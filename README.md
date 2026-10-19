@@ -24,7 +24,7 @@ Méchants : Vador, Palpatine, Maul, Kylo Ren, Boba Fett, Grievous, Dooku, Ventre
 - Clic G, Clic D, Espace, Q (A en AZERTY), E : sorts. R : ultime (100 d'énergie).
 - **Maj + sort** : version EX (25 d'énergie). Comme dans Battlerite, c'est un sort dérivé avec son propre effet (ex. Ruée → Ruée aérienne qui projette en l'air, Détonateur → Grappe de grenades).
 - **F** (porteurs de sabre) : parade. Une parade déclenchée au bon moment (0,3 s) renvoie le tir vers le tireur ; une garde tenue ne fait que bloquer. Consomme de l'endurance ; si elle tombe à zéro, la garde est brisée.
-- M : couper le son.
+- M : couper le son · O (ou bouton ⚙ en bas à droite) : options audio (volume général, bruitages, répliques, cri Wilhelm, son spatialisé), gardées dans le navigateur.
 
 ## Mécaniques
 Incantations avec zone affichée au sol (esquivables), interruptions par étourdissement ou repoussement, renvoi (contre), parade, énergie à gérer entre sorts EX et ultime.

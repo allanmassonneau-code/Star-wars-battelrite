@@ -16,10 +16,27 @@ canvas{width:min(100vw,177.78vh);height:min(56.25vw,100vh);display:block;cursor:
 #net button.alt{background:#2a3a5a;color:#dfe8ff}#net button:focus-visible,#net input:focus-visible{outline:2px solid #7df;outline-offset:2px}
 #net .row{display:flex;gap:8px;margin-top:10px}#net input{flex:1;min-width:0;font:inherit;font-size:18px;letter-spacing:.2em;text-transform:uppercase;padding:8px;border-radius:8px;border:1px solid #3a4a6a;background:#04050b;color:#fff}
 #nStat{color:#ffe81f!important;min-height:1.4em}
+#optB{position:fixed;right:12px;bottom:12px;z-index:4;font:inherit;font-size:14px;font-weight:bold;border:1px solid #3a4a6a;border-radius:8px;padding:6px 10px;background:#0d1424cc;color:#dfe8ff;cursor:pointer}
+#opt{position:fixed;right:12px;bottom:52px;width:min(300px,calc(100vw - 32px));box-sizing:border-box;background:#0d1424;border:1px solid #3a4a6a;border-radius:12px;padding:16px;z-index:6;color:var(--fg);cursor:auto}
+#opt h2{margin:0 0 10px;color:#ffe81f;font-size:17px}#opt label{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:9px 0;font-size:14px;color:#c9d6f2}
+#opt input[type=range]{flex:1;max-width:140px;accent-color:#ffe81f}#opt input[type=checkbox]{accent-color:#ffe81f;width:16px;height:16px}#opt output{width:34px;text-align:right;color:#ffe81f;font-variant-numeric:tabular-nums}
+#opt button{font:inherit;font-weight:bold;border:0;border-radius:8px;padding:7px 12px;background:#2a3a5a;color:#dfe8ff;cursor:pointer;margin-top:6px}#optB:focus-visible,#opt :focus-visible{outline:2px solid #7df;outline-offset:2px}
 </style>
 </head>
 <body>
 <div id="wrap"><canvas id="c" width="1280" height="720"></canvas></div>
+<button id="optB" aria-expanded="false" aria-controls="opt">⚙ Options (O)</button>
+<div id="opt" hidden>
+ <h2>Options audio</h2>
+ <label>Volume général <input type="range" id="oMaster" min="0" max="100"><output id="vMaster"></output></label>
+ <label>Bruitages <input type="range" id="oFx" min="0" max="100"><output id="vFx"></output></label>
+ <label>Répliques <input type="range" id="oVoice" min="0" max="100"><output id="vVoice"></output></label>
+ <label>Répliques à l'ultime <input type="checkbox" id="oVoiceOn"></label>
+ <label>Cri Wilhelm (rare) <input type="checkbox" id="oWil"></label>
+ <label>Son spatialisé (gauche/droite) <input type="checkbox" id="oSpat"></label>
+ <label>Couper le son (M) <input type="checkbox" id="oMute"></label>
+ <button id="oClose">Fermer</button>
+</div>
 <div id="net" hidden>
  <h2>Coop en ligne</h2>
  <p>Jouez à deux dans la même équipe. L'hôte choisit le mode et lance la partie, le coéquipier rejoint avec le code du salon.</p>
@@ -43,7 +60,7 @@ const SLOTS=['lmb','rmb','Space','KeyQ','KeyE','KeyR'];
 const lbl={lmb:'Clic G',rmb:'Clic D',Space:'Espace',KeyQ:'Q',KeyE:'E',KeyR:'R',KeyW:'W',KeyA:'A',KeyS:'S',KeyD:'D',KeyM:'M',KeyF:'F'};
 try{navigator.keyboard&&navigator.keyboard.getLayoutMap().then(m=>{for(const c of['KeyQ','KeyE','KeyR','KeyW','KeyA','KeyS','KeyD','KeyM','KeyF'])if(m.get(c))lbl[c]=m.get(c).toUpperCase()}).catch(()=>{})}catch(e){}
 const wake=()=>{const a=ac();if(a&&a.state==='suspended')a.resume()};
-addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;wake();if(!keys[e.code])pressed[e.code]=1;keys[e.code]=1;if(e.code==='Space'||e.code.startsWith('Arrow'))e.preventDefault();if(e.code==='KeyM')muted=!muted});
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;wake();if(!keys[e.code])pressed[e.code]=1;keys[e.code]=1;if(e.code==='Space'||e.code.startsWith('Arrow'))e.preventDefault();if(e.code==='KeyM'){muted=!muted;syncOpt()}if(e.code==='KeyO')toggleOpt()});
 addEventListener('keyup',e=>{keys[e.code]=0});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=0;mouse.l=0});
 cv.addEventListener('mousemove',e=>{const b=cv.getBoundingClientRect();mouse.x=(e.clientX-b.left)*W/b.width;mouse.y=(e.clientY-b.top)*H/b.height});
@@ -56,13 +73,22 @@ const angDiff=(a,b)=>{let d=a-b;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+
 function rgba(h,a){if(h.length===4)h='#'+h[1]+h[1]+h[2]+h[2]+h[3]+h[3];const n=parseInt(h.slice(1),16);return`rgba(${n>>16},${n>>8&255},${n&255},${a})`}
 
 // ---------- Son : vrais bruitages Star Wars (dossier sounds/), repli synthétisé si absents ----------
-let AC=null,NB=null,MB=null,RV=null,muted=false;
-// moteur audio : bus principal compressé + réverbération courte (tout est synthétisé, aucun fichier)
-function ac(){if(AC===null){try{AC=new(window.AudioContext||window.webkitAudioContext)();const comp=AC.createDynamicsCompressor();comp.threshold.value=-20;comp.ratio.value=4;comp.attack.value=.003;comp.release.value=.2;
- MB=AC.createGain();MB.gain.value=.9;MB.connect(comp);comp.connect(AC.destination);
- RV=AC.createConvolver();const len=Math.floor(AC.sampleRate*1.4),ir=AC.createBuffer(2,len,AC.sampleRate);for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2)}RV.buffer=ir;const rg=AC.createGain();rg.gain.value=.22;RV.connect(rg);rg.connect(comp);loadSnd()}catch(e){AC=0}}return AC}
+let AC=null,NB=null,MB=null,FXB=null,DK=null,VB=null,RV=null,muted=false,POS=null;
+// options audio (gardées dans le navigateur)
+const OPT={master:60,fx:80,voice:80,voiceOn:true,wil:true,spat:true};
+try{Object.assign(OPT,JSON.parse(localStorage.getItem('swOpt')||'{}'))}catch(e){}
+function applyOpt(){try{localStorage.setItem('swOpt',JSON.stringify(OPT))}catch(e){}if(!AC)return;const t=AC.currentTime;MB.gain.setTargetAtTime(.75*OPT.master/100,t,.03);FXB.gain.setTargetAtTime(OPT.fx/80,t,.03);VB.gain.setTargetAtTime(1.2*OPT.voice/80,t,.03)}
+// moteur audio : bus bruitages (adouci, baissé pendant les répliques) + bus voix -> compresseur doux -> sortie ; réverbération commune pour fondre le tout
+function ac(){if(AC===null){try{AC=new(window.AudioContext||window.webkitAudioContext)();const comp=AC.createDynamicsCompressor();comp.threshold.value=-24;comp.knee.value=18;comp.ratio.value=3;comp.attack.value=.01;comp.release.value=.25;
+ MB=AC.createGain();MB.gain.value=.45;MB.connect(comp);comp.connect(AC.destination);
+ const lp=AC.createBiquadFilter();lp.type='highshelf';lp.frequency.value=5500;lp.gain.value=-6;FXB=AC.createGain();DK=AC.createGain();FXB.connect(DK);DK.connect(lp);lp.connect(MB);VB=AC.createGain();VB.connect(MB);
+ RV=AC.createConvolver();const len=Math.floor(AC.sampleRate*1.4),ir=AC.createBuffer(2,len,AC.sampleRate);for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2)}RV.buffer=ir;const rg=AC.createGain();rg.gain.value=.3;RV.connect(rg);rg.connect(MB);applyOpt();loadSnd()}catch(e){AC=0}}return AC}
 const live=()=>{const a=ac();return a&&!muted&&a.state==='running'?a:null};
-function out(n,rev){n.connect(MB);if(rev)n.connect(RV)}
+// spatialisation : volume selon la distance à la caméra + panoramique gauche/droite ; les sons lointains sont plus étouffés et plus réverbérés
+function out(n,rev,bus){const a=AC;let d=n;if(POS&&a.createStereoPanner){const pn=a.createStereoPanner(),g=a.createGain();pn.pan.value=OPT.spat?POS.pan:0;g.gain.value=POS.vol;d.connect(g);g.connect(pn);d=pn;
+  if(POS.far>.05){const f=a.createBiquadFilter();f.type='lowpass';f.frequency.value=12000-POS.far*9000;d.connect(f);d=f}}
+ d.connect(bus||FXB);const w=a.createGain();w.gain.value=rev?1:.35;if(POS)w.gain.value*=1+POS.far*1.5;d.connect(w);w.connect(RV)}
+function at(x,y,f){if(x==null){f();return}const dx=x-cam.x,dy=(y-cam.y)*1.4,dd=Math.hypot(dx,dy),far=Math.min(1,dd/900);POS={pan:Math.max(-.75,Math.min(.75,dx/700)),vol:1-far*.65,far};try{f()}finally{POS=null}}
 function env(a,t,v,att,dur){const g=a.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+dur);return g}
 function osc(type,f0,f1,dur,vol,o={}){const a=live();if(!a)return;const t=a.currentTime+(o.delay||0),os=a.createOscillator(),g=env(a,t,vol,o.att||.005,dur);os.type=type;os.frequency.setValueAtTime(f0,t);os.frequency.exponentialRampToValueAtTime(f1,t+(o.sweep||dur));if(o.detune)os.detune.value=o.detune;
  let n=os;if(o.lp){const f=a.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(o.lp,t);if(o.lp2)f.frequency.exponentialRampToValueAtTime(o.lp2,t+dur);n.connect(f);n=f}
@@ -90,17 +116,19 @@ const SYN={
 // fichiers : nom -> nombre de variantes (sounds/nomN.mp3, ou sounds/nom.mp3 si une seule)
 const SND_N={saber:4,saberS:4,ignite:2,blaster:4,blasterE:3,bow:2,han:2,heavy:3,hit:2,boom:3,zap:2,zapS:1,dash:3,deflect:3,flame:1,wilhelm:1};
 const VOICES=['luke','yoda','han','leia','chewie','obiwan','anakin','mace','quigon','lando','padme','r2','wicket','vader','palpatine','maul','grievous','jango','boba','phasma'];
-const SND_VOL={saber:.42,saberS:.42,ignite:.5,blaster:.32,blasterE:.32,bow:.4,han:.36,heavy:.42,hit:.4,boom:.6,zap:.4,zapS:.22,dash:.3,deflect:.45,flame:.25,wilhelm:.55};
+const SND_VOL={saber:.26,saberS:.26,ignite:.32,blaster:.17,blasterE:.17,bow:.22,han:.2,heavy:.24,hit:.22,boom:.36,zap:.24,zapS:.12,dash:.16,deflect:.28,flame:.14,wilhelm:.35};
+const PLAYING={};const MAXV=3; // au plus 3 exemplaires d'un même son en même temps (évite l'empilement en 20c20)
 const BUF={};let sndLoad=false,voiceEnd=0;
 function loadSnd(){if(sndLoad||!AC)return;sndLoad=true;const L=Object.entries(SND_N).flatMap(([k,n])=>n>1?[...Array(n)].map((_,i)=>[k,k+i]):[[k,k]]).concat(VOICES.map(c=>['v_'+c,'v_'+c]));
  for(const [k,f] of L)fetch('sounds/'+f+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,ko)=>AC.decodeAudioData(b,ok,ko))).then(b=>(BUF[k]=BUF[k]||[]).push(b)).catch(()=>{})}
-function playBuf(k,vol,rate){const a=live(),L=BUF[k];if(!a||!L||!L.length)return false;const s=a.createBufferSource(),g=a.createGain();s.buffer=L[Math.random()*L.length|0];s.playbackRate.value=rate||(.93+Math.random()*.14);g.gain.value=vol;s.connect(g);out(g,k!=='hit');s.start();return s.buffer.duration/s.playbackRate.value}
+function playBuf(k,vol,rate,bus){const a=live(),L=BUF[k];if(!a||!L||!L.length)return false;if((PLAYING[k]||0)>=MAXV)return -1;const s=a.createBufferSource(),g=a.createGain();s.buffer=L[Math.random()*L.length|0];s.playbackRate.value=rate||(.93+Math.random()*.14);
+ const n=PLAYING[k]||0;g.gain.value=vol/(1+n*.5);PLAYING[k]=n+1;s.onended=()=>PLAYING[k]--;s.connect(g);out(g,k!=='hit',bus);s.start();return s.buffer.duration/s.playbackRate.value}
 const SFX={};
 for(const k in SYN)SFX[k]=()=>{if(!playBuf(k,SND_VOL[k]||.4))SYN[k]()};
 for(const [k,b] of [['saberS','saber'],['blasterE','blaster'],['bow','blaster'],['han','blaster']])SFX[k]=()=>{if(!playBuf(k,SND_VOL[k]))SYN[b]()};
-SFX.wilhelm=()=>playBuf('wilhelm',SND_VOL.wilhelm,1);
+SFX.wilhelm=()=>OPT.wil&&playBuf('wilhelm',SND_VOL.wilhelm,1);
 // répliques cultes à l'ultime (une seule voix à la fois)
-for(const c of VOICES)SFX['v_'+c]=()=>{const a=live();if(!a||a.currentTime<voiceEnd)return;const d=playBuf('v_'+c,.85,1);if(d)voiceEnd=a.currentTime+d};
+for(const c of VOICES)SFX['v_'+c]=()=>{const a=live();if(!a||!OPT.voiceOn||a.currentTime<voiceEnd)return;const d=playBuf('v_'+c,.7,1,VB);if(d>0){voiceEnd=a.currentTime+d;const t=a.currentTime;DK.gain.cancelScheduledValues(t);DK.gain.setTargetAtTime(.55,t,.05);DK.gain.setTargetAtTime(1,t+d,.3)}}; // les bruitages s'effacent sous la réplique
 // variante selon le perso : sabre Sith, blasters impériaux rouges, arbalète de Chewie, DL-44 de Han
 const sndKey=(n,u)=>!u||!u.ch?n:n==='saber'&&u.ch.side?'saberS':n==='blaster'?(u.c==='chewie'?'bow':u.c==='han'?'han':u.ch.side?'blasterE':n):n;
 // les sons et effets lointains sont coupés (utile en bataille 20c20)
@@ -108,7 +136,7 @@ let cam={x:CX,y:CY},Yc=377.5;
 const nearMe=(x,y)=>Math.abs(x-cam.x)<820&&Math.abs(y-cam.y)<560;
 const near=(x,y)=>nearMe(x,y)||(net.gcam&&Math.abs(x-net.gcam.x)<820&&Math.abs(y-net.gcam.y)<560);
 const lastS={};
-const S=(n,u)=>{n=sndKey(n,u);if(!SFX[n])return;if(net.role==='host'&&u&&net.conn&&net.ev.snd.length<60)net.ev.snd.push([n,Math.round(u.x),Math.round(u.y)]);const t=performance.now();if((!u||nearMe(u.x,u.y))&&!(t-(lastS[n]||0)<35)){lastS[n]=t;SFX[n]()}};
+const S=(n,u)=>{n=sndKey(n,u);if(!SFX[n])return;if(net.role==='host'&&u&&net.conn&&net.ev.snd.length<60)net.ev.snd.push([n,Math.round(u.x),Math.round(u.y)]);const t=performance.now();if((!u||nearMe(u.x,u.y))&&!(t-(lastS[n]||0)<35)){lastS[n]=t;at(u&&u.x,u&&u.y,SFX[n])}};
 
 // ---------- Capacités ----------
 let EX=false;const X=v=>EX?v*1.2:v;
@@ -139,7 +167,7 @@ function alphaStrike(u,a,t,n,dmg){const p=fwd(u,a,Math.min(t,320)),L=enemies(u).
 function beamHit(u,a,len,w,dmg,o,col){S('zap',u);S('boom',u);beamFx(u.x,u.y,u.x+Math.cos(a)*len,u.y+Math.sin(a)*len,col,w*.8);
  for(const e of enemies(u)){const dx=e.x-u.x,dy=e.y-u.y,f=dx*Math.cos(a)+dy*Math.sin(a),s=Math.abs(-dx*Math.sin(a)+dy*Math.cos(a));if(f>0&&f<len&&s<w/2+e.r)hit(e,u,dmg,Object.assign({unblockable:1},o))}if(near(u.x,u.y))shake=Math.max(shake,.25)}
 const cleanse=x=>{x.stun=0;x.root=0;x.slow=0;x.silence=0;x.fear=0;x.taunt=0;x.disarm=0;x.dot=0};
-const PASS={third:['Maîtrise','Chaque 3e attaque de base : +60 % de dégâts et étourdit'],crit:['Œil de tireur','25 % de coups critiques sur les attaques de base'],slow:['Emprise','Les attaques de base ralentissent'],lifesteal:['Côté obscur','Récupère 30 % des dégâts infligés'],
+const PASS={third:['Maîtrise','Chaque 3e attaque de base : +60 % de dégâts et étourdit (une fois toutes les 2,5 s par cible)'],crit:['Œil de tireur','25 % de coups critiques sur les attaques de base'],slow:['Emprise','Les attaques de base ralentissent'],lifesteal:['Côté obscur','Récupère 30 % des dégâts infligés'],
  rage:['Colère','+25 % de dégâts sous 50 % de vie'],armor:['Blindage','Subit 15 % de dégâts en moins'],regen:['Régénération','Récupère 3 PV par seconde'],speed:['Agilité','+10 % de vitesse de déplacement'],energy:['Méditation','Gagne 50 % d\'énergie en plus']};
 const SB=(col,x={})=>Object.assign({t:'saber',col},x);
 const LOOKS={
@@ -551,7 +579,7 @@ function hit(t,src,dmg,o={}){
  if(src&&t.deflect>0&&o.melee){src.stun=Math.max(src.stun,.9);src.cast=null;src.spin=null;t.deflect=0;say(t,'RENVOI !','#7df');say(src,'ÉTOURDI','#b8f');sparks(t.x,t.y,'#7df',14);S('deflect',t);return false}
  if(src&&src.ch.pw)dmg*=src.ch.pw;if(src&&src.rage>0)dmg*=1.35;if(o.ex)dmg*=1.2;
  const ps=src&&src.ch.pass;
- if(ps&&o.basic){if(ps==='third'&&++src.hits%3===0){dmg*=1.6;o=Object.assign({},o,{stun:Math.max(o.stun||0,.5)});say(src,'3e COUP','#ffe81f')}if(ps==='crit'&&rnd()<.25){dmg*=2;say(t,'CRITIQUE','#ffb03a')}if(ps==='slow')o=Object.assign({},o,{slow:Math.max(o.slow||0,.8)})}
+ if(ps&&o.basic){if(ps==='third'&&++src.hits%3===0){dmg*=1.6;if(!(SIMT<(t.thirdImm||0))){t.thirdImm=SIMT+2.5;o=Object.assign({},o,{stun:Math.max(o.stun||0,.5)})}say(src,'3e COUP','#ffe81f')}if(ps==='crit'&&rnd()<.25){dmg*=2;say(t,'CRITIQUE','#ffb03a')}if(ps==='slow')o=Object.assign({},o,{slow:Math.max(o.slow||0,.8)})}
  if(ps==='rage'&&src.hp<src.max*.5)dmg*=1.25;if(src&&src.ambush>0){dmg*=1.5;src.ambush=0;say(t,'EMBUSCADE','#ffb03a')}
  if(o.exec)dmg+=(t.max-t.hp)*o.exec;if(t.ch.pass==='armor')dmg*=.85;
  if(t.vuln>0)dmg*=1.25;if(t.drT>0)dmg*=1-t.dr;if(t.giant>0)dmg*=.8;if(src&&src.giant>0)dmg*=1.2;
@@ -695,7 +723,8 @@ function updUnit(u,dt,active){
 }
 function localInput(){const Kd=c=>keys[c]?1:0,mw=unP(mouse.x,mouse.y);return{mx:(Kd('KeyD')||Kd('ArrowRight'))-(Kd('KeyA')||Kd('ArrowLeft')),my:(Kd('KeyS')||Kd('ArrowDown'))-(Kd('KeyW')||Kd('ArrowUp')),ax:mw.x,ay:mw.y,l:mouse.l,p:pressed,sh:keys.ShiftLeft||keys.ShiftRight,f:keys.KeyF}}
 function remoteInput(){const r=net.remoteIn;if(!r)return null;const I={mx:clamp(+r.mx||0,-1,1),my:clamp(+r.my||0,-1,1),ax:+r.ax||0,ay:+r.ay||0,l:!!r.l,p:net.remotePressed,sh:!!r.sh,f:!!r.f};net.remotePressed={};return I}
-function update(dt){
+let SIMT=0;
+function update(dt){SIMT+=dt;
  if(state==='menu'){if(pressed.lmb){if(inRect(mouse,coopBtn))netUI(true);if(!isGuest())for(const b of modeBtns)if(inRect(mouse,b)){mode=b.m;netSend({t:'hello',mode})}
   cards.forEach(c=>{if(inRect(mouse,c)){if(isGuest()){net.mate=c.c;net.ready=false;netSend({t:'hero',c:c.c});netSend({t:'ready',v:false})}else if(coop()){net.myPick=c.c;net.ready=false;sendLobby()}else startMatch(c.c)}});
   if(coop()&&inRect(mouse,readyBtn)&&(isGuest()?net.mate:net.myPick)){net.ready=!net.ready;if(isGuest())netSend({t:'ready',v:net.ready});else sendLobby()}}
@@ -1044,7 +1073,7 @@ function drawMenu(){
   tfit(`${ab.n}${ab.ult?' · ultime':` · ${ab.cd}s`}${ab.charges?` · ${ab.charges} charges`:''}${ab.cast?` · incant. ${ab.cast}s`:''}`,x+52,yy,13,ab.ult?'#ffe81f':'#e2e8f4',318,'bold');
   tfit(ab.d||'',x+52,yy+14,11,'#9fb3d9',318);
   if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,x+52,yy+28,11,'#d8c060',318)});
- text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · Maj + sort = version EX (25 énergie) · ${lbl.KeyF} maintenu = parade (sabres) · ${lbl.KeyM} son`,W/2,714,13,'#9fb3d9','center','normal');
+ text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · Maj + sort = version EX (25 énergie) · ${lbl.KeyF} maintenu = parade (sabres) · ${lbl.KeyM} son · O options`,W/2,714,13,'#9fb3d9','center','normal');
  drawCursor();
 }
 function bar(x,y,w,h,v,col,right){g.fillStyle='rgba(0,0,0,.6)';g.fillRect(x,y,w,h);g.fillStyle=col;const vw=w*clamp(v,0,1);g.fillRect(right?x+w-vw:x,y,vw,h);g.strokeStyle='#2a3a5a';g.lineWidth=1;g.strokeRect(x,y,w,h)}
@@ -1152,6 +1181,13 @@ function joinGame(code){if(noPeer())return;code=(code||'').trim().toUpperCase();
   c.on('data',d=>{if(d&&d.t==='snap')applySnap(d);else if(d&&d.t==='hello')mode=d.mode;else if(d&&d.t==='lobby'){net.hostReady=d.hr;mode=d.mode;if(!d.mr&&net.ready&&!d.hr){}}});
   c.on('close',()=>{netReset();state='menu';setStat('L\'hôte a fermé la partie.')})});
  p.on('error',e=>setStat(e.type==='peer-unavailable'?'Salon introuvable : vérifie le code.':'Erreur réseau : '+e.type))}
+// panneau d'options audio
+function syncOpt(){for(const k of['master','fx','voice']){const id='o'+k[0].toUpperCase()+k.slice(1);$(id).value=OPT[k];$('v'+id.slice(1)).textContent=OPT[k]}$('oVoiceOn').checked=OPT.voiceOn;$('oWil').checked=OPT.wil;$('oSpat').checked=OPT.spat;$('oMute').checked=muted}
+function toggleOpt(v){const o=$('opt');o.hidden=v===undefined?!o.hidden:!v;$('optB').setAttribute('aria-expanded',String(!o.hidden));if(!o.hidden)syncOpt()}
+for(const k of['master','fx','voice']){const id='o'+k[0].toUpperCase()+k.slice(1);$(id).oninput=e=>{OPT[k]=+e.target.value;$('v'+id.slice(1)).textContent=OPT[k];applyOpt();if(k!=='voice')(SFX.saber||(()=>{}))()}}
+$('oVoice').onchange=()=>{ac();voiceEnd=0;SFX.v_obiwan()};
+for(const [id,k] of[['oVoiceOn','voiceOn'],['oWil','wil'],['oSpat','spat']])$(id).onchange=e=>{OPT[k]=e.target.checked;applyOpt()};
+$('oMute').onchange=e=>{muted=e.target.checked};$('optB').onclick=()=>{wake();toggleOpt()};$('oClose').onclick=()=>toggleOpt(false);syncOpt();
 $('nHost').onclick=hostGame;$('nJoin').onclick=()=>joinGame($('nCode').value);$('nClose').onclick=()=>netUI(false);
 $('nCode').addEventListener('keydown',e=>{if(e.key==='Enter')joinGame($('nCode').value)});
 const rd=v=>typeof v==='number'?Math.round(v*100)/100:v;
@@ -1179,7 +1215,7 @@ function applySnap(s){
   else if(!fresh&&!jump){u.x=ox;u.y=oy}return u});
  player=units[s.you];if(s.mc)player.cds=s.mc;projs=s.Pj;zones=s.Z;traps=s.Tr||[];turrets=s.Tu||[];fields=s.Fi||[];walls=s.Wl||[];tethers=(s.Te||[]).map(([a,b,t,m,col])=>({a:units[a],b:units[b],t,m,col})).filter(t=>t.a&&t.b);
  for(const f of s.ev.fx){if(typeof f.u==='number')f.u=units[f.u]||player;fx.push(f)}for(const [x,y,c,k] of s.ev.sp||[])if(nearMe(x,y))sparks(x,y,c,k);txt.push(...s.ev.txt);
- for(const [n,x,y] of s.ev.snd)if(nearMe(x,y)&&SFX[n])SFX[n]();
+ for(const [n,x,y] of s.ev.snd)if(nearMe(x,y)&&SFX[n])at(x,y,SFX[n]);
  if(first&&mode==='battle')cam={x:player.x,y:player.y};
 }
 function guestFrame(dt){for(const k in pressed)net.gp[k]=1;
