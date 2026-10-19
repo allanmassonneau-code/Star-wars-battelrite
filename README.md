@@ -21,7 +21,7 @@ Méchants : Vador, Palpatine, Maul, Kylo Ren, Boba Fett, Grievous, Dooku, Ventre
 - ZQSD/WASD ou flèches pour bouger, souris pour viser.
 - Clic G, Clic D, Espace, Q (A en AZERTY), E : sorts. R : ultime (100 d'énergie).
 - **Maj + sort** : version EX (25 d'énergie). Comme dans Battlerite, c'est un sort dérivé avec son propre effet (ex. Ruée → Ruée aérienne qui projette en l'air, Détonateur → Grappe de grenades).
-- **F maintenu** (porteurs de sabre) : parade. Bloque les coups de face et renvoie les tirs vers le tireur. Consomme de l'endurance ; si elle tombe à zéro, la garde est brisée.
+- **F** (porteurs de sabre) : parade. Une parade déclenchée au bon moment (0,3 s) renvoie le tir vers le tireur ; une garde tenue ne fait que bloquer. Consomme de l'endurance ; si elle tombe à zéro, la garde est brisée.
 - M : couper le son.
 
 ## Mécaniques

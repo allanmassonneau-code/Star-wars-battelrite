@@ -455,7 +455,7 @@ const CH={
 };
 
 // Équilibrage : [PV, multiplicateur de dégâts, vitesse], calculé en simulant des centaines de duels entre ordinateurs
-const BAL={"luke":[222,1.16,227],"yoda":[245,1.3,255],"rey":[233,1.28,240],"han":[135,0.76,225],"leia":[148,0.83,220],"chewie":[157,0.7,205],"obiwan":[194,1.01,224],"anakin":[190,1.1,234],"mace":[192,0.94,224],"ahsoka":[250,1.3,250],"quigon":[193,0.92,222],"finn":[149,0.74,220],"lando":[157,0.89,225],"padme":[137,0.79,225],"din":[135,0.7,218],"cal":[225,1.24,237],"rex":[124,0.7,218],"wicket":[152,0.99,235],"r2":[171,0.97,215],"jyn":[140,0.8,230],"vader":[185,0.76,200],"palpatine":[190,1.08,205],"maul":[272,1.3,246],"kylo":[217,1.1,224],"boba":[123,0.7,220],"grievous":[197,0.97,227],"dooku":[212,1.18,227],"ventress":[190,1.13,244],"savage":[188,0.83,220],"jango":[145,0.8,222],"phasma":[173,0.74,205],"iden":[149,0.84,225],"bossk":[146,0.7,212],"cadbane":[137,0.74,225],"inquisitor":[239,1.27,234],"sister":[204,1.13,240],"gideon":[170,0.84,224],"thrawn":[154,0.86,212],"deathtrooper":[170,0.79,210],"ig88":[195,0.97,215]};
+const BAL={"luke":[228,1.19,227],"yoda":[280,1.35,255],"rey":[242,1.34,240],"han":[125,0.69,225],"leia":[139,0.78,220],"chewie":[134,0.62,205],"obiwan":[210,1.13,224],"anakin":[191,1.12,234],"mace":[201,1,224],"ahsoka":[280,1.35,250],"quigon":[217,1.07,222],"finn":[142,0.7,220],"lando":[148,0.82,225],"padme":[126,0.71,225],"din":[121,0.62,218],"cal":[249,1.35,237],"rex":[111,0.62,218],"wicket":[141,0.9,235],"r2":[172,0.98,215],"jyn":[124,0.69,230],"vader":[182,0.73,200],"palpatine":[198,1.13,205],"maul":[280,1.35,246],"kylo":[221,1.13,224],"boba":[112,0.64,220],"grievous":[202,1,227],"dooku":[234,1.34,227],"ventress":[196,1.18,244],"savage":[186,0.82,220],"jango":[134,0.73,222],"phasma":[171,0.72,205],"iden":[130,0.69,225],"bossk":[138,0.64,212],"cadbane":[127,0.66,225],"inquisitor":[279,1.35,234],"sister":[217,1.22,240],"gideon":[170,0.84,224],"thrawn":[145,0.79,212],"deathtrooper":[152,0.67,210],"ig88":[171,0.82,215]};
 for(const k in BAL){const [hp,pw,spd]=BAL[k];Object.assign(CH[k],{hp,pw,spd})}
 const HEROES=Object.keys(CH).filter(k=>!CH[k].trooper);
 const saberCol=u=>u.ch.look.weapon.col||'#ccc';
@@ -519,17 +519,19 @@ function aoe(u,x,y,r,dmg,o={},col){col=col||(o.stun?'#b8f':'#fc6');if(near(x,y))
 function dash(u,a,d,dur,o={}){const tx=clamp(u.x+Math.cos(a)*d,B.x+u.r,B.x+B.w-u.r),ty=clamp(u.y+Math.sin(a)*d,B.y+u.r,B.y+B.h-u.r);u.dash={sx:u.x,sy:u.y,tx,ty,t:0,dur,jump:o.jump||0,end:o.end,dmg:o.dmg,kb:o.kb,air:o.air,through:o.through,hitDone:false,ex:EX}}
 function reflect(p,t){p.owner=t;p.vx*=-1.1;p.vy*=-1.1;p.life=Math.max(p.life,.7);p.hitSet=null;if(near(t.x,t.y)){say(t,'RENVOI !','#7df');sparks(p.x,p.y,'#7df',8);S('deflect',t)}}
 // parade : le tir repart vers celui qui l'a tiré
-function parry(p,t){const sh=p.owner,a=sh&&!sh.dead?Math.atan2(sh.y-p.y,sh.x-p.x)+(rnd()-.5)*.12:Math.atan2(-p.vy,-p.vx),sp=Math.hypot(p.vx,p.vy)*1.05;
+// parade : seule une parade déclenchée à temps (0,3 s) renvoie le tir ; sinon le tir est juste bloqué
+function parry(p,t,force){if(!force&&t.blockT>.3){if(near(t.x,t.y)){sparks(p.x,p.y,saberCol(t),5);S('deflect',t)}stamHit(t,p.heavy?22:12);return false}
+ const sh=p.owner,a=sh&&!sh.dead?Math.atan2(sh.y-p.y,sh.x-p.x)+(rnd()-.5)*.12:Math.atan2(-p.vy,-p.vx),sp=Math.hypot(p.vx,p.vy)*1.05;
  p.owner=t;p.vx=Math.cos(a)*sp;p.vy=Math.sin(a)*sp;p.life=Math.max(p.life,.8);p.hitSet=null;t.swing=.12;t.swingA=a;
- if(near(t.x,t.y)){sparks(p.x,p.y,saberCol(t),6);S('deflect',t)}stamHit(t,p.heavy?14:6)}
-const facing=(t,pt)=>angDiff(Math.atan2(pt.y-t.y,pt.x-t.x),t.aim)<1.3;
+ if(!force){p.dmg*=.75;say(t,'PARADE PARFAITE','#7df')}if(near(t.x,t.y)){sparks(p.x,p.y,saberCol(t),6);S('deflect',t)}stamHit(t,p.heavy?14:6);return true}
+const facing=(t,pt)=>angDiff(Math.atan2(pt.y-t.y,pt.x-t.x),t.aim)<1;
 function stamHit(t,v){t.stam-=v;if(t.stam<=0){t.stam=0;t.block=false;t.blockLock=2;t.stun=Math.max(t.stun,.7);say(t,'GARDE BRISÉE','#fc6')}}
 function hit(t,src,dmg,o={}){
  if(t.dead||state!=='fight')return false;
  if(src&&src!==t&&t.dodge>0&&!o.silent){t.dodge=0;t.haste=Math.max(t.haste,1.5);say(t,'ESQUIVE','#cf6');return false}
  if(src&&src!==t&&t.counter>0&&!o.silent&&!src.dead){t.counter=0;const b=ang(src,t)+Math.PI;t.x=src.x+Math.cos(b)*40;t.y=src.y+Math.sin(b)*40;collide(t);t.aim=ang(t,src);t.swing=.18;t.swingA=t.aim;say(t,'CONTRE !','#3f3');S('deflect',t);hit(src,t,20,{stun:t.counterS,unblockable:1});return false}
  if(src&&t.riposte>0&&o.melee&&!o.unblockable){t.riposte=0;src.silence=Math.max(src.silence,t.riposteS);src.stun=Math.max(src.stun,.5);say(t,'RIPOSTE','#f22');S('deflect',t);hit(src,t,12,{unblockable:1});return false}
- if(src&&t.block&&o.melee&&!o.unblockable&&facing(t,src)){stamHit(t,o.ex?25:14);if(near(t.x,t.y)){say(t,'PARADE','#7df');sparks(t.x,t.y,saberCol(t),10);S('deflect',t)}const a=ang(t,src);src.kx+=Math.cos(a)*220;src.ky+=Math.sin(a)*220;return false}
+ if(src&&t.block&&o.melee&&!o.unblockable&&facing(t,src)){stamHit(t,o.ex?32:22);if(near(t.x,t.y)){say(t,'PARADE','#7df');sparks(t.x,t.y,saberCol(t),10);S('deflect',t)}const a=ang(t,src);src.kx+=Math.cos(a)*220;src.ky+=Math.sin(a)*220;return false}
  if(src&&t.deflect>0&&o.melee){src.stun=Math.max(src.stun,.9);src.cast=null;src.spin=null;t.deflect=0;say(t,'RENVOI !','#7df');say(src,'ÉTOURDI','#b8f');sparks(t.x,t.y,'#7df',14);S('deflect',t);return false}
  if(src&&src.ch.pw)dmg*=src.ch.pw;if(src&&src.rage>0)dmg*=1.35;if(o.ex)dmg*=1.2;
  const ps=src&&src.ch.pass;
@@ -608,7 +610,7 @@ function ai(u,dt){
  u.aiT=(u.hero?.13:.25)+rnd()*.17;
  const th=threat(u);
  // parade : les porteurs de sabre bloquent les tirs pour s'approcher des tireurs
- if(canBlock(u)&&u.stam>25){if(th&&rnd()<.7)u.aiBlock=.4+rnd()*.6;else if(e.ch.pref>200&&d>150&&d<650&&rnd()<.3)u.aiBlock=.5+rnd()*.8}
+ if(canBlock(u)&&u.stam>25){if(th&&rnd()<.7){u.aiBlock=.4+rnd()*.6;if(rnd()<.6&&Math.hypot(th.x-u.x,th.y-u.y)<160)u.blockT=0}else if(e.ch.pref>200&&d>150&&d<650&&rnd()<.3)u.aiBlock=.5+rnd()*.8}
  if(u.aiBlock>0)return[mx,my];
  for(const i of[5,3,1,2,4]){const ab=u.ch.abil[i],h=ab&&ab.ai;if(!h||u.cds[i]>0||(ab.ult&&u.energy<100))continue;
   let ok=false,aimO,td=d;
@@ -653,8 +655,8 @@ function updUnit(u,dt,active){
  const ctl=u.ctrl==='remote'&&!coop()?null:u.ctrl,I=ctl==='local'?localInput():ctl==='remote'?remoteInput():null;
  // parade (F) : bloque et renvoie les tirs de face, consomme de l'endurance
  const wantB=canBlock(u)&&active&&u.stun<=0&&!u.cast&&!u.spin&&u.blockLock<=0&&u.stam>0&&(ctl?!!(I&&I.f):u.aiBlock>0);
- u.block=!!wantB;
- if(u.block){u.stam-=9*dt;u.stamT=.6;if(u.stam<=0)stamHit(u,0)}else{u.stamT-=dt;if(u.stamT<=0)u.stam=Math.min(100,u.stam+30*dt)}
+ u.block=!!wantB;u.blockT=u.block?(u.blockT||0)+dt:0;
+ if(u.block){u.stam-=12*dt;u.stamT=.9;if(u.stam<=0)stamHit(u,0)}else{u.stamT-=dt;if(u.stamT<=0)u.stam=Math.min(100,u.stam+22*dt)}
  if(active&&u.stun<=0&&u.fear>0){const a=Math.atan2(u.y-u.fearY,u.x-u.fearX);mx=Math.cos(a);my=Math.sin(a);u.aim=a}
  else if(active&&u.stun<=0&&u.taunt>0&&u.tauntSrc&&!u.tauntSrc.dead){const e=u.tauntSrc,a=ang(u,e);u.aim=a;if(dist(u,e)>70){mx=Math.cos(a);my=Math.sin(a)}use(u,0,dist(u,e))}
  else if(active&&u.stun<=0){
@@ -727,8 +729,8 @@ function update(dt){
    if(t.absorb>0){dead=true;t.hp=Math.min(t.max,t.hp+4);if(t.absorbEn)t.energy=Math.min(100,t.energy+t.absorbEn);if(near(t.x,t.y))sparks(p.x,p.y,'#3f3',5);break}
    if(t.chrome>0&&!p.rocket){dead=true;if(near(t.x,t.y))sparks(p.x,p.y,'#dddddd',5);break}
    if(t.riot>0&&facing(t,p)){dead=true;if(near(t.x,t.y))sparks(p.x,p.y,'#99ccff',5);break}
-   if(t.deflect>0&&!p.rocket){if(t.parryAll>0)parry(p,t);else reflect(p,t);break}
-   if(t.block&&!p.rocket&&facing(t,p)){parry(p,t);break}
+   if(t.deflect>0&&!p.rocket){if(t.parryAll>0)parry(p,t,1);else reflect(p,t);break}
+   if(t.block&&!p.rocket&&facing(t,p)){if(!parry(p,t))dead=true;break}
    if(!p.rocket&&hit(t,p.owner,p.dmg,Object.assign({ex:p.ex,basic:p.basic,root:p.root,stun:p.stun,exec:p.exec,slow:p.slow},p.o||{})))onProjHit(p,t);if(p.sticky&&!p.stuck){p.stuck=1;t.stick=Object.assign({src:p.owner,ex:p.ex},p.sticky);dead=true}if(!p.pierce)dead=true;break}
   if(dead){if(p.anchor&&!p.hitAny&&!p.owner.dead){const o=p.owner;o.dash={sx:o.x,sy:o.y,tx:clamp(p.x,B.x+20,B.x+B.w-20),ty:clamp(p.y,B.y+20,B.y+B.h-20),t:0,dur:.25,jump:20}}if(p.sticky&&!p.stuck)zone(p.owner,p.x,p.y,p.sticky.r,p.sticky.dmg,.5,{stun:p.sticky.stun},'#fa3');
    p.dead=1;if((p.grenade||p.rocket)&&!p.boom)explode(p);else if(!p.boom&&near(p.x,p.y))sparks(p.x,p.y,p.col,4);if(p.saber)p.src.saberOut=0}
@@ -876,10 +878,10 @@ function drawUnit(u){
  if(u.dead&&u.deadT>1.6)return;
  if(u.stealth>0&&!u.dead&&player&&u.team!==player.team&&dist(u,player)>140){g.strokeStyle='rgba(200,220,255,.15)';g.lineWidth=1;gEll(u.x,u.y,18);g.stroke();return}
 
- const p=P(u.x,u.y,u.z),ally=u.team===player.team,tc=u===player?'#ffffff':u.human?'#7f7':ally?'#4db8ff':'#ff4d4d',S2=p.s*1.3*(u.giant>0?1.35:1),sk=u.ch.look.scale||1;
+ const p=P(u.x,u.y,u.z),ally=u.team===player.team,tc=u===player?'#ffffff':u.human?'#7f7':ally?'#4db8ff':'#ff4d4d',perf=u.block&&u.blockT<.3,S2=p.s*1.3*(u.giant>0?1.35:1),sk=u.ch.look.scale||1;
  g.fillStyle='rgba(0,0,0,.4)';gEll(u.x,u.y,16*sk*(1-u.z/200));g.fill();
  if(!u.dead){g.strokeStyle=tc;g.lineWidth=u.hero?2.5:1.5;g.globalAlpha=u.hero?.85:.55;gEll(u.x,u.y,(u.hero?22:17)*Math.max(1,sk));g.stroke();g.globalAlpha=1}
- if(u.block){g.strokeStyle=saberCol(u);g.lineWidth=4;g.globalAlpha=.55;gEll(u.x,u.y,34,u.aim-1.3,u.aim+1.3);g.stroke();g.globalAlpha=1}
+ if(u.block){g.strokeStyle=perf?'#ffffff':saberCol(u);g.lineWidth=perf?6:4;g.globalAlpha=perf?.9:.55;gEll(u.x,u.y,34,u.aim-1,u.aim+1);g.stroke();g.globalAlpha=1}
  if(u.deflect>0){g.strokeStyle='#7df';g.lineWidth=3;g.globalAlpha=.5+Math.sin(performance.now()/40)*.3;g.beginPath();g.ellipse(p.x,p.y-38*p.s*sk,36*p.s*sk,50*p.s*sk,0,0,7);g.stroke();g.globalAlpha=1}
  if(u.unstop>0){g.strokeStyle='#fc6';g.lineWidth=2;g.globalAlpha=.6;gEll(u.x,u.y,30);g.stroke();g.globalAlpha=1}
  if(u.root>0){g.strokeStyle='#9f6';g.lineWidth=3;gEll(u.x,u.y,24);g.stroke()}
