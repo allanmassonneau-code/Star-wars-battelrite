@@ -6,10 +6,13 @@ Jeu de combat en vue 3/4 plongeante (comme Battlerite), jouable directement dans
 - **Arène 1 contre 1** : héros contre méchant, au meilleur des 3 manches. Holocron de soin à 18 s, mort subite à 45 s.
 - **Bataille 20 contre 20** : les 20 héros contre les 20 méchants sur une grande carte, caméra qui suit le joueur. 60 renforts par camp, chaque élimination en coûte 1. Réapparition à la base, holocrons de soin, mini-carte et fil des éliminations.
 - **Duel** : toi contre ton ami en ligne (1 contre 1, au meilleur des 3 manches), après connexion via « Coop en ligne ».
+- **Prêt** : en coop, chacun choisit son héros puis clique sur PRÊT ; la partie démarre quand les deux sont prêts.
 - **Coop en ligne** : bouton « Coop en ligne » du menu. L'hôte crée un salon (code à 4 caractères), le coéquipier le rejoint. Arène en 2 contre 2, ou bataille dans la même armée. Connexion pair-à-pair (PeerJS) : il faut ouvrir le jeu depuis un vrai site (GitHub Pages, Vercel, Netlify…), pas depuis un fichier local bloqué ou un aperçu restreint.
 
 ## Personnages
-40 personnages, chacun avec un kit unique (6 sorts + un passif) inspiré de League of Legends et Battlerite : grappins, entraves, pièges, tourelles, zones de soin, murs, invisibilité, exécutions, assauts multi-cibles, boomerangs, rayons, tirs qui ricochent, projections en l'air…
+40 personnages, chacun avec un kit écrit sur mesure (6 sorts, un passif, et une version EX dérivée pour chaque sort) inspiré de League of Legends et Battlerite : liens à maintenir, échange de place, contre, riposte, peur, provocation, silence, désarmement, vulnérabilité, poison, grenades collantes ou à fragmentation, roquettes à tête chercheuse, charges, barillet à recharger, Grogu, drone, dôme anti-tirs, zone qui ralentit le temps…
+
+Équilibrage : points de vie, dégâts et vitesse calculés en simulant des centaines de duels entre ordinateurs (table `BAL` dans le code).
 
 Héros : Luke, Yoda, Rey, Han, Leia, Chewbacca, Obi-Wan, Anakin, Mace Windu, Ahsoka, Qui-Gon, Finn, Lando, Padmé, Din Djarin, Cal Kestis, Capitaine Rex, Wicket, R2-D2, Jyn Erso.
 Méchants : Vador, Palpatine, Maul, Kylo Ren, Boba Fett, Grievous, Dooku, Ventress, Savage Opress, Jango Fett, Phasma, Iden Versio, Bossk, Cad Bane, Grand Inquisiteur, Seconde Sœur, Moff Gideon, Thrawn, Death Trooper, IG-88.
