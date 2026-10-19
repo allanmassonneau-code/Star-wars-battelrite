@@ -69,11 +69,11 @@ const S=(n,u)=>{if(net.role==='host'&&u&&net.conn)net.ev.snd.push([n,Math.round(
 
 // ---------- Capacités ----------
 // EX : maintenir Maj en lançant un sort (25 d'énergie) le renforce, comme dans Battlerite
-let EX=false;const X=v=>EX?v*1.5:v;
+let EX=false;const X=v=>EX?v*1.2:v;
 const AB={
  saber:(o={})=>({n:o.n||'Sabre',cd:o.cd||.5,melee:1,ai:{max:(o.range||80)+8,p:1},f:(u,a)=>melee(u,a,o.range||80,o.arc||1.9,o.dmg||12)}),
  blaster:(o={})=>({n:o.n||'Blaster',cd:o.cd||.32,ai:{max:620,p:.85},f:(u,a)=>{S('blaster',u);const n=o.spread||1;for(let i=0;i<n;i++)proj(u,a+(i-(n-1)/2)*.12+(o.inacc?(rnd()-.5)*o.inacc:0),{spd:o.spd||850,r:o.r||5,dmg:o.dmg||7,life:.75,col:o.col||'#ff4a3a'})}}),
- zap:(o={})=>({n:o.n||'Éclairs',cd:o.cd||.3,ai:{max:190,p:.9},f:(u,a)=>{S('zapS',u);lightning(u,a,{range:190,arc:.5,dmg:o.dmg||6,small:1})}}),
+ zap:(o={})=>({n:o.n||'Éclairs',cd:o.cd||.3,ai:{max:190,p:.9},f:(u,a)=>{S('zapS',u);lightning(u,a,{range:190,arc:.5,dmg:o.dmg||6,small:1,col:o.col})}}),
  lightning:(o={})=>({n:o.n||'Éclair de Force',cd:o.cd||5,ult:o.ult,cast:.25,line:{len:230,w:70},ai:{max:220,p:.6},f:(u,a)=>{S('zap',u);lightning(u,a,{range:230,arc:.9,dmg:o.dmg||18,heal:o.heal??9,slow:1.5})}}),
  push:(o={})=>({n:o.n||'Poussée de Force',cd:o.cd||7,ai:{max:150,p:.6},f:(u,a)=>{S('heavy',u);cone(u,a,175,1.7,o.dmg||10,{kb:o.kb||700,slow:1.2},'#9df')}}),
  repulse:(o={})=>({n:o.n||'Répulsion',cd:o.cd||8,ai:{max:115,p:.6},f:u=>{S('heavy',u);aoe(u,u.x,u.y,X(120),o.dmg||12,{kb:520})}}),
@@ -97,54 +97,200 @@ const AB={
  bolt:(o={})=>({n:o.n||'Tir chargé',cd:o.cd||4,ult:o.ult,cast:o.cast||.35,line:{len:650,w:14},ai:{max:650,p:.3},f:(u,a)=>{S('heavy',u);proj(u,a,{spd:1150,r:o.r||8,dmg:o.dmg||22,life:.7,col:o.col||'#ffb03a',heavy:1})}}),
  rocket:(o={})=>({n:o.n||'Roquette',cd:o.cd||6,ult:o.ult,cast:o.cast??.3,line:{len:600,w:24},ai:{max:600,p:.35},f:(u,a)=>{S('heavy',u);proj(u,a,{spd:720,r:o.r||10,dmg:o.dmg||20,life:1.1,col:'#f60',rocket:1,ar:o.ar||80,kb:o.kb??300,stun:o.stun})}}),
  barrage:(o={})=>({n:o.n||'Salve',cd:o.cd||10,ult:o.ult,cast:o.cast??.4,line:{len:550,w:150},ai:{max:550,p:.6},f:(u,a)=>{S('heavy',u);const n=o.count||5;for(let i=0;i<n;i++)proj(u,a+(i-(n-1)/2)*.11,o.rocket?{spd:620+rnd()*120,r:8,dmg:o.dmg||12,life:1,col:'#f60',rocket:1,ar:55,kb:150}:{spd:850,r:7,dmg:o.dmg||9,life:.8,col:o.col||'#4cf'})}}),
- burst:(o={})=>({n:o.n,cd:o.cd||1,ult:o.ult,cast:o.cast??.3,tele:{r:o.r||175,self:1},ai:{max:(o.r||175)-25,p:.8},f:u=>{S('boom',u);if(o.zap)S('zap',u);aoe(u,u.x,u.y,o.r||175,o.dmg||32,{stun:o.stun,kb:o.kb??350,unblockable:1},o.col)}}),
+ burst:(o={})=>({n:o.n,cd:o.cd||1,ult:o.ult,cast:o.cast??.3,tele:{r:o.r||175,self:1},ai:{max:(o.r||175)-25,p:.8},f:u=>{S('boom',u);if(o.zap)S('zap',u);aoe(u,u.x,u.y,o.r||175,o.dmg||32,{stun:o.stun,kb:o.kb??350,air:o.air,unblockable:1},o.col)}}),
+ unstop:(o={})=>({n:o.n||'Inarrêtable',cd:o.cd||10,ai:{mode:'def',p:.5},f:u=>{u.unstop=X(3);u.shield=Math.max(u.shield,25);u.shieldT=3;say(u,'INARRÊTABLE','#fc6');S('heavy',u)}}),
+ hook:(o={})=>({n:o.n||'Grappin',cd:o.cd||9,cast:o.cast??.2,line:{len:o.range||420,w:16},ai:{min:110,max:(o.range||420)-20,p:.45},f:(u,a)=>{S('dash',u);proj(u,a,{spd:950,r:9,dmg:o.dmg||8,life:(o.range||420)/950,col:o.col||'#ccc',hook:o.self?2:1,stun:o.stun??.4})}}),
+ root:(o={})=>({n:o.n||'Entrave',cd:o.cd||8,cast:o.cast??.25,line:{len:520,w:18},ai:{max:500,p:.4},f:(u,a)=>{S('heavy',u);proj(u,a,{spd:o.spd||750,r:9,dmg:o.dmg??10,life:520/(o.spd||750),col:o.col||'#9f6',root:o.dur||1.4})}}),
+ pull:(o={})=>({n:o.n||'Attraction',cd:o.cd||9,cast:o.cast??.3,tele:{r:o.r||110,max:o.max||300,self:o.self},ai:{max:o.self?(o.r||110)-10:300,p:.45},f:(u,a,t)=>{S('heavy',u);const d=o.self?0:Math.min(t,o.max||300);aoe(u,u.x+Math.cos(a)*d,u.y+Math.sin(a)*d,o.r||110,o.dmg||8,{pull:o.str||900,slow:1,unblockable:1},'#b8f')}}),
+ trap:(o={})=>({n:o.n||'Piège',cd:o.cd||10,ai:{min:40,max:380,p:.35},f:(u,a,t)=>{const d=clamp(t,0,380);traps.push({x:clamp(u.x+Math.cos(a)*d,B.x+10,B.x+B.w-10),y:clamp(u.y+Math.sin(a)*d,B.y+10,B.y+B.h-10),r:o.r||60,owner:u,team:u.team,t:o.life||14,arm:.6,dmg:o.dmg??16,root:o.root,stun:o.stun,slow:o.slow,col:o.col||'#fa3',ex:EX});S('deflect',u)}}),
+ turret:(o={})=>({n:o.n||'Tourelle',cd:o.cd||14,ai:{mode:'self',max:520,p:.5},f:(u,a)=>{const n=o.count||1;for(let i=0;i<n;i++){const b=a+(i-(n-1)/2)*1.1;turrets.push({x:clamp(u.x+Math.cos(b)*60,B.x+20,B.x+B.w-20),y:clamp(u.y+Math.sin(b)*60,B.y+20,B.y+B.h-20),owner:u,team:u.team,t:X(o.life||8),cd:.4,dmg:o.dmg||5,col:o.col||'#ff4a3a',range:o.range||450,aim:a})}S('deflect',u)}}),
+ allyHeal:(o={})=>({n:o.n||'Soin',cd:o.cd||10,ai:{mode:'ally',p:.7},f:u=>{const L=units.filter(x=>x.team===u.team&&!x.dead&&dist(x,u)<(o.r||420)).sort((a,b)=>a.hp/a.max-b.hp/b.max).slice(0,o.all?99:1);
+  for(const t of L){const v=Math.round(X(o.amt||30));t.hp=Math.min(t.max,t.hp+v);if(o.shield){t.shield=Math.max(t.shield,X(o.shield));t.shieldT=3}if(v>0)say(t,'+'+v,'#6f9');if(t!==u&&near(u.x,u.y))fx.push({beam:1,x:u.x,y:u.y,x2:t.x,y2:t.y,col:'#6f9',w:4,t:.35,m:.35});ring(t.x,t.y,40,'#6f9')}S('orb',u)}}),
+ field:(o={})=>({n:o.n||'Zone',cd:o.cd||10,cast:o.cast??.2,tele:{r:o.r||110,max:o.max||380,self:o.self},ai:{mode:o.heal?'ally':'atk',max:o.self?(o.r||110):(o.max||380),p:.45},f:(u,a,t)=>{const d=o.self?0:Math.min(t,o.max||380);fields.push({x:u.x+Math.cos(a)*d,y:u.y+Math.sin(a)*d,r:o.r||110,t:X(o.dur||4),m:X(o.dur||4),owner:u,team:u.team,heal:o.heal||0,dps:o.dps||0,slow:o.slow||0,k:0,col:o.col||(o.heal?'#6f9':'#b8f')});S('zap',u)}}),
+ wall:(o={})=>({n:o.n||'Barrière',cd:o.cd||12,ai:{mode:'def',p:.4},f:(u,a)=>{const cx=u.x+Math.cos(a)*90,cy=u.y+Math.sin(a)*90,px=-Math.sin(a),py=Math.cos(a);for(let i=-2;i<=2;i++)walls.push({x:cx+px*i*26,y:cy+py*i*26,r:14,t:X(o.life||4),team:u.team});S('deflect',u)}}),
+ stealth:(o={})=>({n:o.n||'Camouflage',cd:o.cd||12,ai:{mode:'self',max:650,p:.35},f:u=>{u.stealth=X(o.dur||3.5);u.haste=Math.max(u.haste,o.haste||1.5);ring(u.x,u.y,40,'#888');S('deflect',u)}}),
+ execute:(o={})=>({n:o.n||'Exécution',cd:o.cd||1,cast:o.cast??.35,line:{len:o.range||130,w:o.range?20:100},ai:{mode:'exec',max:(o.range||130)-10,p:.9},f:(u,a)=>{if(o.range){S('heavy',u);proj(u,a,{spd:1300,r:10,dmg:o.dmg||20,life:o.range/1300,col:o.col||'#f44',exec:o.k||.4,heavy:1})}
+  else{S('saber',u);u.swing=.18;u.swingA=a;fx.push({x:u.x,y:u.y,swing:1,a,range:130,arc:1.6,t:.25,m:.25,col:saberCol(u)});for(const e of enemies(u))if(dist(u,e)<130+e.r&&angDiff(ang(u,e),a)<.8)hit(e,u,o.dmg||20,{exec:o.k||.4,melee:1,unblockable:1,ex:EX})}}}),
+ alpha:(o={})=>({n:o.n||'Assaut',cd:o.cd||1,ai:{max:320,p:.8},f:(u,a,t)=>{const d=Math.min(t,320),cx=u.x+Math.cos(a)*d,cy=u.y+Math.sin(a)*d,L=enemies(u).filter(e=>Math.hypot(e.x-cx,e.y-cy)<(o.r||230)).slice(0,o.count||4);S('saber',u);
+  if(!L.length){u.x=cx;u.y=cy;collide(u);return}let px=u.x,py=u.y;for(const e of L){fx.push({beam:1,x:px,y:py,x2:e.x,y2:e.y,col:saberCol(u),w:3,t:.35,m:.35});px=e.x;py=e.y;hit(e,u,o.dmg||22,{unblockable:1,ex:EX})}
+  const l=L[L.length-1];u.x=l.x-Math.cos(a)*40;u.y=l.y-Math.sin(a)*40;collide(u);u.swing=.18;u.swingA=a}}),
+ boomerang:(o={})=>({n:o.n||'Lame boomerang',cd:o.cd||6,cast:.15,throw:o.saber?1:0,line:{len:o.range||420,w:22},ai:{min:80,max:o.range||420,p:.4},f:(u,a)=>{if(o.saber)u.saberOut=9;S('saber',u);proj(u,a,{spd:620,r:o.r||(o.big?15:11),dmg:o.dmg||14,life:2.5,col:o.col||saberCol(u),saber:1,ret:o.range||420,pierce:1,big:o.big,slow:o.slow})}}),
+ beam:(o={})=>({n:o.n||'Rayon',cd:o.cd||1,cast:o.cast??.6,line:{len:o.len||700,w:o.w||40},ai:{max:o.len||700,p:.7},f:(u,a)=>{S('zap',u);S('boom',u);const len=o.len||700,w=o.w||40;fx.push({beam:1,x:u.x,y:u.y,x2:u.x+Math.cos(a)*len,y2:u.y+Math.sin(a)*len,col:o.col||'#f44',w:w*.8,t:.45,m:.45});
+  for(const e of enemies(u)){const dx=e.x-u.x,dy=e.y-u.y,f=dx*Math.cos(a)+dy*Math.sin(a),s=Math.abs(-dx*Math.sin(a)+dy*Math.cos(a));if(f>0&&f<len&&s<w/2+e.r)hit(e,u,o.dmg||30,{stun:o.stun,slow:o.slow,unblockable:1,ex:EX})}if(near(u.x,u.y))shake=Math.max(shake,.25)}}),
+ chain:(o={})=>({n:o.n||'Tir ricochet',cd:o.cd||6,cast:o.cast??.2,line:{len:520,w:14},ai:{max:500,p:.5},f:(u,a)=>{S(o.zap?'zap':'heavy',u);proj(u,a,{spd:o.spd||1000,r:7,dmg:o.dmg||14,life:.55,col:o.col||'#ffd23a',chain:o.bounce||3,zapP:o.zap,stun:o.stun})}}),
 };
 
-// ---------- Personnages (inspirés de Star Wars Battlefront II) ----------
+// ---------- Sorts EX : Maj + touche (25 d'énergie) lance un sort dérivé, comme dans Battlerite ----------
+const last1=()=>projs[projs.length-1];
+const EXD={
+ lightning:o=>({n:'Nova d\'éclairs',cast:.3,tele:{r:170,self:1},f:u=>{S('zap',u);aoe(u,u.x,u.y,170,(o.dmg||18)*.8,{stun:.5,unblockable:1},'#b8f');for(let i=0;i<6;i++)fx.push({bolt:1,u,a:i*1.05,range:170,n:1,t:.3,m:.3,col:'#b8f'})}}),
+ push:o=>({n:'Onde étourdissante',f:(u,a)=>{S('heavy',u);cone(u,a,190,2.4,o.dmg||10,{kb:(o.kb||700)*.6,stun:.8},'#ffe81f')}}),
+ repulse:o=>({n:'Implosion',f:u=>{S('heavy',u);aoe(u,u.x,u.y,170,o.dmg||12,{pull:900,stun:.6,unblockable:1},'#b8f')}}),
+ rush:o=>({n:'Ruée aérienne',f:(u,a)=>{S('dash',u);dash(u,a,(o.d||240)*1.25,.22,{dmg:(o.dmg||10)+4,air:.8})}}),
+ leap:o=>({n:'Impact sismique',f:(u,a,t)=>{S('dash',u);dash(u,a,clamp(t,60,o.d||270),.35,{jump:110,end:()=>{aoe(u,u.x,u.y,110,(o.dmg||8)+6,{stun:1});S('boom',u)}})}}),
+ roll:o=>({n:'Repli tactique',f:(u,a)=>{S('dash',u);dash(u,a,(o.d||170)*1.2,.2,{});u.shield=Math.max(u.shield,25);u.shieldT=2.5;u.cds[0]=0}}),
+ jetpack:()=>({n:'Décollage piégé',f:(u,a)=>{S('dash',u);traps.push({x:u.x,y:u.y,r:70,owner:u,team:u.team,t:6,arm:.2,dmg:18,col:'#f93'});dash(u,a,320,.3,{jump:55})}}),
+ blink:(o,b)=>({n:'Sillage foudroyant',f:(u,a,t)=>{zones.push({x:u.x,y:u.y,r:90,t:.5,m:.5,owner:u,dmg:16,o:{stun:.6},col:'#b8f'});b.f(u,a,t)}}),
+ deflect:(o,b)=>({n:'Garde parfaite',f:u=>{b.f(u);u.deflect+=.5;u.haste=Math.max(u.haste,2);u.hp=Math.min(u.max,u.hp+15);say(u,'+15','#6f9')}}),
+ shield:o=>({n:'Rempart collectif',f:u=>{for(const x of units)if(x.team===u.team&&!x.dead&&dist(x,u)<260){x.shield=Math.max(x.shield,(o.amt||35)*.8);x.shieldT=3;ring(x.x,x.y,34,'#fb4')}S('deflect',u)}}),
+ unstop:(o,b)=>({n:'Charge inarrêtable',f:u=>{b.f(u);aoe(u,u.x,u.y,110,8,{kb:500})}}),
+ choke:o=>({n:'Attraction mortelle',cast:o.cast??.35,tele:{r:60,max:340},f:(u,a,t)=>{const d=clamp(t,40,340),x=u.x+Math.cos(a)*d,y=u.y+Math.sin(a)*d;S('heavy',u);ring(x,y,60,'#b8f');
+  for(const e of enemies(u))if(Math.hypot(e.x-x,e.y-y)<60+e.r&&hit(e,u,(o.dmg??8)+6,{stun:(o.stun||1.2)*.7,unblockable:1})&&e.unstop<=0&&!e.dead){const g2=Math.atan2(e.y-u.y,e.x-u.x);e.dash={sx:e.x,sy:e.y,tx:u.x+Math.cos(g2)*45,ty:u.y+Math.sin(g2)*45,t:0,dur:.3,jump:25}}}}),
+ throwS:(o,b)=>({n:'Lancer entravant',f:(u,a)=>{b.f(u,a);const p=last1();p.root=1.2;p.dmg*=.8}}),
+ grenade:(o,b)=>({n:'Grappe de grenades',f:(u,a,t)=>{for(const k of[-.35,0,.35])b.f(u,a+k,t*.9)}}),
+ zone:(o,b)=>({n:'Frappe entravante',f:(u,a,t)=>{b.f(u,a,t);for(const z of zones.slice(-(o.count||1)))z.o=Object.assign({},z.o,{root:1.5})}}),
+ haste:(o,b)=>({n:'Fureur cuirassée',f:u=>{b.f(u);u.shield=Math.max(u.shield,30);u.shieldT=3}}),
+ heal:()=>({n:'Sanctuaire',f:u=>{fields.push({x:u.x,y:u.y,r:130,t:4,m:4,owner:u,team:u.team,heal:12,dps:0,slow:0,k:0,col:'#6f9'});S('orb',u)}}),
+ rapid:(o,b)=>({n:'Feu nourri',f:(u,a)=>{b.f(u);for(const k of[-.2,-.1,0,.1,.2])proj(u,a+k,{spd:900,r:5,dmg:6,life:.6,col:'#ffb03a'})}}),
+ spin:(o,b)=>({n:'Vortex',f:u=>{b.f(u);u.spin.pull=1}}),
+ flame:(o,b)=>({n:'Napalm',f:(u,a)=>{b.f(u);fields.push({x:u.x+Math.cos(a)*110,y:u.y+Math.sin(a)*110,r:90,t:3.5,m:3.5,owner:u,team:u.team,heal:0,dps:10,slow:1,k:0,col:'#f93'})}}),
+ bolt:(o,b)=>({n:'Tir perforant',f:(u,a)=>{b.f(u,a);const p=last1();p.pierce=1;p.r+=3;p.dmg*=1.2}}),
+ rocket:(o,b)=>({n:'Triple roquette',f:(u,a)=>{for(const k of[-.22,0,.22])b.f(u,a+k)}}),
+ burst:o=>({n:'Choc assourdissant',f:u=>{S('boom',u);aoe(u,u.x,u.y,(o.r||175)*.9,o.dmg||12,{stun:1.1,unblockable:1},'#ffe81f')}}),
+ hook:(o,b)=>({n:o.self?'Grappin percutant':'Harpon',f:(u,a)=>{b.f(u,a);const p=last1();p.dmg+=8;if(o.self)p.stun=.8;else p.root=1}}),
+ root:(o,b)=>({n:'Entrave multiple',f:(u,a)=>{for(const k of[-.3,0,.3])b.f(u,a+k)}}),
+ pull:o=>({n:'Effondrement',f:(u,a,t)=>{const d=o.self?0:Math.min(t,o.max||300);S('heavy',u);aoe(u,u.x+Math.cos(a)*d,u.y+Math.sin(a)*d,(o.r||110)*1.2,(o.dmg||8)+6,{pull:o.str||900,stun:.8,unblockable:1},'#b8f')}}),
+ trap:(o,b)=>({n:'Champ de mines',f:(u,a,t)=>{for(const k of[-.5,0,.5])b.f(u,a+k,t)}}),
+ turret:(o,b)=>({n:'Tourelle lourde',f:(u,a)=>{b.f(u,a);for(const tu of turrets.slice(-(o.count||1))){tu.dmg*=2;tu.t*=1.3;tu.big=1}}}),
+ allyHeal:o=>({n:'Soin de groupe',f:u=>AB.allyHeal(Object.assign({},o,{all:1,r:420,amt:(o.amt||30)*.8})).f(u)}),
+ field:(o,b)=>({n:'Zone étendue',f:(u,a,t)=>{b.f(u,a,t);const f=fields[fields.length-1];f.r*=1.5;f.heal*=1.3;f.dps*=1.3}}),
+ wall:()=>({n:'Grand rempart',f:(u,a)=>{const cx=u.x+Math.cos(a)*100,cy=u.y+Math.sin(a)*100,px=-Math.sin(a),py=Math.cos(a);for(let i=-4;i<=4;i++)walls.push({x:cx+px*i*26,y:cy+py*i*26,r:14,t:6,team:u.team});S('deflect',u)}}),
+ stealth:(o,b)=>({n:'Disparition totale',f:u=>{b.f(u);u.stealth+=1.5;u.haste=Math.max(u.haste,3);u.hp=Math.min(u.max,u.hp+20)}}),
+ execute:(o,b)=>({n:'Coup assommant',f:(u,a)=>{b.f(u,a);for(const e of enemies(u))if(dist(u,e)<150&&angDiff(ang(u,e),a)<.8&&e.unstop<=0)e.stun=Math.max(e.stun,1)}}),
+ boomerang:(o,b)=>({n:'Double boomerang',f:(u,a)=>{b.f(u,a-.25);b.f(u,a+.25)}}),
+ chain:(o,b)=>({n:'Ricochet infini',f:(u,a)=>{b.f(u,a);last1().chain=6}}),
+};
+for(const k in AB){const base=AB[k];AB[k]=(o={})=>{const a=base(o);a.type=k;if(EXD[k])a.ex=EXD[k](o,a);return a}}
+// U() transforme un sort en ultime (100 d'énergie, pas de version EX)
+const U=a=>{a.ult=1;a.cd=1;delete a.ex;a.ai.p=Math.max(a.ai.p??.5,.7);if(a.ai.mode==='self')a.ai.max=Math.max(a.ai.max,200);return a};
+const PASS={third:['Maîtrise','Chaque 3e attaque de base : +60 % de dégâts et étourdit'],crit:['Œil de tireur','25 % de coups critiques sur les attaques de base'],slow:['Emprise','Les attaques de base ralentissent'],lifesteal:['Côté obscur','Récupère 30 % des dégâts infligés'],
+ rage:['Colère','+25 % de dégâts sous 50 % de vie'],armor:['Blindage','Subit 15 % de dégâts en moins'],regen:['Régénération','Récupère 3 PV par seconde'],speed:['Agilité','+10 % de vitesse de déplacement'],energy:['Méditation','Gagne 50 % d\'énergie en plus']};
+
+// ---------- Personnages : 20 héros, 20 méchants (kits inspirés de LoL et Battlerite) ----------
+const SB=(col,x={})=>Object.assign({t:'saber',col},x);
 const CH={
- luke:{name:'Luke Skywalker',side:0,desc:'Maître Jedi polyvalent',hp:175,spd:215,pref:55,
-  look:{legs:'#1c1c1e',boot:'#111',torso:'#242428',tunic:'#2e2e33',belt:'#555',arm:'#242428',head:{t:'hair',skin:'#f0c8a0',hair:'#b8904a'},weapon:{t:'saber',col:'#3f3'}},
-  abil:[AB.saber({dmg:13}),AB.push(),AB.rush({n:'Ruée au sabre',dmg:12}),AB.repulse(),AB.deflect(),AB.burst({n:'Onde de Force',ult:1,r:180,dmg:32,stun:1.1})]},
- yoda:{name:'Maître Yoda',side:0,desc:'Minuscule, rapide, soigne',hp:140,spd:240,pref:50,
-  look:{scale:.72,legs:'#a08a6a',boot:'#7a9a4a',torso:'#c2ad86',robe:'#8a7356',belt:'#6a5a40',arm:'#8fb35a',head:{t:'yoda'},weapon:{t:'saber',col:'#3f3',short:1}},
-  abil:[AB.saber({cd:.33,dmg:8,range:70}),AB.push({n:'Libération',kb:800}),AB.leap({n:'Bond',cd:3,d:220,dmg:5}),AB.heal({n:'Soutien',amt:30,shield:15}),AB.deflect(),AB.haste({n:'Rage concentrée',ult:1,dur:6,rage:1,heal:25})]},
- rey:{name:'Rey',side:0,desc:'Agile, contrôle mental',hp:165,spd:228,pref:55,
-  look:{legs:'#c8b48c',boot:'#5a4a3a',torso:'#e8dcc0',tunic:'#d4c39c',belt:'#7a6040',arm:'#f0c8a0',head:{t:'hair',skin:'#f0c8a0',hair:'#5a3a22',style:'rey'},weapon:{t:'saber',col:'#3af'}},
-  abil:[AB.saber({dmg:12,cd:.45}),AB.rush({n:'Attaque éclair',dmg:12,d:260}),AB.roll({n:'Esquive'}),AB.choke({n:'Tour de l\'esprit',dmg:0,stun:1.4,cast:.3}),AB.deflect(),AB.burst({n:'Vague de Force',ult:1,r:190,dmg:28,stun:1.2,kb:450})]},
- han:{name:'Han Solo',side:0,desc:'Tireur d\'élite, explosifs',hp:150,spd:225,pref:300,
+ // ===== HÉROS =====
+ luke:{name:'Luke Skywalker',side:0,desc:'Jedi polyvalent, contrôle de foule',hp:175,spd:215,pref:55,pass:'third',
+  look:{legs:'#1c1c1e',boot:'#111',torso:'#242428',tunic:'#2e2e33',belt:'#555',arm:'#242428',head:{t:'hair',skin:'#f0c8a0',hair:'#b8904a'},weapon:SB('#3f3')},
+  abil:[AB.saber({dmg:13}),AB.push(),AB.rush({n:'Ruée au sabre',dmg:12}),AB.repulse(),AB.deflect(),U(AB.burst({n:'Onde de Force',r:180,dmg:32,stun:1.1}))]},
+ yoda:{name:'Maître Yoda',side:0,desc:'Minuscule, bondissant, soigne la zone',hp:140,spd:240,pref:50,pass:'regen',
+  look:{scale:.72,legs:'#a08a6a',boot:'#7a9a4a',torso:'#c2ad86',robe:'#8a7356',belt:'#6a5a40',arm:'#8fb35a',head:{t:'yoda'},weapon:SB('#3f3',{short:1})},
+  abil:[AB.saber({cd:.33,dmg:8,range:70}),AB.push({n:'Libération',kb:800}),AB.leap({n:'Bond',cd:3,d:220,dmg:5}),AB.field({n:'Méditation',heal:9,r:130,dur:4,self:1,cd:12}),AB.deflect(),U(AB.haste({n:'Rage concentrée',dur:6,rage:1,heal:25}))]},
+ rey:{name:'Rey',side:0,desc:'Agile, soigne ses alliés',hp:165,spd:228,pref:55,pass:'speed',
+  look:{legs:'#c8b48c',boot:'#5a4a3a',torso:'#e8dcc0',tunic:'#d4c39c',belt:'#7a6040',arm:'#f0c8a0',head:{t:'hair',skin:'#f0c8a0',hair:'#5a3a22',style:'rey'},weapon:SB('#3af')},
+  abil:[AB.saber({dmg:12,cd:.45}),AB.rush({n:'Attaque éclair',dmg:12,d:260}),AB.roll({n:'Esquive'}),AB.choke({n:'Tour de l\'esprit',dmg:0,stun:1.4,cast:.3}),AB.allyHeal({n:'Transfert de vie',amt:35,cd:12}),U(AB.burst({n:'Vague de Force',r:190,dmg:28,stun:1.2,kb:450}))]},
+ han:{name:'Han Solo',side:0,desc:'Tireur, critiques, explosifs',hp:150,spd:225,pref:300,pass:'crit',
   look:{legs:'#2a3550',boot:'#222',torso:'#eeeeee',vest:'#1a1a1a',belt:'#6a4a2a',arm:'#eeeeee',head:{t:'hair',skin:'#efc29a',hair:'#6b4a2a'},weapon:{t:'blaster'}},
-  abil:[AB.blaster({n:'DL-44',dmg:9,cd:.38}),AB.rush({n:'Coup d\'épaule',d:200,dmg:10,kb:450}),AB.roll(),AB.grenade({n:'Charge explosive',dmg:22,r:85,col:'#fa3'}),AB.rapid(),AB.bolt({n:'Tir chanceux',ult:1,dmg:42,cast:.4,r:10,col:'#ff3a3a'})]},
- leia:{name:'Leia Organa',side:0,desc:'Soutien, boucliers, frappes',hp:150,spd:220,pref:280,
+  abil:[AB.blaster({n:'DL-44',dmg:9,cd:.38}),AB.rush({n:'Coup d\'épaule',d:200,dmg:10,kb:450}),AB.roll(),AB.grenade({n:'Charge explosive',dmg:22,r:85,col:'#fa3'}),AB.rapid(),U(AB.bolt({n:'Tir chanceux',dmg:42,cast:.4,r:10,col:'#ff3a3a'}))]},
+ leia:{name:'Leia Organa',side:0,desc:'Soutien : boucliers et frappes',hp:150,spd:220,pref:280,pass:'energy',
   look:{legs:'#f2f2f2',boot:'#ddd',torso:'#f7f7f7',robe:'#e9e9e9',belt:'#bbb',arm:'#f7f7f7',head:{t:'hair',skin:'#f3cfaa',hair:'#4a2a1a',style:'buns'},weapon:{t:'blaster'}},
-  abil:[AB.blaster({n:'Blaster',dmg:8}),AB.grenade({n:'Grenade étourdissante',dmg:6,stun:1.2,col:'#9df'}),AB.roll(),AB.shield({n:'Bouclier d\'escouade',amt:45,cd:9}),AB.heal({n:'Garde du corps',amt:25,cd:11}),AB.zone({n:'Frappe rebelle',ult:1,r:80,dmg:20,count:3,stun:.5,col:'#fa3',max:480})]},
- chewie:{name:'Chewbacca',side:0,desc:'Wookiee robuste, arbalète',hp:200,spd:205,pref:220,
+  abil:[AB.blaster({n:'Blaster',dmg:8}),AB.grenade({n:'Grenade étourdissante',dmg:6,stun:1.2,col:'#9df'}),AB.roll(),AB.allyHeal({n:'Bouclier d\'escouade',amt:5,shield:40,all:1,r:300,cd:12}),AB.allyHeal({n:'Garde du corps',amt:30}),U(AB.zone({n:'Frappe rebelle',r:80,dmg:20,count:3,stun:.5,col:'#fa3',max:480}))]},
+ chewie:{name:'Chewbacca',side:0,desc:'Wookiee robuste, arbalète',hp:205,spd:205,pref:220,pass:'armor',
   look:{scale:1.18,legs:'#6b4a2a',boot:'#4a321a',torso:'#7a5530',fur:1,bando:1,arm:'#6b4a2a',head:{t:'wookiee'},weapon:{t:'bowcaster'}},
-  abil:[AB.blaster({n:'Arbalète laser',dmg:12,cd:.55,col:'#4cf',r:7,spd:780}),AB.rush({n:'Charge d\'épaule',dmg:10,kb:500}),AB.roll(),AB.grenade({n:'Détonateur',dmg:18,col:'#fa3'}),AB.shield({n:'Rugissement',amt:30,haste:2,say:'RRAAARGH'}),AB.barrage({n:'Rafale',ult:1,count:7,dmg:9,col:'#4cf'})]},
- vader:{name:'Dark Vador',side:1,desc:'Lent mais implacable',hp:215,spd:188,pref:60,
-  look:{scale:1.1,legs:'#111',boot:'#000',torso:'#161616',cape:'#0a0a0a',belt:'#999',chest:1,arm:'#161616',head:{t:'vader'},weapon:{t:'saber',col:'#f22'}},
-  abil:[AB.saber({cd:.7,dmg:17,range:88}),AB.throwS({dmg:22}),AB.rush({n:'Avancée',d:180,dmg:10}),AB.choke({dmg:10,stun:1.4}),AB.deflect(),AB.haste({n:'Rage concentrée',ult:1,dur:6,rage:1,heal:30})]},
- palpatine:{name:'Empereur Palpatine',side:1,desc:'Éclairs, contrôle à distance',hp:150,spd:205,pref:170,
+  abil:[AB.blaster({n:'Arbalète laser',dmg:12,cd:.55,col:'#4cf',r:7,spd:780}),AB.rush({n:'Charge d\'épaule',dmg:10,kb:500}),AB.roll(),AB.grenade({n:'Détonateur',dmg:18,col:'#fa3'}),AB.burst({n:'Rugissement',r:140,dmg:6,kb:450,cd:9,cast:.15}),U(AB.barrage({n:'Rafale',count:7,dmg:9,col:'#4cf'}))]},
+ obiwan:{name:'Obi-Wan Kenobi',side:0,desc:'Défensif, contre et contrôle',hp:175,spd:212,pref:60,pass:'armor',
+  look:{legs:'#8a6a48',boot:'#3a2a1a',torso:'#d9c8a2',robe:'#7a5a3a',tunic:'#e8dcc0',belt:'#5a4030',arm:'#d9c8a2',head:{t:'hair',skin:'#f0c8a0',hair:'#b5703a',beard:'#b5703a'},weapon:SB('#3af')},
+  abil:[AB.saber({dmg:12}),AB.push(),AB.roll({n:'Esquive'}),AB.field({n:'Suggestion',slow:1,r:110,dur:3,col:'#9df',cd:10}),AB.deflect({n:'Forme III',dur:1.8,cd:10}),U(AB.burst({n:'Avantage du terrain',r:170,dmg:28,air:1.1,kb:0}))]},
+ anakin:{name:'Anakin Skywalker',side:0,desc:'Agressif, enchaîne les cibles',hp:170,spd:222,pref:50,pass:'lifesteal',
+  look:{legs:'#1a1612',boot:'#0d0b09',torso:'#2a2018',robe:'#1c1610',tunic:'#3a2c20',belt:'#2a1e14',arm:'#2a2018',head:{t:'hair',skin:'#f0c8a0',hair:'#6b4a2a',style:'long',scar:1},weapon:SB('#3af')},
+  abil:[AB.saber({dmg:13}),AB.rush({n:'Ruée',dmg:12}),AB.leap(),AB.choke(),AB.haste({n:'Colère',dur:3,rage:1}),U(AB.alpha({n:'Héros sans peur',dmg:26,count:4}))]},
+ mace:{name:'Mace Windu',side:0,desc:'Bruiser Vaapad, exécute',hp:185,spd:212,pref:55,pass:'third',
+  look:{legs:'#7a5a3a',boot:'#3a2a1a',torso:'#c8b48c',robe:'#6b4a2a',tunic:'#d8c7a0',belt:'#4a3220',arm:'#c8b48c',head:{t:'bald',skin:'#6b4630'},weapon:SB('#b4f')},
+  abil:[AB.saber({dmg:15,cd:.6,arc:2.2,range:85}),AB.push({n:'Frappe Vaapad',dmg:18,kb:180,cd:6}),AB.leap(),AB.repulse({n:'Onde de choc',dmg:10}),AB.shield({n:'Concentration',amt:40}),U(AB.execute({n:'Sentence',dmg:25,k:.5}))]},
+ ahsoka:{name:'Ahsoka Tano',side:0,desc:'Assassin acrobatique, invisible',hp:155,spd:235,pref:50,pass:'speed',
+  look:{legs:'#3a3a48',boot:'#222',torso:'#4a3a3a',tunic:'#6a4a3a',belt:'#2a2a2a',arm:'#e07a3a',head:{t:'togruta'},weapon:SB('#3f3',{two:'#cf6'})},
+  abil:[AB.saber({dmg:8,cd:.35,range:75}),AB.boomerang({n:'Lame boomerang',saber:1,dmg:14}),AB.leap({n:'Saut',cd:4,d:240}),AB.stealth({n:'Voile',dur:3}),AB.deflect(),U(AB.spin({n:'Danse des lames',dur:2,dmg:9,r:120}))]},
+ quigon:{name:'Qui-Gon Jinn',side:0,desc:'Gardien : boucliers et soins',hp:190,spd:210,pref:60,pass:'regen',
+  look:{scale:1.08,legs:'#7a5a3a',boot:'#3a2a1a',torso:'#c8b48c',robe:'#5a4030',tunic:'#d8c7a0',belt:'#4a3220',arm:'#c8b48c',head:{t:'hair',skin:'#f0c8a0',hair:'#6b5030',beard:'#6b5030',long:1},weapon:SB('#3f3')},
+  abil:[AB.saber({dmg:12}),AB.push({n:'Paume de Force'}),AB.roll(),AB.field({n:'Calme',heal:8,r:130,dur:4,self:1,cd:12}),AB.allyHeal({n:'Bouclier vivant',amt:5,shield:45,cd:10}),U(AB.allyHeal({n:'Volonté de la Force',amt:55,all:1,r:450,shield:25}))]},
+ finn:{name:'Finn',side:0,desc:'Combattant au contact, bouclier',hp:170,spd:220,pref:200,pass:'third',
+  look:{legs:'#3a3a3a',boot:'#222',torso:'#8a4a2a',vest:'#5a2a1a',belt:'#333',arm:'#8a4a2a',head:{t:'hair',skin:'#6b4630',hair:'#1a1a1a'},weapon:{t:'blaster'}},
+  abil:[AB.blaster({dmg:8}),AB.push({n:'Matraque Z6',dmg:16,kb:200,cd:5}),AB.roll(),AB.grenade({n:'Grenade thermique',dmg:20}),AB.shield({n:'Bouclier anti-émeute',amt:40,haste:2}),U(AB.rush({n:'Charge du résistant',d:320,dmg:20,kb:600}))]},
+ lando:{name:'Lando Calrissian',side:0,desc:'Tirs qui ricochent, fumigènes',hp:150,spd:225,pref:300,pass:'energy',
+  look:{legs:'#2a2a3a',boot:'#111',torso:'#f0e6d0',vest:'#2a5a9a',cape:'#2a5a9a',belt:'#ffd23a',arm:'#f0e6d0',head:{t:'hair',skin:'#7a5038',hair:'#1a1a1a',beard:'#1a1a1a',mus:1},weapon:{t:'blaster'}},
+  abil:[AB.blaster({n:'SE-14r',dmg:8}),AB.chain({n:'Tir de précision',dmg:14,bounce:3}),AB.roll(),AB.field({n:'Fumigène',slow:1,r:120,dur:4,col:'#aaaaaa',cd:11}),AB.stealth({n:'Charisme',dur:3}),U(AB.zone({n:'Faucon Millenium',r:80,dmg:22,count:5,col:'#fa3',max:500}))]},
+ padme:{name:'Padmé Amidala',side:0,desc:'Contrôle, grappin, garde royale',hp:145,spd:225,pref:300,pass:'speed',
+  look:{legs:'#e8e8f0',boot:'#ccc',torso:'#f4f4fa',robe:'#e0e0ea',belt:'#a8a8b8',arm:'#f3cfaa',head:{t:'hair',skin:'#f3cfaa',hair:'#3a2418',style:'bun'},weapon:{t:'blaster'}},
+  abil:[AB.blaster({dmg:8}),AB.root({n:'Tir paralysant',dur:1.5}),AB.roll(),AB.hook({n:'Grappin',self:1,dmg:4,stun:0,range:400}),AB.allyHeal({n:'Diplomatie',amt:30}),U(AB.turret({n:'Garde royale',count:2,life:9,dmg:6}))]},
+ din:{name:'Din Djarin',side:0,desc:'Mandalorien, câble et beskar',hp:180,spd:218,pref:250,pass:'armor',
+  look:{legs:'#5a4a3a',boot:'#3a2a1a',torso:'#6a5a48',armor:'#b8bec4',cape:'#4a3a2a',belt:'#3a2a1a',arm:'#6a5a48',jet:1,head:{t:'mando',col:'#b8bec4'},weapon:{t:'rifle'}},
+  abil:[AB.blaster({n:'Blaster IB-94',dmg:9,cd:.4}),AB.flame(),AB.jetpack(),AB.hook({n:'Câble',dmg:8,stun:.6}),AB.unstop({n:'Beskar'}),U(AB.barrage({n:'Whistling Birds',count:8,rocket:1,dmg:9}))]},
+ cal:{name:'Cal Kestis',side:0,desc:'Ralentit le temps, double lame',hp:165,spd:225,pref:55,pass:'regen',
+  look:{legs:'#3a3a40',boot:'#222',torso:'#5a4a3a',vest:'#7a3a2a',belt:'#2a2a2a',arm:'#5a4a3a',head:{t:'hair',skin:'#f0c8a0',hair:'#c0562a'},weapon:SB('#3af',{double:1})},
+  abil:[AB.saber({dmg:11,arc:2.4,cd:.45}),AB.boomerang({n:'Lancer de sabre',saber:1,dmg:15}),AB.rush({n:'Course murale',d:260,dmg:6}),AB.field({n:'Ralentissement',slow:1,r:110,dur:2.5,col:'#9df',cd:10}),AB.pull({n:'Attraction',self:1,r:200,dmg:6}),U(AB.spin({n:'Double lame',dur:1.8,dmg:9,r:115}))]},
+ rex:{name:'Capitaine Rex',side:0,desc:'Clone vétéran, barrières, artillerie',hp:165,spd:218,pref:300,pass:'third',
+  look:{legs:'#eeeeee',boot:'#cccccc',torso:'#f2f2f2',armor:'#ffffff',belt:'#333',arm:'#eeeeee',head:{t:'clone',stripe:'#2a5fd0'},weapon:{t:'pistols'}},
+  abil:[AB.blaster({n:'DC-17 jumeaux',spread:2,dmg:5,cd:.34}),AB.bolt({n:'Tir précis',dmg:24}),AB.roll(),AB.grenade({n:'Grenade',dmg:16}),AB.wall({n:'Bulle de bouclier'}),U(AB.zone({n:'Frappe d\'artillerie',r:85,dmg:22,count:4,col:'#fa3',max:500}))]},
+ wicket:{name:'Wicket',side:0,desc:'Ewok piégeur, embuscades',hp:130,spd:235,pref:260,pass:'regen',
+  look:{scale:.62,legs:'#6b4a2a',boot:'#5a3a1a',torso:'#7a5530',fur:1,arm:'#6b4a2a',head:{t:'ewok'},weapon:{t:'spear'}},
+  abil:[AB.blaster({n:'Lance',dmg:9,cd:.55,spd:650,r:6,col:'#c9a36a'}),AB.root({n:'Bolas',dur:1.6,col:'#c9a36a',dmg:6}),AB.roll(),AB.trap({n:'Piège à rondins',root:1.5,dmg:18}),AB.stealth({n:'Camouflage',dur:4}),U(AB.zone({n:'Embuscade Ewok',r:90,dmg:24,count:4,col:'#c9a36a',stun:.6}))]},
+ r2:{name:'R2-D2',side:0,desc:'Droïde : tourelles, huile, réparations',hp:150,spd:215,pref:280,pass:'armor',
+  look:{scale:.85,r2:1,legs:'#dddddd',boot:'#cccccc',torso:'#e8eef5',arm:'#e8eef5',head:{t:'none'},weapon:{t:'none'}},
+  abil:[AB.zap({n:'Décharge',dmg:6,col:'#7df'}),AB.turret({n:'Tourelle',life:8,col:'#7df'}),AB.jetpack({n:'Propulseurs'}),AB.trap({n:'Flaque d\'huile',slow:2.5,dmg:4,col:'#555555',r:80}),AB.field({n:'Écran de fumée',slow:1,r:120,dur:4,col:'#aaaaaa',self:1,cd:12}),U(AB.allyHeal({n:'Réparation d\'urgence',amt:50,all:1,r:450}))]},
+ jyn:{name:'Jyn Erso',side:0,desc:'Infiltratrice, embuscades',hp:150,spd:230,pref:260,pass:'crit',
+  look:{legs:'#3a3a40',boot:'#2a1a10',torso:'#5a4a3a',vest:'#3a2a1a',belt:'#2a1a10',arm:'#5a4a3a',head:{t:'hair',skin:'#f0c8a0',hair:'#5a3a22',style:'bun'},weapon:{t:'blaster'}},
+  abil:[AB.blaster({dmg:8}),AB.execute({n:'Matraque',dmg:14,k:.15,cd:6,cast:.15}),AB.roll(),AB.grenade({n:'Grenade',dmg:16}),AB.stealth({n:'Infiltration'}),U(AB.bolt({n:'Fusil A280-CFE',dmg:44,cast:.5,r:10}))]},
+ // ===== MÉCHANTS =====
+ vader:{name:'Dark Vador',side:1,desc:'Lent mais implacable',hp:215,spd:188,pref:60,pass:'armor',
+  look:{scale:1.1,legs:'#111',boot:'#000',torso:'#161616',cape:'#0a0a0a',belt:'#999',chest:1,arm:'#161616',head:{t:'vader'},weapon:SB('#f22')},
+  abil:[AB.saber({cd:.7,dmg:17,range:88}),AB.boomerang({n:'Lancer de sabre',saber:1,dmg:20}),AB.rush({n:'Avancée',d:180,dmg:10}),AB.choke({dmg:10,stun:1.4}),AB.deflect(),U(AB.haste({n:'Rage concentrée',dur:6,rage:1,heal:30}))]},
+ palpatine:{name:'Empereur Palpatine',side:1,desc:'Mage d\'éclairs',hp:150,spd:205,pref:170,pass:'energy',
   look:{legs:'#0b0b0e',boot:'#000',torso:'#111114',robe:'#0b0b0e',arm:'#111114',head:{t:'hood',hood:'#0d0d10',skin:'#c9bfb0',eyes:'#ffd23a',old:1},weapon:{t:'hands'}},
-  abil:[AB.zap(),AB.lightning({n:'Éclairs en chaîne',dmg:20,heal:10}),AB.blink(),AB.zone({n:'Orage',r:90,dmg:16,stun:.7,cd:8}),AB.shield({n:'Aura obscure',amt:35}),AB.burst({n:'Courroux de l\'Empereur',ult:1,r:220,dmg:30,stun:1.2,kb:250,col:'#b8f',zap:1})]},
- maul:{name:'Dark Maul',side:1,desc:'Double sabre, acrobate',hp:165,spd:232,pref:50,
-  look:{legs:'#111',boot:'#000',torso:'#1a1a1f',robe:'#121216',belt:'#333',arm:'#1a1a1f',head:{t:'maul'},weapon:{t:'saber',col:'#f22',double:1}},
-  abil:[AB.saber({arc:2.6,dmg:10,cd:.45}),AB.spin(),AB.leap({n:'Saut acrobatique'}),AB.choke({n:'Prise de Force',dmg:6,stun:1}),AB.deflect(),AB.throwS({n:'Lancer furieux',ult:1,dmg:32,big:1})]},
- kylo:{name:'Kylo Ren',side:1,desc:'Instable et puissant',hp:180,spd:212,pref:55,
-  look:{legs:'#111',boot:'#000',torso:'#16161a',robe:'#0e0e12',cape:'#0e0e12',arm:'#16161a',head:{t:'kylo'},weapon:{t:'saber',col:'#f22',cross:1}},
-  abil:[AB.saber({dmg:14,cd:.55}),AB.choke({n:'Gel',dmg:0,stun:1.6,cast:.3,cd:9}),AB.rush({n:'Charge au sabre',dmg:12}),AB.throwS(),AB.haste({n:'Colère',dur:3,rage:1}),AB.burst({n:'Frénésie',ult:1,r:120,dmg:36,kb:500,cast:.25,col:'#f44'})]},
- boba:{name:'Boba Fett',side:1,desc:'Jetpack, roquettes, flammes',hp:150,spd:220,pref:300,
-  look:{legs:'#7a7a5a',boot:'#4a3a2a',torso:'#6a6a50',armor:'#4f6b45',belt:'#6b4a2a',arm:'#7a7a5a',cape:'#5a4a3a',jet:1,head:{t:'mando',col:'#4f6b45',stripe:'#a33'},weapon:{t:'blaster'}},
-  abil:[AB.blaster({n:'EE-3',dmg:8}),AB.rocket({n:'Roquette commotion',cd:5,dmg:12,stun:.8,ar:60,kb:0}),AB.jetpack(),AB.flame(),AB.shield(),AB.barrage({n:'Salve de roquettes',ult:1,count:5,rocket:1,dmg:12})]},
- grievous:{name:'Général Grievous',side:1,desc:'Quatre sabres, tourbillon',hp:185,spd:215,pref:55,
-  look:{scale:1.08,legs:'#ddd8c8',boot:'#888',torso:'#e8e2d0',cape:'#3a2a20',arm:'#ddd8c8',bony:1,head:{t:'grievous'},weapon:{t:'saber',col:'#3af',two:'#3f3'}},
-  abil:[AB.saber({arc:2.2,dmg:11,cd:.45,range:85}),AB.rush({n:'Estocade',d:200,dmg:14}),AB.rush({n:'Ruée des griffes',d:260,dmg:6,kb:400,cd:7}),AB.spin({dur:.9,dmg:6}),AB.deflect({n:'Avancée implacable',dur:1.6,haste:1,cd:10}),AB.spin({n:'Ouragan de sabres',ult:1,dur:1.8,dmg:8,r:120})]},
- // soldats du mode Bataille
- rebel:{name:'Soldat rebelle',side:0,trooper:1,hp:70,spd:195,pref:300,
-  look:{scale:.92,legs:'#5a5040',boot:'#3a3020',torso:'#b8844a',vest:'#5f5f50',belt:'#4a3a2a',arm:'#b8844a',head:{t:'helm',col:'#a89c80',skin:'#e8b890'},weapon:{t:'blaster'}},
-  abil:[AB.blaster({n:'A280',dmg:6,cd:.5,inacc:.12}),AB.grenade({n:'Grenade',dmg:14,cd:15}),AB.roll({cd:8}),null,null,null]},
- storm:{name:'Stormtrooper',side:1,trooper:1,hp:70,spd:195,pref:300,
-  look:{scale:.92,legs:'#e8e8e8',boot:'#ccc',torso:'#f2f2f2',armor:'#ffffff',belt:'#222',arm:'#e8e8e8',head:{t:'storm'},weapon:{t:'blaster'}},
-  abil:[AB.blaster({n:'E-11',dmg:6,cd:.5,inacc:.16}),AB.grenade({n:'Détonateur',dmg:14,cd:15}),AB.roll({cd:8}),null,null,null]},
+  abil:[AB.zap(),AB.chain({n:'Éclairs en chaîne',zap:1,dmg:14,bounce:3,col:'#b8f'}),AB.blink(),AB.zone({n:'Orage',r:90,dmg:16,stun:.7,cd:8}),AB.shield({n:'Aura obscure',amt:35}),U(AB.burst({n:'Courroux de l\'Empereur',r:220,dmg:30,stun:1.2,kb:250,col:'#b8f',zap:1}))]},
+ maul:{name:'Dark Maul',side:1,desc:'Double sabre, acrobate',hp:165,spd:232,pref:50,pass:'speed',
+  look:{legs:'#111',boot:'#000',torso:'#1a1a1f',robe:'#121216',belt:'#333',arm:'#1a1a1f',head:{t:'maul'},weapon:SB('#f22',{double:1})},
+  abil:[AB.saber({arc:2.6,dmg:10,cd:.45}),AB.spin(),AB.leap({n:'Saut acrobatique'}),AB.choke({n:'Prise de Force',dmg:6,stun:1}),AB.deflect(),U(AB.boomerang({n:'Lancer furieux',saber:1,dmg:30,big:1,range:520}))]},
+ kylo:{name:'Kylo Ren',side:1,desc:'Gèle et attire ses proies',hp:180,spd:212,pref:55,pass:'rage',
+  look:{legs:'#111',boot:'#000',torso:'#16161a',robe:'#0e0e12',cape:'#0e0e12',arm:'#16161a',head:{t:'kylo'},weapon:SB('#f22',{cross:1})},
+  abil:[AB.saber({dmg:14,cd:.55}),AB.root({n:'Gel',dur:1.8,dmg:0,col:'#f66'}),AB.rush({n:'Charge au sabre',dmg:12}),AB.pull({n:'Attraction de Force',max:320,r:90}),AB.haste({n:'Colère',dur:3,rage:1}),U(AB.burst({n:'Frénésie',r:120,dmg:36,kb:500,cast:.25,col:'#f44'}))]},
+ boba:{name:'Boba Fett',side:1,desc:'Jetpack, roquettes, flammes',hp:155,spd:220,pref:300,pass:'crit',
+  look:{legs:'#7a7a5a',boot:'#4a3a2a',torso:'#6a6a50',armor:'#4f6b45',belt:'#6b4a2a',arm:'#7a7a5a',cape:'#5a4a3a',jet:1,head:{t:'mando',col:'#4f6b45',stripe:'#a33'},weapon:{t:'rifle'}},
+  abil:[AB.blaster({n:'EE-3',dmg:8}),AB.rocket({n:'Roquette commotion',cd:5,dmg:12,stun:.8,ar:60,kb:0}),AB.jetpack(),AB.flame(),AB.shield(),U(AB.barrage({n:'Salve de roquettes',count:5,rocket:1,dmg:12}))]},
+ grievous:{name:'Général Grievous',side:1,desc:'Quatre sabres, tourbillon',hp:185,spd:215,pref:55,pass:'armor',
+  look:{scale:1.08,legs:'#ddd8c8',boot:'#888',torso:'#e8e2d0',cape:'#3a2a20',arm:'#ddd8c8',bony:1,head:{t:'grievous'},weapon:SB('#3af',{two:'#3f3'})},
+  abil:[AB.saber({arc:2.2,dmg:11,cd:.45,range:85}),AB.rush({n:'Estocade',d:200,dmg:14}),AB.rush({n:'Ruée des griffes',d:260,dmg:6,kb:400,cd:7}),AB.spin({dur:.9,dmg:6}),AB.deflect({n:'Avancée implacable',dur:1.6,haste:1,cd:10}),U(AB.spin({n:'Ouragan de sabres',dur:1.8,dmg:8,r:120}))]},
+ dooku:{name:'Comte Dooku',side:1,desc:'Duelliste, éclairs ralentissants',hp:165,spd:215,pref:70,pass:'slow',
+  look:{scale:1.08,legs:'#1a1a1f',boot:'#000',torso:'#22222a',cape:'#4a2a1a',belt:'#888',arm:'#22222a',head:{t:'hair',skin:'#efd8c0',hair:'#e8e8e8',beard:'#e8e8e8'},weapon:SB('#f22')},
+  abil:[AB.saber({dmg:11,cd:.4,range:85}),AB.lightning({n:'Éclairs de Force',dmg:16,heal:0}),AB.blink({n:'Retraite élégante'}),AB.push(),AB.deflect({n:'Forme II',dur:1.2}),U(AB.beam({n:'Tempête du Comte',len:600,w:70,dmg:34,col:'#b8f',slow:2,cast:.5}))]},
+ ventress:{name:'Asajj Ventress',side:1,desc:'Assassin furtive, draine la vie',hp:155,spd:232,pref:50,pass:'lifesteal',
+  look:{legs:'#1a1a1f',boot:'#000',torso:'#2a2a30',robe:'#1a1a20',belt:'#444',arm:'#e8e0e8',head:{t:'bald',skin:'#e8e0e8',mark:'#555'},weapon:SB('#f22',{two:'#f22'})},
+  abil:[AB.saber({dmg:9,cd:.38}),AB.boomerang({n:'Lames jumelles',saber:1,dmg:12}),AB.leap(),AB.stealth({n:'Voile nocturne'}),AB.choke({n:'Étreinte',dmg:12,stun:1}),U(AB.alpha({n:'Assaut de l\'ombre',dmg:24,count:3}))]},
+ savage:{name:'Savage Opress',side:1,desc:'Brute zabrak, charge et décapite',hp:210,spd:208,pref:55,pass:'rage',
+  look:{scale:1.15,legs:'#1a1a1f',boot:'#000',torso:'#2a2a30',armor:'#555a60',belt:'#333',arm:'#c8a040',head:{t:'maul',skin:'#c8a040',horns:1},weapon:SB('#f22',{double:1})},
+  abil:[AB.saber({dmg:15,cd:.6}),AB.rush({n:'Charge du taureau',d:300,dmg:12,kb:600}),AB.leap(),AB.burst({n:'Rugissement',r:150,dmg:8,kb:0,stun:.8,cd:10,cast:.2}),AB.unstop({n:'Rage de Zabrak'}),U(AB.execute({n:'Décapitation',dmg:28,k:.6}))]},
+ jango:{name:'Jango Fett',side:1,desc:'Chasseur volant, charges sismiques',hp:160,spd:222,pref:300,pass:'energy',
+  look:{legs:'#3a4a6a',boot:'#2a2a2a',torso:'#4a5a7a',armor:'#7d8fa3',belt:'#5a3a2a',arm:'#4a5a7a',jet:1,head:{t:'mando',col:'#7d8fa3',stripe:'#2a4a8a'},weapon:{t:'pistols'}},
+  abil:[AB.blaster({n:'WESTAR-34',spread:2,dmg:5,cd:.34}),AB.rocket({n:'Mini-roquette',dmg:16,kb:400}),AB.jetpack(),AB.grenade({n:'Charge sismique',dmg:16,stun:.8,r:95}),AB.rapid({n:'Tir en vol'}),U(AB.barrage({n:'Rafale Westar',count:9,dmg:8,col:'#ff4a3a'}))]},
+ phasma:{name:'Capitaine Phasma',side:1,desc:'Commandante blindée, droïdes',hp:200,spd:205,pref:220,pass:'armor',
+  look:{scale:1.12,legs:'#c8ccd0',boot:'#999999',torso:'#d8dce0',armor:'#e8ecf0',cape:'#1a1a1a',belt:'#333',arm:'#c8ccd0',head:{t:'storm',col:'#d8dce0',band:1},weapon:{t:'rifle'}},
+  abil:[AB.blaster({n:'F-11D',dmg:9,cd:.45}),AB.burst({n:'Matraque électrique',r:90,dmg:12,stun:.7,kb:150,cd:7,cast:.15}),AB.roll(),AB.turret({n:'Droïde de combat',life:8}),AB.deflect({n:'Armure chromée',dur:1.2}),U(AB.zone({n:'Ordre de tir',r:85,dmg:22,count:5,col:'#f44'}))]},
+ iden:{name:'Iden Versio',side:1,desc:'Commando Inferno, tireuse d\'élite',hp:150,spd:225,pref:320,pass:'crit',
+  look:{legs:'#1a1a1a',boot:'#000',torso:'#2a2a2a',armor:'#3a3a3a',belt:'#555',arm:'#2a2a2a',head:{t:'hair',skin:'#c89a70',hair:'#1a1a1a',style:'bun'},weapon:{t:'blaster'}},
+  abil:[AB.blaster({dmg:8}),AB.turret({n:'Droïde de choc',life:6,dmg:6,col:'#7df'}),AB.roll(),AB.grenade({n:'Grenade impulsion',stun:1,dmg:10,col:'#9df'}),AB.stealth({n:'Brouillage'}),U(AB.beam({n:'Tir de précision',len:900,w:22,dmg:40,col:'#ff3a3a',cast:.7}))]},
+ bossk:{name:'Bossk',side:1,desc:'Chasseur trandoshan, pièges',hp:195,spd:212,pref:250,pass:'regen',
+  look:{scale:1.1,legs:'#c8a040',boot:'#3a2a1a',torso:'#d8b050',vest:'#a08030',belt:'#6b4a2a',arm:'#5a7a3a',head:{t:'lizard'},weapon:{t:'rifle'}},
+  abil:[AB.blaster({n:'Relby-v10',dmg:12,cd:.6,r:7,spd:800,col:'#7f7'}),AB.grenade({n:'Grenade à fragmentation',dmg:20}),AB.roll(),AB.trap({n:'Piège à mâchoires',root:1.8,dmg:12}),AB.heal({n:'Régénération',amt:40}),U(AB.haste({n:'Chasse',dur:5,rage:1,heal:20}))]},
+ cadbane:{name:'Cad Bane',side:1,desc:'Pistolero, lasso, duel',hp:155,spd:225,pref:280,pass:'crit',
+  look:{legs:'#5a4030',boot:'#3a2a1a',torso:'#6a4a30',cape:'#4a3020',belt:'#2a1a10',arm:'#5a8ac0',head:{t:'hat'},weapon:{t:'pistols'}},
+  abil:[AB.blaster({n:'LL-30 jumeaux',spread:2,dmg:5,cd:.34}),AB.hook({n:'Lasso',dmg:6,stun:.6}),AB.jetpack({n:'Bottes-fusées'}),AB.root({n:'Fléchette électrique',dur:1.3,col:'#7df'}),AB.field({n:'Fumigène',slow:1,r:120,dur:3,col:'#aaaaaa',self:1}),U(AB.execute({n:'Duel au soleil',range:700,dmg:24,k:.5,cast:.6}))]},
+ inquisitor:{name:'Grand Inquisiteur',side:1,desc:'Lame rotative, purge',hp:170,spd:222,pref:55,pass:'slow',
+  look:{legs:'#1a1a1f',boot:'#000',torso:'#22222a',armor:'#3a3a40',cape:'#111',belt:'#555',arm:'#22222a',head:{t:'bald',skin:'#a8b0b8',mark:'#a33'},weapon:SB('#f22',{double:1})},
+  abil:[AB.saber({arc:2.4,dmg:11,cd:.45}),AB.boomerang({n:'Lame rotative',saber:1,dmg:16,range:460}),AB.jetpack({n:'Vol rotatif'}),AB.choke({n:'Étreinte',stun:1.2}),AB.deflect({n:'Parade tournoyante'}),U(AB.spin({n:'Purge',dur:2,dmg:9,r:125}))]},
+ sister:{name:'Seconde Sœur',side:1,desc:'Traqueuse, fouet de Force',hp:165,spd:228,pref:55,pass:'third',
+  look:{legs:'#1a1a1f',boot:'#000',torso:'#22222a',armor:'#3a3a40',belt:'#555',arm:'#22222a',head:{t:'kylo',line:'#c33'},weapon:SB('#f22',{double:1})},
+  abil:[AB.saber({dmg:11,arc:2.2,cd:.45}),AB.hook({n:'Fouet de Force',self:1,dmg:10,stun:.3,range:420}),AB.roll(),AB.pull({n:'Attraction',max:300,r:100}),AB.shield({n:'Garde',amt:35}),U(AB.execute({n:'Exécution de Jedi',dmg:26,k:.55}))]},
+ gideon:{name:'Moff Gideon',side:1,desc:'Sabre noir, Dark Troopers',hp:185,spd:212,pref:70,pass:'armor',
+  look:{legs:'#111',boot:'#000',torso:'#1a1a1a',cape:'#0a0a0a',belt:'#666',arm:'#1a1a1a',head:{t:'hair',skin:'#c89a70',hair:'#111111'},weapon:SB('#e8e8ff',{dark:1})},
+  abil:[AB.saber({dmg:13}),AB.bolt({n:'Tir de blaster',dmg:18,cast:.25}),AB.jetpack(),AB.turret({n:'Dark Troopers',count:2,life:7,dmg:5}),AB.unstop({n:'Armure de beskar'}),U(AB.burst({n:'Le Sabre noir',r:170,dmg:34,kb:500,col:'#dddddd',cast:.35}))]},
+ thrawn:{name:'Grand Amiral Thrawn',side:1,desc:'Stratège : analyse, bombardement',hp:150,spd:212,pref:300,pass:'slow',
+  look:{legs:'#f2f2f2',boot:'#111',torso:'#f5f5f5',belt:'#ffd23a',arm:'#f5f5f5',head:{t:'hair',skin:'#4a7ac0',hair:'#111111',eye:'#f33'},weapon:{t:'blaster'}},
+  abil:[AB.blaster({dmg:8}),AB.root({n:'Analyse',dur:1.4,dmg:8,col:'#f44'}),AB.roll(),AB.field({n:'Champ tactique',dps:6,slow:1,r:120,dur:4,col:'#f44'}),AB.allyHeal({n:'Stratégie',amt:5,shield:35,all:1,r:350,cd:12}),U(AB.zone({n:'Bombardement orbital',r:170,dmg:42,delay:1.2,stun:1,col:'#f44',max:550}))]},
+ deathtrooper:{name:'Death Trooper',side:1,desc:'Fusil à dispersion, escouade',hp:185,spd:210,pref:220,pass:'armor',
+  look:{scale:1.08,legs:'#1a1a1a',boot:'#000',torso:'#222',armor:'#2a2a2a',belt:'#444',arm:'#1a1a1a',head:{t:'storm',col:'#1c1c1c',eye:'#3f6'},weapon:{t:'rifle'}},
+  abil:[AB.blaster({n:'E-11D',spread:3,dmg:4,cd:.55,inacc:.1}),AB.rapid({n:'Tir de suppression'}),AB.roll(),AB.grenade({n:'Grenade à impulsion',stun:1,dmg:12}),AB.wall({n:'Bouclier anti-émeute'}),U(AB.turret({n:'Escouade de la mort',count:3,life:8,dmg:5}))]},
+ ig88:{name:'IG-88',side:1,desc:'Droïde assassin, mines',hp:170,spd:215,pref:300,pass:'armor',
+  look:{scale:1.1,legs:'#6a6a6a',boot:'#444',torso:'#7a7a7a',arm:'#6a6a6a',bony:1,head:{t:'ig'},weapon:{t:'rifle'}},
+  abil:[AB.blaster({n:'DLT-20A',dmg:8,cd:.36}),AB.trap({n:'Mine de proximité',dmg:26,r:70,stun:.5}),AB.roll(),AB.turret({n:'Tourelle',life:8}),AB.rapid({n:'Surcharge'}),U(AB.burst({n:'Autodestruction',r:200,dmg:48,kb:600,cast:.9,col:'#f60'}))]},
 };
 const HEROES=Object.keys(CH).filter(k=>!CH[k].trooper);
 const saberCol=u=>u.ch.look.weapon.col||'#ccc';
@@ -152,31 +298,30 @@ const canBlock=u=>u.ch.look.weapon.t==='saber';
 
 // ---------- État ----------
 let mode='arena',state='menu',units=[],player=null,projs=[],fx=[],txt=[],zones=[],orb=null,orbUsed=false,score=[0,0],round=1,timer=0,stateT=0,playerChamp='luke',aiChamp='vader',winner=0,shake=0,hs=0,flashS=0,banner=null,hover='luke';
+let traps=[],turrets=[],fields=[],walls=[],BASIC=false,GLOW=18;
 let B=A,OBST=ARENA_OBST,tickets=[100,100],killfeed=[],pickups=[],deathPos=null;
 const SD_START=45,SD_LEN=35;
 const sdR=()=>mode!=='arena'||timer<SD_START?9999:lerp(720,130,clamp((timer-SD_START)/SD_LEN,0,1));
 function mkUnit(c,x,y,team){const ch=CH[c];return{c,ch,x,y,z:0,vx:0,vy:0,kx:0,ky:0,r:18*(ch.look.scale>1?1.1:1),hp:ch.hp,max:ch.hp,energy:0,team,hero:!ch.trooper,cds:[0,0,0,0,0,0],stun:0,slow:0,haste:0,rage:0,rapid:0,unstop:0,deflect:0,shield:0,shieldT:0,
- stam:100,stamT:0,block:false,blockLock:0,aiBlock:0,dash:null,cast:null,spin:null,flame:null,aim:team?Math.PI:0,swing:0,swingA:0,saberOut:0,walk:0,moving:0,aiT:.3+rnd()*.4,strT:0,strDir:rnd()<.5?1:-1,flash:0,dead:false,deadT:0,respawn:0,tgt:null,lane:y,ctrl:null,human:false,nx:x,ny:y}}
+ stam:100,stamT:0,block:false,blockLock:0,aiBlock:0,dash:null,cast:null,spin:null,flame:null,aim:team?Math.PI:0,swing:0,swingA:0,saberOut:0,walk:0,moving:0,aiT:.3+rnd()*.4,strT:0,strDir:rnd()<.5?1:-1,flash:0,dead:false,deadT:0,respawn:0,tgt:null,lane:y,ctrl:null,human:false,nx:x,ny:y,root:0,stealth:0,ambush:0,airT:0,hits:0}}
 function startMatch(c){playerChamp=c;const o=HEROES.filter(x=>CH[x].side!==CH[c].side);aiChamp=o[Math.floor(rnd()*o.length)];score=[0,0];round=1;mode==='arena'?startRound():startBattle()}
-function resetWorld(){projs=[];fx=[];txt=[];zones=[];orb=null;orbUsed=false;timer=0;banner=null;killfeed=[];state='countdown';stateT=3}
+function resetWorld(){traps=[];turrets=[];fields=[];walls=[];projs=[];fx=[];txt=[];zones=[];orb=null;orbUsed=false;timer=0;banner=null;killfeed=[];state='countdown';stateT=3}
 function mateChamp(){if(!net.mate||!CH[net.mate]){const o=HEROES.filter(h=>CH[h].side===CH[playerChamp].side&&h!==playerChamp);net.mate=o[Math.floor(rnd()*o.length)]}return net.mate}
 const setHuman=(u,c)=>{u.ctrl=c;u.human=true;return u};
-function startRound(){B=A;OBST=ARENA_OBST;cam={x:CX,y:CY};Yc=377.5;
+function startRound(){B=A;OBST=ARENA_OBST;GLOW=18;cam={x:CX,y:CY};Yc=377.5;
  if(coop()){const foes=HEROES.filter(x=>CH[x].side!==CH[playerChamp].side).sort(()=>rnd()-.5);
   units=[mkUnit(playerChamp,A.x+150,CY-70,0),setHuman(mkUnit(mateChamp(),A.x+150,CY+70,0),'remote'),mkUnit(foes[0],A.x+A.w-150,CY-70,1),mkUnit(foes[1],A.x+A.w-150,CY+70,1)]}
  else units=[mkUnit(playerChamp,A.x+150,CY,0),mkUnit(aiChamp,A.x+A.w-150,CY,1)];
  player=setHuman(units[0],'local');resetWorld()}
 const spawnPos=t=>({x:t?MAP.w-150-rnd()*150:150+rnd()*150,y:MAP.h/2+(rnd()-.5)*1000});
 function startBattle(){
- B=MAP;OBST=battleObstacles();Yc=390;tickets=[100,100];
- const side=CH[playerChamp].side,mine=HEROES.filter(h=>CH[h].side===side&&h!==playerChamp),theirs=HEROES.filter(h=>CH[h].side!==side);
- const pick=(arr,n)=>arr.slice().sort(()=>rnd()-.5).slice(0,n);
+ B=MAP;OBST=battleObstacles();Yc=390;GLOW=6;tickets=[60,60];
+ const side=CH[playerChamp].side,mine=HEROES.filter(h=>CH[h].side===side&&h!==playerChamp).sort(()=>rnd()-.5),theirs=HEROES.filter(h=>CH[h].side!==side).sort(()=>rnd()-.5);
  const mk=(c,t)=>{const p=spawnPos(t);return mkUnit(c,p.x,p.y,t)};
  units=[mk(playerChamp,0)];player=setHuman(units[0],'local');
- if(coop()){const m=mateChamp();units.push(setHuman(mk(m,0),'remote'));for(const h of pick(mine.filter(x=>x!==m),2))units.push(mk(h,0))}
- else for(const h of pick(mine,3))units.push(mk(h,0));
- for(const h of pick(theirs,4))units.push(mk(h,1));
- for(let i=0;i<16;i++){units.push(mk(side?'storm':'rebel',0));units.push(mk(side?'rebel':'storm',1))}
+ if(coop()){const m=mateChamp(),i=mine.indexOf(m);units.push(setHuman(mk(m,0),'remote'));if(i>=0)mine.splice(i,1);else mine.pop()}
+ for(const h of mine)units.push(mk(h,0));
+ for(const h of theirs.slice(0,20))units.push(mk(h,1));
  pickups=[[1100,500],[1100,1500],[2100,1000],[3100,500],[3100,1500],[2100,300],[2100,1700]].map(([x,y])=>({x,y,t:0}));
  cam={x:player.x,y:player.y};resetWorld();
 }
@@ -185,23 +330,24 @@ function battleObstacles(){let s=7;const r=()=>(s=s*16807%2147483647)/2147483647
 const enemies=u=>units.filter(e=>e.team!==u.team&&!e.dead);
 
 // ---------- Mécaniques ----------
-function use(u,i,td,aimOv,ex){const ab=u.ch.abil[i];if(!ab||u.cds[i]>0||u.stun>0||u.dash||u.cast||u.spin||u.flame||u.block)return false;if(ab.ult&&u.energy<100)return false;if((ab.throw||ab.melee)&&u.saberOut>0)return false;
- ex=!!(ex&&i>0&&!ab.ult&&u.energy>=25);if(ex)u.energy-=25;
+function use(u,i,td,aimOv,ex){let ab=u.ch.abil[i];if(!ab||u.cds[i]>0||u.stun>0||u.dash||u.cast||u.spin||u.flame||u.block)return false;if(ab.ult&&u.energy<100)return false;if((ab.throw||ab.melee)&&u.saberOut>0)return false;
+ ex=!!(ex&&i>0&&!ab.ult&&u.energy>=25);if(ex){u.energy-=25;if(ab.ex)ab=Object.assign({},ab,ab.ex)}if(u.stealth>0){u.stealth=0;u.ambush=2}
  u.cds[i]=(ab.cd||1)*(i===0&&u.rapid>0?.45:1);if(ab.ult){u.energy-=100;if(u===player)flashS=.25;if(near(u.x,u.y))shake=.3}
  if(ab.cast){u.cast={i,t:0,dur:ab.cast,td:td??200,aimOv,ex};return true}
  fire(u,ab,aimOv??u.aim,td??200,ex);return true}
-function fire(u,ab,a,td,ex){EX=ex;if(ex){ring(u.x,u.y,46,'#ffe81f');say(u,'EX','#ffe81f');S('ex',u)}ab.f(u,a,td);EX=false}
-function proj(u,a,o){projs.push(Object.assign({x:u.x+Math.cos(a)*24,y:u.y+Math.sin(a)*24,vx:Math.cos(a)*o.spd,vy:Math.sin(a)*o.spd,owner:u,src:u,rot:0,life0:o.life,ex:EX,hitSet:null},o))}
+const castAb=(u,c)=>{const b=u.ch.abil[c.i];return c.ex&&b.ex?Object.assign({},b,b.ex):b};
+function fire(u,ab,a,td,ex){EX=ex;BASIC=u.ch.abil[0]===ab;if(ex){ring(u.x,u.y,46,'#ffe81f');say(u,'EX','#ffe81f');S('ex',u)}ab.f(u,a,td);EX=false;BASIC=false}
+function proj(u,a,o){projs.push(Object.assign({x:u.x+Math.cos(a)*24,y:u.y+Math.sin(a)*24,vx:Math.cos(a)*o.spd,vy:Math.sin(a)*o.spd,owner:u,src:u,rot:0,life0:o.life,ex:EX,basic:BASIC,hitSet:null},o))}
 function melee(u,a,range,arc,dmg){u.swing=.18;u.swingA=a;S('saber',u);fx.push({x:u.x,y:u.y,swing:1,a,range,arc,t:.18,m:.18,col:saberCol(u)});
- for(const e of enemies(u))if(dist(u,e)<range+e.r&&angDiff(ang(u,e),a)<arc/2&&hit(e,u,dmg,{melee:1,ex:EX})&&(u===player||e===player))hs=.05;
+ for(const e of enemies(u))if(dist(u,e)<range+e.r&&angDiff(ang(u,e),a)<arc/2&&hit(e,u,dmg,{melee:1,ex:EX,basic:BASIC})&&(u===player||e===player))hs=.05;
  for(const p of projs)if(p.owner.team!==u.team&&!p.rocket&&!p.grenade&&Math.hypot(p.x-u.x,p.y-u.y)<range&&angDiff(Math.atan2(p.y-u.y,p.x-u.x),a)<arc/2&&rnd()<.5)reflect(p,u)}
 function cone(u,a,range,arc,dmg,o,col){if(near(u.x,u.y))for(let i=0;i<24;i++){const b=a+(rnd()-.5)*arc,s=300+rnd()*300;fx.push({x:u.x,y:u.y,vx:Math.cos(b)*s,vy:Math.sin(b)*s,t:.4,m:.4,col,r:3})}
  for(const e of enemies(u))if(dist(u,e)<range+e.r&&angDiff(ang(u,e),a)<arc/2)hit(e,u,dmg,Object.assign({melee:1,ex:EX},o))}
-function lightning(u,a,o){fx.push({bolt:1,u,a,range:o.range,n:o.small?2:4,t:o.small?.15:.3,m:o.small?.15:.3,col:'#b8f'});if(!o.small)fx.push({light:1,x:u.x+Math.cos(a)*100,y:u.y+Math.sin(a)*100,r:180,t:.3,m:.3,col:'#b8f'});
- let healed=false;for(const e of enemies(u))if(dist(u,e)<o.range+e.r&&angDiff(ang(u,e),a)<o.arc/2&&hit(e,u,o.dmg,{slow:o.slow,melee:1,ex:EX})&&o.heal&&!healed){healed=true;u.hp=Math.min(u.max,u.hp+o.heal);say(u,'+'+o.heal,'#6f9')}}
+function lightning(u,a,o){fx.push({bolt:1,u,a,range:o.range,n:o.small?2:4,t:o.small?.15:.3,m:o.small?.15:.3,col:o.col||'#b8f'});if(!o.small)fx.push({light:1,x:u.x+Math.cos(a)*100,y:u.y+Math.sin(a)*100,r:180,t:.3,m:.3,col:'#b8f'});
+ let healed=false;for(const e of enemies(u))if(dist(u,e)<o.range+e.r&&angDiff(ang(u,e),a)<o.arc/2&&hit(e,u,o.dmg,{slow:o.slow,melee:1,ex:EX,basic:BASIC})&&o.heal&&!healed){healed=true;u.hp=Math.min(u.max,u.hp+o.heal);say(u,'+'+o.heal,'#6f9')}}
 function aoe(u,x,y,r,dmg,o={},col){col=col||(o.stun?'#b8f':'#fc6');if(near(x,y)){ring(x,y,r,col);if(!o.quiet)fx.push({light:1,x,y,r:r*1.6,t:.35,m:.35,col})}
  for(const e of enemies(u))if(Math.hypot(e.x-x,e.y-y)<r+e.r&&hit(e,u,dmg,Object.assign({fx:x,fy:y,ex:EX},o))&&(u===player||e===player))hs=Math.max(hs,dmg>20?.1:.03)}
-function dash(u,a,d,dur,o={}){const tx=clamp(u.x+Math.cos(a)*d,B.x+u.r,B.x+B.w-u.r),ty=clamp(u.y+Math.sin(a)*d,B.y+u.r,B.y+B.h-u.r);u.dash={sx:u.x,sy:u.y,tx,ty,t:0,dur,jump:o.jump||0,end:o.end,dmg:o.dmg,kb:o.kb,hitDone:false,ex:EX}}
+function dash(u,a,d,dur,o={}){const tx=clamp(u.x+Math.cos(a)*d,B.x+u.r,B.x+B.w-u.r),ty=clamp(u.y+Math.sin(a)*d,B.y+u.r,B.y+B.h-u.r);u.dash={sx:u.x,sy:u.y,tx,ty,t:0,dur,jump:o.jump||0,end:o.end,dmg:o.dmg,kb:o.kb,air:o.air,hitDone:false,ex:EX}}
 function reflect(p,t){p.owner=t;p.vx*=-1.1;p.vy*=-1.1;p.life=Math.max(p.life,.7);p.hitSet=null;if(near(t.x,t.y)){say(t,'RENVOI !','#7df');sparks(p.x,p.y,'#7df',8);S('deflect',t)}}
 // parade : le tir repart vers celui qui l'a tiré
 function parry(p,t){const sh=p.owner,a=sh&&!sh.dead?Math.atan2(sh.y-p.y,sh.x-p.x)+(rnd()-.5)*.12:Math.atan2(-p.vy,-p.vx),sp=Math.hypot(p.vx,p.vy)*1.05;
@@ -213,15 +359,22 @@ function hit(t,src,dmg,o={}){
  if(t.dead||state!=='fight')return false;
  if(src&&t.block&&o.melee&&!o.unblockable&&facing(t,src)){stamHit(t,o.ex?25:14);if(near(t.x,t.y)){say(t,'PARADE','#7df');sparks(t.x,t.y,saberCol(t),10);S('deflect',t)}const a=ang(t,src);src.kx+=Math.cos(a)*220;src.ky+=Math.sin(a)*220;return false}
  if(src&&t.deflect>0&&o.melee){src.stun=Math.max(src.stun,.9);src.cast=null;src.spin=null;t.deflect=0;say(t,'RENVOI !','#7df');say(src,'ÉTOURDI','#b8f');sparks(t.x,t.y,'#7df',14);S('deflect',t);return false}
- if(src&&src.rage>0)dmg*=1.35;if(o.ex)dmg*=1.5;
+ if(src&&src.rage>0)dmg*=1.35;if(o.ex)dmg*=1.2;
+ const ps=src&&src.ch.pass;
+ if(ps&&o.basic){if(ps==='third'&&++src.hits%3===0){dmg*=1.6;o=Object.assign({},o,{stun:Math.max(o.stun||0,.5)});say(src,'3e COUP','#ffe81f')}if(ps==='crit'&&rnd()<.25){dmg*=2;say(t,'CRITIQUE','#ffb03a')}if(ps==='slow')o=Object.assign({},o,{slow:Math.max(o.slow||0,.8)})}
+ if(ps==='rage'&&src.hp<src.max*.5)dmg*=1.25;if(src&&src.ambush>0){dmg*=1.5;src.ambush=0;say(t,'EMBUSCADE','#ffb03a')}
+ if(o.exec)dmg+=(t.max-t.hp)*o.exec;if(t.ch.pass==='armor')dmg*=.85;
  let d=dmg;if(t.shield>0){const ab=Math.min(t.shield,d);t.shield-=ab;d-=ab}
- t.hp-=d;
- if(!o.silent){t.flash=.12;if(src)src.energy=Math.min(100,src.energy+dmg*(src.hero?.6:0));if(t.hero)t.energy=Math.min(100,t.energy+dmg*.2);
+ t.hp-=d;if(ps==='lifesteal'&&d>0)src.hp=Math.min(src.max,src.hp+d*.3);
+ if(!o.silent){t.flash=.12;if(src)src.energy=Math.min(100,src.energy+dmg*(ps==='energy'?.9:.6));if(t.hero)t.energy=Math.min(100,t.energy+dmg*.2);
   if(near(t.x,t.y)){if(Math.round(d)>0)say(t,'-'+Math.round(d),d<dmg?'#fc6':o.ex?'#ffe81f':'#fff');sparks(t.x,t.y,t.team?'#f66':'#6cf',6);if(t===player||src===player)shake=Math.max(shake,.08);S('hit',t)}}
  const hard=t.unstop<=0,xm=o.ex?1.4:1;
  if(o.stun&&hard){t.stun=Math.max(t.stun,o.stun*xm);say(t,'ÉTOURDI','#b8f')}
  if((o.stun||o.kb)&&hard&&(t.cast||t.spin||t.flame||t.block)){if(t.cast||t.spin||t.flame)say(t,'INTERROMPU','#fc6');t.cast=null;t.spin=null;t.flame=null}
  if(o.slow&&hard)t.slow=Math.max(t.slow,o.slow*xm);
+ if(o.root&&hard){t.root=Math.max(t.root,o.root*xm);say(t,'ENTRAVÉ','#9f6')}
+ if(o.air&&hard){t.stun=Math.max(t.stun,o.air*xm);t.airT=.55;t.dash=null;say(t,'PROJETÉ','#b8f')}
+ if(o.pull&&hard&&o.fx!=null){const a=Math.atan2(o.fy-t.y,o.fx-t.x),k=Math.min(o.pull,Math.hypot(o.fx-t.x,o.fy-t.y)*7);t.kx+=Math.cos(a)*k;t.ky+=Math.sin(a)*k}
  if(o.kb&&hard){const fx0=o.fx??src.x,fy0=o.fy??src.y,a=Math.atan2(t.y-fy0,t.x-fx0);t.kx+=Math.cos(a)*o.kb*xm;t.ky+=Math.sin(a)*o.kb*xm;t.dash=null;t.z=0}
  if(t.hp<=0)die(t,src);
  return true;
@@ -229,11 +382,16 @@ function hit(t,src,dmg,o={}){
 function die(t,src){t.hp=0;t.dead=true;t.deadT=0;t.cast=null;t.dash=null;t.spin=null;t.flame=null;t.block=false;
  if(near(t.x,t.y)){sparks(t.x,t.y,'#fff',t.hero?40:12);if(t.hero)shake=Math.max(shake,.3)}
  if(mode==='arena'){if(units.some(x=>x.team===t.team&&!x.dead))return;winner=1-t.team;score[winner]++;state='roundEnd';stateT=2.8;shake=.5;hs=.25;(winner===0?SFX.win:SFX.lose)();return}
- tickets[t.team]=Math.max(0,tickets[t.team]-(t.hero?5:1));t.respawn=t.hero?8:5;if(src&&src.hero)src.energy=Math.min(100,src.energy+10);
+ tickets[t.team]=Math.max(0,tickets[t.team]-1);t.respawn=6;if(src&&src.hero)src.energy=Math.min(100,src.energy+10);
  if(t===player)deathPos={x:t.x,y:t.y};
  if(t.hero||(src&&(src.hero||src===player)))killfeed.unshift({a:src?src.ch.name:'Arène',b:t.ch.name,ta:src?src.team:2,tb:t.team,t:5});killfeed.length=Math.min(killfeed.length,6);
  if(tickets[t.team]<=0){state='matchEnd';winner=1-t.team;(winner===0?SFX.win:SFX.lose)()}
 }
+function onProjHit(p,t){const o=p.owner;
+ if(p.hook===1&&!t.dead&&t.unstop<=0){const a=Math.atan2(t.y-o.y,t.x-o.x);t.dash={sx:t.x,sy:t.y,tx:o.x+Math.cos(a)*45,ty:o.y+Math.sin(a)*45,t:0,dur:.25,jump:0};t.cast=null}
+ if(p.hook===2&&!o.dead){const a=Math.atan2(o.y-t.y,o.x-t.x);o.dash={sx:o.x,sy:o.y,tx:t.x+Math.cos(a)*40,ty:t.y+Math.sin(a)*40,t:0,dur:.22,jump:20};o.cast=null}
+ if(p.chain>0){let nb=null,bd=330;for(const e of units)if(e!==t&&!e.dead&&e.team!==o.team){const d=dist(e,t);if(d<bd){bd=d;nb=e}}
+  if(nb){const a=Math.atan2(nb.y-t.y,nb.x-t.x),sp=Math.hypot(p.vx,p.vy);projs.push(Object.assign({},p,{x:t.x+Math.cos(a)*22,y:t.y+Math.sin(a)*22,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,chain:p.chain-1,dmg:p.dmg*.8,life:.5,hitSet:null,dead:0}))}}}
 function explode(p){p.boom=1;EX=p.ex;if(p.grenade)aoe(p.owner,p.x,p.y,p.ar||80,p.dmg,{stun:p.stun,unblockable:1});else aoe(p.owner,p.x,p.y,p.ar||95,p.dmg,{kb:p.kb??550,stun:p.stun,unblockable:1});EX=false;if(near(p.x,p.y)){sparks(p.x,p.y,p.col,24);shake=Math.max(shake,.2);SFX.boom()}}
 
 // ---------- Effets ----------
@@ -243,10 +401,11 @@ function ring(x,y,r,col){if(near(x,y))fx.push({x,y,ring:r,t:.35,m:.35,col})}
 
 // ---------- IA générique (lit les indices "ai" de chaque capacité) ----------
 function threat(u){for(const p of projs){if(p.owner.team===u.team||p.grenade)continue;const rx=u.x-p.x,ry=u.y-p.y,d=Math.hypot(rx,ry);if(d>220)continue;const v=Math.hypot(p.vx,p.vy);if((rx*p.vx+ry*p.vy)/(d*v)>.9)return p}return null}
-function teleTarget(u){const ab=u.ch.abil[u.cast.i],a=u.cast.aimOv??u.aim;if(!ab.tele)return null;if(ab.tele.self)return{x:u.x,y:u.y,r:ab.tele.r};const d=clamp(u.cast.td,40,ab.tele.max);return{x:u.x+Math.cos(a)*d,y:u.y+Math.sin(a)*d,r:ab.tele.r}}
+function teleTarget(u){const ab=castAb(u,u.cast),a=u.cast.aimOv??u.aim;if(!ab.tele)return null;if(ab.tele.self)return{x:u.x,y:u.y,r:ab.tele.r};const d=clamp(u.cast.td,40,ab.tele.max);return{x:u.x+Math.cos(a)*d,y:u.y+Math.sin(a)*d,r:ab.tele.r}}
 function dangers(u){const L=[];for(const z of zones)if(z.owner.team!==u.team)L.push(z);for(const p of projs)if(p.grenade&&p.owner.team!==u.team)L.push({x:p.tx,y:p.ty,r:p.ar||80});
- for(const e of units)if(e.team!==u.team&&!e.dead&&Math.abs(e.x-u.x)<450){if(e.cast){const t=teleTarget(e);if(t)L.push(t)}if(e.spin)L.push({x:e.x,y:e.y,r:e.spin.r+10})}return L}
-function pickTarget(u){let best=null,bd=mode==='arena'?1e9:800;for(const e of units){if(e.team===u.team||e.dead)continue;const d=dist(u,e)-(e.human?60:0);if(d<bd){bd=d;best=e}}return best}
+ for(const e of units)if(e.team!==u.team&&!e.dead&&Math.abs(e.x-u.x)<450){if(e.cast){const t=teleTarget(e);if(t)L.push(t)}if(e.spin)L.push({x:e.x,y:e.y,r:e.spin.r+10})}
+ for(const f of fields)if(f.team!==u.team&&(f.dps||f.slow))L.push(f);for(const tr of traps)if(tr.team!==u.team)L.push({x:tr.x,y:tr.y,r:tr.r});return L}
+function pickTarget(u){let best=null,bd=mode==='arena'?1e9:800;for(const e of units){if(e.team===u.team||e.dead||(e.stealth>0&&dist(u,e)>140))continue;const d=dist(u,e)-(e.human?60:0);if(d<bd){bd=d;best=e}}return best}
 function ai(u,dt){
  if((u.aiT-=dt)<=0)u.tgt=pickTarget(u);
  const e=u.tgt&&!u.tgt.dead?u.tgt:null;let mx=0,my=0;
@@ -275,7 +434,9 @@ function ai(u,dt){
    case'esc':ok=d<h.max||(th&&rnd()<.5);aimO=th?Math.atan2(th.vy,th.vx)+Math.PI/2*(rnd()<.5?1:-1):a+Math.PI+(rnd()-.5);td=300;break;
    case'def':ok=!!th||(d<110&&(e.swing>0||e.spin))||(e.cast&&d<300);break;
    case'self':ok=d<=h.max;break;
-   case'heal':ok=u.hp<u.max*.6;break}
+   case'heal':ok=u.hp<u.max*.6;break;
+   case'ally':ok=units.some(x=>x.team===u.team&&!x.dead&&x.hp<x.max*.65&&dist(x,u)<400);aimO=u.aim;td=0;break;
+   case'exec':ok=d<=h.max&&e.hp<e.max*.45;break}
   if(ok&&rnd()<(h.p??.5)*(u.hero?1:.5)&&use(u,i,td,aimO,u.energy>=50&&rnd()<.4))return[mx,my];
  }
  const l=u.ch.abil[0].ai;if(d<=l.max&&rnd()<l.p)use(u,0,d);
@@ -286,18 +447,20 @@ function ai(u,dt){
 function collide(u){
  u.x=clamp(u.x,B.x+u.r,B.x+B.w-u.r);u.y=clamp(u.y,B.y+u.r,B.y+B.h-u.r);
  for(const p of OBST){const d=Math.hypot(u.x-p.x,u.y-p.y),m=p.r+u.r;if(d<m&&d>0){u.x=p.x+(u.x-p.x)/d*m;u.y=p.y+(u.y-p.y)/d*m}}
+ for(const w of walls)if(w.team!==u.team){const d=Math.hypot(u.x-w.x,u.y-w.y),m=w.r+u.r;if(d<m&&d>0){u.x=w.x+(u.x-w.x)/d*m;u.y=w.y+(u.y-w.y)/d*m}}
 }
 function respawn(u){const p=spawnPos(u.team),n=mkUnit(u.c,p.x,p.y,u.team);n.lane=u.lane;n.energy=u.hero?30:0;Object.assign(u,n);if(u===player)deathPos=null}
 function updUnit(u,dt,active){
  for(let i=0;i<6;i++)u.cds[i]=Math.max(0,u.cds[i]-dt);
- for(const k of['stun','deflect','slow','haste','rage','rapid','unstop','swing','blockLock','aiBlock'])u[k]=Math.max(0,u[k]-dt);u.flash-=dt;
+ for(const k of['stun','deflect','slow','haste','rage','rapid','unstop','swing','blockLock','aiBlock','root','stealth','ambush'])u[k]=Math.max(0,u[k]-dt);u.flash-=dt;
  if(u.shieldT>0){u.shieldT-=dt;if(u.shieldT<=0)u.shield=0}
+ if(u.ch.pass==='regen'&&!u.dead)u.hp=Math.min(u.max,u.hp+3*dt);
  if(u.dead){u.deadT+=dt;if(mode==='battle'&&active&&(u.respawn-=dt)<=0)respawn(u);return}
  if(u.dash){const d=u.dash;d.t+=dt;const k=Math.min(1,d.t/d.dur);u.x=d.sx+(d.tx-d.sx)*k;u.y=d.sy+(d.ty-d.sy)*k;u.z=Math.sin(Math.PI*k)*d.jump;u.moving=0;
   if(near(u.x,u.y))fx.push({x:u.x,y:u.y,z:u.z+(u.ch.look.jet?20:30),vx:0,vy:0,t:.25,m:.25,col:u.ch.look.jet?'#f93':canBlock(u)?saberCol(u):'#aab',r:6});
-  if(d.dmg&&!d.hitDone)for(const e of enemies(u))if(dist(u,e)<u.r+e.r+12){d.hitDone=true;hit(e,u,d.dmg,{melee:1,slow:1,kb:d.kb,ex:d.ex});break}
+  if(d.dmg&&!d.hitDone)for(const e of enemies(u))if(dist(u,e)<u.r+e.r+12){d.hitDone=true;hit(e,u,d.dmg,{melee:1,slow:1,kb:d.kb,air:d.air,ex:d.ex});break}
   if(k>=1){u.dash=null;u.z=0;if(d.end){EX=d.ex;d.end();EX=false}}collide(u);return}
- u.z=0;let mx=0,my=0;
+ u.z=0;if(u.airT>0){u.airT-=dt;u.z=Math.max(0,Math.sin(Math.PI*(1-u.airT/.55))*45)}let mx=0,my=0;
  const ctl=u.ctrl==='remote'&&!coop()?null:u.ctrl,I=ctl==='local'?localInput():ctl==='remote'?remoteInput():null;
  // parade (F) : bloque et renvoie les tirs de face, consomme de l'endurance
  const wantB=canBlock(u)&&active&&u.stun<=0&&!u.cast&&!u.spin&&u.blockLock<=0&&u.stam>0&&(ctl?!!(I&&I.f):u.aiBlock>0);
@@ -309,12 +472,12 @@ function updUnit(u,dt,active){
    if(I.l)use(u,0,td);if(p.rmb)use(u,1,td,undefined,ex);if(p.Space)use(u,2,td,undefined,ex);if(p.KeyQ)use(u,3,td,undefined,ex);if(p.KeyE)use(u,4,td,undefined,ex);if(p.KeyR)use(u,5,td)}
   }else[mx,my]=ai(u,dt);
  }
- if(u.cast){u.cast.t+=dt;if(u.cast.t>=u.cast.dur){const c=u.cast;u.cast=null;fire(u,u.ch.abil[c.i],c.aimOv??u.aim,c.td,c.ex)}}
- if(u.spin){const s=u.spin;s.t-=dt;s.k-=dt;u.swing=.18;u.swingA+=dt*22;if(s.k<=0){s.k=.15;S('saber',u);EX=s.ex;aoe(u,u.x,u.y,s.r,s.dmg,{quiet:1,melee:1},saberCol(u));EX=false}if(s.t<=0)u.spin=null}
+ if(u.cast){u.cast.t+=dt;if(u.cast.t>=u.cast.dur){const c=u.cast;u.cast=null;fire(u,castAb(u,c),c.aimOv??u.aim,c.td,c.ex)}}
+ if(u.spin){const s=u.spin;s.t-=dt;s.k-=dt;u.swing=.18;u.swingA+=dt*22;if(s.k<=0){s.k=.15;S('saber',u);EX=s.ex;aoe(u,u.x,u.y,s.r,s.dmg,{quiet:1,melee:1,pull:s.pull?500:0},saberCol(u));EX=false}if(s.t<=0)u.spin=null}
  if(u.flame){const f=u.flame;f.t-=dt;f.k-=dt;if(near(u.x,u.y))for(let i=0;i<3;i++){const b=u.aim+(rnd()-.5)*.6,s=350+rnd()*150;fx.push({x:u.x+Math.cos(u.aim)*20,y:u.y+Math.sin(u.aim)*20,z:26,vx:Math.cos(b)*s,vy:Math.sin(b)*s,t:.4,m:.4,col:rnd()<.5?'#f93':'#fc4',r:4+rnd()*3})}
   if(f.k<=0){f.k=.12;S('flame',u);for(const e of enemies(u))if(dist(u,e)<175+e.r&&angDiff(ang(u,e),u.aim)<.4)hit(e,u,3.5,{slow:.5,unblockable:1})}if(f.t<=0)u.flame=null}
  const l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l}
- const sp=u.ch.spd*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.4:1)*(u.flame?.5:1)*(u.spin?.8:1)*(u.block?.55:1);u.vx=mx*sp;u.vy=my*sp;
+ const sp=u.ch.spd*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.4:1)*(u.flame?.5:1)*(u.spin?.8:1)*(u.block?.55:1)*(u.root>0?0:1)*(u.ch.pass==='speed'?1.1:1);u.vx=mx*sp;u.vy=my*sp;
  u.x+=(u.vx+u.kx)*dt;u.y+=(u.vy+u.ky)*dt;const dec=Math.exp(-7*dt);u.kx*=dec;u.ky*=dec;
  u.moving=l>.1;if(u.moving){u.walk+=dt*13*(u.haste>0?1.4:1);if(rnd()<dt*9&&near(u.x,u.y))fx.push({x:u.x+(rnd()-.5)*10,y:u.y+4,z:2,vx:(rnd()-.5)*30,vy:(rnd()-.5)*20,t:.5,m:.5,col:'#5a6478',r:3})}
  if(u.haste>0&&rnd()<dt*20&&near(u.x,u.y))fx.push({x:u.x,y:u.y,z:20+rnd()*30,vx:(rnd()-.5)*40,vy:(rnd()-.5)*40,t:.4,m:.4,col:u.rage>0?'#f44':'#fc6',r:3});
@@ -343,16 +506,25 @@ function update(dt){
  for(const z of zones){z.t-=dt;if(z.t<=0){z.done=1;EX=z.ex;aoe(z.owner,z.x,z.y,z.r,z.dmg,Object.assign({unblockable:1},z.o),z.col);EX=false;if(near(z.x,z.y)){SFX.zap();SFX.boom();shake=Math.max(shake,.25);
   for(let i=0;i<4;i++)fx.push({bolt:2,x:z.x+(rnd()-.5)*z.r,y:z.y+(rnd()-.5)*z.r*.8,t:.3,m:.3,col:z.col})}}}
  zones=zones.filter(z=>!z.done);
+ for(const tr of traps){tr.t-=dt;tr.arm-=dt;if(tr.arm>0)continue;for(const e of units)if(e.team!==tr.team&&!e.dead&&Math.hypot(e.x-tr.x,e.y-tr.y)<tr.r){tr.t=0;EX=tr.ex;aoe(tr.owner,tr.x,tr.y,tr.r+10,tr.dmg,{root:tr.root,stun:tr.stun,slow:tr.slow,unblockable:1},tr.col);EX=false;if(nearMe(tr.x,tr.y))SFX.boom();break}}
+ traps=traps.filter(t=>t.t>0);
+ for(const tu of turrets){tu.t-=dt;tu.cd-=dt;if(tu.cd>0)continue;let tg=null,bd=tu.range;for(const e of units)if(e.team!==tu.team&&!e.dead&&!(e.stealth>0)){const d=Math.hypot(e.x-tu.x,e.y-tu.y);if(d<bd){bd=d;tg=e}}
+  if(tg){tu.cd=.45;tu.aim=Math.atan2(tg.y-tu.y,tg.x-tu.x);projs.push({x:tu.x+Math.cos(tu.aim)*14,y:tu.y+Math.sin(tu.aim)*14,vx:Math.cos(tu.aim)*800,vy:Math.sin(tu.aim)*800,owner:tu.owner,src:tu.owner,rot:0,r:5,dmg:tu.dmg,life:tu.range/800,life0:1,col:tu.col,ex:false,basic:false,hitSet:null});if(nearMe(tu.x,tu.y))tone('square',1300,300,.08,.012)}}
+ turrets=turrets.filter(t=>t.t>0);
+ for(const f of fields){f.t-=dt;f.k-=dt;if(f.k>0)continue;f.k=.25;for(const e of units){if(e.dead||Math.hypot(e.x-f.x,e.y-f.y)>f.r+e.r)continue;if(e.team===f.team){if(f.heal)e.hp=Math.min(e.max,e.hp+f.heal*.25)}else{if(f.dps)hit(e,f.owner,f.dps*.25,{silent:1});if(f.slow&&e.unstop<=0)e.slow=Math.max(e.slow,.35)}}}
+ fields=fields.filter(f=>f.t>0);
+ for(const w of walls)w.t-=dt;walls=walls.filter(w=>w.t>0);
  for(const p of projs){
   p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;p.rot+=dt*25;
+  if(p.ret){p.trav=(p.trav||0)+Math.hypot(p.vx,p.vy)*dt;if(!p.back&&p.trav>=p.ret){p.back=1;p.hitSet=null}if(p.back){const o=p.src,a=Math.atan2(o.y-p.y,o.x-p.x);p.vx=Math.cos(a)*760;p.vy=Math.sin(a)*760;if(Math.hypot(o.x-p.x,o.y-p.y)<26||o.dead)p.life=0}}if(p.hook){p.ox=p.owner.x;p.oy=p.owner.y}
   if(p.rocket&&near(p.x,p.y))fx.push({x:p.x,y:p.y,z:28,vx:(rnd()-.5)*40,vy:(rnd()-.5)*40,t:.3,m:.3,col:'#fa3',r:4});
   let dead=p.life<=0||p.x<B.x||p.x>B.x+B.w||p.y<B.y||p.y>B.y+B.h;
-  if(!p.grenade)for(const pl of OBST)if(Math.abs(p.x-pl.x)<pl.r+p.r&&Math.hypot(p.x-pl.x,p.y-pl.y)<pl.r+p.r){dead=true;break}
+  if(!p.grenade&&!p.ret){for(const pl of OBST)if(Math.abs(p.x-pl.x)<pl.r+p.r&&Math.hypot(p.x-pl.x,p.y-pl.y)<pl.r+p.r){dead=true;break}for(const w of walls)if(w.team!==p.owner.team&&Math.hypot(p.x-w.x,p.y-w.y)<w.r+p.r){dead=true;break}}
   if(!dead&&!p.grenade)for(const t of units){if(t.dead||t.team===p.owner.team||Math.abs(t.x-p.x)>40)continue;if(Math.hypot(t.x-p.x,t.y-p.y)>=t.r+p.r)continue;
    if(p.pierce){p.hitSet=p.hitSet||new Set();if(p.hitSet.has(t))continue;p.hitSet.add(t)}
    if(t.deflect>0&&!p.rocket){reflect(p,t);break}
    if(t.block&&!p.rocket&&facing(t,p)){parry(p,t);break}
-   if(!p.rocket)hit(t,p.owner,p.dmg,{ex:p.ex});if(!p.pierce)dead=true;break}
+   if(!p.rocket&&hit(t,p.owner,p.dmg,{ex:p.ex,basic:p.basic,root:p.root,stun:p.stun,exec:p.exec,slow:p.slow}))onProjHit(p,t);if(!p.pierce)dead=true;break}
   if(dead){p.dead=1;if((p.grenade||p.rocket)&&!p.boom)explode(p);else if(!p.boom&&near(p.x,p.y))sparks(p.x,p.y,p.col,4);if(p.saber)p.src.saberOut=0}
  }
  projs=projs.filter(p=>!p.dead);
@@ -368,7 +540,8 @@ const scl=y=>.97+.3*(y-cam.y)/555;
 function P(x,y,z=0){const s=scl(y);return{x:W/2+(x-cam.x)*s,y:Yc+(y-cam.y)*K-z*s,s}}
 function unP(mx,my){const y=cam.y+(my-Yc)/K;return{x:cam.x+(mx-W/2)/scl(y),y}}
 function gEll(x,y,r,a0=0,a1=7){const p=P(x,y);g.beginPath();g.ellipse(p.x,p.y,r*p.s,r*p.s*K,0,a0,a1)}
-const CW=175,CHt=172,cards=HEROES.map((c,i)=>({x:82+(i%6)*(CW+13),y:i<6?132:332,w:CW,h:CHt,c}));
+const LIGHT=HEROES.filter(h=>!CH[h].side),DARK=HEROES.filter(h=>CH[h].side),CW=110,CHt=92;
+const cards=[...LIGHT.map((c,i)=>({x:58+(i%10)*117,y:136+Math.floor(i/10)*97,w:CW,h:CHt,c})),...DARK.map((c,i)=>({x:58+(i%10)*117,y:346+Math.floor(i/10)*97,w:CW,h:CHt,c}))];
 const modeBtns=[{x:410,y:76,w:225,h:30,m:'arena',t:'ARÈNE · 1 contre 1'},{x:645,y:76,w:225,h:30,m:'battle',t:'BATAILLE · 20 contre 20'}];
 const coopBtn={x:1040,y:76,w:158,h:30};
 const inRect=(p,r)=>p.x>r.x&&p.x<r.x+r.w&&p.y>r.y&&p.y<r.y+r.h;
@@ -389,26 +562,30 @@ function drawSky(){
 }
 
 // ---------- Petits personnages ----------
-function blade(x0,y0,x1,y1,col,flick){g.save();g.lineCap='round';g.shadowColor=col;g.shadowBlur=18;g.strokeStyle=col;g.lineWidth=flick?5+rnd()*3:6;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();g.shadowBlur=0;g.strokeStyle='#fff';g.lineWidth=2;g.stroke();g.restore()}
+function blade(x0,y0,x1,y1,col,flick,dark){g.save();g.lineCap='round';g.shadowColor=dark?'#fff':col;g.shadowBlur=GLOW;g.strokeStyle=dark?'#0a0a0a':col;g.lineWidth=flick?5+rnd()*3:6;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();g.shadowBlur=0;g.strokeStyle=dark?'#666':'#fff';g.lineWidth=2;g.stroke();g.restore()}
 function drawWeapon(u,a,L){
  const w=L.weapon,dx=Math.cos(a),dy=Math.sin(a)*K,l=Math.hypot(dx,dy),ux=dx/l,uy=dy/l;
  const raise=u.cast||u.block?-8:0,hx=Math.cos(u.aim)*11,hy=-26+Math.sin(u.aim)*4+raise;
+ if(L.r2){if(u.cast||u.swing>0){g.strokeStyle=rgba('#7df',.9);g.lineWidth=1.5;for(let i=0;i<3;i++){g.beginPath();g.moveTo(0,-40);for(let j=1;j<5;j++)g.lineTo(ux*j*7+(rnd()-.5)*10,-40+uy*j*7+(rnd()-.5)*10);g.stroke()}}return}
  g.strokeStyle=u.flash>0?'#fff':L.arm;g.lineWidth=5;g.lineCap='round';g.beginPath();g.moveTo(0,-33);g.lineTo(hx,hy);g.stroke();
- if(w.t==='blaster'||w.t==='bowcaster'){g.save();g.translate(hx,hy);g.rotate(Math.atan2(uy,ux));
+ if(w.t==='blaster'||w.t==='bowcaster'||w.t==='rifle'||w.t==='pistols'){g.save();g.translate(hx,hy);g.rotate(Math.atan2(uy,ux));
   if(w.t==='bowcaster'){g.fillStyle='#5a3a1a';g.fillRect(-4,-4,30,8);g.strokeStyle='#999';g.lineWidth=2;g.beginPath();g.moveTo(22,-10);g.quadraticCurveTo(28,0,22,10);g.stroke();g.fillStyle='#333';g.fillRect(4,0,5,8)}
-  else{g.fillStyle='#222';g.fillRect(-3,-3,24,6);g.fillStyle='#444';g.fillRect(-1,0,5,7);g.fillRect(14,-5,6,3)}
-  if(u.cast||u.flame){g.fillStyle=rgba(u.flame?'#ff9a3a':'#ffb03a',.5+rnd()*.5);g.beginPath();g.arc(26,0,4+rnd()*3,0,7);g.fill()}g.restore();return}
+  else{const Lr=w.t==='rifle'?34:24;g.fillStyle='#222';g.fillRect(-3,-3,Lr,6);g.fillStyle='#444';g.fillRect(-1,0,5,7);g.fillRect(14,-5,6,3)}
+  if(u.cast||u.flame){g.fillStyle=rgba(u.flame?'#ff9a3a':'#ffb03a',.5+rnd()*.5);g.beginPath();g.arc(26,0,4+rnd()*3,0,7);g.fill()}g.restore();
+  if(w.t==='pistols'){const h2x=-hx*.5,h2y=hy+3;g.strokeStyle=L.arm;g.lineWidth=4;g.beginPath();g.moveTo(0,-33);g.lineTo(h2x,h2y);g.stroke();g.save();g.translate(h2x,h2y);g.rotate(Math.atan2(uy,ux));g.fillStyle='#222';g.fillRect(-3,-3,20,6);g.restore()}return}
+ if(w.t==='spear'){g.strokeStyle='#8a6a3a';g.lineWidth=3;g.beginPath();g.moveTo(hx-ux*14,hy-uy*14+6);g.lineTo(hx+ux*30,hy+uy*30-10);g.stroke();circ(hx+ux*32,hy+uy*32-11,3,'#bbb');return}
+ if(w.t==='none')return;
  if(w.t==='hands'){if(u.cast||u.swing>0){g.strokeStyle=rgba('#b8f',.9);g.lineWidth=1.5;for(let i=0;i<3;i++){g.beginPath();g.moveTo(hx,hy);for(let j=1;j<5;j++)g.lineTo(hx+ux*j*6+(rnd()-.5)*10,hy+uy*j*6+(rnd()-.5)*10);g.stroke()}}circ(hx,hy,3,'#c9bfb0');return}
  if(u.saberOut>0||u.dead)return;
  const len=w.short?30:42;
  g.strokeStyle='#bbb';g.lineWidth=4;g.beginPath();g.moveTo(hx-ux*5,hy-uy*5+2);g.lineTo(hx+ux*3,hy+uy*3-1);g.stroke();
- if(u.block&&u.swing<=0){const px=-uy,py=ux;blade(hx-px*8,hy-py*8,hx+px*len*.8,hy+py*len*.8-len*.6,w.col,w.cross);if(w.double)blade(hx-px*8,hy-py*8,hx-px*len*.8,hy-py*len*.8+len*.3,w.col);return}
+ if(u.block&&u.swing<=0){const px=-uy,py=ux;blade(hx-px*8,hy-py*8,hx+px*len*.8,hy+py*len*.8-len*.6,w.col,w.cross,w.dark);if(w.double)blade(hx-px*8,hy-py*8,hx-px*len*.8,hy-py*len*.8+len*.3,w.col);return}
  const ex=hx+ux*len,ey=hy+uy*len-16;
- blade(hx+ux*3,hy+uy*3-1,ex,ey,w.col,w.cross);
+ blade(hx+ux*3,hy+uy*3-1,ex,ey,w.col,w.cross,w.dark);
  if(w.double)blade(hx-ux*5,hy-uy*5+2,hx-ux*(len+4),hy-uy*(len+4)+14,w.col);
  if(w.cross){const px=-uy*8,py=ux*8;blade(hx+ux*4-px,hy+uy*4-py,hx+ux*4+px,hy+uy*4+py,w.col,1)}
  if(w.two){const h2x=-hx*.6,h2y=hy+3,b=a+.9,vx=Math.cos(b),vy=Math.sin(b)*K;g.strokeStyle=L.arm;g.lineWidth=4;g.beginPath();g.moveTo(0,-33);g.lineTo(h2x,h2y);g.stroke();blade(h2x,h2y,h2x+vx*38,h2y+vy*38-14,w.two)}
- if(u.cast&&u.ch.abil[u.cast.i].tele){g.strokeStyle=rgba('#b8f',.8);g.lineWidth=1.5;for(let i=0;i<2;i++){g.beginPath();g.moveTo(-hx*.4,hy);for(let j=1;j<5;j++)g.lineTo(-hx*.4+(rnd()-.5)*14,hy-j*4+(rnd()-.5)*4);g.stroke()}}
+ if(u.cast&&castAb(u,u.cast).tele){g.strokeStyle=rgba('#b8f',.8);g.lineWidth=1.5;for(let i=0;i<2;i++){g.beginPath();g.moveTo(-hx*.4,hy);for(let j=1;j<5;j++)g.lineTo(-hx*.4+(rnd()-.5)*14,hy-j*4+(rnd()-.5)*4);g.stroke()}}
 }
 function drawHead(u,L,hx,hy,fx,back,fl){
  const h=L.head,ex=hx+fx*3;
@@ -417,23 +594,37 @@ function drawHead(u,L,hx,hy,fx,back,fl){
   case'hair':circ(hx,hy,11,fl?'#fff':h.skin);g.fillStyle=h.hair;g.beginPath();if(back)g.arc(hx,hy,11.5,0,7);else g.arc(hx,hy-1,11.5,Math.PI*1.05,Math.PI*1.95);g.fill();
    if(h.style==='buns'){circ(hx-12,hy+1,5.5,h.hair);circ(hx+12,hy+1,5.5,h.hair)}
    if(h.style==='rey'){circ(hx-fx*6,hy-9,4,h.hair);circ(hx-fx*8,hy-3,3.5,h.hair)}
-   eyes('#222');break;
+   if(h.long||h.style==='long'){g.fillRect(hx-12,hy-3,4,13);g.fillRect(hx+8,hy-3,4,13)}
+   if(h.style==='bun')circ(hx-fx*7,hy-7,5,h.hair);
+   eyes(h.eye||'#222');
+   if(!back){if(h.beard){g.fillStyle=h.beard;if(h.mus)g.fillRect(ex-5,hy+5,10,2);else{g.beginPath();g.arc(ex,hy+3,8.5,.1,Math.PI-.1);g.fill()}}if(h.scar){g.strokeStyle='#b77';g.lineWidth=1;g.beginPath();g.moveTo(ex+4,hy-4);g.lineTo(ex+5,hy+3);g.stroke()}}break;
+  case'bald':circ(hx,hy,11,fl?'#fff':h.skin);if(h.mark){g.strokeStyle=h.mark;g.lineWidth=1.5;g.beginPath();g.moveTo(hx-6,hy-10);g.lineTo(hx-3,hy-3);g.moveTo(hx+6,hy-10);g.lineTo(hx+3,hy-3);g.moveTo(hx,hy-11);g.lineTo(hx,hy-6);g.stroke()}eyes(h.eye||'#222');break;
+  case'togruta':g.fillStyle='#e8eef8';g.beginPath();g.moveTo(hx-11,hy-4);g.lineTo(hx-8,hy-20);g.lineTo(hx-3,hy-6);g.fill();g.beginPath();g.moveTo(hx+11,hy-4);g.lineTo(hx+8,hy-20);g.lineTo(hx+3,hy-6);g.fill();
+   g.fillStyle='#3a6ad0';g.fillRect(hx-10,hy-14,3,3);g.fillRect(hx+7,hy-14,3,3);g.fillStyle='#e8eef8';g.fillRect(hx-12,hy,5,16);g.fillRect(hx+7,hy,5,16);g.fillStyle='#3a6ad0';g.fillRect(hx-12,hy+6,5,3);g.fillRect(hx+7,hy+6,5,3);
+   circ(hx,hy,10.5,fl?'#fff':'#e07a3a');if(!back){g.fillStyle='#fff';g.fillRect(ex-6,hy-5,4,2);g.fillRect(ex+2,hy-5,4,2);g.fillRect(ex-1,hy+2,2,5)}eyes('#2a4a8a');break;
+  case'clone':circ(hx,hy,12,fl?'#fff':'#f2f2f2');g.fillStyle=h.stripe;g.fillRect(hx-2,hy-12,4,8);if(!back){g.fillStyle='#111';g.fillRect(ex-8,hy-3,16,4);g.fillRect(ex-2,hy-3,4,10);g.fillStyle=h.stripe;g.fillRect(ex-9,hy+3,4,6);g.fillRect(ex+5,hy+3,4,6)}break;
+  case'ewok':circ(hx,hy,13,fl?'#fff':'#7a5530');g.fillStyle='#c46a2a';g.beginPath();g.arc(hx,hy-2,13.5,Math.PI,0);g.fill();g.beginPath();g.moveTo(hx-12,hy-6);g.lineTo(hx-15,hy-14);g.lineTo(hx-8,hy-11);g.fill();g.beginPath();g.moveTo(hx+12,hy-6);g.lineTo(hx+15,hy-14);g.lineTo(hx+8,hy-11);g.fill();
+   if(!back){g.fillStyle='#a07a50';g.beginPath();g.ellipse(ex,hy+5,6,4,0,0,7);g.fill();circ(ex-4,hy,2.5,'#111');circ(ex+4,hy,2.5,'#111');circ(ex,hy+3,1.5,'#222')}break;
+  case'hat':circ(hx,hy,11,fl?'#fff':'#5a8ac0');if(!back){g.fillStyle='#f33';g.fillRect(ex-5,hy,3,2);g.fillRect(ex+2,hy,3,2);g.fillStyle='#ccc';g.fillRect(ex-6,hy+4,12,3)}g.fillStyle='#5a3a22';g.beginPath();g.ellipse(hx,hy-8,22,6,0,0,7);g.fill();g.fillRect(hx-10,hy-20,20,12);g.fillStyle='#3a2414';g.fillRect(hx-10,hy-11,20,2);break;
+  case'lizard':g.fillStyle=fl?'#fff':'#6a8a3a';g.beginPath();g.ellipse(hx+fx*4,hy,12,11,0,0,7);g.fill();if(!back){g.beginPath();g.ellipse(ex+fx*6,hy+4,7,5,0,0,7);g.fill();g.fillStyle='#f33';g.fillRect(ex-5,hy-3,3,3);g.fillRect(ex+3,hy-3,3,3);g.strokeStyle='#4a6a2a';g.lineWidth=1;g.beginPath();g.moveTo(ex-2,hy+7);g.lineTo(ex+8,hy+7);g.stroke()}g.fillStyle='#5a7a2a';for(let i=-1;i<=1;i++)g.fillRect(hx+i*5-1,hy-11,3,3);break;
+  case'ig':g.fillStyle=fl?'#fff':'#8a8a8a';g.fillRect(hx-6,hy-16,12,22);g.fillStyle='#6a6a6a';g.fillRect(hx-7,hy-18,14,4);g.fillStyle='#f33';for(let i=0;i<3;i++)g.fillRect(hx-5+i*4+fx*2,hy-8,2,2);break;
+  case'none':break;
   case'helm':circ(hx,hy,11,fl?'#fff':h.skin);g.fillStyle=h.col;g.beginPath();g.arc(hx,hy-1,12.5,Math.PI,0);g.fill();g.fillRect(hx-13,hy-2,26,3);eyes('#222');break;
-  case'storm':circ(hx,hy,11.5,fl?'#fff':'#f4f4f4');if(!back){g.fillStyle='#111';g.beginPath();g.ellipse(ex-4,hy-1,3.2,2.4,-.3,0,7);g.ellipse(ex+4,hy-1,3.2,2.4,.3,0,7);g.fill();g.fillStyle='#333';g.fillRect(ex-3,hy+5,6,3);g.fillStyle='#7a8';g.fillRect(ex-6,hy+4,2,2);g.fillRect(ex+4,hy+4,2,2)}break;
+  case'storm':circ(hx,hy,11.5,fl?'#fff':h.col||'#f4f4f4');if(!back){g.fillStyle='#111';g.beginPath();g.ellipse(ex-4,hy-1,3.2,2.4,-.3,0,7);g.ellipse(ex+4,hy-1,3.2,2.4,.3,0,7);g.fill();if(h.eye){g.fillStyle=h.eye;g.fillRect(ex-5,hy-2,2,2);g.fillRect(ex+3,hy-2,2,2)}if(h.band){g.fillStyle='#222';g.fillRect(ex-9,hy-3,18,3)}g.fillStyle='#333';g.fillRect(ex-3,hy+5,6,3);g.fillStyle='#7a8';g.fillRect(ex-6,hy+4,2,2);g.fillRect(ex+4,hy+4,2,2)}break;
   case'yoda':g.fillStyle=fl?'#fff':'#8fb35a';g.beginPath();g.moveTo(hx-8,hy-3);g.lineTo(hx-26,hy-8);g.lineTo(hx-9,hy+4);g.fill();g.beginPath();g.moveTo(hx+8,hy-3);g.lineTo(hx+26,hy-8);g.lineTo(hx+9,hy+4);g.fill();
    circ(hx,hy,12,fl?'#fff':'#9cc066');if(!back){circ(ex-4,hy,2.5,'#222');circ(ex+4,hy,2.5,'#222');g.strokeStyle='#6f8f42';g.lineWidth=1;g.beginPath();g.moveTo(ex-4,hy+6);g.lineTo(ex+4,hy+6);g.stroke()}else{g.fillStyle='#ccc';g.fillRect(hx-6,hy-12,12,3)}break;
   case'wookiee':circ(hx,hy,13.5,fl?'#fff':'#7a5530');if(!back){g.fillStyle='#93683d';g.beginPath();g.ellipse(ex,hy+5,7,5,0,0,7);g.fill();circ(ex,hy+3,2,'#222');eyes('#111',hy-3,2,2)}
    g.strokeStyle='#5a3a1e';g.lineWidth=1.2;for(let i=-2;i<=2;i++){g.beginPath();g.moveTo(hx+i*4,hy-12);g.lineTo(hx+i*4+2,hy-6);g.stroke()}break;
   case'vader':circ(hx,hy,13,fl?'#fff':'#0e0e0e');poly([{x:hx-15,y:hy+3},{x:hx+15,y:hy+3},{x:hx+17,y:hy+11},{x:hx-17,y:hy+11}],fl?'#fff':'#0e0e0e');
    if(!back){g.fillStyle='#2a2a2a';g.beginPath();g.ellipse(ex-5,hy,4,3,0,0,7);g.ellipse(ex+5,hy,4,3,0,0,7);g.fill();g.fillStyle='#888';poly([{x:ex-4,y:hy+4},{x:ex+4,y:hy+4},{x:ex,y:hy+11}]);g.fill();g.fillStyle='rgba(255,255,255,.35)';g.fillRect(hx-8,hy-9,5,2)}break;
-  case'kylo':circ(hx,hy,12,fl?'#fff':'#141416');if(!back){g.fillStyle='#9aa';g.fillRect(ex-8,hy-1,16,2);g.fillRect(ex-1,hy-1,2,9);g.fillStyle='#555';g.fillRect(ex-7,hy-6,14,1.5)}break;
+  case'kylo':circ(hx,hy,12,fl?'#fff':'#141416');if(!back){g.fillStyle=h.line||'#9aa';g.fillRect(ex-8,hy-1,16,2);g.fillRect(ex-1,hy-1,2,9);g.fillStyle='#555';g.fillRect(ex-7,hy-6,14,1.5)}break;
   case'mando':circ(hx,hy,12,fl?'#fff':h.col);g.fillStyle='#6b7680';g.fillRect(hx-(fx<0?-10:12),hy-16,2,10);
    if(!back){g.fillStyle=h.stripe||'#333';g.fillRect(hx-3+fx*3,hy-11,6,7);g.fillStyle='#111';g.fillRect(ex-8,hy-3,16,4);g.fillRect(ex-2,hy-3,4,11)}break;
   case'hood':circ(hx,hy,13,fl?'#fff':h.hood);g.beginPath();g.moveTo(hx-13,hy);g.lineTo(hx,hy-19);g.lineTo(hx+13,hy);g.fill();
    if(!back){g.fillStyle=h.skin;g.beginPath();g.ellipse(ex,hy+2,8,9,0,0,7);g.fill();if(h.old){g.strokeStyle='#8a7f72';g.lineWidth=1;g.beginPath();g.moveTo(ex-5,hy+6);g.lineTo(ex-2,hy+8);g.moveTo(ex+5,hy+6);g.lineTo(ex+2,hy+8);g.stroke()}g.fillStyle=h.eyes;g.fillRect(ex-5,hy,3,2);g.fillRect(ex+2,hy,3,2)}break;
-  case'maul':circ(hx,hy,11,fl?'#fff':'#c22');g.strokeStyle='#111';g.lineWidth=2;
+  case'maul':circ(hx,hy,h.horns?12:11,fl?'#fff':h.skin||'#c22');g.strokeStyle='#111';g.lineWidth=2;
    if(!back){g.beginPath();g.moveTo(ex-9,hy-4);g.lineTo(ex-3,hy-1);g.moveTo(ex+9,hy-4);g.lineTo(ex+3,hy-1);g.moveTo(ex,hy-10);g.lineTo(ex,hy-4);g.moveTo(ex-4,hy+8);g.lineTo(ex+4,hy+8);g.stroke();g.fillStyle='#ffd23a';g.fillRect(ex-5,hy+1,3,2);g.fillRect(ex+2,hy+1,3,2)}
-   g.fillStyle='#e8d8a0';for(const [ox,oy] of[[-6,-9],[0,-11],[6,-9],[-3,-12],[3,-12]]){g.beginPath();g.moveTo(hx+ox-1.5,hy+oy+2);g.lineTo(hx+ox,hy+oy-3);g.lineTo(hx+ox+1.5,hy+oy+2);g.fill()}break;
+   g.fillStyle='#e8d8a0';for(const [ox,oy] of[[-6,-9],[0,-11],[6,-9],[-3,-12],[3,-12]]){g.beginPath();g.moveTo(hx+ox-1.5,hy+oy+2);g.lineTo(hx+ox,hy+oy-(h.horns?7:3));g.lineTo(hx+ox+1.5,hy+oy+2);g.fill()}break;
   case'grievous':g.fillStyle=fl?'#fff':'#e8e2d0';g.beginPath();g.ellipse(hx+fx*2,hy-2,10,13,0,0,7);g.fill();
    if(!back){g.fillStyle='#2a2a2a';g.beginPath();g.ellipse(ex-4,hy-2,3.5,3,0,0,7);g.ellipse(ex+4,hy-2,3.5,3,0,0,7);g.fill();g.fillStyle='#ffd23a';g.fillRect(ex-5,hy-3,2,2);g.fillRect(ex+3,hy-3,2,2);g.fillStyle='#8a8070';g.fillRect(ex-3,hy+5,6,4)}break;
  }
@@ -444,6 +635,7 @@ function drawChar(u,bx,by,s){
  const step=u.moving?Math.sin(u.walk):0,bob=u.moving?Math.abs(Math.cos(u.walk))*1.6:0,sk=L.scale||1;
  g.save();g.translate(bx,by);g.scale(s*sk,s*sk);
  if(u.dead){g.globalAlpha=Math.max(0,1-u.deadT*.6);g.rotate(Math.min(1.4,u.deadT*6)*(fx<0?-1:1))}
+ if(L.r2){drawR2(u,fx,back,fl);g.restore();return}
  const lw=L.bony?3:5;g.fillStyle=fl?'#fff':L.legs;g.fillRect(-6+step*3,-17,lw,14);g.fillRect(2-step*3,-17,lw,14);
  g.fillStyle=L.boot;g.fillRect(-8+step*3,-5,7,5);g.fillRect(1-step*3,-5,7,5);
  g.translate(0,-bob);
@@ -468,14 +660,22 @@ function drawChar(u,bx,by,s){
  if(!back)drawWeapon(u,a,L);
  g.restore();
 }
+function drawR2(u,fx,back,fl){const st=u.moving?Math.sin(u.walk)*1.5:0;
+ g.fillStyle='#c8d0d8';g.fillRect(-15,-30+st,5,28);g.fillRect(10,-30-st,5,28);g.fillStyle='#8a929a';g.fillRect(-16,-4,7,4);g.fillRect(9,-4,7,4);
+ g.fillStyle=fl?'#fff':'#eef2f8';g.fillRect(-10,-34,20,28);g.fillStyle='#2a5fb0';g.fillRect(-7,-28,5,7);g.fillRect(2,-22,6,5);g.fillRect(-7,-16,14,3);
+ g.fillStyle=fl?'#fff':'#c8d0d8';g.beginPath();g.arc(0,-34,10.5,Math.PI,0);g.fill();g.fillStyle='#2a5fb0';g.fillRect(-9,-38,4,3);g.fillRect(5,-38,4,3);
+ if(!back){circ(fx*4,-39,3,'#111');circ(fx*4+4,-41,1.2,'#f33')}else circ(0,-40,1.5,'#3af');drawWeapon(u,u.aim,u.ch.look)}
 function drawUnit(u){
  if(u.dead&&u.deadT>1.6)return;
+ if(u.stealth>0&&!u.dead&&player&&u.team!==player.team&&dist(u,player)>140){g.strokeStyle='rgba(200,220,255,.15)';g.lineWidth=1;gEll(u.x,u.y,18);g.stroke();return}
+
  const p=P(u.x,u.y,u.z),ally=u.team===0,tc=u===player?'#ffffff':u.human?'#7f7':ally?'#4db8ff':'#ff4d4d',S2=p.s*1.3,sk=u.ch.look.scale||1;
  g.fillStyle='rgba(0,0,0,.4)';gEll(u.x,u.y,16*sk*(1-u.z/200));g.fill();
  if(!u.dead){g.strokeStyle=tc;g.lineWidth=u.hero?2.5:1.5;g.globalAlpha=u.hero?.85:.55;gEll(u.x,u.y,(u.hero?22:17)*Math.max(1,sk));g.stroke();g.globalAlpha=1}
  if(u.block){g.strokeStyle=saberCol(u);g.lineWidth=4;g.globalAlpha=.55;gEll(u.x,u.y,34,u.aim-1.3,u.aim+1.3);g.stroke();g.globalAlpha=1}
  if(u.deflect>0){g.strokeStyle='#7df';g.lineWidth=3;g.globalAlpha=.5+Math.sin(performance.now()/40)*.3;g.beginPath();g.ellipse(p.x,p.y-38*p.s*sk,36*p.s*sk,50*p.s*sk,0,0,7);g.stroke();g.globalAlpha=1}
  if(u.unstop>0){g.strokeStyle='#fc6';g.lineWidth=2;g.globalAlpha=.6;gEll(u.x,u.y,30);g.stroke();g.globalAlpha=1}
+ if(u.root>0){g.strokeStyle='#9f6';g.lineWidth=3;gEll(u.x,u.y,24);g.stroke()}if(u.stealth>0){g.strokeStyle='rgba(200,220,255,.5)';g.setLineDash([4,4]);g.lineWidth=2;gEll(u.x,u.y,30);g.stroke();g.setLineDash([])}
  drawChar(u,p.x,p.y,S2);
  if(u.shield>0){g.fillStyle='rgba(255,180,60,.2)';g.strokeStyle='#fb4';g.lineWidth=2;g.beginPath();g.ellipse(p.x,p.y-38*p.s*sk,34*p.s*sk,48*p.s*sk,0,0,7);g.fill();g.stroke()}
  const top=p.y-(100*sk)*p.s;
@@ -488,7 +688,7 @@ function drawUnit(u){
  if(u.shield>0){g.fillStyle='#fda';g.fillRect(x+w*u.hp/u.max,y,Math.min(w*u.shield/u.max,w),6)}
  g.fillStyle='#ffe81f';g.fillRect(x,y+7,w*u.energy/100,2);
  if(canBlock(u)&&u.stam<100){g.fillStyle=u.blockLock>0?'#a55':'#7df';g.fillRect(x,y+10,w*u.stam/100,2)}
- if(u.cast){g.fillStyle='rgba(0,0,0,.7)';g.fillRect(x,y+13,w,5);g.fillStyle=u.cast.ex?'#ffe81f':'#fff';g.fillRect(x,y+13,w*u.cast.t/u.cast.dur,5);text(u.ch.abil[u.cast.i].n,p.x,y+29,11,'#fff')}
+ if(u.cast){g.fillStyle='rgba(0,0,0,.7)';g.fillRect(x,y+13,w,5);g.fillStyle=u.cast.ex?'#ffe81f':'#fff';g.fillRect(x,y+13,w*u.cast.t/u.cast.dur,5);text(castAb(u,u.cast).n,p.x,y+29,11,'#fff')}
 }
 function drawObst(pl){
  const p=P(pl.x,pl.y),rx=pl.r*p.s,ry=rx*K,h=(pl.rock?60:105)*p.s;
@@ -500,7 +700,7 @@ function drawObst(pl){
  g.fillStyle=pl.rock?'#7d6a54':'#6d7894';g.beginPath();g.ellipse(p.x,p.y-h,rx,ry,0,0,7);g.fill();
  g.strokeStyle=pl.rock?'#5a4a3a':'#3a4458';g.lineWidth=2;g.beginPath();g.ellipse(p.x,p.y-h,rx*.6,ry*.6,0,0,7);g.stroke();
 }
-function drawProj(p){
+function drawProj(p){if(p.hook&&p.ox!=null){const a=P(p.ox,p.oy,30),b=P(p.x,p.y,28);g.strokeStyle='#999';g.lineWidth=2;g.setLineDash([5,3]);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.setLineDash([])}
  const z=p.grenade?Math.sin(Math.PI*(1-p.life/p.life0))*70+15:28,q=P(p.x,p.y,z);
  g.fillStyle='rgba(0,0,0,.35)';gEll(p.x,p.y,p.r*.9);g.fill();
  g.save();g.translate(q.x,q.y);g.scale(q.s,q.s);g.shadowColor=p.col;g.shadowBlur=14;
@@ -564,10 +764,17 @@ function drawLights(){
  if(orb)glow(orb.x,orb.y,90,'#6f9',.25);
  g.restore();
 }
+function drawDeploy(){const t=performance.now()/1000;
+ for(const f of fields){if(!near(f.x,f.y))continue;g.fillStyle=rgba(f.col,.13+Math.sin(t*4)*.03);gEll(f.x,f.y,f.r);g.fill();g.strokeStyle=rgba(f.col,.6);g.lineWidth=2;g.setLineDash([10,6]);g.lineDashOffset=-t*20;gEll(f.x,f.y,f.r);g.stroke();g.setLineDash([]);
+  if(f.heal){const p=P(f.x,f.y,10+((t*40)%40));g.fillStyle=rgba('#6f9',.6);g.fillRect(p.x-1,p.y-5,2,10);g.fillRect(p.x-5,p.y-1,10,2)}}
+ for(const tr of traps){if(!near(tr.x,tr.y))continue;const mine=player&&tr.team===player.team;g.globalAlpha=mine?.9:.35;g.strokeStyle=tr.col;g.lineWidth=1.5;g.setLineDash([3,4]);gEll(tr.x,tr.y,tr.r);g.stroke();g.setLineDash([]);const p=P(tr.x,tr.y,3);circ(p.x,p.y,6*p.s,'#333');circ(p.x,p.y,2.5*p.s,tr.arm>0?'#666':Math.sin(t*10)>0?tr.col:'#300');g.globalAlpha=1}}
+function drawTurret(tu){const p=P(tu.x,tu.y),s=p.s*(tu.big?1.3:1),mine=player&&tu.team===player.team;g.fillStyle='rgba(0,0,0,.35)';gEll(tu.x,tu.y,12);g.fill();g.strokeStyle='#666';g.lineWidth=2*s;for(const k of[-1,0,1]){g.beginPath();g.moveTo(p.x,p.y-14*s);g.lineTo(p.x+k*9*s,p.y);g.stroke()}
+ g.save();g.translate(p.x,p.y-18*s);g.rotate(Math.atan2(Math.sin(tu.aim||0)*K,Math.cos(tu.aim||0)));g.fillStyle=mine?'#8ab':'#a88';g.fillRect(-6*s,-5*s,14*s,10*s);g.fillStyle='#222';g.fillRect(6*s,-2*s,10*s,4*s);g.restore();circ(p.x,p.y-24*s,2*s,tu.col)}
+function drawWall(w){const p=P(w.x,w.y),rx=w.r*p.s,h=60*p.s,col=player&&w.team===player.team?'90,180,255':'255,90,90';g.fillStyle=`rgba(${col},.25)`;g.fillRect(p.x-rx,p.y-h,rx*2,h);g.strokeStyle=`rgba(${col},.8)`;g.lineWidth=1.5;g.strokeRect(p.x-rx,p.y-h,rx*2,h)}
 function drawTelegraphs(){
  for(const z of zones){if(!near(z.x,z.y))continue;const k=1-z.t/z.m;g.fillStyle=rgba(z.col,.12);gEll(z.x,z.y,z.r);g.fill();g.fillStyle=rgba(z.col,.3);gEll(z.x,z.y,z.r*k);g.fill();g.strokeStyle=z.col;g.lineWidth=2;gEll(z.x,z.y,z.r);g.stroke()}
  for(const p of projs)if(p.grenade&&near(p.x,p.y)){g.strokeStyle='rgba(255,90,90,.8)';g.lineWidth=2;g.setLineDash([6,5]);gEll(p.tx,p.ty,p.ar||80);g.stroke();g.setLineDash([])}
- for(const u of units){if(!u.cast||u.dead||!near(u.x,u.y))continue;const ab=u.ch.abil[u.cast.i],t=teleTarget(u),k=u.cast.t/u.cast.dur,col=u.cast.ex?'#ffe81f':u.team?'#ff5050':'#5ab8ff';
+ for(const u of units){if(!u.cast||u.dead||!near(u.x,u.y))continue;const ab=castAb(u,u.cast),t=teleTarget(u),k=u.cast.t/u.cast.dur,col=u.cast.ex?'#ffe81f':u.team?'#ff5050':'#5ab8ff';
   if(t){g.fillStyle=rgba(col,.12);gEll(t.x,t.y,t.r);g.fill();g.fillStyle=rgba(col,.28);gEll(t.x,t.y,t.r*k);g.fill();g.strokeStyle=col;g.lineWidth=2;gEll(t.x,t.y,t.r);g.stroke()}
   else{const a=u.cast.aimOv??u.aim,len=ab.line?.len||500,w=ab.line?.w||14,c1=P(u.x,u.y),pts=[[-w/2,0],[w/2,0],[w/2,len],[-w/2,len]].map(([s,f])=>P(u.x+Math.cos(a)*f-Math.sin(a)*s,u.y+Math.sin(a)*f+Math.cos(a)*s));
    poly(pts,rgba(col,.15));const e=P(u.x+Math.cos(a)*len*k,u.y+Math.sin(a)*len*k);g.strokeStyle=rgba(col,.7);g.lineWidth=2;g.beginPath();g.moveTo(c1.x,c1.y);g.lineTo(e.x,e.y);g.stroke()}}
@@ -578,30 +785,31 @@ function drawBolt(x0,y0,x1,y1,col){g.strokeStyle=col;g.lineWidth=2.5;g.beginPath
 function drawMenu(){
  g.save();g.shadowColor='#ffe81f';g.shadowBlur=18;text('STAR WARS · ARÈNE',W/2,52,42,'#ffe81f');g.restore();
  {const b=coopBtn,h=inRect(mouse,b),on=!!net.conn;g.fillStyle=on?'#7f7':h?'rgba(40,52,80,.95)':'rgba(13,20,36,.9)';g.strokeStyle=on?'#7f7':'#3a4a6a';g.lineWidth=1.5;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,15);g.fill();g.stroke();text(on?'COOP CONNECTÉ':'COOP EN LIGNE',b.x+b.w/2,b.y+20,13,on?'#10131c':'#cbd6ee')}
- if(net.role){const m=isGuest()?(net.mate?`Ton héros : ${CH[net.mate].name} · l'hôte choisit le mode et lance la partie`:'Choisis ton héros · l\'hôte choisit le mode et lance la partie'):net.conn?`Coéquipier : ${net.mate?CH[net.mate].name:'en train de choisir'} · clique sur ton héros pour lancer`:net.status;text(m,1198,124,12,'#9f9','right','normal')}
+ if(net.role){const m=isGuest()?(net.mate?`Ton héros : ${CH[net.mate].name} · l'hôte choisit le mode et lance la partie`:'Choisis ton héros · l\'hôte choisit le mode et lance la partie'):net.conn?`Coéquipier : ${net.mate?CH[net.mate].name:'en train de choisir'} · clique sur ton héros pour lancer`:net.status;text(m,1222,130,12,'#9f9','right','normal')}
  for(const b of modeBtns){const on=mode===b.m,h=inRect(mouse,b);g.fillStyle=on?'#ffe81f':h?'rgba(40,52,80,.95)':'rgba(13,20,36,.9)';g.strokeStyle=on?'#ffe81f':'#3a4a6a';g.lineWidth=1.5;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,15);g.fill();g.stroke();text(b.t,b.x+b.w/2,b.y+20,13,on?'#10131c':'#cbd6ee')}
- text('HÉROS',82,125,13,'#7fc4ff','left');text('MÉCHANTS',82,326,13,'#ff8a8a','left');
- if(!net.role)text(mode==='arena'?(coop()?'2 contre 2 avec ton coéquipier, au meilleur des 3 manches':'Ton adversaire sera un personnage du camp opposé, au meilleur des 3 manches'):'Ton camp : 4 héros et 16 soldats contre autant en face · 100 renforts par camp (soldat −1, héros −5)',W/2,125,13,'#9fb3d9','center','normal');
+ text('HÉROS',58,130,13,'#7fc4ff','left');text('MÉCHANTS',58,340,13,'#ff8a8a','left');
+ if(!net.role)text(mode==='arena'?(coop()?'2 contre 2 avec ton coéquipier, au meilleur des 3 manches':'Ton adversaire sera un personnage du camp opposé, au meilleur des 3 manches'):'20 personnages contre 20 · 60 renforts par camp, chaque élimination en coûte 1',W/2,130,13,'#9fb3d9','center','normal');
  const t=performance.now()/1000;let hov=null;
  cards.forEach((c,i)=>{const h=inRect(mouse,c),ch=CH[c.c];if(h)hov=c.c;const sideC=ch.side?'#ff6060':'#4db8ff';
   const sel=isGuest()&&net.mate===c.c;g.fillStyle=h||sel?'rgba(22,34,58,.95)':'rgba(13,20,36,.88)';g.strokeStyle=h||sel?'#ffe81f':rgba(sideC,.35);g.lineWidth=2;g.beginPath();g.roundRect(c.x,c.y,c.w,c.h,10);g.fill();g.stroke();
   const fake=mkUnit(c.c,0,0,ch.side);fake.aim=Math.PI/2+Math.sin(t*.8+i)*.9;fake.moving=h;fake.walk=t*13;
-  const fy=c.y+108;g.fillStyle='rgba(0,0,0,.4)';g.beginPath();g.ellipse(c.x+c.w/2,fy,26,8,0,0,7);g.fill();
+  const fy=c.y+68;g.fillStyle='rgba(0,0,0,.4)';g.beginPath();g.ellipse(c.x+c.w/2,fy,26,8,0,0,7);g.fill();
   if(ch.look.weapon.t==='saber'){g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(c.x+c.w/2,fy,0,c.x+c.w/2,fy,60);gr.addColorStop(0,rgba(ch.look.weapon.col,.18));gr.addColorStop(1,rgba(ch.look.weapon.col,0));g.fillStyle=gr;g.fillRect(c.x,c.y,c.w,c.h);g.restore()}
-  drawChar(fake,c.x+c.w/2,fy,1.45);
-  text(ch.name,c.x+c.w/2,c.y+136,15,'#fff');
-  text(ch.desc,c.x+c.w/2,c.y+155,11,'#9fb3d9','center','normal');
+  drawChar(fake,c.x+c.w/2,fy,1.05);
+  text(ch.name.length>16?ch.name.split(' ').slice(-1)[0]:ch.name,c.x+c.w/2,c.y+85,11,'#fff');
  });
  if(hov)hover=hov;
- const ch=CH[hover],y=516;
- g.fillStyle='rgba(13,20,36,.9)';g.strokeStyle='#2a3a5a';g.lineWidth=1;g.beginPath();g.roundRect(82,y,1115,130,10);g.fill();g.stroke();
- text(ch.name,102,y+30,22,ch.side?'#ff9a9a':'#9fd4ff','left');
- text(`${ch.hp} PV · vitesse ${ch.spd} · ${ch.desc}${ch.look.weapon.t==='saber'?` · parade (${lbl.KeyF}) : renvoie les tirs vers le tireur`:''}`,102,y+52,13,'#9fb3d9','left','normal');
- ch.abil.forEach((ab,j)=>{const x=102+(j%3)*370,yy=y+82+Math.floor(j/3)*24;
+ const ch=CH[hover],y=543,ps=PASS[ch.pass];
+ g.fillStyle='rgba(13,20,36,.9)';g.strokeStyle='#2a3a5a';g.lineWidth=1;g.beginPath();g.roundRect(58,y,1164,122,10);g.fill();g.stroke();
+ text(ch.name,76,y+26,20,ch.side?'#ff9a9a':'#9fd4ff','left');g.font='bold 20px "Trebuchet MS",system-ui,sans-serif';const nw=g.measureText(ch.name).width;
+ text(`${ch.hp} PV · vitesse ${ch.spd} · ${ch.desc}${ch.look.weapon.t==='saber'?` · parade (${lbl.KeyF})`:''}`,90+nw,y+26,13,'#9fb3d9','left','normal');
+ if(ps)text(`Passif · ${ps[0]} : ${ps[1]}`,76,y+46,12,'#9f9','left','normal');
+ ch.abil.forEach((ab,j)=>{const x=76+(j%3)*382,yy=y+72+Math.floor(j/3)*36;
   text(lbl[SLOTS[j]],x,yy,13,ab.ult?'#ffe81f':'#fff','left');
-  text(`${ab.n}${ab.ult?' · ultime (100 énergie)':` · ${ab.cd}s`}${ab.cast?` · incantation ${ab.cast}s`:''}`,x+58,yy,13,ab.ult?'#ffe81f':'#cbd6ee','left','normal')});
- text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · Maj + sort = version EX (25 énergie) · ${lbl.KeyF} maintenu = parade (sabres) · ${lbl.KeyM} son`,W/2,672,14,'#9fb3d9','center','normal');
- text('Les sorts avec incantation montrent leur zone au sol : esquive-les. Les étourdissements interrompent les incantations.',W/2,694,13,'#7f93b8','center','normal');
+  text(`${ab.n}${ab.ult?' · ultime':` · ${ab.cd}s`}${ab.cast?` · incant. ${ab.cast}s`:''}`,x+52,yy,13,ab.ult?'#ffe81f':'#cbd6ee','left','normal');
+  if(ab.ex)text(`EX : ${ab.ex.n}`,x+52,yy+15,11,'#d8c060','left','normal')});
+ text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · Maj + sort = version EX (25 énergie) · ${lbl.KeyF} maintenu = parade (sabres) · ${lbl.KeyM} son`,W/2,686,14,'#9fb3d9','center','normal');
+ text('Les sorts avec incantation montrent leur zone au sol : esquive-les. Les étourdissements interrompent les incantations.',W/2,706,13,'#7f93b8','center','normal');
  drawCursor();
 }
 function bar(x,y,w,h,v,col,right){g.fillStyle='rgba(0,0,0,.6)';g.fillRect(x,y,w,h);g.fillStyle=col;const vw=w*clamp(v,0,1);g.fillRect(right?x+w-vw:x,y,vw,h);g.strokeStyle='#2a3a5a';g.lineWidth=1;g.strokeRect(x,y,w,h)}
@@ -633,7 +841,7 @@ function drawHud(){
   if(ab.cast)text(`${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');
   if(!ab.ult&&p.cds[i]>0){const kk=Math.min(1,p.cds[i]/ab.cd);g.fillStyle='rgba(0,0,0,.6)';g.fillRect(x,y+sh*(1-kk),s,sh*kk);text(p.cds[i].toFixed(1),x+s/2,y+42,13,'#ffe81f')}
   if(ab.ult&&!ready){g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-p.energy/100),s,sh*p.energy/100)}
-  text(ab.n,x+s/2,y+sh+13,10,'#9fb3d9','center','normal')});
+  text(exS&&ab.ex?ab.ex.n:ab.n,x+s/2,y+sh+13,10,exS&&ab.ex?'#ffe81f':'#9fb3d9','center','normal')});
  text(muted?`${lbl.KeyM} : son coupé`:`${lbl.KeyM} : son`,20,H-14,11,'#55607a','left','normal');
 }
 function drawMinimap(){const w=230,h=w*MAP.h/MAP.w,x=W-w-20,y=H-h-90,k=w/MAP.w;
@@ -650,18 +858,20 @@ function draw(){
  g.save();if(shake>0)g.translate((rnd()-.5)*shake*24,(rnd()-.5)*shake*24);
  mode==='arena'?drawArena():drawBattlefield();
  drawLights();
+ drawDeploy();
  drawTelegraphs();
  for(const f of fx){if(!f.ring&&!f.swing)continue;if(!near(f.x,f.y))continue;g.globalAlpha=f.t/f.m;g.strokeStyle=f.col;g.lineWidth=f.swing?6:4;
   if(f.ring)gEll(f.x,f.y,f.ring*(1.1-f.t/f.m*.6));else gEll(f.x,f.y,f.range,f.a-f.arc/2,f.a+f.arc/2);g.stroke()}g.globalAlpha=1;
  const me=player;if(state==='fight'&&!me.dead){const ex=me.x+Math.cos(me.aim)*70,ey=me.y+Math.sin(me.aim)*70,a=P(me.x+Math.cos(me.aim)*28,me.y+Math.sin(me.aim)*28),b=P(ex,ey);
   g.strokeStyle='rgba(120,200,255,.45)';g.lineWidth=3;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()}
- const list=[];for(const o of OBST)if(near(o.x,o.y))list.push({y:o.y,d:()=>drawObst(o)});for(const u of units)if(near(u.x,u.y))list.push({y:u.y,d:()=>drawUnit(u)});for(const p of projs)if(near(p.x,p.y))list.push({y:p.y,d:()=>drawProj(p)});
+ const list=[];for(const o of OBST)if(near(o.x,o.y))list.push({y:o.y,d:()=>drawObst(o)});for(const u of units)if(near(u.x,u.y))list.push({y:u.y,d:()=>drawUnit(u)});for(const p of projs)if(near(p.x,p.y))list.push({y:p.y,d:()=>drawProj(p)});for(const w of walls)if(near(w.x,w.y))list.push({y:w.y,d:()=>drawWall(w)});for(const tu of turrets)if(near(tu.x,tu.y))list.push({y:tu.y,d:()=>drawTurret(tu)});
  list.sort((a,b)=>a.y-b.y).forEach(o=>o.d());
  g.save();g.globalCompositeOperation='lighter';
- for(const f of fx){if(f.bolt===1&&!f.u.dead&&near(f.u.x,f.u.y)){const h=P(f.u.x,f.u.y,40);g.globalAlpha=f.t/f.m;for(let i=0;i<f.n;i++){const b=f.a+(rnd()-.5)*.8,e=P(f.u.x+Math.cos(b)*f.range,f.u.y+Math.sin(b)*f.range,25);drawBolt(h.x,h.y,e.x,e.y,i%2?'#fff':f.col)}}
+ for(const f of fx){if(f.beam&&near(f.x,f.y)){const a=P(f.x,f.y,30),b=P(f.x2,f.y2,30);g.globalAlpha=f.t/f.m;g.lineCap='round';g.strokeStyle=f.col;g.lineWidth=f.w*a.s;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.strokeStyle='#fff';g.lineWidth=Math.max(1,f.w*a.s*.3);g.stroke()}
+  if(f.bolt===1&&!f.u.dead&&near(f.u.x,f.u.y)){const h=P(f.u.x,f.u.y,40);g.globalAlpha=f.t/f.m;for(let i=0;i<f.n;i++){const b=f.a+(rnd()-.5)*.8,e=P(f.u.x+Math.cos(b)*f.range,f.u.y+Math.sin(b)*f.range,25);drawBolt(h.x,h.y,e.x,e.y,i%2?'#fff':f.col)}}
   if(f.bolt===2&&near(f.x,f.y)){const top=P(f.x,f.y,300),bot=P(f.x,f.y);g.globalAlpha=f.t/f.m;drawBolt(top.x,top.y,bot.x,bot.y,f.col);drawBolt(top.x,top.y,bot.x,bot.y,'#fff')}}
  g.restore();g.globalAlpha=1;
- for(const f of fx){if(f.ring||f.swing||f.bolt||f.light)continue;const p=P(f.x,f.y,f.z??20);g.globalAlpha=f.t/f.m;g.fillStyle=f.col;g.beginPath();g.arc(p.x,p.y,f.r*p.s,0,7);g.fill()}g.globalAlpha=1;
+ for(const f of fx){if(f.ring||f.swing||f.bolt||f.light||f.beam)continue;const p=P(f.x,f.y,f.z??20);g.globalAlpha=f.t/f.m;g.fillStyle=f.col;g.beginPath();g.arc(p.x,p.y,f.r*p.s,0,7);g.fill()}g.globalAlpha=1;
  for(const t of txt){const p=P(t.x,t.y,t.z);g.globalAlpha=Math.min(1,t.t*2);g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)';g.font='bold 15px "Trebuchet MS",system-ui,sans-serif';g.textAlign='center';g.strokeText(t.s,p.x,p.y);text(t.s,p.x,p.y,15,t.col)}g.globalAlpha=1;
  g.restore();
  const vg=g.createRadialGradient(W/2,H/2,H*.45,W/2,H/2,H*.95);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');g.fillStyle=vg;g.fillRect(0,0,W,H);
@@ -706,23 +916,23 @@ function joinGame(code){if(noPeer())return;code=(code||'').trim().toUpperCase();
 $('nHost').onclick=hostGame;$('nJoin').onclick=()=>joinGame($('nCode').value);$('nClose').onclick=()=>netUI(false);
 $('nCode').addEventListener('keydown',e=>{if(e.key==='Enter')joinGame($('nCode').value)});
 const rd=v=>typeof v==='number'?Math.round(v*100)/100:v;
-const UK=['c','team','x','y','z','hp','max','energy','aim','swing','swingA','moving','walk','dead','deadT','stun','deflect','shield','block','stam','blockLock','haste','rage','unstop','saberOut','flash','respawn','hero','r','cds','human','slow','vx','vy'];
-const PK=['x','y','vx','vy','r','col','saber','big','grenade','rocket','ex','life','life0','rot','tx','ty','ar'],ZK=['x','y','r','t','m','col'];
+const UK=['c','team','x','y','z','hp','max','energy','aim','swing','swingA','moving','walk','dead','deadT','stun','deflect','shield','block','stam','blockLock','haste','rage','unstop','saberOut','flash','respawn','hero','r','cds','human','slow','vx','vy','root','stealth','airT'];
+const PK=['x','y','vx','vy','r','col','saber','big','grenade','rocket','ex','life','life0','rot','tx','ty','ar','hook','ox','oy','zapP'],ZK=['x','y','r','t','m','col'];
 function pickK(o,ks){const r={};for(const k of ks){const v=o[k];r[k]=Array.isArray(v)?v.map(rd):v===undefined?null:rd(v)}return r}
 function snapU(u){return Object.assign(pickK(u,UK),{cast:u.cast?{i:u.cast.i,t:rd(u.cast.t),dur:u.cast.dur,td:rd(u.cast.td),aimOv:u.cast.aimOv??null,ex:u.cast.ex}:null,spin:u.spin?{r:u.spin.r}:null,flame:!!u.flame,dash:!!u.dash})}
 function netCapture(fx0,tx0){if(net.role!=='host'||!coop())return;for(let i=fx0;i<fx.length&&net.ev.fx.length<400;i++){const f=Object.assign({},fx[i]);if(f.u)f.u=units.indexOf(f.u);for(const k in f)f[k]=rd(f[k]);net.ev.fx.push(f)}for(let i=tx0;i<txt.length;i++)net.ev.txt.push(Object.assign({},txt[i]))}
 function makeSnap(){if(state==='menu')return{t:'snap',st:'menu',mode};
  return{t:'snap',st:state,stT:rd(stateT),mode,score,round,timer:rd(timer),tickets,kf:killfeed,banner,orb,pk:pickups.map(p=>({x:p.x,y:p.y,t:rd(p.t)})),win:winner,
-  U:units.map(snapU),Pj:projs.map(p=>pickK(p,PK)),Z:zones.map(z=>pickK(z,ZK)),ev:net.ev,you:units.findIndex(u=>u.ctrl==='remote')}}
+  U:units.map(snapU),Pj:projs.map(p=>pickK(p,PK)),Z:zones.map(z=>pickK(z,ZK)),Tr:traps.map(t=>pickK(t,['x','y','r','t','team','col','arm'])),Tu:turrets.map(t=>pickK(t,['x','y','t','team','col','aim','big'])),Fi:fields.map(f=>pickK(f,['x','y','r','t','m','team','col','heal','dps','slow'])),Wl:walls.map(w=>pickK(w,['x','y','r','t','team'])),ev:net.ev,you:units.findIndex(u=>u.ctrl==='remote')}}
 function applySnap(s){
  if(s.st==='menu'){if(net.live){net.live=false;state='menu'}mode=s.mode;return}
  if(s.you<0)return;
- if(!net.live||mode!==s.mode){mode=s.mode;if(mode==='arena'){B=A;OBST=ARENA_OBST;cam={x:CX,y:CY};Yc=377.5}else{B=MAP;OBST=battleObstacles();Yc=390}fx=[];txt=[]}
+ if(!net.live||mode!==s.mode){mode=s.mode;if(mode==='arena'){B=A;OBST=ARENA_OBST;cam={x:CX,y:CY};Yc=377.5;GLOW=18}else{B=MAP;OBST=battleObstacles();Yc=390;GLOW=6}fx=[];txt=[]}
  const first=!net.live;net.live=true;
  state=s.st;stateT=s.stT;score=s.score;round=s.round;timer=s.timer;tickets=s.tickets;killfeed=s.kf;banner=s.banner;orb=s.orb;pickups=s.pk;winner=s.win;
  units=s.U.map((d,i)=>{let u=units[i];const fresh=!u||u.c!==d.c;if(fresh)u=mkUnit(d.c,d.x,d.y,d.team);const ox=u.x,oy=u.y,jump=Math.hypot(ox-d.x,oy-d.y)>150;
   Object.assign(u,d);u.ch=CH[d.c];if(!fresh&&!jump){u.x=ox;u.y=oy}u.nx=d.x;u.ny=d.y;return u});
- player=units[s.you];projs=s.Pj;zones=s.Z;
+ player=units[s.you];projs=s.Pj;zones=s.Z;traps=s.Tr||[];turrets=s.Tu||[];fields=s.Fi||[];walls=s.Wl||[];
  for(const f of s.ev.fx){if(typeof f.u==='number')f.u=units[f.u]||player;fx.push(f)}txt.push(...s.ev.txt);
  for(const [n,x,y] of s.ev.snd)if(nearMe(x,y)&&SFX[n])SFX[n]();
  if(first&&mode==='battle')cam={x:player.x,y:player.y};

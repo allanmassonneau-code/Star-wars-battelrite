@@ -4,16 +4,19 @@ Jeu de combat en vue 3/4 plongeante (comme Battlerite), jouable directement dans
 
 ## Modes
 - **Arène 1 contre 1** : héros contre méchant, au meilleur des 3 manches. Holocron de soin à 18 s, mort subite à 45 s.
-- **Bataille 20 contre 20** : grande carte avec caméra qui suit le joueur. Chaque camp a 4 héros et 16 soldats (rebelles ou stormtroopers) et 100 renforts (soldat −1, héros −5). Réapparition à la base, holocrons de soin sur la carte, mini-carte et fil des éliminations.
+- **Bataille 20 contre 20** : les 20 héros contre les 20 méchants sur une grande carte, caméra qui suit le joueur. 60 renforts par camp, chaque élimination en coûte 1. Réapparition à la base, holocrons de soin, mini-carte et fil des éliminations.
+- **Coop en ligne** : bouton « Coop en ligne » du menu. L'hôte crée un salon (code à 4 caractères), le coéquipier le rejoint. Arène en 2 contre 2, ou bataille dans la même armée. Connexion pair-à-pair (PeerJS) : il faut ouvrir le jeu depuis un vrai site (GitHub Pages, Vercel, Netlify…), pas depuis un fichier local bloqué ou un aperçu restreint.
 
-## Personnages (inspirés de Battlefront II)
-Héros : Luke Skywalker, Maître Yoda, Rey, Han Solo, Leia Organa, Chewbacca.
-Méchants : Dark Vador, Empereur Palpatine, Dark Maul, Kylo Ren, Boba Fett, Général Grievous.
+## Personnages
+40 personnages, chacun avec un kit unique (6 sorts + un passif) inspiré de League of Legends et Battlerite : grappins, entraves, pièges, tourelles, zones de soin, murs, invisibilité, exécutions, assauts multi-cibles, boomerangs, rayons, tirs qui ricochent, projections en l'air…
+
+Héros : Luke, Yoda, Rey, Han, Leia, Chewbacca, Obi-Wan, Anakin, Mace Windu, Ahsoka, Qui-Gon, Finn, Lando, Padmé, Din Djarin, Cal Kestis, Capitaine Rex, Wicket, R2-D2, Jyn Erso.
+Méchants : Vador, Palpatine, Maul, Kylo Ren, Boba Fett, Grievous, Dooku, Ventress, Savage Opress, Jango Fett, Phasma, Iden Versio, Bossk, Cad Bane, Grand Inquisiteur, Seconde Sœur, Moff Gideon, Thrawn, Death Trooper, IG-88.
 
 ## Contrôles
 - ZQSD/WASD ou flèches pour bouger, souris pour viser.
 - Clic G, Clic D, Espace, Q (A en AZERTY), E : sorts. R : ultime (100 d'énergie).
-- **Maj + sort** : version EX du sort (coûte 25 d'énergie, plus de dégâts, d'étourdissement et de durée).
+- **Maj + sort** : version EX (25 d'énergie). Comme dans Battlerite, c'est un sort dérivé avec son propre effet (ex. Ruée → Ruée aérienne qui projette en l'air, Détonateur → Grappe de grenades).
 - **F maintenu** (porteurs de sabre) : parade. Bloque les coups de face et renvoie les tirs vers le tireur. Consomme de l'endurance ; si elle tombe à zéro, la garde est brisée.
 - M : couper le son.
 
