@@ -56,19 +56,43 @@ const angDiff=(a,b)=>{let d=a-b;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+
 function rgba(h,a){if(h.length===4)h='#'+h[1]+h[1]+h[2]+h[2]+h[3]+h[3];const n=parseInt(h.slice(1),16);return`rgba(${n>>16},${n>>8&255},${n&255},${a})`}
 
 // ---------- Son (synthétisé, aucun fichier) ----------
-let AC=null,NB=null,muted=false;
-function ac(){if(AC===null){try{AC=new(window.AudioContext||window.webkitAudioContext)()}catch(e){AC=0}}return AC}
-function tone(type,f0,f1,dur,vol){const a=ac();if(!a||muted||a.state!=='running')return;const t=a.currentTime,o=a.createOscillator(),v=a.createGain();o.type=type;o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+dur);v.gain.setValueAtTime(vol,t);v.gain.exponentialRampToValueAtTime(.0001,t+dur);o.connect(v);v.connect(a.destination);o.start(t);o.stop(t+dur)}
-function noise(dur,vol,freq){const a=ac();if(!a||muted||a.state!=='running')return;if(!NB){NB=a.createBuffer(1,a.sampleRate,a.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
- const t=a.currentTime,s=a.createBufferSource(),f=a.createBiquadFilter(),v=a.createGain();s.buffer=NB;f.type='lowpass';f.frequency.value=freq;v.gain.setValueAtTime(vol,t);v.gain.exponentialRampToValueAtTime(.0001,t+dur);s.connect(f);f.connect(v);v.connect(a.destination);s.start(t);s.stop(t+dur)}
-const SFX={saber:()=>tone('sawtooth',220,80,.2,.05),blaster:()=>tone('square',1100,180,.13,.025),heavy:()=>tone('sawtooth',700,90,.3,.06),hit:()=>tone('triangle',220,50,.12,.09),
- boom:()=>noise(.6,.3,500),zap:()=>noise(.35,.12,4000),dash:()=>tone('sine',250,800,.22,.06),orb:()=>tone('sine',520,1040,.35,.07),deflect:()=>tone('square',1400,2200,.08,.04),win:()=>tone('triangle',440,880,.6,.08),lose:()=>tone('triangle',300,90,.7,.08),flame:()=>noise(.15,.05,1200),
- ex:()=>tone('triangle',660,1320,.18,.06),zapS:()=>tone('sawtooth',1800,900,.08,.015)};
+let AC=null,NB=null,MB=null,RV=null,muted=false;
+// moteur audio : bus principal compressé + réverbération courte (tout est synthétisé, aucun fichier)
+function ac(){if(AC===null){try{AC=new(window.AudioContext||window.webkitAudioContext)();const comp=AC.createDynamicsCompressor();comp.threshold.value=-20;comp.ratio.value=4;comp.attack.value=.003;comp.release.value=.2;
+ MB=AC.createGain();MB.gain.value=.9;MB.connect(comp);comp.connect(AC.destination);
+ RV=AC.createConvolver();const len=Math.floor(AC.sampleRate*1.4),ir=AC.createBuffer(2,len,AC.sampleRate);for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2)}RV.buffer=ir;const rg=AC.createGain();rg.gain.value=.22;RV.connect(rg);rg.connect(comp)}catch(e){AC=0}}return AC}
+const live=()=>{const a=ac();return a&&!muted&&a.state==='running'?a:null};
+function out(n,rev){n.connect(MB);if(rev)n.connect(RV)}
+function env(a,t,v,att,dur){const g=a.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+dur);return g}
+function osc(type,f0,f1,dur,vol,o={}){const a=live();if(!a)return;const t=a.currentTime+(o.delay||0),os=a.createOscillator(),g=env(a,t,vol,o.att||.005,dur);os.type=type;os.frequency.setValueAtTime(f0,t);os.frequency.exponentialRampToValueAtTime(f1,t+(o.sweep||dur));if(o.detune)os.detune.value=o.detune;
+ let n=os;if(o.lp){const f=a.createBiquadFilter();f.type='lowpass';f.frequency.setValueAtTime(o.lp,t);if(o.lp2)f.frequency.exponentialRampToValueAtTime(o.lp2,t+dur);n.connect(f);n=f}
+ if(o.bp){const f=a.createBiquadFilter();f.type='bandpass';f.frequency.value=o.bp;f.Q.value=o.q||4;n.connect(f);n=f}n.connect(g);out(g,o.rev);os.start(t);os.stop(t+dur+.05)}
+function nz(dur,vol,o={}){const a=live();if(!a)return;if(!NB){NB=a.createBuffer(1,a.sampleRate*2,a.sampleRate);const d=NB.getChannelData(0);for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1}
+ const t=a.currentTime+(o.delay||0),s=a.createBufferSource(),f=a.createBiquadFilter(),g=env(a,t,vol,o.att||.005,dur);s.buffer=NB;s.loop=true;f.type=o.type||'lowpass';f.frequency.setValueAtTime(o.f0||1000,t);if(o.f1)f.frequency.exponentialRampToValueAtTime(o.f1,t+dur);f.Q.value=o.q||1;s.connect(f);
+ let n=f;if(o.crackle){const cg=a.createGain();for(let k=0;k<dur*45;k++)cg.gain.setValueAtTime(Math.random()<.45?0:1,t+k/45);f.connect(cg);n=cg}n.connect(g);out(g,o.rev);s.start(t,Math.random());s.stop(t+dur+.05)}
+const tone=(type,f0,f1,dur,vol)=>osc(type,f0,f1,dur,vol*1.4,{rev:1});
+const SFX={
+ saber:()=>{osc('sawtooth',150,92,.38,.06,{lp:1500,lp2:300,rev:1});osc('sawtooth',153,94,.38,.045,{lp:1200,lp2:280,detune:14});nz(.26,.05,{type:'bandpass',f0:700,f1:2600,q:.9})},
+ ignite:()=>{osc('sawtooth',38,140,.7,.07,{lp:500,lp2:2200,sweep:.35,rev:1});osc('sawtooth',39,142,.7,.05,{lp:400,lp2:1800,sweep:.35,detune:20});nz(.25,.06,{type:'highpass',f0:3000,f1:1200})},
+ blaster:()=>{osc('sawtooth',2100,130,.2,.045,{sweep:.17,bp:1300,q:1.4,rev:1});osc('sine',2600,260,.16,.03,{delay:.06,rev:1})},
+ heavy:()=>{osc('square',900,55,.4,.045,{lp:2200,lp2:180,rev:1});nz(.35,.08,{type:'bandpass',f0:250,f1:1600,q:.8})},
+ hit:()=>{osc('sine',150,45,.15,.12);nz(.08,.06,{type:'bandpass',f0:1600,f1:500,q:1})},
+ boom:()=>{osc('sine',85,26,.8,.28);nz(1,.32,{type:'lowpass',f0:1400,f1:50,rev:1});nz(.15,.12,{type:'highpass',f0:2500,f1:800})},
+ zap:()=>{nz(.45,.11,{type:'bandpass',f0:3800,f1:1700,q:2,crackle:1,rev:1});osc('sawtooth',62,55,.45,.03,{lp:400})},
+ zapS:()=>nz(.12,.045,{type:'bandpass',f0:4200,f1:2600,q:2,crackle:1}),
+ dash:()=>nz(.3,.09,{type:'bandpass',f0:280,f1:2000,q:.8}),
+ orb:()=>{osc('sine',660,1320,.45,.06,{rev:1});osc('sine',990,1980,.45,.04,{delay:.08,rev:1})},
+ deflect:()=>{osc('square',2600,1700,.13,.03,{bp:2600,q:6,rev:1});nz(.16,.08,{type:'highpass',f0:3200,f1:1800});osc('sawtooth',190,120,.22,.04,{lp:900})},
+ win:()=>{[392,523,659,784].forEach((f,i)=>osc('triangle',f,f,.9,.06,{delay:i*.12,att:.02,rev:1}))},
+ lose:()=>{osc('sawtooth',196,98,1,.05,{lp:900,lp2:300,rev:1});osc('sawtooth',185,92,1,.04,{lp:800,lp2:250,delay:.15})},
+ flame:()=>nz(.2,.05,{type:'lowpass',f0:1000,f1:450}),
+ ex:()=>{osc('triangle',523,1046,.22,.05,{rev:1});osc('triangle',784,1568,.22,.04,{delay:.06,rev:1})}};
 // les sons et effets lointains sont coupés (utile en bataille 20c20)
 let cam={x:CX,y:CY},Yc=377.5;
 const nearMe=(x,y)=>Math.abs(x-cam.x)<820&&Math.abs(y-cam.y)<560;
 const near=(x,y)=>nearMe(x,y)||(net.gcam&&Math.abs(x-net.gcam.x)<820&&Math.abs(y-net.gcam.y)<560);
-const S=(n,u)=>{if(net.role==='host'&&u&&net.conn)net.ev.snd.push([n,Math.round(u.x),Math.round(u.y)]);if(!u||nearMe(u.x,u.y))SFX[n]()};
+const lastS={};
+const S=(n,u)=>{if(net.role==='host'&&u&&net.conn&&net.ev.snd.length<60)net.ev.snd.push([n,Math.round(u.x),Math.round(u.y)]);const t=performance.now();if((!u||nearMe(u.x,u.y))&&!(t-(lastS[n]||0)<35)){lastS[n]=t;SFX[n]()}};
 
 // ---------- Capacités ----------
 // EX : maintenir Maj en lançant un sort (25 d'énergie) le renforce, comme dans Battlerite
@@ -495,7 +519,7 @@ function update(dt){
   cards.forEach(c=>{if(inRect(mouse,c)){if(isGuest()){net.mate=c.c;netSend({t:'hero',c:c.c})}else startMatch(c.c)}})}return}
  if(state==='matchEnd'){if(pressed.lmb||pressed.Enter||pressed.Space)state='menu';return}
  stateT-=dt;shake=Math.max(0,shake-dt);flashS=Math.max(0,flashS-dt);const fx0=fx.length,tx0=txt.length;
- if(state==='countdown'&&stateT<=0){state='fight';banner={s:'COMBATTEZ !',t:1.2}}
+ if(state==='countdown'&&stateT<=0){state='fight';banner={s:'COMBATTEZ !',t:1.2};S('ignite')}
  if(state==='roundEnd'&&stateT<=0){if(score[0]>=2||score[1]>=2)state='matchEnd';else{round++;startRound()}}
  const active=state==='fight';
  if(active&&mode!=='battle'){const before=timer;timer+=dt;if(before<SD_START&&timer>=SD_START){banner={s:'MORT SUBITE : l\'arène se referme',t:2.5};SFX.lose()}
@@ -913,7 +937,7 @@ function hostGame(){if(noPeer())return;netReset();const code=Math.random().toStr
  p.on('error',e=>setStat(e.type==='unavailable-id'?'Code déjà pris, réessaie.':'Erreur réseau : '+e.type))}
 function joinGame(code){if(noPeer())return;code=(code||'').trim().toUpperCase();if(code.length!==4){setStat('Entre le code à 4 caractères de l\'hôte.');return}
  netReset();net.role='guest';setStat('Connexion…');const p=new Peer();net.peer=p;
- p.on('open',()=>{const c=p.connect('swarena-'+code,{reliable:true,serialization:'json'});net.conn=c;
+ p.on('open',()=>{const c=p.connect('swarena-'+code,{reliable:true,serialization:'binary'});net.conn=c;
   c.on('open',()=>{setStat(`Connecté au salon ${code}. Choisis ton héros.`);netUI(false)});
   c.on('data',d=>{if(d&&d.t==='snap')applySnap(d);else if(d&&d.t==='hello')mode=d.mode});
   c.on('close',()=>{netReset();state='menu';setStat('L\'hôte a fermé la partie.')})});
