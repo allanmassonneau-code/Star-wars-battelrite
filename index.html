@@ -31,6 +31,9 @@ canvas{width:min(100vw,177.78vh);height:min(56.25vw,100vh);display:block;cursor:
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 <script>
 const cv=document.getElementById('c'),g=cv.getContext('2d'),W=1280,H=720;
+// rendu à la résolution réelle de l'écran (sinon le canvas 1280x720 est étiré et flou)
+let RS=1;function fit(){const r=cv.getBoundingClientRect(),d=Math.min(window.devicePixelRatio||1,2),w=Math.max(1,Math.round(r.width*d)),h=Math.max(1,Math.round(r.height*d));if(cv.width!==w||cv.height!==h){cv.width=w;cv.height=h}RS=cv.width/W}
+addEventListener('resize',fit);fit();
 const A={x:90,y:70,w:1100,h:555},CX=A.x+A.w/2,CY=A.y+A.h/2;
 const MAP={x:0,y:0,w:4200,h:2000};
 const ARENA_OBST=[{x:430,y:235,r:34},{x:850,y:235,r:34},{x:430,y:460,r:34},{x:850,y:460,r:34}];
@@ -543,7 +546,7 @@ function unP(mx,my){const y=cam.y+(my-Yc)/K;return{x:cam.x+(mx-W/2)/scl(y),y}}
 function gEll(x,y,r,a0=0,a1=7){const p=P(x,y);g.beginPath();g.ellipse(p.x,p.y,r*p.s,r*p.s*K,0,a0,a1)}
 const LIGHT=HEROES.filter(h=>!CH[h].side),DARK=HEROES.filter(h=>CH[h].side),CW=110,CHt=92;
 const cards=[...LIGHT.map((c,i)=>({x:58+(i%10)*117,y:136+Math.floor(i/10)*97,w:CW,h:CHt,c})),...DARK.map((c,i)=>({x:58+(i%10)*117,y:346+Math.floor(i/10)*97,w:CW,h:CHt,c}))];
-const modeBtns=[{x:290,y:76,w:220,h:30,m:'arena',t:'ARÈNE · 1 contre 1'},{x:520,y:76,w:220,h:30,m:'battle',t:'BATAILLE · 20 contre 20'},{x:750,y:76,w:220,h:30,m:'duel',t:'DUEL · contre ton ami'}];
+const modeBtns=[{x:290,y:76,w:220,h:30,m:'arena',t:'ARÈNE · 1 contre 1'},{x:520,y:76,w:220,h:30,m:'battle',t:'BATAILLE · 20 contre 20'},{x:750,y:76,w:220,h:30,m:'duel',t:'DUEL · 1v1 contre ton ami'}];
 const coopBtn={x:1040,y:76,w:158,h:30};
 const inRect=(p,r)=>p.x>r.x&&p.x<r.x+r.w&&p.y>r.y&&p.y<r.y+r.h;
 function text(s,x,y,size,col,align='center',weight='bold'){g.font=`${weight} ${size}px "Trebuchet MS",system-ui,sans-serif`;g.textAlign=align;g.fillStyle=col;g.fillText(s,x,y)}
@@ -563,7 +566,7 @@ function drawSky(){
 }
 
 // ---------- Petits personnages ----------
-function blade(x0,y0,x1,y1,col,flick,dark){g.save();g.lineCap='round';g.shadowColor=dark?'#fff':col;g.shadowBlur=GLOW;g.strokeStyle=dark?'#0a0a0a':col;g.lineWidth=flick?5+rnd()*3:6;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();g.shadowBlur=0;g.strokeStyle=dark?'#666':'#fff';g.lineWidth=2;g.stroke();g.restore()}
+function blade(x0,y0,x1,y1,col,flick,dark){g.save();g.lineCap='round';g.shadowColor=dark?'#fff':col;g.shadowBlur=GLOW*RS;g.strokeStyle=dark?'#0a0a0a':col;g.lineWidth=flick?5+rnd()*3:6;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.stroke();g.shadowBlur=0;g.strokeStyle=dark?'#666':'#fff';g.lineWidth=2;g.stroke();g.restore()}
 function drawWeapon(u,a,L){
  const w=L.weapon,dx=Math.cos(a),dy=Math.sin(a)*K,l=Math.hypot(dx,dy),ux=dx/l,uy=dy/l;
  const raise=u.cast||u.block?-8:0,hx=Math.cos(u.aim)*11,hy=-26+Math.sin(u.aim)*4+raise;
@@ -787,7 +790,7 @@ function drawMenu(){
  g.save();g.shadowColor='#ffe81f';g.shadowBlur=18;text('STAR WARS · ARÈNE',W/2,52,42,'#ffe81f');g.restore();
  {const b=coopBtn,h=inRect(mouse,b),on=!!net.conn;g.fillStyle=on?'#7f7':h?'rgba(40,52,80,.95)':'rgba(13,20,36,.9)';g.strokeStyle=on?'#7f7':'#3a4a6a';g.lineWidth=1.5;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,15);g.fill();g.stroke();text(on?'COOP CONNECTÉ':'COOP EN LIGNE',b.x+b.w/2,b.y+20,13,on?'#10131c':'#cbd6ee')}
  if(net.role){const m=isGuest()?(net.mate?`Ton héros : ${CH[net.mate].name} · l'hôte choisit le mode et lance la partie`:'Choisis ton héros · l\'hôte choisit le mode et lance la partie'):net.conn?`Coéquipier : ${net.mate?CH[net.mate].name:'en train de choisir'} · clique sur ton héros pour lancer`:net.status;text(m,1222,130,12,'#9f9','right','normal')}
- for(const b of modeBtns){const on=mode===b.m,h=inRect(mouse,b);g.fillStyle=on?'#ffe81f':h?'rgba(40,52,80,.95)':'rgba(13,20,36,.9)';g.strokeStyle=on?'#ffe81f':'#3a4a6a';g.lineWidth=1.5;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,15);g.fill();g.stroke();text(b.t,b.x+b.w/2,b.y+20,13,on?'#10131c':'#cbd6ee')}
+ for(const b of modeBtns){const on=mode===b.m,h=inRect(mouse,b);g.fillStyle=on?'#ffe81f':h?'rgba(40,52,80,.95)':'rgba(13,20,36,.9)';g.strokeStyle=on?'#ffe81f':'#3a4a6a';g.lineWidth=1.5;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,15);g.fill();g.stroke();text(b.m==='arena'&&coop()?'ARÈNE · 2v2 contre bots':b.t,b.x+b.w/2,b.y+20,13,on?'#10131c':'#cbd6ee')}
  text('HÉROS',58,130,13,'#7fc4ff','left');text('MÉCHANTS',58,340,13,'#ff8a8a','left');
  if(!net.role||mode==='duel')text(mode==='duel'?(coop()?'Duel : toi contre ton ami, au meilleur des 3 manches':'Duel : connecte un ami avec « Coop en ligne » pour l\'affronter (sinon, contre l\'ordinateur)'):mode!=='battle'?(coop()?'2 contre 2 avec ton coéquipier, au meilleur des 3 manches':'Ton adversaire sera un personnage du camp opposé, au meilleur des 3 manches'):'20 personnages contre 20 · 60 renforts par camp, chaque élimination en coûte 1',W/2,130,13,'#9fb3d9','center','normal');
  const t=performance.now()/1000;let hov=null;
@@ -854,6 +857,7 @@ function drawMinimap(){const w=230,h=w*MAP.h/MAP.w,x=W-w-20,y=H-h-90,k=w/MAP.w;
  g.strokeStyle='rgba(255,232,31,.6)';g.strokeRect(x+(cam.x-760)*k,y+(cam.y-520)*k,1520*k,960*k)}
 function drawCursor(){g.strokeStyle='#ffe81f';g.lineWidth=1.5;g.beginPath();g.ellipse(mouse.x,mouse.y,10,10*K,0,0,7);g.stroke();g.fillStyle='#ffe81f';g.fillRect(mouse.x-1,mouse.y-1,2,2)}
 function draw(){
+ fit();g.setTransform(RS,0,0,RS,0,0);g.imageSmoothingEnabled=true;
  drawSky();
  if(state==='menu'){g.fillStyle='rgba(4,5,11,.55)';g.fillRect(0,0,W,H);drawMenu();return}
  g.save();if(shake>0)g.translate((rnd()-.5)*shake*24,(rnd()-.5)*shake*24);
