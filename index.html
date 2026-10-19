@@ -200,7 +200,7 @@ const CH={
   SP('Tir en éventail','Vide le barillet en éventail',8,{ai:RG(220,.5),P:{n:6}},(u,a,t,P)=>{S('blaster',u);for(let i=0;i<P.n;i++)proj(u,a+(i-(P.n-1)/2)*.12,{spd:900,r:5,dmg:7,life:.4,col:'#ff4a3a'});u.ammo=0;u.cds[0]=1.5},['Éventail double','10 balles',{n:10}]),
   ULT('Faucon Millenium','Le Faucon mitraille une longue ligne',{cast:.3,line:{len:700,w:90},ai:{max:650,p:.8}},(u,a)=>{for(let i=1;i<=7;i++){const p=fwd(u,a,i*95);zone(u,p.x,p.y,65,20,.4+i*.12,{},'#fa3')}})]),
  leia:HERO('Leia Organa',0,'Commandante : dôme, ralliement, frappes',150,220,280,'energy',LOOKS.leia,[
-  SP('Blaster DDC','Tir rapide',.32,{ai:RG(620,.85)},(u,a)=>shot(u,a,8)),
+  SP('Tir de commandement','Rend la cible un peu vulnérable pour l\'équipe',.34,{ai:RG(620,.85)},(u,a)=>shot(u,a,7,{o:{vuln:.6}})),
   SP('Grenade étourdissante','Étourdit la zone',9,{ai:RG(420,.35,90),P:{s:0}},(u,a,t,P)=>gren(u,a,t,{dmg:6,stun:1.2,silence:P.s,col:'#9df'}),['Grenade aveuglante','Réduit aussi au silence 2 s',{s:2}]),
   SP('Rejoindre','Bondit vers un allié et vous protège tous les deux',8,{ai:{mode:'ally',p:.5},P:{sh:20}},(u,a,t,P)=>{const p=fwd(u,a,Math.min(t,420));let b=null,bd=260;for(const x of units)if(x!==u&&x.team===u.team&&!x.dead){const d=Math.hypot(x.x-p.x,x.y-p.y);if(d<bd){bd=d;b=x}}const g2=b?{x:b.x-Math.cos(a)*40,y:b.y-Math.sin(a)*40}:fwd(u,a,220);S('dash',u);dash(u,Math.atan2(g2.y-u.y,g2.x-u.x),Math.min(Math.hypot(g2.x-u.x,g2.y-u.y),420),.25,{jump:30});shieldU(u,P.sh);if(b)shieldU(b,P.sh)},['Bouclier royal','Boucliers bien plus gros',{sh:45}]),
   SP('Dôme d\'escouade','Dôme qui arrête les tirs ennemis 4 s',13,{ai:DEF,P:{h:0}},(u,a,t,P)=>{field(u,u.x,u.y,{r:110,heal:P.h,col:'#7df',dome:1});S('deflect',u)},['Dôme de soin','Soigne aussi à l\'intérieur',{h:8}]),
@@ -249,7 +249,7 @@ const CH={
   SP('Bouclier vivant','Gros bouclier sur l\'allié le plus faible',10,{ai:ALLY,P:{all:0}},(u,a,t,P)=>{const L=allies(u,420).sort((a,b)=>a.hp/a.max-b.hp/b.max);for(const x of P.all?L:L.slice(0,1)){shieldU(x,45);beamFx(u.x,u.y,x.x,x.y,'#fb4',3)}S('deflect',u)},['Bouclier collectif','Tous les alliés proches',{all:1}]),
   ULT('Volonté de la Force','Soigne et libère tous les alliés proches',{ai:{mode:'ally',p:.8}},u=>{for(const x of allies(u,450)){heal(x,55);cleanse(x);ring(x.x,x.y,40,'#6f9')}S('orb',u)})]),
  finn:HERO('Finn',0,'Ex-stormtrooper : matraque, bouclier frontal',170,220,200,'third',LOOKS.finn,[
-  SP('Blaster FN','Tir rapide',.35,{ai:RG(600,.85)},(u,a)=>shot(u,a,8)),
+  SP('Blaster FN','Deux tirs serrés',.38,{ai:RG(600,.85)},(u,a)=>{shot(u,a-.03,5);proj(u,a+.03,{spd:880,r:5,dmg:5,life:.72,col:'#ff4a3a'})}),
   SP('Matraque Z6','Coup électrique qui étourdit',6,{ai:RG(100,.6),P:{air:0}},(u,a,t,P)=>slash(u,a,105,1.8,16,{stun:P.air?0:.5,air:P.air}),['Uppercut Z6','Projette en l\'air',{air:.8}]),
   SP('Roulade de soldat','Roulade',6,{ai:ESC,P:{g:0}},(u,a,t,P)=>{if(P.g)zone(u,u.x,u.y,80,16,.6);S('dash',u);dash(u,a,180,.2,{})},['Roulade piégée','Laisse une grenade au départ',{g:1}]),
   SP('Grenade thermique','Explose et laisse le sol en feu',9,{ai:RG(420,.35,90),P:{r:80}},(u,a,t,P)=>gren(u,a,t,{dmg:16,ar:P.r,col:'#f93',burn:1}),['Grenade incendiaire','Zone plus grande',{r:120}]),
@@ -263,7 +263,7 @@ const CH={
   SP('Désactivateur','Réduit au silence et révèle la cible',10,{cast:.15,line:{len:450,w:14},ai:RG(430,.45),P:{s:2}},(u,a,t,P)=>proj(u,a,{spd:900,r:8,dmg:6,life:.5,col:'#7df',o:{silence:P.s,reveal:1}}),['Brouilleur','Silence de 3 s',{s:3}]),
   ULT('Coup de poker','Pile : soin d\'équipe. Face : énorme explosion sur la cible',{cast:.3,tele:{r:150,max:450},ai:{max:440,p:.8}},(u,a,t)=>{if(rnd()<.5){say(u,'PILE !','#6f9');for(const x of allies(u,450)){heal(x,45);shieldU(x,25)}}else{say(u,'FACE !','#ffd23a');const p=fwd(u,a,Math.min(t,450));zone(u,p.x,p.y,150,42,.6,{stun:1},'#ffd23a')}S('ex',u)})]),
  padme:HERO('Padmé Amidala',0,'Reine : grappin, garde royale, négocie',145,225,300,'speed',LOOKS.padme,[
-  SP('Pistolet ELG-3A','Tir précis',.4,{ai:RG(620,.85)},(u,a)=>shot(u,a,9,{spd:950})),
+  SP('Pistolet ELG-3A','Tir qui ralentit légèrement',.4,{ai:RG(620,.85)},(u,a)=>shot(u,a,7,{spd:950,slow:.5})),
   SP('Tir paralysant','Immobilise la cible',8,{cast:.25,line:{len:520,w:18},ai:RG(500,.45),P:{d:1.5}},(u,a,t,P)=>{S('heavy',u);proj(u,a,{spd:750,r:9,dmg:8,life:.7,col:'#9f6',root:P.d})},['Paralysie','2,2 s',{d:2.2}]),
   SP('Grappin','S\'accroche à un ennemi ou au sol et s\'y tire',7,{ai:GAP,P:{s:0}},(u,a,t,P)=>{S('dash',u);proj(u,a,{spd:950,r:9,dmg:4,life:.42,col:'#ccc',hook:2,stun:P.s,anchor:1})},['Grappin percutant','Étourdit la cible',{s:.8}]),
   SP('Garde de Naboo','Pose un garde qui tire 8 s',14,{ai:SELF(520,.5),P:{n:1}},(u,a,t,P)=>{for(let i=0;i<P.n;i++)turret(u,a+(i-(P.n-1)/2)*1.1,8,6,'#ff4a3a');S('deflect',u)},['Garde royale','2 gardes',{n:2}]),
@@ -277,7 +277,7 @@ const CH={
   SP('Grogu','Grogu le soigne et repousse un ennemi',14,{ai:HEALM,P:{d:6}},(u,a,t,P)=>{field(u,u.x,u.y,{r:70,t:P.d,heal:6,col:'#9cc066',follow:u,pet:1});const e=nearE(u,u.x,u.y,220);if(e)hit(e,u,6,{kb:500,stun:.5});S('orb',u)},['Grogu en colère','10 s',{d:10}]),
   ULT('Whistling Birds','8 mini-roquettes à tête chercheuse',{ai:{max:550,p:.8}},(u,a)=>{S('heavy',u);for(let i=0;i<8;i++)proj(u,a+(i-3.5)*.22,{spd:520,r:6,dmg:10,life:1.6,col:'#f60',rocket:1,ar:45,kb:100,home:1})})]),
  cal:HERO('Cal Kestis',0,'Ralentit le temps, lame aimantée, stim',165,225,55,'regen',LOOKS.cal,[
-  SP('Double lame','Large balayage',.45,{melee:1,ai:M()},(u,a)=>melee(u,a,80,2.4,10)),
+  SP('Bâton-sabre','Large balayage',.45,{melee:1,ai:M()},(u,a)=>melee(u,a,80,2.4,10)),
   SP('Lame aimantée','Boomerang qui ramène les ennemis touchés au retour',6,{ai:RG(420,.4,80),P:{sl:0}},(u,a,t,P)=>{u.saberOut=9;S('saber',u);proj(u,a,{spd:620,r:11,dmg:12,life:2.5,col:saberCol(u),saber:1,ret:420,pierce:1,drag:1,slow:P.sl})},['Lame gelée','Ralentit aussi',{sl:2}]),
   SP('Course murale','Course rapide',6,{ai:GAP,P:{th:0}},(u,a,t,P)=>{S('dash',u);dash(u,a,260,.25,{jump:25,dmg:6,through:P.th})},['Course tranchante','Frappe tous ceux traversés',{th:1}]),
   SP('Ralentissement','Zone où ennemis et tirs ralentissent',10,{ai:RG(380,.45),P:{r:120}},(u,a,t,P)=>{const p=fwd(u,a,Math.min(t,380));field(u,p.x,p.y,{r:P.r,t:3,slow:1,col:'#9df',timeSlow:1});S('zap',u)},['Stase','Plus grande',{r:170}]),
@@ -305,7 +305,7 @@ const CH={
   SP('Piratage','Silence devant lui et détruit les tourelles ennemies',10,{ai:RG(240,.45),P:{s:1.5}},(u,a,t,P)=>{S('zap',u);cone(u,a,260,1.2,4,{silence:P.s},'#7df');for(const tu of turrets)if(tu.team!==u.team&&dist(tu,u)<300)tu.t=0},['Piratage total','Silence de 2,5 s',{s:2.5}]),
   ULT('Réparation d\'urgence','Soigne et recharge en énergie les alliés proches',{ai:{mode:'ally',p:.8}},u=>{for(const x of allies(u,450)){heal(x,50);x.energy=Math.min(100,x.energy+30);beamFx(u.x,u.y,x.x,x.y,'#6f9',4)}S('orb',u)})]),
  jyn:HERO('Jyn Erso',0,'Saboteuse : matraque, bombe, escalade',150,230,260,'crit',LOOKS.jyn,[
-  SP('A280-CFE','Tir de fusil',.4,{ai:RG(640,.85)},(u,a)=>shot(u,a,9,{spd:950})),
+  SP('A280-CFE','Tir lourd de fusil',.5,{ai:RG(660,.85)},(u,a)=>shot(u,a,11,{spd:1000,r:6})),
   SP('Matraque','Coup qui étourdit',6,{cast:.1,line:{len:110,w:90},ai:RG(100,.6),P:{v:0}},(u,a,t,P)=>slash(u,a,110,1.6,12,{stun:.6,vuln:P.v}),['Coup bas','Rend aussi vulnérable 3 s',{v:3}]),
   SP('Escalade','Saute loin, invisible à l\'arrivée',8,{ai:ESC,P:{d:1}},(u,a,t,P)=>{S('dash',u);dash(u,a,clamp(t,100,320),.4,{jump:100,end:()=>{u.stealth=P.d}})},['Escalade furtive','3 s d\'invisibilité',{d:3}]),
   SP('Charge de sabotage','Bombe qui explose après 2,5 s',11,{ai:RG(380,.35,60),P:{r:110}},(u,a,t,P)=>{const p=fwd(u,a,clamp(t,0,380));zone(u,p.x,p.y,P.r,32,2.5,{kb:400},'#f60')},['Charge lourde','Plus grande',{r:160}]),
@@ -341,9 +341,9 @@ const CH={
   SP('Sacrifice','Sacrifie 15 % de sa vie pour recharger ses sorts',10,{ai:SELF(250,.35),P:{r:3}},(u,a,t,P)=>{u.hp=Math.max(1,u.hp-u.max*.15);for(let i=1;i<4;i++)u.cds[i]=0;u.rage=P.r;say(u,'COLÈRE','#f44');S('heavy',u)},['Fureur sacrificielle','Rage plus longue',{r:6}]),
   ULT('Frénésie','Trois coups dévastateurs autour de lui',{cast:.25,tele:{r:120,self:1},ai:{max:110,p:.8}},u=>{for(let k=0;k<3;k++)zones.push({x:u.x,y:u.y,r:120,t:.05+k*.25,m:.05+k*.25,owner:u,dmg:14,o:{kb:200},col:'#f44',follow:u})})]),
  boba:HERO('Boba Fett',1,'Chasseur : poison, roquettes, visée',155,220,300,'crit',LOOKS.boba,[
-  SP('EE-3','Carabine',.32,{ai:RG(620,.85)},(u,a)=>shot(u,a,8)),
+  SP('EE-3','Carabine longue portée',.42,{ai:RG(760,.85)},(u,a)=>shot(u,a,10,{spd:1000,life:.85})),
   SP('Roquette commotion','Roquette qui étourdit',5,{cast:.3,line:{len:600,w:24},ai:RG(600,.35),P:{s:.8}},(u,a,t,P)=>{S('heavy',u);proj(u,a,{spd:720,r:10,dmg:12,life:1.1,col:'#f60',rocket:1,ar:60,kb:0,stun:P.s})},['Double commotion','1,4 s',{s:1.4}]),
-  SP('Jetpack','Vol rapide',7,{ai:ESC,P:{b:0}},(u,a,t,P)=>{S('dash',u);dash(u,a,clamp(t,100,320),.3,{jump:60,end:P.b?()=>aoe(u,u.x,u.y,90,14,{kb:300}):null})},['Atterrissage explosif','Explose à l\'arrivée',{b:1}]),
+  SP('Réacteur Z-6','Vol rapide',7,{ai:ESC,P:{b:0}},(u,a,t,P)=>{S('dash',u);dash(u,a,clamp(t,100,320),.3,{jump:60,end:P.b?()=>aoe(u,u.x,u.y,90,14,{kb:300}):null})},['Atterrissage explosif','Explose à l\'arrivée',{b:1}]),
   SP('Fléchettes','3 fléchettes empoisonnées',8,{ai:RG(420,.5),P:{dps:6}},(u,a,t,P)=>{S('blaster',u);for(const k of[-.15,0,.15])proj(u,a+k,{spd:900,r:5,dmg:3,life:.5,col:'#7f7',o:{dot:{dps:P.dps,dur:3}}})},['Poison mortel','Poison plus fort',{dps:11}]),
   SP('Visée HUD','Le prochain tir est critique',8,{ai:SELF(600,.4),P:{n:1}},(u,a,t,P)=>{u.critBuf=P.n;say(u,'CIBLE ACQUISE','#ffb03a');S('ex',u)},['Visée totale','3 tirs critiques',{n:3}]),
   ULT('Salve de roquettes','5 roquettes en éventail',{cast:.4,line:{len:550,w:150},ai:{max:550,p:.8}},(u,a)=>{S('heavy',u);for(let i=0;i<5;i++)proj(u,a+(i-2)*.11,{spd:620+rnd()*120,r:8,dmg:12,life:1,col:'#f60',rocket:1,ar:55,kb:150})})]),
@@ -372,7 +372,7 @@ const CH={
   SP('Lame de brute','Coups lourds',.6,{melee:1,ai:M(90)},(u,a)=>melee(u,a,86,2,15)),
   SP('Charge du taureau','Charge qui projette en l\'air',7,{ai:GAP,P:{d:300}},(u,a,t,P)=>{S('dash',u);dash(u,a,P.d,.3,{dmg:12,air:.7,through:1})},['Charge du taureau furieux','Plus loin',{d:420}]),
   SP('Saut écrasant','Bondit et repousse tout à l\'arrivée',7,{ai:GAP,P:{r:120}},(u,a,t,P)=>{S('dash',u);dash(u,a,clamp(t,60,280),.35,{jump:90,end:()=>{aoe(u,u.x,u.y,P.r,10,{kb:600});S('boom',u)}})},['Séisme','Zone bien plus grande',{r:180}]),
-  SP('Rugissement','Étourdit autour de lui',10,{cast:.2,tele:{r:150,self:1},ai:RG(140,.5),P:{s:.8}},(u,a,t,P)=>{S('heavy',u);aoe(u,u.x,u.y,150,8,{stun:P.s},'#fa3')},['Rugissement assourdissant','1,4 s',{s:1.4}]),
+  SP('Cri de Zabrak','Étourdit autour de lui',10,{cast:.2,tele:{r:150,self:1},ai:RG(140,.5),P:{s:.8}},(u,a,t,P)=>{S('heavy',u);aoe(u,u.x,u.y,150,8,{stun:P.s},'#fa3')},['Cri assourdissant','1,4 s',{s:1.4}]),
   SP('Rage de Zabrak','Inarrêtable 3 s',10,{ai:DEF,P:{d:3}},(u,a,t,P)=>{u.unstop=P.d;shieldU(u,25);say(u,'INARRÊTABLE','#fc6');S('heavy',u)},['Rage aveugle','5 s',{d:5}]),
   ULT('Géant de Dathomir','Devient énorme 6 s : bouclier, dégâts et portée',{ai:{max:200,p:.8}},u=>{u.giant=6;u.rage=6;shieldU(u,60,6);ring(u.x,u.y,80,'#f44');S('boom',u)})]),
  jango:HERO('Jango Fett',1,'Chasseur volant : charge sismique, lance-flammes',160,222,300,'energy',LOOKS.jango,[
@@ -390,7 +390,7 @@ const CH={
   SP('Armure chromée','Immunisée aux tirs 2 s',11,{ai:DEF,P:{d:2}},(u,a,t,P)=>{u.chrome=P.d;ring(u.x,u.y,36,'#dddddd');S('deflect',u)},['Chrome poli','3,5 s',{d:3.5}]),
   ULT('Escadron du Premier Ordre','Tir de barrage de 15 tirs',{cast:.4,line:{len:600,w:220},ai:{max:550,p:.8}},(u,a)=>{S('heavy',u);for(let i=0;i<15;i++)proj(u,a+(i-7)*.07,{spd:850+rnd()*150,r:5,dmg:8,life:.75,col:'#ff4a3a'})})]),
  iden:HERO('Iden Versio',1,'Commando Inferno : drone, impulsion, ordre de charge',150,225,320,'crit',LOOKS.iden,[
-  SP('Blaster TL-50','Tir précis',.35,{ai:RG(640,.85)},(u,a)=>shot(u,a,8)),
+  SP('Répéteur TL-50','Rafale très rapide mais imprécise',.18,{ai:RG(520,.9)},(u,a)=>shot(u,a+(rnd()-.5)*.18,4)),
   SP('Droïde ID10','Drone qui la suit et tire 8 s',13,{ai:SELF(520,.5),P:{d:5}},(u,a,t,P)=>{turret(u,a,8,P.d,'#7df',{follow:u});S('deflect',u)},['Drone d\'assaut','Dégâts doublés',{d:10}]),
   SP('Brouillage','Roulade et brouille les ennemis autour',6,{ai:ESC,P:{s:0}},(u,a,t,P)=>{aoe(u,u.x,u.y,100,0,{slow:1.5,silence:P.s,unblockable:1},'#7df');S('dash',u);dash(u,a,180,.2,{})},['Brouillage total','Silence 1,5 s',{s:1.5}]),
   SP('Grenade impulsion','Étourdit en zone',9,{ai:RG(420,.35,90),P:{r:80}},(u,a,t,P)=>gren(u,a,t,{dmg:10,stun:1,ar:P.r,col:'#9df'}),['Impulsion large','Zone plus grande',{r:120}]),
@@ -418,10 +418,10 @@ const CH={
   SP('Parade tournoyante','Tourne en renvoyant les tirs',10,{ai:DEF,P:{d:1}},(u,a,t,P)=>{u.deflect=P.d;u.spin={t:P.d,k:0,r:80,dmg:4}},['Parade infernale','1,8 s',{d:1.8}]),
   ULT('Purge','Anneau d\'explosions autour de lui',{cast:.3,tele:{r:200,self:1},ai:{max:200,p:.8}},u=>{for(let i=0;i<10;i++){const b=i*Math.PI/5;zone(u,u.x+Math.cos(b)*150,u.y+Math.sin(b)*150,60,24,.5+i*.05,{stun:.6},'#f22')}})]),
  sister:HERO('Seconde Sœur',1,'Traqueuse : écrase contre les murs, fouette, exécute',165,228,55,'third',LOOKS.sister,[
-  SP('Double lame','Coups rapides',.45,{melee:1,ai:M(84)},(u,a)=>melee(u,a,80,2.2,11)),
+  SP('Lame de l\'Inquisition','Coups rapides',.45,{melee:1,ai:M(84)},(u,a)=>melee(u,a,80,2.2,11)),
   SP('Poussée murale','Repousse : étourdit si la cible heurte un obstacle',7,{ai:RG(160,.5),P:{kb:800}},(u,a,t,P)=>{S('heavy',u);cone(u,a,170,1,8,{kb:P.kb,wall:1.4},'#f22')},['Écrasement','Repousse plus fort',{kb:1200}]),
   SP('Fouet de Force','S\'accroche à l\'ennemi et fonce sur lui',7,{ai:GAP,P:{s:.3}},(u,a,t,P)=>{S('dash',u);proj(u,a,{spd:1000,r:9,dmg:10,life:.42,col:'#f22',hook:2,stun:P.s})},['Fouet percutant','Étourdit 1 s',{s:1}]),
-  SP('Attraction','Attire tout le monde vers un point',9,{cast:.3,tele:{r:110,max:300},ai:RG(300,.45),P:{s:0}},(u,a,t,P)=>{const p=fwd(u,a,Math.min(t,300));S('heavy',u);aoe(u,p.x,p.y,110,8,{pull:900,stun:P.s,unblockable:1},'#b8f')},['Implosion','Étourdit aussi',{s:.8}]),
+  SP('Étau de Force','Attire tout le monde vers un point',9,{cast:.3,tele:{r:110,max:300},ai:RG(300,.45),P:{s:0}},(u,a,t,P)=>{const p=fwd(u,a,Math.min(t,300));S('heavy',u);aoe(u,p.x,p.y,110,8,{pull:900,stun:P.s,unblockable:1},'#b8f')},['Implosion','Étourdit aussi',{s:.8}]),
   SP('Garde de l\'Inquisition','Bouclier, ralentit ceux qui la frappent',10,{ai:DEF,P:{sh:35}},(u,a,t,P)=>{shieldU(u,P.sh);u.thornSlow=3;S('deflect',u)},['Garde d\'acier','Gros bouclier',{sh:60}]),
   ULT('Exécution de Jedi','Coup fatal sur les ennemis blessés',{cast:.35,line:{len:130,w:100},ai:{mode:'exec',max:120,p:.9}},(u,a)=>slash(u,a,130,1.6,26,{exec:.55,unblockable:1}))]),
  gideon:HERO('Moff Gideon',1,'Sabre noir : Dark Troopers, beskar',185,212,70,'armor',LOOKS.gideon,[
@@ -432,7 +432,7 @@ const CH={
   SP('Armure de beskar','Inarrêtable, 30 % de dégâts en moins',11,{ai:DEF,P:{d:3}},(u,a,t,P)=>{u.unstop=P.d;u.dr=.3;u.drT=P.d;ring(u.x,u.y,36,'#888');S('heavy',u)},['Beskar pur','5 s',{d:5}]),
   ULT('Le Sabre noir','Grand coup circulaire qui repousse',{cast:.35,tele:{r:170,self:1},ai:{max:160,p:.8}},u=>{S('boom',u);aoe(u,u.x,u.y,170,34,{kb:500,unblockable:1},'#dddddd')})]),
  thrawn:HERO('Grand Amiral Thrawn',1,'Stratège : analyse, échange d\'alliés, bombardement',150,212,300,'slow',LOOKS.thrawn,[
-  SP('Pistolet de duel','Tir précis',.4,{ai:RG(620,.85)},(u,a)=>shot(u,a,8)),
+  SP('Pistolet de duel','Tir rapide qui dévoile les cibles invisibles',.45,{ai:RG(640,.85)},(u,a)=>shot(u,a,9,{spd:1100,o:{reveal:1}})),
   SP('Analyse','Immobilise et rend vulnérable',8,{cast:.25,line:{len:520,w:18},ai:RG(500,.45),P:{d:1.4}},(u,a,t,P)=>proj(u,a,{spd:750,r:9,dmg:8,life:.7,col:'#f44',root:P.d,o:{vuln:3}}),['Analyse complète','Immobilise 2,2 s',{d:2.2}]),
   SP('Repositionnement','Échange sa place avec un allié',9,{ai:ESC,P:{sh:0}},(u,a,t,P)=>{const p=fwd(u,a,Math.min(t,500));let b=null,bd=300;for(const x of units)if(x!==u&&x.team===u.team&&!x.dead){const d=Math.hypot(x.x-p.x,x.y-p.y);if(d<bd){bd=d;b=x}}if(!b){blinkTo(u,p.x,p.y);return}const ox=u.x,oy=u.y;blinkTo(u,b.x,b.y);b.x=ox;b.y=oy;if(P.sh){shieldU(u,30);shieldU(b,30)}},['Manœuvre','Boucliers pour les deux',{sh:1}]),
   SP('Champ tactique','Zone qui blesse et ralentit',10,{ai:RG(380,.45),P:{dps:6}},(u,a,t,P)=>{const p=fwd(u,a,Math.min(t,380));field(u,p.x,p.y,{r:120,dps:P.dps,slow:1,col:'#f44'})},['Champ mortel','Blesse plus',{dps:12}]),
@@ -446,7 +446,7 @@ const CH={
   SP('Armure de commando','40 % de dégâts en moins',11,{ai:DEF,P:{d:3}},(u,a,t,P)=>{u.dr=.4;u.drT=P.d;ring(u.x,u.y,36,'#3f6');S('deflect',u)},['Armure renforcée','5 s',{d:5}]),
   ULT('Escouade de la mort','3 Death Troopers tirent 8 s',{ai:{mode:'self',max:520,p:.8}},(u,a)=>{for(const k of[-1,0,1])turret(u,a+k*.9,8,5,'#3f6');S('deflect',u)})]),
  ig88:HERO('IG-88',1,'Droïde assassin : mines, tir à 360°, autodestruction',170,215,300,'armor',LOOKS.ig88,[
-  SP('DLT-20A','Tir de fusil',.36,{ai:RG(620,.85)},(u,a)=>shot(u,a,8)),
+  SP('DLT-20A','Tir rapide à très longue portée',.28,{ai:RG(800,.85)},(u,a)=>shot(u,a,6,{spd:1050,life:.8})),
   SP('Mine de proximité','Mine très puissante',10,{ai:RG(380,.35,40),P:{d:26}},(u,a,t,P)=>trap(u,a,t,{dmg:P.d,r:70,stun:.5,col:'#f60'}),['Mine lourde','Énormes dégâts',{d:40}]),
   SP('Réacteurs','Fonce en tournoyant à travers les ennemis',7,{ai:GAP,P:{d:8}},(u,a,t,P)=>{S('dash',u);dash(u,a,260,.25,{dmg:P.d,through:1})},['Réacteurs surchauffés','Plus de dégâts',{d:16}]),
   SP('Tir de saturation','12 tirs dans toutes les directions',9,{ai:RG(200,.5),P:{n:12}},(u,a,t,P)=>{S('blaster',u);for(let i=0;i<P.n;i++)proj(u,i*Math.PI*2/P.n,{spd:800,r:5,dmg:7,life:.55,col:'#ff4a3a'})},['Saturation','20 tirs',{n:20}]),
