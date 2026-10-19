@@ -5,6 +5,7 @@ Jeu de combat en vue 3/4 plongeante (comme Battlerite), jouable directement dans
 ## Modes
 - **Arène 1 contre 1** : héros contre méchant, au meilleur des 3 manches. Holocron de soin à 18 s, mort subite à 45 s.
 - **Bataille 20 contre 20** : les 20 héros contre les 20 méchants sur une grande carte, caméra qui suit le joueur. 60 renforts par camp, chaque élimination en coûte 1. Réapparition à la base, holocrons de soin, mini-carte et fil des éliminations.
+- **Duel** : toi contre ton ami en ligne (1 contre 1, au meilleur des 3 manches), après connexion via « Coop en ligne ».
 - **Coop en ligne** : bouton « Coop en ligne » du menu. L'hôte crée un salon (code à 4 caractères), le coéquipier le rejoint. Arène en 2 contre 2, ou bataille dans la même armée. Connexion pair-à-pair (PeerJS) : il faut ouvrir le jeu depuis un vrai site (GitHub Pages, Vercel, Netlify…), pas depuis un fichier local bloqué ou un aperçu restreint.
 
 ## Personnages
