@@ -10,6 +10,8 @@ Jeu de combat en vue 3/4 plongeante (comme Battlerite), jouable directement dans
 - **Coop en ligne** : bouton « Coop en ligne » du menu. L'hôte crée un salon (code à 4 caractères), le coéquipier le rejoint. Arène en 2 contre 2, ou bataille dans la même armée. Connexion pair-à-pair (PeerJS) : il faut ouvrir le jeu depuis un vrai site (GitHub Pages, Vercel, Netlify…), pas depuis un fichier local bloqué ou un aperçu restreint.
 
 ## Personnages
+**Son** : vrais bruitages Star Wars (dossier `sounds/`, ~1 Mo) : sabres Jedi/Sith, blasters rebelles et impériaux, arbalète de Chewie, DL-44 de Han, éclairs de Force, explosions, et une réplique culte quand un héros lance son ultime (« Hello there! », « Do or do not »…). Si les fichiers manquent (jeu ouvert en local), les sons synthétisés prennent le relais.
+
 40 personnages, chacun avec un kit écrit sur mesure (6 sorts, un passif, et une version EX dérivée pour chaque sort) inspiré de League of Legends et Battlerite : liens à maintenir, échange de place, contre, riposte, peur, provocation, silence, désarmement, vulnérabilité, poison, grenades collantes ou à fragmentation, roquettes à tête chercheuse, charges, barillet à recharger, Grogu, drone, dôme anti-tirs, zone qui ralentit le temps…
 
 Équilibrage : points de vie, dégâts et vitesse calculés en simulant des centaines de duels entre ordinateurs (table `BAL` dans le code).

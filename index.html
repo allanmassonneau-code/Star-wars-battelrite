@@ -55,12 +55,12 @@ const dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y),ang=(a,b)=>Math.atan2(b.y-a.y,b.x-
 const angDiff=(a,b)=>{let d=a-b;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;return Math.abs(d)};
 function rgba(h,a){if(h.length===4)h='#'+h[1]+h[1]+h[2]+h[2]+h[3]+h[3];const n=parseInt(h.slice(1),16);return`rgba(${n>>16},${n>>8&255},${n&255},${a})`}
 
-// ---------- Son (synthétisé, aucun fichier) ----------
+// ---------- Son : vrais bruitages Star Wars (dossier sounds/), repli synthétisé si absents ----------
 let AC=null,NB=null,MB=null,RV=null,muted=false;
 // moteur audio : bus principal compressé + réverbération courte (tout est synthétisé, aucun fichier)
 function ac(){if(AC===null){try{AC=new(window.AudioContext||window.webkitAudioContext)();const comp=AC.createDynamicsCompressor();comp.threshold.value=-20;comp.ratio.value=4;comp.attack.value=.003;comp.release.value=.2;
  MB=AC.createGain();MB.gain.value=.9;MB.connect(comp);comp.connect(AC.destination);
- RV=AC.createConvolver();const len=Math.floor(AC.sampleRate*1.4),ir=AC.createBuffer(2,len,AC.sampleRate);for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2)}RV.buffer=ir;const rg=AC.createGain();rg.gain.value=.22;RV.connect(rg);rg.connect(comp)}catch(e){AC=0}}return AC}
+ RV=AC.createConvolver();const len=Math.floor(AC.sampleRate*1.4),ir=AC.createBuffer(2,len,AC.sampleRate);for(let c=0;c<2;c++){const d=ir.getChannelData(c);for(let i=0;i<len;i++)d[i]=(Math.random()*2-1)*Math.pow(1-i/len,3.2)}RV.buffer=ir;const rg=AC.createGain();rg.gain.value=.22;RV.connect(rg);rg.connect(comp);loadSnd()}catch(e){AC=0}}return AC}
 const live=()=>{const a=ac();return a&&!muted&&a.state==='running'?a:null};
 function out(n,rev){n.connect(MB);if(rev)n.connect(RV)}
 function env(a,t,v,att,dur){const g=a.createGain();g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(v,t+att);g.gain.exponentialRampToValueAtTime(.0001,t+dur);return g}
@@ -71,7 +71,7 @@ function nz(dur,vol,o={}){const a=live();if(!a)return;if(!NB){NB=a.createBuffer(
  const t=a.currentTime+(o.delay||0),s=a.createBufferSource(),f=a.createBiquadFilter(),g=env(a,t,vol,o.att||.005,dur);s.buffer=NB;s.loop=true;f.type=o.type||'lowpass';f.frequency.setValueAtTime(o.f0||1000,t);if(o.f1)f.frequency.exponentialRampToValueAtTime(o.f1,t+dur);f.Q.value=o.q||1;s.connect(f);
  let n=f;if(o.crackle){const cg=a.createGain();for(let k=0;k<dur*45;k++)cg.gain.setValueAtTime(Math.random()<.45?0:1,t+k/45);f.connect(cg);n=cg}n.connect(g);out(g,o.rev);s.start(t,Math.random());s.stop(t+dur+.05)}
 const tone=(type,f0,f1,dur,vol)=>osc(type,f0,f1,dur,vol*1.4,{rev:1});
-const SFX={
+const SYN={
  saber:()=>{osc('sawtooth',150,92,.38,.06,{lp:1500,lp2:300,rev:1});osc('sawtooth',153,94,.38,.045,{lp:1200,lp2:280,detune:14});nz(.26,.05,{type:'bandpass',f0:700,f1:2600,q:.9})},
  ignite:()=>{osc('sawtooth',38,140,.7,.07,{lp:500,lp2:2200,sweep:.35,rev:1});osc('sawtooth',39,142,.7,.05,{lp:400,lp2:1800,sweep:.35,detune:20});nz(.25,.06,{type:'highpass',f0:3000,f1:1200})},
  blaster:()=>{osc('sawtooth',2100,130,.2,.045,{sweep:.17,bp:1300,q:1.4,rev:1});osc('sine',2600,260,.16,.03,{delay:.06,rev:1})},
@@ -87,12 +87,28 @@ const SFX={
  lose:()=>{osc('sawtooth',196,98,1,.05,{lp:900,lp2:300,rev:1});osc('sawtooth',185,92,1,.04,{lp:800,lp2:250,delay:.15})},
  flame:()=>nz(.2,.05,{type:'lowpass',f0:1000,f1:450}),
  ex:()=>{osc('triangle',523,1046,.22,.05,{rev:1});osc('triangle',784,1568,.22,.04,{delay:.06,rev:1})}};
+// fichiers : nom -> nombre de variantes (sounds/nomN.mp3, ou sounds/nom.mp3 si une seule)
+const SND_N={saber:4,saberS:4,ignite:2,blaster:4,blasterE:3,bow:2,han:2,heavy:3,hit:2,boom:3,zap:2,zapS:1,dash:3,deflect:3,flame:1,wilhelm:1};
+const VOICES=['luke','yoda','han','leia','chewie','obiwan','anakin','mace','quigon','lando','padme','r2','wicket','vader','palpatine','maul','grievous','jango','boba','phasma'];
+const SND_VOL={saber:.42,saberS:.42,ignite:.5,blaster:.32,blasterE:.32,bow:.4,han:.36,heavy:.42,hit:.4,boom:.6,zap:.4,zapS:.22,dash:.3,deflect:.45,flame:.25,wilhelm:.55};
+const BUF={};let sndLoad=false,voiceEnd=0;
+function loadSnd(){if(sndLoad||!AC)return;sndLoad=true;const L=Object.entries(SND_N).flatMap(([k,n])=>n>1?[...Array(n)].map((_,i)=>[k,k+i]):[[k,k]]).concat(VOICES.map(c=>['v_'+c,'v_'+c]));
+ for(const [k,f] of L)fetch('sounds/'+f+'.mp3').then(r=>r.ok?r.arrayBuffer():Promise.reject()).then(b=>new Promise((ok,ko)=>AC.decodeAudioData(b,ok,ko))).then(b=>(BUF[k]=BUF[k]||[]).push(b)).catch(()=>{})}
+function playBuf(k,vol,rate){const a=live(),L=BUF[k];if(!a||!L||!L.length)return false;const s=a.createBufferSource(),g=a.createGain();s.buffer=L[Math.random()*L.length|0];s.playbackRate.value=rate||(.93+Math.random()*.14);g.gain.value=vol;s.connect(g);out(g,k!=='hit');s.start();return s.buffer.duration/s.playbackRate.value}
+const SFX={};
+for(const k in SYN)SFX[k]=()=>{if(!playBuf(k,SND_VOL[k]||.4))SYN[k]()};
+for(const [k,b] of [['saberS','saber'],['blasterE','blaster'],['bow','blaster'],['han','blaster']])SFX[k]=()=>{if(!playBuf(k,SND_VOL[k]))SYN[b]()};
+SFX.wilhelm=()=>playBuf('wilhelm',SND_VOL.wilhelm,1);
+// répliques cultes à l'ultime (une seule voix à la fois)
+for(const c of VOICES)SFX['v_'+c]=()=>{const a=live();if(!a||a.currentTime<voiceEnd)return;const d=playBuf('v_'+c,.85,1);if(d)voiceEnd=a.currentTime+d};
+// variante selon le perso : sabre Sith, blasters impériaux rouges, arbalète de Chewie, DL-44 de Han
+const sndKey=(n,u)=>!u||!u.ch?n:n==='saber'&&u.ch.side?'saberS':n==='blaster'?(u.c==='chewie'?'bow':u.c==='han'?'han':u.ch.side?'blasterE':n):n;
 // les sons et effets lointains sont coupés (utile en bataille 20c20)
 let cam={x:CX,y:CY},Yc=377.5;
 const nearMe=(x,y)=>Math.abs(x-cam.x)<820&&Math.abs(y-cam.y)<560;
 const near=(x,y)=>nearMe(x,y)||(net.gcam&&Math.abs(x-net.gcam.x)<820&&Math.abs(y-net.gcam.y)<560);
 const lastS={};
-const S=(n,u)=>{if(net.role==='host'&&u&&net.conn&&net.ev.snd.length<60)net.ev.snd.push([n,Math.round(u.x),Math.round(u.y)]);const t=performance.now();if((!u||nearMe(u.x,u.y))&&!(t-(lastS[n]||0)<35)){lastS[n]=t;SFX[n]()}};
+const S=(n,u)=>{n=sndKey(n,u);if(!SFX[n])return;if(net.role==='host'&&u&&net.conn&&net.ev.snd.length<60)net.ev.snd.push([n,Math.round(u.x),Math.round(u.y)]);const t=performance.now();if((!u||nearMe(u.x,u.y))&&!(t-(lastS[n]||0)<35)){lastS[n]=t;SFX[n]()}};
 
 // ---------- Capacités ----------
 let EX=false;const X=v=>EX?v*1.2:v;
@@ -499,7 +515,7 @@ const enemies=u=>units.filter(e=>e.team!==u.team&&!e.dead);
 function use(u,i,td,aimOv,ex){let ab=u.ch.abil[i];const chg=ab&&ab.charges;if(!ab||(chg?u.chg[i]<=0:u.cds[i]>0)||(i>0&&u.silence>0)||(i===0&&u.disarm>0)||u.stun>0||u.dash||u.cast||u.spin||u.flame||u.block)return false;if(ab.ult&&u.energy<100)return false;if((ab.throw||ab.melee)&&u.saberOut>0)return false;
  ex=!!(ex&&i>0&&!ab.ult&&u.energy>=25);if(ex){u.energy-=25;if(ab.ex)ab=exAb(ab)}if(u.stealth>0){u.stealth=0;u.ambush=2}
  if(chg){u.chg[i]--;if(u.cds[i]<=0)u.cds[i]=ab.cd}else u.cds[i]=(ab.cd||1)*(i===0&&u.rapid>0?.45:1);
- if(ab.ammo){if(u.ammo<=0)u.ammo=ab.ammo;u.ammo--;if(u.ammo<=0){u.ammo=ab.ammo;u.cds[i]=ab.reload}}if(ab.ult){u.energy-=100;if(u===player)flashS=.25;if(near(u.x,u.y))shake=.3}
+ if(ab.ammo){if(u.ammo<=0)u.ammo=ab.ammo;u.ammo--;if(u.ammo<=0){u.ammo=ab.ammo;u.cds[i]=ab.reload}}if(ab.ult){u.energy-=100;S('v_'+u.c,u);if(u===player)flashS=.25;if(near(u.x,u.y))shake=.3}
  if(ab.cast){u.cast={i,t:0,dur:ab.cast,td:td??200,aimOv,ex};return true}
  fire(u,ab,aimOv??u.aim,td??200,ex);return true}
 const exAb=b=>Object.assign({},b,{n:b.ex.n,d:b.ex.d,P:Object.assign({},b.P,b.ex.p),isEx:1});
@@ -559,7 +575,7 @@ function hit(t,src,dmg,o={}){
  if(t.hp<=0)die(t,src);
  return true;
 }
-function die(t,src){t.hp=0;t.dead=true;t.deadT=0;t.cast=null;t.dash=null;t.spin=null;t.flame=null;t.block=false;
+function die(t,src){t.hp=0;t.dead=true;t.deadT=0;if(Math.random()<.07&&t.c!=='r2'&&t.c!=='ig88')S('wilhelm',t);t.cast=null;t.dash=null;t.spin=null;t.flame=null;t.block=false;
  if(near(t.x,t.y)){sparks(t.x,t.y,'#fff',t.hero?40:12);if(t.hero)shake=Math.max(shake,.3)}
  if(mode!=='battle'){if(units.some(x=>x.team===t.team&&!x.dead))return;winner=1-t.team;score[winner]++;state='roundEnd';stateT=2.8;shake=.5;hs=.25;(winner===0?SFX.win:SFX.lose)();return}
  tickets[t.team]=Math.max(0,tickets[t.team]-1);t.respawn=6;if(src&&src.hero)src.energy=Math.min(100,src.energy+10);
