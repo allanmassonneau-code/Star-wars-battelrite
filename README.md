@@ -25,6 +25,7 @@ Méchants : Vador, Palpatine, Maul, Kylo Ren, Boba Fett, Grievous, Dooku, Ventre
 - **Maj + sort** : version EX (25 d'énergie). Comme dans Battlerite, c'est un sort dérivé avec son propre effet (ex. Ruée → Ruée aérienne qui projette en l'air, Détonateur → Grappe de grenades).
 - **F** (porteurs de sabre) : parade. Une parade déclenchée au bon moment (0,3 s) renvoie le tir vers le tireur ; une garde tenue ne fait que bloquer. Consomme de l'endurance ; si elle tombe à zéro, la garde est brisée.
 - Tab (maintenu) : tableau des scores (éliminations, morts, assistances, dégâts infligés et subis, soins) ; le même tableau s'affiche en fin de partie avec le meilleur joueur (★).
+- **En ligne jusqu'à 8 joueurs** : l'hôte ouvre un salon, ses amis (7 max) entrent le code. Chacun choisit son héros (un héros pris est marqué) ; en duel et en bataille chacun choisit son équipe A ou B (en arène, tous les joueurs affrontent des bots). La partie démarre quand tout le monde est PRÊT ; si un ami se déconnecte, l'ordinateur reprend son perso.
 - ⚙ Partie : taille des équipes en arène/duel (1v1, 2v2, 3v3, complétées par des bots), manches gagnantes, taille de la bataille (5 à 20 par camp), renforts, mort subite, holocron, soins au sol. En ligne, c'est l'hôte qui règle.
 - M : couper le son · O (ou bouton ⚙ en bas à droite) : options audio (volume général, bruitages, répliques, cri Wilhelm, son spatialisé), gardées dans le navigateur.
 
