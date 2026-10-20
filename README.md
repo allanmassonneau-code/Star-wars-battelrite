@@ -24,6 +24,8 @@ Méchants : Vador, Palpatine, Maul, Kylo Ren, Boba Fett, Grievous, Dooku, Ventre
 - Clic G, Clic D, Espace, Q (A en AZERTY), E : sorts. R : ultime (100 d'énergie).
 - **Maj + sort** : version EX (25 d'énergie). Comme dans Battlerite, c'est un sort dérivé avec son propre effet (ex. Ruée → Ruée aérienne qui projette en l'air, Détonateur → Grappe de grenades).
 - **F** (porteurs de sabre) : parade. Une parade déclenchée au bon moment (0,3 s) renvoie le tir vers le tireur ; une garde tenue ne fait que bloquer. Consomme de l'endurance ; si elle tombe à zéro, la garde est brisée.
+- Tab (maintenu) : tableau des scores (éliminations, morts, assistances, dégâts infligés et subis, soins) ; le même tableau s'affiche en fin de partie avec le meilleur joueur (★).
+- ⚙ Partie : taille des équipes en arène/duel (1v1, 2v2, 3v3, complétées par des bots), manches gagnantes, taille de la bataille (5 à 20 par camp), renforts, mort subite, holocron, soins au sol. En ligne, c'est l'hôte qui règle.
 - M : couper le son · O (ou bouton ⚙ en bas à droite) : options audio (volume général, bruitages, répliques, cri Wilhelm, son spatialisé), gardées dans le navigateur.
 
 ## Mécaniques

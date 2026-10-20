@@ -20,14 +20,24 @@ canvas{width:min(100vw,177.78vh);height:min(56.25vw,100vh);display:block;cursor:
 #opt{position:fixed;right:12px;bottom:52px;width:min(300px,calc(100vw - 32px));box-sizing:border-box;background:#0d1424;border:1px solid #3a4a6a;border-radius:12px;padding:16px;z-index:6;color:var(--fg);cursor:auto}
 #opt h2{margin:0 0 10px;color:#ffe81f;font-size:17px}#opt label{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:9px 0;font-size:14px;color:#c9d6f2}
 #opt input[type=range]{flex:1;max-width:140px;accent-color:#ffe81f}#opt input[type=checkbox]{accent-color:#ffe81f;width:16px;height:16px}#opt output{width:34px;text-align:right;color:#ffe81f;font-variant-numeric:tabular-nums}
+#opt select{font:inherit;font-size:13px;background:#04050b;color:#fff;border:1px solid #3a4a6a;border-radius:6px;padding:3px 4px;max-width:150px}#opt select:disabled,#opt input:disabled{opacity:.5}#opt .note{margin:0 0 4px;font-size:12px;color:#9fb3d9}#opt{max-height:calc(100vh - 70px);overflow:auto}
 #opt button{font:inherit;font-weight:bold;border:0;border-radius:8px;padding:7px 12px;background:#2a3a5a;color:#dfe8ff;cursor:pointer;margin-top:6px}#optB:focus-visible,#opt :focus-visible{outline:2px solid #7df;outline-offset:2px}
 </style>
 </head>
 <body>
 <div id="wrap"><canvas id="c" width="1280" height="720"></canvas></div>
-<button id="optB" aria-expanded="false" aria-controls="opt">⚙ Options (O)</button>
+<button id="optB" aria-expanded="false" aria-controls="opt">⚙ Partie & options (O)</button>
 <div id="opt" hidden>
- <h2>Options audio</h2>
+ <h2>Partie</h2>
+ <p id="cfgNote" class="note"></p>
+ <label>Arène / duel : taille des équipes <select id="cTeam"><option value="1">1 contre 1</option><option value="2">2 contre 2</option><option value="3">3 contre 3</option></select></label>
+ <label>Manches gagnantes <select id="cWins"><option value="1">1 (manche unique)</option><option value="2">2 (meilleur des 3)</option><option value="3">3 (meilleur des 5)</option><option value="4">4 (meilleur des 7)</option></select></label>
+ <label>Bataille : joueurs par camp <select id="cBsize"><option>5</option><option>10</option><option>15</option><option>20</option></select></label>
+ <label>Bataille : renforts par camp <select id="cTickets"><option>20</option><option>40</option><option>60</option><option>100</option><option>150</option></select></label>
+ <label>Mort subite (arène) <input type="checkbox" id="cSd"></label>
+ <label>Holocron de soin (arène) <input type="checkbox" id="cOrb"></label>
+ <label>Soins au sol (bataille) <input type="checkbox" id="cPk"></label>
+ <h2 style="margin-top:14px">Options audio</h2>
  <label>Volume général <input type="range" id="oMaster" min="0" max="100"><output id="vMaster"></output></label>
  <label>Bruitages <input type="range" id="oFx" min="0" max="100"><output id="vFx"></output></label>
  <label>Répliques <input type="range" id="oVoice" min="0" max="100"><output id="vVoice"></output></label>
@@ -60,7 +70,7 @@ const SLOTS=['lmb','rmb','Space','KeyQ','KeyE','KeyR'];
 const lbl={lmb:'Clic G',rmb:'Clic D',Space:'Espace',KeyQ:'Q',KeyE:'E',KeyR:'R',KeyW:'W',KeyA:'A',KeyS:'S',KeyD:'D',KeyM:'M',KeyF:'F'};
 try{navigator.keyboard&&navigator.keyboard.getLayoutMap().then(m=>{for(const c of['KeyQ','KeyE','KeyR','KeyW','KeyA','KeyS','KeyD','KeyM','KeyF'])if(m.get(c))lbl[c]=m.get(c).toUpperCase()}).catch(()=>{})}catch(e){}
 const wake=()=>{const a=ac();if(a&&a.state==='suspended')a.resume()};
-addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;wake();if(!keys[e.code])pressed[e.code]=1;keys[e.code]=1;if(e.code==='Space'||e.code.startsWith('Arrow'))e.preventDefault();if(e.code==='KeyM'){muted=!muted;syncOpt()}if(e.code==='KeyO')toggleOpt()});
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;wake();if(!keys[e.code])pressed[e.code]=1;keys[e.code]=1;if(e.code==='Space'||e.code==='Tab'||e.code.startsWith('Arrow'))e.preventDefault();if(e.code==='KeyM'){muted=!muted;syncOpt()}if(e.code==='KeyO')toggleOpt()});
 addEventListener('keyup',e=>{keys[e.code]=0});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=0;mouse.l=0});
 cv.addEventListener('mousemove',e=>{const b=cv.getBoundingClientRect();mouse.x=(e.clientX-b.left)*W/b.width;mouse.y=(e.clientY-b.top)*H/b.height});
@@ -151,7 +161,7 @@ const pick=(u,a,t,R)=>{const p=fwd(u,a,Math.min(t,R));return nearE(u,p.x,p.y,150
 const allies=(u,r)=>units.filter(x=>x.team===u.team&&!x.dead&&dist(x,u)<r);
 function blinkTo(u,x,y){ring(u.x,u.y,36,'#b8f');u.x=x;u.y=y;collide(u);ring(u.x,u.y,36,'#b8f')}
 const shieldU=(u,v,d=3)=>{u.shield=Math.max(u.shield,v);u.shieldT=Math.max(u.shieldT,d)};
-const heal=(u,v)=>{v=Math.round(v);if(u.dead)return;u.hp=Math.min(u.max,u.hp+v);say(u,'+'+v,'#6f9')};
+const heal=(u,v)=>{v=Math.round(v);if(u.dead)return;const real=Math.min(v,u.max-u.hp);if(real>0)stOf(CUR&&CUR.team===u.team?CUR:u).heal+=real;u.hp=Math.min(u.max,u.hp+v);say(u,'+'+v,'#6f9')};
 const beamFx=(x,y,x2,y2,col,w)=>{if(near(x,y)||near(x2,y2))fx.push({beam:1,x,y,x2,y2,col,w,t:.35,m:.35})};
 const tether=(u,t,dur,r,col,end,tick)=>tethers.push({a:u,b:t,t:dur,m:dur,r,col,end,tick,k:0});
 const turret=(u,a,life,dmg,col,o={})=>turrets.push(Object.assign({col:boltCol(u,col),x:clamp(u.x+Math.cos(a)*60,B.x+20,B.x+B.w-20),y:clamp(u.y+Math.sin(a)*60,B.y+20,B.y+B.h-20),owner:u,team:u.team,t:life,cd:.4,dmg,range:450,aim:a},o));
@@ -510,29 +520,42 @@ let mode='arena',state='menu',units=[],player=null,projs=[],fx=[],txt=[],zones=[
 let tethers=[],traps=[],turrets=[],fields=[],walls=[],BASIC=false,GLOW=18;
 let B=A,OBST=ARENA_OBST,tickets=[100,100],killfeed=[],pickups=[],deathPos=null;
 const SD_START=45,SD_LEN=35;
-const sdR=()=>mode!=='arena'||timer<SD_START?9999:lerp(720,130,clamp((timer-SD_START)/SD_LEN,0,1));
+// configuration de partie (réglée par l'hôte en ligne, gardée dans le navigateur)
+const CFG={team:1,wins:2,bsize:20,tickets:60,sd:true,orb:true,pk:true};
+try{Object.assign(CFG,JSON.parse(localStorage.getItem('swCfg')||'{}'))}catch(e){}
+const saveCfg=()=>{try{localStorage.setItem('swCfg',JSON.stringify(CFG))}catch(e){}};
+// taille d'équipe effective : en coop arène il faut au moins 2 par équipe
+const teamN=()=>mode==='arena'&&coop()?Math.max(2,CFG.team):CFG.team;
+const sdR=()=>mode!=='arena'||!CFG.sd||timer<SD_START?9999:lerp(720,130,clamp((timer-SD_START)/SD_LEN,0,1));
 function mkUnit(c,x,y,team){const ch=CH[c];return{c,ch,x,y,z:0,vx:0,vy:0,kx:0,ky:0,r:18*(ch.look.scale>1?1.1:1),hp:ch.hp,max:ch.hp,energy:0,team,hero:!ch.trooper,cds:[0,0,0,0,0,0],stun:0,slow:0,haste:0,rage:0,rapid:0,unstop:0,deflect:0,shield:0,shieldT:0,
  stam:100,stamT:0,block:false,blockLock:0,aiBlock:0,dash:null,cast:null,spin:null,flame:null,aim:team?Math.PI:0,swing:0,swingA:0,saberOut:0,walk:0,moving:0,aiT:.3+rnd()*.4,strT:0,strDir:rnd()<.5?1:-1,flash:0,dead:false,deadT:0,respawn:0,tgt:null,lane:y,ctrl:null,human:false,nx:x,ny:y,root:0,stealth:0,ambush:0,airT:0,hits:0,chg:ch.abil.map(a=>a&&a.charges||0),ammo:ch.abil[0].ammo||0,silence:0,fear:0,taunt:0,disarm:0,vuln:0,counter:0,riposte:0,dodge:0,absorb:0,thorns:0,dr:0,drT:0,cdrHit:0,lsB:0,regenB:0,slowImm:0,giant:0,riot:0,chrome:0,parryAll:0,thornSlow:0,wallStun:0,critBuf:0,pierceBuf:0,dot:0,dotT:0,sleepT:0,markB:null,stick:null}}
-function startMatch(c){playerChamp=c;const o=HEROES.filter(x=>CH[x].side!==CH[c].side);aiChamp=o[Math.floor(rnd()*o.length)];score=[0,0];round=1;mode!=='battle'?startRound():startBattle()}
+// statistiques de la partie (éliminations, morts, assistances, dégâts infligés/subis, soins), par perso et par camp
+let STATS={},CUR=null;
+const stOf=u=>{const k=u.c+'|'+u.team;return STATS[k]||(STATS[k]={c:u.c,team:u.team,k:0,d:0,a:0,dmg:0,tk:0,heal:0})};
+function startMatch(c){playerChamp=c;STATS={};const o=HEROES.filter(x=>CH[x].side!==CH[c].side);aiChamp=o[Math.floor(rnd()*o.length)];score=[0,0];round=1;mode!=='battle'?startRound():startBattle()}
 function resetWorld(){tethers=[];traps=[];turrets=[];fields=[];walls=[];projs=[];fx=[];txt=[];zones=[];orb=null;orbUsed=false;timer=0;banner=null;killfeed=[];state='countdown';stateT=3}
 function mateChamp(){if(!net.mate||!CH[net.mate]){const o=HEROES.filter(h=>CH[h].side===CH[playerChamp].side&&h!==playerChamp);net.mate=o[Math.floor(rnd()*o.length)]}return net.mate}
 const setHuman=(u,c)=>{u.ctrl=c;u.human=true;return u};
 function startRound(){B=A;OBST=ARENA_OBST;GLOW=18;cam={x:CX,y:CY};Yc=377.5;
- if(mode==='duel'&&coop())units=[mkUnit(playerChamp,A.x+150,CY,0),setHuman(mkUnit(mateChamp(),A.x+A.w-150,CY,1),'remote')];
- else if(coop()){const foes=HEROES.filter(x=>CH[x].side!==CH[playerChamp].side).sort(()=>rnd()-.5);
-  units=[mkUnit(playerChamp,A.x+150,CY-70,0),setHuman(mkUnit(mateChamp(),A.x+150,CY+70,0),'remote'),mkUnit(foes[0],A.x+A.w-150,CY-70,1),mkUnit(foes[1],A.x+A.w-150,CY+70,1)]}
- else units=[mkUnit(playerChamp,A.x+150,CY,0),mkUnit(aiChamp,A.x+A.w-150,CY,1)];
+ const n=teamN(),used=new Set([playerChamp]),pickFrom=side=>{const o=HEROES.filter(h=>CH[h].side===side&&!used.has(h));const c=o[Math.floor(rnd()*o.length)];used.add(c);return c},
+  pos=(t,i)=>[t?A.x+A.w-150:A.x+150,CY+(i-(n-1)/2)*(n>2?95:140)];
+ const t0=[playerChamp],t1=[];
+ if(mode==='duel'&&coop()){const m=mateChamp();used.add(m);t1.push(m)}else if(coop()){const m=mateChamp();used.add(m);t0.push(m)}else if(n===1){used.add(aiChamp);t1.push(aiChamp)}
+ while(t0.length<n)t0.push(pickFrom(CH[playerChamp].side));
+ const s1=t1.length?CH[t1[0]].side:1-CH[playerChamp].side;while(t1.length<n)t1.push(pickFrom(s1));
+ units=t0.map((c,i)=>mkUnit(c,...pos(0,i),0)).concat(t1.map((c,i)=>mkUnit(c,...pos(1,i),1)));
+ if(coop())setHuman(units[mode==='duel'?n:1],'remote');
  player=setHuman(units[0],'local');resetWorld()}
 const spawnPos=t=>({x:t?MAP.w-150-rnd()*150:150+rnd()*150,y:MAP.h/2+(rnd()-.5)*1000});
 function startBattle(){
- B=MAP;OBST=battleObstacles();Yc=390;GLOW=6;tickets=[60,60];
+ B=MAP;OBST=battleObstacles();Yc=390;GLOW=6;tickets=[CFG.tickets,CFG.tickets];const bs=CFG.bsize;
  const side=CH[playerChamp].side,mine=HEROES.filter(h=>CH[h].side===side&&h!==playerChamp).sort(()=>rnd()-.5),theirs=HEROES.filter(h=>CH[h].side!==side).sort(()=>rnd()-.5);
  const mk=(c,t)=>{const p=spawnPos(t);return mkUnit(c,p.x,p.y,t)};
  units=[mk(playerChamp,0)];player=setHuman(units[0],'local');
  if(coop()){const m=mateChamp(),i=mine.indexOf(m);units.push(setHuman(mk(m,0),'remote'));if(i>=0)mine.splice(i,1);else mine.pop()}
- for(const h of mine)units.push(mk(h,0));
- for(const h of theirs.slice(0,20))units.push(mk(h,1));
- pickups=[[1100,500],[1100,1500],[2100,1000],[3100,500],[3100,1500],[2100,300],[2100,1700]].map(([x,y])=>({x,y,t:0}));
+ for(const h of mine.slice(0,bs-units.length))units.push(mk(h,0));
+ for(const h of theirs.slice(0,bs))units.push(mk(h,1));
+ pickups=[[1100,500],[1100,1500],[2100,1000],[3100,500],[3100,1500],[2100,300],[2100,1700]].map(([x,y])=>({x,y,t:0}));if(!CFG.pk)pickups=[];
  cam={x:player.x,y:player.y};resetWorld();
 }
 function battleObstacles(){let s=7;const r=()=>(s=s*16807%2147483647)/2147483647,o=[];
@@ -548,7 +571,7 @@ function use(u,i,td,aimOv,ex){let ab=u.ch.abil[i];const chg=ab&&ab.charges;if(!a
  fire(u,ab,aimOv??u.aim,td??200,ex);return true}
 const exAb=b=>Object.assign({},b,{n:b.ex.n,d:b.ex.d,P:Object.assign({},b.P,b.ex.p),isEx:1});
 const castAb=(u,c)=>{const b=u.ch.abil[c.i];return c.ex&&b.ex?exAb(b):b};
-function fire(u,ab,a,td,ex){EX=ex;BASIC=u.ch.abil[0]===ab;if(ex){ring(u.x,u.y,46,'#ffe81f');say(u,'EX','#ffe81f');S('ex',u)}const n0=projs.length;ab.f(u,a,td,ab.P||{});if(BASIC&&u.pierceBuf>0&&projs.length>n0){for(let k=n0;k<projs.length;k++)projs[k].pierce=1;u.pierceBuf--}EX=false;BASIC=false}
+function fire(u,ab,a,td,ex){EX=ex;CUR=u;BASIC=u.ch.abil[0]===ab;if(ex){ring(u.x,u.y,46,'#ffe81f');say(u,'EX','#ffe81f');S('ex',u)}const n0=projs.length;ab.f(u,a,td,ab.P||{});CUR=null;if(BASIC&&u.pierceBuf>0&&projs.length>n0){for(let k=n0;k<projs.length;k++)projs[k].pierce=1;u.pierceBuf--}EX=false;BASIC=false}
 const boltCol=(u,c)=>c==='#ff4a3a'||c==='#ff3a3a'?(u.c==='chewie'?'#5f5':u.ch.side?c:(c==='#ff3a3a'?'#2a9dff':'#4ab8ff')):c;
 function proj(u,a,o){if(o.col)o.col=boltCol(u,o.col);projs.push(Object.assign({x:u.x+Math.cos(a)*24,y:u.y+Math.sin(a)*24,vx:Math.cos(a)*o.spd,vy:Math.sin(a)*o.spd,owner:u,src:u,rot:0,life0:o.life,ex:EX,basic:BASIC,hitSet:null},o))}
 function melee(u,a,range,arc,dmg,o={}){u.swing=.18;u.swingA=a;S('saber',u);fx.push({x:u.x,y:u.y,swing:1,a,range,arc,t:.18,m:.18,col:saberCol(u)});let n=0;
@@ -586,6 +609,7 @@ function hit(t,src,dmg,o={}){
  if(src&&src.critBuf>0&&o.basic){dmg*=2;src.critBuf--;say(t,'CRITIQUE','#ffb03a')}
  if(src&&src.cdrHit>0)for(let i=1;i<5;i++)src.cds[i]=Math.max(0,src.cds[i]-.4);
  let d=dmg;if(t.shield>0){const ab=Math.min(t.shield,d);t.shield-=ab;d-=ab}
+ if(d>0){const real=Math.min(d,Math.max(0,t.hp));stOf(t).tk+=real;if(src&&src!==t&&src.team!==t.team){stOf(src).dmg+=real;(t.dmgBy||(t.dmgBy={}))[src.c+'|'+src.team]=SIMT}}
  t.hp-=d;if(ps==='lifesteal'&&d>0)src.hp=Math.min(src.max,src.hp+d*.3);if(src&&src.lsB>0&&d>0)src.hp=Math.min(src.max,src.hp+d*.35);
  if(src&&o.melee&&!o.thorn){if(t.thorns>0)hit(src,t,dmg*.3,{silent:1,thorn:1});if(t.thornSlow>0)src.slow=Math.max(src.slow,1)}
  if(!o.silent){t.flash=.12;if(src)src.energy=Math.min(100,src.energy+dmg*(ps==='energy'?.9:.6));if(t.hero)t.energy=Math.min(100,t.energy+dmg*.2);
@@ -603,7 +627,7 @@ function hit(t,src,dmg,o={}){
  if(t.hp<=0)die(t,src);
  return true;
 }
-function die(t,src){t.hp=0;t.dead=true;t.deadT=0;if(Math.random()<.07&&t.c!=='r2'&&t.c!=='ig88')S('wilhelm',t);t.cast=null;t.dash=null;t.spin=null;t.flame=null;t.block=false;
+function die(t,src){if(!t.dead){stOf(t).d++;const sk=src&&src!==t&&src.team!==t.team?src.c+'|'+src.team:null;if(sk)stOf(src).k++;for(const k in t.dmgBy||{})if(k!==sk&&SIMT-t.dmgBy[k]<6&&STATS[k])STATS[k].a++}t.hp=0;t.dead=true;t.deadT=0;if(Math.random()<.07&&t.c!=='r2'&&t.c!=='ig88')S('wilhelm',t);t.cast=null;t.dash=null;t.spin=null;t.flame=null;t.block=false;
  if(near(t.x,t.y)){sparks(t.x,t.y,'#fff',t.hero?40:12);if(t.hero)shake=Math.max(shake,.3)}
  if(mode!=='battle'){if(units.some(x=>x.team===t.team&&!x.dead))return;winner=1-t.team;score[winner]++;state='roundEnd';stateT=2.8;shake=.5;hs=.25;(winner===0?SFX.win:SFX.lose)();return}
  tickets[t.team]=Math.max(0,tickets[t.team]-1);t.respawn=6;if(src&&src.hero)src.energy=Math.min(100,src.energy+10);
@@ -725,7 +749,7 @@ function localInput(){const Kd=c=>keys[c]?1:0,mw=unP(mouse.x,mouse.y);return{mx:
 function remoteInput(){const r=net.remoteIn;if(!r)return null;const I={mx:clamp(+r.mx||0,-1,1),my:clamp(+r.my||0,-1,1),ax:+r.ax||0,ay:+r.ay||0,l:!!r.l,p:net.remotePressed,sh:!!r.sh,f:!!r.f};net.remotePressed={};return I}
 let SIMT=0;
 function update(dt){SIMT+=dt;
- if(state==='menu'){if(pressed.lmb){if(inRect(mouse,coopBtn))netUI(true);if(!isGuest())for(const b of modeBtns)if(inRect(mouse,b)){mode=b.m;netSend({t:'hello',mode})}
+ if(state==='menu'){if(pressed.lmb){if(inRect(mouse,coopBtn))netUI(true);if(!isGuest())for(const b of modeBtns)if(inRect(mouse,b)){mode=b.m;netSend({t:'hello',mode,cfg:CFG})}
   cards.forEach(c=>{if(inRect(mouse,c)){if(isGuest()){net.mate=c.c;net.ready=false;netSend({t:'hero',c:c.c});netSend({t:'ready',v:false})}else if(coop()){net.myPick=c.c;net.ready=false;sendLobby()}else startMatch(c.c)}});
   if(coop()&&inRect(mouse,readyBtn)&&(isGuest()?net.mate:net.myPick)){net.ready=!net.ready;if(isGuest())netSend({t:'ready',v:net.ready});else sendLobby()}}
   // la partie démarre quand l'hôte et le coéquipier sont prêts
@@ -733,17 +757,17 @@ function update(dt){SIMT+=dt;
  if(state==='matchEnd'){if(pressed.lmb||pressed.Enter||pressed.Space)state='menu';return}
  stateT-=dt;shake=Math.max(0,shake-dt);flashS=Math.max(0,flashS-dt);const fx0=fx.length,tx0=txt.length;
  if(state==='countdown'&&stateT<=0){state='fight';banner={s:'COMBATTEZ !',t:1.2};S('ignite')}
- if(state==='roundEnd'&&stateT<=0){if(score[0]>=2||score[1]>=2)state='matchEnd';else{round++;startRound()}}
+ if(state==='roundEnd'&&stateT<=0){if(score[0]>=CFG.wins||score[1]>=CFG.wins)state='matchEnd';else{round++;startRound()}}
  const active=state==='fight';
- if(active&&mode!=='battle'){const before=timer;timer+=dt;if(before<SD_START&&timer>=SD_START){banner={s:'MORT SUBITE : l\'arène se referme',t:2.5};SFX.lose()}
-  if(!orb&&!orbUsed&&timer>18){orb={x:CX,y:CY};ring(CX,CY,60,'#6f9');banner={s:'Un holocron apparaît au centre',t:1.8}}}
+ if(active&&mode!=='battle'){const before=timer;timer+=dt;if(CFG.sd&&before<SD_START&&timer>=SD_START){banner={s:'MORT SUBITE : l\'arène se referme',t:2.5};SFX.lose()}
+  if(CFG.orb&&!orb&&!orbUsed&&timer>18){orb={x:CX,y:CY};ring(CX,CY,60,'#6f9');banner={s:'Un holocron apparaît au centre',t:1.8}}}
  if(active&&mode==='battle')timer+=dt;
  if(banner&&(banner.t-=dt)<=0)banner=null;
  for(const u of units)updUnit(u,dt,active);
  // séparation des unités
  for(let i=0;i<units.length;i++){const a=units[i];if(a.dead)continue;for(let j=i+1;j<units.length;j++){const b=units[j];if(b.dead)continue;const dx=b.x-a.x,dy=b.y-a.y;if(Math.abs(dx)>50||Math.abs(dy)>50)continue;const d=Math.hypot(dx,dy),m=a.r+b.r;if(d<m&&d>0){const px=dx/d*(m-d)/2,py=dy/d*(m-d)/2;a.x-=px;a.y-=py;b.x+=px;b.y+=py}}}
  if(orb&&active)for(const u of units)if(!u.dead&&dist(u,orb)<u.r+16){u.hp=Math.min(u.max,u.hp+30);u.energy=Math.min(100,u.energy+35);say(u,'+30 HOLOCRON','#6f9');sparks(orb.x,orb.y,'#6f9',30);fx.push({light:1,x:orb.x,y:orb.y,r:200,t:.5,m:.5,col:'#6f9'});SFX.orb();orb=null;orbUsed=true;break}
- if(mode==='battle')for(const p of pickups){if(p.t>0){p.t-=dt;continue}for(const u of units)if(!u.dead&&dist(u,p)<u.r+16){u.hp=Math.min(u.max,u.hp+40);u.energy=Math.min(100,u.energy+20);say(u,'+40','#6f9');if(near(p.x,p.y)){sparks(p.x,p.y,'#6f9',20);SFX.orb()}p.t=20;break}}
+ if(mode==='battle'&&CFG.pk)for(const p of pickups){if(p.t>0){p.t-=dt;continue}for(const u of units)if(!u.dead&&dist(u,p)<u.r+16){u.hp=Math.min(u.max,u.hp+40);u.energy=Math.min(100,u.energy+20);say(u,'+40','#6f9');if(near(p.x,p.y)){sparks(p.x,p.y,'#6f9',20);SFX.orb()}p.t=20;break}}
  for(const z of zones){if(z.follow&&!z.follow.dead){z.x=z.follow.x;z.y=z.follow.y}z.t-=dt;if(z.t<=0){z.done=1;EX=z.ex;aoe(z.owner,z.x,z.y,z.r,z.dmg,Object.assign({unblockable:1},z.o),z.col);EX=false;if(near(z.x,z.y)){SFX.zap();SFX.boom();shake=Math.max(shake,.25);
   for(let i=0;i<4;i++)fx.push({bolt:2,x:z.x+(rnd()-.5)*z.r,y:z.y+(rnd()-.5)*z.r*.8,t:.3,m:.3,col:z.col})}}}
  zones=zones.filter(z=>!z.done);
@@ -796,6 +820,9 @@ function gEll(x,y,r,a0=0,a1=7){const p=P(x,y);g.beginPath();g.ellipse(p.x,p.y,r*
 const LIGHT=HEROES.filter(h=>!CH[h].side),DARK=HEROES.filter(h=>CH[h].side),CW=110,CHt=92;
 const cards=[...LIGHT.map((c,i)=>({x:58+(i%10)*117,y:136+Math.floor(i/10)*97,w:CW,h:CHt,c})),...DARK.map((c,i)=>({x:58+(i%10)*117,y:346+Math.floor(i/10)*97,w:CW,h:CHt,c}))];
 const modeBtns=[{x:290,y:76,w:220,h:30,m:'arena',t:'ARÈNE · 1 contre 1'},{x:520,y:76,w:220,h:30,m:'battle',t:'BATAILLE · 20 contre 20'},{x:750,y:76,w:220,h:30,m:'duel',t:'DUEL · 1v1 contre ton ami'}];
+const bo=()=>CFG.wins===1?'en une manche':`au meilleur des ${CFG.wins*2-1} manches`;
+const menuDesc=()=>{const n=teamN(),bots=n>1?` (complété par des bots)`:'';return mode==='duel'?(coop()?`Duel : toi contre ton ami${n>1?`, ${n} contre ${n}`+bots:''}, ${bo()}`:'Duel : connecte un ami avec « Coop en ligne » pour l\'affronter (sinon, contre l\'ordinateur)'):mode!=='battle'?(coop()?`${n} contre ${n} avec ton coéquipier${n>2?bots:''}, ${bo()}`:n>1?`${n} contre ${n} avec des alliés bots, ${bo()}`:`Ton adversaire sera un personnage du camp opposé, ${bo()}`):`${CFG.bsize} personnages contre ${CFG.bsize} · ${CFG.tickets} renforts par camp, chaque élimination en coûte 1 · ⚙ pour configurer`};
+const modeLabel=b=>{const n=b.m==='arena'&&coop()?Math.max(2,CFG.team):CFG.team;return b.m==='arena'?`ARÈNE · ${n} contre ${n}${coop()?' (bots)':''}`:b.m==='battle'?`BATAILLE · ${CFG.bsize} contre ${CFG.bsize}`:`DUEL · ${n>1?n+'v'+n+' ':'1v1 '}contre ton ami`};
 const coopBtn={x:1040,y:76,w:158,h:30},readyBtn={x:1052,y:550,w:158,h:32};
 const inRect=(p,r)=>p.x>r.x&&p.x<r.x+r.w&&p.y>r.y&&p.y<r.y+r.h;
 function tfit(s,x,y,size,col,maxW,weight='normal'){let z=size;g.font=`${weight} ${z}px "Trebuchet MS",system-ui,sans-serif`;while(z>8&&g.measureText(s).width>maxW){z-=.5;g.font=`${weight} ${z}px "Trebuchet MS",system-ui,sans-serif`}if(g.measureText(s).width>maxW){while(s.length>4&&g.measureText(s+'…').width>maxW)s=s.slice(0,-1);s+='…'}g.textAlign='left';g.fillStyle=col;g.fillText(s,x,y)}
@@ -1049,9 +1076,9 @@ function drawMenu(){
  g.save();g.shadowColor='#ffe81f';g.shadowBlur=18;text('STAR WARS · ARÈNE',W/2,52,42,'#ffe81f');g.restore();
  {const b=coopBtn,h=inRect(mouse,b),on=!!net.conn;g.fillStyle=on?'#7f7':h?'rgba(40,52,80,.95)':'rgba(13,20,36,.9)';g.strokeStyle=on?'#7f7':'#3a4a6a';g.lineWidth=1.5;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,15);g.fill();g.stroke();text(on?'COOP CONNECTÉ':'COOP EN LIGNE',b.x+b.w/2,b.y+20,13,on?'#10131c':'#cbd6ee')}
  if(net.role){const ok=v=>v?'prêt ✓':'pas prêt';const m=!coop()?net.status:isGuest()?`Ton héros : ${net.mate?CH[net.mate].name:'à choisir'} · hôte ${ok(net.hostReady)} · l'hôte choisit le mode`:`Coéquipier : ${net.mate?CH[net.mate].name:'choisit'} (${ok(net.mateReady)}) · choisis ton héros puis PRÊT`;text(m,1222,130,12,'#9f9','right','normal')}
- for(const b of modeBtns){const on=mode===b.m,h=inRect(mouse,b);g.fillStyle=on?'#ffe81f':h?'rgba(40,52,80,.95)':'rgba(13,20,36,.9)';g.strokeStyle=on?'#ffe81f':'#3a4a6a';g.lineWidth=1.5;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,15);g.fill();g.stroke();text(b.m==='arena'&&coop()?'ARÈNE · 2v2 contre bots':b.t,b.x+b.w/2,b.y+20,13,on?'#10131c':'#cbd6ee')}
+ for(const b of modeBtns){const on=mode===b.m,h=inRect(mouse,b);g.fillStyle=on?'#ffe81f':h?'rgba(40,52,80,.95)':'rgba(13,20,36,.9)';g.strokeStyle=on?'#ffe81f':'#3a4a6a';g.lineWidth=1.5;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,15);g.fill();g.stroke();text(modeLabel(b),b.x+b.w/2,b.y+20,13,on?'#10131c':'#cbd6ee')}
  text('HÉROS',58,130,13,'#7fc4ff','left');text('MÉCHANTS',58,340,13,'#ff8a8a','left');
- if(!net.role||mode==='duel')text(mode==='duel'?(coop()?'Duel : toi contre ton ami, au meilleur des 3 manches':'Duel : connecte un ami avec « Coop en ligne » pour l\'affronter (sinon, contre l\'ordinateur)'):mode!=='battle'?(coop()?'2 contre 2 avec ton coéquipier, au meilleur des 3 manches':'Ton adversaire sera un personnage du camp opposé, au meilleur des 3 manches'):'20 personnages contre 20 · 60 renforts par camp, chaque élimination en coûte 1',W/2,130,13,'#9fb3d9','center','normal');
+ if(!net.role||mode==='duel')text(menuDesc(),W/2,130,13,'#9fb3d9','center','normal');
  const t=performance.now()/1000;let hov=null;
  cards.forEach((c,i)=>{const h=inRect(mouse,c),ch=CH[c.c];if(h)hov=c.c;const sideC=ch.side?'#ff6060':'#4db8ff';
   const sel=!!net.role&&(isGuest()?net.mate:net.myPick)===c.c;g.fillStyle=h||sel?'rgba(22,34,58,.95)':'rgba(13,20,36,.88)';g.strokeStyle=h||sel?'#ffe81f':rgba(sideC,.35);g.lineWidth=2;g.beginPath();g.roundRect(c.x,c.y,c.w,c.h,10);g.fill();g.stroke();
@@ -1073,24 +1100,38 @@ function drawMenu(){
   tfit(`${ab.n}${ab.ult?' · ultime':` · ${ab.cd}s`}${ab.charges?` · ${ab.charges} charges`:''}${ab.cast?` · incant. ${ab.cast}s`:''}`,x+52,yy,13,ab.ult?'#ffe81f':'#e2e8f4',318,'bold');
   tfit(ab.d||'',x+52,yy+14,11,'#9fb3d9',318);
   if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,x+52,yy+28,11,'#d8c060',318)});
- text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · Maj + sort = version EX (25 énergie) · ${lbl.KeyF} maintenu = parade (sabres) · ${lbl.KeyM} son · O options`,W/2,714,13,'#9fb3d9','center','normal');
+ text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · Maj + sort = version EX (25 énergie) · ${lbl.KeyF} maintenu = parade (sabres) · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,13,'#9fb3d9','center','normal');
  drawCursor();
 }
 function bar(x,y,w,h,v,col,right){g.fillStyle='rgba(0,0,0,.6)';g.fillRect(x,y,w,h);g.fillStyle=col;const vw=w*clamp(v,0,1);g.fillRect(right?x+w-vw:x,y,vw,h);g.strokeStyle='#2a3a5a';g.lineWidth=1;g.strokeRect(x,y,w,h)}
 function eBar(x,y,w,v,right){bar(x,y,w,5,v,'#ffe81f',right);g.fillStyle='#04050b';for(let i=1;i<4;i++)g.fillRect(x+w*i/4-1,y,2,5)}
+// tableau des scores : un tableau par camp, trié par dégâts ; ★ = meilleur score de la partie
+const stScore=s=>s.k*300+s.a*120+s.dmg+s.heal*.8;
+function drawBoard(y0,rh){units.forEach(stOf);const all=Object.values(STATS);if(!all.length)return;const mvp=all.reduce((a,b)=>stScore(b)>stScore(a)?b:a);
+ const me=player&&player.c+'|'+player.team,humans=new Set(units.filter(u=>u.human).map(u=>u.c+'|'+u.team)),two=mode==='battle'&&CFG.bsize>10,cols=[['Perso',0,'left'],['É',200,'right'],['M',236,'right'],['A',272,'right'],['Dégâts',340,'right'],['Subis',410,'right'],['Soins',470,'right']];
+ const side0=CH[(units[0]||player).c].side;
+ [0,1].forEach(team=>{const L=all.filter(s=>s.team===team).sort((a,b)=>b.dmg-a.dmg),w=500,x=W/2+(team?20:-20-w),tc=team===player.team?'#9fd4ff':'#ffa0a0',side=team?1-side0:side0;
+  g.fillStyle='rgba(8,12,22,.88)';g.fillRect(x-12,y0-26,w+24,32+L.length*rh+8);
+  const tot=L.reduce((a,s)=>(a.k+=s.k,a.dmg+=s.dmg,a),{k:0,dmg:0});
+  text(`${side?'Empire':'Alliance'}${team===player.team?' (ton camp)':''}`,x,y0-8,14,tc,'left');text(`${tot.k} élim. · ${Math.round(tot.dmg)} dégâts`,x+w,y0-8,12,'#9fb3d9','right','normal');
+  for(const [h,cx,al] of cols)text(h,x+cx,y0+12,11,'#7f8aa8',al,'normal');
+  L.forEach((st,i)=>{const y=y0+18+(i+1)*rh,k=st.c+'|'+st.team;if(k===me){g.fillStyle='rgba(255,232,31,.12)';g.fillRect(x-6,y-rh+5,w+12,rh)}
+   const nm=CH[st.c].name+(k===me?' (toi)':humans.has(k)?' (ami)':'')+(st===mvp?' ★':''),f=two?12:13;
+   text(nm,x,y,f,st===mvp?'#ffe81f':k===me?'#fff':'#cbd6ee','left',k===me?'bold':'normal');
+   [[st.k,200],[st.d,236],[st.a,272],[Math.round(st.dmg),340],[Math.round(st.tk),410],[Math.round(st.heal),470]].forEach(([v,cx])=>text(String(v),x+cx,y,f,'#dfe8ff','right','normal'))})})}
 function drawHud(){
  const p=player;
  text(p.ch.name+' (toi)',30,32,18,'#9fd4ff','left');bar(30,40,360,16,p.hp/p.max,'#4db8ff');eBar(30,59,360,p.energy/100);
  if(canBlock(p)){bar(30,67,360,4,p.stam/100,p.blockLock>0?'#a55':'#7df');text(`${lbl.KeyF} parade`,396,72,10,'#7df','left','normal')}
- for(const m of units)if(m!==player&&m.human&&m.team===player.team){text(m.ch.name+' (coéquipier)',30,94,13,'#9f9','left');bar(30,100,220,8,m.hp/m.max,'#7f7');if(m.dead&&mode==='battle')text(`retour dans ${Math.ceil(m.respawn)} s`,258,108,11,'#9f9','left','normal')}
- if(mode!=='battle'){const fo=units.filter(u=>u.team!==player.team),two=fo.length>1;fo.forEach((e,i)=>{const y=i*44;
+ let ay=0;for(const m of units)if(m!==player&&m.team===player.team&&(m.human||mode!=='battle')){const yy=ay;ay+=30;text(m.ch.name+(m.human?' (coéquipier)':' (allié)'),30,94+yy,13,m.human?'#9f9':'#9fd4ff','left');bar(30,100+yy,220,8,m.hp/m.max,m.human?'#7f7':'#4db8ff');if(m.dead&&mode==='battle')text(`retour dans ${Math.ceil(m.respawn)} s`,258,108+yy,11,'#9f9','left','normal')}
+ if(mode!=='battle'){const fo=units.filter(u=>u.team!==player.team),two=fo.length>1;fo.forEach((e,i)=>{const y=i*(fo.length>2?36:44);
   text(e.ch.name,W-30,(two?28:32)+y,two?14:18,'#ffa0a0','right');bar(W-390,(two?34:40)+y,360,two?10:16,e.hp/e.max,'#ff4d4d',1);eBar(W-390,(two?46:59)+y,360,e.energy/100,1)});
   text(`${score[player.team]}  —  ${score[1-player.team]}`,W/2,40,30,'#ffe81f');
-  text(timer<SD_START?`Manche ${round} · mort subite dans ${Math.ceil(SD_START-timer)} s`:`Manche ${round} · MORT SUBITE`,W/2,60,13,timer<SD_START?'#9fb3d9':'#ff6060','center','normal');
+  text(!CFG.sd?`Manche ${round} · ${CFG.wins} manche${CFG.wins>1?'s':''} pour gagner`:timer<SD_START?`Manche ${round} · mort subite dans ${Math.ceil(SD_START-timer)} s`:`Manche ${round} · MORT SUBITE`,W/2,60,13,!CFG.sd||timer<SD_START?'#9fb3d9':'#ff6060','center','normal');
  }else{
   const side=units[0].ch.side,nA=side?'Empire':'Alliance',nB=side?'Alliance':'Empire';
   text(nA,W/2-20,28,14,'#9fd4ff','right');text(nB,W/2+20,28,14,'#ffa0a0','left');text('—',W/2,40,22,'#ffe81f');
-  bar(W/2-230,34,200,10,tickets[0]/100,'#4db8ff',1);bar(W/2+30,34,200,10,tickets[1]/100,'#ff4d4d');
+  bar(W/2-230,34,200,10,tickets[0]/CFG.tickets,'#4db8ff',1);bar(W/2+30,34,200,10,tickets[1]/CFG.tickets,'#ff4d4d');
   text(String(tickets[0]),W/2-20,62,18,'#fff','right');text(String(tickets[1]),W/2+20,62,18,'#fff','left');
   killfeed.forEach((k,i)=>{const y=34+i*20;g.globalAlpha=Math.min(1,k.t);text(k.b,W-24,y,13,k.tb===0?'#9fd4ff':'#ffa0a0','right');const wb=g.measureText(k.b).width;text('▸',W-30-wb,y,13,'#888','right');text(k.a,W-44-wb,y,13,k.ta===0?'#9fd4ff':k.ta===1?'#ffa0a0':'#ccc','right');g.globalAlpha=1});
   drawMinimap();
@@ -1144,13 +1185,16 @@ function draw(){
  const vg=g.createRadialGradient(W/2,H/2,H*.45,W/2,H/2,H*.95);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');g.fillStyle=vg;g.fillRect(0,0,W,H);
  if(flashS>0){g.fillStyle=`rgba(255,255,255,${flashS*1.2})`;g.fillRect(0,0,W,H)}
  drawHud();
+ if(keys.Tab&&state!=='menu'&&state!=='matchEnd'&&player){g.fillStyle='rgba(0,0,0,.45)';g.fillRect(0,0,W,H);text(mode==='battle'?`Bataille · ${tickets[0]} – ${tickets[1]} renforts`:`Manche ${round} · ${score[0]} – ${score[1]}`,W/2,70,20,'#ffe81f');drawBoard(120,mode==='battle'&&CFG.bsize>10?24:28)}
  if(banner&&state==='fight'){g.globalAlpha=Math.min(1,banner.t*2);g.fillStyle='rgba(0,0,0,.5)';g.fillRect(0,H/2-130,W,46);text(banner.s,W/2,H/2-98,26,banner.s.startsWith('MORT')?'#ff6060':'#ffe81f');g.globalAlpha=1}
- if(state==='countdown'){g.fillStyle='rgba(0,0,0,.35)';g.fillRect(0,0,W,H);text(mode!=='battle'?`Manche ${round}`:'Bataille · 20 contre 20',W/2,H/2-60,28,'#9fb3d9');text(mode!=='battle'?`${units[0].ch.name}  contre  ${units[1].ch.name}`:'Élimine les ennemis pour vider leurs renforts',W/2,H/2-30,18,'#dfe8ff','center','normal');text(String(Math.ceil(stateT)),W/2,H/2+50,90,'#ffe81f')}
+ if(state==='countdown'){g.fillStyle='rgba(0,0,0,.35)';g.fillRect(0,0,W,H);text(mode!=='battle'?`Manche ${round}`:`Bataille · ${CFG.bsize} contre ${CFG.bsize}`,W/2,H/2-60,28,'#9fb3d9');text(mode!=='battle'?units.filter(u=>u.team===0).map(u=>u.ch.name).join(' + ')+'  contre  '+units.filter(u=>u.team===1).map(u=>u.ch.name).join(' + '):'Élimine les ennemis pour vider leurs renforts',W/2,H/2-30,18,'#dfe8ff','center','normal');text(String(Math.ceil(stateT)),W/2,H/2+50,90,'#ffe81f')}
  if(state==='roundEnd'){g.fillStyle='rgba(0,0,0,.35)';g.fillRect(0,0,W,H);text(winner===player.team?'Manche gagnée':'Manche perdue',W/2,H/2,54,winner===player.team?'#7fd4ff':'#ff7a7a')}
  if(state==='matchEnd'){g.fillStyle='rgba(0,0,0,.6)';g.fillRect(0,0,W,H);const win=winner===player.team,light=units[0].ch.side===0;
-  g.save();g.shadowColor='#ffe81f';g.shadowBlur=24;text(win?'VICTOIRE':'DÉFAITE',W/2,H/2-10,84,win?'#ffe81f':'#ff5a5a');g.restore();
-  text(win===light?'La Force est avec toi.':'Le côté obscur l\'emporte…',W/2,H/2+40,22,'#dfe8ff','center','normal');
-  text('Clic ou Entrée pour revenir au menu',W/2,H/2+90,16,'#9fb3d9','center','normal')}
+  const big=mode==='battle'&&CFG.bsize>10,y0=big?150:Math.max(180,H/2-40-Object.values(STATS).length*8);
+  g.save();g.shadowColor='#ffe81f';g.shadowBlur=24;text(win?'VICTOIRE':'DÉFAITE',W/2,big?70:y0-80,big?56:72,win?'#ffe81f':'#ff5a5a');g.restore();
+  text((win===light?'La Force est avec toi.':'Le côté obscur l\'emporte…')+(mode==='battle'?`  ·  renforts ${tickets[0]} – ${tickets[1]}`:`  ·  ${score[0]} – ${score[1]}`),W/2,big?102:y0-44,18,'#dfe8ff','center','normal');
+  drawBoard(y0,big?22:28);
+  text('Clic ou Entrée pour revenir au menu',W/2,H-16,15,'#9fb3d9','center','normal')}
  drawCursor();
 }
 let last=performance.now();
@@ -1162,7 +1206,7 @@ const isGuest=()=>net.role==='guest',coop=()=>!!(net.conn&&net.conn.open);
 const $=id=>document.getElementById(id);
 function netUI(show){$('net').hidden=!show;if(show)$('nStat').textContent=net.status}
 function setStat(s){net.status=s;$('nStat').textContent=s}
-function sendLobby(){netSend({t:'lobby',hr:!!net.ready,mr:!!net.mateReady,mode})}
+function sendLobby(){netSend({t:'lobby',hr:!!net.ready,mr:!!net.mateReady,mode,cfg:CFG})}
 function netSend(m){if(coop())try{net.conn.send(m)}catch(e){}}
 function netReset(){try{net.peer&&net.peer.destroy()}catch(e){}net=Object.assign(net,{seq:0,pend:[],role:null,peer:null,conn:null,mate:null,remoteIn:null,remotePressed:{},gp:{},live:false,gcam:null,ev:{fx:[],txt:[],snd:[],sp:[]}})}
 const noPeer=()=>{if(typeof Peer!=='undefined')return false;setStat('Le coop ne peut pas démarrer ici : la connexion réseau est bloquée. Ouvre le jeu depuis un site hébergé.');return true};
@@ -1170,7 +1214,7 @@ function hostGame(){if(noPeer())return;netReset();const code=Math.random().toStr
  const p=new Peer('swarena-'+code);net.peer=p;
  p.on('open',()=>setStat(`Salon ${code} ouvert. Donne ce code à ton coéquipier.`));
  p.on('connection',c=>{if(coop()){c.close();return}net.conn=c;
-  c.on('open',()=>{setStat(`Coéquipier connecté au salon ${code}.`);c.send({t:'hello',mode})});
+  c.on('open',()=>{setStat(`Coéquipier connecté au salon ${code}.`);c.send({t:'hello',mode,cfg:CFG})});
   c.on('data',d=>{if(!d||typeof d!=='object')return;if(d.t==='hero'&&CH[d.c]&&!CH[d.c].trooper){net.mate=d.c;net.mateReady=false;sendLobby()}if(d.t==='ready'){net.mateReady=!!d.v;sendLobby()}if(d.t==='in'){net.remoteIn=d;net.gcam={x:+d.cx||0,y:+d.cy||0};if(Array.isArray(d.p))for(const k of d.p)net.remotePressed[k]=1}});
   c.on('close',()=>{setStat('Ton coéquipier s\'est déconnecté. L\'ordinateur prend le relais.');net.conn=null;net.gcam=null})});
  p.on('error',e=>setStat(e.type==='unavailable-id'?'Code déjà pris, réessaie.':'Erreur réseau : '+e.type))}
@@ -1178,11 +1222,16 @@ function joinGame(code){if(noPeer())return;code=(code||'').trim().toUpperCase();
  netReset();net.role='guest';setStat('Connexion…');const p=new Peer();net.peer=p;
  p.on('open',()=>{const c=p.connect('swarena-'+code,{reliable:true,serialization:'binary'});net.conn=c;
   c.on('open',()=>{setStat(`Connecté au salon ${code}. Choisis ton héros.`);netUI(false)});
-  c.on('data',d=>{if(d&&d.t==='snap')applySnap(d);else if(d&&d.t==='hello')mode=d.mode;else if(d&&d.t==='lobby'){net.hostReady=d.hr;mode=d.mode;if(!d.mr&&net.ready&&!d.hr){}}});
+  c.on('data',d=>{if(d&&d.t==='snap')applySnap(d);else if(d&&d.t==='hello'){mode=d.mode;if(d.cfg)Object.assign(CFG,d.cfg)}else if(d&&d.t==='lobby'){if(d.cfg)Object.assign(CFG,d.cfg);net.hostReady=d.hr;mode=d.mode;if(!d.mr&&net.ready&&!d.hr){}}});
   c.on('close',()=>{netReset();state='menu';setStat('L\'hôte a fermé la partie.')})});
  p.on('error',e=>setStat(e.type==='peer-unavailable'?'Salon introuvable : vérifie le code.':'Erreur réseau : '+e.type))}
 // panneau d'options audio
-function syncOpt(){for(const k of['master','fx','voice']){const id='o'+k[0].toUpperCase()+k.slice(1);$(id).value=OPT[k];$('v'+id.slice(1)).textContent=OPT[k]}$('oVoiceOn').checked=OPT.voiceOn;$('oWil').checked=OPT.wil;$('oSpat').checked=OPT.spat;$('oMute').checked=muted}
+const CSEL=[['cTeam','team'],['cWins','wins'],['cBsize','bsize'],['cTickets','tickets']],CCHK=[['cSd','sd'],['cOrb','orb'],['cPk','pk']];
+function syncCfg(){const g=isGuest(),busy=state!=='menu';for(const [id,k] of CSEL){$(id).value=String(CFG[k]);$(id).disabled=g||busy}for(const [id,k] of CCHK){$(id).checked=CFG[k];$(id).disabled=g||busy}
+ $('cfgNote').textContent=g?'Réglée par l\'hôte de la partie.':busy?'Modifiable depuis le menu (entre deux parties).':mode==='arena'&&coop()&&CFG.team<2?'En coop, l\'arène se joue au minimum en 2 contre 2.':''}
+for(const [id,k] of CSEL)$(id).onchange=e=>{CFG[k]=+e.target.value;saveCfg();netSend({t:'hello',mode,cfg:CFG});syncCfg()};
+for(const [id,k] of CCHK)$(id).onchange=e=>{CFG[k]=e.target.checked;saveCfg();netSend({t:'hello',mode,cfg:CFG})};
+function syncOpt(){syncCfg();for(const k of['master','fx','voice']){const id='o'+k[0].toUpperCase()+k.slice(1);$(id).value=OPT[k];$('v'+id.slice(1)).textContent=OPT[k]}$('oVoiceOn').checked=OPT.voiceOn;$('oWil').checked=OPT.wil;$('oSpat').checked=OPT.spat;$('oMute').checked=muted}
 function toggleOpt(v){const o=$('opt');o.hidden=v===undefined?!o.hidden:!v;$('optB').setAttribute('aria-expanded',String(!o.hidden));if(!o.hidden)syncOpt()}
 for(const k of['master','fx','voice']){const id='o'+k[0].toUpperCase()+k.slice(1);$(id).oninput=e=>{OPT[k]=+e.target.value;$('v'+id.slice(1)).textContent=OPT[k];applyOpt();if(k!=='voice')(SFX.saber||(()=>{}))()}}
 $('oVoice').onchange=()=>{ac();voiceEnd=0;SFX.v_obiwan()};
@@ -1196,10 +1245,11 @@ const PK=['x','y','vx','vy','r','col','saber','big','grenade','rocket','ex','lif
 function pickK(o,ks){const r={};for(const k of ks){const v=o[k];r[k]=Array.isArray(v)?v.map(rd):v===undefined?null:rd(v)}return r}
 function snapU(u){const a=UK.map(k=>u[k]===undefined?null:rd(u[k]));a.push(u.cast?{i:u.cast.i,t:rd(u.cast.t),dur:u.cast.dur,td:rd(u.cast.td),aimOv:u.cast.aimOv??null,ex:u.cast.ex}:null,u.spin?{r:u.spin.r}:null,!!u.flame,!!u.dash);return a}
 function netCapture(fx0,tx0){if(net.role!=='host'||!coop())return;for(let i=fx0;i<fx.length&&net.ev.fx.length<150;i++){if(fx[i].vx!==undefined)continue;const f=Object.assign({},fx[i]);if(f.u)f.u=units.indexOf(f.u);for(const k in f)f[k]=rd(f[k]);net.ev.fx.push(f)}for(let i=tx0;i<txt.length;i++)net.ev.txt.push(Object.assign({},txt[i]))}
-function makeSnap(){if(state==='menu')return{t:'snap',st:'menu',mode};
- return{t:'snap',st:state,stT:rd(stateT),mode,score,round,timer:rd(timer),tickets,kf:killfeed,banner,orb,pk:pickups.map(p=>({x:p.x,y:p.y,t:rd(p.t)})),win:winner,
+function makeSnap(){if(state==='menu')return{t:'snap',st:'menu',mode,cfg:CFG};
+ net.stc=(net.stc||0)+1;const SS=net.stc%10===0||state!=='fight'?Object.values(STATS).map(x=>[x.c,x.team,x.k,x.d,x.a,Math.round(x.dmg),Math.round(x.tk),Math.round(x.heal)]):undefined;
+ return{t:'snap',SS,st:state,stT:rd(stateT),mode,cfg:CFG,score,round,timer:rd(timer),tickets,kf:killfeed,banner,orb,pk:pickups.map(p=>({x:p.x,y:p.y,t:rd(p.t)})),win:winner,
   U:units.map(snapU),Pj:projs.map(p=>pickK(p,PK)),Z:zones.map(z=>pickK(z,ZK)),Tr:traps.map(t=>pickK(t,['x','y','r','t','team','col','arm'])),Tu:turrets.map(t=>pickK(t,['x','y','t','team','col','aim','big'])),Fi:fields.map(f=>pickK(f,['x','y','r','t','m','team','col','heal','dps','slow','pet','spinner','dome'])),Te:tethers.map(t=>[units.indexOf(t.a),units.indexOf(t.b),rd(t.t),t.m,t.col]),Wl:walls.map(w=>pickK(w,['x','y','r','t','team'])),ev:net.ev,you:units.findIndex(u=>u.ctrl==='remote'),mc:(units.find(u=>u.ctrl==='remote')||{}).cds,ack:net.remoteIn?net.remoteIn.seq||0:0}}
-function applySnap(s){
+function applySnap(s){if(s.cfg)Object.assign(CFG,s.cfg);if(s.SS){STATS={};for(const [c,team,k,d,a,dmg,tk,heal] of s.SS)STATS[c+'|'+team]={c,team,k,d,a,dmg,tk,heal}}
  if(s.st==='menu'){if(net.live){net.live=false;state='menu';net.ready=false;net.hostReady=false}mode=s.mode;return}
  if(s.you<0)return;
  if(!net.live||mode!==s.mode){mode=s.mode;if(mode!=='battle'){B=A;OBST=ARENA_OBST;cam={x:CX,y:CY};Yc=377.5;GLOW=18}else{B=MAP;OBST=battleObstacles();Yc=390;GLOW=6}fx=[];txt=[]}
