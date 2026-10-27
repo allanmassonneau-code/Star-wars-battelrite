@@ -81,6 +81,6 @@ function drawMenu(){
    tfit(`${ab.n}${ab.ult?'':` · ${ab.cd}s`}${ab.charges?` · ${ab.charges} charges`:''}${ab.cast?` · incant. ${ab.cast}s`:''}`,R.x+62,R.y+20,14,'#ffd38a',R.w-150,'bold');
    tfit(ab.d||'',R.x+12,R.y+37,12,'#e8cfa8',R.w-24);if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+12,R.y+52,11,'#d8c060',R.w-24)});
   text('Clique ailleurs pour fermer',W/2,710,12,'#b89a70','center','normal')}
- else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade au kunai · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
+ else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
  drawCursor();
 }

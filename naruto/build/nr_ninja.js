@@ -17,7 +17,7 @@ const STYLES=[
  ['Poing décuplé','Grand poing qui frappe large et lourd','savage.0','tai','bigfist',[3],1.38,1.32],
  ['Nuée d\'insectes','Petites nuées à distance','thrawn.0','bugs','bugs',[4],.85,.85],
  ['Taijutsu + insectes','Coups qui drainent la vie','quigon.0','bugs','fist',[4],1.2,1.2],
- ['Crocs et griffes','Griffures rapides, le chien ninja attaque avec toi','ventress.0','tai','claws',[5],1.25,1.2],
+ ['Crocs et griffes','Griffures rapides, le chien ninja attaque avec toi','ventress.0','claws','claws',[5],1.25,1.2],
  ['Chaînes de chakra','Chaîne qui frappe à moyenne portée','palpatine.0','chain','chain',[6],1,1],
  ['Senbon fleuris','Aiguilles rapides à distance, avec des pétales','ig88.0','senbon','senbon',[7],.8,.8],
  ['Balles de sable','Projectiles de sable compact qui repoussent','bossk.0','sand','sand',[8],.9,.9],
@@ -218,7 +218,7 @@ function styleAb(i){const S=STYLES[i],b=srcAb(S[2]);return Object.assign({},b,{n
 function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=[styleAb(b.j[0])].concat(b.j.slice(1).map(id=>jutsu(id))),w=[5,1,1,1,1,1];let hp=0,pw=0,sp=0,W=0;
  abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie],S=STYLES[b.j[0]];hp*=S[6];pw*=S[7];
  const lign=b.clan>=0?'Clan '+CLANS[b.clan][0]:'Sans clan';
- return{name:b.name,side:b.side,desc:`${v[0]} · ${lign}${b.clan===TAIJ?'':' · '+NATURES[b.nat][0]} · ${S[0]}`,hp:Math.round(hp/W*v[1]),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,pref:200,pass:PASSK[b.pass],look:ninjaLook(b.l,b.clan,b.j[0]),abil,build:b}}
+ return{name:b.name,side:b.side,desc:`${lign}${b.clan===TAIJ?'':' · '+NATURES[b.nat][0]} · voie ${v[0].toLowerCase()}`,hp:Math.round(hp/W*v[1]),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,pref:200,pass:PASSK[b.pass],look:ninjaLook(b.l,b.clan,b.j[0]),abil,build:b}}
 // générateur pseudo-aléatoire déterministe (mêmes ninjas adverses chez tous les joueurs en ligne)
 const srnd=seed=>()=>(seed=seed*16807%2147483647)/2147483647;
 function randomKit(r,b){const k=a=>Math.floor(r()*a.length);b.nat=k(NATURES);b.clan=r()<.8?k(CLANS):-1;b.voie=k(VOIES);b.pass=k(PASSK);
