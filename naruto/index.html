@@ -614,14 +614,14 @@ const JD=[
  ['n2',4,'B','vader.4','Fûton : Mur de vent','Renvoie les tirs, repousse au contact','wind'],
  ['n2',5,'A','thrawn.5','Fûton : Rasen-shuriken','Un Rasen-shuriken s\'abat sur une grande zone','rasenshuriken'],
  // ---- Raiton
- ['n3',1,'B','grievous.1','Chidori','Fente électrique qui traverse la cible','chidori'],
- ['n3',1,'B','palpatine.1','Raiton : Chaîne','Éclair qui rebondit entre les ennemis','lightning'],
- ['n3',2,'B','ig88.2','Raiton : Pas de l\'éclair','Fonce en éclair à travers les ennemis','lightning'],
- ['n3',3,'C','palpatine.3','Raiton : Orage','La foudre tombe sur une zone après un délai','lightning'],
- ['n3',3,'C','r2.3','Raiton : Piège électrique','Piège qui étourdit','lightning'],
- ['n3',4,'B','grievous.4','Raiton : Armure de foudre','Renvoie les tirs en avançant vite','lightning'],
- ['n3',4,'C','phasma.1','Raiton : Décharge','Décharge autour de soi qui étourdit','lightning'],
- ['n3',5,'S','dooku.5','Raiton : Kirin','Le dragon de foudre frappe en ligne','kirin'],
+ ['n3',1,'C','grievous.1','Chidori','Fente électrique qui traverse la cible','chidori'],
+ ['n3',1,'C','palpatine.1','Raiton : Chaîne','Éclair qui rebondit entre les ennemis','lightning'],
+ ['n3',2,'C','ig88.2','Raiton : Pas de l\'éclair','Fonce en éclair à travers les ennemis','lightning'],
+ ['n3',3,'D','palpatine.3','Raiton : Orage','La foudre tombe sur une zone après un délai','lightning'],
+ ['n3',3,'D','r2.3','Raiton : Piège électrique','Piège qui étourdit','lightning'],
+ ['n3',4,'C','grievous.4','Raiton : Armure de foudre','Renvoie les tirs en avançant vite','lightning'],
+ ['n3',4,'D','phasma.1','Raiton : Décharge','Décharge autour de soi qui étourdit','lightning'],
+ ['n3',5,'A','dooku.5','Raiton : Kirin','Le dragon de foudre frappe en ligne','kirin'],
  // ---- Doton
  ['n4',1,'C','obiwan.1','Doton : Rocher','Projette un rocher qui envoie en l\'air','earth'],
  ['n4',2,'D','jyn.2','Doton : Taupe','Passe sous terre et ressort invisible','earth'],
@@ -693,19 +693,26 @@ const JD=[
  ['c9',3,'B','iden.3','Forêt naissante','Des os jaillissent du sol et étourdissent','bone'],
  ['c9',4,'B','gideon.4','Armure d\'os','Inarrêtable, 30 % de dégâts en moins','bone'],
  ['c9',5,'B','inquisitor.5','Forêt d\'os','Anneau d\'os qui jaillissent autour de soi','bone'],
- // ---- Taijutsuka (Fauves de jade)
+ // ---- Taijutsuka (Fauves de jade) : que du taijutsu, de D à S
  ['c10',1,'D','maul.1','Konoha Senpû','Coup de pied tornade qui repousse et ralentit','tai'],
- ['c10',1,'C','anakin.1','Lotus primaire','Saisit et projette : ignore les parades','tai'],
  ['c10',1,'C','savage.3','Konoha Daisenpû','Tourbillon de coups de pied qui étourdit autour de soi','tai'],
+ ['c10',1,'B','anakin.1','Konoha Gôriki Senpû','Coup de pied surpuissant qui ignore les parades','tai'],
+ ['c10',1,'S','savage.1','Lotus primaire','Fonce, saisit la cible et la projette en l\'air','gate'],
  ['c10',2,'D','quigon.2','Poids retirés','Très rapide 2 s, se libère des entraves','gate'],
- ['c10',2,'C','savage.2','Bond du fauve','Bondit et repousse tout à l\'arrivée','tai'],
- ['c10',3,'D','bossk.2','Dynamic Entry','Fond sur l\'ennemi le plus blessé d\'un coup de pied','tai'],
- ['c10',3,'B','mace.1','Lotus caché','La cible subit +25 % de dégâts','gate'],
- ['c10',4,'D','savage.4','Première Porte','Inarrêtable 3 s','gate'],
- ['c10',4,'D','ahsoka.4','Esquive du fauve','Évite le prochain coup et accélère','tai'],
- ['c10',5,'B','bossk.5','Huit Portes','Rage, vitesse et vol de vie 5 s','gate'],
- ['c10',5,'B','iden.5','Paon du matin','Rafale de coups enflammés devant soi','peacock'],
- ['c10',5,'B','gideon.5','Tigre du soir','Coup d\'air géant qui repousse tout autour','gate'],
+ ['c10',2,'B','savage.2','Bond du fauve','Bondit et repousse tout à l\'arrivée','tai'],
+ ['c10',2,'B','ventress.2','Vitesse du fauve','Disparaît et réapparaît derrière l\'ennemi visé','gate'],
+ ['c10',3,'C','mace.1','Défi éternel','La cible défiée subit +25 % de dégâts','gate'],
+ ['c10',3,'C','bossk.2','Dynamic Entry','Fond sur l\'ennemi le plus blessé d\'un coup de pied volant','tai'],
+ ['c10',3,'S','rey.1','Lotus caché','Ouvre les portes et traverse les ennemis en les frappant tous','gate'],
+ ['c10',4,'C','ahsoka.4','Esquive du fauve','Évite le prochain coup et accélère','tai'],
+ ['c10',4,'C','savage.4','Première Porte','Inarrêtable 3 s','gate'],
+ ['c10',4,'B','maul.4','Porte de la Vie','Vol de vie massif et vitesse','gate'],
+ ['c10',4,'A','gideon.4','Corps de jade','Inarrêtable, 30 % de dégâts en moins','gate'],
+ ['c10',5,'B','gideon.5','Éléphant de midi','Coups de poing d\'air tout autour qui repoussent','gate'],
+ ['c10',5,'A','bossk.5','Huit Portes','Rage, vitesse et vol de vie 5 s','gate'],
+ ['c10',5,'S','anakin.5','Paon du matin','Rafale de coups enflammés sur jusqu\'à 4 ennemis','peacock'],
+ ['c10',5,'S','luke.5','Tigre du soir','Immense souffle d\'air en forme de tigre qui projette et étourdit','gate'],
+ ['c10',5,'S','sister.5','Nuit de la mort','8e porte : coup fatal sur les ennemis blessés','gate'],
 ];
 // réglages propres à certains jutsu (réglés par duels simulés)
 const JPAR={'Multiclonage':{d:1.2},'Ninken':{d:3},'Insectes dévoreurs':{dps:4}};
@@ -750,7 +757,7 @@ function jutsu(id){const J=JL[id],b=srcAb(J.src);return Object.assign({},b,J.P?{
 function styleAb(i){const S=STYLES[i],b=srcAb(S[2]);return Object.assign({},b,{n:S[0],d:S[1],ex:null,src:S[2].split('.')[0],vfx:S[3],style:i})}
 // stats : moyenne des persos d'origine (le style de combat compte pour 5 : un ninja à distance est fragile, un ninja au corps à corps solide), puis la voie
 function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=[styleAb(b.j[0])].concat(b.j.slice(1).map(id=>jutsu(id))),w=[5,1,1,1,1,1];let hp=0,pw=0,sp=0,W=0;
- abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie],S=STYLES[b.j[0]];hp*=S[6];pw*=S[7];if(b.clan===TAIJ){hp*=1.15;pw*=1.1;sp+=8*W} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
+ abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie],S=STYLES[b.j[0]];hp*=S[6];pw*=S[7];if(b.clan===TAIJ){hp*=1.05;sp+=4*W} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
  const lign=b.clan>=0?'Clan '+CLANS[b.clan][0]:'Sans clan';
  return{name:b.name,side:b.side,desc:`${lign}${b.clan===TAIJ?'':' · '+NATURES[b.nat][0]} · voie ${v[0].toLowerCase()}`,hp:Math.round(hp/W*v[1]),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,pref:200,pass:PASSK[b.pass],look:ninjaLook(b.l,b.clan,b.j[0]),abil,build:b}}
 // générateur pseudo-aléatoire déterministe (mêmes ninjas adverses chez tous les joueurs en ligne)
@@ -803,8 +810,8 @@ const PRESETS=[
  ['Génie Hyûga (style Neji)',2,1,0,'slow','Poing souple',['Hakke : Paume','Pas du Hakke','Byakugan','Kaiten','Hakke : 64 points'],{v:0,t:4,c:1,h:5,p:0,k:5,a:0}],
  ['Stratège (style Shikamaru)',0,2,1,'energy','Fouet d\'ombre',['Kage Mane','Course de l\'ombre','Kage Kubi Shibari','Ombre protectrice','Ombres liées'],{v:0,t:1,c:2,h:1,p:1,k:2,a:0}],
  ['Ninja copieur (style Kakashi)',3,-1,1,'crit','Kunai',['Chidori','Roulade','Multiclonage','Pilule du soldat','Raiton : Kirin'],{v:0,t:1,c:0,h:4,p:0,k:5,a:1}],
- ['Fauve de jade (style Rock Lee)',0,10,0,'third','Taijutsu du fauve',['Konoha Senpû','Poids retirés','Dynamic Entry','Première Porte','Huit Portes'],{v:0,t:7,c:3,h:1,p:0,k:2,a:0}],
- ['Fauve sublime (style Gai)',0,10,0,'rage','Taijutsu du fauve',['Lotus primaire','Bond du fauve','Lotus caché','Esquive du fauve','Paon du matin'],{v:0,t:7,c:3,h:1,p:1,k:2,a:0}],
+ ['Fauve de jade (style Rock Lee)',0,10,0,'third','Taijutsu du fauve',['Lotus primaire','Poids retirés','Lotus caché','Première Porte','Huit Portes'],{v:0,t:7,c:3,h:1,p:0,k:2,a:0}],
+ ['Fauve sublime (style Gai)',0,10,0,'rage','Taijutsu du fauve',['Konoha Gôriki Senpû','Vitesse du fauve','Dynamic Entry','Esquive du fauve','Nuit de la mort'],{v:0,t:7,c:3,h:1,p:1,k:2,a:0}],
  ['Maître-chien (style Kiba)',4,5,0,'speed','Crocs et griffes',['Gatsûga','Instinct bestial','Ninken','Flair du chien','Garôga'],{v:0,t:1,c:0,h:5,p:1,k:4,a:3}],
  ['Maître des insectes (style Shino)',4,4,1,'lifesteal','Nuée d\'insectes',['Insectes chercheurs','Clone d\'insectes','Essaim d\'insectes','Doton : Corps de roche','Nuée destructrice'],{v:0,t:1,c:3,h:5,p:1,k:2,a:4}],
  ['Kunoichi médicale (style Sakura)',4,-1,0,'regen','Taijutsu',['Lotus primaire','Saut ninja','Bombe fumigène','Shôsen','Doton : Montagne écrasante'],{v:0,t:0,c:1,h:2,p:0,k:2,a:0}],
@@ -1652,7 +1659,8 @@ const JFX={
  seal:(u,a,td)=>{const e=targetOf(u,a,td);if(e)jx({jfx:'seal',ti:units.indexOf(e),x:e.x,y:e.y,t:2,m:2})},
  gatsuga:(u,a)=>{jx({jfx:'drill',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.65,m:.65,two:u.ch.look.dog?1:0})},
  peacock:(u,a)=>{jx({jfx:'peacock',ui:units.indexOf(u),x:u.x,y:u.y,a,t:1,m:1})},
- gate:(u,a,td,pre,ab)=>{if(/Portes|Porte|Tigre/.test(ab.n)){jx({jfx:'gateburst',ui:units.indexOf(u),x:u.x,y:u.y,t:.7,m:.7,tiger:/Tigre/.test(ab.n)?1:0});say(u,/Huit/.test(ab.n)?'8e PORTE !':/Tigre/.test(ab.n)?'TIGRE DU SOIR !':'1re PORTE !','#6aff7a')}},
+ gate:(u,a,td,pre,ab)=>{if(/Porte|Tigre|Nuit|Lotus|Éléphant|Vitesse|Poids|Défi|jade/.test(ab.n)){const night=/Nuit/.test(ab.n);jx({jfx:'gateburst',ui:units.indexOf(u),x:u.x,y:u.y,t:night?1.2:.7,m:night?1.2:.7,tiger:/Tigre/.test(ab.n)?1:0,night:night?1:0});
+  const call={'Huit Portes':'8e PORTE !','Tigre du soir':'TIGRE DU SOIR !','Nuit de la mort':'NUIT DE LA MORT !','Première Porte':'1re PORTE !','Porte de la Vie':'3e PORTE !','Lotus caché':'LOTUS CACHÉ !','Lotus primaire':'LOTUS !','Éléphant de midi':'ÉLÉPHANT DE MIDI !'}[ab.n];if(call)say(u,call,night?'#ff4a3a':'#6aff7a')}},
  heal:(u,a,td,pre,ab)=>{if(/Katsuyu/.test(ab.n))jx({jfx:'slugs',ui:units.indexOf(u),x:u.x,y:u.y,t:1.6,m:1.6})},
  sage:(u)=>{jx({jfx:'gateburst',ui:units.indexOf(u),x:u.x,y:u.y,t:.8,m:.8,sage:1})},
  susano:(u)=>{jx({jfx:'gateburst',ui:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6,sus:1});jx({jfx:'aura',kind:'susano',ui:units.indexOf(u),x:u.x,y:u.y,t:2.6,m:2.6})},
@@ -1701,7 +1709,8 @@ function drawJfx(f){const k=f.t/f.m,e=1-k,t=performance.now()/1000,u=UI(f),tg=TI
   case'drill':{if(!u)break;const q=P(u.x,u.y,26),s=q.s;for(const off of f.two?[-14,14]:[0]){const ox=-Math.sin(u.aim)*off*s,oy=Math.cos(u.aim)*off*s*K;g.save();g.translate(q.x+ox,q.y+oy);g.rotate(Math.atan2(Math.sin(u.aim)*K,Math.cos(u.aim)));
     for(let i=0;i<5;i++){g.strokeStyle=i%2?'rgba(200,200,210,.85)':'rgba(255,255,255,.7)';g.lineWidth=3*s;g.beginPath();g.ellipse(-10*s+i*6*s,0,(22-i*4)*s,(14-i*2.5)*s,0,t*30+i,t*30+i+4);g.stroke()}g.restore()}break}
   case'peacock':{if(!u)break;const q=P(u.x,u.y,40);g.globalCompositeOperation='lighter';for(let i=0;i<9;i++){const a=u.aim+(i-4)*.28,r=(40+e*60)*q.s;g.fillStyle=rgba(i%2?'#ff8a2a':'#ffd36a',.6*k);g.beginPath();g.ellipse(q.x+Math.cos(a)*r,q.y+Math.sin(a)*r*K,10*q.s,5*q.s,a,0,7);g.fill()}break}
-  case'gateburst':{if(!u)break;const q=P(u.x,u.y,30),col=f.sage?'#e8a020':f.sus?(u.ch.look.weapon.col||'#a5f'):'#6aff7a';g.globalCompositeOperation='lighter';g.strokeStyle=rgba(col,.8*k);g.lineWidth=5;g.beginPath();g.ellipse(q.x,q.y+16*q.s,(30+e*120)*q.s,(30+e*120)*q.s*K,0,0,7);g.stroke();
+  case'gateburst':{if(!u)break;const q=P(u.x,u.y,30),col=f.sage?'#e8a020':f.sus?(u.ch.look.weapon.col||'#a5f'):f.night?'#ff3a2a':'#6aff7a';
+   if(f.night){g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff3a2a',.7*k);g.lineWidth=8*q.s;g.lineCap='round';g.beginPath();for(let i=0;i<=20;i++){const d=i/20,x=q.x+Math.cos(u.aim)*d*220*e*q.s,y=q.y+Math.sin(u.aim)*d*220*e*q.s*K+Math.sin(d*9+t*8)*16*q.s;i?g.lineTo(x,y):g.moveTo(x,y)}g.stroke();g.restore()}g.globalCompositeOperation='lighter';g.strokeStyle=rgba(col,.8*k);g.lineWidth=5;g.beginPath();g.ellipse(q.x,q.y+16*q.s,(30+e*120)*q.s,(30+e*120)*q.s*K,0,0,7);g.stroke();
    for(let i=0;i<10;i++){const a=i*.63+t,r=(20+e*70)*q.s;circ(q.x+Math.cos(a)*r,q.y-e*40*q.s+Math.sin(a)*r*.4,(5+e*8)*q.s,rgba(col,.25*k))}
    if(f.tiger){g.globalCompositeOperation='source-over';g.globalAlpha=k;const R=(40+e*90)*q.s;g.fillStyle='rgba(180,255,190,.35)';g.beginPath();g.ellipse(q.x+Math.cos(u.aim)*R,q.y,R,R*.8,0,0,7);g.fill();g.fillStyle='rgba(20,60,30,.6)';g.fillRect(q.x+Math.cos(u.aim)*R-R*.45,q.y-R*.25,R*.25,R*.12);g.fillRect(q.x+Math.cos(u.aim)*R+R*.2,q.y-R*.25,R*.25,R*.12)}break}
   case'slugs':{if(!u)break;for(let i=0;i<4;i++){const a=i*1.57+t*.6,q=P(u.x+Math.cos(a)*50,u.y+Math.sin(a)*40,6);g.fillStyle='#e8eef8';g.beginPath();g.ellipse(q.x,q.y,11*q.s,6*q.s,a,0,7);g.fill();g.fillStyle='#4a6aa8';g.fillRect(q.x-6*q.s,q.y-2*q.s,12*q.s,2*q.s)}break}

@@ -80,14 +80,14 @@ const JD=[
  ['n2',4,'B','vader.4','Fûton : Mur de vent','Renvoie les tirs, repousse au contact','wind'],
  ['n2',5,'A','thrawn.5','Fûton : Rasen-shuriken','Un Rasen-shuriken s\'abat sur une grande zone','rasenshuriken'],
  // ---- Raiton
- ['n3',1,'B','grievous.1','Chidori','Fente électrique qui traverse la cible','chidori'],
- ['n3',1,'B','palpatine.1','Raiton : Chaîne','Éclair qui rebondit entre les ennemis','lightning'],
- ['n3',2,'B','ig88.2','Raiton : Pas de l\'éclair','Fonce en éclair à travers les ennemis','lightning'],
- ['n3',3,'C','palpatine.3','Raiton : Orage','La foudre tombe sur une zone après un délai','lightning'],
- ['n3',3,'C','r2.3','Raiton : Piège électrique','Piège qui étourdit','lightning'],
- ['n3',4,'B','grievous.4','Raiton : Armure de foudre','Renvoie les tirs en avançant vite','lightning'],
- ['n3',4,'C','phasma.1','Raiton : Décharge','Décharge autour de soi qui étourdit','lightning'],
- ['n3',5,'S','dooku.5','Raiton : Kirin','Le dragon de foudre frappe en ligne','kirin'],
+ ['n3',1,'C','grievous.1','Chidori','Fente électrique qui traverse la cible','chidori'],
+ ['n3',1,'C','palpatine.1','Raiton : Chaîne','Éclair qui rebondit entre les ennemis','lightning'],
+ ['n3',2,'C','ig88.2','Raiton : Pas de l\'éclair','Fonce en éclair à travers les ennemis','lightning'],
+ ['n3',3,'D','palpatine.3','Raiton : Orage','La foudre tombe sur une zone après un délai','lightning'],
+ ['n3',3,'D','r2.3','Raiton : Piège électrique','Piège qui étourdit','lightning'],
+ ['n3',4,'C','grievous.4','Raiton : Armure de foudre','Renvoie les tirs en avançant vite','lightning'],
+ ['n3',4,'D','phasma.1','Raiton : Décharge','Décharge autour de soi qui étourdit','lightning'],
+ ['n3',5,'A','dooku.5','Raiton : Kirin','Le dragon de foudre frappe en ligne','kirin'],
  // ---- Doton
  ['n4',1,'C','obiwan.1','Doton : Rocher','Projette un rocher qui envoie en l\'air','earth'],
  ['n4',2,'D','jyn.2','Doton : Taupe','Passe sous terre et ressort invisible','earth'],
@@ -159,19 +159,26 @@ const JD=[
  ['c9',3,'B','iden.3','Forêt naissante','Des os jaillissent du sol et étourdissent','bone'],
  ['c9',4,'B','gideon.4','Armure d\'os','Inarrêtable, 30 % de dégâts en moins','bone'],
  ['c9',5,'B','inquisitor.5','Forêt d\'os','Anneau d\'os qui jaillissent autour de soi','bone'],
- // ---- Taijutsuka (Fauves de jade)
+ // ---- Taijutsuka (Fauves de jade) : que du taijutsu, de D à S
  ['c10',1,'D','maul.1','Konoha Senpû','Coup de pied tornade qui repousse et ralentit','tai'],
- ['c10',1,'C','anakin.1','Lotus primaire','Saisit et projette : ignore les parades','tai'],
  ['c10',1,'C','savage.3','Konoha Daisenpû','Tourbillon de coups de pied qui étourdit autour de soi','tai'],
+ ['c10',1,'B','anakin.1','Konoha Gôriki Senpû','Coup de pied surpuissant qui ignore les parades','tai'],
+ ['c10',1,'S','savage.1','Lotus primaire','Fonce, saisit la cible et la projette en l\'air','gate'],
  ['c10',2,'D','quigon.2','Poids retirés','Très rapide 2 s, se libère des entraves','gate'],
- ['c10',2,'C','savage.2','Bond du fauve','Bondit et repousse tout à l\'arrivée','tai'],
- ['c10',3,'D','bossk.2','Dynamic Entry','Fond sur l\'ennemi le plus blessé d\'un coup de pied','tai'],
- ['c10',3,'B','mace.1','Lotus caché','La cible subit +25 % de dégâts','gate'],
- ['c10',4,'D','savage.4','Première Porte','Inarrêtable 3 s','gate'],
- ['c10',4,'D','ahsoka.4','Esquive du fauve','Évite le prochain coup et accélère','tai'],
- ['c10',5,'B','bossk.5','Huit Portes','Rage, vitesse et vol de vie 5 s','gate'],
- ['c10',5,'B','iden.5','Paon du matin','Rafale de coups enflammés devant soi','peacock'],
- ['c10',5,'B','gideon.5','Tigre du soir','Coup d\'air géant qui repousse tout autour','gate'],
+ ['c10',2,'B','savage.2','Bond du fauve','Bondit et repousse tout à l\'arrivée','tai'],
+ ['c10',2,'B','ventress.2','Vitesse du fauve','Disparaît et réapparaît derrière l\'ennemi visé','gate'],
+ ['c10',3,'C','mace.1','Défi éternel','La cible défiée subit +25 % de dégâts','gate'],
+ ['c10',3,'C','bossk.2','Dynamic Entry','Fond sur l\'ennemi le plus blessé d\'un coup de pied volant','tai'],
+ ['c10',3,'S','rey.1','Lotus caché','Ouvre les portes et traverse les ennemis en les frappant tous','gate'],
+ ['c10',4,'C','ahsoka.4','Esquive du fauve','Évite le prochain coup et accélère','tai'],
+ ['c10',4,'C','savage.4','Première Porte','Inarrêtable 3 s','gate'],
+ ['c10',4,'B','maul.4','Porte de la Vie','Vol de vie massif et vitesse','gate'],
+ ['c10',4,'A','gideon.4','Corps de jade','Inarrêtable, 30 % de dégâts en moins','gate'],
+ ['c10',5,'B','gideon.5','Éléphant de midi','Coups de poing d\'air tout autour qui repoussent','gate'],
+ ['c10',5,'A','bossk.5','Huit Portes','Rage, vitesse et vol de vie 5 s','gate'],
+ ['c10',5,'S','anakin.5','Paon du matin','Rafale de coups enflammés sur jusqu\'à 4 ennemis','peacock'],
+ ['c10',5,'S','luke.5','Tigre du soir','Immense souffle d\'air en forme de tigre qui projette et étourdit','gate'],
+ ['c10',5,'S','sister.5','Nuit de la mort','8e porte : coup fatal sur les ennemis blessés','gate'],
 ];
 // réglages propres à certains jutsu (réglés par duels simulés)
 const JPAR={'Multiclonage':{d:1.2},'Ninken':{d:3},'Insectes dévoreurs':{dps:4}};
@@ -216,7 +223,7 @@ function jutsu(id){const J=JL[id],b=srcAb(J.src);return Object.assign({},b,J.P?{
 function styleAb(i){const S=STYLES[i],b=srcAb(S[2]);return Object.assign({},b,{n:S[0],d:S[1],ex:null,src:S[2].split('.')[0],vfx:S[3],style:i})}
 // stats : moyenne des persos d'origine (le style de combat compte pour 5 : un ninja à distance est fragile, un ninja au corps à corps solide), puis la voie
 function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=[styleAb(b.j[0])].concat(b.j.slice(1).map(id=>jutsu(id))),w=[5,1,1,1,1,1];let hp=0,pw=0,sp=0,W=0;
- abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie],S=STYLES[b.j[0]];hp*=S[6];pw*=S[7];if(b.clan===TAIJ){hp*=1.15;pw*=1.1;sp+=8*W} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
+ abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie],S=STYLES[b.j[0]];hp*=S[6];pw*=S[7];if(b.clan===TAIJ){hp*=1.05;sp+=4*W} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
  const lign=b.clan>=0?'Clan '+CLANS[b.clan][0]:'Sans clan';
  return{name:b.name,side:b.side,desc:`${lign}${b.clan===TAIJ?'':' · '+NATURES[b.nat][0]} · voie ${v[0].toLowerCase()}`,hp:Math.round(hp/W*v[1]),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,pref:200,pass:PASSK[b.pass],look:ninjaLook(b.l,b.clan,b.j[0]),abil,build:b}}
 // générateur pseudo-aléatoire déterministe (mêmes ninjas adverses chez tous les joueurs en ligne)
