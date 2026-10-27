@@ -7,7 +7,7 @@
 <style>
 /* Plein écran : une arène canvas 16:9 centrée, look unique sombre */
 :root{--bg:#04050b;--fg:#dfe8ff;color-scheme:dark}
-#net,#opt{background:#1c120a!important;border-color:#6a4426!important}#net h2,#opt h2{color:#ffb347!important}#net button,#optB{background:#ff9a3a}#optB{color:#1a1008!important;background:#ffb347!important;border-color:#8a5a2a!important}
+#net,#opt{background:#1c120a!important;border-color:#6a4426!important}#net h2,#opt h2{color:#ffb347!important}#net button,#optB{background:#ff9a3a}#backB{background:#1c120acc!important;border-color:#6a4426!important;color:#f3d9b0!important}#optB{color:#1a1008!important;background:#ffb347!important;border-color:#8a5a2a!important}
 html,body{margin:0;height:100%;background:var(--bg);color:var(--fg);overflow:hidden;font-family:"Trebuchet MS",system-ui,sans-serif}
 #wrap{display:flex;align-items:center;justify-content:center;height:100%}
 canvas{width:min(100vw,177.78vh);height:min(56.25vw,100vh);display:block;cursor:none;background:var(--bg)}
@@ -17,6 +17,7 @@ canvas{width:min(100vw,177.78vh);height:min(56.25vw,100vh);display:block;cursor:
 #net button.alt{background:#2a3a5a;color:#dfe8ff}#net button:focus-visible,#net input:focus-visible{outline:2px solid #7df;outline-offset:2px}
 #net .row{display:flex;gap:8px;margin-top:10px}#net input{flex:1;min-width:0;font:inherit;font-size:18px;letter-spacing:.2em;text-transform:uppercase;padding:8px;border-radius:8px;border:1px solid #3a4a6a;background:#04050b;color:#fff}
 #nStat{color:#ffe81f!important;min-height:1.4em}
+#backB{position:fixed;left:12px;top:12px;z-index:4;font:inherit;font-size:13px;font-weight:bold;text-decoration:none;border:1px solid #3a4a6a;border-radius:8px;padding:6px 10px;background:#0d1424cc;color:#dfe8ff}#backB:hover{border-color:#ffe81f}#backB:focus-visible{outline:2px solid #7df;outline-offset:2px}
 #optB{position:fixed;right:12px;bottom:12px;z-index:4;font:inherit;font-size:14px;font-weight:bold;border:1px solid #3a4a6a;border-radius:8px;padding:6px 10px;background:#0d1424cc;color:#dfe8ff;cursor:pointer}
 #opt{position:fixed;right:12px;bottom:52px;width:min(300px,calc(100vw - 32px));box-sizing:border-box;background:#0d1424;border:1px solid #3a4a6a;border-radius:12px;padding:16px;z-index:6;color:var(--fg);cursor:auto}
 #opt h2{margin:0 0 10px;color:#ffe81f;font-size:17px}#opt label{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:9px 0;font-size:14px;color:#c9d6f2}
@@ -27,6 +28,7 @@ canvas{width:min(100vw,177.78vh);height:min(56.25vw,100vh);display:block;cursor:
 </head>
 <body>
 <div id="wrap"><canvas id="c" width="1280" height="720"></canvas></div>
+<a id="backB" href="../index.html">⇦ Changer de jeu</a>
 <button id="optB" aria-expanded="false" aria-controls="opt">⚙ Partie & options (O)</button>
 <div id="opt" hidden>
  <h2>Partie</h2>
@@ -1535,7 +1537,8 @@ function netTick(dt){if(!coop())return;net.sendT-=dt;if(net.sendT>0)return;
  else if(net.live){net.sendT=0;const I=localInput();netSend({t:'in',seq:net.seq,mx:I.mx,my:I.my,ax:rd(I.ax),ay:rd(I.ay),l:!!mouse.l,p:Object.keys(net.gp),sh:!!I.sh,f:!!I.f,cx:rd(cam.x),cy:rd(cam.y)});net.gp={}}}
 function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;
  if(isGuest()&&net.live)guestFrame(dt);else{const udt=hs>0?0:dt;hs=Math.max(0,hs-dt);update(udt)}
- netTick(dt);draw();pressed={};requestAnimationFrame(loop)}
+ netTick(dt);draw();backB.hidden=state!=='menu';pressed={};requestAnimationFrame(loop)}
+const backB=document.getElementById('backB');
 requestAnimationFrame(loop);
 </script>
 </body>

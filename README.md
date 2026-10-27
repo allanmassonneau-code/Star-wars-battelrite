@@ -1,6 +1,6 @@
 # Star Wars Arena (Battlerite × Battlefront II)
 
-Jeu de combat en vue 3/4 plongeante (comme Battlerite), jouable directement dans le navigateur : ouvrir `index.html`.
+Jeu de combat en vue 3/4 plongeante (comme Battlerite), jouable directement dans le navigateur : ouvrir `index.html`, qui propose de choisir entre le jeu Star Wars (`starwars/`) et le jeu Naruto (`naruto/`).
 
 **Version Naruto** (on crée son propre ninja et son build de jutsu) : voir [`naruto/`](naruto/README.md).
 

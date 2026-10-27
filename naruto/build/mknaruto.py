@@ -2,7 +2,7 @@ import re,sys,os
 # Génère naruto/index.html à partir du jeu Star Wars : python3 naruto/build/mknaruto.py
 SP=os.path.dirname(os.path.abspath(__file__))+'/'
 ROOT=os.path.abspath(SP+'../..')+'/'
-src=open(ROOT+'index.html').read()
+src=open(ROOT+'starwars/index.html').read()
 s=src
 def rep(a,b,n=1):
     global s
@@ -16,7 +16,7 @@ def cut(a,b,new,keep_b=True):
 
 # ---------- habillage
 rep('<title>Arène Holonet</title>','<title>Arène Ninja</title>')
-rep("color-scheme:dark}","color-scheme:dark}\n#net,#opt{background:#1c120a!important;border-color:#6a4426!important}#net h2,#opt h2{color:#ffb347!important}#net button,#optB{background:#ff9a3a}#optB{color:#1a1008!important;background:#ffb347!important;border-color:#8a5a2a!important}")
+rep("color-scheme:dark}","color-scheme:dark}\n#net,#opt{background:#1c120a!important;border-color:#6a4426!important}#net h2,#opt h2{color:#ffb347!important}#net button,#optB{background:#ff9a3a}#backB{background:#1c120acc!important;border-color:#6a4426!important;color:#f3d9b0!important}#optB{color:#1a1008!important;background:#ffb347!important;border-color:#8a5a2a!important}")
 rep('<label>Holocron de soin (arène) <input type="checkbox" id="cOrb"></label>','<label>Pilule du soldat (arène) <input type="checkbox" id="cOrb"></label>')
 rep("<p>Jusqu'à 8 joueurs.","<p>Jusqu'à 8 ninjas.")
 rep("'swOpt'","'nrOpt'",2)

@@ -18,4 +18,4 @@ Même jeu que l'arène Star Wars (vue 3/4 façon Battlerite, arène, bataille, d
 ## Le reste
 Parade au kunai (F), tableau des scores (Tab), réglages de partie et son (O), pilule du soldat au centre de l'arène, mort subite. En ligne, chacun crée son ninja, l'hôte règle la partie.
 
-Le fichier est généré à partir du jeu Star Wars (même moteur).
+Le fichier est généré à partir du jeu Star Wars (même moteur) : `python3 naruto/build/mknaruto.py` le recrée depuis `starwars/index.html`.
