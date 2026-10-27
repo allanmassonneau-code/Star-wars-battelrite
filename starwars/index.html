@@ -148,7 +148,7 @@ let cam={x:CX,y:CY},Yc=377.5;
 const nearMe=(x,y)=>Math.abs(x-cam.x)<820&&Math.abs(y-cam.y)<560;
 const near=(x,y)=>nearMe(x,y)||net.peers.some(p=>p.gcam&&Math.abs(x-p.gcam.x)<820&&Math.abs(y-p.gcam.y)<560);
 const lastS={};
-const S=(n,u)=>{n=sndKey(n,u);if(!SFX[n])return;if(net.role==='host'&&u&&net.conn&&net.ev.snd.length<60)net.ev.snd.push([n,Math.round(u.x),Math.round(u.y)]);const t=performance.now();if((!u||nearMe(u.x,u.y))&&!(t-(lastS[n]||0)<35)){lastS[n]=t;at(u&&u.x,u&&u.y,SFX[n])}};
+const S=(n,u)=>{n=sndKey(n,u);if(!SFX[n])return;if(net.role==='host'&&u&&coop()&&net.ev.snd.length<60)net.ev.snd.push([n,Math.round(u.x),Math.round(u.y)]);const t=performance.now();if((!u||nearMe(u.x,u.y))&&!(t-(lastS[n]||0)<35)){lastS[n]=t;at(u&&u.x,u&&u.y,SFX[n])}};
 
 // ---------- Capacités ----------
 let EX=false;const X=v=>EX?v*1.2:v;
@@ -661,7 +661,7 @@ function explode(p){p.boom=1;EX=p.ex;if(p.grenade)aoe(p.owner,p.x,p.y,p.ar||80,p
 
 // ---------- Effets ----------
 function say(u,s,col){if(near(u.x,u.y))txt.push({x:u.x+(rnd()-.5)*20,y:u.y,z:95,s,col,t:1})}
-function sparks(x,y,col,n){if(net.role==='host'&&net.conn){if(net.ev.sp.length<200)net.ev.sp.push([Math.round(x),Math.round(y),col,n]);}for(let i=0;i<n;i++){const a=rnd()*7,s=80+rnd()*260;fx.push({x,y,z:20+rnd()*20,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:.5,m:.5,col,r:2+rnd()*2})}}
+function sparks(x,y,col,n){if(net.role==='host'&&coop()){if(net.ev.sp.length<200)net.ev.sp.push([Math.round(x),Math.round(y),col,n]);}for(let i=0;i<n;i++){const a=rnd()*7,s=80+rnd()*260;fx.push({x,y,z:20+rnd()*20,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:.5,m:.5,col,r:2+rnd()*2})}}
 function ring(x,y,r,col){if(near(x,y))fx.push({x,y,ring:r,t:.35,m:.35,col})}
 
 // ---------- IA générique (lit les indices "ai" de chaque capacité) ----------

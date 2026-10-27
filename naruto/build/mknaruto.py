@@ -110,5 +110,40 @@ rep(" if(L.robe)poly([{x:-12,y:-40},{x:12,y:-40},{x:17+step*2,y:-6},{x:-17+step*
 # indices et bannières
 rep("Choisis ton héros.`","Crée ton ninja puis clique PRÊT.`")
 rep("if(coop()&&inRect(mouse,readyBtn)&&(isGuest()?net.mate:net.myPick)){","if(coop()&&inRect(mouse,readyBtn)&&(isGuest()?net.mate:net.myPick)&&!overBudget()){")
+
+# ---------- effets visuels ninja : chaque jutsu marque ce qu'il crée avec son élément (vfx)
+rep("function drawProj(p){",open(SP+'nr_vfx.js').read()+"\nfunction drawProjOld(p){")
+rep("function sparks(x,y,col,n){if(net.role==='host'&&coop()){if(net.ev.sp.length<200)net.ev.sp.push([Math.round(x),Math.round(y),col,n]);}for(let i=0;i<n;i++){const a=rnd()*7,s=80+rnd()*260;fx.push({x,y,z:20+rnd()*20,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:.5,m:.5,col,r:2+rnd()*2})}}",
+    "function sparks(x,y,col,n,v){v=v||VFX;if(net.role==='host'&&coop()){if(net.ev.sp.length<200)net.ev.sp.push([Math.round(x),Math.round(y),col,n,v]);}for(let i=0;i<n;i++){const a=rnd()*7,s=(v==='smoke'||v==='leaf'?40:80)+rnd()*(v==='smoke'||v==='leaf'?120:260);fx.push({x,y,z:20+rnd()*20,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:v?.7:.5,m:v?.7:.5,col,r:2+rnd()*2,vfx:v})}}")
+rep("function ring(x,y,r,col){if(near(x,y))fx.push({x,y,ring:r,t:.35,m:.35,col})}","function ring(x,y,r,col){if(near(x,y))fx.push({x,y,ring:r,t:.35,m:.35,col,vfx:VFX})}")
+rep("const n0=projs.length;ab.f(u,a,td,ab.P||{});CUR=null;",
+    "VFX=ab.vfx||null;const f0=fx.length,z0=zones.length,fi0=fields.length,te0=tethers.length,tr0=traps.length,n0=projs.length;ab.f(u,a,td,ab.P||{});CUR=null;\n if(VFX)for(const [L,i0] of[[fx,f0],[zones,z0],[fields,fi0],[tethers,te0],[traps,tr0],[projs,n0]])for(let i=i0;i<L.length;i++)L[i].vfx=L[i].vfx||VFX;VFX=null;")
+rep("function explode(p){p.boom=1;","function explode(p){const V0=VFX;VFX=p.vfx||V0;const fi0=fields.length;p.boom=1;")
+rep("if(near(p.x,p.y)){sparks(p.x,p.y,p.col,24);shake=Math.max(shake,.2);SFX.boom()}}","if(near(p.x,p.y)){sparks(p.x,p.y,p.col,24);shake=Math.max(shake,.2);SFX.boom()}for(let i=fi0;i<fields.length;i++)fields[i].vfx=fields[i].vfx||VFX;VFX=V0}")
+rep("sparks(p.x,p.y,p.col,4)","sparks(p.x,p.y,p.col,4,p.vfx)")
+rep("z.t-=dt;if(z.t<=0){z.done=1;EX=z.ex;aoe(","z.t-=dt;if(z.t<=0){z.done=1;EX=z.ex;VFX=z.vfx||null;aoe(")
+rep("if(near(z.x,z.y)){SFX.zap();SFX.boom();shake=Math.max(shake,.25);\n  for(let i=0;i<4;i++)fx.push({bolt:2,x:z.x+(rnd()-.5)*z.r,y:z.y+(rnd()-.5)*z.r*.8,t:.3,m:.3,col:z.col})}}}\n zones=zones.filter(z=>!z.done);",
+    "if(near(z.x,z.y)){if(!z.vfx||z.vfx==='lightning')SFX.zap();SFX.boom();shake=Math.max(shake,.25);\n  if(!z.vfx||z.vfx==='lightning')for(let i=0;i<4;i++)fx.push({bolt:2,x:z.x+(rnd()-.5)*z.r,y:z.y+(rnd()-.5)*z.r*.8,t:.3,m:.3,col:z.col,vfx:z.vfx});else{sparks(z.x,z.y,z.col,22);fx.push({x:z.x,y:z.y,ring:z.r,t:.45,m:.45,col:z.col,vfx:z.vfx})}}}}\n VFX=null;zones=zones.filter(z=>!z.done);")
+rep("tr.t=0;EX=tr.ex;aoe(","tr.t=0;EX=tr.ex;VFX=tr.vfx||null;aoe(")
+rep("if(nearMe(tr.x,tr.y))SFX.boom();break}}","if(nearMe(tr.x,tr.y))SFX.boom();VFX=null;break}}")
+# rendu
+rep("for(const f of fx){if(!f.ring&&!f.swing)continue;if(!near(f.x,f.y))continue;g.globalAlpha=f.t/f.m;g.strokeStyle=f.col;g.lineWidth=f.swing?6:4;\n  if(f.ring)gEll(f.x,f.y,f.ring*(1.1-f.t/f.m*.6));else gEll(f.x,f.y,f.range,f.a-f.arc/2,f.a+f.arc/2);g.stroke()}g.globalAlpha=1;",
+    "for(const f of fx){if(!f.ring&&!f.swing)continue;if(!near(f.x,f.y))continue;g.globalAlpha=f.t/f.m;drawRingSwing(f)}g.globalAlpha=1;")
+rep("for(const f of fx){if(f.beam&&near(f.x,f.y)){const a=P(f.x,f.y,30),b=P(f.x2,f.y2,30);g.globalAlpha=f.t/f.m;g.lineCap='round';g.strokeStyle=f.col;g.lineWidth=f.w*a.s;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.strokeStyle='#fff';g.lineWidth=Math.max(1,f.w*a.s*.3);g.stroke()}",
+    "for(const f of fx){if(f.beam&&near(f.x,f.y))drawBeamN(f);")
+rep("drawBolt(h.x,h.y,e.x,e.y,i%2?'#fff':f.col)","drawBolt(h.x,h.y,e.x,e.y,i%2?'#fff':vcol(f.vfx==='chakra'?null:f.vfx,f.col))")
+rep("const p=P(f.x,f.y,f.z??20);g.globalAlpha=f.t/f.m;g.fillStyle=f.col;g.beginPath();g.arc(p.x,p.y,f.r*p.s,0,7);g.fill()}g.globalAlpha=1;","const p=P(f.x,f.y,f.z??20);g.globalAlpha=f.t/f.m;drawPart(f,p)}g.globalAlpha=1;")
+rep("for(const p of projs)if(near(p.x,p.y))glow(p.x,p.y,p.rocket?90:45,p.col,.3);","for(const p of projs)if(near(p.x,p.y)&&!DARKV[p.vfx])glow(p.x,p.y,p.rocket?90:45,p.vfx&&p.vfx!=='chakra'?vcol(p.vfx,p.col):p.col,.3);")
+rep("for(const f of fields){if(!near(f.x,f.y))continue;g.fillStyle=rgba(f.col,","for(const f of fields){if(!near(f.x,f.y))continue;if(drawFieldN(f,t))continue;g.fillStyle=rgba(f.col,")
+rep("for(const z of zones){if(!near(z.x,z.y))continue;const k=1-z.t/z.m;g.fillStyle=rgba(z.col,.12);gEll(z.x,z.y,z.r);g.fill();g.fillStyle=rgba(z.col,.3);gEll(z.x,z.y,z.r*k);g.fill();g.strokeStyle=z.col;",
+    "for(const z of zones){if(!near(z.x,z.y))continue;const k=1-z.t/z.m,zc=z.vfx&&z.vfx!=='chakra'?vcol(z.vfx,z.col):z.col;g.fillStyle=rgba(DARKV[z.vfx]?'#101014':zc,.12);gEll(z.x,z.y,z.r);g.fill();g.fillStyle=rgba(DARKV[z.vfx]?'#101014':zc,.3);gEll(z.x,z.y,z.r*k);g.fill();g.strokeStyle=zc;")
+rep("const a=P(te.a.x,te.a.y,40),b=P(te.b.x,te.b.y,40),k=te.t/te.m;g.strokeStyle=te.col;","const a=P(te.a.x,te.a.y,40),b=P(te.b.x,te.b.y,40),k=te.t/te.m;g.strokeStyle=te.vfx&&te.vfx!=='chakra'?vcol(te.vfx,te.col):te.col;")
+# réseau : l'élément voyage avec les objets
+rep("const PK=['x','y','vx','vy','r','col',","const PK=['vfx','x','y','vx','vy','r','col',")
+rep(",ZK=['x','y','r','t','m','col'];",",ZK=['x','y','r','t','m','col','vfx'];")
+rep("Fi:fields.map(f=>pickK(f,['x','y','r','t','m','team','col','heal','dps','slow','pet','spinner','dome']))","Fi:fields.map(f=>pickK(f,['x','y','r','t','m','team','col','heal','dps','slow','pet','spinner','dome','vfx']))")
+rep("Te:tethers.map(t=>[units.indexOf(t.a),units.indexOf(t.b),rd(t.t),t.m,t.col])","Te:tethers.map(t=>[units.indexOf(t.a),units.indexOf(t.b),rd(t.t),t.m,t.col,t.vfx])")
+rep("tethers=(s.Te||[]).map(([a,b,t,m,col])=>({a:units[a],b:units[b],t,m,col}))","tethers=(s.Te||[]).map(([a,b,t,m,col,vfx])=>({a:units[a],b:units[b],t,m,col,vfx}))")
+rep("for(const [x,y,c,k] of s.ev.sp||[])if(nearMe(x,y))sparks(x,y,c,k);","for(const [x,y,c,k,v] of s.ev.sp||[])if(nearMe(x,y))sparks(x,y,c,k,v);")
 open(ROOT+'naruto/index.html','w').write(s)
 print('ok',len(s))
