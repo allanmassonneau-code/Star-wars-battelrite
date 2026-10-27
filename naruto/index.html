@@ -651,7 +651,7 @@ const JD=[
  ['n4',5,'B','gideon.5','Doton : Séisme','Grand coup de terre circulaire qui repousse','','','earth'],
 ];
 // réglages propres à certains jutsu (réglés par duels simulés)
-const JPAR={'Multiclonage':{d:2.5},'Ninken':{d:3}};
+const JPAR={'Multiclonage':{d:1.8},'Ninken':{d:3},'Insectes dévoreurs':{dps:6}};
 const JL=JD.map(([cat,slot,r,src,n,d,xn,xd,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,xn,xd,vfx,P:JPAR[n]}));
 const SLOTN=['Attaque de base','Jutsu principal','Déplacement','Technique','Défense','Ultime'];
 const catName=c=>c==='u'?'Universel':c[0]==='n'?NATURES[+c.slice(1)][0]:'Clan '+CLANS[+c.slice(1)][0];
