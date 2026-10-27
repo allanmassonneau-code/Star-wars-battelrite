@@ -28,7 +28,7 @@ const JD=[
  ['u',3,'C','han.3','Parchemin explosif','Se colle au premier ennemi et explose','','','tag'],
  ['u',3,'D','lando.3','Bombe fumigène','Fumée : ralentit les ennemis, cache les alliés','','','smoke'],
  ['u',3,'C','wicket.3','Piège ninja','Piège qui étourdit et repousse','','','steel'],
- ['u',3,'B','cadbane.3','Genjutsu : Plumes','Les ennemis qui restent dedans s\'endorment','','','genjutsu'],
+ ['u',3,'C','cadbane.3','Genjutsu : Plumes','Les ennemis qui restent dedans s\'endorment','','','genjutsu'],
  ['u',3,'C','rex.3','Kunai explosifs','Explose puis se divise en 4','','','tag'],
  ['u',4,'B','rey.4','Shôsen','Soigne l\'allié le plus blessé','','','heal'],
  ['u',4,'B','yoda.3','Zone de soin','Zone de chakra médical autour de soi','','','heal'],
@@ -39,11 +39,11 @@ const JD=[
  ['u',5,'A','bossk.5','Huit Portes','Rage, vitesse et vol de vie 5 s','','','gate'],
  ['u',5,'C','rex.5','Pluie de parchemins','4 parchemins explosifs sur la zone','','','tag'],
  // ---- natures
- ['n0',1,'B','jango.1','Katon : Boule de feu','Grosse boule de feu qui repousse','Katon : Grand feu','Explosion plus large','fire'],
+ ['n0',1,'A','jango.1','Katon : Boule de feu','Grosse boule de feu qui repousse','Katon : Grand feu','Explosion plus large','fire'],
  ['n0',1,'B','din.1','Katon : Souffle du dragon','Brûle tout devant soi','','','fire'],
  ['n0',3,'C','finn.3','Katon : Phénix','Explose et laisse le sol en feu','','','fire'],
- ['n0',3,'C','jango.4','Katon : Souffle ardent','Jet de flammes court qui brûle','','','fire'],
- ['n0',5,'A','din.5','Katon : Pluie de phénix','8 petites boules de feu à tête chercheuse','','','fire'],
+ ['n0',3,'B','jango.4','Katon : Souffle ardent','Jet de flammes court qui brûle','','','fire'],
+ ['n0',5,'S','din.5','Katon : Pluie de phénix','8 petites boules de feu à tête chercheuse','','','fire'],
  ['n1',1,'B','luke.1','Suiton : Vague','Cône d\'eau qui repousse et ralentit','Suiton : Raz-de-marée','Plus large, étourdit','water'],
  ['n1',3,'A','vader.3','Suiton : Prison aqueuse','Enferme et étouffe à distance','','','water'],
  ['n1',4,'B','mace.4','Suiton : Mur d\'eau','2 s : moitié moins de dégâts, renvoie 30 % au contact','','','water'],
@@ -74,7 +74,7 @@ const JD=[
  ['c1',3,'D','lando.4','Byakugan','Bloque le chakra de la cible (silence) et la révèle','','','jyuken'],
  ['c1',4,'C','obiwan.4','Kaiten','Tourbillon divin qui renvoie les tirs','','','jyuken'],
  ['c1',5,'B','mace.5','Hakke : 64 points','Tous les ennemis proches : dégâts, étourdis et vulnérables','','','jyuken'],
- ['c2',1,'C','padme.1','Kage Mane','L\'ombre immobilise la cible','Ombre étendue','Plus longue','shadow'],
+ ['c2',1,'D','padme.1','Kage Mane','L\'ombre immobilise la cible','Ombre étendue','Plus longue','shadow'],
  ['c2',3,'B','maul.3','Kage Kubi Shibari','L\'ombre saisit et attire un peu','','','shadow'],
  ['c2',5,'A','rey.5','Ombres liées','Attire tous les ennemis proches puis les étourdit','','','shadow'],
  ['c3',0,'D','savage.0','Poing décuplé','Coups lourds','','','tai'],
@@ -90,10 +90,10 @@ const JD=[
  ['c6',1,'C','cadbane.1','Chaînes de chakra','Attrape un ennemi et le ramène','','','chain'],
  ['c6',3,'B','dooku.3','Sceau','La cible ne peut plus attaquer','','','chain'],
  ['c6',5,'A','chewie.5','Chakra de Kyûbi','6 s : inarrêtable, régénération et dégâts','','','fox'],
- ['c7',3,'A','kylo.3','Shintenshin','Lien : si la cible reste proche 2 s, gros dégâts et étourdie','','','genjutsu'],
- ['c7',4,'B','quigon.3','Champ de fleurs','Aura de soin qui le suit 5 s','','','heal'],
+ ['c7',3,'S','kylo.3','Shintenshin','Lien : si la cible reste proche 2 s, gros dégâts et étourdie','','','genjutsu'],
+ ['c7',4,'A','quigon.3','Champ de fleurs','Aura de soin qui le suit 5 s','','','heal'],
  ['c7',5,'S','sister.5','Esprit destructeur','Coup fatal sur les ennemis blessés','','','genjutsu'],
- ['c8',1,'C','kylo.1','Cercueil de sable','Le sable fige la cible sur place','Funérailles du désert','Plus long','sand'],
+ ['c8',1,'D','kylo.1','Cercueil de sable','Le sable fige la cible sur place','Funérailles du désert','Plus long','sand'],
  ['c8',3,'D','cal.3','Sable mouvant','Zone où ennemis et tirs ralentissent','','','sand'],
  ['c8',4,'C','thrawn.4','Armure de sable','Bouclier pour les alliés proches','','','sand'],
  ['c8',5,'B','grievous.5','Tsunami de sable','Tourbillon géant qui aspire','','','sand'],
@@ -107,9 +107,9 @@ const JD=[
  ['u',4,'C','luke.3','Concentration du chakra','Réduit tous ses temps de recharge de 2 s','','','chakra'],
  ['u',5,'S','yoda.5','Mode Ermite','6 s : vitesse, dégâts et soin','','','gate'],
  ['u',5,'B','r2.5','Invocation : Katsuyu','La limace soigne et recharge le chakra des alliés proches','','','heal'],
- ['n0',1,'B','boba.1','Katon : Météore','Boule de feu explosive qui étourdit','','','fire'],
+ ['n0',1,'A','boba.1','Katon : Météore','Boule de feu explosive qui étourdit','','','fire'],
  ['n1',2,'C','deathtrooper.2','Suiton : Brume cachée','Recule dans un nuage de brume','','','water'],
- ['n1',3,'C','bossk.1','Suiton : Balles d\'eau','Bulle qui rebondit 2 fois en éclatant','','','water'],
+ ['n1',3,'D','bossk.1','Suiton : Balles d\'eau','Bulle qui rebondit 2 fois en éclatant','','','water'],
  ['n1',5,'A','jyn.5','Suiton : Dragon aqueux','Un dragon d\'eau transperce toute une ligne','','','water'],
  ['n2',1,'B','yoda.1','Fûton : Grand souffle','Onde de vent à 360° qui repousse','','','wind'],
  ['n2',3,'B','mace.3','Fûton : Rafale','Repousse et coupe le chakra (silence)','','','wind'],
@@ -117,7 +117,9 @@ const JD=[
  ['n3',4,'C','phasma.1','Raiton : Décharge','Décharge autour de soi qui étourdit','','','lightning'],
  ['n4',5,'B','gideon.5','Doton : Séisme','Grand coup de terre circulaire qui repousse','','','earth'],
 ];
-const JL=JD.map(([cat,slot,r,src,n,d,xn,xd,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,xn,xd,vfx}));
+// réglages propres à certains jutsu (réglés par duels simulés)
+const JPAR={'Multiclonage':{d:2.5},'Ninken':{d:3}};
+const JL=JD.map(([cat,slot,r,src,n,d,xn,xd,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,xn,xd,vfx,P:JPAR[n]}));
 const SLOTN=['Attaque de base','Jutsu principal','Déplacement','Technique','Défense','Ultime'];
 const catName=c=>c==='u'?'Universel':c[0]==='n'?NATURES[+c.slice(1)][0]:'Clan '+CLANS[+c.slice(1)][0];
 const catCol=c=>c==='u'?'#c8b89a':c[0]==='n'?NATURES[+c.slice(1)][2]:CLANS[+c.slice(1)][1];
@@ -152,9 +154,9 @@ function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Ma
  return o}
 // le clan se voit : Sharingan, Byakugan, carrure Akimichi, marques Kaguya
 function ninjaLook(l,clan){const v=VILLAGES[l.v];return Object.assign({},TENUES[l.t][1],clan===3?{scale:1.14}:{},{head:{t:'ninja',skin:PEAUX[l.p][1],hair:HAIRC[l.h][1],style:COIFS[l.c][1],band:v[1],vil:l.v,acc:ACCS[l.a][1],eye:clan===0?'#e01a1a':clan===1?'#e8e8f8':null,kaguya:clan===9},weapon:{t:'kunai',col:CHAKRAS[l.k][1]}})}
-function jutsu(id){const J=JL[id],[h,k]=J.src.split('.'),b=SRC[h].abil[+k];return Object.assign({},b,{n:J.n,d:J.d,ex:b.ex?{n:J.xn||J.n,d:J.xd||b.ex.d,p:b.ex.p}:null,src:h,vfx:J.vfx,rank:J.r,jid:id})}
+function jutsu(id){const J=JL[id],[h,k]=J.src.split('.'),b=SRC[h].abil[+k];return Object.assign({},b,J.P?{P:Object.assign({},b.P,J.P)}:{},{n:J.n,d:J.d,ex:b.ex?{n:J.xn||J.n,d:J.xd||b.ex.d,p:b.ex.p}:null,src:h,vfx:J.vfx,rank:J.r,jid:id})}
 // l'attaque de base fixe le profil : à distance = moins de PV et de puissance, au corps à corps = plus (réglé par duels simulés)
-const BASICMOD={'Kunai':[.85,.85],'Double kunai':[.8,.8],'Shuriken':[.85,.88],'Senbon':[.8,.8],'Raiton : Étincelles':[1,1],'Taijutsu':[1.2,1.15],'Lame de chakra':[1.3,1.25],'Grande épée':[1.32,1.3],'Poing du lotus':[1.2,1.2],'Poing souple':[1.15,1.12],'Poing décuplé':[1.3,1.25],'Danse du saule':[1.32,1.3]};
+const BASICMOD={'Kunai':[.8,.8],'Double kunai':[.76,.76],'Shuriken':[.85,.86],'Senbon':[.76,.76],'Raiton : Étincelles':[1,1],'Taijutsu':[1.2,1.15],'Lame de chakra':[1.42,1.38],'Grande épée':[1.42,1.4],'Poing du lotus':[1.2,1.2],'Poing souple':[1.25,1.2],'Poing décuplé':[1.38,1.32],'Danse du saule':[1.42,1.4]};
 // stats : moyenne des persos d'origine des jutsu (l'attaque de base compte pour 5 : un ninja à distance est fragile, un ninja au corps à corps solide), puis la voie
 function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=b.j.map(id=>jutsu(id)),w=[5,1,1,1,1,1];let hp=0,pw=0,sp=0,W=0;
  abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie],bm=BASICMOD[abil[0].n]||[1,1];hp*=bm[0];pw*=bm[1];
