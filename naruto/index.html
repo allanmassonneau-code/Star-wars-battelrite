@@ -517,81 +517,116 @@ const SRC={
 // Équilibrage : [PV, multiplicateur de dégâts, vitesse], calculé en simulant des centaines de duels entre ordinateurs
 const BAL={luke:[218,1.12,227],yoda:[280,1.35,255],rey:[265,1.26,240],han:[110,0.6,225],leia:[131,0.74,220],chewie:[114,0.6,205],obiwan:[206,1.1,224],anakin:[185,1.08,234],mace:[189,0.92,224],ahsoka:[278,1.33,250],quigon:[255,1.32,222],finn:[120,0.6,220],lando:[139,0.75,225],padme:[119,0.65,225],din:[130,0.68,218],cal:[267,1.29,237],rex:[120,0.7,218],wicket:[142,0.92,235],r2:[162,0.92,215],jyn:[108,0.6,230],vader:[185,0.74,200],palpatine:[189,1.07,205],maul:[280,1.35,246],kylo:[207,1.03,224],boba:[100,0.6,220],grievous:[191,0.93,227],dooku:[222,1.25,227],ventress:[207,1.25,244],savage:[193,0.86,220],jango:[120,0.63,222],phasma:[155,0.64,205],iden:[149,0.81,225],bossk:[144,0.67,212],cadbane:[121,0.62,225],inquisitor:[269,1.28,234],sister:[205,1.14,240],gideon:[162,0.79,224],thrawn:[128,0.66,212],deathtrooper:[149,0.64,210],ig88:[164,0.78,215]};
 for(const k in BAL){const [hp,pw,spd]=BAL[k];Object.assign(SRC[k],{hp,pw,spd})}
-// ===================== NINJAS : chacun crée son ninja et choisit son build =====================
-// Les jutsu réutilisent les mécaniques éprouvées du moteur (SRC). Chaque entrée : [source perso.emplacement, nom, description, nom EX, description EX]
-const JP=[
- [ // Clic G : attaque de base
-  ['lando.0','Kunai','Lancer de kunai rapide','',''],
-  ['deathtrooper.0','Shuriken','Trois shuriken en éventail','',''],
-  ['rey.0','Taijutsu','Enchaînement de coups rapides','',''],
-  ['yoda.0','Poing souple','Frappes du Jûken qui ralentissent','',''],
-  ['ig88.0','Senbon','Aiguilles très rapides, longue portée','',''],
-  ['mace.0','Lame de chakra','Grands coups de lame imprégnée de chakra','',''],
-  ['vader.0','Grande épée','Coup lent et lourd qui ralentit','',''],
-  ['palpatine.0','Raiton : Étincelles','Courts arcs électriques','',''],
-  ['quigon.0','Poing du lotus','Chaque coup qui touche le soigne','',''],
- ],
- [ // Clic D : jutsu principal
-  ['savage.1','Rasengan','Fonce avec une sphère de chakra qui projette en l\'air','Rasengan géant','Plus long et plus fort'],
-  ['grievous.1','Chidori','Fente électrique qui traverse la cible','Chidori nagashi','Plus long, étourdit'],
-  ['jango.1','Katon : Boule de feu','Grosse boule de feu qui repousse','Katon : Grand feu','Explosion plus large'],
-  ['luke.1','Suiton : Vague','Cône d\'eau qui repousse et ralentit','Suiton : Raz-de-marée','Plus large, étourdit'],
-  ['padme.1','Kage Mane','L\'ombre immobilise la cible','Ombre étendue','Plus longue'],
-  ['ventress.1','Fûton : Lames de vent','Deux lames de vent qui transpercent','Fûton : Tempête','Plus de lames'],
-  ['obiwan.1','Doton : Rocher','Projette un rocher qui envoie en l\'air','Doton : Éboulement','Plus gros'],
-  ['quigon.1','Hakke : Paume','Paume du Hakke qui étourdit devant soi','Hakke : 64 points','Plus fort'],
-  ['palpatine.1','Raiton : Chaîne','Éclair qui rebondit entre les ennemis','Raiton : Tonnerre','Plus de rebonds'],
-  ['cadbane.1','Kunai à fil','Attrape un ennemi et le ramène','Fil d\'acier','Plus loin'],
-  ['kylo.1','Sable : Étreinte','Le sable fige la cible sur place','Sable : Cercueil','Plus long'],
- ],
- [ // Espace : mobilité
-  ['palpatine.2','Shunshin','Se téléporte dans un tourbillon de feuilles','',''],
-  ['lando.2','Kawarimi','Se substitue à une bûche qui explose','',''],
-  ['luke.2','Saut ninja','Bondit au curseur, choc à l\'arrivée','',''],
-  ['quigon.2','Pas du vent','Très rapide 2 s, se libère des entraves','',''],
-  ['yoda.2','Bonds acrobatiques','3 petits bonds rechargeables','',''],
-  ['ventress.2','Hiraishin','Apparaît derrière l\'ennemi visé','',''],
-  ['rey.2','Roulade','Roulade rapide','',''],
-  ['jyn.2','Saut de l\'ombre','Saute loin, invisible à l\'arrivée','',''],
- ],
- [ // Q : contrôle / outil
-  ['gideon.3','Multiclonage','Deux clones qui lancent des kunai 7 s','Clones d\'ombre','Dégâts doublés'],
-  ['han.3','Parchemin explosif','Se colle au premier ennemi et explose','',''],
-  ['lando.3','Bombe fumigène','Fumée : ralentit les ennemis, cache les alliés','',''],
-  ['phasma.3','Doton : Mur de terre','Mur qui bloque les tirs','',''],
-  ['cadbane.3','Genjutsu : Plumes','Les ennemis qui restent dedans s\'endorment','',''],
-  ['wicket.3','Piège ninja','Piège qui étourdit et repousse','',''],
-  ['vader.3','Suiton : Prison aqueuse','Enferme et étouffe à distance','',''],
-  ['boba.3','Essaim d\'insectes','3 nuées qui empoisonnent','',''],
-  ['vader.1','Fûma Shuriken','Shuriken géant qui revient','',''],
-  ['iden.1','Chien ninja','Un ninken le suit et attaque 8 s','',''],
- ],
- [ // E : défense / soutien
-  ['rey.4','Shôsen','Soigne l\'allié le plus blessé','',''],
-  ['yoda.3','Zone de soin','Zone de chakra médical autour de soi','',''],
-  ['obiwan.4','Kaiten','Tourbillon divin qui renvoie les tirs','',''],
-  ['thrawn.4','Armure de sable','Bouclier pour les alliés proches','',''],
-  ['lando.4','Byakugan','Bloque le chakra de la cible (silence) et la révèle','',''],
-  ['deathtrooper.4','Peau de pierre','40 % de dégâts en moins','',''],
-  ['ahsoka.4','Réflexes','Évite le prochain coup et accélère','',''],
-  ['luke.4','Contre du clone','Contre le prochain coup : apparaît derrière l\'attaquant','',''],
-  ['savage.4','Première Porte','Inarrêtable 3 s','',''],
-  ['yoda.4','Absorption de chakra','Absorbe les tirs et se soigne','',''],
- ],
- [ // R : ultime
-  ['chewie.5','Chakra de Kyûbi','6 s : inarrêtable, régénération et dégâts','',''],
-  ['thrawn.5','Fûton : Rasen-shuriken','Un Rasen-shuriken s\'abat sur une grande zone','',''],
-  ['ahsoka.5','Amaterasu','Flammes noires sur jusqu\'à 5 ennemis','',''],
-  ['luke.5','Tsukuyomi','Immense cône qui projette et étourdit','',''],
-  ['palpatine.5','Shinra Tensei','Énorme onde qui repousse tout autour','',''],
-  ['wicket.5','Invocation : Crapaud géant','Un crapaud géant s\'écrase et laisse un sol boueux','',''],
-  ['bossk.5','Huit Portes','Rage, vitesse et vol de vie 5 s','',''],
-  ['savage.5','Susanô','Devient énorme 6 s : bouclier, dégâts et portée','',''],
-  ['rex.5','Pluie de parchemins','4 parchemins explosifs sur la zone','',''],
-  ['anakin.5','Éclair jaune','Frappe jusqu\'à 4 ennemis d\'affilée','',''],
-  ['grievous.5','Tsunami de sable','Tourbillon géant qui aspire','',''],
- ]];
+// ===================== NINJAS : chacun crée son ninja et compose son kit =====================
+// Les jutsu réutilisent les mécaniques éprouvées du moteur (SRC) avec leurs propres effets visuels (vfx).
+// Rangs D C B A S = coût en points ; le kit a un budget maximum. Jutsu universels + nature(s) + clan.
+const RANKS={D:1,C:2,B:3,A:4,S:5},RANKC={D:'#9aa3ad',C:'#6fcf6f',B:'#5ab4ff',A:'#c07aff',S:'#ffc53a'},BUDGET=17;
+const NATURES=[['Katon','Feu','#ff7a2a'],['Suiton','Eau','#3aa8ff'],['Fûton','Vent','#9fe8c8'],['Raiton','Foudre','#ffe14a'],['Doton','Terre','#b08850']];
+const CLANS=[['Uchiha','#c0202a'],['Hyûga','#d8d0f0'],['Nara','#5a6a3a'],['Akimichi','#d87a3a'],['Aburame','#4a6a5a'],['Inuzuka','#a04a2a'],['Uzumaki','#e0503a'],['Yamanaka','#c8a0e0'],['Sabaku','#c8a060'],['Kaguya','#e8e8e0']];
+// [catégorie, emplacement 0-5, rang, source perso.sort, nom, description, nom EX, description EX, effet visuel]
+// catégorie : 'u' universel, 'n0'..'n4' nature, 'c0'..'c9' clan
+const JD=[
+ ['u',0,'D','lando.0','Kunai','Lancer de kunai rapide','','','kunai'],
+ ['u',0,'D','deathtrooper.0','Shuriken','Trois shuriken en éventail','','','shuriken'],
+ ['u',0,'D','rey.0','Taijutsu','Enchaînement de coups rapides','','','tai'],
+ ['u',0,'C','ig88.0','Senbon','Aiguilles très rapides, longue portée','','','senbon'],
+ ['u',0,'C','mace.0','Lame de chakra','Grands coups de lame imprégnée de chakra','','','chakra'],
+ ['u',0,'C','vader.0','Grande épée','Coup lent et lourd qui ralentit','','','steel'],
+ ['u',0,'C','quigon.0','Poing du lotus','Chaque coup qui touche le soigne','','','tai'],
+ ['u',1,'A','savage.1','Rasengan','Fonce avec une sphère de chakra qui projette en l\'air','Rasengan géant','Plus long et plus fort','chakra'],
+ ['u',1,'C','vader.1','Fûma Shuriken','Shuriken géant qui revient','','','shuriken'],
+ ['u',1,'C','maul.1','Coup de pied tornade','Repousse fort et ralentit','','','tai'],
+ ['u',1,'B','anakin.1','Lotus primaire','Gros coup qui ignore les parades','','','tai'],
+ ['u',2,'C','palpatine.2','Shunshin','Se téléporte dans un tourbillon de feuilles','','','leaf'],
+ ['u',2,'C','lando.2','Kawarimi','Se substitue à une bûche qui explose','','','smoke'],
+ ['u',2,'C','luke.2','Saut ninja','Bondit au curseur, choc à l\'arrivée','','','leaf'],
+ ['u',2,'C','yoda.2','Bonds acrobatiques','3 petits bonds rechargeables','','','leaf'],
+ ['u',2,'D','rey.2','Roulade','Roulade rapide','','','smoke'],
+ ['u',2,'A','ventress.2','Hiraishin','Apparaît derrière l\'ennemi visé','','','chakra'],
+ ['u',3,'B','gideon.3','Multiclonage','Deux clones qui lancent des kunai 7 s','Clones d\'ombre','Dégâts doublés','smoke'],
+ ['u',3,'C','han.3','Parchemin explosif','Se colle au premier ennemi et explose','','','tag'],
+ ['u',3,'D','lando.3','Bombe fumigène','Fumée : ralentit les ennemis, cache les alliés','','','smoke'],
+ ['u',3,'C','wicket.3','Piège ninja','Piège qui étourdit et repousse','','','steel'],
+ ['u',3,'B','cadbane.3','Genjutsu : Plumes','Les ennemis qui restent dedans s\'endorment','','','genjutsu'],
+ ['u',3,'C','rex.3','Kunai explosifs','Explose puis se divise en 4','','','tag'],
+ ['u',4,'B','rey.4','Shôsen','Soigne l\'allié le plus blessé','','','heal'],
+ ['u',4,'B','yoda.3','Zone de soin','Zone de chakra médical autour de soi','','','heal'],
+ ['u',4,'B','luke.4','Contre du clone','Contre le prochain coup : apparaît derrière l\'attaquant','','','smoke'],
+ ['u',4,'C','savage.4','Première Porte','Inarrêtable 3 s','','','gate'],
+ ['u',4,'C','bossk.4','Pilule du soldat','Soin rapide et se libère','','','heal'],
+ ['u',5,'A','wicket.5','Invocation : Crapaud','Un crapaud géant s\'écrase et laisse un sol boueux','','','smoke'],
+ ['u',5,'A','bossk.5','Huit Portes','Rage, vitesse et vol de vie 5 s','','','gate'],
+ ['u',5,'B','rex.5','Pluie de parchemins','4 parchemins explosifs sur la zone','','','tag'],
+ // ---- natures
+ ['n0',1,'B','jango.1','Katon : Boule de feu','Grosse boule de feu qui repousse','Katon : Grand feu','Explosion plus large','fire'],
+ ['n0',1,'B','din.1','Katon : Souffle du dragon','Brûle tout devant soi','','','fire'],
+ ['n0',3,'C','finn.3','Katon : Phénix','Explose et laisse le sol en feu','','','fire'],
+ ['n0',3,'C','jango.4','Katon : Souffle ardent','Jet de flammes court qui brûle','','','fire'],
+ ['n0',5,'A','din.5','Katon : Pluie de phénix','8 petites boules de feu à tête chercheuse','','','fire'],
+ ['n1',1,'B','luke.1','Suiton : Vague','Cône d\'eau qui repousse et ralentit','Suiton : Raz-de-marée','Plus large, étourdit','water'],
+ ['n1',3,'B','vader.3','Suiton : Prison aqueuse','Enferme et étouffe à distance','','','water'],
+ ['n1',4,'B','mace.4','Suiton : Mur d\'eau','2 s : moitié moins de dégâts, renvoie 30 % au contact','','','water'],
+ ['n1',5,'A','maul.5','Suiton : Grand requin','Requin d\'eau géant qui revient','','','water'],
+ ['n2',1,'B','ventress.1','Fûton : Lames de vent','Deux lames de vent qui transpercent','Fûton : Tempête','Plus de lames','wind'],
+ ['n2',2,'C','quigon.2','Fûton : Pas du vent','Très rapide 2 s, se libère des entraves','','','wind'],
+ ['n2',3,'C','anakin.3','Fûton : Vide','Cône qui rend les ennemis vulnérables','','','wind'],
+ ['n2',5,'S','thrawn.5','Fûton : Rasen-shuriken','Un Rasen-shuriken s\'abat sur une grande zone','','','wind'],
+ ['n3',0,'C','palpatine.0','Raiton : Étincelles','Courts arcs électriques','','','lightning'],
+ ['n3',1,'A','grievous.1','Chidori','Fente électrique qui traverse la cible','Chidori nagashi','Plus long, étourdit','lightning'],
+ ['n3',1,'B','palpatine.1','Raiton : Chaîne','Éclair qui rebondit entre les ennemis','','','lightning'],
+ ['n3',3,'B','palpatine.3','Raiton : Orage','La foudre tombe sur une zone après un délai','','','lightning'],
+ ['n3',4,'B','grievous.4','Raiton : Armure de foudre','Renvoie les tirs en avançant vite','','','lightning'],
+ ['n3',5,'S','dooku.5','Raiton : Kirin','Le dragon de foudre frappe en ligne','','','lightning'],
+ ['n4',1,'B','obiwan.1','Doton : Rocher','Projette un rocher qui envoie en l\'air','Doton : Éboulement','Plus gros','earth'],
+ ['n4',2,'C','jyn.2','Doton : Taupe','Passe sous terre et ressort invisible','','','earth'],
+ ['n4',3,'C','phasma.3','Doton : Mur de terre','Mur qui bloque les tirs','','','earth'],
+ ['n4',4,'B','deathtrooper.4','Doton : Corps de roche','40 % de dégâts en moins','','','earth'],
+ ['n4',5,'A','obiwan.5','Doton : Montagne écrasante','Saut très haut, projette tout le monde à l\'arrivée','','','earth'],
+ // ---- clans
+ ['c0',3,'B','inquisitor.3','Sharingan : Genjutsu','Le regard terrifie la cible','','','genjutsu'],
+ ['c0',4,'C','ahsoka.4','Sharingan','Lit le prochain coup, l\'évite et accélère','','','genjutsu'],
+ ['c0',5,'S','ahsoka.5','Amaterasu','Flammes noires sur jusqu\'à 5 ennemis','','','black'],
+ ['c0',5,'A','luke.5','Tsukuyomi','Immense cône qui projette et étourdit','','','genjutsu'],
+ ['c0',5,'S','kylo.5','Susanô : Totsuka','Trois coups dévastateurs autour de soi','','','chakra'],
+ ['c1',0,'C','yoda.0','Poing souple','Frappes du Jûken qui ralentissent','','','jyuken'],
+ ['c1',1,'B','quigon.1','Hakke : Paume','Paume du Hakke qui étourdit devant soi','Hakke : Vide','Plus fort','jyuken'],
+ ['c1',3,'C','lando.4','Byakugan','Bloque le chakra de la cible (silence) et la révèle','','','jyuken'],
+ ['c1',4,'B','obiwan.4','Kaiten','Tourbillon divin qui renvoie les tirs','','','jyuken'],
+ ['c1',5,'A','mace.5','Hakke : 64 points','Tous les ennemis proches : dégâts, étourdis et vulnérables','','','jyuken'],
+ ['c2',1,'B','padme.1','Kage Mane','L\'ombre immobilise la cible','Ombre étendue','Plus longue','shadow'],
+ ['c2',3,'B','maul.3','Kage Kubi Shibari','L\'ombre saisit et attire un peu','','','shadow'],
+ ['c2',5,'A','rey.5','Ombres liées','Attire tous les ennemis proches puis les étourdit','','','shadow'],
+ ['c3',0,'C','savage.0','Poing décuplé','Coups lourds','','','tai'],
+ ['c3',2,'C','chewie.2','Boulet humain','Roule et renverse','','','tai'],
+ ['c3',5,'S','savage.5','Décuplement','Devient énorme 6 s : bouclier, dégâts et portée','','','gate'],
+ ['c4',3,'B','boba.3','Essaim d\'insectes','3 nuées qui empoisonnent','','','bugs'],
+ ['c4',4,'B','ventress.4','Insectes dévoreurs','Lien qui vole le chakra tant que la cible reste proche','','','bugs'],
+ ['c4',5,'A','deathtrooper.5','Nuée destructrice','3 nuées qui attaquent 8 s','','','bugs'],
+ ['c5',1,'B','rey.1','Gatsûga','Tornade qui traverse les ennemis','','','tai'],
+ ['c5',2,'C','bossk.2','Instinct bestial','Bondit sur l\'ennemi le plus blessé','','','tai'],
+ ['c5',3,'B','iden.1','Ninken','Un chien ninja le suit et attaque 8 s','','','smoke'],
+ ['c5',5,'A','anakin.5','Garôga','Frappe jusqu\'à 4 ennemis d\'affilée','','','tai'],
+ ['c6',1,'B','cadbane.1','Chaînes de chakra','Attrape un ennemi et le ramène','','','chain'],
+ ['c6',3,'B','dooku.3','Sceau','La cible ne peut plus attaquer','','','chain'],
+ ['c6',5,'S','chewie.5','Chakra de Kyûbi','6 s : inarrêtable, régénération et dégâts','','','fox'],
+ ['c7',3,'B','kylo.3','Shintenshin','Lien : si la cible reste proche 2 s, gros dégâts et étourdie','','','genjutsu'],
+ ['c7',4,'C','quigon.3','Champ de fleurs','Aura de soin qui le suit 5 s','','','heal'],
+ ['c7',5,'A','sister.5','Esprit destructeur','Coup fatal sur les ennemis blessés','','','genjutsu'],
+ ['c8',1,'B','kylo.1','Cercueil de sable','Le sable fige la cible sur place','Funérailles du désert','Plus long','sand'],
+ ['c8',3,'C','cal.3','Sable mouvant','Zone où ennemis et tirs ralentissent','','','sand'],
+ ['c8',4,'B','thrawn.4','Armure de sable','Bouclier pour les alliés proches','','','sand'],
+ ['c8',5,'A','grievous.5','Tsunami de sable','Tourbillon géant qui aspire','','','sand'],
+ ['c9',0,'C','grievous.0','Danse du saule','Balayage très large avec des os','','','bone'],
+ ['c9',1,'C','gideon.1','Doigts-balles','Tire un os comme une balle','','','bone'],
+ ['c9',5,'A','inquisitor.5','Forêt d\'os','Anneau d\'os qui jaillissent autour de soi','','','bone'],
+];
+const JL=JD.map(([cat,slot,r,src,n,d,xn,xd,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,xn,xd,vfx}));
 const SLOTN=['Attaque de base','Jutsu principal','Déplacement','Technique','Défense','Ultime'];
+const catName=c=>c==='u'?'Universel':c[0]==='n'?NATURES[+c.slice(1)][0]:'Clan '+CLANS[+c.slice(1)][0];
+const catCol=c=>c==='u'?'#c8b89a':c[0]==='n'?NATURES[+c.slice(1)][2]:CLANS[+c.slice(1)][1];
+// jutsu accessibles : universels + nature principale + (clan, ou seconde nature si sans clan)
+const avail=(b,slot)=>JL.filter(j=>j.slot===slot&&(j.cat==='u'||j.cat==='n'+b.nat||(b.clan>=0?j.cat==='c'+b.clan:j.cat==='n'+b.nat2)));
+const kitCost=b=>b.j.reduce((a,id)=>a+JL[id].cost,0);
 // passifs renommés
 Object.assign(PASS,{third:['Taijutsu',PASS.third[1]],crit:['Précision ninja',PASS.crit[1]],slow:['Fils de chakra',PASS.slow[1]],lifesteal:['Vol de chakra',PASS.lifesteal[1]],rage:['Volonté du feu',PASS.rage[1]],
  armor:['Corps endurci',PASS.armor[1]],regen:['Sang Uzumaki',PASS.regen[1]],speed:['Pieds légers',PASS.speed[1]],energy:['Contrôle du chakra',PASS.energy[1]]});
@@ -609,26 +644,34 @@ const HAIRC=[['Blond','#f2c84a'],['Noir','#1a1a22'],['Rose','#f08ab0'],['Roux','
 const PEAUX=[['Claire','#f6d6b4'],['Mate','#e0b08a'],['Hâlée','#b8805a'],['Foncée','#7a5038'],['Pâle','#e8e0e8']];
 const CHAKRAS=[['Bleu','#3af'],['Rouge','#f33'],['Vert','#3f6'],['Violet','#a5f'],['Orange','#f93'],['Blanc','#eef'],['Jaune','#fd3']];
 const ACCS=[['Aucun',''],['Masque','masque'],['Moustaches','moust'],['Marques rouges','marques'],['Lunettes','lunettes']];
-// build : {name, side, voie, j:[6 index], pass, l:{v,t,c,h,p,k,a}}
-function sanitizeBuild(b){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Math.max(0,Math.min(m-1,(a|0)));const l=b.l||{};
- return{name:String(b.name||'Ninja').replace(/[<>]/g,'').slice(0,16)||'Ninja',side:b.side?1:0,voie:n(b.voie??1,VOIES.length),j:[0,1,2,3,4,5].map(s=>n((b.j||[])[s],JP[s].length)),pass:n(b.pass,PASSK.length),
-  l:{v:n(l.v,VILLAGES.length),t:n(l.t,TENUES.length),c:n(l.c,COIFS.length),h:n(l.h,HAIRC.length),p:n(l.p,PEAUX.length),k:n(l.k,CHAKRAS.length),a:n(l.a,ACCS.length)}}}
+// build : {name, side, voie, nat, clan (-1 = sans clan), nat2, j:[6 id de jutsu], pass, l:{v,t,c,h,p,k,a}}
+// strict : ramène le kit sous le budget (pour les builds reçus en ligne et les bots)
+function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Math.max(0,Math.min(m-1,(a|0)));const l=b.l||{};
+ const o={name:String(b.name||'Ninja').replace(/[<>]/g,'').slice(0,16)||'Ninja',side:b.side?1:0,voie:n(b.voie??1,VOIES.length),nat:n(b.nat,NATURES.length),clan:b.clan==null?0:Math.max(-1,Math.min(CLANS.length-1,b.clan|0)),nat2:n(b.nat2??1,NATURES.length),pass:n(b.pass,PASSK.length),
+  l:{v:n(l.v,VILLAGES.length),t:n(l.t,TENUES.length),c:n(l.c,COIFS.length),h:n(l.h,HAIRC.length),p:n(l.p,PEAUX.length),k:n(l.k,CHAKRAS.length),a:n(l.a,ACCS.length)}};
+ if(o.clan<0&&o.nat2===o.nat)o.nat2=(o.nat+1)%NATURES.length;
+ o.j=[0,1,2,3,4,5].map(s=>{const A=avail(o,s),id=(b.j||[])[s];return A.some(j=>j.id===id)?id:A.reduce((a,c)=>c.cost<a.cost?c:a).id});
+ if(strict)while(kitCost(o)>BUDGET){let best=null;o.j.forEach((id,s)=>{for(const c of avail(o,s))if(c.cost<JL[id].cost){const gain=JL[id].cost-c.cost;if(!best||gain>best.g)best={s,id:c.id,g:gain}}});if(!best)break;o.j[best.s]=best.id}
+ return o}
 function ninjaLook(l){const v=VILLAGES[l.v];return Object.assign({},TENUES[l.t][1],{head:{t:'ninja',skin:PEAUX[l.p][1],hair:HAIRC[l.h][1],style:COIFS[l.c][1],band:v[1],vil:l.v,acc:ACCS[l.a][1]},weapon:{t:'kunai',col:CHAKRAS[l.k][1]}})}
-function jutsu(s,i){const [src,n,d,xn,xd]=JP[s][i],[h,k]=src.split('.'),b=SRC[h].abil[+k];return Object.assign({},b,{n,d,ex:b.ex?{n:xn||n,d:xd||b.ex.d,p:b.ex.p}:null,src:h})}
+function jutsu(id){const J=JL[id],[h,k]=J.src.split('.'),b=SRC[h].abil[+k];return Object.assign({},b,{n:J.n,d:J.d,ex:b.ex?{n:J.xn||J.n,d:J.xd||b.ex.d,p:b.ex.p}:null,src:h,vfx:J.vfx,rank:J.r,jid:id})}
 // stats : moyenne des persos d'origine des jutsu (l'attaque de base compte double), puis la voie
-function mkNinja(b){b=sanitizeBuild(b);const abil=b.j.map((i,s)=>jutsu(s,i)),w=[2,1,1,1,1,1];let hp=0,pw=0,sp=0,W=0;
+function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=b.j.map(id=>jutsu(id)),w=[2,1,1,1,1,1];let hp=0,pw=0,sp=0,W=0;
  abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie];
- return{name:b.name,side:b.side,desc:`${v[0]} · ${VILLAGES[b.l.v][0]} · ${CAMPS[b.side]}`,hp:Math.round(hp/W*v[1]),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,pref:200,pass:PASSK[b.pass],look:ninjaLook(b.l),abil,build:b}}
+ const lign=b.clan>=0?'Clan '+CLANS[b.clan][0]:'Sans clan · '+NATURES[b.nat2][0];
+ return{name:b.name,side:b.side,desc:`${v[0]} · ${NATURES[b.nat][0]} · ${lign}`,hp:Math.round(hp/W*v[1]),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,pref:200,pass:PASSK[b.pass],look:ninjaLook(b.l),abil,build:b}}
 // générateur pseudo-aléatoire déterministe (mêmes ninjas adverses chez tous les joueurs en ligne)
 const srnd=seed=>()=>(seed=seed*16807%2147483647)/2147483647;
+function randomKit(r,b){const k=a=>Math.floor(r()*a.length);b.nat=k(NATURES);b.clan=r()<.75?k(CLANS):-1;b.nat2=k(NATURES);b.voie=k(VOIES);b.pass=k(PASSK);
+ b=sanitizeBuild(b);b.j=[0,1,2,3,4,5].map(s=>{const A=avail(b,s);const own=A.filter(j=>j.cat!=='u');const L=own.length&&r()<.6?own:A;return L[Math.floor(r()*L.length)].id});return sanitizeBuild(b,true)}
 function randomBuild(r,side,name){const k=a=>Math.floor(r()*a.length);
- return sanitizeBuild({name,side,voie:k(VOIES),j:JP.map(p=>k(p)),pass:k(PASSK),l:{v:side&&r()<.6?6:k(VILLAGES.slice(0,6)),t:side?(r()<.55?2:k(TENUES)):[0,1,3,4,5,6,7][k([0,1,3,4,5,6,7])],c:k(COIFS),h:k(HAIRC),p:k(PEAUX),k:k(CHAKRAS),a:r()<.6?0:k(ACCS)}})}
+ return randomKit(r,{name,side,l:{v:side&&r()<.6?6:k(VILLAGES.slice(0,6)),t:side?(r()<.55?2:k(TENUES)):[0,1,3,4,5,6,7][k([0,1,3,4,5,6,7])],c:k(COIFS),h:k(HAIRC),p:k(PEAUX),k:k(CHAKRAS),a:r()<.6?0:k(ACCS)}})}
 const BOTN=[['Hayate','Kaito','Ren','Sora','Yuki','Haruto','Aiko','Daichi','Emi','Hikaru','Kenji','Mitsuki','Natsu','Riku','Saki','Takumi','Yori','Asuka','Jiro','Kaede'],
  ['Kurogane','Akuma','Raijin','Mizore','Shiden','Gekkô','Hebi','Kagerô','Oboro','Tetsu','Jaku','Kirisame','Yami','Rasetsu','Kuroi','Hyôga','Doku','Zangetsu','Mukuro','Shura']];
-const CH={};{const r=srnd(4242);for(let s=0;s<2;s++)BOTN[s].forEach((n,i)=>{CH['b'+(s*20+i)]=mkNinja(randomBuild(r,s,n))})}
+const CH={};{const r=srnd(4242);for(let s=0;s<2;s++)BOTN[s].forEach((n,i)=>{CH['b'+(s*20+i)]=mkNinja(randomBuild(r,s,n),true)})}
 const HEROES=Object.keys(CH);
 // ton ninja (gardé dans le navigateur)
-let MY;try{MY=sanitizeBuild(JSON.parse(localStorage.getItem('nrBuild')||'null')||randomBuild(srnd(Date.now()%2147483647||1),0,'Ninja'))}catch(e){MY=randomBuild(srnd(99),0,'Ninja')}
+let MY;try{MY=sanitizeBuild(JSON.parse(localStorage.getItem('nrBuild2')||'null')||randomBuild(srnd(Date.now()%2147483647||1),0,'Ninja'))}catch(e){MY=randomBuild(srnd(99),0,'Ninja')}
 CH.p0=mkNinja(MY);
 
 const saberCol=u=>u.ch.look.weapon.col||'#ccc';
@@ -877,7 +920,7 @@ function update(dt){SIMT+=dt;
  if(state==='menu'){if(pressed.lmb){if(inRect(mouse,coopBtn))netUI(true);if(!isGuest())for(const b of modeBtns)if(inRect(mouse,b)){mode=b.m;netSend({t:'hello',mode,cfg:CFG})}
   if(creatorClick()){pressed.lmb=0}
   if(isGuest()&&mode!=='arena'&&inRect(mouse,teamBtn))netSend({t:'team',v:net.myTeam?0:1});
-  if(coop()&&inRect(mouse,readyBtn)&&(isGuest()?net.mate:net.myPick)){net.ready=!net.ready;if(isGuest())netSend({t:'ready',v:net.ready});else sendLobby()}}
+  if(coop()&&inRect(mouse,readyBtn)&&(isGuest()?net.mate:net.myPick)&&!overBudget()){net.ready=!net.ready;if(isGuest())netSend({t:'ready',v:net.ready});else sendLobby()}}
   // la partie démarre quand l'hôte et le coéquipier sont prêts
   if(net.role==='host'&&coop()&&lobbyList().every(x=>x.ready&&x.c)){const c=net.myPick;startMatch(c);net.ready=false;for(const q of net.peers)q.ready=false;sendLobby()}return}
  if(state==='matchEnd'){if(pressed.lmb||pressed.Enter||pressed.Space)state='menu';return}
@@ -1275,27 +1318,33 @@ function drawBolt(x0,y0,x1,y1,col){g.strokeStyle=col;g.lineWidth=2.5;g.beginPath
 
 // ---------- Menu : créateur de ninja (apparence + build) ----------
 let picker=null; // emplacement dont on choisit le jutsu (liste ouverte)
-const APP=[['Camp',()=>CAMPS,'side'],['Voie',()=>VOIES,'voie'],['Village',()=>VILLAGES,'l.v'],['Tenue',()=>TENUES,'l.t'],['Coiffure',()=>COIFS,'l.c'],['Cheveux',()=>HAIRC,'l.h'],['Peau',()=>PEAUX,'l.p'],['Chakra',()=>CHAKRAS,'l.k'],['Accessoire',()=>ACCS,'l.a']];
-const getB=k=>k.startsWith('l.')?MY.l[k[2]]:MY[k],setB=(k,v)=>{if(k.startsWith('l.'))MY.l[k[2]]=v;else MY[k]=v};
-const appRow=i=>({y:418+i*29,l:{x:200,y:403+i*29,w:28,h:24},r:{x:372,y:403+i*29,w:28,h:24}});
+// lignes de gauche : [libellé, liste, clé] ; le clan a une entrée « Sans clan » (valeur -1), la 2e nature n'existe que sans clan
+const CLANL=[['Sans clan','#888']].concat(CLANS),NATL=NATURES.map(n=>[n[0]+' ('+n[1]+')',n[2]]);
+const APP=[['Camp',()=>CAMPS,'side'],['Voie',()=>VOIES,'voie'],['Nature',()=>NATL,'nat'],['Clan',()=>CLANL,'clan'],['2e nature',()=>NATL,'nat2'],['Village',()=>VILLAGES,'l.v'],['Tenue',()=>TENUES,'l.t'],['Coiffure',()=>COIFS,'l.c'],['Cheveux',()=>HAIRC,'l.h'],['Peau',()=>PEAUX,'l.p'],['Chakra',()=>CHAKRAS,'l.k'],['Accessoire',()=>ACCS,'l.a']];
+const getB=k=>k==='clan'?MY.clan+1:k.startsWith('l.')?MY.l[k[2]]:MY[k],setB=(k,v)=>{if(k==='clan')MY.clan=v-1;else if(k.startsWith('l.'))MY.l[k[2]]=v;else MY[k]=v};
+const appOff=k=>k==='nat2'&&MY.clan>=0;
+const appRow=i=>({y:398+i*25,l:{x:200,y:383+i*25,w:26,h:21},r:{x:374,y:383+i*25,w:26,h:21}});
+const overBudget=()=>kitCost(MY)>BUDGET;
+const cycleJ=(s,d)=>{const A=avail(MY,s),i=A.findIndex(j=>j.id===MY.j[s]);MY.j[s]=A[(i+d+A.length)%A.length].id};
 const slotRow=s=>({x:428,y:150+s*64,w:812,h:58});
 const passRow={x:428,y:150+6*64,w:812,h:40};
 const nameBtn={x:40,y:150,w:300,h:30},rndBtn={x:348,y:150,w:52,h:30},rndBuildBtn={x:428,y:600,w:180,h:34},fightBtn={x:1030,y:592,w:210,h:48};
-const pickRect=(s,i)=>{const n=JP[s].length,cols=2,w=330,h=60;return{x:W/2-w-6+(i%cols)*(w+12),y:150+Math.floor(i/cols)*(h+8),w,h}};
+const pickRect=(s,i)=>{const cols=2,w=330,h=60;return{x:W/2-w-6+(i%cols)*(w+12),y:150+Math.floor(i/cols)*(h+8),w,h}};
 function rebuildMine(){MY=sanitizeBuild(MY);try{localStorage.setItem('nrBuild',JSON.stringify(MY))}catch(e){}CH.p0=mkNinja(MY);
  if(net.role==='host'){net.ready=false;sendLobby()}else if(isGuest()&&coop()){net.ready=false;netSend({t:'build',b:MY});netSend({t:'ready',v:false})}}
 function creatorClick(){
- if(picker!==null){for(let i=0;i<JP[picker].length;i++)if(inRect(mouse,pickRect(picker,i))){MY.j[picker]=i;rebuildMine();break}picker=null;return true}
+ if(picker!==null){const A=avail(MY,picker);for(let i=0;i<A.length;i++)if(inRect(mouse,pickRect(picker,i))){MY.j[picker]=A[i].id;rebuildMine();break}picker=null;return true}
  if(inRect(mouse,nameBtn)){const n=prompt('Nom de ton ninja (16 caractères max)',MY.name);if(n!==null){MY.name=n.trim()||MY.name;rebuildMine()}return true}
  if(inRect(mouse,rndBtn)){const r=srnd((Date.now()%2147483647)||7),b=randomBuild(r,MY.side,MY.name);MY.l=b.l;rebuildMine();return true}
- if(inRect(mouse,rndBuildBtn)){const r=srnd((Date.now()%2147483647)||7),b=randomBuild(r,MY.side,MY.name);MY.j=b.j;MY.pass=b.pass;MY.voie=b.voie;rebuildMine();return true}
- for(let i=0;i<APP.length;i++){const R=appRow(i),n=APP[i][1]().length,k=APP[i][2];
+ if(inRect(mouse,rndBuildBtn)){MY=randomKit(srnd((Date.now()%2147483647)||7),MY);rebuildMine();return true}
+ for(let i=0;i<APP.length;i++){const R=appRow(i),n=APP[i][1]().length,k=APP[i][2];if(appOff(k))continue;
   if(inRect(mouse,R.l)){setB(k,(getB(k)+n-1)%n);rebuildMine();return true}if(inRect(mouse,R.r)){setB(k,(getB(k)+1)%n);rebuildMine();return true}}
- for(let s=0;s<6;s++){const R=slotRow(s);if(inRect(mouse,R)){const n=JP[s].length;
-  if(mouse.x<R.x+60){MY.j[s]=(MY.j[s]+n-1)%n;rebuildMine()}else if(mouse.x>R.x+R.w-50){MY.j[s]=(MY.j[s]+1)%n;rebuildMine()}else picker=s;return true}}
+ for(let s=0;s<6;s++){const R=slotRow(s);if(inRect(mouse,R)){
+  if(mouse.x<R.x+60){cycleJ(s,-1);rebuildMine()}else if(mouse.x>R.x+R.w-50){cycleJ(s,1);rebuildMine()}else picker=s;return true}}
  if(inRect(mouse,passRow)){const n=PASSK.length;MY.pass=mouse.x<passRow.x+60?(MY.pass+n-1)%n:(MY.pass+1)%n;rebuildMine();return true}
- if(!coop()&&inRect(mouse,fightBtn)){startMatch('p0');return true}
+ if(!coop()&&inRect(mouse,fightBtn)){if(!overBudget())startMatch('p0');return true}
  return false}
+function rankBadge(x,y,J){g.fillStyle=RANKC[J.r];g.beginPath();g.roundRect(x,y,46,18,5);g.fill();text(`${J.r} · ${J.cost}`,x+23,y+13,12,'#14100a')}
 function arrowBtn(R,left){const h=inRect(mouse,R);g.fillStyle=h?'#ff9a3a':'rgba(40,30,20,.9)';g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,6);g.fill();text(left?'◀':'▶',R.x+R.w/2,R.y+R.h/2+5,13,h?'#1a1008':'#f3d9b0')}
 function btn(R,label,on,col='#ff9a3a'){const h=inRect(mouse,R);g.fillStyle=on?col:h?'rgba(90,60,30,.95)':'rgba(40,28,18,.92)';g.strokeStyle=col;g.lineWidth=1.5;g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,R.h/2);g.fill();g.stroke();text(label,R.x+R.w/2,R.y+R.h/2+5,13,on?'#1a1008':'#f3d9b0')}
 function drawMenu(){
@@ -1310,33 +1359,40 @@ function drawMenu(){
  {const h=inRect(mouse,nameBtn);g.fillStyle=h?'rgba(90,60,30,.6)':'rgba(0,0,0,.25)';g.beginPath();g.roundRect(nameBtn.x,nameBtn.y,nameBtn.w,nameBtn.h,8);g.fill();tfit(MY.name+'  ✎',nameBtn.x+10,nameBtn.y+22,20,ch.side?'#ff9a9a':'#ffd38a',280,'bold')}
  btn(rndBtn,'🎲',false);
  const fake=mkUnit('p0',0,0,ch.side);fake.aim=Math.PI/2+Math.sin(t*.8)*1.1;fake.moving=Math.sin(t*.5)>.3;fake.walk=t*13;fake.swing=0;
- g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(220,340,60,16,0,0,7);g.fill();
- {g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(220,300,0,220,300,140);gr.addColorStop(0,rgba(ch.look.weapon.col,.16));gr.addColorStop(1,rgba(ch.look.weapon.col,0));g.fillStyle=gr;g.fillRect(80,190,280,200);g.restore()}
- drawChar(fake,220,338,2.3);
- text(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2)}`,220,376,12,'#e8cfa8','center','normal');
- text('Parade au kunai (F) · attaques de base : '+(ch.abil[0].n),220,392,11,'#b89a70','center','normal');
- APP.forEach(([lab,list,k],i)=>{const R=appRow(i),L=list(),v=getB(k),it=L[v];text(lab,48,R.y,13,'#d8b888','left');arrowBtn(R.l,1);arrowBtn(R.r,0);
-  const nm=Array.isArray(it)?it[0]:String(it);const col=k==='l.h'||k==='l.p'||k==='l.k'?it[1]:null;
-  if(col){g.fillStyle=col;g.beginPath();g.roundRect(236,R.y-12,14,14,3);g.fill()}tfit(nm,col?256:236,R.y,13,'#fff',col?110:130,'bold')});
+ g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(220,316,50,13,0,0,7);g.fill();
+ {g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(220,300,0,220,300,140);gr.addColorStop(0,rgba(ch.look.weapon.col,.16));gr.addColorStop(1,rgba(ch.look.weapon.col,0));g.fillStyle=gr;g.fillRect(80,186,280,150);g.restore()}
+ drawChar(fake,220,314,1.6);
+ text(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2)}`,220,340,12,'#e8cfa8','center','normal');
+ tfit(ch.desc,220-Math.min(340,(g.font='normal 11px "Trebuchet MS",system-ui,sans-serif',g.measureText(ch.desc).width))/2,356,11,'#b89a70',340);
+ APP.forEach(([lab,list,k],i)=>{const R=appRow(i),L=list(),v=getB(k),it=L[v];text(lab,48,R.y,13,'#d8b888','left');
+  if(appOff(k)){text('— (avec un clan)',236,R.y,12,'#7a6a58','left','normal');return}arrowBtn(R.l,1);arrowBtn(R.r,0);
+  const nm=Array.isArray(it)?it[0]:String(it);const col=['l.h','l.p','l.k','nat','clan','nat2'].includes(k)?it[1]:null;
+  if(col){g.fillStyle=col;g.beginPath();g.roundRect(234,R.y-11,13,13,3);g.fill()}tfit(nm,col?252:234,R.y,13,k==='nat'||k==='clan'||k==='nat2'?'#ffd38a':'#fff',col?116:134,'bold')});
  // --- colonne de droite : build (6 jutsu + passif)
  for(let s=0;s<6;s++){const R=slotRow(s),ab=ch.abil[s],h=inRect(mouse,R)&&picker===null;
   g.fillStyle=h?'rgba(70,46,24,.95)':'rgba(20,14,10,.85)';g.strokeStyle=ab.ult?'#ffb347':'#5a3a1e';g.lineWidth=ab.ult?2:1;g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,10);g.fill();g.stroke();
   text('◀',R.x+16,R.y+34,15,'#ffb347');text('▶',R.x+R.w-20,R.y+34,15,'#ffb347');
   text(lbl[SLOTS[s]],R.x+40,R.y+22,13,ab.ult?'#ffe81f':'#fff','left');text(SLOTN[s],R.x+40,R.y+40,10,'#b89a70','left','normal');
-  tfit(`${ab.n}${ab.ult?' · ultime':` · ${ab.cd}s`}${ab.charges?` · ${ab.charges} charges`:''}${ab.cast?` · incant. ${ab.cast}s`:''}   (${MY.j[s]+1}/${JP[s].length})`,R.x+160,R.y+20,15,ab.ult?'#ffe81f':'#ffd38a',590,'bold');
+  const J=JL[MY.j[s]],A=avail(MY,s);rankBadge(R.x+160,R.y+7,J);
+  tfit(`${ab.n}${ab.ult?' · ultime':` · ${ab.cd}s`}${ab.charges?` · ${ab.charges} charges`:''}${ab.cast?` · incant. ${ab.cast}s`:''}`,R.x+218,R.y+20,15,ab.ult?'#ffe81f':'#ffd38a',400,'bold');
+  text(`${catName(J.cat)} · ${A.findIndex(j=>j.id===J.id)+1}/${A.length}`,R.x+R.w-40,R.y+20,11,catCol(J.cat),'right','normal');
   tfit(ab.d||'',R.x+160,R.y+36,12,'#e8cfa8',590);if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+160,R.y+51,11,'#d8c060',590)}
  {const R=passRow,ps=PASS[ch.pass],h=inRect(mouse,R)&&picker===null;g.fillStyle=h?'rgba(70,46,24,.95)':'rgba(20,14,10,.85)';g.strokeStyle='#3a6a3a';g.lineWidth=1;g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,10);g.fill();g.stroke();
   text('◀',R.x+16,R.y+26,15,'#9f9');text('▶',R.x+R.w-20,R.y+26,15,'#9f9');text('Passif',R.x+40,R.y+25,13,'#9f9','left');tfit(`${ps[0]} : ${ps[1]}`,R.x+160,R.y+25,13,'#cfe8c0',590,'bold')}
- btn(rndBuildBtn,'🎲 Build aléatoire',false);
- text('Clique sur un jutsu pour voir toute la liste · ◀ ▶ pour faire défiler',812,660,11,'#b89a70','center','normal');
- if(!coop())btn(fightBtn,'COMBATTRE ▶',true);
+ btn(rndBuildBtn,'🎲 Kit aléatoire',false);
+ {const c=kitCost(MY),over=c>BUDGET,x=628,y=604;text('Points du kit',x,y+2,12,'#b89a70','left','normal');for(let i=0;i<BUDGET;i++){g.fillStyle=i<c?(over?'#ff5a4a':'#ffb347'):'rgba(255,255,255,.12)';g.fillRect(x+i*13,y+8,11,10)}
+  if(c>BUDGET)for(let i=BUDGET;i<c;i++){g.fillStyle='#ff5a4a';g.fillRect(x+i*13,y+8,11,10)}
+  text(`${c} / ${BUDGET}`,x+96,y+2,13,over?'#ff6a5a':'#ffd38a','left');if(over)text('Trop de points : choisis des jutsu de rang plus bas',x,y+36,12,'#ff8a7a','left')}
+ text('Rangs D=1 · C=2 · B=3 · A=4 · S=5 points · clique sur un jutsu pour voir la liste',812,672,11,'#b89a70','center','normal');
+ if(!coop())btn(fightBtn,overBudget()?'TROP DE POINTS':'COMBATTRE ▶',!overBudget(),overBudget()?'#a55':'#ff9a3a');
  if(isGuest()&&mode!=='arena'){const b=teamBtn,h=inRect(mouse,b);g.fillStyle=h?'#5a3a1e':'#2a1c10';g.strokeStyle=net.myTeam?'#ff6060':'#4db8ff';g.lineWidth=2;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,16);g.fill();g.stroke();text(`ÉQUIPE ${net.myTeam?'B':'A'} (changer)`,b.x+b.w/2,b.y+21,13,'#f3d9b0','center')}
- if(coop()){const b=readyBtn,on=net.ready;g.fillStyle=on?'#7f7':inRect(mouse,b)?'#ffb347':'rgba(255,154,58,.85)';g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,16);g.fill();text(on?'PRÊT ✓':'PRÊT ?',b.x+b.w/2,b.y+21,13,'#10131c','center')}
+ if(coop()){const b=readyBtn,on=net.ready&&!overBudget();g.fillStyle=on?'#7f7':inRect(mouse,b)?'#ffb347':'rgba(255,154,58,.85)';g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,16);g.fill();text(on?'PRÊT ✓':'PRÊT ?',b.x+b.w/2,b.y+21,13,'#10131c','center')}
  // --- liste complète d'un emplacement
- if(picker!==null){g.fillStyle='rgba(0,0,0,.72)';g.fillRect(0,0,W,H);text(`${lbl[SLOTS[picker]]} · ${SLOTN[picker]} : choisis ton jutsu`,W/2,132,18,'#ffb347');
-  JP[picker].forEach((_,i)=>{const R=pickRect(picker,i),ab=jutsu(picker,i),sel=MY.j[picker]===i,h=inRect(mouse,R);
+ if(picker!==null){g.fillStyle='rgba(0,0,0,.72)';g.fillRect(0,0,W,H);text(`${lbl[SLOTS[picker]]} · ${SLOTN[picker]} : choisis ton jutsu (${kitCost(MY)}/${BUDGET} points)`,W/2,132,18,'#ffb347');
+  avail(MY,picker).forEach((J,i)=>{const R=pickRect(picker,i),ab=jutsu(J.id),sel=MY.j[picker]===J.id,h=inRect(mouse,R);
    g.fillStyle=sel?'rgba(110,70,30,.98)':h?'rgba(70,46,24,.98)':'rgba(24,16,10,.97)';g.strokeStyle=sel?'#ffb347':'#5a3a1e';g.lineWidth=sel?2:1;g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,8);g.fill();g.stroke();
-   tfit(`${ab.n}${ab.ult?'':` · ${ab.cd}s`}${ab.charges?` · ${ab.charges} charges`:''}${ab.cast?` · incant. ${ab.cast}s`:''}`,R.x+12,R.y+20,14,'#ffd38a',R.w-24,'bold');
+   rankBadge(R.x+10,R.y+6,J);text(catName(J.cat),R.x+R.w-10,R.y+18,10,catCol(J.cat),'right','normal');
+   tfit(`${ab.n}${ab.ult?'':` · ${ab.cd}s`}${ab.charges?` · ${ab.charges} charges`:''}${ab.cast?` · incant. ${ab.cast}s`:''}`,R.x+62,R.y+20,14,'#ffd38a',R.w-150,'bold');
    tfit(ab.d||'',R.x+12,R.y+37,12,'#e8cfa8',R.w-24);if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+12,R.y+52,11,'#d8c060',R.w-24)});
   text('Clique ailleurs pour fermer',W/2,710,12,'#b89a70','center','normal')}
  else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · Maj + jutsu = version EX (25 énergie) · ${lbl.KeyF} maintenu = parade au kunai · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
@@ -1461,7 +1517,7 @@ function hostGame(){if(noPeer())return;netReset();net.myPick='p0';const code=Mat
   c.on('open',()=>{if(livePeers().length>=MAXP||state!=='menu'){c.send({t:'full',v:state!=='menu'});setTimeout(()=>c.close(),400);return}
    net.peers.push(P);setStat(cnt());c.send({t:'hello',mode,cfg:CFG,id:P.id});net.ready=false;for(const q of net.peers)q.ready=false;sendLobby()});
   c.on('data',d=>{if(!d||typeof d!=='object'||!net.peers.includes(P))return;
-   if(d.t==='build'){P.b=sanitizeBuild(d.b);P.c='p'+P.id;CH[P.c]=mkNinja(P.b);P.ready=false;sendLobby()}
+   if(d.t==='build'){P.b=sanitizeBuild(d.b,true);P.c='p'+P.id;CH[P.c]=mkNinja(P.b,true);P.ready=false;sendLobby()}
    if(d.t==='ready'){P.ready=!!d.v&&!!P.c;sendLobby()}
    if(d.t==='team'){P.team=d.v?1:0;P.ready=false;sendLobby()}
    if(d.t==='in'){P.in=d;P.gcam={x:+d.cx||0,y:+d.cy||0};if(Array.isArray(d.p))for(const k of d.p)P.pressed[k]=1}});
@@ -1472,7 +1528,7 @@ function joinGame(code){if(noPeer())return;code=(code||'').trim().toUpperCase();
  p.on('open',()=>{const c=p.connect('nrarena-'+code,{reliable:true,serialization:'binary'});net.conn=c;
   c.on('open',()=>{netSend({t:'build',b:MY});setStat(`Connecté au salon ${code}. Crée ton ninja puis clique PRÊT.`);netUI(false)});
   c.on('data',d=>{if(!d)return;if(d.t==='snap')applySnap(d);else if(d.t==='hello'){mode=d.mode;if(d.cfg)Object.assign(CFG,d.cfg);if(d.id){net.myId=d.id;netSend({t:'build',b:MY})}}
-   else if(d.t==='lobby'){if(d.cfg)Object.assign(CFG,d.cfg);mode=d.mode;net.lobby=d.P||[];for(const x of net.lobby)if(x.b&&x.c)CH[x.c]=mkNinja(x.b);const me=net.lobby.find(x=>x.id===net.myId);if(me){net.mate=me.c;net.ready=me.ready;net.myTeam=me.team}}
+   else if(d.t==='lobby'){if(d.cfg)Object.assign(CFG,d.cfg);mode=d.mode;net.lobby=d.P||[];for(const x of net.lobby)if(x.b&&x.c)CH[x.c]=mkNinja(x.b,true);const me=net.lobby.find(x=>x.id===net.myId);if(me){net.mate=me.c;net.ready=me.ready;net.myTeam=me.team}}
    else if(d.t==='full')setStat(d.v?'La partie a déjà commencé : attends la fin et reconnecte-toi.':`Salon complet (${MAXP} joueurs maximum).`)});
   c.on('close',()=>{netReset();state='menu';setStat('L\'hôte a fermé la partie.')})});
  p.on('error',e=>setStat(e.type==='peer-unavailable'?'Salon introuvable : vérifie le code.':'Erreur réseau : '+e.type))}
