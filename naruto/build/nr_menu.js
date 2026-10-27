@@ -60,7 +60,7 @@ function drawMenu(){
   text('◀',R.x+16,R.y+34,15,'#ffb347');text('▶',R.x+R.w-20,R.y+34,15,'#ffb347');
   text(lbl[SLOTS[s]],R.x+40,R.y+22,13,ab.ult?'#ffe81f':'#fff','left');text(SLOTN[s],R.x+40,R.y+40,10,'#b89a70','left','normal');
   const J=s?JL[MY.j[s]]:null,A=s?avail(MY,s):stylesOf(MY);if(J)rankBadge(R.x+160,R.y+7,J);else styleBadge(R.x+160,R.y+7);
-  tfit(`${ab.n}${ab.ult?' · ultime':''} · ${ab.cd}s${s?` · ${MUDRAS[ab.rank]} mudras · ${jcost(ab)} chakra`:''}`,R.x+218,R.y+20,15,ab.ult?'#ffe81f':'#ffd38a',400,'bold');
+  tfit(`${ab.n}${ab.ult?' · ultime':''} · ${ab.cd}s${s?` · ${ab.mud?ab.mud+' mudras':'sans mudra'} · ${jcost(ab)} chakra`:''}`,R.x+218,R.y+20,15,ab.ult?'#ffe81f':'#ffd38a',400,'bold');
   text(J?`${catName(J.cat)} · ${A.findIndex(j=>j.id===J.id)+1}/${A.length}`:`${MY.clan>=0?'Clan '+CLANS[MY.clan][0]:'Sans clan'} · ${A.indexOf(MY.j[0])+1}/${A.length}`,R.x+R.w-40,R.y+20,11,J?catCol(J.cat):'#ffd38a','right','normal');
   tfit(ab.d||'',R.x+160,R.y+36,12,'#e8cfa8',590);if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+160,R.y+51,11,'#d8c060',590)}
  {const R=passRow,ps=PASS[ch.pass],h=inRect(mouse,R)&&picker===null;g.fillStyle=h?'rgba(70,46,24,.95)':'rgba(20,14,10,.85)';g.strokeStyle='#3a6a3a';g.lineWidth=1;g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,10);g.fill();g.stroke();
@@ -78,7 +78,7 @@ function drawMenu(){
   (picker?avail(MY,picker):stylesOf(MY).map(i=>({style:i}))).forEach((J,i)=>{const R=pickRect(picker,i),ab=picker?jutsu(J.id):styleAb(J.style),sel=MY.j[picker]===(picker?J.id:J.style),h=inRect(mouse,R),used=picker&&!sel&&MY.j.slice(1).includes(J.id);
    g.fillStyle=sel?'rgba(110,70,30,.98)':h?'rgba(70,46,24,.98)':'rgba(24,16,10,.97)';g.strokeStyle=sel?'#ffb347':'#5a3a1e';g.lineWidth=sel?2:1;g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,8);g.fill();g.stroke();
    if(picker){rankBadge(R.x+10,R.y+6,J);text(catName(J.cat),R.x+R.w-10,R.y+18,10,catCol(J.cat),'right','normal')}else{styleBadge(R.x+10,R.y+6);text(STYLES[J.style][4]==='kunai'||STYLES[J.style][4]==='senbon'||STYLES[J.style][4]==='bugs'||STYLES[J.style][4]==='sand'?'Distance':STYLES[J.style][4]==='shadow'||STYLES[J.style][4]==='chain'?'Moyenne portée':'Corps à corps',R.x+R.w-10,R.y+18,10,'#ffd38a','right','normal')}
-   tfit(`${ab.n} · ${ab.cd}s${picker?` · ${MUDRAS[ab.rank]} mudras · ${jcost(ab)} chakra`:''}`,R.x+62,R.y+20,14,'#ffd38a',R.w-150,'bold');
+   tfit(`${ab.n} · ${ab.cd}s${picker?` · ${ab.mud?ab.mud+' mudras':'sans mudra'} · ${jcost(ab)} chakra`:''}`,R.x+62,R.y+20,14,'#ffd38a',R.w-150,'bold');
    tfit(ab.d||'',R.x+12,R.y+37,12,'#e8cfa8',R.w-24);if(used){g.fillStyle='rgba(10,6,4,.7)';g.fillRect(R.x,R.y,R.w,R.h);text('DÉJÀ DANS TON KIT',R.x+R.w/2,R.y+36,12,'#ffb347')}if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+12,R.y+52,11,'#d8c060',R.w-24)});
   text('Clique ailleurs pour fermer',W/2,710,12,'#b89a70','center','normal')}
  else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · ${lbl.KeyR} maintenu = chakra · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');

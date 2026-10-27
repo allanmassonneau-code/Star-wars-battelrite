@@ -247,7 +247,7 @@ rep("if(ab.ult&&!(u.chan&&u.chan.i===i)){u.energy-=100;","u.energy-=ck;if(ab.ult
 rep("if(ab.cast){u.cast={i,t:0,dur:ab.cast,td:td??200,aimOv,ex};return true}","if(ab.cast&&!rec){u.cast={i,t:0,dur:ab.cast,td:td??200,aimOv,ex};return true}")
 rep("BASIC=u.ch.abil[0]===ab;","BASIC=u.ch.abil[0]===ab;COMBO3=BASIC&&u.cmb===5;if(COMBO3)u.c3T=.5;")
 rep(" for(let i=z0;i<zones.length;i++)zones[i].jn=zones[i].jn||ab.n;"," if(COMBO3){for(let i=n0;i<projs.length;i++){projs[i].dmg*=1.35;projs[i].o=Object.assign({},projs[i].o,{stun:.35})}if(near(u.x,u.y)){say(u,'COMBO !','#ffd36a');ring(u.x+Math.cos(a)*38,u.y+Math.sin(a)*38,40,'#ffd36a')}}COMBO3=false;\n for(let i=z0;i<zones.length;i++)zones[i].jn=zones[i].jn||ab.n;")
-rep("if(src&&src.ch.pw)dmg*=src.ch.pw;","if((COMBO3&&o.basic)||(src&&src.c3T>0&&o.melee)){dmg*=1.35;o=Object.assign({},o,{stun:Math.max(o.stun||0,.35)})}if(src&&src.ch.pw)dmg*=src.ch.pw;")
+rep("if(src&&src.ch.pw)dmg*=src.ch.pw;","if(o.melee&&src&&src.cmbT>0&&src.cmbH&&meleeU(src)&&src.ch.abil[0]&&BASIC!==null){const c=src.cmbH,fin=c===5,an=ang(src,t);sparks(t.x,t.y,fin?'#ffd36a':'#fff',fin?18:7);ring(t.x+Math.cos(an+Math.PI)*8,t.y+Math.sin(an+Math.PI)*8,fin?38:14+c*3,fin?'#ffd36a':'#ffffff');if(fin){t.kx=(t.kx||0)+Math.cos(an)*160;t.ky=(t.ky||0)+Math.sin(an)*160;shake=Math.max(shake,.12)}else{t.kx=(t.kx||0)+Math.cos(an)*35;t.ky=(t.ky||0)+Math.sin(an)*35}}if((COMBO3&&o.basic)||(src&&src.c3T>0&&o.melee)){dmg*=1.35;o=Object.assign({},o,{stun:Math.max(o.stun||0,.35)})}if(src&&src.ch.pw)dmg*=src.ch.pw;")
 rep("if(u.auraV&&!auraOn(u))u.auraV=null;","if(u.cmbT>0)u.cmbT-=dt;if(u.c3T>0)u.c3T-=dt;if(u.auraV&&!auraOn(u))u.auraV=null;")
 rep("const UK=['jstN',","const UK=['chk','cmb','cmbH','cmbT','jstN',")
 rep("if(!h||u.cds[i]>0||(ab.ult&&u.energy<100))continue;","if(!h||u.cds[i]>0||u.energy<jcost(ab))continue;")
@@ -256,6 +256,9 @@ rep("else{const a=u.cast.aimOv??u.aim,len=ab.line?.len||500","else if(!ab.noTele
 rep("function resetWorld(){cutin=null;aux=[];","function resetWorld(){cutin=null;aux=[];for(const u of units)u.energy=Math.max(u.energy,60);if(player)cam={x:player.x,y:player.y};")
 rep("n.energy=u.hero?30:0","n.energy=60")
 rep("drawStatusN(u,p,S2,sk);","drawStatusN(u,p,S2,sk);drawFlowN(u,p,S2,sk);")
+# arène : perspective ancrée au centre de l'arène, la caméra fait un simple défilement (plus de sol qui pivote)
+rep("const scl=y=>.97+.3*(y-cam.y)/555;\nfunction P(x,y,z=0){const s=scl(y);return{x:W/2+(x-cam.x)*s,y:Yc+(y-cam.y)*K-z*s,s}}\nfunction unP(mx,my){const y=cam.y+(my-Yc)/K;return{x:cam.x+(mx-W/2)/scl(y),y}}",
+ "const PV=()=>mode==='battle'?cam:{x:CX,y:CY},scl=y=>.97+.3*(y-PV().y)/555;\nfunction P(x,y,z=0){const v=PV(),s=scl(y);return{x:W/2+(x-v.x)*s-(cam.x-v.x)*scl(cam.y),y:Yc+(y-cam.y)*K-z*s,s}}\nfunction unP(mx,my){const v=PV(),y=cam.y+(my-Yc)/K;return{x:v.x+(mx-W/2+(cam.x-v.x)*scl(cam.y))/scl(y),y}}")
 # cartes plus grandes : arène 1700×900 avec caméra qui suit, bataille 6000×2800
 rep("const A={x:90,y:70,w:1100,h:555},CX=A.x+A.w/2,CY=A.y+A.h/2;","const A={x:90,y:70,w:1700,h:900},CX=A.x+A.w/2,CY=A.y+A.h/2;")
 rep("const MAP={x:0,y:0,w:4200,h:2000};","const MAP={x:0,y:0,w:6000,h:2800};")

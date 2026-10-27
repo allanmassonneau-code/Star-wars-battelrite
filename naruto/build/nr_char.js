@@ -5,18 +5,31 @@ function limb(x0,y0,x1,y1,x2,y2,w,col){g.lineCap='round';g.lineJoin='round';g.st
 function blob(x,y,r,col){g.fillStyle=OUT;g.beginPath();g.arc(x,y,r+1,0,7);g.fill();g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,7);g.fill()}
 function outlined(path,col){g.fillStyle=col;g.strokeStyle=OUT;g.lineWidth=1.6;g.beginPath();path();g.closePath();g.fill();g.stroke()}
 // pose des mains selon l'action : renvoie [main avant, main arrière] en coordonnées locales
+// mudras : les 12 signes (nom, main avant, main arrière, doigts) ; chaque jutsu a sa propre suite de signes
+const SIGNS=[['Tigre',[1,-37],[-1,-33],'up'],['Bélier',[2,-35],[-2,-32],'up1'],['Serpent',[0,-31],[0,-30],'clasp'],['Dragon',[-3,-36],[3,-31],'side'],
+ ['Rat',[2,-33],[-2,-35],'fist'],['Oiseau',[-4,-30],[4,-30],'wing'],['Chien',[1,-29],[2,-25],'flat'],['Sanglier',[-1,-31],[1,-31],'down'],
+ ['Cheval',[0,-36],[0,-34],'tri'],['Singe',[3,-33],[-3,-33],'cross'],['Lièvre',[-2,-31],[3,-36],'side'],['Bœuf',[1,-33],[-4,-30],'fist']];
+const signOf=(ab,i)=>{let h=0;for(const c of ab.n||'')h=(h*31+c.charCodeAt(0))%997;return SIGNS[(h+i*5)%12]};
+// état des mudras pendant l'incantation : signe en cours, progression dans le signe (q), signe précédent
+function mudraOf(u){if(!u.cast)return null;const ab=castAb(u,u.cast),n=ab&&ab.mud;if(!n)return null;const f=Math.min(.999,u.cast.t/u.cast.dur)*n,i=Math.floor(f);
+ return{i,n,q:f-i,sg:signOf(ab,i),pv:i>0?signOf(ab,i-1):null}}
 // étape du combo corps à corps en cours (0 si pas de combo)
+// courbe de frappe : sortie très rapide puis retour lent
+const punchK=sw=>{const p=1-sw;return p<.3?1-(1-p/.3)**2:1-(p-.3)/.7*.85};
 const cmbStep=u=>u.swing>0&&u.cmbH&&MELEEK.has(u.ch.look.weapon.k)?u.cmbH:0;
 function ninjaHands(u,fx,fy,run,t){const sw=u.swing>0?u.swing/.18:0,ax=Math.cos(u.aim),ay=Math.sin(u.aim)*K*.6;
+ const md=mudraOf(u);if(md){const fs=fx>=0?1:-1,k=Math.min(1,md.q/.3),e=1-(1-k)*(1-k),pop=md.q<.3?Math.sin(k*Math.PI)*2.5:0,A=md.pv||[0,[0,-30],[0,-30]],Bs=md.sg;
+  const mix=(a,b)=>[fx*3+(a[0]+(b[0]-a[0])*e)*fs,a[1]+(b[1]-a[1])*e-pop];return[mix(A[1],Bs[1]),mix(A[2],Bs[2])]}
  if(u.cast)return[[fx*4,-30+Math.sin(t*14)],[fx*4-1,-30-Math.sin(t*14)]];
  if(u.block)return[[ax*9-3,-34],[ax*9+3,-34]];
- if(sw>0){const ph=Math.sin(Math.PI*(1-sw)),ext=10+16*ph;switch(cmbStep(u)){
+ if(sw>0){const ph=punchK(sw),ext=10+19*ph;switch(cmbStep(u)){
   case 2:return[[ax*4,-31],[ax*(ext+3),-33+ay*ext]]; // direct du bras arrière
   case 3:return[[ax*(6+9*ph),-22-20*ph],[-ax*5,-27]]; // uppercut
   case 4:return[[ax*7,-33],[ax*2,-35]]; // garde pendant le coup de pied
   case 5:return[[ax*(ext+4),-30+ay*ext],[ax*(ext+1),-25+ay*ext]]; // double paume du final
   default:return[[ax*ext,-30+ay*ext],[-ax*6,-26]]}} // jab
  if(run>1)return[[-fx*13,-24],[-fx*15,-22]];
+ if(u.cmbT>0&&MELEEK.has(u.ch.look.weapon.k))return[[ax*9,-33+Math.sin(t*6)],[ax*3,-35-Math.sin(t*6)]]; // garde
  const sv=u.moving?Math.sin(u.walk)*7:Math.sin(t*2)*.6;return[[ax*7+sv*fy*.3,-22+sv*.5],[-ax*4-sv*.6,-22-sv*.4]]}
 function drawNinja(u,bx,by,s){
  const L=u.ch.look,h=L.head,W=L.weapon,k=W.k||'fist',t=performance.now()/1000;
@@ -25,14 +38,17 @@ function drawNinja(u,bx,by,s){
  g.save();g.translate(bx,by);g.scale(s*sk,s*sk);
  if(u.dead){g.globalAlpha=Math.max(0,1-u.deadT*.6);g.rotate(Math.min(1.4,u.deadT*6)*(fx<0?-1:1))}
  if(u.stun>0)g.rotate(Math.sin(t*12)*.06);
- const sw=u.swing>0?u.swing/.18:0,cs=cmbStep(u),cph=sw>0?Math.sin(Math.PI*(1-sw)):0,fs=Math.cos(u.aim)>=0?1:-1;if(sw>0)g.translate(Math.cos(u.aim)*(cs===2?7:4)*cph,Math.sin(u.aim)*2*cph);
- if(cs===5){g.translate(0,-12*cph);g.rotate(fs*.3*cph)}else if(cs===3)g.translate(0,-4*cph);else if(cs===4)g.rotate(-fs*.18*cph);
+ const sw=u.swing>0?u.swing/.18:0,cs=cmbStep(u),cph=sw>0?punchK(sw):0,fs=Math.cos(u.aim)>=0?1:-1;if(sw>0)g.translate(Math.cos(u.aim)*[4,6,10,5,7,12][cs]*cph,Math.sin(u.aim)*3*cph);
+ if(cs===5){g.translate(0,-16*cph);g.rotate(fs*.38*cph)}else if(cs===3){g.translate(0,-6*cph);g.rotate(-fs*.12*cph)}else if(cs===4)g.rotate(-fs*.26*cph);else if(cs===2)g.rotate(fs*.14*cph);else if(cs===1)g.rotate(fs*.07*cph);
+ // image rémanente du coup final
+ if(cs===5&&cph>.3){g.save();g.globalAlpha=.25*cph;g.translate(-fs*14,8);g.fillStyle=rgba(u.ch.look.weapon.col||'#ffd36a',.8);g.beginPath();g.ellipse(0,-30,12,22,0,0,7);g.fill();g.restore()}
  if(fl)g.translate(-fx*2,0);
  const step=u.moving?Math.sin(u.walk):0,bob=u.moving?Math.abs(Math.cos(u.walk))*1.8:Math.sin(t*2.2)*.5,lean=run>1?fx*5:run?fx*1.5:0;
  const col=c=>fl?'#fff':c,skin=col(h.skin),LG=col(L.legs),TO=col(L.torso),AR=col(L.arm||L.torso);
  // jambes (genou plié) et sandales
  for(const side of[-1,1]){const kick=(cs===4||cs===5)&&side===fs,ph=step*side,hx=side*4;let kx=hx+ph*4+lean*.3,ky=-10+Math.abs(ph)*-2,fxx=hx+ph*6,fyy=-2-Math.max(0,ph)*2;
-  if(kick){kx=hx+fs*10*cph;ky=-16-8*cph;fxx=hx+fs*(6+20*cph);fyy=-6-(cs===5?22:16)*cph}
+  if(kick){kx=hx+fs*12*cph;ky=-17-9*cph;fxx=hx+fs*(6+25*cph);fyy=-6-(cs===5?26:19)*cph}
+  else if(!u.moving&&(u.cmbT>0||cs)&&MELEEK.has(k)){kx=hx*1.6+side*fs*3;fxx=hx*2+side*fs*5;ky=-9}
   limb(hx,-20,kx,ky,fxx,fyy,5.2,LG);if(L.legs!=='#d8d0c0'&&L.torso==='#4a8a3a'){g.strokeStyle='#e8e0d0';g.lineWidth=1;g.beginPath();g.moveTo(kx-2,ky+3);g.lineTo(kx+2,ky+5);g.stroke()}
   g.fillStyle=OUT;g.fillRect(fxx-4,fyy-1,9,4);g.fillStyle=col(L.boot||'#222');g.fillRect(fxx-3.5,fyy-.5,8,2.5);g.fillStyle=skin;g.fillRect(fxx+(fx>0?2:-3),fyy-2.5,3,2)}
  g.translate(lean*.4,-bob);
@@ -70,6 +86,10 @@ function drawNinja(u,bx,by,s){
  limb(sx,sy,(sx+hf[0])/2+1,(sy+hf[1])/2+2,hf[0],hf[1],4.6,AR);
  drawNinjaWeapon(u,L,W,k,hf,hb,fx,fy,back,fl,t);
  // traits d'impact propres à chaque coup du combo
+ if(cs&&!fl){const sw2=1-u.swing/.18;if(sw2<.55){const al=.55*(1-sw2/.55);g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ffffff',al);g.lineCap='round';
+   if(cs===1||cs===2){const hp=cs===1?hf:hb;g.lineWidth=2.4;for(let q=-1;q<=1;q++){g.beginPath();g.moveTo(hp[0]-fs*(10+8*(1-Math.abs(q))),hp[1]+q*3);g.lineTo(hp[0]-fs*3,hp[1]+q*2);g.stroke()}}
+   else if(cs===3){g.lineWidth=4;g.beginPath();g.arc(hf[0]-fs*4,hf[1]+10,14,fs>0?-1.2:-1.95,fs>0?1:-.2+Math.PI);g.stroke()}
+   else{g.lineWidth=cs===5?6:4.5;g.strokeStyle=rgba(cs===5?'#ffd36a':'#ffffff',al);g.beginPath();g.arc(0,-18,cs===5?30:25,fs>0?-1.3:1.4,fs>0?1.0:4.4);g.stroke()}g.restore()}}
  if(cs&&cph>.45&&!fl){const ix=cs===2?hb[0]:cs>=4?fs*24:hf[0],iy=cs===2?hb[1]:cs===4?-24:cs===5?-30:hf[1],al=(cph-.45)*1.8;g.save();g.globalCompositeOperation='lighter';
   g.strokeStyle=rgba(cs===5?'#ffd36a':'#ffffff',al);g.lineWidth=cs===5?2.2:1.4;g.beginPath();
   if(cs===3){g.arc(ix,iy+8,12,-2.4,-.7)}else if(cs===4){g.arc(hf[0]*.2,-20,22,fs>0?-1.1:2.0,fs>0?.6:3.7)}else{const n=cs===5?8:4;for(let q=0;q<n;q++){const b=q/n*6.28+t;g.moveTo(ix+Math.cos(b)*4,iy+Math.sin(b)*4);g.lineTo(ix+Math.cos(b)*(cs===5?14:8),iy+Math.sin(b)*(cs===5?14:8))}}
@@ -129,7 +149,19 @@ function drawNinjaWeapon(u,L,W,k,hf,hb,fx,fy,back,fl,t){const [x,y]=hf,a=Math.at
   default:{fist(x,y,3,u.ch.look.head.skin);if(u.saberOut>0)break;g.save();g.translate(x,y);g.rotate(a+(u.block?-1.2:0));if(act){g.shadowColor=c;g.shadowBlur=10*RS}g.fillStyle='#3a3a44';g.fillRect(-7,-1.5,8,3);g.strokeStyle='#3a3a44';g.lineWidth=1.2;g.beginPath();g.arc(-9,0,2.4,0,7);g.stroke();
    g.fillStyle=act?c:'#d3d8e2';g.beginPath();g.moveTo(1,-3.6);g.lineTo(15,0);g.lineTo(1,3.6);g.fill();g.restore()}}
  // mudras : chakra entre les mains pendant l'incantation
- if(u.cast){g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.45+rnd()*.3);g.beginPath();g.arc(hf[0],hf[1],6+rnd()*3,0,7);g.fill();g.strokeStyle=rgba(c,.85);g.lineWidth=1.2;g.beginPath();g.arc(hf[0],hf[1],11,t*7,t*7+4.5);g.stroke();g.restore()}
+ const md=mudraOf(u);if(md){const [f,b]=[hf,hb],mx=(f[0]+b[0])/2,my=(f[1]+b[1])/2,fs=fx>=0?1:-1,st=md.sg[3],pw=(md.i+md.q)/md.n;
+  // doigts du signe
+  g.strokeStyle=OUT;g.lineWidth=2.6;g.lineCap='round';const fing=(x,y,dx,dy)=>{g.strokeStyle=OUT;g.lineWidth=2.6;g.beginPath();g.moveTo(x,y);g.lineTo(x+dx,y+dy);g.stroke();g.strokeStyle=u.ch.look.head.skin;g.lineWidth=1.4;g.stroke()};
+  if(st==='up'||st==='tri'){fing(mx,my-2,0,-7);if(st==='tri'){fing(mx-1.5,my-1,-2,-6);fing(mx+1.5,my-1,2,-6)}}
+  else if(st==='up1'){fing(f[0],f[1]-2,0,-6)}else if(st==='side'){fing(f[0],f[1],fs*6,-2)}else if(st==='wing'){fing(f[0],f[1],-4,-5);fing(b[0],b[1],4,-5)}
+  else if(st==='down'){fing(mx,my+2,0,6)}else if(st==='cross'){fing(f[0],f[1],-3,-5);fing(b[0],b[1],3,-5)}else if(st==='flat'){fing(f[0],f[1],fs*5,0)}
+  blob(f[0],f[1],2.7,u.ch.look.head.skin);blob(b[0],b[1],2.7,u.ch.look.head.skin);
+  // chakra qui monte à chaque signe, éclair au changement de signe
+  g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.25+.45*pw);g.beginPath();g.arc(mx,my,4+6*pw+rnd()*1.5,0,7);g.fill();
+  if(md.q<.3){const k2=md.q/.3;g.strokeStyle=rgba('#ffffff',.9*(1-k2));g.lineWidth=1.6;g.beginPath();g.arc(mx,my,5+14*k2,0,7);g.stroke();
+   for(let q=0;q<6;q++){const b2=q*1.047+md.i;g.beginPath();g.moveTo(mx+Math.cos(b2)*(6+8*k2),my+Math.sin(b2)*(6+8*k2));g.lineTo(mx+Math.cos(b2)*(10+12*k2),my+Math.sin(b2)*(10+12*k2));g.stroke()}}
+  g.strokeStyle=rgba(c,.7);g.lineWidth=1.2;g.beginPath();g.arc(mx,my,11+3*pw,t*7,t*7+1.5+3*pw);g.stroke();g.restore()}
+ else if(u.cast){g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.45+rnd()*.3);g.beginPath();g.arc(hf[0],hf[1],6+rnd()*3,0,7);g.fill();g.strokeStyle=rgba(c,.85);g.lineWidth=1.2;g.beginPath();g.arc(hf[0],hf[1],11,t*7,t*7+4.5);g.stroke();g.restore()}
 }
 // chien ninja (Inuzuka) : suit son maître et bondit quand il attaque
 function drawDog(u){if(u.dead||!u.ch.look.dog)return;const t=performance.now()/1000,a=u.aim,atk=u.swing>0,d=atk?30:-22,ox=u.x+Math.cos(a+(atk?0:1.9))*Math.abs(d)*(atk?1:1),oy=u.y+Math.sin(a+(atk?0:1.9))*Math.abs(d)+6,p=P(ox,oy),s=p.s*1.25,f=Math.cos(a)>=0?1:-1,run=u.moving?Math.sin(t*16):0;
