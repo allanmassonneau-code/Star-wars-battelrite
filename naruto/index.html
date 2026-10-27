@@ -566,16 +566,20 @@ const GSPEED=.8; // tout le jeu tourne à 80 % : combats plus lisibles
 const CKCOST={D:8,C:12,B:16,A:22,S:30},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
 // coût en chakra d'un jutsu (les ultimes coûtent 12 de plus)
 const jcost=ab=>ab&&ab.rank?CKCOST[ab.rank]+(ab.ult?12:0):0;
-let COMBO3=false; // vrai pendant le 3e coup du combo (petit étourdissement)
+let COMBO3=false; // vrai pendant le 5e coup du combo corps à corps (petit étourdissement)
+// corps à corps : combo de 5 coups (20 d'endurance chacun = un combo complet) ; distance : 10 d'endurance par tir, sans combo
+const MELEEK=new Set(['fist','bigfist','palm','claws','bone','sword']);
+const meleeU=u=>MELEEK.has(u.ch.look.weapon.k);
 function drawFlowN(u,p,S,sk){const t=performance.now()/1000,col=u.ch.look.weapon.col||'#3af';
  if(u.chk&&!u.dead){g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba(col,.6);g.lineWidth=2;g.beginPath();g.ellipse(p.x,p.y,(26+Math.sin(t*10)*3)*S,(10+Math.sin(t*10))*S,0,0,7);g.stroke();
   for(let i=0;i<8;i++){const a=i*.785+t*2,k=(t*1.6+i/8)%1,x=p.x+Math.cos(a)*16*S,y=p.y-k*70*S;g.fillStyle=rgba(col,.55*(1-k));g.beginPath();g.moveTo(x-4*S,y);g.quadraticCurveTo(x,y-12*S,x+4*S,y);g.fill()}g.restore()}
  if(u.cast&&!u.dead){const ab=castAb(u,u.cast),n=ab&&ab.rank?MUDRAS[ab.rank]:0;if(n){const done=Math.min(n,Math.floor(u.cast.t/u.cast.dur*n)+1),y=p.y-112*S*sk;
   for(let i=0;i<n;i++){const x=p.x+(i-(n-1)/2)*10;g.save();g.translate(x,y);g.rotate(.785);g.fillStyle=i<done?col:'rgba(0,0,0,.5)';g.strokeStyle='#fff';g.lineWidth=1;g.fillRect(-3,-3,6,6);g.strokeRect(-3,-3,6,6);g.restore()}}}
- if(u===player&&u.cmbT>0&&u.cmb){for(let i=0;i<3;i++){const x=p.x+(i-1)*12,y=p.y+16*S;g.fillStyle=i<u.cmb?(u.cmb===3?'#ffd36a':'#fff'):'rgba(0,0,0,.4)';g.beginPath();g.arc(x,y,3.5,0,7);g.fill()}}}
+ if(u===player&&u.cmbT>0&&u.cmb){for(let i=0;i<5;i++){const x=p.x+(i-2)*11,y=p.y+16*S;g.fillStyle=i<u.cmb?(u.cmb===5?'#ffd36a':'#fff'):'rgba(0,0,0,.4)';g.beginPath();g.arc(x,y,3.5,0,7);g.fill()}}}
 // ---------- Natures sur mesure : Fûton et Katon (mécaniques propres) ----------
 // aux : objets de jeu spéciaux (couloir de vent, tornades, zones de brûlure progressives) mis à jour et dessinés à part
-let aux=[];
+let aux=[],seqs=[]; // seqs : tirs différés (rafales)
+function seqUpdate(dt){for(const q of seqs){if(q.owner.dead||q.owner.stun>0){q.n=0;continue}q.t-=dt;if(q.t<=0&&q.n>0){q.n--;q.t=q.iv;VFX=q.vfx||null;CUR=q.owner;BASIC=false;EX=false;q.f(q.owner);CUR=null;VFX=null}}seqs=seqs.filter(q=>q.n>0)}
 const BURN=(dps=4,dur=3)=>({dps,dur});
 const wind=(u,a,o)=>proj(u,a,Object.assign({spd:820,r:7,dmg:10,life:.6,col:'#c8fff0',o:{kb:120}},o));
 const fireP=(u,a,o)=>proj(u,a,Object.assign({spd:700,r:8,dmg:12,life:.7,col:'#ff7a2a',o:{dot:BURN()}},o));
@@ -595,7 +599,7 @@ const NAT={
  // ---- Fûton
  fu_wall:SP('Fûton : Mur de vent','Mur de vent qui bloque les projectiles et le passage',8,{ai:DEF},(u,a)=>{wallLine(u,a,2,{wind:1});S('wind',u)}),
  fu_bullet:SP('Fûton : Balle d\'air','Projectile de vent qui repousse légèrement',4,{ai:RG(520,.7)},(u,a)=>{S('wind',u);wind(u,a,{})}),
- fu_tri:SP('Fûton : Triple balle d\'air','3 projectiles de vent qui repoussent légèrement',6,{ai:RG(520,.6)},(u,a)=>{S('wind',u);for(const k of[-.18,0,.18])wind(u,a+k,{dmg:8,o:{kb:100}})}),
+ fu_tri:SP('Fûton : Triple balle d\'air','3 balles de vent tirées l\'une après l\'autre, qui repoussent légèrement',6,{ai:RG(520,.6)},(u,a)=>{S('wind',u);wind(u,a,{dmg:8,o:{kb:100}});seqs.push({owner:u,n:2,t:.16,iv:.16,vfx:'wind',f:o=>{S('wind',o);wind(o,o.aim,{dmg:8,o:{kb:100}})}})}),
  fu_big:SP('Fûton : Grande balle d\'air','Gros projectile de vent',7,{cast:.2,line:{len:480,w:30},ai:RG(480,.5)},(u,a)=>{S('wind',u);wind(u,a,{r:15,dmg:20,spd:600,life:.8,big:1,o:{kb:170}})}),
  fu_shotgun:SP('Fûton : Rafale à bout portant','Immobile, tire 10 balles d\'air imprécises au corps à corps',8,{cast:.2,ai:RG(200,.7)},(u,a)=>{u.root=Math.max(u.root,.35);S('wind',u);S('heavy',u);for(let i=0;i<10;i++)wind(u,a+(rnd()-.5)*1,{spd:760+rnd()*160,r:5,dmg:5,life:.3,o:{kb:60}})}),
  fu_stack:SP('Fûton : Balles chargées','Prépare 3 balles d\'air qui repoussent, à relancer pendant 5 s',10,{ai:RG(500,.7)},null),
@@ -623,7 +627,7 @@ for(const k in NAT)NAT[k].key=k;
 // stats de référence (pour les PV / la puissance du ninja) : un perso Star Wars proche dans l'esprit
 const NATHERO={fu:'palpatine',ka:'boba'};
 // mise à jour des objets spéciaux (hôte)
-function auxUpdate(dt){for(const x of aux){x.t-=dt;x.k-=dt;
+function auxUpdate(dt){seqUpdate(dt);for(const x of aux){x.t-=dt;x.k-=dt;
   if(x.type==='tornado'){x.x=clamp(x.x+x.vx*dt,B.x+20,B.x+B.w-20);x.y=clamp(x.y+x.vy*dt,B.y+20,B.y+B.h-20)}
   if(x.type==='prog'&&x.owner&&!x.owner.dead){x.x=x.owner.x;x.y=x.owner.y}
   const tick=x.k<=0;if(tick)x.k=.25;
@@ -702,7 +706,7 @@ const JD=[
  // ---- Fûton (kit sur mesure)
  ['n2',1,'D','x.fu_wall','Fûton : Mur de vent','Mur de vent qui bloque les projectiles et le passage','wind'],
  ['n2',1,'D','x.fu_bullet','Fûton : Balle d\'air','Projectile de vent qui repousse légèrement','wind'],
- ['n2',1,'C','x.fu_tri','Fûton : Triple balle d\'air','3 projectiles de vent qui repoussent légèrement','wind'],
+ ['n2',1,'C','x.fu_tri','Fûton : Triple balle d\'air','3 balles de vent tirées l\'une après l\'autre, qui repoussent légèrement','wind'],
  ['n2',1,'C','x.fu_big','Fûton : Grande balle d\'air','Gros projectile de vent','wind'],
  ['n2',1,'B','x.fu_shotgun','Fûton : Rafale à bout portant','Immobile, tire 10 balles d\'air imprécises au corps à corps','wind'],
  ['n2',1,'B','x.fu_stack','Fûton : Balles chargées','Prépare 3 balles d\'air qui repoussent, à relancer pendant 5 s','wind'],
@@ -975,7 +979,7 @@ function mkUnit(c,x,y,team){const ch=CH[c];return{c,ch,x,y,z:0,vx:0,vy:0,kx:0,ky
 let STATS={},CUR=null;
 const stOf=u=>{const k=u.c+'|'+u.team;return STATS[k]||(STATS[k]={c:u.c,team:u.team,k:0,d:0,a:0,dmg:0,tk:0,heal:0,sh:0})};
 function startMatch(c){playerChamp=c;STATS={};const o=HEROES.filter(x=>CH[x].side!==CH[c].side);aiChamp=o[Math.floor(rnd()*o.length)];score=[0,0];round=1;MT=mode!=='battle'?buildTeams(teamN()):null;mode!=='battle'?startRound():startBattle()}
-function resetWorld(){cutin=null;aux=[];for(const u of units)u.energy=Math.max(u.energy,60);if(player)cam={x:player.x,y:player.y};tethers=[];traps=[];turrets=[];fields=[];walls=[];projs=[];fx=[];txt=[];zones=[];orb=null;orbUsed=false;timer=0;banner=null;killfeed=[];state='countdown';stateT=3}
+function resetWorld(){cutin=null;aux=[];for(const u of units)u.energy=Math.max(u.energy,60);if(player)cam={x:player.x,y:player.y};seqs=[];tethers=[];traps=[];turrets=[];fields=[];walls=[];projs=[];fx=[];txt=[];zones=[];orb=null;orbUsed=false;timer=0;banner=null;killfeed=[];state='countdown';stateT=3}
 // joueurs humains : l'hôte (local) + les amis connectés (remote). Arène = tous ensemble contre des bots ; duel = deux équipes de joueurs
 function humanList(){const L=lobbyList().map(x=>({c:x.c&&CH[x.c]?x.c:null,team:x.team,ctrl:x.id===0?'local':'remote',rid:x.id}));if(!L.length)L.push({c:playerChamp,team:0,ctrl:'local',rid:0});
  if(net.role!=='guest')L[0].c=playerChamp;
@@ -1011,16 +1015,16 @@ const enemies=u=>units.filter(e=>e.team!==u.team&&!e.dead);
 
 // ---------- Mécaniques ----------
 function use(u,i,td,aimOv,ex){let ab=u.ch.abil[i];const chg=ab&&ab.charges;if(!ab||(chg?u.chg[i]<=0:u.cds[i]>0)||(i>0&&u.silence>0)||(i===0&&u.disarm>0)||u.stun>0||u.dash||u.cast||u.spin||u.flame||u.block)return false;const rec=(u.chan&&u.chan.i===i)||(u.jst&&u.jst.i===i),ck=i>0&&!rec?jcost(ab):0;if(u.energy<ck){if(u===player)say(u,'CHAKRA ! ('+lbl.KeyR+')','#4ab0ff');return false}if((ab.throw||ab.melee)&&u.saberOut>0)return false;
- ex=false;if(i===0){if(u.stam<10){if(u===player)say(u,'ENDURANCE !','#7df');return false}u.stam-=10;u.stamT=Math.max(u.stamT||0,.6);u.cmb=(u.cmbT>0?u.cmb||0:0)%3+1;u.cmbT=1.1}if(ex){u.energy-=25;if(ab.ex)ab=exAb(ab)}if(u.stealth>0){u.stealth=0;u.ambush=2}
+ ex=false;if(i===0){const ml=meleeU(u),sc=ml?20:10;if(u.stam<sc-.01){if(u===player)say(u,'ENDURANCE !','#7df');return false}u.stam-=sc;u.stamT=Math.max(u.stamT||0,.6);u.cmb=ml?(u.cmbT>0?u.cmb||0:0)%5+1:0;u.cmbH=u.cmb;u.cmbT=1.1}if(ex){u.energy-=25;if(ab.ex)ab=exAb(ab)}if(u.stealth>0){u.stealth=0;u.ambush=2}
  if(chg){u.chg[i]--;if(u.cds[i]<=0)u.cds[i]=ab.cd}else u.cds[i]=(ab.cd||1)*(i===0&&u.rapid>0?.45:1);
  if(ab.ammo){if(u.ammo<=0)u.ammo=ab.ammo;u.ammo--;if(u.ammo<=0){u.ammo=ab.ammo;u.cds[i]=ab.reload}}u.energy-=ck;if(ab.ult&&ck){S('v_'+u.c,u);if(u===player)flashS=.25;if(near(u.x,u.y))shake=.3}
  if(ab.cast&&!rec){u.cast={i,t:0,dur:ab.cast,td:td??200,aimOv,ex};return true}
  fire(u,ab,aimOv??u.aim,td??200,ex);return true}
 const exAb=b=>Object.assign({},b,{n:b.ex.n,d:b.ex.d,P:Object.assign({},b.P,b.ex.p),isEx:1});
 const castAb=(u,c)=>{const b=u.ch.abil[c.i];return c.ex&&b.ex?exAb(b):b};
-function fire(u,ab,a,td,ex){EX=ex;CUR=u;BASIC=u.ch.abil[0]===ab;COMBO3=BASIC&&u.cmb===3;if(COMBO3)u.c3T=.5;if(ex){ring(u.x,u.y,46,'#ffe81f');say(u,'EX','#ffe81f');S('ex',u)}VFX=ab.vfx||null;const PRE={x:u.x,y:u.y},AB0=AURK.map(k=>u[k]||0),f0=fx.length,z0=zones.length,fi0=fields.length,te0=tethers.length,tr0=traps.length,n0=projs.length,w0=walls.length;ab.f(u,a,td,ab.P||{});CUR=null;
+function fire(u,ab,a,td,ex){EX=ex;CUR=u;BASIC=u.ch.abil[0]===ab;COMBO3=BASIC&&u.cmb===5;if(COMBO3)u.c3T=.5;if(ex){ring(u.x,u.y,46,'#ffe81f');say(u,'EX','#ffe81f');S('ex',u)}VFX=ab.vfx||null;const PRE={x:u.x,y:u.y},AB0=AURK.map(k=>u[k]||0),f0=fx.length,z0=zones.length,fi0=fields.length,te0=tethers.length,tr0=traps.length,n0=projs.length,w0=walls.length;ab.f(u,a,td,ab.P||{});CUR=null;
  if(VFX)for(const [L,i0] of[[fx,f0],[zones,z0],[fields,fi0],[tethers,te0],[traps,tr0],[projs,n0],[walls,w0]])for(let i=i0;i<L.length;i++)L[i].vfx=L[i].vfx||VFX;VFX=null;
- if(COMBO3){for(let i=n0;i<projs.length;i++){projs[i].dmg*=1.35;projs[i].o=Object.assign({},projs[i].o,{stun:.35})}if(near(u.x,u.y))say(u,'COMBO !','#ffd36a')}COMBO3=false;
+ if(COMBO3){for(let i=n0;i<projs.length;i++){projs[i].dmg*=1.35;projs[i].o=Object.assign({},projs[i].o,{stun:.35})}if(near(u.x,u.y)){say(u,'COMBO !','#ffd36a');ring(u.x+Math.cos(a)*38,u.y+Math.sin(a)*38,40,'#ffd36a')}}COMBO3=false;
  for(let i=z0;i<zones.length;i++)zones[i].jn=zones[i].jn||ab.n;for(let i=n0;i<projs.length;i++)projs[i].jn=projs[i].jn||ab.n;
  if(ab.vfx&&JFX[ab.vfx]&&near(u.x,u.y)){VFX=ab.vfx;JFX[ab.vfx](u,a,td,PRE,ab);VFX=null}
  if(ab.vfx&&AURK.some((k,i)=>(u[k]||0)>AB0[i]+.05))u.auraV=ab.vfx;
@@ -1179,7 +1183,7 @@ function updUnit(u,dt,active){
  const wantB=canBlock(u)&&active&&u.stun<=0&&!u.cast&&!u.spin&&u.blockLock<=0&&u.stam>0&&(ctl?!!(I&&I.f):u.aiBlock>0);
  u.block=!!wantB;u.blockT=u.block?(u.blockT||0)+dt:0;
  u.chk=active&&!u.dead&&u.stun<=0&&!u.cast&&!u.dash&&!u.block&&!u.chan&&(ctl?!!(I&&I.r):(u.energy<35&&!nearE(u,u.x,u.y,360)));if(u.chk)u.energy=Math.min(100,u.energy+30*dt);
- if(u.block){u.stam-=12*dt;u.stamT=.9;if(u.stam<=0)stamHit(u,0)}else{u.stamT-=dt;if(u.stamT<=0)u.stam=Math.min(100,u.stam+22*dt)}
+ if(u.block){u.stam-=12*dt;u.stamT=.9;if(u.stam<=0)stamHit(u,0)}else{u.stamT-=dt;if(u.stamT<=0)u.stam=Math.min(100,u.stam+32*dt)}
  if(active&&u.stun<=0&&u.fear>0){const a=Math.atan2(u.y-u.fearY,u.x-u.fearX);mx=Math.cos(a);my=Math.sin(a);u.aim=a}
  else if(active&&u.stun<=0&&u.taunt>0&&u.tauntSrc&&!u.tauntSrc.dead){const e=u.tauntSrc,a=ang(u,e);u.aim=a;if(dist(u,e)>70){mx=Math.cos(a);my=Math.sin(a)}use(u,0,dist(u,e))}
  else if(active&&u.stun<=0){
@@ -1482,10 +1486,17 @@ function limb(x0,y0,x1,y1,x2,y2,w,col){g.lineCap='round';g.lineJoin='round';g.st
 function blob(x,y,r,col){g.fillStyle=OUT;g.beginPath();g.arc(x,y,r+1,0,7);g.fill();g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,7);g.fill()}
 function outlined(path,col){g.fillStyle=col;g.strokeStyle=OUT;g.lineWidth=1.6;g.beginPath();path();g.closePath();g.fill();g.stroke()}
 // pose des mains selon l'action : renvoie [main avant, main arrière] en coordonnées locales
+// étape du combo corps à corps en cours (0 si pas de combo)
+const cmbStep=u=>u.swing>0&&u.cmbH&&MELEEK.has(u.ch.look.weapon.k)?u.cmbH:0;
 function ninjaHands(u,fx,fy,run,t){const sw=u.swing>0?u.swing/.18:0,ax=Math.cos(u.aim),ay=Math.sin(u.aim)*K*.6;
  if(u.cast)return[[fx*4,-30+Math.sin(t*14)],[fx*4-1,-30-Math.sin(t*14)]];
  if(u.block)return[[ax*9-3,-34],[ax*9+3,-34]];
- if(sw>0){const ext=10+16*Math.sin(Math.PI*(1-sw));return[[ax*ext,-30+ay*ext],[-ax*6,-26]]}
+ if(sw>0){const ph=Math.sin(Math.PI*(1-sw)),ext=10+16*ph;switch(cmbStep(u)){
+  case 2:return[[ax*4,-31],[ax*(ext+3),-33+ay*ext]]; // direct du bras arrière
+  case 3:return[[ax*(6+9*ph),-22-20*ph],[-ax*5,-27]]; // uppercut
+  case 4:return[[ax*7,-33],[ax*2,-35]]; // garde pendant le coup de pied
+  case 5:return[[ax*(ext+4),-30+ay*ext],[ax*(ext+1),-25+ay*ext]]; // double paume du final
+  default:return[[ax*ext,-30+ay*ext],[-ax*6,-26]]}} // jab
  if(run>1)return[[-fx*13,-24],[-fx*15,-22]];
  const sv=u.moving?Math.sin(u.walk)*7:Math.sin(t*2)*.6;return[[ax*7+sv*fy*.3,-22+sv*.5],[-ax*4-sv*.6,-22-sv*.4]]}
 function drawNinja(u,bx,by,s){
@@ -1495,12 +1506,14 @@ function drawNinja(u,bx,by,s){
  g.save();g.translate(bx,by);g.scale(s*sk,s*sk);
  if(u.dead){g.globalAlpha=Math.max(0,1-u.deadT*.6);g.rotate(Math.min(1.4,u.deadT*6)*(fx<0?-1:1))}
  if(u.stun>0)g.rotate(Math.sin(t*12)*.06);
- const sw=u.swing>0?u.swing/.18:0;if(sw>0)g.translate(Math.cos(u.aim)*4*Math.sin(Math.PI*(1-sw)),Math.sin(u.aim)*2*Math.sin(Math.PI*(1-sw)));
+ const sw=u.swing>0?u.swing/.18:0,cs=cmbStep(u),cph=sw>0?Math.sin(Math.PI*(1-sw)):0,fs=Math.cos(u.aim)>=0?1:-1;if(sw>0)g.translate(Math.cos(u.aim)*(cs===2?7:4)*cph,Math.sin(u.aim)*2*cph);
+ if(cs===5){g.translate(0,-12*cph);g.rotate(fs*.3*cph)}else if(cs===3)g.translate(0,-4*cph);else if(cs===4)g.rotate(-fs*.18*cph);
  if(fl)g.translate(-fx*2,0);
  const step=u.moving?Math.sin(u.walk):0,bob=u.moving?Math.abs(Math.cos(u.walk))*1.8:Math.sin(t*2.2)*.5,lean=run>1?fx*5:run?fx*1.5:0;
  const col=c=>fl?'#fff':c,skin=col(h.skin),LG=col(L.legs),TO=col(L.torso),AR=col(L.arm||L.torso);
  // jambes (genou plié) et sandales
- for(const side of[-1,1]){const ph=step*side,hx=side*4,kx=hx+ph*4+lean*.3,ky=-10+Math.abs(ph)*-2,fxx=hx+ph*6,fyy=-2-Math.max(0,ph)*2;
+ for(const side of[-1,1]){const kick=(cs===4||cs===5)&&side===fs,ph=step*side,hx=side*4;let kx=hx+ph*4+lean*.3,ky=-10+Math.abs(ph)*-2,fxx=hx+ph*6,fyy=-2-Math.max(0,ph)*2;
+  if(kick){kx=hx+fs*10*cph;ky=-16-8*cph;fxx=hx+fs*(6+20*cph);fyy=-6-(cs===5?22:16)*cph}
   limb(hx,-20,kx,ky,fxx,fyy,5.2,LG);if(L.legs!=='#d8d0c0'&&L.torso==='#4a8a3a'){g.strokeStyle='#e8e0d0';g.lineWidth=1;g.beginPath();g.moveTo(kx-2,ky+3);g.lineTo(kx+2,ky+5);g.stroke()}
   g.fillStyle=OUT;g.fillRect(fxx-4,fyy-1,9,4);g.fillStyle=col(L.boot||'#222');g.fillRect(fxx-3.5,fyy-.5,8,2.5);g.fillStyle=skin;g.fillRect(fxx+(fx>0?2:-3),fyy-2.5,3,2)}
  g.translate(lean*.4,-bob);
@@ -1537,6 +1550,11 @@ function drawNinja(u,bx,by,s){
  if(back)armB();
  limb(sx,sy,(sx+hf[0])/2+1,(sy+hf[1])/2+2,hf[0],hf[1],4.6,AR);
  drawNinjaWeapon(u,L,W,k,hf,hb,fx,fy,back,fl,t);
+ // traits d'impact propres à chaque coup du combo
+ if(cs&&cph>.45&&!fl){const ix=cs===2?hb[0]:cs>=4?fs*24:hf[0],iy=cs===2?hb[1]:cs===4?-24:cs===5?-30:hf[1],al=(cph-.45)*1.8;g.save();g.globalCompositeOperation='lighter';
+  g.strokeStyle=rgba(cs===5?'#ffd36a':'#ffffff',al);g.lineWidth=cs===5?2.2:1.4;g.beginPath();
+  if(cs===3){g.arc(ix,iy+8,12,-2.4,-.7)}else if(cs===4){g.arc(hf[0]*.2,-20,22,fs>0?-1.1:2.0,fs>0?.6:3.7)}else{const n=cs===5?8:4;for(let q=0;q<n;q++){const b=q/n*6.28+t;g.moveTo(ix+Math.cos(b)*4,iy+Math.sin(b)*4);g.lineTo(ix+Math.cos(b)*(cs===5?14:8),iy+Math.sin(b)*(cs===5?14:8))}}
+  g.stroke();g.restore()}
  g.restore();
 }
 function drawNinjaHead(u,h,fx,fy,back,fl,t,run){const hx=fx*1.5,hy=-53,ex=hx+fx*3.5,R=12.5,hc=fl?'#fff':h.hair;
@@ -2203,7 +2221,7 @@ $('oMute').onchange=e=>{muted=e.target.checked};$('optB').onclick=()=>{wake();to
 $('nHost').onclick=hostGame;$('nJoin').onclick=()=>joinGame($('nCode').value);$('nClose').onclick=()=>netUI(false);
 $('nCode').addEventListener('keydown',e=>{if(e.key==='Enter')joinGame($('nCode').value)});
 const rd=v=>typeof v==='number'?Math.round(v*100)/100:v;
-const UK=['chk','cmb','cmbT','jstN','jstV','auraV','mk','stk','rootV','sleepT','c','team','x','y','z','hp','max','energy','aim','swing','swingA','moving','walk','dead','deadT','stun','deflect','shield','block','stam','blockLock','haste','rage','unstop','saberOut','flash','respawn','hero','r','human','slow','vx','vy','root','stealth','airT','silence','fear','taunt','disarm','vuln','dotT','counter','riposte','dodge','absorb','chrome','riot','giant','thorns','drT','ammo','chg'];
+const UK=['chk','cmb','cmbH','cmbT','jstN','jstV','auraV','mk','stk','rootV','sleepT','c','team','x','y','z','hp','max','energy','aim','swing','swingA','moving','walk','dead','deadT','stun','deflect','shield','block','stam','blockLock','haste','rage','unstop','saberOut','flash','respawn','hero','r','human','slow','vx','vy','root','stealth','airT','silence','fear','taunt','disarm','vuln','dotT','counter','riposte','dodge','absorb','chrome','riot','giant','thorns','drT','ammo','chg'];
 const PK=['vfx','jn','dragon','shuri','x','y','vx','vy','r','col','saber','big','grenade','rocket','ex','life','life0','rot','tx','ty','ar','hook','ox','oy','zapP','rock','spear'],ZK=['x','y','r','t','m','col','vfx','jn'];
 function pickK(o,ks){const r={};for(const k of ks){const v=o[k];r[k]=Array.isArray(v)?v.map(rd):v===undefined?null:rd(v)}return r}
 function snapU(u){const a=UK.map(k=>u[k]===undefined?null:rd(u[k]));a.push(u.cast?{i:u.cast.i,t:rd(u.cast.t),dur:u.cast.dur,td:rd(u.cast.td),aimOv:u.cast.aimOv??null,ex:u.cast.ex}:null,u.spin?{r:u.spin.r}:null,!!u.flame,!!u.dash);return a}

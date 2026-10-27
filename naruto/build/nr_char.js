@@ -5,10 +5,17 @@ function limb(x0,y0,x1,y1,x2,y2,w,col){g.lineCap='round';g.lineJoin='round';g.st
 function blob(x,y,r,col){g.fillStyle=OUT;g.beginPath();g.arc(x,y,r+1,0,7);g.fill();g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,7);g.fill()}
 function outlined(path,col){g.fillStyle=col;g.strokeStyle=OUT;g.lineWidth=1.6;g.beginPath();path();g.closePath();g.fill();g.stroke()}
 // pose des mains selon l'action : renvoie [main avant, main arrière] en coordonnées locales
+// étape du combo corps à corps en cours (0 si pas de combo)
+const cmbStep=u=>u.swing>0&&u.cmbH&&MELEEK.has(u.ch.look.weapon.k)?u.cmbH:0;
 function ninjaHands(u,fx,fy,run,t){const sw=u.swing>0?u.swing/.18:0,ax=Math.cos(u.aim),ay=Math.sin(u.aim)*K*.6;
  if(u.cast)return[[fx*4,-30+Math.sin(t*14)],[fx*4-1,-30-Math.sin(t*14)]];
  if(u.block)return[[ax*9-3,-34],[ax*9+3,-34]];
- if(sw>0){const ext=10+16*Math.sin(Math.PI*(1-sw));return[[ax*ext,-30+ay*ext],[-ax*6,-26]]}
+ if(sw>0){const ph=Math.sin(Math.PI*(1-sw)),ext=10+16*ph;switch(cmbStep(u)){
+  case 2:return[[ax*4,-31],[ax*(ext+3),-33+ay*ext]]; // direct du bras arrière
+  case 3:return[[ax*(6+9*ph),-22-20*ph],[-ax*5,-27]]; // uppercut
+  case 4:return[[ax*7,-33],[ax*2,-35]]; // garde pendant le coup de pied
+  case 5:return[[ax*(ext+4),-30+ay*ext],[ax*(ext+1),-25+ay*ext]]; // double paume du final
+  default:return[[ax*ext,-30+ay*ext],[-ax*6,-26]]}} // jab
  if(run>1)return[[-fx*13,-24],[-fx*15,-22]];
  const sv=u.moving?Math.sin(u.walk)*7:Math.sin(t*2)*.6;return[[ax*7+sv*fy*.3,-22+sv*.5],[-ax*4-sv*.6,-22-sv*.4]]}
 function drawNinja(u,bx,by,s){
@@ -18,12 +25,14 @@ function drawNinja(u,bx,by,s){
  g.save();g.translate(bx,by);g.scale(s*sk,s*sk);
  if(u.dead){g.globalAlpha=Math.max(0,1-u.deadT*.6);g.rotate(Math.min(1.4,u.deadT*6)*(fx<0?-1:1))}
  if(u.stun>0)g.rotate(Math.sin(t*12)*.06);
- const sw=u.swing>0?u.swing/.18:0;if(sw>0)g.translate(Math.cos(u.aim)*4*Math.sin(Math.PI*(1-sw)),Math.sin(u.aim)*2*Math.sin(Math.PI*(1-sw)));
+ const sw=u.swing>0?u.swing/.18:0,cs=cmbStep(u),cph=sw>0?Math.sin(Math.PI*(1-sw)):0,fs=Math.cos(u.aim)>=0?1:-1;if(sw>0)g.translate(Math.cos(u.aim)*(cs===2?7:4)*cph,Math.sin(u.aim)*2*cph);
+ if(cs===5){g.translate(0,-12*cph);g.rotate(fs*.3*cph)}else if(cs===3)g.translate(0,-4*cph);else if(cs===4)g.rotate(-fs*.18*cph);
  if(fl)g.translate(-fx*2,0);
  const step=u.moving?Math.sin(u.walk):0,bob=u.moving?Math.abs(Math.cos(u.walk))*1.8:Math.sin(t*2.2)*.5,lean=run>1?fx*5:run?fx*1.5:0;
  const col=c=>fl?'#fff':c,skin=col(h.skin),LG=col(L.legs),TO=col(L.torso),AR=col(L.arm||L.torso);
  // jambes (genou plié) et sandales
- for(const side of[-1,1]){const ph=step*side,hx=side*4,kx=hx+ph*4+lean*.3,ky=-10+Math.abs(ph)*-2,fxx=hx+ph*6,fyy=-2-Math.max(0,ph)*2;
+ for(const side of[-1,1]){const kick=(cs===4||cs===5)&&side===fs,ph=step*side,hx=side*4;let kx=hx+ph*4+lean*.3,ky=-10+Math.abs(ph)*-2,fxx=hx+ph*6,fyy=-2-Math.max(0,ph)*2;
+  if(kick){kx=hx+fs*10*cph;ky=-16-8*cph;fxx=hx+fs*(6+20*cph);fyy=-6-(cs===5?22:16)*cph}
   limb(hx,-20,kx,ky,fxx,fyy,5.2,LG);if(L.legs!=='#d8d0c0'&&L.torso==='#4a8a3a'){g.strokeStyle='#e8e0d0';g.lineWidth=1;g.beginPath();g.moveTo(kx-2,ky+3);g.lineTo(kx+2,ky+5);g.stroke()}
   g.fillStyle=OUT;g.fillRect(fxx-4,fyy-1,9,4);g.fillStyle=col(L.boot||'#222');g.fillRect(fxx-3.5,fyy-.5,8,2.5);g.fillStyle=skin;g.fillRect(fxx+(fx>0?2:-3),fyy-2.5,3,2)}
  g.translate(lean*.4,-bob);
@@ -60,6 +69,11 @@ function drawNinja(u,bx,by,s){
  if(back)armB();
  limb(sx,sy,(sx+hf[0])/2+1,(sy+hf[1])/2+2,hf[0],hf[1],4.6,AR);
  drawNinjaWeapon(u,L,W,k,hf,hb,fx,fy,back,fl,t);
+ // traits d'impact propres à chaque coup du combo
+ if(cs&&cph>.45&&!fl){const ix=cs===2?hb[0]:cs>=4?fs*24:hf[0],iy=cs===2?hb[1]:cs===4?-24:cs===5?-30:hf[1],al=(cph-.45)*1.8;g.save();g.globalCompositeOperation='lighter';
+  g.strokeStyle=rgba(cs===5?'#ffd36a':'#ffffff',al);g.lineWidth=cs===5?2.2:1.4;g.beginPath();
+  if(cs===3){g.arc(ix,iy+8,12,-2.4,-.7)}else if(cs===4){g.arc(hf[0]*.2,-20,22,fs>0?-1.1:2.0,fs>0?.6:3.7)}else{const n=cs===5?8:4;for(let q=0;q<n;q++){const b=q/n*6.28+t;g.moveTo(ix+Math.cos(b)*4,iy+Math.sin(b)*4);g.lineTo(ix+Math.cos(b)*(cs===5?14:8),iy+Math.sin(b)*(cs===5?14:8))}}
+  g.stroke();g.restore()}
  g.restore();
 }
 function drawNinjaHead(u,h,fx,fy,back,fl,t,run){const hx=fx*1.5,hy=-53,ex=hx+fx*3.5,R=12.5,hc=fl?'#fff':h.hair;

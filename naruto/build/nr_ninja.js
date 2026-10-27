@@ -77,7 +77,7 @@ const JD=[
  // ---- Fûton (kit sur mesure)
  ['n2',1,'D','x.fu_wall','Fûton : Mur de vent','Mur de vent qui bloque les projectiles et le passage','wind'],
  ['n2',1,'D','x.fu_bullet','Fûton : Balle d\'air','Projectile de vent qui repousse légèrement','wind'],
- ['n2',1,'C','x.fu_tri','Fûton : Triple balle d\'air','3 projectiles de vent qui repoussent légèrement','wind'],
+ ['n2',1,'C','x.fu_tri','Fûton : Triple balle d\'air','3 balles de vent tirées l\'une après l\'autre, qui repoussent légèrement','wind'],
  ['n2',1,'C','x.fu_big','Fûton : Grande balle d\'air','Gros projectile de vent','wind'],
  ['n2',1,'B','x.fu_shotgun','Fûton : Rafale à bout portant','Immobile, tire 10 balles d\'air imprécises au corps à corps','wind'],
  ['n2',1,'B','x.fu_stack','Fûton : Balles chargées','Prépare 3 balles d\'air qui repoussent, à relancer pendant 5 s','wind'],

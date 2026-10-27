@@ -1,6 +1,7 @@
 // ---------- Natures sur mesure : Fûton et Katon (mécaniques propres) ----------
 // aux : objets de jeu spéciaux (couloir de vent, tornades, zones de brûlure progressives) mis à jour et dessinés à part
-let aux=[];
+let aux=[],seqs=[]; // seqs : tirs différés (rafales)
+function seqUpdate(dt){for(const q of seqs){if(q.owner.dead||q.owner.stun>0){q.n=0;continue}q.t-=dt;if(q.t<=0&&q.n>0){q.n--;q.t=q.iv;VFX=q.vfx||null;CUR=q.owner;BASIC=false;EX=false;q.f(q.owner);CUR=null;VFX=null}}seqs=seqs.filter(q=>q.n>0)}
 const BURN=(dps=4,dur=3)=>({dps,dur});
 const wind=(u,a,o)=>proj(u,a,Object.assign({spd:820,r:7,dmg:10,life:.6,col:'#c8fff0',o:{kb:120}},o));
 const fireP=(u,a,o)=>proj(u,a,Object.assign({spd:700,r:8,dmg:12,life:.7,col:'#ff7a2a',o:{dot:BURN()}},o));
@@ -20,7 +21,7 @@ const NAT={
  // ---- Fûton
  fu_wall:SP('Fûton : Mur de vent','Mur de vent qui bloque les projectiles et le passage',8,{ai:DEF},(u,a)=>{wallLine(u,a,2,{wind:1});S('wind',u)}),
  fu_bullet:SP('Fûton : Balle d\'air','Projectile de vent qui repousse légèrement',4,{ai:RG(520,.7)},(u,a)=>{S('wind',u);wind(u,a,{})}),
- fu_tri:SP('Fûton : Triple balle d\'air','3 projectiles de vent qui repoussent légèrement',6,{ai:RG(520,.6)},(u,a)=>{S('wind',u);for(const k of[-.18,0,.18])wind(u,a+k,{dmg:8,o:{kb:100}})}),
+ fu_tri:SP('Fûton : Triple balle d\'air','3 balles de vent tirées l\'une après l\'autre, qui repoussent légèrement',6,{ai:RG(520,.6)},(u,a)=>{S('wind',u);wind(u,a,{dmg:8,o:{kb:100}});seqs.push({owner:u,n:2,t:.16,iv:.16,vfx:'wind',f:o=>{S('wind',o);wind(o,o.aim,{dmg:8,o:{kb:100}})}})}),
  fu_big:SP('Fûton : Grande balle d\'air','Gros projectile de vent',7,{cast:.2,line:{len:480,w:30},ai:RG(480,.5)},(u,a)=>{S('wind',u);wind(u,a,{r:15,dmg:20,spd:600,life:.8,big:1,o:{kb:170}})}),
  fu_shotgun:SP('Fûton : Rafale à bout portant','Immobile, tire 10 balles d\'air imprécises au corps à corps',8,{cast:.2,ai:RG(200,.7)},(u,a)=>{u.root=Math.max(u.root,.35);S('wind',u);S('heavy',u);for(let i=0;i<10;i++)wind(u,a+(rnd()-.5)*1,{spd:760+rnd()*160,r:5,dmg:5,life:.3,o:{kb:60}})}),
  fu_stack:SP('Fûton : Balles chargées','Prépare 3 balles d\'air qui repoussent, à relancer pendant 5 s',10,{ai:RG(500,.7)},null),
@@ -48,7 +49,7 @@ for(const k in NAT)NAT[k].key=k;
 // stats de référence (pour les PV / la puissance du ninja) : un perso Star Wars proche dans l'esprit
 const NATHERO={fu:'palpatine',ka:'boba'};
 // mise à jour des objets spéciaux (hôte)
-function auxUpdate(dt){for(const x of aux){x.t-=dt;x.k-=dt;
+function auxUpdate(dt){seqUpdate(dt);for(const x of aux){x.t-=dt;x.k-=dt;
   if(x.type==='tornado'){x.x=clamp(x.x+x.vx*dt,B.x+20,B.x+B.w-20);x.y=clamp(x.y+x.vy*dt,B.y+20,B.y+B.h-20)}
   if(x.type==='prog'&&x.owner&&!x.owner.dead){x.x=x.owner.x;x.y=x.owner.y}
   const tick=x.k<=0;if(tick)x.k=.25;
