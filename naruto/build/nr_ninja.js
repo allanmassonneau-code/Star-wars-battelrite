@@ -27,6 +27,7 @@ const STYLES=[
 const styleOk=(s,clan)=>STYLES[s][5].includes(clan);
 // [catégorie, emplacement 1-5, rang, source perso.sort, nom, description, effet visuel]
 // catégorie : 'u' Subjutsu (sans clan), 'n0'..'n4' nature, 'c0'..'c10' clan
+/*NR_NATURE*/
 const JD=[
  // ---- Subjutsu (ninjas sans clan)
  ['u',1,'S','savage.1','Rasengan','Fonce avec une sphère de chakra qui projette en l\'air','rasengan'],
@@ -54,15 +55,17 @@ const JD=[
  ['u',5,'C','rex.5','Pluie de parchemins','4 parchemins explosifs sur la zone','tag'],
  ['u',5,'S','yoda.5','Mode Ermite','6 s : vitesse, dégâts et soin','sage'],
  ['u',5,'B','r2.5','Invocation : Katsuyu','La limace soigne et recharge le chakra des alliés proches','heal'],
- // ---- Katon
- ['n0',1,'S','jango.1','Katon : Boule de feu','Grosse boule de feu crachée qui repousse','fire'],
- ['n0',1,'S','boba.1','Katon : Météore','Boule de feu explosive qui étourdit','fire'],
- ['n0',1,'A','din.1','Katon : Souffle du dragon','Brûle tout devant soi','fire'],
- ['n0',2,'C','boba.2','Katon : Propulsion','S\'élance porté par les flammes','fire'],
- ['n0',3,'C','finn.3','Katon : Phénix','Explose et laisse le sol en feu','fire'],
- ['n0',3,'A','jango.4','Katon : Souffle ardent','Jet de flammes court qui brûle','fire'],
- ['n0',4,'A','palpatine.4','Katon : Manteau de flammes','Bouclier et flammes autour de soi 3 s','fire'],
- ['n0',5,'S','din.5','Katon : Pluie de phénix','8 petites boules de feu à tête chercheuse','fire'],
+ // ---- Katon (kit sur mesure)
+ ['n0',1,'D','x.ka_ball','Katon : Flamme','Projectile de feu qui brûle quelques secondes','fire'],
+ ['n0',1,'D','x.ka_wall','Katon : Mur de feu','Mur de feu qui bloque les tirs et le passage, et brûle au contact','fire'],
+ ['n0',1,'C','x.ka_tri','Katon : Triple flamme','3 projectiles de feu qui brûlent','fire'],
+ ['n0',1,'C','x.ka_air','Katon : Shuriken de feu aériens','Saute et lance 5 shuriken de feu sur un point précis','fire'],
+ ['n0',1,'B','x.ka_zone','Katon : Fournaise','Grande zone de feu autour de soi : plus on y reste, plus ça brûle','fire'],
+ ['n0',1,'B','x.ka_stack','Katon : Flammes chargées','Prépare 5 flammes qui brûlent, à relancer pendant 5 s','fire'],
+ ['n0',1,'A','x.ka_dragon','Katon : Dragon de feu','Dragon de feu qu\'on peut rediriger, explose et brûle','fire'],
+ ['n0',1,'A','x.ka_tornado','Katon : Tornade de feu','Tornade de feu qui avance et brûle, sans emporter','fire'],
+ ['n0',5,'S','x.ka_nuee','Katon : Nuée ardente','Canalise une nuée sur une zone, immobile ; relance pour relâcher : plus c\'est long, plus c\'est fort','fire'],
+ ['n0',5,'S','x.ka_breath','Katon : Grand souffle de feu','Immobile, embrase une très large zone devant soi','fire'],
  // ---- Suiton
  ['n1',1,'B','luke.1','Suiton : Vague','Vague d\'eau qui repousse et ralentit','water'],
  ['n1',2,'C','deathtrooper.2','Suiton : Brume cachée','Recule dans un nuage de brume','water'],
@@ -71,14 +74,17 @@ const JD=[
  ['n1',4,'B','mace.4','Suiton : Mur d\'eau','2 s : moitié moins de dégâts, renvoie 30 % au contact','water'],
  ['n1',5,'A','maul.5','Suiton : Grand requin','Requin d\'eau géant qui revient','water'],
  ['n1',5,'A','jyn.5','Suiton : Dragon aqueux','Un dragon d\'eau transperce toute une ligne','water'],
- // ---- Fûton
- ['n2',1,'B','ventress.1','Fûton : Lames de vent','Deux lames de vent qui transpercent','wind'],
- ['n2',1,'B','yoda.1','Fûton : Grand souffle','Onde de vent à 360° qui repousse','wind'],
- ['n2',2,'C','quigon.2','Fûton : Pas du vent','Très rapide 2 s, se libère des entraves','wind'],
- ['n2',3,'C','anakin.3','Fûton : Vide','Cône qui rend les ennemis vulnérables','wind'],
- ['n2',3,'B','mace.3','Fûton : Rafale','Repousse et coupe le chakra (silence)','wind'],
- ['n2',4,'B','vader.4','Fûton : Mur de vent','Renvoie les tirs, repousse au contact','wind'],
- ['n2',5,'A','thrawn.5','Fûton : Rasen-shuriken','Un Rasen-shuriken s\'abat sur une grande zone','rasenshuriken'],
+ // ---- Fûton (kit sur mesure)
+ ['n2',1,'D','x.fu_wall','Fûton : Mur de vent','Mur de vent qui bloque les projectiles et le passage','wind'],
+ ['n2',1,'D','x.fu_bullet','Fûton : Balle d\'air','Projectile de vent qui repousse légèrement','wind'],
+ ['n2',1,'C','x.fu_tri','Fûton : Triple balle d\'air','3 projectiles de vent qui repoussent légèrement','wind'],
+ ['n2',1,'C','x.fu_big','Fûton : Grande balle d\'air','Gros projectile de vent','wind'],
+ ['n2',1,'B','x.fu_shotgun','Fûton : Rafale à bout portant','Immobile, tire 10 balles d\'air imprécises au corps à corps','wind'],
+ ['n2',1,'B','x.fu_stack','Fûton : Balles chargées','Prépare 3 balles d\'air qui repoussent, à relancer pendant 5 s','wind'],
+ ['n2',1,'A','x.fu_line','Fûton : Lame d\'air','Projectile linéaire perçant qui repousse','wind'],
+ ['n2',1,'A','x.fu_breath','Fûton : Souffle','Canalise un souffle de vent qui repousse et blesse','wind'],
+ ['n2',5,'S','x.fu_corridor','Fûton : Couloir de vent','Couloir de vent : dégâts croissants et silence pour ceux qui restent dedans','wind'],
+ ['n2',5,'S','x.fu_tornado','Fûton : Tornade','Tornade qui avance, blesse et emporte les ennemis','wind'],
  // ---- Raiton
  ['n3',1,'B','rey.1','Chidori','Charge électrique qui traverse les ennemis et explose au bout','chidori'],
  ['n3',1,'C','palpatine.1','Raiton : Chaîne','Éclair qui rebondit entre les ennemis','lightning'],
@@ -140,6 +146,7 @@ const JD=[
  ['c6',3,'B','dooku.3','Sceau','La cible ne peut plus attaquer','seal'],
  ['c6',3,'S','gideon.3','Multiclonage','Deux clones qui lancent des kunai 7 s','smoke'],
  ['c6',4,'C','bossk.4','Vitalité Uzumaki','Soin rapide et se libère','heal'],
+ ['c6',5,'A','thrawn.5','Rasen-shuriken','Un Rasen-shuriken s\'abat sur une grande zone','rasenshuriken'],
  ['c6',5,'A','chewie.5','Chakra de Kyûbi','6 s : inarrêtable, régénération et dégâts','fox'],
  // ---- Yamanaka
  ['c7',1,'A','inquisitor.3','Shinranshin','Projectile mental qui terrifie','genjutsu'],
@@ -184,11 +191,12 @@ const JD=[
 const JPAR={'Multiclonage':{d:1.2},'Ninken':{d:3},'Insectes dévoreurs':{dps:4},'Chidori':{sp:1}};
 const JCD={'Lotus primaire':10,'Lotus caché':9}; // temps de recharge propres à certains jutsu
 const JL=JD.map(([cat,slot,r,src,n,d,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,vfx,P:JPAR[n]}));
-const SLOTN=['Style de combat','Jutsu principal','Déplacement','Technique','Défense','Ultime'];
+const SLOTN=['Style de combat','Jutsu','Déplacement','Jutsu','Jutsu','Ultime'];
+const stype=s=>s===2?2:s===5?5:1; // 1 = jutsu (Clic D, Q, E), 2 = déplacement, 5 = ultime
 const catName=c=>c==='u'?'Subjutsu':c[0]==='n'?NATURES[+c.slice(1)][0]:'Clan '+CLANS[+c.slice(1)][0];
 const catCol=c=>c==='u'?'#c8b89a':c[0]==='n'?NATURES[+c.slice(1)][2]:CLANS[+c.slice(1)][1];
 // jutsu accessibles : jutsu de clan (ou Subjutsu sans clan) + jutsu de sa nature (les Taijutsuka n'ont pas de nature)
-const avail=(b,slot)=>JL.filter(j=>j.slot===slot&&((b.clan>=0?j.cat==='c'+b.clan:j.cat==='u')||(b.clan!==TAIJ&&j.cat==='n'+b.nat)));
+const avail=(b,slot)=>JL.filter(j=>stype(j.slot)===stype(slot)&&((b.clan>=0?j.cat==='c'+b.clan:j.cat==='u')||(b.clan!==TAIJ&&j.cat==='n'+b.nat)));
 const kitCost=b=>b.j.slice(1).reduce((a,id)=>a+JL[id].cost,0);
 // passifs renommés
 Object.assign(PASS,{third:['Taijutsu',PASS.third[1]],crit:['Précision ninja',PASS.crit[1]],slow:['Fils de chakra',PASS.slow[1]],lifesteal:['Vol de chakra',PASS.lifesteal[1]],rage:['Volonté du feu',PASS.rage[1]],
@@ -213,14 +221,15 @@ function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Ma
  const o={name:String(b.name||'Ninja').replace(/[<>]/g,'').slice(0,16)||'Ninja',side:b.side?1:0,voie:n(b.voie??1,VOIES.length),nat:n(b.nat,NATURES.length),clan:b.clan==null?-1:Math.max(-1,Math.min(CLANS.length-1,b.clan|0)),pass:n(b.pass,PASSK.length),
   l:{v:n(l.v,VILLAGES.length),t:n(l.t,TENUES.length),c:n(l.c,COIFS.length),h:n(l.h,HAIRC.length),p:n(l.p,PEAUX.length),k:n(l.k,CHAKRAS.length),a:n(l.a,ACCS.length)}};
  const st=(b.j||[])[0];o.j=[STYLES[st]&&styleOk(st,o.clan)?st:STYLES.findIndex((_,i)=>styleOk(i,o.clan))];
- for(let s=1;s<6;s++){const A=avail(o,s),id=(b.j||[])[s];o.j.push(A.some(j=>j.id===id)?id:A.reduce((a,c)=>c.cost<a.cost?c:a).id)}
- if(strict)while(kitCost(o)>BUDGET){let best=null;o.j.forEach((id,s)=>{if(!s)return;for(const c of avail(o,s))if(c.cost<JL[id].cost){const gain=JL[id].cost-c.cost;if(!best||gain>best.g)best={s,id:c.id,g:gain}}});if(!best)break;o.j[best.s]=best.id}
+ for(let s=1;s<6;s++){const A=avail(o,s).filter(j=>!o.j.slice(1).includes(j.id)),id=(b.j||[])[s];o.j.push(A.some(j=>j.id===id)?id:A.reduce((a,c)=>c.cost<a.cost?c:a).id)}
+ if(strict)while(kitCost(o)>BUDGET){let best=null;o.j.forEach((id,s)=>{if(!s)return;for(const c of avail(o,s))if(c.cost<JL[id].cost&&!o.j.slice(1).includes(c.id)){const gain=JL[id].cost-c.cost;if(!best||gain>best.g)best={s,id:c.id,g:gain}}});if(!best)break;o.j[best.s]=best.id}
  return o}
 // le clan se voit : Sharingan, Byakugan, carrure Akimichi, marques Kaguya, chien Inuzuka, gourde Sabaku ; l'arme suit le style de combat
 function ninjaLook(l,clan,style){const v=VILLAGES[l.v],S=STYLES[style]||STYLES[0];return Object.assign({},TENUES[l.t][1],clan===3?{scale:1.14}:{},clan===5?{dog:1}:{},clan===8?{gourd:1}:{},
  {head:{t:'ninja',skin:PEAUX[l.p][1],hair:HAIRC[l.h][1],style:COIFS[l.c][1],band:v[1],vil:l.v,acc:ACCS[l.a][1],eye:clan===0?'#e01a1a':clan===1?'#e8e8f8':null,kaguya:clan===9,brows:clan===TAIJ},weapon:{t:'kunai',k:S[4],col:CHAKRAS[l.k][1]}})}
-const srcAb=src=>{const [h,k]=src.split('.');return SRC[h].abil[+k]};
-function jutsu(id){const J=JL[id],b=srcAb(J.src);return Object.assign({},b,J.P?{P:Object.assign({},b.P,J.P)}:{},JCD[J.n]?{cd:JCD[J.n]}:{},{n:J.n,d:J.d,ex:null,src:J.src.split('.')[0],vfx:J.vfx,rank:J.r,jid:id})}
+const srcAb=src=>{const [h,k]=src.split('.');return h==='x'?NAT[k]:SRC[h].abil[+k]};
+const srcHero=src=>{const [h,k]=src.split('.');return h==='x'?NATHERO[k.slice(0,2)]:h};
+function jutsu(id){const J=JL[id],b=srcAb(J.src);return Object.assign({},b,J.P?{P:Object.assign({},b.P,J.P)}:{},JCD[J.n]?{cd:JCD[J.n]}:{},{n:J.n,d:J.d,ex:null,src:srcHero(J.src),vfx:J.vfx,rank:J.r,jid:id})}
 function styleAb(i){const S=STYLES[i],b=srcAb(S[2]);return Object.assign({},b,{n:S[0],d:S[1],ex:null,src:S[2].split('.')[0],vfx:S[3],style:i})}
 // stats : moyenne des persos d'origine (le style de combat compte pour 5 : un ninja à distance est fragile, un ninja au corps à corps solide), puis la voie
 function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=[styleAb(b.j[0])].concat(b.j.slice(1).map(id=>jutsu(id))),w=[5,1,1,1,1,1];let hp=0,pw=0,sp=0,W=0;
@@ -230,7 +239,7 @@ function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=[styleAb(b.j[0])
 // générateur pseudo-aléatoire déterministe (mêmes ninjas adverses chez tous les joueurs en ligne)
 const srnd=seed=>()=>(seed=seed*16807%2147483647)/2147483647;
 function randomKit(r,b){const k=a=>Math.floor(r()*a.length);b.nat=k(NATURES);b.clan=r()<.8?k(CLANS):-1;b.voie=k(VOIES);b.pass=k(PASSK);
- b=sanitizeBuild(b);const ST=STYLES.map((_,i)=>i).filter(i=>styleOk(i,b.clan));b.j=[ST[k(ST)]];for(let s=1;s<6;s++){const A=avail(b,s);b.j.push(A[k(A)].id)}return sanitizeBuild(b,true)}
+ b=sanitizeBuild(b);const ST=STYLES.map((_,i)=>i).filter(i=>styleOk(i,b.clan));b.j=[ST[k(ST)]];for(let s=1;s<6;s++){const A=avail(b,s).filter(j=>!b.j.slice(1).includes(j.id));b.j.push(A[k(A)].id)}return sanitizeBuild(b,true)}
 function randomBuild(r,side,name){const k=a=>Math.floor(r()*a.length);
  return randomKit(r,{name,side,l:{v:side&&r()<.6?6:k(VILLAGES.slice(0,6)),t:side?(r()<.55?2:k(TENUES)):[0,1,3,4,5,6,7][k([0,1,3,4,5,6,7])],c:k(COIFS),h:k(HAIRC),p:k(PEAUX),k:k(CHAKRAS),a:r()<.6?0:k(ACCS)}})}
 const BOTN=[['Hayate','Kaito','Ren','Sora','Yuki','Haruto','Aiko','Daichi','Emi','Hikaru','Kenji','Mitsuki','Natsu','Riku','Saki','Takumi','Yori','Asuka','Jiro','Kaede'],

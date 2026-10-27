@@ -36,7 +36,7 @@ rep(" deflect:()=>{osc('square',2600,1700,.13,.03,{bp:2600,q:6,rev:1});","  defl
 # ---------- persos : les kits Star Wars deviennent la réserve de jutsu (SRC)
 rep("const CH={\n","const SRC={\n")
 rep("for(const k in BAL){const [hp,pw,spd]=BAL[k];Object.assign(CH[k],{hp,pw,spd})}","for(const k in BAL){const [hp,pw,spd]=BAL[k];Object.assign(SRC[k],{hp,pw,spd})}")
-rep("const HEROES=Object.keys(CH).filter(k=>!CH[k].trooper);",open(SP+'nr_ninja.js').read().replace('/*NR_PASS*/',open(SP+'nr_pass.js').read()))
+rep("const HEROES=Object.keys(CH).filter(k=>!CH[k].trooper);",open(SP+'nr_ninja.js').read().replace('/*NR_PASS*/',open(SP+'nr_pass.js').read()).replace('/*NR_NATURE*/',open(SP+'nr_nature.js').read()))
 rep("playerChamp='luke',aiChamp='vader'","playerChamp='p0',aiChamp='b20'")
 rep(",hover='luke';",",hover='p0';")
 rep("const saberCol=u=>u.ch.look.weapon.col||'#ccc';\nconst canBlock=u=>u.ch.look.weapon.t==='saber';",
@@ -207,5 +207,24 @@ rep(" ex:()=>{osc('triangle',523,1046,.22,.05,{rev:1});"," rasengan:()=>{osc('sq
 # ambiance et poussière
 rep(" drawHud();drawCutin();"," drawAmbient();drawHud();drawCutin();")
 rep(" const aur=u.auraV&&auraOn(u);"," drawDust(u);const aur=u.auraV&&auraOn(u);")
+# natures sur mesure : canalisations, charges, dragon dirigeable, souffles, murs, tornades
+rep("if(ab.ult&&u.energy<100)return false;","if(ab.ult&&u.energy<100&&!(u.chan&&u.chan.i===i))return false;")
+rep("if(ab.ult){u.energy-=100;","if(ab.ult&&!(u.chan&&u.chan.i===i)){u.energy-=100;")
+rep("if(u.flame){const f=u.flame;f.t-=dt;f.k-=dt;if(near(u.x,u.y))for(let i=0;i<3;i++){const b=u.aim+(rnd()-.5)*.6,s=350+rnd()*150;fx.push({x:u.x+Math.cos(u.aim)*20,y:u.y+Math.sin(u.aim)*20,z:26,vx:Math.cos(b)*s,vy:Math.sin(b)*s,t:.4,m:.4,col:rnd()<.5?'#f93':'#fc4',r:4+rnd()*3})}",
+    "if(u.flame){const f=u.flame;f.t-=dt;f.k-=dt;const FR=f.R||175,FA=f.arc||.4,wv=f.v==='wind';if(near(u.x,u.y))for(let i=0;i<(FR>200?5:3);i++){const b=u.aim+(rnd()-.5)*FA*1.5,s=(350+rnd()*150)*FR/175;fx.push({x:u.x+Math.cos(u.aim)*20,y:u.y+Math.sin(u.aim)*20,z:26,vx:Math.cos(b)*s,vy:Math.sin(b)*s,t:.4,m:.4,col:wv?'#e8fff8':rnd()<.5?'#f93':'#fc4',r:4+rnd()*3,vfx:f.v||'fire'})}")
+rep("if(f.k<=0){f.k=.12;S('flame',u);for(const e of enemies(u))if(dist(u,e)<175+e.r&&angDiff(ang(u,e),u.aim)<.4)hit(e,u,3.5,{slow:.5,unblockable:1})}",
+    "if(f.k<=0){f.k=.12;VFX=f.v||'fire';S('flame',u);for(const e of enemies(u))if(dist(u,e)<FR+e.r&&angDiff(ang(u,e),u.aim)<FA)hit(e,u,f.d||3.5,{slow:.5,unblockable:1,kb:f.kb,dot:f.dot,silent:!!f.kb});VFX=null}")
+s=s.replace("*(u.flame?.5:1)*","*(u.flame?(u.flame.still?0:.5):1)*")
+rep(" for(const p of projs){VFX=p.vfx||null;\n"," for(const p of projs){VFX=p.vfx||null;if(p.steer&&p.owner&&!p.owner.dead){const o=p.owner,tx=o.x+Math.cos(o.aim)*700,ty=o.y+Math.sin(o.aim)*700,cur=Math.atan2(p.vy,p.vx);let df=Math.atan2(ty-p.y,tx-p.x)-cur;while(df>Math.PI)df-=2*Math.PI;while(df<-Math.PI)df+=2*Math.PI;const na=cur+clamp(df,-2.6*dt,2.6*dt),sp=Math.hypot(p.vx,p.vy);p.vx=Math.cos(na)*sp;p.vy=Math.sin(na)*sp}\n")
+rep("[tethers,te0],[traps,tr0],[projs,n0]]","[tethers,te0],[traps,tr0],[projs,n0],[walls,w0]]")
+rep(",n0=projs.length;ab.f(u,a,td,ab.P||{});",",n0=projs.length,w0=walls.length;ab.f(u,a,td,ab.P||{});")
+rep("Wl:walls.map(w=>pickK(w,['x','y','r','t','team']))","Wl:walls.map(w=>pickK(w,['x','y','r','t','team','vfx'])),Ax:aux.map(x=>pickK(x,['type','x','y','a','len','w','r','t','m','team','vfx','k']))")
+rep("walls=s.Wl||[];","walls=s.Wl||[];aux=s.Ax||[];")
+rep("const UK=['auraV',","const UK=['jstN','jstV','auraV',")
+rep("const PK=['vfx','jn',","const PK=['vfx','jn','dragon','shuri',")
+rep(" fields=fields.filter(f=>f.t>0);"," fields=fields.filter(f=>f.t>0);auxUpdate(dt);")
+rep(" drawDeploy();"," drawDeploy();drawAux();")
+rep("function resetWorld(){cutin=null;","function resetWorld(){cutin=null;aux=[];")
+rep("function drawWall(w){const p=P(w.x,w.y),rx=w.r*p.s,h=60*p.s,gr=","function drawWall(w){if(drawWallN(w))return;const p=P(w.x,w.y),rx=w.r*p.s,h=60*p.s,gr=")
 open(ROOT+'naruto/index.html','w').write(s)
 print('ok',len(s))

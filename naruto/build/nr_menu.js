@@ -8,7 +8,7 @@ const appOff=k=>k==='nat'&&MY.clan===TAIJ;
 const stylesOf=b=>STYLES.map((_,i)=>i).filter(i=>styleOk(i,b.clan));
 const appRow=i=>({y:398+i*25,l:{x:200,y:383+i*25,w:26,h:21},r:{x:374,y:383+i*25,w:26,h:21}});
 const overBudget=()=>kitCost(MY)>BUDGET;
-const cycleJ=(s,d)=>{if(!s){const L=stylesOf(MY),i=L.indexOf(MY.j[0]);MY.j[0]=L[(i+d+L.length)%L.length];return}const A=avail(MY,s),i=A.findIndex(j=>j.id===MY.j[s]);MY.j[s]=A[(i+d+A.length)%A.length].id};
+const cycleJ=(s,d)=>{if(!s){const L=stylesOf(MY),i=L.indexOf(MY.j[0]);MY.j[0]=L[(i+d+L.length)%L.length];return}const A=avail(MY,s).filter(j=>j.id===MY.j[s]||!MY.j.slice(1).includes(j.id)),i=A.findIndex(j=>j.id===MY.j[s]);MY.j[s]=A[(i+d+A.length)%A.length].id};
 const slotRow=s=>({x:428,y:150+s*64,w:812,h:58});
 const passRow={x:428,y:150+6*64,w:812,h:40};
 let presetI=-1;const presetBtn={x:428,y:640,w:180,h:30};
@@ -17,7 +17,7 @@ const pickRect=(s,i)=>{const cols=2,w=330,h=60;return{x:W/2-w-6+(i%cols)*(w+12),
 function rebuildMine(){MY=sanitizeBuild(MY);try{localStorage.setItem('nrBuild3',JSON.stringify(MY))}catch(e){}CH.p0=mkNinja(MY);
  if(net.role==='host'){net.ready=false;sendLobby()}else if(isGuest()&&coop()){net.ready=false;netSend({t:'build',b:MY});netSend({t:'ready',v:false})}}
 function creatorClick(){
- if(picker!==null){const A=picker?avail(MY,picker).map(j=>j.id):stylesOf(MY);for(let i=0;i<A.length;i++)if(inRect(mouse,pickRect(picker,i))){MY.j[picker]=A[i];rebuildMine();break}picker=null;return true}
+ if(picker!==null){const A=picker?avail(MY,picker).map(j=>j.id):stylesOf(MY);for(let i=0;i<A.length;i++)if(inRect(mouse,pickRect(picker,i))){if(picker&&A[i]!==MY.j[picker]&&MY.j.slice(1).includes(A[i]))break;MY.j[picker]=A[i];rebuildMine();break}picker=null;return true}
  if(inRect(mouse,nameBtn)){const n=prompt('Nom de ton ninja (16 caractères max)',MY.name);if(n!==null){MY.name=n.trim()||MY.name;rebuildMine()}return true}
  if(inRect(mouse,rndBtn)){const r=srnd((Date.now()%2147483647)||7),b=randomBuild(r,MY.side,MY.name);MY.l=b.l;rebuildMine();return true}
  if(inRect(mouse,presetBtn)){presetI=(presetI+1)%PRESETS.length;MY=presetBuild(presetI,MY.name,MY.side);rebuildMine();return true}
@@ -75,11 +75,11 @@ function drawMenu(){
  if(coop()){const b=readyBtn,on=net.ready&&!overBudget();g.fillStyle=on?'#7f7':inRect(mouse,b)?'#ffb347':'rgba(255,154,58,.85)';g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,16);g.fill();text(on?'PRÊT ✓':'PRÊT ?',b.x+b.w/2,b.y+21,13,'#10131c','center')}
  // --- liste complète d'un emplacement
  if(picker!==null){g.fillStyle='rgba(0,0,0,.72)';g.fillRect(0,0,W,H);text(picker?`${lbl[SLOTS[picker]]} · ${SLOTN[picker]} : choisis ton jutsu (${kitCost(MY)}/${BUDGET} points)`:'Style de combat de ton clan (gratuit)',W/2,132,18,'#ffb347');
-  (picker?avail(MY,picker):stylesOf(MY).map(i=>({style:i}))).forEach((J,i)=>{const R=pickRect(picker,i),ab=picker?jutsu(J.id):styleAb(J.style),sel=MY.j[picker]===(picker?J.id:J.style),h=inRect(mouse,R);
+  (picker?avail(MY,picker):stylesOf(MY).map(i=>({style:i}))).forEach((J,i)=>{const R=pickRect(picker,i),ab=picker?jutsu(J.id):styleAb(J.style),sel=MY.j[picker]===(picker?J.id:J.style),h=inRect(mouse,R),used=picker&&!sel&&MY.j.slice(1).includes(J.id);
    g.fillStyle=sel?'rgba(110,70,30,.98)':h?'rgba(70,46,24,.98)':'rgba(24,16,10,.97)';g.strokeStyle=sel?'#ffb347':'#5a3a1e';g.lineWidth=sel?2:1;g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,8);g.fill();g.stroke();
    if(picker){rankBadge(R.x+10,R.y+6,J);text(catName(J.cat),R.x+R.w-10,R.y+18,10,catCol(J.cat),'right','normal')}else{styleBadge(R.x+10,R.y+6);text(STYLES[J.style][4]==='kunai'||STYLES[J.style][4]==='senbon'||STYLES[J.style][4]==='bugs'||STYLES[J.style][4]==='sand'?'Distance':STYLES[J.style][4]==='shadow'||STYLES[J.style][4]==='chain'?'Moyenne portée':'Corps à corps',R.x+R.w-10,R.y+18,10,'#ffd38a','right','normal')}
    tfit(`${ab.n}${ab.ult?'':` · ${ab.cd}s`}${ab.charges?` · ${ab.charges} charges`:''}${ab.cast?` · incant. ${ab.cast}s`:''}`,R.x+62,R.y+20,14,'#ffd38a',R.w-150,'bold');
-   tfit(ab.d||'',R.x+12,R.y+37,12,'#e8cfa8',R.w-24);if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+12,R.y+52,11,'#d8c060',R.w-24)});
+   tfit(ab.d||'',R.x+12,R.y+37,12,'#e8cfa8',R.w-24);if(used){g.fillStyle='rgba(10,6,4,.7)';g.fillRect(R.x,R.y,R.w,R.h);text('DÉJÀ DANS TON KIT',R.x+R.w/2,R.y+36,12,'#ffb347')}if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+12,R.y+52,11,'#d8c060',R.w-24)});
   text('Clique ailleurs pour fermer',W/2,710,12,'#b89a70','center','normal')}
  else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
  drawCursor();
