@@ -10,6 +10,7 @@ const overBudget=()=>kitCost(MY)>BUDGET;
 const cycleJ=(s,d)=>{const A=avail(MY,s),i=A.findIndex(j=>j.id===MY.j[s]);MY.j[s]=A[(i+d+A.length)%A.length].id};
 const slotRow=s=>({x:428,y:150+s*64,w:812,h:58});
 const passRow={x:428,y:150+6*64,w:812,h:40};
+let presetI=-1;const presetBtn={x:428,y:640,w:180,h:30};
 const nameBtn={x:40,y:150,w:300,h:30},rndBtn={x:348,y:150,w:52,h:30},rndBuildBtn={x:428,y:600,w:180,h:34},fightBtn={x:1030,y:592,w:210,h:48};
 const pickRect=(s,i)=>{const cols=2,w=330,h=60;return{x:W/2-w-6+(i%cols)*(w+12),y:150+Math.floor(i/cols)*(h+8),w,h}};
 function rebuildMine(){MY=sanitizeBuild(MY);try{localStorage.setItem('nrBuild',JSON.stringify(MY))}catch(e){}CH.p0=mkNinja(MY);
@@ -18,6 +19,7 @@ function creatorClick(){
  if(picker!==null){const A=avail(MY,picker);for(let i=0;i<A.length;i++)if(inRect(mouse,pickRect(picker,i))){MY.j[picker]=A[i].id;rebuildMine();break}picker=null;return true}
  if(inRect(mouse,nameBtn)){const n=prompt('Nom de ton ninja (16 caractères max)',MY.name);if(n!==null){MY.name=n.trim()||MY.name;rebuildMine()}return true}
  if(inRect(mouse,rndBtn)){const r=srnd((Date.now()%2147483647)||7),b=randomBuild(r,MY.side,MY.name);MY.l=b.l;rebuildMine();return true}
+ if(inRect(mouse,presetBtn)){presetI=(presetI+1)%PRESETS.length;MY=presetBuild(presetI,MY.name,MY.side);rebuildMine();return true}
  if(inRect(mouse,rndBuildBtn)){MY=randomKit(srnd((Date.now()%2147483647)||7),MY);rebuildMine();return true}
  for(let i=0;i<APP.length;i++){const R=appRow(i),n=APP[i][1]().length,k=APP[i][2];if(appOff(k))continue;
   if(inRect(mouse,R.l)){setB(k,(getB(k)+n-1)%n);rebuildMine();return true}if(inRect(mouse,R.r)){setB(k,(getB(k)+1)%n);rebuildMine();return true}}
@@ -61,11 +63,11 @@ function drawMenu(){
   tfit(ab.d||'',R.x+160,R.y+36,12,'#e8cfa8',590);if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+160,R.y+51,11,'#d8c060',590)}
  {const R=passRow,ps=PASS[ch.pass],h=inRect(mouse,R)&&picker===null;g.fillStyle=h?'rgba(70,46,24,.95)':'rgba(20,14,10,.85)';g.strokeStyle='#3a6a3a';g.lineWidth=1;g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,10);g.fill();g.stroke();
   text('◀',R.x+16,R.y+26,15,'#9f9');text('▶',R.x+R.w-20,R.y+26,15,'#9f9');text('Passif',R.x+40,R.y+25,13,'#9f9','left');tfit(`${ps[0]} : ${ps[1]}`,R.x+160,R.y+25,13,'#cfe8c0',590,'bold')}
- btn(rndBuildBtn,'🎲 Kit aléatoire',false);
+ btn(rndBuildBtn,'🎲 Kit aléatoire',false);btn(presetBtn,'📜 Modèle suivant',false);if(presetI>=0)text('Modèle : '+PRESETS[presetI][0],presetBtn.x,presetBtn.y+50,12,'#ffd38a','left');
  {const c=kitCost(MY),over=c>BUDGET,x=628,y=604;text('Points du kit',x,y+2,12,'#b89a70','left','normal');for(let i=0;i<BUDGET;i++){g.fillStyle=i<c?(over?'#ff5a4a':'#ffb347'):'rgba(255,255,255,.12)';g.fillRect(x+i*13,y+8,11,10)}
   if(c>BUDGET)for(let i=BUDGET;i<c;i++){g.fillStyle='#ff5a4a';g.fillRect(x+i*13,y+8,11,10)}
   text(`${c} / ${BUDGET}`,x+96,y+2,13,over?'#ff6a5a':'#ffd38a','left');if(over)text('Trop de points : choisis des jutsu de rang plus bas',x,y+36,12,'#ff8a7a','left')}
- text('Rangs D=1 · C=2 · B=3 · A=4 · S=5 points · clique sur un jutsu pour voir la liste',812,672,11,'#b89a70','center','normal');
+ text('Rangs : D=1 · C=2 · B=3 · A=4 · S=5 points · clique sur un jutsu pour voir la liste',628,666,11,'#b89a70','left','normal');
  if(!coop())btn(fightBtn,overBudget()?'TROP DE POINTS':'COMBATTRE ▶',!overBudget(),overBudget()?'#a55':'#ff9a3a');
  if(isGuest()&&mode!=='arena'){const b=teamBtn,h=inRect(mouse,b);g.fillStyle=h?'#5a3a1e':'#2a1c10';g.strokeStyle=net.myTeam?'#ff6060':'#4db8ff';g.lineWidth=2;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,16);g.fill();g.stroke();text(`ÉQUIPE ${net.myTeam?'B':'A'} (changer)`,b.x+b.w/2,b.y+21,13,'#f3d9b0','center')}
  if(coop()){const b=readyBtn,on=net.ready&&!overBudget();g.fillStyle=on?'#7f7':inRect(mouse,b)?'#ffb347':'rgba(255,154,58,.85)';g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,16);g.fill();text(on?'PRÊT ✓':'PRÊT ?',b.x+b.w/2,b.y+21,13,'#10131c','center')}
@@ -77,6 +79,6 @@ function drawMenu(){
    tfit(`${ab.n}${ab.ult?'':` · ${ab.cd}s`}${ab.charges?` · ${ab.charges} charges`:''}${ab.cast?` · incant. ${ab.cast}s`:''}`,R.x+62,R.y+20,14,'#ffd38a',R.w-150,'bold');
    tfit(ab.d||'',R.x+12,R.y+37,12,'#e8cfa8',R.w-24);if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+12,R.y+52,11,'#d8c060',R.w-24)});
   text('Clique ailleurs pour fermer',W/2,710,12,'#b89a70','center','normal')}
- else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · Maj + jutsu = version EX (25 énergie) · ${lbl.KeyF} maintenu = parade au kunai · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
+ else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · Maj + jutsu = version EX (25 chakra) · ${lbl.KeyF} maintenu = parade au kunai · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
  drawCursor();
 }

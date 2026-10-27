@@ -145,5 +145,39 @@ rep("Fi:fields.map(f=>pickK(f,['x','y','r','t','m','team','col','heal','dps','sl
 rep("Te:tethers.map(t=>[units.indexOf(t.a),units.indexOf(t.b),rd(t.t),t.m,t.col])","Te:tethers.map(t=>[units.indexOf(t.a),units.indexOf(t.b),rd(t.t),t.m,t.col,t.vfx])")
 rep("tethers=(s.Te||[]).map(([a,b,t,m,col])=>({a:units[a],b:units[b],t,m,col}))","tethers=(s.Te||[]).map(([a,b,t,m,col,vfx])=>({a:units[a],b:units[b],t,m,col,vfx}))")
 rep("for(const [x,y,c,k] of s.ev.sp||[])if(nearMe(x,y))sparks(x,y,c,k);","for(const [x,y,c,k,v] of s.ev.sp||[])if(nearMe(x,y))sparks(x,y,c,k,v);")
+
+# ---------- grosse passe : auras, annonces d'ultime, mudras, sons par élément, chakra, cartes, décors de jutsu
+rep(" if(VFX)for(const [L,i0] of[[fx,f0],[zones,z0],[fields,fi0],[tethers,te0],[traps,tr0],[projs,n0]])for(let i=i0;i<L.length;i++)L[i].vfx=L[i].vfx||VFX;VFX=null;",
+    " if(VFX)for(const [L,i0] of[[fx,f0],[zones,z0],[fields,fi0],[tethers,te0],[traps,tr0],[projs,n0]])for(let i=i0;i<L.length;i++)L[i].vfx=L[i].vfx||VFX;VFX=null;\n for(let i=z0;i<zones.length;i++)zones[i].jn=zones[i].jn||ab.n;\n if(ab.vfx&&AURK.some((k,i)=>(u[k]||0)>AB0[i]+.05))u.auraV=ab.vfx;\n if(ab.ult){say(u,ab.n+' !',u.ch.look.weapon.col||'#ffb347');S('roar',u);if(u===player)cutin={s:ab.n,t:1.4,col:u.ch.look.weapon.col,who:u.ch.name};else if(net.role==='host'&&u.ctrl==='remote')net.ev.ci.push([units.indexOf(u),ab.n])}")
+rep("VFX=ab.vfx||null;const f0=fx.length,","VFX=ab.vfx||null;const AB0=AURK.map(k=>u[k]||0),f0=fx.length,")
+s=s.replace("{fx:[],txt:[],snd:[],sp:[]}","{fx:[],txt:[],snd:[],sp:[],ci:[]}")
+rep("for(const [x,y,c,k,v] of s.ev.sp||[])if(nearMe(x,y))sparks(x,y,c,k,v);","for(const [x,y,c,k,v] of s.ev.sp||[])if(nearMe(x,y))sparks(x,y,c,k,v);for(const [i,n] of s.ev.ci||[])if(i===s.you&&units[i])cutin={s:n,t:1.4,col:units[i].ch.look.weapon.col,who:units[i].ch.name};")
+rep("if(u.regenB>0)gain(u,10*dt,u);","if(u.auraV&&!auraOn(u))u.auraV=null;if(u.regenB>0)gain(u,10*dt,u);")
+rep("const UK=['c',","const UK=['auraV','c',")
+rep(" drawChar(u,p.x,p.y,S2);"," const aur=u.auraV&&auraOn(u);if(aur)drawAura(u,p,S2,sk);drawChar(u,p.x,p.y,S2);if(aur)drawAura(u,p,S2,sk,1);")
+rep(" drawHud();\n if(keys.Tab"," drawHud();drawCutin();\n if(keys.Tab")
+# zones : décor des jutsu marquants (bûche, crapaud, Rasen-shuriken…)
+rep("const PK=['vfx',","const PK=['vfx',")
+rep(",ZK=['x','y','r','t','m','col','vfx'];",",ZK=['x','y','r','t','m','col','vfx','jn'];")
+rep("g.strokeStyle=zc;g.lineWidth=2;gEll(z.x,z.y,z.r);g.stroke()}","g.strokeStyle=zc;g.lineWidth=2;gEll(z.x,z.y,z.r);g.stroke();if(z.jn)drawZoneDeco(z)}")
+# mudras pendant l'incantation
+rep("if(u.cast){g.fillStyle=rgba(w.col,.35+rnd()*.3);g.beginPath();g.arc(-hx*.5,hy+2,5+rnd()*3,0,7);g.fill()}return}",
+    "if(u.cast){const t=performance.now()/90;g.strokeStyle=L.arm;g.lineWidth=4;g.lineCap='round';g.beginPath();g.moveTo(-5,-33);g.lineTo(fx0(u)*3,-27+Math.sin(t)*1.5);g.moveTo(5,-33);g.lineTo(fx0(u)*3,-27-Math.sin(t)*1.5);g.stroke();\n  g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(w.col,.45+rnd()*.3);g.beginPath();g.arc(fx0(u)*3,-27,6+rnd()*3,0,7);g.fill();g.strokeStyle=rgba(w.col,.8);g.lineWidth=1.2;g.beginPath();g.arc(fx0(u)*3,-27,11,t*.5,t*.5+4.5);g.stroke();g.restore()}return}")
+rep("function drawWeapon(u,a,L){","const fx0=u=>Math.cos(u.aim);\nfunction drawWeapon(u,a,L){")
+# yeux de clan
+rep("   eyes('#222');\n   if(!back){if(h.acc==='masque')","   eyes(h.eye||'#222');if(!back&&h.eye==='#e01a1a'){g.fillStyle='#111';g.fillRect(ex-4.5,hy+2,1,1);g.fillRect(ex+3.5,hy+2,1,1)}if(!back&&h.kaguya){circ(ex-3,hy-2,1.2,'#c22');circ(ex+3,hy-2,1.2,'#c22')}\n   if(!back){if(h.acc==='masque')")
+# sons par élément
+s2=None
+
+s=re.sub(r"const sndKey=\(n,u\)=>[^;]*;","const sndKey=(n,u)=>{const m=VFX&&VSND[VFX];return!m||VSKIP[n]?n:(m[n]||m['*']||n)};",s,count=1)
+rep(" ex:()=>{osc('triangle',523,1046,.22,.05,{rev:1});"," fire:()=>{nz(.5,.11,{type:'lowpass',f0:1800,f1:300,rev:1});osc('sawtooth',90,50,.4,.04,{lp:500})},\n water:()=>{nz(.35,.09,{type:'bandpass',f0:1400,f1:400,q:1.5,rev:1});for(let i=0;i<3;i++)osc('sine',600+i*220,1200+i*300,.08,.03,{delay:.05+i*.06})},\n wind:()=>nz(.55,.09,{type:'bandpass',f0:600,f1:2400,q:5,rev:1}),\n chidori:()=>{nz(.45,.07,{type:'highpass',f0:4000,f1:6000,crackle:1});for(let i=0;i<5;i++)osc('square',2400+rnd()*900,3200,.05,.015,{delay:i*.07})},\n rock:()=>{osc('sine',90,40,.35,.16);nz(.3,.12,{type:'lowpass',f0:600,f1:120,rev:1})},\n sand:()=>nz(.5,.06,{type:'highpass',f0:2500,f1:1500,crackle:1}),\n poof:()=>{nz(.25,.1,{type:'bandpass',f0:900,f1:300,q:.8,rev:1});osc('sine',300,120,.12,.06)},\n bugs:()=>{osc('sawtooth',140,150,.5,.03,{lp:900});osc('sawtooth',147,141,.5,.025,{lp:900,detune:30})},\n bone:()=>{nz(.08,.12,{type:'highpass',f0:3000});osc('square',700,300,.07,.03)},\n roar:()=>{osc('sawtooth',110,70,.7,.06,{lp:700,rev:1});nz(.6,.08,{type:'lowpass',f0:900,f1:200})},\n genjutsu:()=>{osc('sine',880,440,.6,.04,{rev:1});osc('sine',1320,660,.6,.025,{rev:1,delay:.05})},\n jyuken:()=>{nz(.2,.08,{type:'bandpass',f0:1800,f1:900,q:2});osc('sine',520,260,.15,.05)},\n shadow:()=>{osc('sine',160,80,.5,.05,{rev:1});nz(.4,.04,{type:'lowpass',f0:400,f1:150})},\n ex:()=>{osc('triangle',523,1046,.22,.05,{rev:1});")
+# chakra plutôt qu'énergie
+s=s.replace("Maj + sort = version EX (25 énergie)","Maj + jutsu = version EX (25 chakra)")
+rep("function eBar(x,y,w,v,right){bar(x,y,w,5,v,'#ffe81f',right);","function eBar(x,y,w,v,right){bar(x,y,w,5,v,'#4ab0ff',right);")
+rep("g.fillStyle='#ffe81f';g.fillRect(x,y+7,w*u.energy/100,2);","g.fillStyle='#4ab0ff';g.fillRect(x,y+7,w*u.energy/100,2);")
+# cartes de l'arène
+rep("const CFG={team:1,wins:2,bsize:20,tickets:60,sd:true,orb:true,pk:true};","const CFG={team:1,wins:2,bsize:20,tickets:60,sd:true,orb:true,pk:true,map:0};")
+rep('<label>Manches gagnantes','<label>Carte <select id="cMap"><option value="0">Terrain d\'entraînement</option><option value="1">Vallée de la Fin</option><option value="2">Désert de Suna</option></select></label>\n <label>Manches gagnantes')
+rep("const CSEL=[['cTeam','team'],","const CSEL=[['cMap','map'],['cTeam','team'],")
 open(ROOT+'naruto/index.html','w').write(s)
 print('ok',len(s))
