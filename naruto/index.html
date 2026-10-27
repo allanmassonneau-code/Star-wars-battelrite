@@ -699,7 +699,7 @@ const JD=[
  ['c10',1,'B','anakin.1','Konoha Gôriki Senpû','Coup de pied surpuissant qui ignore les parades','tai'],
  ['c10',1,'S','savage.1','Lotus primaire','Fonce, saisit la cible et la projette en l\'air','gate'],
  ['c10',2,'D','quigon.2','Poids retirés','Très rapide 2 s, se libère des entraves','gate'],
- ['c10',2,'B','savage.2','Bond du fauve','Bondit et repousse tout à l\'arrivée','tai'],
+ ['c10',2,'A','savage.2','Bond du fauve','Bondit et repousse tout à l\'arrivée','tai'],
  ['c10',2,'B','ventress.2','Vitesse du fauve','Disparaît et réapparaît derrière l\'ennemi visé','gate'],
  ['c10',3,'C','mace.1','Défi éternel','La cible défiée subit +25 % de dégâts','gate'],
  ['c10',3,'C','bossk.2','Dynamic Entry','Fond sur l\'ennemi le plus blessé d\'un coup de pied volant','tai'],
@@ -716,7 +716,7 @@ const JD=[
 ];
 // réglages propres à certains jutsu (réglés par duels simulés)
 const JPAR={'Multiclonage':{d:1.2},'Ninken':{d:3},'Insectes dévoreurs':{dps:4},'Chidori':{sp:1}};
-const JCD={'Lotus primaire':10}; // temps de recharge propres à certains jutsu
+const JCD={'Lotus primaire':10,'Lotus caché':9}; // temps de recharge propres à certains jutsu
 const JL=JD.map(([cat,slot,r,src,n,d,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,vfx,P:JPAR[n]}));
 const SLOTN=['Style de combat','Jutsu principal','Déplacement','Technique','Défense','Ultime'];
 const catName=c=>c==='u'?'Subjutsu':c[0]==='n'?NATURES[+c.slice(1)][0]:'Clan '+CLANS[+c.slice(1)][0];
