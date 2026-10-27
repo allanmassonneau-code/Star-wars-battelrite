@@ -2,6 +2,8 @@
 
 Jeu de combat en vue 3/4 plongeante (comme Battlerite), jouable directement dans le navigateur : ouvrir `index.html`.
 
+**Version Naruto** (on crée son propre ninja et son build de jutsu) : voir [`naruto/`](naruto/README.md).
+
 ## Modes
 - **Arène 1 contre 1** : héros contre méchant, au meilleur des 3 manches. Holocron de soin à 18 s, mort subite à 45 s.
 - **Bataille 20 contre 20** : les 20 héros contre les 20 méchants sur une grande carte, caméra qui suit le joueur. 60 renforts par camp, chaque élimination en coûte 1. Réapparition à la base, holocrons de soin, mini-carte et fil des éliminations.
