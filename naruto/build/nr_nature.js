@@ -32,7 +32,7 @@ const NAT={
  // ---- Katon
  ka_ball:SP('Katon : Flamme','Projectile de feu qui brûle quelques secondes',4,{ai:RG(520,.7)},(u,a)=>{S('fire',u);fireP(u,a,{})}),
  ka_wall:SP('Katon : Mur de feu','Mur de feu qui bloque les tirs et le passage, et brûle au contact',9,{ai:DEF},(u,a)=>{wallLine(u,a,2,{burn:1,k:0});S('fire',u)}),
- ka_tri:SP('Katon : Triple flamme','3 projectiles de feu qui brûlent',6,{ai:RG(520,.6)},(u,a)=>{S('fire',u);for(const k of[-.18,0,.18])fireP(u,a+k,{dmg:9,o:{dot:BURN(3,2.5)}})}),
+ ka_tri:SP('Katon : Triple flamme','3 boules de feu tirées l\'une après l\'autre, qui brûlent',6,{ai:RG(520,.6)},(u,a)=>{S('fire',u);fireP(u,a,{dmg:9,o:{dot:BURN(3,2.5)}});seqs.push({owner:u,n:2,t:.16,iv:.16,vfx:'fire',f:o=>{S('fire',o);fireP(o,o.aim,{dmg:9,o:{dot:BURN(3,2.5)}})}})}),
  ka_air:SP('Katon : Shuriken de feu aériens','Saute et lance 5 shuriken de feu sur un point précis',8,{ai:RG(450,.55)},(u,a,t)=>{S('fire',u);const tp=fwd(u,a,Math.min(t||300,450));dash(u,a,0,.45,{jump:110});
   for(let i=0;i<5;i++){const ox=u.x+(rnd()-.5)*50,oy=u.y+(rnd()-.5)*50,b=Math.atan2(tp.y-oy,tp.x-ox),d=Math.hypot(tp.x-ox,tp.y-oy);projs.push({x:ox,y:oy,vx:Math.cos(b)*700,vy:Math.sin(b)*700,owner:u,src:u,rot:0,r:7,dmg:7,life:Math.max(.2,d/700),life0:Math.max(.2,d/700),col:'#ff7a2a',o:{dot:BURN(3,2.5)},vfx:'fire',shuri:1,hitSet:null})}}),
  ka_zone:SP('Katon : Fournaise','Grande zone de feu autour de soi : plus on y reste, plus ça brûle',10,{ai:SELF(200,.5)},(u)=>{aux.push({type:'prog',x:u.x,y:u.y,r:180,t:4,m:4,team:u.team,owner:u,vfx:'fire',k:0,in:{},dmg:3});S('fire',u)}),

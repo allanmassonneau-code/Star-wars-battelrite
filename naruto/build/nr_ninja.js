@@ -58,7 +58,7 @@ const JD=[
  // ---- Katon (kit sur mesure)
  ['n0',1,'D','x.ka_ball','Katon : Flamme','Projectile de feu qui brûle quelques secondes','fire'],
  ['n0',1,'D','x.ka_wall','Katon : Mur de feu','Mur de feu qui bloque les tirs et le passage, et brûle au contact','fire'],
- ['n0',1,'C','x.ka_tri','Katon : Triple flamme','3 projectiles de feu qui brûlent','fire'],
+ ['n0',1,'C','x.ka_tri','Katon : Triple flamme','3 boules de feu tirées l\'une après l\'autre, qui brûlent','fire'],
  ['n0',1,'C','x.ka_air','Katon : Shuriken de feu aériens','Saute et lance 5 shuriken de feu sur un point précis','fire'],
  ['n0',1,'B','x.ka_zone','Katon : Fournaise','Grande zone de feu autour de soi : plus on y reste, plus ça brûle','fire'],
  ['n0',1,'B','x.ka_stack','Katon : Flammes chargées','Prépare 5 flammes qui brûlent, à relancer pendant 5 s','fire'],
