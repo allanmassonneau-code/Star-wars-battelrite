@@ -80,7 +80,7 @@ const JD=[
  ['n2',4,'B','vader.4','Fûton : Mur de vent','Renvoie les tirs, repousse au contact','wind'],
  ['n2',5,'A','thrawn.5','Fûton : Rasen-shuriken','Un Rasen-shuriken s\'abat sur une grande zone','rasenshuriken'],
  // ---- Raiton
- ['n3',1,'C','grievous.1','Chidori','Fente électrique qui traverse la cible','chidori'],
+ ['n3',1,'B','rey.1','Chidori','Charge électrique qui traverse les ennemis et explose au bout','chidori'],
  ['n3',1,'C','palpatine.1','Raiton : Chaîne','Éclair qui rebondit entre les ennemis','lightning'],
  ['n3',2,'C','ig88.2','Raiton : Pas de l\'éclair','Fonce en éclair à travers les ennemis','lightning'],
  ['n3',3,'D','palpatine.3','Raiton : Orage','La foudre tombe sur une zone après un délai','lightning'],
@@ -181,7 +181,8 @@ const JD=[
  ['c10',5,'S','sister.5','Nuit de la mort','8e porte : coup fatal sur les ennemis blessés','gate'],
 ];
 // réglages propres à certains jutsu (réglés par duels simulés)
-const JPAR={'Multiclonage':{d:1.2},'Ninken':{d:3},'Insectes dévoreurs':{dps:4}};
+const JPAR={'Multiclonage':{d:1.2},'Ninken':{d:3},'Insectes dévoreurs':{dps:4},'Chidori':{sp:1}};
+const JCD={'Lotus primaire':10}; // temps de recharge propres à certains jutsu
 const JL=JD.map(([cat,slot,r,src,n,d,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,vfx,P:JPAR[n]}));
 const SLOTN=['Style de combat','Jutsu principal','Déplacement','Technique','Défense','Ultime'];
 const catName=c=>c==='u'?'Subjutsu':c[0]==='n'?NATURES[+c.slice(1)][0]:'Clan '+CLANS[+c.slice(1)][0];
@@ -219,7 +220,7 @@ function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Ma
 function ninjaLook(l,clan,style){const v=VILLAGES[l.v],S=STYLES[style]||STYLES[0];return Object.assign({},TENUES[l.t][1],clan===3?{scale:1.14}:{},clan===5?{dog:1}:{},clan===8?{gourd:1}:{},
  {head:{t:'ninja',skin:PEAUX[l.p][1],hair:HAIRC[l.h][1],style:COIFS[l.c][1],band:v[1],vil:l.v,acc:ACCS[l.a][1],eye:clan===0?'#e01a1a':clan===1?'#e8e8f8':null,kaguya:clan===9,brows:clan===TAIJ},weapon:{t:'kunai',k:S[4],col:CHAKRAS[l.k][1]}})}
 const srcAb=src=>{const [h,k]=src.split('.');return SRC[h].abil[+k]};
-function jutsu(id){const J=JL[id],b=srcAb(J.src);return Object.assign({},b,J.P?{P:Object.assign({},b.P,J.P)}:{},{n:J.n,d:J.d,ex:null,src:J.src.split('.')[0],vfx:J.vfx,rank:J.r,jid:id})}
+function jutsu(id){const J=JL[id],b=srcAb(J.src);return Object.assign({},b,J.P?{P:Object.assign({},b.P,J.P)}:{},JCD[J.n]?{cd:JCD[J.n]}:{},{n:J.n,d:J.d,ex:null,src:J.src.split('.')[0],vfx:J.vfx,rank:J.r,jid:id})}
 function styleAb(i){const S=STYLES[i],b=srcAb(S[2]);return Object.assign({},b,{n:S[0],d:S[1],ex:null,src:S[2].split('.')[0],vfx:S[3],style:i})}
 // stats : moyenne des persos d'origine (le style de combat compte pour 5 : un ninja à distance est fragile, un ninja au corps à corps solide), puis la voie
 function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=[styleAb(b.j[0])].concat(b.j.slice(1).map(id=>jutsu(id))),w=[5,1,1,1,1,1];let hp=0,pw=0,sp=0,W=0;
