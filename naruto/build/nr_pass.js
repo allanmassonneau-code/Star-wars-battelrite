@@ -30,28 +30,30 @@ function drawCutin(){if(!cutin)return;cutin.t-=1/60;if(cutin.t<=0){cutin=null;re
  g.save();g.globalAlpha=a;g.translate((1-in_)*-300,0);g.fillStyle='rgba(10,6,4,.78)';g.beginPath();g.moveTo(0,y-40);g.lineTo(W,y-62);g.lineTo(W,y+22);g.lineTo(0,y+44);g.fill();
  g.fillStyle=cutin.col;g.fillRect(0,y+38,W,3);g.save();g.translate(W*.5,y);g.rotate(-.018);g.shadowColor=cutin.col;g.shadowBlur=24;text(cutin.s,0,6,46,'#fff4d8');g.restore();text(cutin.who,W*.5,y+30,15,cutin.col,'center');g.restore()}
 // ---------- Modèles de kits inspirés des ninjas célèbres ----------
-// [libellé, nature, clan (-1 sans), 2e nature, voie, passif, 6 noms de jutsu, apparence]
+// [libellé, nature, clan (-1 sans), voie, passif, style de combat, 5 jutsu (principal, déplacement, technique, défense, ultime), apparence]
 const PRESETS=[
- ['Jinchûriki (style Naruto)',2,6,0,0,'regen',['Taijutsu','Rasengan','Roulade','Multiclonage','Première Porte','Chakra de Kyûbi'],{v:0,t:0,c:0,h:0,p:0,k:4,a:2}],
- ['Vengeur (style Sasuke)',3,0,0,1,'crit',['Kunai','Chidori','Roulade','Sharingan : Genjutsu','Sharingan','Susanô : Totsuka'],{v:0,t:5,c:0,h:1,p:0,k:3,a:0}],
- ['Prodige Uchiha (style Itachi)',0,0,0,2,'energy',['Shuriken','Katon : Boule de feu','Roulade','Sharingan : Genjutsu','Sharingan','Amaterasu'],{v:6,t:2,c:1,h:1,p:4,k:1,a:0}],
- ['Démon du sable (style Gaara)',2,8,0,2,'armor',['Shuriken','Cercueil de sable','Shunshin','Sable mouvant','Armure de sable','Tsunami de sable'],{v:1,t:6,c:3,h:7,p:4,k:4,a:0}],
- ['Génie Hyûga (style Neji)',2,1,0,0,'slow',['Poing souple','Hakke : Paume','Roulade','Byakugan','Kaiten','Hakke : 64 points'],{v:0,t:4,c:1,h:5,p:0,k:5,a:0}],
- ['Stratège (style Shikamaru)',0,2,0,1,'energy',['Kunai','Kage Mane','Shunshin','Kage Kubi Shibari','Pilule du soldat','Ombres liées'],{v:0,t:1,c:2,h:1,p:1,k:2,a:0}],
- ['Ninja copieur (style Kakashi)',3,-1,4,1,'crit',['Kunai','Chidori','Doton : Taupe','Multiclonage','Pilule du soldat','Pluie de parchemins'],{v:0,t:1,c:0,h:4,p:0,k:5,a:1}],
- ['Fauve de jade (style Rock Lee)',2,-1,4,0,'third',['Taijutsu','Coup de pied tornade','Bonds acrobatiques','Piège ninja','Première Porte','Huit Portes'],{v:0,t:7,c:3,h:1,p:0,k:2,a:0}],
- ['Maître-chien (style Kiba)',4,5,0,0,'speed',['Taijutsu','Gatsûga','Instinct bestial','Ninken','Pilule du soldat','Garôga'],{v:0,t:1,c:0,h:5,p:1,k:4,a:3}],
- ['Maître des insectes (style Shino)',4,4,0,1,'lifesteal',['Kunai','Fûma Shuriken','Roulade','Essaim d\'insectes','Pilule du soldat','Nuée destructrice'],{v:0,t:1,c:3,h:5,p:1,k:2,a:4}],
- ['Kunoichi médicale (style Sakura)',4,-1,1,0,'regen',['Poing du lotus','Lotus primaire','Saut ninja','Doton : Mur de terre','Shôsen','Doton : Montagne écrasante'],{v:0,t:0,c:1,h:2,p:0,k:2,a:0}],
- ['Gourmet géant (style Chôji)',4,3,0,0,'armor',['Poing décuplé','Lotus primaire','Boulet humain','Bombe fumigène','Pilule du soldat','Décuplement'],{v:0,t:1,c:0,h:5,p:1,k:3,a:3}],
- ['Esprit fleuri (style Ino)',2,7,0,2,'energy',['Taijutsu','Fûma Shuriken','Shunshin','Shintenshin','Pilule du soldat','Esprit destructeur'],{v:0,t:1,c:2,h:0,p:0,k:3,a:0}],
- ['Os vivants (style Kimimaro)',4,9,0,0,'third',['Danse du saule','Doigts-balles','Roulade','Piège ninja','Première Porte','Forêt d\'os'],{v:5,t:4,c:1,h:4,p:4,k:5,a:0}],
- ['Sage des crapauds (style Jiraiya)',0,-1,4,1,'rage',['Taijutsu','Rasengan','Saut ninja','Katon : Souffle ardent','Pilule du soldat','Invocation : Crapaud'],{v:0,t:6,c:1,h:4,p:1,k:0,a:3}],
- ['Artiste explosif (style Deidara)',4,-1,0,2,'crit',['Shuriken','Doton : Rocher','Saut ninja','Kunai explosifs','Doton : Corps de roche','Pluie de parchemins'],{v:6,t:2,c:1,h:0,p:0,k:4,a:0}],
+ ['Jinchûriki (style Naruto)',2,6,0,'regen','Taijutsu',['Rasengan','Fûton : Pas du vent','Multiclonage','Vitalité Uzumaki','Chakra de Kyûbi'],{v:0,t:0,c:0,h:0,p:0,k:4,a:2}],
+ ['Vengeur (style Sasuke)',3,0,1,'crit','Kenjutsu',['Chidori','Shunshin Uchiha','Sharingan : Genjutsu','Sharingan','Susanô : Totsuka'],{v:0,t:5,c:0,h:1,p:0,k:3,a:0}],
+ ['Prodige Uchiha (style Itachi)',0,0,2,'energy','Taijutsu Uchiha',['Katon : Boule de feu','Shunshin Uchiha','Sharingan : Genjutsu','Sharingan','Amaterasu'],{v:6,t:2,c:1,h:1,p:4,k:1,a:0}],
+ ['Démon du sable (style Gaara)',2,8,2,'armor','Balles de sable',['Cercueil de sable','Sable volant','Sable mouvant','Armure de sable','Tsunami de sable'],{v:1,t:6,c:3,h:7,p:4,k:4,a:0}],
+ ['Génie Hyûga (style Neji)',2,1,0,'slow','Poing souple',['Hakke : Paume','Pas du Hakke','Byakugan','Kaiten','Hakke : 64 points'],{v:0,t:4,c:1,h:5,p:0,k:5,a:0}],
+ ['Stratège (style Shikamaru)',0,2,1,'energy','Fouet d\'ombre',['Kage Mane','Course de l\'ombre','Kage Kubi Shibari','Ombre protectrice','Ombres liées'],{v:0,t:1,c:2,h:1,p:1,k:2,a:0}],
+ ['Ninja copieur (style Kakashi)',3,-1,1,'crit','Kunai',['Chidori','Roulade','Multiclonage','Pilule du soldat','Raiton : Kirin'],{v:0,t:1,c:0,h:4,p:0,k:5,a:1}],
+ ['Fauve de jade (style Rock Lee)',0,10,0,'third','Taijutsu du fauve',['Konoha Senpû','Poids retirés','Dynamic Entry','Première Porte','Huit Portes'],{v:0,t:7,c:3,h:1,p:0,k:2,a:0}],
+ ['Fauve sublime (style Gai)',0,10,0,'rage','Taijutsu du fauve',['Lotus primaire','Bond du fauve','Lotus caché','Esquive du fauve','Paon du matin'],{v:0,t:7,c:3,h:1,p:1,k:2,a:0}],
+ ['Maître-chien (style Kiba)',4,5,0,'speed','Crocs et griffes',['Gatsûga','Instinct bestial','Ninken','Flair du chien','Garôga'],{v:0,t:1,c:0,h:5,p:1,k:4,a:3}],
+ ['Maître des insectes (style Shino)',4,4,1,'lifesteal','Nuée d\'insectes',['Insectes chercheurs','Clone d\'insectes','Essaim d\'insectes','Doton : Corps de roche','Nuée destructrice'],{v:0,t:1,c:3,h:5,p:1,k:2,a:4}],
+ ['Kunoichi médicale (style Sakura)',4,-1,0,'regen','Taijutsu',['Lotus primaire','Saut ninja','Bombe fumigène','Shôsen','Doton : Montagne écrasante'],{v:0,t:0,c:1,h:2,p:0,k:2,a:0}],
+ ['Gourmet géant (style Chôji)',4,3,0,'armor','Poing décuplé',['Paume géante','Boulet humain','Décuplement partiel','Pilule rouge','Décuplement'],{v:0,t:1,c:0,h:5,p:1,k:3,a:3}],
+ ['Esprit fleuri (style Ino)',1,7,2,'energy','Senbon fleuris',['Shinranshin','Transposition','Shintenshin','Suiton : Mur d\'eau','Suiton : Grand requin'],{v:0,t:1,c:2,h:0,p:0,k:3,a:0}],
+ ['Os vivants (style Kimimaro)',4,9,0,'third','Danse des os',['Doigts-balles','Bond d\'os','Forêt naissante','Armure d\'os','Forêt d\'os'],{v:5,t:4,c:1,h:4,p:4,k:5,a:0}],
+ ['Sage des crapauds (style Jiraiya)',0,-1,1,'rage','Taijutsu',['Rasengan','Saut ninja','Katon : Souffle ardent','Pilule du soldat','Invocation : Crapaud'],{v:0,t:6,c:1,h:4,p:1,k:0,a:3}],
+ ['Éclair jaune (style Minato)',2,-1,2,'speed','Kunai',['Rasengan','Hiraishin','Parchemin explosif','Concentration du chakra','Fûton : Rasen-shuriken'],{v:0,t:1,c:0,h:0,p:0,k:6,a:0}],
+ ['Artiste explosif (style Deidara)',4,-1,2,'crit','Kunai',['Doton : Rocher','Saut ninja','Kunai explosifs','Doton : Corps de roche','Pluie de parchemins'],{v:6,t:2,c:1,h:0,p:0,k:4,a:0}],
 ];
 const PASSI=k=>Math.max(0,PASSK.indexOf(k));
-function presetBuild(i,name,side){const [lab,nat,clan,nat2,voie,pass,names,l]=PRESETS[i];
- const b={name:name||MY.name,side:side??MY.side,voie,nat,clan,nat2,pass:PASSI(pass),l:Object.assign({},l),j:names.map((n,s)=>{const J=JL.find(j=>j.n===n&&j.slot===s);return J?J.id:-1})};
+function presetBuild(i,name,side){const [lab,nat,clan,voie,pass,sty,names,l]=PRESETS[i];
+ const b={name:name||(typeof MY!=='undefined'&&MY?MY.name:'Ninja'),side:side??0,voie,nat,clan,pass:PASSI(pass),l:Object.assign({},l),j:[STYLES.findIndex(x=>x[0]===sty)].concat(names.map((n,k)=>{const J=JL.find(j=>j.n===n&&j.slot===k+1&&(j.cat==='c'+clan||j.cat==='n'+nat||(clan<0&&j.cat==='u')));return J?J.id:-1}))};
  return sanitizeBuild(b,true)}
 // ---------- Cartes de l'arène ----------
 const MAPS=[['Terrain d\'entraînement'],['Vallée de la Fin'],['Désert de Suna']];

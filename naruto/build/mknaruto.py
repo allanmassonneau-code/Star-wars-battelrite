@@ -180,5 +180,9 @@ rep("const CFG={team:1,wins:2,bsize:20,tickets:60,sd:true,orb:true,pk:true};","c
 rep('<label>Manches gagnantes','<label>Carte <select id="cMap"><option value="0">Terrain d\'entraînement</option><option value="1">Vallée de la Fin</option><option value="2">Désert de Suna</option></select></label>\n <label>Manches gagnantes')
 rep("const CSEL=[['cTeam','team'],","const CSEL=[['cMap','map'],['cTeam','team'],")
 rep("function resetWorld(){","function resetWorld(){cutin=null;")
+# pas de versions EX dans le jeu Naruto
+rep("ex=!!(ex&&i>0&&!ab.ult&&u.energy>=25);","ex=false;")
+rep("exOn=(keys.ShiftLeft||keys.ShiftRight)&&p.energy>=25","exOn=false")
+s=s.replace("Maj + jutsu = version EX (25 chakra) · ","")
 open(ROOT+'naruto/index.html','w').write(s)
 print('ok',len(s))
