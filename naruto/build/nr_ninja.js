@@ -24,7 +24,7 @@ const JD=[
  ['u',2,'C','yoda.2','Bonds acrobatiques','3 petits bonds rechargeables','','','leaf'],
  ['u',2,'D','rey.2','Roulade','Roulade rapide','','','smoke'],
  ['u',2,'A','ventress.2','Hiraishin','Apparaît derrière l\'ennemi visé','','','chakra'],
- ['u',3,'A','gideon.3','Multiclonage','Deux clones qui lancent des kunai 7 s','Clones d\'ombre','Dégâts doublés','smoke'],
+ ['u',3,'S','gideon.3','Multiclonage','Deux clones qui lancent des kunai 7 s','Clones d\'ombre','Dégâts doublés','smoke'],
  ['u',3,'C','han.3','Parchemin explosif','Se colle au premier ennemi et explose','','','tag'],
  ['u',3,'D','lando.3','Bombe fumigène','Fumée : ralentit les ennemis, cache les alliés','','','smoke'],
  ['u',3,'C','wicket.3','Piège ninja','Piège qui étourdit et repousse','','','steel'],
@@ -79,10 +79,10 @@ const JD=[
  ['c2',5,'A','rey.5','Ombres liées','Attire tous les ennemis proches puis les étourdit','','','shadow'],
  ['c3',0,'D','savage.0','Poing décuplé','Coups lourds','','','tai'],
  ['c3',2,'D','chewie.2','Boulet humain','Roule et renverse','','','tai'],
- ['c3',5,'A','savage.5','Décuplement','Devient énorme 6 s : bouclier, dégâts et portée','','','gate'],
+ ['c3',5,'B','savage.5','Décuplement','Devient énorme 6 s : bouclier, dégâts et portée','','','gate'],
  ['c4',3,'A','boba.3','Essaim d\'insectes','3 nuées qui empoisonnent','','','bugs'],
- ['c4',4,'A','ventress.4','Insectes dévoreurs','Lien qui vole le chakra tant que la cible reste proche','','','bugs'],
- ['c4',5,'A','deathtrooper.5','Nuée destructrice','3 nuées qui attaquent 8 s','','','bugs'],
+ ['c4',4,'S','ventress.4','Insectes dévoreurs','Lien qui vole le chakra tant que la cible reste proche','','','bugs'],
+ ['c4',5,'S','deathtrooper.5','Nuée destructrice','3 nuées qui attaquent 8 s','','','bugs'],
  ['c5',1,'B','rey.1','Gatsûga','Tornade qui traverse les ennemis','','','tai'],
  ['c5',2,'C','bossk.2','Instinct bestial','Bondit sur l\'ennemi le plus blessé','','','tai'],
  ['c5',3,'A','iden.1','Ninken','Un chien ninja le suit et attaque 8 s','','','smoke'],
@@ -103,7 +103,7 @@ const JD=[
  // ---- ajouts (en fin de liste pour garder les ninjas déjà enregistrés)
  ['u',0,'C','finn.0','Double kunai','Deux kunai lancés ensemble','','','kunai'],
  ['u',2,'C','padme.2','Kunai à fil','Plante un kunai et se tire jusqu\'à lui','','','chain'],
- ['u',3,'C','jango.3','Clone explosif','Un clone piégé explose en grand anneau','','','smoke'],
+ ['u',3,'D','jango.3','Clone explosif','Un clone piégé explose en grand anneau','','','smoke'],
  ['u',4,'C','luke.3','Concentration du chakra','Réduit tous ses temps de recharge de 2 s','','','chakra'],
  ['u',5,'S','yoda.5','Mode Ermite','6 s : vitesse, dégâts et soin','','','gate'],
  ['u',5,'B','r2.5','Invocation : Katsuyu','La limace soigne et recharge le chakra des alliés proches','','','heal'],
@@ -153,9 +153,11 @@ function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Ma
 // le clan se voit : Sharingan, Byakugan, carrure Akimichi, marques Kaguya
 function ninjaLook(l,clan){const v=VILLAGES[l.v];return Object.assign({},TENUES[l.t][1],clan===3?{scale:1.14}:{},{head:{t:'ninja',skin:PEAUX[l.p][1],hair:HAIRC[l.h][1],style:COIFS[l.c][1],band:v[1],vil:l.v,acc:ACCS[l.a][1],eye:clan===0?'#e01a1a':clan===1?'#e8e8f8':null,kaguya:clan===9},weapon:{t:'kunai',col:CHAKRAS[l.k][1]}})}
 function jutsu(id){const J=JL[id],[h,k]=J.src.split('.'),b=SRC[h].abil[+k];return Object.assign({},b,{n:J.n,d:J.d,ex:b.ex?{n:J.xn||J.n,d:J.xd||b.ex.d,p:b.ex.p}:null,src:h,vfx:J.vfx,rank:J.r,jid:id})}
+// l'attaque de base fixe le profil : à distance = moins de PV et de puissance, au corps à corps = plus (réglé par duels simulés)
+const BASICMOD={'Kunai':[.85,.85],'Double kunai':[.8,.8],'Shuriken':[.85,.88],'Senbon':[.8,.8],'Raiton : Étincelles':[1,1],'Taijutsu':[1.2,1.15],'Lame de chakra':[1.3,1.25],'Grande épée':[1.32,1.3],'Poing du lotus':[1.2,1.2],'Poing souple':[1.15,1.12],'Poing décuplé':[1.3,1.25],'Danse du saule':[1.32,1.3]};
 // stats : moyenne des persos d'origine des jutsu (l'attaque de base compte pour 5 : un ninja à distance est fragile, un ninja au corps à corps solide), puis la voie
 function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=b.j.map(id=>jutsu(id)),w=[5,1,1,1,1,1];let hp=0,pw=0,sp=0,W=0;
- abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie];
+ abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie],bm=BASICMOD[abil[0].n]||[1,1];hp*=bm[0];pw*=bm[1];
  const lign=b.clan>=0?'Clan '+CLANS[b.clan][0]:'Sans clan · '+NATURES[b.nat2][0];
  return{name:b.name,side:b.side,desc:`${v[0]} · ${NATURES[b.nat][0]} · ${lign}`,hp:Math.round(hp/W*v[1]),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,pref:200,pass:PASSK[b.pass],look:ninjaLook(b.l,b.clan),abil,build:b}}
 // générateur pseudo-aléatoire déterministe (mêmes ninjas adverses chez tous les joueurs en ligne)
