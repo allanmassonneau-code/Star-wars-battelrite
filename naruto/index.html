@@ -802,7 +802,7 @@ function mkUnit(c,x,y,team){const ch=CH[c];return{c,ch,x,y,z:0,vx:0,vy:0,kx:0,ky
 let STATS={},CUR=null;
 const stOf=u=>{const k=u.c+'|'+u.team;return STATS[k]||(STATS[k]={c:u.c,team:u.team,k:0,d:0,a:0,dmg:0,tk:0,heal:0,sh:0})};
 function startMatch(c){playerChamp=c;STATS={};const o=HEROES.filter(x=>CH[x].side!==CH[c].side);aiChamp=o[Math.floor(rnd()*o.length)];score=[0,0];round=1;MT=mode!=='battle'?buildTeams(teamN()):null;mode!=='battle'?startRound():startBattle()}
-function resetWorld(){tethers=[];traps=[];turrets=[];fields=[];walls=[];projs=[];fx=[];txt=[];zones=[];orb=null;orbUsed=false;timer=0;banner=null;killfeed=[];state='countdown';stateT=3}
+function resetWorld(){cutin=null;tethers=[];traps=[];turrets=[];fields=[];walls=[];projs=[];fx=[];txt=[];zones=[];orb=null;orbUsed=false;timer=0;banner=null;killfeed=[];state='countdown';stateT=3}
 // joueurs humains : l'hôte (local) + les amis connectés (remote). Arène = tous ensemble contre des bots ; duel = deux équipes de joueurs
 function humanList(){const L=lobbyList().map(x=>({c:x.c&&CH[x.c]?x.c:null,team:x.team,ctrl:x.id===0?'local':'remote',rid:x.id}));if(!L.length)L.push({c:playerChamp,team:0,ctrl:'local',rid:0});
  if(net.role!=='guest')L[0].c=playerChamp;

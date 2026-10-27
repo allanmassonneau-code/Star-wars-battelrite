@@ -179,5 +179,6 @@ rep("g.fillStyle='#ffe81f';g.fillRect(x,y+7,w*u.energy/100,2);","g.fillStyle='#4
 rep("const CFG={team:1,wins:2,bsize:20,tickets:60,sd:true,orb:true,pk:true};","const CFG={team:1,wins:2,bsize:20,tickets:60,sd:true,orb:true,pk:true,map:0};")
 rep('<label>Manches gagnantes','<label>Carte <select id="cMap"><option value="0">Terrain d\'entraînement</option><option value="1">Vallée de la Fin</option><option value="2">Désert de Suna</option></select></label>\n <label>Manches gagnantes')
 rep("const CSEL=[['cTeam','team'],","const CSEL=[['cMap','map'],['cTeam','team'],")
+rep("function resetWorld(){","function resetWorld(){cutin=null;")
 open(ROOT+'naruto/index.html','w').write(s)
 print('ok',len(s))
