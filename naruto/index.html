@@ -1279,7 +1279,7 @@ function hit(t,src,dmg,o={}){
  t.hp-=d;if(ps==='lifesteal'&&d>0)gain(src,d*.3,src);if(src&&src.lsB>0&&d>0)gain(src,d*.35,src);
  if(src&&o.melee&&!o.thorn){if(t.thorns>0)hit(src,t,dmg*.3,{silent:1,thorn:1});if(t.thornSlow>0)src.slow=Math.max(src.slow,1)}
  if(!o.silent){t.flash=.12;if(src)src.energy=Math.min(100,src.energy+dmg*(ps==='energy'?.9:.6));if(t.hero)t.energy=Math.min(100,t.energy+dmg*.2);
-  if(near(t.x,t.y)){if(Math.round(d)>0)say(t,'-'+Math.round(d),d<dmg?'#fc6':o.ex?'#ffe81f':'#fff');sparks(t.x,t.y,t.team?'#f66':'#6cf',6);fx.push({x:t.x,y:t.y,z:34,imp:1,t:.18,m:.18,vx:0,vy:0,col:VFX&&VP[VFX]?VP[VFX][0]:'#ffffff',r:d>18?1.6:1,a:src?ang(src,t):0});if(t===player||src===player)shake=Math.max(shake,.08);S('hit',t)}}
+  if(near(t.x,t.y)){if(Math.round(d)>0)say(t,'-'+Math.round(d),d<dmg?'#fc6':o.ex?'#ffe81f':'#fff');sparks(t.x,t.y,t.team?'#f66':'#6cf',6);sparks(t.x,t.y,VFX&&VP[VFX]?VP[VFX][0]:'#ffffff',d>18?2:1,'imp');if(t===player||src===player)shake=Math.max(shake,.08);S('hit',t)}}
  const hard=t.unstop<=0,xm=o.ex?1.4:1;
  if(o.stun&&hard){t.stun=Math.max(t.stun,o.stun*xm);say(t,'ÉTOURDI','#b8f')}
  if((o.stun||o.kb||o.fear)&&hard&&(t.cast||t.spin||t.flame||t.block)){if(t.cast||t.spin||t.flame)say(t,'INTERROMPU','#fc6');t.cast=null;t.spin=null;t.flame=null}
@@ -1316,7 +1316,7 @@ function explode(p){const V0=VFX;VFX=p.vfx||V0;const fi0=fields.length;p.boom=1;
 
 // ---------- Effets ----------
 function say(u,s,col){if(near(u.x,u.y))txt.push({x:u.x+(rnd()-.5)*20,y:u.y,z:95,s,col,t:1})}
-function sparks(x,y,col,n,v){v=v||VFX;if(net.role==='host'&&coop()){if(net.ev.sp.length<200)net.ev.sp.push([Math.round(x),Math.round(y),col,n,v]);}for(let i=0;i<n;i++){const a=rnd()*7,s=(v==='smoke'||v==='leaf'?40:80)+rnd()*(v==='smoke'||v==='leaf'?120:260);fx.push({x,y,z:20+rnd()*20,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:v?.7:.5,m:v?.7:.5,col,r:2+rnd()*2,vfx:v})}}
+function sparks(x,y,col,n,v){v=v||VFX;if(net.role==='host'&&coop()){if(net.ev.sp.length<200)net.ev.sp.push([Math.round(x),Math.round(y),col,n,v]);}if(v==='imp'){fx.push({x,y,z:34,imp:1,t:.18,m:.18,vx:0,vy:0,col,r:n>1?1.6:1,a:rnd()*7});return}for(let i=0;i<n;i++){const a=rnd()*7,s=(v==='smoke'||v==='leaf'?40:80)+rnd()*(v==='smoke'||v==='leaf'?120:260);fx.push({x,y,z:20+rnd()*20,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:v?.7:.5,m:v?.7:.5,col,r:2+rnd()*2,vfx:v})}}
 function ring(x,y,r,col){if(near(x,y))fx.push({x,y,ring:r,t:.35,m:.35,col,vfx:VFX})}
 
 // ---------- IA générique (lit les indices "ai" de chaque capacité) ----------
@@ -1476,7 +1476,7 @@ function update(dt){SIMT+=dt;
  netCapture(fx0,tx0);
  ageFx(dt);
  for(const k of killfeed)k.t-=dt;killfeed=killfeed.filter(k=>k.t>0);
- {const tg=player.dead&&deathPos?deathPos:player,k=Math.min(1,dt*6);cam.x+=(clamp(tg.x+(tg.dead?0:Math.cos(tg.aim)*70),B.x+420,B.x+B.w-420)-cam.x)*k*.8;cam.y+=(clamp(tg.y+(tg.dead?0:Math.sin(tg.aim)*45),B.y+240,B.y+B.h-170)-cam.y)*k*.8}
+ {const tg=player.dead&&deathPos?deathPos:player,k=Math.min(1,dt*6);const la=tg===player&&!player.dead?1:0;cam.x+=(clamp(tg.x+la*Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)-cam.x)*k*.8;cam.y+=(clamp(tg.y+la*Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*k*.8}
 }
 
 // ---------- Rendu : caméra 3/4 en plongée (comme Battlerite) ----------
@@ -2518,7 +2518,7 @@ function guestFrame(dt){for(const k in pressed)net.gp[k]=1;
  for(const p of projs){p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot=(p.rot||0)+dt*25;if(p.life0)p.life=Math.max(.001,p.life-dt)}
  for(const z of zones)z.t=Math.max(0,z.t-dt);
  ageFx(dt);shake=Math.max(0,shake-dt);
- if(player){const c=Math.min(1,dt*6);cam.x+=(clamp(player.x+Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)-cam.x)*c*.8;cam.y+=(clamp(player.y+Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*c*.8}}
+ if(player){const c=Math.min(1,dt*6);const la=player.dead||!isFinite(player.aim)?0:1;cam.x+=(clamp(player.x+la*Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)-cam.x)*c*.8;cam.y+=(clamp(player.y+la*Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*c*.8}}
 function netTick(dt){if(!coop())return;net.sendT-=dt;if(net.sendT>0)return;
  if(net.role==='host'){net.sendT=state==='menu'?.5:mode==='battle'?.05:.033;const base=makeSnap();
   for(const P of livePeers()){const i=units.findIndex(u=>u.ctrl==='remote'&&u.rid===P.id);try{P.conn.send(state==='menu'?base:Object.assign({},base,{you:i,mc:i>=0?units[i].cds:null,ack:P.in?P.in.seq||0:0}))}catch(e){}}

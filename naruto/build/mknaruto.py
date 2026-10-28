@@ -284,12 +284,13 @@ rep("u.vx=mx*sp;u.vy=my*sp;","{const ac=sp?1-Math.exp(-ACCEL*dt):1;u.vx+=(mx*sp-
 rep("const vx=mx*sp,vy=my*sp;u.x+=vx*dt;","const ac=sp?1-Math.exp(-ACCEL*dt):1;u.gvx=(u.gvx||0)+(mx*sp-(u.gvx||0))*ac;u.gvy=(u.gvy||0)+(my*sp-(u.gvy||0))*ac;const vx=u.gvx,vy=u.gvy;u.x+=vx*dt;")
 rep("if(I.l||p.lmb)use(u,0,td);if(p.rmb)use(u,1,td,undefined,ex);if(p.Space)use(u,2,td,undefined,ex);if(p.KeyQ)use(u,3,td,undefined,ex);if(p.KeyE)use(u,4,td,undefined,ex);if(p.KeyT)use(u,5,td)}",
  "if(p.rmb)tryUse(u,1,td,ex);if(p.Space)tryUse(u,2,td,ex);if(p.KeyQ)tryUse(u,3,td,ex);if(p.KeyE)tryUse(u,4,td,ex);if(p.KeyT)tryUse(u,5,td,false);bufTick(u,dt,td,I)}")
-rep("cam.x+=(clamp(player.x,B.x+420,B.x+B.w-420)-cam.x)*c;cam.y+=(clamp(player.y,B.y+240,B.y+B.h-170)-cam.y)*c","cam.x+=(clamp(player.x+Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)-cam.x)*c*.8;cam.y+=(clamp(player.y+Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*c*.8")
-rep("cam.x+=(clamp(tg.x,B.x+420,B.x+B.w-420)-cam.x)*k;cam.y+=(clamp(tg.y,B.y+240,B.y+B.h-170)-cam.y)*k","cam.x+=(clamp(tg.x+(tg.dead?0:Math.cos(tg.aim)*70),B.x+420,B.x+B.w-420)-cam.x)*k*.8;cam.y+=(clamp(tg.y+(tg.dead?0:Math.sin(tg.aim)*45),B.y+240,B.y+B.h-170)-cam.y)*k*.8")
+rep("cam.x+=(clamp(player.x,B.x+420,B.x+B.w-420)-cam.x)*c;cam.y+=(clamp(player.y,B.y+240,B.y+B.h-170)-cam.y)*c","const la=player.dead||!isFinite(player.aim)?0:1;cam.x+=(clamp(player.x+la*Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)-cam.x)*c*.8;cam.y+=(clamp(player.y+la*Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*c*.8")
+rep("cam.x+=(clamp(tg.x,B.x+420,B.x+B.w-420)-cam.x)*k;cam.y+=(clamp(tg.y,B.y+240,B.y+B.h-170)-cam.y)*k","const la=tg===player&&!player.dead?1:0;cam.x+=(clamp(tg.x+la*Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)-cam.x)*k*.8;cam.y+=(clamp(tg.y+la*Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*k*.8")
 rep("BASIC=u.ch.abil[0]===ab;COMBO3","BASIC=u.ch.abil[0]===ab;if(!BASIC)u.relT=.3;else if(!meleeU(u))u.thrT=.2;COMBO3")
 rep("const UK=['phase',","const UK=['relT','thrT','phase',")
 # impacts francs, chiffres de dégâts qui « claquent », images rémanentes
-rep("sparks(t.x,t.y,t.team?'#f66':'#6cf',6);","sparks(t.x,t.y,t.team?'#f66':'#6cf',6);fx.push({x:t.x,y:t.y,z:34,imp:1,t:.18,m:.18,vx:0,vy:0,col:VFX&&VP[VFX]?VP[VFX][0]:'#ffffff',r:d>18?1.6:1,a:src?ang(src,t):0});")
+rep("sparks(t.x,t.y,t.team?'#f66':'#6cf',6);","sparks(t.x,t.y,t.team?'#f66':'#6cf',6);sparks(t.x,t.y,VFX&&VP[VFX]?VP[VFX][0]:'#ffffff',d>18?2:1,'imp');")
+rep("net.ev.sp.push([Math.round(x),Math.round(y),col,n,v]);}for(let i=0;i<n;i++){","net.ev.sp.push([Math.round(x),Math.round(y),col,n,v]);}if(v==='imp'){fx.push({x,y,z:34,imp:1,t:.18,m:.18,vx:0,vy:0,col,r:n>1?1.6:1,a:rnd()*7});return}for(let i=0;i<n;i++){")
 rep("drawDust(u);const aur=","drawDust(u);drawGhosts(u);const aur=")
 rep("g.globalAlpha=Math.min(1,t.t*2);g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)';g.font='bold 15px \"Trebuchet MS\",system-ui,sans-serif';g.textAlign='center';g.strokeText(t.s,p.x,p.y);text(t.s,p.x,p.y,15,t.col)",
  "g.globalAlpha=Math.min(1,t.t*2);const big=t.s[0]==='-'&&+t.s.slice(1)>=20,fs=Math.round((big?19:15)*(1+Math.max(0,t.t-.86)*4.5));g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)';g.font=`bold ${fs}px \"Trebuchet MS\",system-ui,sans-serif`;g.textAlign='center';g.strokeText(t.s,p.x,p.y);text(t.s,p.x,p.y,fs,t.col)")
