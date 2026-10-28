@@ -209,11 +209,11 @@ function render3D(){N3.tile.clear();if(!N3.on||OPT.p3d===false)return;if(!N3.tri
  const now=performance.now(),rdt=(now-(N3.last||now))/1000,dt=Math.min(.05,rdt)||1/60,t=now/1000;N3.last=now;N3.frame++;
  // plus de 2,5 s sous ~22 images/s en combat : on repasse en 2D
  if(state==='fight'&&rdt>0&&rdt<1){N3.slow=rdt>.045?(N3.slow||0)+1:Math.max(0,(N3.slow||0)-2);if(N3.slow>150){N3.on=false;N3.auto=true;console.warn('Ninjas 3D coupés : ordinateur trop lent');return}}
- const want=[];for(const u of units)if(u&&!(u.dead&&u.deadT>1.6)&&u.ch&&u.ch.look&&u.ch.look.head.t==='ninja'&&near(u.x,u.y))want.push(u);for(const u of N3.req)if(!want.includes(u))want.push(u);N3.req.clear();
+ const want=[];for(const u of units)if(u&&!(u.dead&&u.deadT>1.6)&&u.ch&&u.ch.look&&u.ch.look.head.t==='ninja'&&near(u.x,u.y))want.push(u);for(const u of[...want])if(u.ch.look.dog&&!u.dead)want.push(u._dog3||(u._dog3={dog:1,owner:u,aim:0}));for(const u of N3.req)if(!want.includes(u))want.push(u);N3.req.clear();
  const n=Math.min(want.length,TCOLS*TROWS);atlasSize(Math.max(2,n));const CO=N3.cols,RO=N3.rows;
  for(const rec of N3.recs.values())rec.grp.visible=false;
- for(let i=0;i<n;i++){const u=want[i];let rec=N3.recs.get(u);if(rec&&rec.key!==lookKey(u)){dispose3D(u,rec);rec=null}if(!rec){rec=buildNinja3D(u);N3.recs.set(u,rec)}
-  rec.used=N3.frame;rec.grp.visible=true;poseModel(u,rec,dt,t);
+ for(let i=0;i<n;i++){const u=want[i];let rec=N3.recs.get(u);if(rec&&!u.dog&&rec.key!==lookKey(u)){dispose3D(u,rec);rec=null}if(!rec){rec=u.dog?buildDog3D():buildNinja3D(u);N3.recs.set(u,rec)}
+  rec.used=N3.frame;rec.grp.visible=true;if(rec.dog)poseDog(u,rec,dt,t);else poseModel(u,rec,dt,t);
   const c=i%CO,r=Math.floor(i/CO),cx=c*TWU+TWU/2,cy=(RO-1-r)*THU+FOOT;
   rec.grp.position.copy(N3.right).multiplyScalar(cx).addScaledVector(N3.up,cy).addScaledVector(N3.fwd,1200);rec.grp.rotation.set(0,rec.yaw,0);
   N3.tile.set(u,{sx:c*TPW,sy:r*TPH})}
@@ -260,3 +260,29 @@ Object.assign(ANIM,{
  swirl:(P,e,u,t)=>{const a=t*10;pz(P,'armL',-1.5+Math.sin(a)*.6,0,.6+Math.cos(a)*.4);pz(P,'armR',-1.5+Math.sin(a+Math.PI)*.6,0,-.6-Math.cos(a)*.4)},
  kneel:(P,e)=>ANIM.summon(P,1),
 });
+
+// ----- chien ninja (Inuzuka) en 3D : même style, petit squelette à quatre pattes
+const DBONES=[['root',null,[0,0,0]],['body','root',[0,11,0]],['head','body',[0,4.5,8]],['legFL','body',[3.2,-3,5.5]],['legFR','body',[-3.2,-3,5.5]],['legBL','body',[3.2,-3,-5.5]],['legBR','body',[-3.2,-3,-5.5]],['tail','body',[0,2.5,-8.5]]];
+const DBI=Object.fromEntries(DBONES.map((b,i)=>[b[0],i]));
+function buildDog3D(){const T=THREE,P=[],N=[],C=[],SI=[],SW=[],rest={};for(const [n,p,o] of DBONES){const v=new T.Vector3(...o);if(p)v.add(rest[p]);rest[n]=v}
+ const M=new T.Matrix4(),Q=new T.Quaternion(),E=new T.Euler(),S=new T.Vector3(),V=new T.Vector3();
+ const add=(g,bone,c,pos=[0,0,0],rot=[0,0,0],scl=[1,1,1])=>{const gg=g.index?g.toNonIndexed():g;E.set(...rot);Q.setFromEuler(E);V.set(...pos).add(rest[bone]);S.set(...scl);M.compose(V,Q,S);gg.applyMatrix4(M);
+  const a=gg.attributes.position,nn=gg.attributes.normal,cc=new T.Color(c),bi=DBI[bone];for(let i=0;i<a.count;i++){P.push(a.getX(i),a.getY(i),a.getZ(i));N.push(nn.getX(i),nn.getY(i),nn.getZ(i));C.push(cc.r,cc.g,cc.b);SI.push(bi,0,0,0);SW.push(1,0,0,0)}};
+ const fur='#f4f0e8',tan='#c8a080';
+ add(new T.CapsuleGeometry(5.6,8,3,10),'body',fur,[0,0,0],[Math.PI/2,0,0],[1,1,.95]);add(new T.SphereGeometry(6,14,10),'head',fur,[0,1,1]);add(new T.CapsuleGeometry(2.6,3,2,8),'head',fur,[0,-.6,6],[Math.PI/2,0,0]);
+ add(new T.SphereGeometry(1.2,8,6),'head','#111',[0,.4,8.6]);for(const x of[-2.8,2.8]){add(new T.ConeGeometry(2,5.5,6),'head',tan,[x,6.2,-.5],[0,0,x>0?-.35:.35]);add(new T.SphereGeometry(.9,8,6),'head','#111',[x*.75,2.2,4.6])}
+ for(const l of['legFL','legFR','legBL','legBR']){add(new T.CapsuleGeometry(1.7,4.6,2,8),l,fur,[0,-3.4,0]);add(new T.SphereGeometry(1.9,8,6),l,fur,[0,-6.6,.6],[0,0,0],[1,.7,1.2])}
+ add(new T.ConeGeometry(1.6,8,7),'tail',fur,[0,3,-1.5],[-.7,0,0]);add(new T.TorusGeometry(4.2,.7,6,14),'body','#c0303a',[0,3.2,5],[Math.PI/2-.4,0,0]);
+ const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(P,3));geo.setAttribute('normal',new T.Float32BufferAttribute(N,3));geo.setAttribute('color',new T.Float32BufferAttribute(C,3));
+ geo.setAttribute('skinIndex',new T.Uint16BufferAttribute(SI,4));geo.setAttribute('skinWeight',new T.Float32BufferAttribute(SW,4));
+ const bones=DBONES.map(([n,p,o])=>{const b=new T.Bone();b.name=n;b.position.set(...o);return b});DBONES.forEach(([n,p],i)=>{if(p)bones[DBI[p]].add(bones[i])});
+ const mat=new T.MeshToonMaterial({vertexColors:true,gradientMap:N3.gm}),mesh=new T.SkinnedMesh(geo,mat);mesh.add(bones[0]);const skel=new T.Skeleton(bones);mesh.bind(skel);mesh.frustumCulled=false;
+ const out=new T.SkinnedMesh(geo,N3.outline);out.bind(skel,mesh.bindMatrix);out.frustumCulled=false;const grp=new T.Group();grp.add(mesh);grp.add(out);N3.sc.add(grp);
+ const cur={};for(const [n] of DBONES)cur[n]=new T.Quaternion();
+ return{grp,mesh,out,mat,bones,skel,key:'dog',cur,rootP:new T.Vector3(),rootR:new T.Euler(),yaw:0,used:0,dog:1,face:{geometry:{dispose(){}},material:{dispose(){}}},sym:{geometry:{dispose(){}},material:{dispose(){}}}}}
+function poseDog(d,rec,dt,t){const u=d.owner,run=u.moving||u.dash,atk=u.swing>0||(u.anim&&u.anim.t>0),w=t*16,P={};
+ const lg=(n,x)=>{P[n]=x};if(run){lg('legFL',Math.sin(w)*.8);lg('legBR',Math.sin(w)*.8);lg('legFR',-Math.sin(w)*.8);lg('legBL',-Math.sin(w)*.8)}
+ let ry=0,rz=0,hx=Math.sin(t*2)*.05;if(atk){lg('legFL',-1.1);lg('legFR',-1.1);hx=-.35;rz=6}
+ for(const [n] of DBONES){if(n==='root')continue;const b=rec.bones[DBI[n]],q=rec.cur[n];const x=n==='head'?hx:n==='tail'?.2:P[n]||0,y=n==='tail'?Math.sin(t*14)*.6:0;_E.set(x,y,0);_Q.setFromEuler(_E);q.slerp(_Q,1-Math.exp(-16*dt));b.quaternion.copy(q)}
+ const rb=rec.bones[0];rec.rootP.z+=(rz-rec.rootP.z)*(1-Math.exp(-14*dt));rec.rootP.y=run?Math.abs(Math.cos(w))*1.2:0;rb.position.copy(rec.rootP);
+ const a=d.aim||0,want=Math.PI/2-Math.atan2(Math.sin(a)*.7+.42,Math.cos(a));let dd=want-rec.yaw;while(dd>Math.PI)dd-=2*Math.PI;while(dd<-Math.PI)dd+=2*Math.PI;rec.yaw+=dd*(1-Math.exp(-14*dt))}

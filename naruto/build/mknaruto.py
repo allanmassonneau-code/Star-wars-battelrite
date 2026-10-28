@@ -321,6 +321,8 @@ rep(' <button id="oClose">Fermer</button>',' <h2 style="margin-top:14px">Afficha
 rep("const OPT={master:60,fx:80,voice:80,voiceOn:true,wil:true,spat:true};","const OPT={master:60,fx:80,voice:80,voiceOn:true,wil:true,spat:true,p3d:true};")
 rep("$('oSpat').checked=OPT.spat;$('oMute').checked=muted}","$('oSpat').checked=OPT.spat;$('oMute').checked=muted;$('o3d').checked=OPT.p3d!==false}")
 rep("$('oMute').onchange=e=>{muted=e.target.checked};","$('oMute').onchange=e=>{muted=e.target.checked};$('o3d').onchange=e=>{OPT.p3d=e.target.checked;N3.on=true;N3.slow=0;applyOpt()};")
+# clones (Multiclonage, nuées…) dessinés comme les ninjas : en 3D si disponible
+rep("drawChar(f,p.x,p.y,p.s*1.15*(tu.big?1.2:1))","drawChar3(f,p.x,p.y,p.s*1.15*(tu.big?1.2:1))")
 s=s.replace("cam={x:CX,y:CY};Yc=377.5;","cam={x:CX,y:CY};Yc=390;")
 open(ROOT+'naruto/index.html','w').write(s)
 print('ok',len(s))

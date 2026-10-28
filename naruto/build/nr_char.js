@@ -172,6 +172,8 @@ function drawNinjaWeapon(u,L,W,k,hf,hb,fx,fy,back,fl,t){const [x,y]=hf,a=Math.at
 }
 // chien ninja (Inuzuka) : suit son maître et bondit quand il attaque
 function drawDog(u){if(u.dead||!u.ch.look.dog)return;const t=performance.now()/1000,a=u.aim,atk=u.swing>0,d=atk?30:-22,ox=u.x+Math.cos(a+(atk?0:1.9))*Math.abs(d)*(atk?1:1),oy=u.y+Math.sin(a+(atk?0:1.9))*Math.abs(d)+6,p=P(ox,oy),s=p.s*1.25,f=Math.cos(a)>=0?1:-1,run=u.moving?Math.sin(t*16):0;
+ // chien en 3D si disponible (même place, même échelle)
+ {const dg=u._dog3,tl=dg&&N3.ok&&N3.tile.get(dg);if(tl){dg.aim=a;g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(p.x,p.y,13*s,4*s,0,0,7);g.fill();const w=TWU*s,h=THU*s;g.drawImage(N3.cv,tl.sx,tl.sy,TPW,TPH,p.x-w/2,p.y-h+FOOT*s,w,h);return}}
  g.save();g.translate(p.x,p.y);g.scale(s*f,s);g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(0,0,13,4,0,0,7);g.fill();
  g.strokeStyle=OUT;g.lineWidth=3;for(const [lx,ph] of[[-7,1],[-3,-1],[5,1],[9,-1]]){g.beginPath();g.moveTo(lx,-8);g.lineTo(lx+run*ph*2,-1);g.stroke()}
  outlined(()=>{g.ellipse(0,-11,12,6.5,0,0,7)},'#f4f0e8');outlined(()=>{g.ellipse(11,-17-(atk?2:0),6,5.5,0,0,7)},'#f4f0e8');

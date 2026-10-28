@@ -54,6 +54,10 @@ function drawMenu(){
  drawChar3(fake,220,314,1.6);
  text(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2)}`,220,340,12,'#e8cfa8','center','normal');
  tfit(ch.desc,220-Math.min(340,(g.font='normal 11px "Trebuchet MS",system-ui,sans-serif',g.measureText(ch.desc).width))/2,356,11,'#b89a70',340);
+ // trait du clan (en haut de l'aperçu) et affinités de la nature (sous la description)
+ {const T=TRAITS[MY.clan],ctr=(str,y,col)=>{g.font='normal 11px "Trebuchet MS",system-ui,sans-serif';const w=Math.min(350,g.measureText(str).width);tfit(str,220-w/2,y,11,col,350)};
+  const tl=T?`${T.nom||T.name||'Trait'} : ${T.desc||''}`:MY.clan<0?'Sans clan : polyvalent, +2 points de budget':'';if(tl)ctr(tl,197,MY.clan>=0?CLANS[MY.clan][1]:'#e8cfa8');
+  if(MY.clan!==TAIJ){const n=MY.nat,w=BEATS[n],l=BEATS.indexOf(n);ctr(`${NATURES[n][0]} : fort contre ${NATURES[w][0]}, faible contre ${NATURES[l][0]}`,370,NATURES[n][2])}}
  APP.forEach(([lab,list,k],i)=>{const R=appRow(i),L=list(),v=getB(k),it=L[v];text(lab,48,R.y,13,'#d8b888','left');
   if(appOff(k)){text('— (taijutsu pur)',236,R.y,12,'#7a6a58','left','normal');return}arrowBtn(R.l,1);arrowBtn(R.r,0);
   const nm=Array.isArray(it)?it[0]:String(it);const col=['l.h','l.p','l.k','nat','clan','nat2'].includes(k)?it[1]:null;
