@@ -7,7 +7,7 @@ const getB=k=>k==='clan'?MY.clan+1:k.startsWith('l.')?MY.l[k[2]]:MY[k],setB=(k,v
 const appOff=k=>k==='nat'&&MY.clan===TAIJ;
 const stylesOf=b=>STYLES.map((_,i)=>i).filter(i=>styleOk(i,b.clan));
 const appRow=i=>({y:398+i*25,l:{x:200,y:383+i*25,w:26,h:21},r:{x:374,y:383+i*25,w:26,h:21}});
-const overBudget=()=>kitCost(MY)>BUDGET;
+const overBudget=()=>kitCost(MY)>budgetOf(MY);
 const cycleJ=(s,d)=>{if(!s){const L=stylesOf(MY),i=L.indexOf(MY.j[0]);MY.j[0]=L[(i+d+L.length)%L.length];return}const A=avail(MY,s).filter(j=>j.id===MY.j[s]||!MY.j.slice(1).includes(j.id)),i=A.findIndex(j=>j.id===MY.j[s]);MY.j[s]=A[(i+d+A.length)%A.length].id};
 const slotRow=s=>({x:428,y:150+s*64,w:812,h:58});
 const passRow={x:428,y:150+6*64,w:812,h:40};
@@ -68,15 +68,15 @@ function drawMenu(){
  {const R=passRow,ps=PASS[ch.pass],h=inRect(mouse,R)&&picker===null;g.fillStyle=h?'rgba(70,46,24,.95)':'rgba(20,14,10,.85)';g.strokeStyle='#3a6a3a';g.lineWidth=1;g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,10);g.fill();g.stroke();
   text('◀',R.x+16,R.y+26,15,'#9f9');text('▶',R.x+R.w-20,R.y+26,15,'#9f9');text('Passif',R.x+40,R.y+25,13,'#9f9','left');tfit(`${ps[0]} : ${ps[1]}`,R.x+160,R.y+25,13,'#cfe8c0',590,'bold')}
  btn(rndBuildBtn,'🎲 Kit aléatoire',false);btn(presetBtn,'📜 Modèle suivant',false);if(presetI>=0)text('Modèle : '+PRESETS[presetI][0],presetBtn.x,presetBtn.y+50,12,'#ffd38a','left');
- {const c=kitCost(MY),over=c>BUDGET,x=628,y=604;text('Points du kit',x,y+2,12,'#b89a70','left','normal');for(let i=0;i<BUDGET;i++){g.fillStyle=i<c?(over?'#ff5a4a':'#ffb347'):'rgba(255,255,255,.12)';g.fillRect(x+i*13,y+8,11,10)}
-  if(c>BUDGET)for(let i=BUDGET;i<c;i++){g.fillStyle='#ff5a4a';g.fillRect(x+i*13,y+8,11,10)}
-  text(`${c} / ${BUDGET}`,x+96,y+2,13,over?'#ff6a5a':'#ffd38a','left');if(over)text('Trop de points : choisis des jutsu de rang plus bas',x,y+36,12,'#ff8a7a','left')}
+ {const BUD=budgetOf(MY),c=kitCost(MY),over=c>BUD,x=628,y=604;text('Points du kit',x,y+2,12,'#b89a70','left','normal');for(let i=0;i<BUD;i++){g.fillStyle=i<c?(over?'#ff5a4a':'#ffb347'):'rgba(255,255,255,.12)';g.fillRect(x+i*13,y+8,11,10)}
+  if(c>BUD)for(let i=BUD;i<c;i++){g.fillStyle='#ff5a4a';g.fillRect(x+i*13,y+8,11,10)}
+  text(`${c} / ${BUD}`,x+96,y+2,13,over?'#ff6a5a':'#ffd38a','left');if(over)text('Trop de points : choisis des jutsu de rang plus bas',x,y+36,12,'#ff8a7a','left')}
  text('Rangs : D=1 · C=2 · B=3 · A=4 · S=5 points · clique sur un jutsu pour voir la liste',628,666,11,'#b89a70','left','normal');
  if(!coop())btn(fightBtn,overBudget()?'TROP DE POINTS':'COMBATTRE ▶',!overBudget(),overBudget()?'#a55':'#ff9a3a');
  if(isGuest()&&mode!=='arena'){const b=teamBtn,h=inRect(mouse,b);g.fillStyle=h?'#5a3a1e':'#2a1c10';g.strokeStyle=net.myTeam?'#ff6060':'#4db8ff';g.lineWidth=2;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,16);g.fill();g.stroke();text(`ÉQUIPE ${net.myTeam?'B':'A'} (changer)`,b.x+b.w/2,b.y+21,13,'#f3d9b0','center')}
  if(coop()){const b=readyBtn,on=net.ready&&!overBudget();g.fillStyle=on?'#7f7':inRect(mouse,b)?'#ffb347':'rgba(255,154,58,.85)';g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,16);g.fill();text(on?'PRÊT ✓':'PRÊT ?',b.x+b.w/2,b.y+21,13,'#10131c','center')}
  // --- liste complète d'un emplacement
- if(picker!==null){g.fillStyle='rgba(0,0,0,.72)';g.fillRect(0,0,W,H);text(picker?`${lbl[SLOTS[picker]]} · ${SLOTN[picker]} : choisis ton jutsu (${kitCost(MY)}/${BUDGET} points)`:'Style de combat de ton clan (gratuit)',W/2,132,18,'#ffb347');
+ if(picker!==null){g.fillStyle='rgba(0,0,0,.72)';g.fillRect(0,0,W,H);text(picker?`${lbl[SLOTS[picker]]} · ${SLOTN[picker]} : choisis ton jutsu (${kitCost(MY)}/${budgetOf(MY)} points)`:'Style de combat de ton clan (gratuit)',W/2,132,18,'#ffb347');
   (picker?avail(MY,picker):stylesOf(MY).map(i=>({style:i}))).forEach((J,i)=>{const R=pickRect(picker,i),ab=picker?jutsu(J.id):styleAb(J.style),sel=MY.j[picker]===(picker?J.id:J.style),h=inRect(mouse,R),used=picker&&!sel&&MY.j.slice(1).includes(J.id);
    g.fillStyle=sel?'rgba(110,70,30,.98)':h?'rgba(70,46,24,.98)':'rgba(24,16,10,.97)';g.strokeStyle=sel?'#ffb347':'#5a3a1e';g.lineWidth=sel?2:1;g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,8);g.fill();g.stroke();
    if(picker){rankBadge(R.x+10,R.y+6,J);text(catName(J.cat),R.x+R.w-10,R.y+18,10,catCol(J.cat),'right','normal')}else{styleBadge(R.x+10,R.y+6);text(STYLES[J.style][4]==='kunai'||STYLES[J.style][4]==='senbon'||STYLES[J.style][4]==='bugs'||STYLES[J.style][4]==='sand'?'Distance':STYLES[J.style][4]==='shadow'||STYLES[J.style][4]==='chain'?'Moyenne portée':'Corps à corps',R.x+R.w-10,R.y+18,10,'#ffd38a','right','normal')}

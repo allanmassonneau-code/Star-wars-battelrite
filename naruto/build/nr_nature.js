@@ -35,6 +35,7 @@ function auxUpdate(dt){seqUpdate(dt);for(const x of aux){x.t-=dt;x.k-=dt;if(AUXF
    else{VFX=x.vfx;hit(e,x.owner,x.dmg,{silent:1,dot:x.vfx==='fire'?BURN(3,2):null});VFX=null}}}
  aux=aux.filter(x=>x.t>0);
  for(const u of units){if(u.dead)continue;
+  {const T=trait(u);if(T){if(!u._tri){u._tri=1;if(T.init)T.init(u)}if(T.update)T.update(u,dt)}}if(u.anim){u.anim.t-=dt;if(u.anim.t<=0)u.anim=null}
   if(u.phase>0)u.phase-=dt;if(u.relT>0)u.relT-=dt;if(u.thrT>0)u.thrT-=dt;if(u.izT>0)u.izT-=dt;
   if(u.jst){u.jst.t-=dt;if(u.jst.t<=0){u.cds[u.jst.i]=u.jst.cd;u.jst=null}}u.jstN=u.jst?u.jst.n:0;u.jstV=u.jst?u.jst.v:null;
   if(u.chan){const c=u.chan;c.t+=dt;u.root=Math.max(u.root,.15);for(const x of aux)if(x.type==='chan'&&x.owner===u)x.k=c.t/c.max;if(u.stun>0){u.chan=null;for(const x of aux)if(x.type==='chan'&&x.owner===u)x.t=0;u.cds[c.i]=c.cd}else if(c.t>=c.max)releaseChan(u)}}
