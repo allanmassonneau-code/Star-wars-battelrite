@@ -17,7 +17,7 @@ const JD=KITROWS; // le catalogue est assemblé par les fichiers kits/*.js (un p
 const JPAR={'Multiclonage':{d:1.2},'Ninken':{d:3},'Insectes dévoreurs':{dps:4}};
 const JCD={'Lotus primaire':10,'Lotus caché':9}; // temps de recharge propres à certains jutsu
 // équilibrage par clan (-1 = sans clan) et par nature : [multiplicateur PV, multiplicateur puissance], réglés par duels simulés
-const CLANBAL={"0":[0.82,0.78],"1":[0.78,0.75],"2":[1.2,1.26],"3":[0.97,0.96],"4":[1.08,1.08],"5":[1.13,1.17],"6":[1.12,1.14],"7":[1.11,1.11],"8":[0.83,0.79],"9":[0.97,0.98],"10":[1.04,1.04],"-1":[0.99,1]},NATBAL={"0":[0.98,0.95],"1":[1.04,1.04],"2":[0.96,0.93],"3":[1.02,1.01],"4":[1,1]};
+const CLANBAL={"0":[0.82,0.78],"1":[0.78,0.75],"2":[1.2,1.26],"3":[0.97,0.96],"4":[1.08,1.08],"5":[1.13,1.17],"6":[1.12,1.14],"7":[1.11,1.11],"8":[0.83,0.79],"9":[0.97,0.98],"10":[1.04,1.04],"-1":[0.99,1]},NATBAL={"0":[0.98,0.95],"1":[1.04,1.04],"2":[0.96,0.93],"3":[1.02,1.01],"4":[1,1]},STYLEBAL={}; // STYLEBAL[style] = [PV, puissance]
 const JL=JD.map(([cat,slot,r,src,n,d,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,vfx,P:JPAR[n]}));
 const SLOTN=['Style de combat','Jutsu','Déplacement','Jutsu','Jutsu','Ultime'];
 const stype=s=>s===2?2:s===5?5:1; // 1 = jutsu (Clic D, Q, E), 2 = déplacement, 5 = ultime
@@ -64,7 +64,7 @@ function styleAb(i){const S=STYLES[i],b=srcAb(S[2]);return Object.assign({},b,{n
 // stats : moyenne des persos d'origine (le style de combat compte pour 5 : un ninja à distance est fragile, un ninja au corps à corps solide), puis la voie
 function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=[styleAb(b.j[0])].concat(b.j.slice(1).map(id=>jutsu(id))),w=[5,1,1,1,1,1];let hp=0,pw=0,sp=0,W=0;
  abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie],S=STYLES[b.j[0]];hp*=S[6];pw*=S[7];if(b.clan===TAIJ){hp*=1.05;sp+=4*W}
- {const cb=CLANBAL[b.clan]||[1,1],nb=b.clan===TAIJ?[1,1]:NATBAL[b.nat]||[1,1];hp*=cb[0]*nb[0];pw*=cb[1]*nb[1]} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
+ {const cb=CLANBAL[b.clan]||[1,1],nb=b.clan===TAIJ?[1,1]:NATBAL[b.nat]||[1,1],sb=STYLEBAL[b.j[0]]||[1,1];hp*=cb[0]*nb[0]*sb[0];pw*=cb[1]*nb[1]*sb[1]} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
  const lign=b.clan>=0?'Clan '+CLANS[b.clan][0]:'Sans clan';
  return{name:b.name,side:b.side,desc:`${lign}${b.clan===TAIJ?'':' · '+NATURES[b.nat][0]} · voie ${v[0].toLowerCase()}`,hp:Math.round(hp/W*v[1]),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,clan:b.clan,nat:b.clan===TAIJ?-1:b.nat,pref:{fist:75,bigfist:85,palm:75,claws:75,bone:90,sword:90,shadow:170,chain:170}[S[4]]||320,taij:b.clan===TAIJ,pass:PASSK[b.pass],look:ninjaLook(b.l,b.clan,b.j[0]),abil,build:b}}
 // générateur pseudo-aléatoire déterministe (mêmes ninjas adverses chez tous les joueurs en ligne)
