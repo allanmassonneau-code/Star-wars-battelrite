@@ -323,6 +323,15 @@ rep("$('oSpat').checked=OPT.spat;$('oMute').checked=muted}","$('oSpat').checked=
 rep("$('oMute').onchange=e=>{muted=e.target.checked};","$('oMute').onchange=e=>{muted=e.target.checked};$('o3d').onchange=e=>{OPT.p3d=e.target.checked;N3.on=true;N3.slow=0;applyOpt()};")
 # clones (Multiclonage, nuées…) dessinés comme les ninjas : en 3D si disponible
 rep("drawChar(f,p.x,p.y,p.s*1.15*(tu.big?1.2:1))","drawChar3(f,p.x,p.y,p.s*1.15*(tu.big?1.2:1))")
+# déplacement plus léger + sprint (Maj maintenue) : plus rapide, consomme l'endurance ; les bots sprintent pour rejoindre leur cible
+rep("const sp=u.ch.spd*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.4:1)","const sp=u.ch.spd*SPD_K*(u.sprint?SPRINT_K:1)*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.5:1)")
+rep("if(u.chk)u.energy=Math.min(100,u.energy+30*dt);","if(u.chk)u.energy=Math.min(100,u.energy+30*dt);\n {const want=ctl?!!(I&&I.sh)&&Math.hypot(I.mx,I.my)>.1:!!u.aiSprint&&u.moving;if(!want)u.sprintLock=0;u.sprint=active&&want&&!u.sprintLock&&u.stun<=0&&!u.cast&&!u.dash&&!u.block&&!u.chk&&!u.flame&&!u.spin&&!u.chan&&!(u.root>0)&&u.stam>1}")
+rep("if(u.block){u.stam-=12*dt;u.stamT=.9;if(u.stam<=0)stamHit(u,0)}else{","if(u.block){u.stam-=12*dt;u.stamT=.9;if(u.stam<=0)stamHit(u,0)}else if(u.sprint){u.stam=Math.max(0,u.stam-SPRINT_COST*dt);u.stamT=.5;if(u.stam<=0){u.sprint=false;u.sprintLock=1}}else{")
+rep("u.walk+=dt*13*(u.haste>0?1.4:1);if(rnd()<dt*9&&","u.walk+=dt*13*(u.haste>0?1.4:1)*(u.sprint?1.35:1);if(rnd()<dt*(u.sprint?26:9)&&")
+rep("sp=can?u.ch.spd*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.4:1)","sp=can?u.ch.spd*SPD_K*(I.sh&&u.stam>1&&!I.f?SPRINT_K:1)*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.5:1)")
+rep("const e=u.tgt&&!u.tgt.dead?u.tgt:null;let mx=0,my=0;","const e=u.tgt&&!u.tgt.dead?u.tgt:null;let mx=0,my=0;u.aiSprint=!e?u.stam>60:dist(u,e)>460&&u.stam>45;")
+rep("const UK=['wet',","const UK=['sprint','wet',")
+rep("text(`${lbl.KeyF} parade`,396,72,","text(`${lbl.KeyF} parade · Maj sprint`,396,72,")
 s=s.replace("cam={x:CX,y:CY};Yc=377.5;","cam={x:CX,y:CY};Yc=390;")
 open(ROOT+'naruto/index.html','w').write(s)
 print('ok',len(s))

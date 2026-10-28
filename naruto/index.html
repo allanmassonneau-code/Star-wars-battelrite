@@ -565,7 +565,9 @@ function drawFlowN(u,p,S,sk){const t=performance.now()/1000,col=u.ch.look.weapon
  if(u===player&&u.cmbT>0&&u.cmb){for(let i=0;i<5;i++){const x=p.x+(i-2)*11,y=p.y+16*S;g.fillStyle=i<u.cmb?(u.cmb===5?'#ffd36a':'#fff'):'rgba(0,0,0,.4)';g.beginPath();g.arc(x,y,3.5,0,7);g.fill()}}}
 
 // ---------- Fluidité : accélération, mémoire des touches, caméra ----------
-const ACCEL=18; // le ninja prend et perd sa vitesse en un éclair, sans à-coups
+const ACCEL=30; // le ninja prend et perd sa vitesse en un éclair, sans à-coups
+// déplacement plus vif (le jeu reste à 80 %) et sprint (Maj maintenue) : plus rapide, consomme l'endurance
+const SPD_K=1.12,SPRINT_K=1.45,SPRINT_COST=18;
 // mémoire des touches : un jutsu demandé pendant un coup, une incantation ou une fin de recharge part dès que possible
 function tryUse(u,i,td,ex){if(use(u,i,td,undefined,ex)){u.buf=null;return true}const ab=u.ch.abil[i];
  if(ab&&u.energy>=jcost(ab)&&!(u.silence>0)&&(u.cast||u.dash||u.swing>0||u.spin||u.stun>0&&u.stun<.25||(u.cds[i]>0&&u.cds[i]<.35)))u.buf={i,t:.35,ex};return false}
@@ -6829,7 +6831,7 @@ function dangers(u){const L=[];for(const z of zones)if(z.owner.team!==u.team)L.p
 function pickTarget(u){let best=null,bd=mode!=='battle'?1e9:800;for(const e of units){if(e.team===u.team||e.dead||(e.stealth>0&&dist(u,e)>140))continue;const d=dist(u,e)-(e.human?60:0);if(d<bd){bd=d;best=e}}return best}
 function ai(u,dt){
  if((u.aiT-=dt)<=0)u.tgt=pickTarget(u);
- const e=u.tgt&&!u.tgt.dead?u.tgt:null;let mx=0,my=0;
+ const e=u.tgt&&!u.tgt.dead?u.tgt:null;let mx=0,my=0;u.aiSprint=!e?u.stam>60:dist(u,e)>460&&u.stam>45;
  if(!e){const gx=u.team?MAP.x+200:MAP.w-200,a=Math.atan2(u.lane-u.y,gx-u.x);
   return[Math.cos(a)*.9,Math.sin(a)*.9+clamp((u.lane-u.y)/300,-.5,.5)]}
  const d=dist(u,e),a=ang(u,e),tt=d/800;
@@ -6892,7 +6894,8 @@ function updUnit(u,dt,active){
  const wantB=canBlock(u)&&active&&u.stun<=0&&!u.cast&&!u.spin&&u.blockLock<=0&&u.stam>0&&(ctl?!!(I&&I.f):u.aiBlock>0);
  u.block=!!wantB;u.blockT=u.block?(u.blockT||0)+dt:0;
  u.chk=active&&!u.dead&&u.stun<=0&&!u.cast&&!u.dash&&!u.block&&!u.chan&&(ctl?!!(I&&I.r):(u.energy<35&&!nearE(u,u.x,u.y,360)));if(u.chk)u.energy=Math.min(100,u.energy+30*dt);
- if(u.block){u.stam-=12*dt;u.stamT=.9;if(u.stam<=0)stamHit(u,0)}else{u.stamT-=dt;if(u.stamT<=0)u.stam=Math.min(100,u.stam+(u.ch.taij?50:32)*dt)}
+ {const want=ctl?!!(I&&I.sh)&&Math.hypot(I.mx,I.my)>.1:!!u.aiSprint&&u.moving;if(!want)u.sprintLock=0;u.sprint=active&&want&&!u.sprintLock&&u.stun<=0&&!u.cast&&!u.dash&&!u.block&&!u.chk&&!u.flame&&!u.spin&&!u.chan&&!(u.root>0)&&u.stam>1}
+ if(u.block){u.stam-=12*dt;u.stamT=.9;if(u.stam<=0)stamHit(u,0)}else if(u.sprint){u.stam=Math.max(0,u.stam-SPRINT_COST*dt);u.stamT=.5;if(u.stam<=0){u.sprint=false;u.sprintLock=1}}else{u.stamT-=dt;if(u.stamT<=0)u.stam=Math.min(100,u.stam+(u.ch.taij?50:32)*dt)}
  if(active&&u.stun<=0&&u.fear>0){const a=Math.atan2(u.y-u.fearY,u.x-u.fearX);mx=Math.cos(a);my=Math.sin(a);u.aim=a}
  else if(active&&u.stun<=0&&u.taunt>0&&u.tauntSrc&&!u.tauntSrc.dead){const e=u.tauntSrc,a=ang(u,e);u.aim=a;if(dist(u,e)>70){mx=Math.cos(a);my=Math.sin(a)}use(u,0,dist(u,e))}
  else if(active&&u.stun<=0){
@@ -6906,9 +6909,9 @@ function updUnit(u,dt,active){
  if(u.flame){const f=u.flame;f.t-=dt;f.k-=dt;const FR=f.R||175,FA=f.arc||.4,wv=f.v==='wind';if(near(u.x,u.y))for(let i=0;i<(FR>200?5:3);i++){const b=u.aim+(rnd()-.5)*FA*1.5,s=(350+rnd()*150)*FR/175;fx.push({x:u.x+Math.cos(u.aim)*20,y:u.y+Math.sin(u.aim)*20,z:26,vx:Math.cos(b)*s,vy:Math.sin(b)*s,t:.4,m:.4,col:wv?'#e8fff8':rnd()<.5?'#f93':'#fc4',r:4+rnd()*3,vfx:f.v||'fire'})}
   if(f.k<=0){f.k=.12;VFX=f.v||'fire';S('flame',u);for(const e of enemies(u))if(dist(u,e)<FR+e.r&&angDiff(ang(u,e),u.aim)<FA)hit(e,u,f.d||3.5,{slow:.5,unblockable:1,kb:f.kb,dot:f.dot,silent:!!f.kb});VFX=null}if(f.t<=0)u.flame=null}
  const l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l}
- const sp=u.ch.spd*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.4:1)*(u.flame?(u.flame.still?0:.5):1)*(u.spin?.8:1)*(u.block?.55:1)*(u.root>0?0:1)*(u.chk?0:1)*(u.ch.pass==='speed'?1.1:1);{const ac=sp?1-Math.exp(-ACCEL*dt):1;u.vx+=(mx*sp-u.vx)*ac;u.vy+=(my*sp-u.vy)*ac}
+ const sp=u.ch.spd*SPD_K*(u.sprint?SPRINT_K:1)*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.5:1)*(u.flame?(u.flame.still?0:.5):1)*(u.spin?.8:1)*(u.block?.55:1)*(u.root>0?0:1)*(u.chk?0:1)*(u.ch.pass==='speed'?1.1:1);{const ac=sp?1-Math.exp(-ACCEL*dt):1;u.vx+=(mx*sp-u.vx)*ac;u.vy+=(my*sp-u.vy)*ac}
  u.x+=(u.vx+u.kx)*dt;u.y+=(u.vy+u.ky)*dt;const dec=Math.exp(-7*dt);u.kx*=dec;u.ky*=dec;
- u.moving=l>.1;if(u.moving){u.walk+=dt*13*(u.haste>0?1.4:1);if(rnd()<dt*9&&near(u.x,u.y))fx.push({x:u.x+(rnd()-.5)*10,y:u.y+4,z:2,vx:(rnd()-.5)*30,vy:(rnd()-.5)*20,t:.5,m:.5,col:'#5a6478',r:3})}
+ u.moving=l>.1;if(u.moving){u.walk+=dt*13*(u.haste>0?1.4:1)*(u.sprint?1.35:1);if(rnd()<dt*(u.sprint?26:9)&&near(u.x,u.y))fx.push({x:u.x+(rnd()-.5)*10,y:u.y+4,z:2,vx:(rnd()-.5)*30,vy:(rnd()-.5)*20,t:.5,m:.5,col:'#5a6478',r:3})}
  if(u.haste>0&&rnd()<dt*20&&near(u.x,u.y))fx.push({x:u.x,y:u.y,z:20+rnd()*30,vx:(rnd()-.5)*40,vy:(rnd()-.5)*40,t:.4,m:.4,col:u.rage>0?'#f44':'#fc6',r:3});
  collide(u);
  if(active&&mode!=='battle'&&dist(u,{x:CX,y:CY})>sdR())hit(u,null,14*dt,{silent:1});
@@ -7226,12 +7229,12 @@ function ninjaHands(u,fx,fy,run,t){const sw=u.swing>0?u.swing/.18:0,ax=Math.cos(
  if(u.cmbT>0&&MELEEK.has(u.ch.look.weapon.k))return[[ax*9,-33+Math.sin(t*6)],[ax*3,-35-Math.sin(t*6)]]; // garde
  const sv=u.moving?Math.sin(u.walk)*7:Math.sin(t*2)*.6;return[[ax*7+sv*fy*.3,-22+sv*.5],[-ax*4-sv*.6,-22-sv*.4]]}
 // images rémanentes : silhouettes qui s'effacent derrière un ninja qui file
-function drawGhosts(u){const T=u._tr||(u._tr=[]),fast=!u.dead&&(u.dash||u.phase>0||(u===player&&u.haste>0&&u.moving));if(fast)T.push({x:u.x,y:u.y,z:u.z||0});else if(T.length)T.shift();while(T.length>7)T.shift();
+function drawGhosts(u){const T=u._tr||(u._tr=[]),fast=!u.dead&&(u.dash||u.phase>0||(u===player&&(u.haste>0||u.sprint)&&u.moving));if(fast)T.push({x:u.x,y:u.y,z:u.z||0});else if(T.length)T.shift();while(T.length>7)T.shift();
  if(T.length<3||u.ch.look.head.t!=='ninja')return;const S2=1.3*(u.giant>0?1.35:1);for(let i=0;i<T.length-2;i+=2){const o=T[i],q=P(o.x,o.y,o.z);g.save();g.globalAlpha=.1+.18*i/T.length;(N3.ok&&N3.tile.get(u)?drawChar3(u,q.x,q.y,q.s*S2):drawNinja(u,q.x,q.y,q.s*S2,1));g.restore()}}
 function drawNinja(u,bx,by,s,ghost){
  const L=u.ch.look,h=L.head,W=L.weapon,k=W.k||'fist',t=performance.now()/1000;
  const fx=Math.cos(u.aim),fy=Math.sin(u.aim),back=fy<-.3,fl=u.flash>0,sk=L.scale||1;
- const run=u.dash?2:u.haste>0&&u.moving?2:u.moving?1:0;
+ const run=u.dash?2:(u.haste>0||u.sprint)&&u.moving?2:u.moving?1:0;
  g.save();g.translate(bx,by);g.scale(s*sk,s*sk);if(u.phase>0)g.globalAlpha*=.35+Math.sin(t*30)*.1;
  if(u.dead){g.globalAlpha=Math.max(0,1-u.deadT*.6);g.rotate(Math.min(1.4,u.deadT*6)*(fx<0?-1:1))}
  if(u.stun>0)g.rotate(Math.sin(t*12)*.06);
@@ -7384,7 +7387,7 @@ const BONES=[['root',null,[0,0,0]],['hips','root',[0,20.5,0]],['spine','hips',[0
  ['cape','chest',[0,6,-7.6]],['cape2','cape',[0,-13,0]],['skirt','hips',[0,0,0]],['thighL','hips',[4.4,-.5,0]],['shinL','thighL',[0,-9.5,0]],['footL','shinL',[0,-9,0]],['thighR','hips',[-4.4,-.5,0]],['shinR','thighR',[0,-9.5,0]],['footR','shinR',[0,-9,0]]];
 const BI=Object.fromEntries(BONES.map((b,i)=>[b[0],i]));
 // vitesse de mise en place de chaque os (plus haut = plus sec)
-const BRATE={root:16,hips:16,spine:16,chest:18,neck:18,head:16,hair:7,band:6,armL:22,foreL:22,handL:22,armR:22,foreR:22,handR:22,cape:6,cape2:5,skirt:10,thighL:18,shinL:18,footL:18,thighR:18,shinR:18,footR:18};
+const BRATE={root:20,hips:20,spine:20,chest:22,neck:22,head:20,hair:7,band:6,armL:26,foreL:26,handL:26,armR:26,foreR:26,handR:26,cape:6,cape2:5,skirt:12,thighL:24,shinL:24,footL:24,thighR:24,shinR:24,footR:24};
 function init3D(){if(N3.tried)return N3.ok;N3.tried=true;try{
  if(typeof THREE==='undefined'||OPT&&OPT.p3d===false)return false;
  let cv=document.createElement('canvas'),r=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
@@ -7514,7 +7517,7 @@ const pz=(P,b,x=0,y=0,z=0)=>{const o=E3(P,b);o.x=x;o.y=y;o.z=z;return o},padd=(P
 // mains jointes pour les mudras : 12 signes (bras et avant-bras gauche/droit), comme les signes du 2D
 const MUDP=[[-1.25,-.62,-1.75,-1.25,.62,-1.75],[-1.2,-.5,-1.55,-1.05,.7,-1.9],[-.95,-.6,-1.35,-.95,.6,-1.35],[-1.35,-.45,-1.4,-1.35,.45,-1.4],[-1.5,-.7,-1.9,-.9,.4,-1.4],[-1.45,-.25,-1.6,-1.45,.25,-1.6],
  [-1,-.65,-1.5,-1.25,.4,-1.7],[-.9,-.55,-1.1,-.9,.55,-1.1],[-1.6,-.6,-1.95,-1.6,.6,-1.95],[-1.2,-.8,-1.6,-1.2,.8,-1.6],[-1.05,-.3,-1.5,-1.4,.7,-1.85],[-.95,-.5,-1.45,-1.2,.65,-1.7]];
-function basePose(u,t,rec,P){const run=u.moving?(u.dash||u.haste>0?2:1):0,w=u.walk||0,air=(u.z||0)>4||u.airT>0;
+function basePose(u,t,rec,P){const run=u.moving?(u.dash||u.haste>0||u.sprint?2:1):0,w=u.walk||0,air=(u.z||0)>4||u.airT>0;
  P.root={x:0,y:0,z:0};P.rootR={x:0,y:0,z:0};
  if(u.dead){const d=Math.min(1,(u.deadT||0)*4);P.rootR.x=-1.45*ezo(d);P.root.y=2*d;pz(P,'armL',-.4*d,0,1.1*d);pz(P,'armR',-.4*d,0,-1.1*d);pz(P,'head',-.3*d);return P}
  // repos : respiration, bras un peu écartés
@@ -7574,10 +7577,10 @@ function actionPose(u,t,rec,P){const k=u.ch.look.weapon.k;
 const _Q=typeof THREE!=='undefined'?new THREE.Quaternion():null,_E=typeof THREE!=='undefined'?new THREE.Euler():null;
 function poseModel(u,rec,dt,t){const P={};basePose(u,t,rec,P);actionPose(u,t,rec,P);
  for(const [n] of BONES){if(n==='root')continue;const o=P[n],b=rec.bones[BI[n]],q=rec.cur[n];_E.set(o?o.x:0,o?o.y:0,o?o.z:0);_Q.setFromEuler(_E);q.slerp(_Q,1-Math.exp(-(BRATE[n]||16)*dt));b.quaternion.copy(q)}
- const rb=rec.bones[0],k=1-Math.exp(-18*dt);rec.rootP.x+=((P.root.x||0)-rec.rootP.x)*k;rec.rootP.y+=((P.root.y||0)-rec.rootP.y)*k;rec.rootP.z+=((P.root.z||0)-rec.rootP.z)*k;rb.position.copy(rec.rootP);
+ const rb=rec.bones[0],k=1-Math.exp(-24*dt);rec.rootP.x+=((P.root.x||0)-rec.rootP.x)*k;rec.rootP.y+=((P.root.y||0)-rec.rootP.y)*k;rec.rootP.z+=((P.root.z||0)-rec.rootP.z)*k;rb.position.copy(rec.rootP);
  const R=P.rootR;rec.rootR.x+=(R.x-rec.rootR.x)*k;rec.rootR.z+=(R.z-rec.rootR.z)*k;rec.rootR.y=R.y?R.y:rec.rootR.y*(1-k);rb.rotation.set(rec.rootR.x,rec.rootR.y,rec.rootR.z);
  // orientation : le ninja se tourne vers sa visée (au plus court), un peu en douceur
- const a=u.aim||0,want=Math.PI/2-Math.atan2(Math.sin(a)*.7+.42,Math.cos(a));let d=want-rec.yaw;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;rec.yaw+=d*(1-Math.exp(-20*dt));
+ const a=u.aim||0,want=Math.PI/2-Math.atan2(Math.sin(a)*.7+.42,Math.cos(a));let d=want-rec.yaw;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;rec.yaw+=d*(1-Math.exp(-30*dt));
  const f=u.flash>0&&!u.dead?Math.min(1,u.flash/.12):0;rec.mat.emissive.setRGB(f,f,f);rec.mat.emissiveIntensity=f?1:0;
  if(rec.face&&rec.face.material&&rec.face.material.map){const ph=(rec.ph??(rec.ph=Math.random()*4)),md=u.dead?'x':u.stun>0||u.sleepT<0?'s':f>.2||(t+ph)%4.1<.13?'c':'o';if(rec.fm!==md){rec.fm=md;rec.face.material.map=faceTexture(u.ch.look,md)}}}
 // taille de l'atlas : de 2 à 48 cases selon le nombre de ninjas visibles (agrandi aussitôt, réduit après un moment)
@@ -8131,7 +8134,7 @@ function drawMenu(){
    tfit(`${ab.n} · ${ab.cd}s${picker?` · ${ab.mud?ab.mud+' mudras':'sans mudra'} · ${jcost(ab)} chakra`:''}`,R.x+62,R.y+20,14,'#ffd38a',R.w-150,'bold');
    tfit2(ab.d||'',R.x+12,R.y+(R.h>56?35:33),R.h>56?11.5:11,'#e8cfa8',R.w-24);if(used){g.fillStyle='rgba(10,6,4,.7)';g.fillRect(R.x,R.y,R.w,R.h);text('DÉJÀ DANS TON KIT',R.x+R.w/2,R.y+36,12,'#ffb347')}if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+12,R.y+52,11,'#d8c060',R.w-24)});
   text('Clique ailleurs pour fermer',W/2,710,12,'#b89a70','center','normal')}
- else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · ${lbl.KeyR} maintenu = chakra · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
+ else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · ${lbl.KeyR} maintenu = chakra · Maj = sprint · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
  drawCursor();
 }
 function bar(x,y,w,h,v,col,right){g.fillStyle='rgba(0,0,0,.6)';g.fillRect(x,y,w,h);g.fillStyle=col;const vw=w*clamp(v,0,1);g.fillRect(right?x+w-vw:x,y,vw,h);g.strokeStyle='#2a3a5a';g.lineWidth=1;g.strokeRect(x,y,w,h)}
@@ -8153,7 +8156,7 @@ function drawBoard(y0,rh){units.forEach(stOf);const all=Object.values(STATS);if(
 function drawHud(){
  const p=player;
  text(p.ch.name+' (toi)',30,32,18,'#9fd4ff','left');bar(30,40,360,16,p.hp/p.max,'#4db8ff');eBar(30,59,360,p.energy/100);{const T=trait(p);if(T&&T.hud)try{T.hud(p,30,96)}catch(e){}}
- if(canBlock(p)){bar(30,67,360,4,p.stam/100,p.blockLock>0?'#a55':'#7df');text(`${lbl.KeyF} parade`,396,72,10,'#7df','left','normal')}
+ if(canBlock(p)){bar(30,67,360,4,p.stam/100,p.blockLock>0?'#a55':'#7df');text(`${lbl.KeyF} parade · Maj sprint`,396,72,10,'#7df','left','normal')}
  let ay=0;for(const m of units)if(m!==player&&m.team===player.team&&(m.human||mode!=='battle')){const yy=ay;ay+=30;text(m.ch.name+(m.human?' (coéquipier)':' (allié)'),30,94+yy,13,m.human?'#9f9':'#9fd4ff','left');bar(30,100+yy,220,8,m.hp/m.max,m.human?'#7f7':'#4db8ff');if(m.dead&&mode==='battle')text(`retour dans ${Math.ceil(m.respawn)} s`,258,108+yy,11,'#9f9','left','normal')}
  if(mode!=='battle'){const fo=units.filter(u=>u.team!==player.team),two=fo.length>1;fo.forEach((e,i)=>{const y=i*(fo.length>2?36:44);
   text(e.ch.name,W-30,(two?28:32)+y,two?14:18,'#ffa0a0','right');bar(W-390,(two?34:40)+y,360,two?10:16,e.hp/e.max,'#ff4d4d',1);eBar(W-390,(two?46:59)+y,360,e.energy/100,1)});
@@ -8283,7 +8286,7 @@ $('oMute').onchange=e=>{muted=e.target.checked};$('o3d').onchange=e=>{OPT.p3d=e.
 $('nHost').onclick=hostGame;$('nJoin').onclick=()=>joinGame($('nCode').value);$('nClose').onclick=()=>netUI(false);
 $('nCode').addEventListener('keydown',e=>{if(e.key==='Enter')joinGame($('nCode').value)});
 const rd=v=>typeof v==='number'?Math.round(v*100)/100:v;
-const UK=['wet','dotEl','anim','relT','thrT','phase','izT','chk','cmb','cmbH','cmbT','jstN','jstV','auraV','mk','stk','rootV','sleepT','c','team','x','y','z','hp','max','energy','aim','swing','swingA','moving','walk','dead','deadT','stun','deflect','shield','block','stam','blockLock','haste','rage','unstop','saberOut','flash','respawn','hero','r','human','slow','vx','vy','root','stealth','airT','silence','fear','taunt','disarm','vuln','dotT','counter','riposte','dodge','absorb','chrome','riot','giant','thorns','drT','ammo','chg'];
+const UK=['sprint','wet','dotEl','anim','relT','thrT','phase','izT','chk','cmb','cmbH','cmbT','jstN','jstV','auraV','mk','stk','rootV','sleepT','c','team','x','y','z','hp','max','energy','aim','swing','swingA','moving','walk','dead','deadT','stun','deflect','shield','block','stam','blockLock','haste','rage','unstop','saberOut','flash','respawn','hero','r','human','slow','vx','vy','root','stealth','airT','silence','fear','taunt','disarm','vuln','dotT','counter','riposte','dodge','absorb','chrome','riot','giant','thorns','drT','ammo','chg'];
 const PK=['vfx','jn','dragon','shuri','kind','x','y','vx','vy','r','col','saber','big','grenade','rocket','ex','life','life0','rot','tx','ty','ar','hook','ox','oy','zapP','rock','spear'],ZK=['x','y','r','t','m','col','vfx','jn'];
 function pickK(o,ks){const r={};for(const k of ks){const v=o[k];r[k]=Array.isArray(v)?v.map(rd):v===undefined?null:rd(v)}return r}
 function snapU(u){const a=UK.map(k=>u[k]===undefined?null:rd(u[k]));a.push(u.cast?{i:u.cast.i,t:rd(u.cast.t),dur:u.cast.dur,td:rd(u.cast.td),aimOv:u.cast.aimOv??null,ex:u.cast.ex}:null,u.spin?{r:u.spin.r}:null,!!u.flame,!!u.dash);return a}
@@ -8315,7 +8318,7 @@ function guestFrame(dt){for(const k in pressed)net.gp[k]=1;
  const k=Math.min(1,dt*14);for(const u of units)if(u!==player){u.x+=(u.nx-u.x)*k;u.y+=(u.ny-u.y)*k}
  // prédiction : le coéquipier voit son personnage bouger tout de suite, sans attendre l'hôte
  const u=player;if(u&&!u.dead&&state==='fight'){const I=localInput();u.aim=Math.atan2(I.ay-u.y,I.ax-u.x);let mx=I.mx,my=I.my;const l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l}
-  const can=u.stun<=0&&!u.dash&&!(u.root>0)&&!I.r,sp=can?u.ch.spd*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.4:1)*(u.flame?(u.flame.still?0:.5):1)*(u.spin?.8:1)*(I.f&&canBlock(u)&&u.stam>0?.55:1)*(u.ch.pass==='speed'?1.1:1):0;
+  const can=u.stun<=0&&!u.dash&&!(u.root>0)&&!I.r,sp=can?u.ch.spd*SPD_K*(I.sh&&u.stam>1&&!I.f?SPRINT_K:1)*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.5:1)*(u.flame?(u.flame.still?0:.5):1)*(u.spin?.8:1)*(I.f&&canBlock(u)&&u.stam>0?.55:1)*(u.ch.pass==='speed'?1.1:1):0;
   const ac=sp?1-Math.exp(-ACCEL*dt):1;u.gvx=(u.gvx||0)+(mx*sp-(u.gvx||0))*ac;u.gvy=(u.gvy||0)+(my*sp-(u.gvy||0))*ac;const vx=u.gvx,vy=u.gvy;u.x+=vx*dt;u.y+=vy*dt;collide(u);u.moving=l>.1&&sp>0;if(u.moving)u.walk+=dt*13;
   net.seq++;net.pend.push({seq:net.seq,vx,vy,dt});if(net.pend.length>180)net.pend.shift()}
  for(const p of projs){p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot=(p.rot||0)+dt*25;if(p.life0)p.life=Math.max(.001,p.life-dt)}

@@ -27,7 +27,7 @@ Même moteur que l'arène Star Wars (vue 3/4 façon Battlerite, arène, bataille
 - Jutsu reconnaissables : sphère du Rasengan, Chidori qui crépite, traînée jaune du Hiraishin, Rasen-shuriken, Kirin, dragon d'eau, requin, prison aqueuse, Kage Mane et mains d'ombre, cercueil de sable, Kaiten, trigramme des 64 points, Byakugan, Tsukuyomi (lune rouge), Amaterasu (flammes noires), Susanô, manteau de Kyûbi, Huit Portes, Paon du matin, Tigre du soir, vrilles du Gatsûga, forêt d'os, Katsuyu, sceaux, feuilles du Shunshin, bûche du Kawarimi, crapaud géant.
 - Rythme posé : jeu à 80 %, **R maintenu = recharger le chakra**, chaque jutsu coûte du chakra et demande des **mudras** (D 2, C 3, B 4, A 5, S 6 ; subjutsu et déplacements sans mudra), animés signe par signe.
 - Clic gauche : **combo de 5 coups** au corps à corps (le 5e étourdit, l'endurance permet un combo complet) ; à distance, 10 tirs par barre d'endurance.
-- Prise en main fluide : accélération douce, touches mémorisées pendant un coup ou une incantation, caméra rapprochée qui regarde devant.
+- Prise en main fluide : déplacements vifs, **Maj maintenue = sprint** (consomme l'endurance), touches mémorisées pendant un coup ou une incantation, caméra rapprochée qui regarde devant.
 - Sons synthétisés par élément, annonce plein écran de ton ultime.
 - Cartes : Terrain d'entraînement, Vallée de la Fin, Désert de Suna (⚙ Partie), avec feuilles, sable ou brume.
 

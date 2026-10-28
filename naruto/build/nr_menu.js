@@ -89,6 +89,6 @@ function drawMenu(){
    tfit(`${ab.n} · ${ab.cd}s${picker?` · ${ab.mud?ab.mud+' mudras':'sans mudra'} · ${jcost(ab)} chakra`:''}`,R.x+62,R.y+20,14,'#ffd38a',R.w-150,'bold');
    tfit2(ab.d||'',R.x+12,R.y+(R.h>56?35:33),R.h>56?11.5:11,'#e8cfa8',R.w-24);if(used){g.fillStyle='rgba(10,6,4,.7)';g.fillRect(R.x,R.y,R.w,R.h);text('DÉJÀ DANS TON KIT',R.x+R.w/2,R.y+36,12,'#ffb347')}if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+12,R.y+52,11,'#d8c060',R.w-24)});
   text('Clique ailleurs pour fermer',W/2,710,12,'#b89a70','center','normal')}
- else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · ${lbl.KeyR} maintenu = chakra · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
+ else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · ${lbl.KeyR} maintenu = chakra · Maj = sprint · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
  drawCursor();
 }

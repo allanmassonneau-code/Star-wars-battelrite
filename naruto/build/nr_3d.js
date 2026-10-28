@@ -10,7 +10,7 @@ const BONES=[['root',null,[0,0,0]],['hips','root',[0,20.5,0]],['spine','hips',[0
  ['cape','chest',[0,6,-7.6]],['cape2','cape',[0,-13,0]],['skirt','hips',[0,0,0]],['thighL','hips',[4.4,-.5,0]],['shinL','thighL',[0,-9.5,0]],['footL','shinL',[0,-9,0]],['thighR','hips',[-4.4,-.5,0]],['shinR','thighR',[0,-9.5,0]],['footR','shinR',[0,-9,0]]];
 const BI=Object.fromEntries(BONES.map((b,i)=>[b[0],i]));
 // vitesse de mise en place de chaque os (plus haut = plus sec)
-const BRATE={root:16,hips:16,spine:16,chest:18,neck:18,head:16,hair:7,band:6,armL:22,foreL:22,handL:22,armR:22,foreR:22,handR:22,cape:6,cape2:5,skirt:10,thighL:18,shinL:18,footL:18,thighR:18,shinR:18,footR:18};
+const BRATE={root:20,hips:20,spine:20,chest:22,neck:22,head:20,hair:7,band:6,armL:26,foreL:26,handL:26,armR:26,foreR:26,handR:26,cape:6,cape2:5,skirt:12,thighL:24,shinL:24,footL:24,thighR:24,shinR:24,footR:24};
 function init3D(){if(N3.tried)return N3.ok;N3.tried=true;try{
  if(typeof THREE==='undefined'||OPT&&OPT.p3d===false)return false;
  let cv=document.createElement('canvas'),r=new THREE.WebGLRenderer({canvas:cv,antialias:true,alpha:true});
@@ -140,7 +140,7 @@ const pz=(P,b,x=0,y=0,z=0)=>{const o=E3(P,b);o.x=x;o.y=y;o.z=z;return o},padd=(P
 // mains jointes pour les mudras : 12 signes (bras et avant-bras gauche/droit), comme les signes du 2D
 const MUDP=[[-1.25,-.62,-1.75,-1.25,.62,-1.75],[-1.2,-.5,-1.55,-1.05,.7,-1.9],[-.95,-.6,-1.35,-.95,.6,-1.35],[-1.35,-.45,-1.4,-1.35,.45,-1.4],[-1.5,-.7,-1.9,-.9,.4,-1.4],[-1.45,-.25,-1.6,-1.45,.25,-1.6],
  [-1,-.65,-1.5,-1.25,.4,-1.7],[-.9,-.55,-1.1,-.9,.55,-1.1],[-1.6,-.6,-1.95,-1.6,.6,-1.95],[-1.2,-.8,-1.6,-1.2,.8,-1.6],[-1.05,-.3,-1.5,-1.4,.7,-1.85],[-.95,-.5,-1.45,-1.2,.65,-1.7]];
-function basePose(u,t,rec,P){const run=u.moving?(u.dash||u.haste>0?2:1):0,w=u.walk||0,air=(u.z||0)>4||u.airT>0;
+function basePose(u,t,rec,P){const run=u.moving?(u.dash||u.haste>0||u.sprint?2:1):0,w=u.walk||0,air=(u.z||0)>4||u.airT>0;
  P.root={x:0,y:0,z:0};P.rootR={x:0,y:0,z:0};
  if(u.dead){const d=Math.min(1,(u.deadT||0)*4);P.rootR.x=-1.45*ezo(d);P.root.y=2*d;pz(P,'armL',-.4*d,0,1.1*d);pz(P,'armR',-.4*d,0,-1.1*d);pz(P,'head',-.3*d);return P}
  // repos : respiration, bras un peu écartés
@@ -200,10 +200,10 @@ function actionPose(u,t,rec,P){const k=u.ch.look.weapon.k;
 const _Q=typeof THREE!=='undefined'?new THREE.Quaternion():null,_E=typeof THREE!=='undefined'?new THREE.Euler():null;
 function poseModel(u,rec,dt,t){const P={};basePose(u,t,rec,P);actionPose(u,t,rec,P);
  for(const [n] of BONES){if(n==='root')continue;const o=P[n],b=rec.bones[BI[n]],q=rec.cur[n];_E.set(o?o.x:0,o?o.y:0,o?o.z:0);_Q.setFromEuler(_E);q.slerp(_Q,1-Math.exp(-(BRATE[n]||16)*dt));b.quaternion.copy(q)}
- const rb=rec.bones[0],k=1-Math.exp(-18*dt);rec.rootP.x+=((P.root.x||0)-rec.rootP.x)*k;rec.rootP.y+=((P.root.y||0)-rec.rootP.y)*k;rec.rootP.z+=((P.root.z||0)-rec.rootP.z)*k;rb.position.copy(rec.rootP);
+ const rb=rec.bones[0],k=1-Math.exp(-24*dt);rec.rootP.x+=((P.root.x||0)-rec.rootP.x)*k;rec.rootP.y+=((P.root.y||0)-rec.rootP.y)*k;rec.rootP.z+=((P.root.z||0)-rec.rootP.z)*k;rb.position.copy(rec.rootP);
  const R=P.rootR;rec.rootR.x+=(R.x-rec.rootR.x)*k;rec.rootR.z+=(R.z-rec.rootR.z)*k;rec.rootR.y=R.y?R.y:rec.rootR.y*(1-k);rb.rotation.set(rec.rootR.x,rec.rootR.y,rec.rootR.z);
  // orientation : le ninja se tourne vers sa visée (au plus court), un peu en douceur
- const a=u.aim||0,want=Math.PI/2-Math.atan2(Math.sin(a)*.7+.42,Math.cos(a));let d=want-rec.yaw;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;rec.yaw+=d*(1-Math.exp(-20*dt));
+ const a=u.aim||0,want=Math.PI/2-Math.atan2(Math.sin(a)*.7+.42,Math.cos(a));let d=want-rec.yaw;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;rec.yaw+=d*(1-Math.exp(-30*dt));
  const f=u.flash>0&&!u.dead?Math.min(1,u.flash/.12):0;rec.mat.emissive.setRGB(f,f,f);rec.mat.emissiveIntensity=f?1:0;
  if(rec.face&&rec.face.material&&rec.face.material.map){const ph=(rec.ph??(rec.ph=Math.random()*4)),md=u.dead?'x':u.stun>0||u.sleepT<0?'s':f>.2||(t+ph)%4.1<.13?'c':'o';if(rec.fm!==md){rec.fm=md;rec.face.material.map=faceTexture(u.ch.look,md)}}}
 // taille de l'atlas : de 2 à 48 cases selon le nombre de ninjas visibles (agrandi aussitôt, réduit après un moment)

@@ -15,7 +15,9 @@ function drawFlowN(u,p,S,sk){const t=performance.now()/1000,col=u.ch.look.weapon
  if(u===player&&u.cmbT>0&&u.cmb){for(let i=0;i<5;i++){const x=p.x+(i-2)*11,y=p.y+16*S;g.fillStyle=i<u.cmb?(u.cmb===5?'#ffd36a':'#fff'):'rgba(0,0,0,.4)';g.beginPath();g.arc(x,y,3.5,0,7);g.fill()}}}
 
 // ---------- Fluidité : accélération, mémoire des touches, caméra ----------
-const ACCEL=18; // le ninja prend et perd sa vitesse en un éclair, sans à-coups
+const ACCEL=30; // le ninja prend et perd sa vitesse en un éclair, sans à-coups
+// déplacement plus vif (le jeu reste à 80 %) et sprint (Maj maintenue) : plus rapide, consomme l'endurance
+const SPD_K=1.12,SPRINT_K=1.45,SPRINT_COST=18;
 // mémoire des touches : un jutsu demandé pendant un coup, une incantation ou une fin de recharge part dès que possible
 function tryUse(u,i,td,ex){if(use(u,i,td,undefined,ex)){u.buf=null;return true}const ab=u.ch.abil[i];
  if(ab&&u.energy>=jcost(ab)&&!(u.silence>0)&&(u.cast||u.dash||u.swing>0||u.spin||u.stun>0&&u.stun<.25||(u.cds[i]>0&&u.cds[i]<.35)))u.buf={i,t:.35,ex};return false}
