@@ -13,3 +13,11 @@ function drawFlowN(u,p,S,sk){const t=performance.now()/1000,col=u.ch.look.weapon
  if(u.cast&&!u.dead){const ab=castAb(u,u.cast),n=ab&&ab.mud||0;if(n){const done=Math.min(n,Math.floor(u.cast.t/u.cast.dur*n)+1),y=p.y-112*S*sk;
   for(let i=0;i<n;i++){const x=p.x+(i-(n-1)/2)*10;g.save();g.translate(x,y);g.rotate(.785);g.fillStyle=i<done?col:'rgba(0,0,0,.5)';g.strokeStyle='#fff';g.lineWidth=1;g.fillRect(-3,-3,6,6);g.strokeRect(-3,-3,6,6);g.restore()}const md=mudraOf(u);if(md){g.save();g.font='bold 11px sans-serif';g.textAlign='center';g.fillStyle='rgba(0,0,0,.6)';g.fillText(md.sg[0],p.x+1,y-9);g.fillStyle=md.q<.3?'#fff':col;g.fillText(md.sg[0],p.x,y-10);g.restore()}}}
  if(u===player&&u.cmbT>0&&u.cmb){for(let i=0;i<5;i++){const x=p.x+(i-2)*11,y=p.y+16*S;g.fillStyle=i<u.cmb?(u.cmb===5?'#ffd36a':'#fff'):'rgba(0,0,0,.4)';g.beginPath();g.arc(x,y,3.5,0,7);g.fill()}}}
+
+// ---------- Fluidité : accélération, mémoire des touches, caméra ----------
+const ACCEL=18; // le ninja prend et perd sa vitesse en un éclair, sans à-coups
+// mémoire des touches : un jutsu demandé pendant un coup, une incantation ou une fin de recharge part dès que possible
+function tryUse(u,i,td,ex){if(use(u,i,td,undefined,ex)){u.buf=null;return true}const ab=u.ch.abil[i];
+ if(ab&&u.energy>=jcost(ab)&&!(u.silence>0)&&(u.cast||u.dash||u.swing>0||u.spin||u.stun>0&&u.stun<.25||(u.cds[i]>0&&u.cds[i]<.35)))u.buf={i,t:.35,ex};return false}
+function bufTick(u,dt,td,I){if(I.l||I.p.lmb){if(!use(u,0,td)&&I.p.lmb&&u.stam>=(meleeU(u)?20:10)-.01)u.bufL=.28}else if(u.bufL>0){u.bufL-=dt;if(use(u,0,td))u.bufL=0}
+ if(!u.buf)return;u.buf.t-=dt;const ab=u.ch.abil[u.buf.i];if(u.buf.t<=0||!ab||u.energy<jcost(ab)){u.buf=null;return}if(use(u,u.buf.i,td,undefined,u.buf.ex))u.buf=null}

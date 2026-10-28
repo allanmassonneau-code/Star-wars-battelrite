@@ -49,7 +49,7 @@ for(const k in NAT)NAT[k].key=k;
 // stats de référence (pour les PV / la puissance du ninja) : un perso Star Wars proche dans l'esprit
 const NATHERO={fu:'palpatine',ka:'boba'};
 // mise à jour des objets spéciaux (hôte)
-function auxUpdate(dt){seqUpdate(dt);for(const x of aux){x.t-=dt;x.k-=dt;
+function auxUpdate(dt){seqUpdate(dt);for(const x of aux){x.t-=dt;x.k-=dt;if(AUXF[x.type]){AUXF[x.type](x,dt);continue}
   if(x.type==='tornado'){x.x=clamp(x.x+x.vx*dt,B.x+20,B.x+B.w-20);x.y=clamp(x.y+x.vy*dt,B.y+20,B.y+B.h-20)}
   if(x.type==='prog'&&x.owner&&!x.owner.dead){x.x=x.owner.x;x.y=x.owner.y}
   const tick=x.k<=0;if(tick)x.k=.25;
@@ -63,6 +63,7 @@ function auxUpdate(dt){seqUpdate(dt);for(const x of aux){x.t-=dt;x.k-=dt;
    else{VFX=x.vfx;hit(e,x.owner,x.dmg,{silent:1,dot:x.vfx==='fire'?BURN(3,2):null});VFX=null}}}
  aux=aux.filter(x=>x.t>0);
  for(const u of units){if(u.dead)continue;
+  if(u.phase>0)u.phase-=dt;if(u.relT>0)u.relT-=dt;if(u.thrT>0)u.thrT-=dt;if(u.izT>0)u.izT-=dt;
   if(u.jst){u.jst.t-=dt;if(u.jst.t<=0){u.cds[u.jst.i]=u.jst.cd;u.jst=null}}u.jstN=u.jst?u.jst.n:0;u.jstV=u.jst?u.jst.v:null;
   if(u.chan){const c=u.chan;c.t+=dt;u.root=Math.max(u.root,.15);for(const x of aux)if(x.type==='chan'&&x.owner===u)x.k=c.t/c.max;if(u.stun>0){u.chan=null;for(const x of aux)if(x.type==='chan'&&x.owner===u)x.t=0;u.cds[c.i]=c.cd}else if(c.t>=c.max)releaseChan(u)}}
  for(const w of walls)if(w.burn){w.k-=dt;if(w.k<=0){w.k=.3;for(const e of units)if(!e.dead&&e.team!==w.team&&Math.hypot(e.x-w.x,e.y-w.y)<w.r+e.r+8){VFX='fire';hit(e,w.owner,3,{silent:1,dot:BURN(3,2)});VFX=null}}}}
@@ -73,6 +74,7 @@ function drawAux(){const t=performance.now()/1000;for(const x of aux){if(!near(x
  else if(x.type==='tornado'){const q=P(x.x,x.y,0),fire=x.vfx==='fire';g.globalCompositeOperation=fire?'lighter':'source-over';for(let i=0;i<9;i++){const h=i*14*q.s,rr=(18+i*8)*q.s*(x.r/70),a0=t*8+i*.7;g.strokeStyle=fire?rgba(i%2?'#ff7a2a':'#ffd36a',.55*k):rgba(i%2?'#e8fff8':'#a8d8c8',.6*k);g.lineWidth=(5-i*.3)*q.s;g.beginPath();g.ellipse(q.x+Math.sin(t*3+i*.5)*4*q.s,q.y-h,rr,rr*.35,0,a0,a0+4.2);g.stroke()}}
  else if(x.type==='prog'){const q=P(x.x,x.y,0);g.fillStyle=rgba('#ff5a1a',.12*k);gEll(x.x,x.y,x.r);g.fill();g.strokeStyle=rgba('#ff9a3a',.6*k);g.lineWidth=2;g.setLineDash([10,6]);g.lineDashOffset=-t*30;gEll(x.x,x.y,x.r);g.stroke();g.setLineDash([]);
   g.globalCompositeOperation='lighter';for(let i=0;i<12;i++){const a=i*.52+t*.5,d=x.r*(.3+((i*37)%60)/100),p=P(x.x+Math.cos(a)*d,x.y+Math.sin(a)*d*.8,2),h=(10+Math.sin(t*9+i)*5)*p.s;g.fillStyle=rgba(i%2?'#ffb03a':'#ff5a1a',.7*k);g.beginPath();g.moveTo(p.x-4*p.s,p.y);g.quadraticCurveTo(p.x,p.y-h*2,p.x+4*p.s,p.y);g.fill()}}
+ else if(AUXD[x.type])AUXD[x.type](x,k,t);
  else if(x.type==='chan'){const c=x.k||0;g.fillStyle=rgba('#ff5a1a',.1+.25*c);gEll(x.x,x.y,x.r);g.fill();g.strokeStyle='#ff9a3a';g.lineWidth=2+3*c;gEll(x.x,x.y,x.r*(.3+.7*c));g.stroke();g.strokeStyle=rgba('#ff9a3a',.5);g.lineWidth=1.5;gEll(x.x,x.y,x.r);g.stroke();
   const q=P(x.x,x.y,0);g.fillStyle=rgba('#3a3030',.35+.3*c);for(let i=0;i<5;i++){const a=t*.7+i*1.3;g.beginPath();g.ellipse(q.x+Math.cos(a)*x.r*.5*q.s,q.y-40*q.s-Math.sin(a)*8,30*q.s*(.6+c*.6),14*q.s*(.6+c*.6),0,0,7);g.fill()}}
  g.restore()}

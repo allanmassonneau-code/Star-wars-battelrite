@@ -13,8 +13,10 @@ const slotRow=s=>({x:428,y:150+s*64,w:812,h:58});
 const passRow={x:428,y:150+6*64,w:812,h:40};
 let presetI=-1;const presetBtn={x:428,y:640,w:180,h:30};
 const nameBtn={x:40,y:150,w:300,h:30},rndBtn={x:348,y:150,w:52,h:30},rndBuildBtn={x:428,y:600,w:180,h:34},fightBtn={x:1030,y:592,w:210,h:48};
-const pickRect=(s,i)=>{const cols=2,w=330,h=60;return{x:W/2-w-6+(i%cols)*(w+12),y:150+Math.floor(i/cols)*(h+8),w,h}};
-function rebuildMine(){MY=sanitizeBuild(MY);try{localStorage.setItem('nrBuild3',JSON.stringify(MY))}catch(e){}CH.p0=mkNinja(MY);
+// description sur deux lignes si elle est trop longue
+function tfit2(s,x,y,size,col,w){g.font=`normal ${size}px "Trebuchet MS",system-ui,sans-serif`;if(g.measureText(s).width<=w)return tfit(s,x,y,size,col,w);let best=-1;for(let i=0;i<s.length;i++)if(s[i]===' '&&g.measureText(s.slice(0,i)).width<=w&&(best<0||Math.abs(i-s.length/2)<Math.abs(best-s.length/2)))best=i;if(best<0)return tfit(s,x,y,size,col,w);tfit(s.slice(0,best),x,y,size,col,w);tfit(s.slice(best+1),x,y+size+1.5,size,col,w)}
+const pickRect=(s,i)=>{const n=s?avail(MY,s).length:stylesOf(MY).length,cols=n>16?3:2,w=cols>2?300:330,h=cols>2?54:60;return{x:W/2-(cols*(w+12)-12)/2+(i%cols)*(w+12),y:150+Math.floor(i/cols)*(h+(cols>2?5:8)),w,h}};
+function rebuildMine(){MY=sanitizeBuild(MY);try{localStorage.setItem('nrBuild4',JSON.stringify(Object.assign({},MY,{jn:MY.j.slice(1).map(id=>JL[id].n)})))}catch(e){}CH.p0=mkNinja(MY);
  if(net.role==='host'){net.ready=false;sendLobby()}else if(isGuest()&&coop()){net.ready=false;netSend({t:'build',b:MY});netSend({t:'ready',v:false})}}
 function creatorClick(){
  if(picker!==null){const A=picker?avail(MY,picker).map(j=>j.id):stylesOf(MY);for(let i=0;i<A.length;i++)if(inRect(mouse,pickRect(picker,i))){if(picker&&A[i]!==MY.j[picker]&&MY.j.slice(1).includes(A[i]))break;MY.j[picker]=A[i];rebuildMine();break}picker=null;return true}
@@ -79,7 +81,7 @@ function drawMenu(){
    g.fillStyle=sel?'rgba(110,70,30,.98)':h?'rgba(70,46,24,.98)':'rgba(24,16,10,.97)';g.strokeStyle=sel?'#ffb347':'#5a3a1e';g.lineWidth=sel?2:1;g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,8);g.fill();g.stroke();
    if(picker){rankBadge(R.x+10,R.y+6,J);text(catName(J.cat),R.x+R.w-10,R.y+18,10,catCol(J.cat),'right','normal')}else{styleBadge(R.x+10,R.y+6);text(STYLES[J.style][4]==='kunai'||STYLES[J.style][4]==='senbon'||STYLES[J.style][4]==='bugs'||STYLES[J.style][4]==='sand'?'Distance':STYLES[J.style][4]==='shadow'||STYLES[J.style][4]==='chain'?'Moyenne portée':'Corps à corps',R.x+R.w-10,R.y+18,10,'#ffd38a','right','normal')}
    tfit(`${ab.n} · ${ab.cd}s${picker?` · ${ab.mud?ab.mud+' mudras':'sans mudra'} · ${jcost(ab)} chakra`:''}`,R.x+62,R.y+20,14,'#ffd38a',R.w-150,'bold');
-   tfit(ab.d||'',R.x+12,R.y+37,12,'#e8cfa8',R.w-24);if(used){g.fillStyle='rgba(10,6,4,.7)';g.fillRect(R.x,R.y,R.w,R.h);text('DÉJÀ DANS TON KIT',R.x+R.w/2,R.y+36,12,'#ffb347')}if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+12,R.y+52,11,'#d8c060',R.w-24)});
+   tfit2(ab.d||'',R.x+12,R.y+(R.h>56?35:33),R.h>56?11.5:11,'#e8cfa8',R.w-24);if(used){g.fillStyle='rgba(10,6,4,.7)';g.fillRect(R.x,R.y,R.w,R.h);text('DÉJÀ DANS TON KIT',R.x+R.w/2,R.y+36,12,'#ffb347')}if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+12,R.y+52,11,'#d8c060',R.w-24)});
   text('Clique ailleurs pour fermer',W/2,710,12,'#b89a70','center','normal')}
  else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · ${lbl.KeyR} maintenu = chakra · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
  drawCursor();

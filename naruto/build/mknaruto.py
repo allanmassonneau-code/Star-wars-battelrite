@@ -36,7 +36,7 @@ rep(" deflect:()=>{osc('square',2600,1700,.13,.03,{bp:2600,q:6,rev:1});","  defl
 # ---------- persos : les kits Star Wars deviennent la réserve de jutsu (SRC)
 rep("const CH={\n","const SRC={\n")
 rep("for(const k in BAL){const [hp,pw,spd]=BAL[k];Object.assign(CH[k],{hp,pw,spd})}","for(const k in BAL){const [hp,pw,spd]=BAL[k];Object.assign(SRC[k],{hp,pw,spd})}")
-rep("const HEROES=Object.keys(CH).filter(k=>!CH[k].trooper);",open(SP+'nr_ninja.js').read().replace('/*NR_PASS*/',open(SP+'nr_pass.js').read()).replace('/*NR_NATURE*/',open(SP+'nr_flow.js').read()+open(SP+'nr_nature.js').read()))
+rep("const HEROES=Object.keys(CH).filter(k=>!CH[k].trooper);",open(SP+'nr_ninja.js').read().replace('/*NR_PASS*/',open(SP+'nr_pass.js').read()).replace('/*NR_NATURE*/',open(SP+'nr_flow.js').read()+open(SP+'nr_nature.js').read()+open(SP+'nr_kits.js').read()))
 rep("playerChamp='luke',aiChamp='vader'","playerChamp='p0',aiChamp='b20'")
 rep(",hover='luke';",",hover='p0';")
 rep("const saberCol=u=>u.ch.look.weapon.col||'#ccc';\nconst canBlock=u=>u.ch.look.weapon.t==='saber';",
@@ -196,7 +196,7 @@ rep("else{sparks(z.x,z.y,z.col,22);fx.push({x:z.x,y:z.y,ring:z.r,t:.45,m:.45,col
 rep("if(near(p.x,p.y)){sparks(p.x,p.y,p.col,24);shake=Math.max(shake,.2);SFX.boom()}for(let i=fi0;","if(near(p.x,p.y)){sparks(p.x,p.y,p.col,24);shake=Math.max(shake,.2);SFX.boom();detoFx(p.x,p.y,p.ar||80,p.vfx)}for(let i=fi0;")
 rep(" list.sort((a,b)=>a.y-b.y).forEach(o=>o.d());"," list.sort((a,b)=>a.y-b.y).forEach(o=>o.d());\n for(const f of fx)if(f.jfx)drawJfx(f);")
 rep("for(const f of fx){if(f.ring||f.swing||f.bolt||f.light||f.beam)continue;","for(const f of fx){if(f.ring||f.swing||f.bolt||f.light||f.beam||f.jfx)continue;")
-rep("if(u.stamT<=0)u.stam=Math.min(100,u.stam+22*dt)","if(u.stamT<=0)u.stam=Math.min(100,u.stam+32*dt)")
+rep("if(u.stamT<=0)u.stam=Math.min(100,u.stam+22*dt)","if(u.stamT<=0)u.stam=Math.min(100,u.stam+(u.ch.taij?50:32)*dt)")
 rep("if(u.auraV&&!auraOn(u))u.auraV=null;","if(u.auraV&&!auraOn(u))u.auraV=null;u.mk=u.markB?1:0;u.stk=u.stick?1:0;if(u.root<=0)u.rootV=null;")
 rep("o.root&&hard){t.root=Math.max(t.root,o.root*xm)","o.root&&hard){t.root=Math.max(t.root,o.root*xm);t.rootV=VFX")
 rep("const UK=['auraV',","const UK=['auraV','mk','stk','rootV','sleepT',")
@@ -271,6 +271,31 @@ rep("if(mode==='battle'){const tg=player.dead&&deathPos?deathPos:player,k=Math.m
     "{const tg=player.dead&&deathPos?deathPos:player,k=Math.min(1,dt*6);cam.x+=(clamp(tg.x,B.x+420,B.x+B.w-420)-cam.x)*k;cam.y+=(clamp(tg.y,B.y+240,B.y+B.h-170)-cam.y)*k}")
 rep("if(mode==='battle'&&player){const c=Math.min(1,dt*6);cam.x+=(clamp(player.x,420,MAP.w-420)-cam.x)*c;cam.y+=(clamp(player.y,240,MAP.h-170)-cam.y)*c}",
     "if(player){const c=Math.min(1,dt*6);cam.x+=(clamp(player.x,B.x+420,B.x+B.w-420)-cam.x)*c;cam.y+=(clamp(player.y,B.y+240,B.y+B.h-170)-cam.y)*c}")
+# kits sur mesure : effets à l'impact, intangibilité, Izanagi, explosions propres, synchro réseau
+rep("function onProjHit(p,t){const o=p.owner;p.hitAny=1;","function onProjHit(p,t){const o=p.owner;p.hitAny=1;if(p.onHit)p.onHit(p,t);")
+rep("function hit(t,src,dmg,o={}){\n if(t.dead||state!=='fight')return false;","function hit(t,src,dmg,o={}){\n if(t.dead||state!=='fight')return false;if(t.phase>0&&src&&src!==t)return false;")
+rep(" if(t.hp<=0)die(t,src);\n return true;"," if(t.hp<=0&&!(t.izT>0&&t.izS&&izRevive(t)))die(t,src);\n return true;")
+rep("detoFx(z.x,z.y,z.r,z.vfx)","detoFx(z.x,z.y,z.r,z.deto||z.vfx)")
+rep("const UK=['chk',","const UK=['phase','izT','chk',")
+rep("const PK=['vfx','jn','dragon','shuri',","const PK=['vfx','jn','dragon','shuri','kind',")
+rep(",'team','vfx','k']))",",'team','vfx','k','ti','ui']))")
+# fluidité : accélération douce, touches mémorisées, caméra qui regarde un peu devant, gestes de lancer
+rep("u.vx=mx*sp;u.vy=my*sp;","{const ac=sp?1-Math.exp(-ACCEL*dt):1;u.vx+=(mx*sp-u.vx)*ac;u.vy+=(my*sp-u.vy)*ac}")
+rep("const vx=mx*sp,vy=my*sp;u.x+=vx*dt;","const ac=sp?1-Math.exp(-ACCEL*dt):1;u.gvx=(u.gvx||0)+(mx*sp-(u.gvx||0))*ac;u.gvy=(u.gvy||0)+(my*sp-(u.gvy||0))*ac;const vx=u.gvx,vy=u.gvy;u.x+=vx*dt;")
+rep("if(I.l||p.lmb)use(u,0,td);if(p.rmb)use(u,1,td,undefined,ex);if(p.Space)use(u,2,td,undefined,ex);if(p.KeyQ)use(u,3,td,undefined,ex);if(p.KeyE)use(u,4,td,undefined,ex);if(p.KeyT)use(u,5,td)}",
+ "if(p.rmb)tryUse(u,1,td,ex);if(p.Space)tryUse(u,2,td,ex);if(p.KeyQ)tryUse(u,3,td,ex);if(p.KeyE)tryUse(u,4,td,ex);if(p.KeyT)tryUse(u,5,td,false);bufTick(u,dt,td,I)}")
+rep("cam.x+=(clamp(player.x,B.x+420,B.x+B.w-420)-cam.x)*c;cam.y+=(clamp(player.y,B.y+240,B.y+B.h-170)-cam.y)*c","cam.x+=(clamp(player.x+Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)-cam.x)*c*.8;cam.y+=(clamp(player.y+Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*c*.8")
+rep("cam.x+=(clamp(tg.x,B.x+420,B.x+B.w-420)-cam.x)*k;cam.y+=(clamp(tg.y,B.y+240,B.y+B.h-170)-cam.y)*k","cam.x+=(clamp(tg.x+(tg.dead?0:Math.cos(tg.aim)*70),B.x+420,B.x+B.w-420)-cam.x)*k*.8;cam.y+=(clamp(tg.y+(tg.dead?0:Math.sin(tg.aim)*45),B.y+240,B.y+B.h-170)-cam.y)*k*.8")
+rep("BASIC=u.ch.abil[0]===ab;COMBO3","BASIC=u.ch.abil[0]===ab;if(!BASIC)u.relT=.3;else if(!meleeU(u))u.thrT=.2;COMBO3")
+rep("const UK=['phase',","const UK=['relT','thrT','phase',")
+# impacts francs, chiffres de dégâts qui « claquent », images rémanentes
+rep("sparks(t.x,t.y,t.team?'#f66':'#6cf',6);","sparks(t.x,t.y,t.team?'#f66':'#6cf',6);fx.push({x:t.x,y:t.y,z:34,imp:1,t:.18,m:.18,vx:0,vy:0,col:VFX&&VP[VFX]?VP[VFX][0]:'#ffffff',r:d>18?1.6:1,a:src?ang(src,t):0});")
+rep("drawDust(u);const aur=","drawDust(u);drawGhosts(u);const aur=")
+rep("g.globalAlpha=Math.min(1,t.t*2);g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)';g.font='bold 15px \"Trebuchet MS\",system-ui,sans-serif';g.textAlign='center';g.strokeText(t.s,p.x,p.y);text(t.s,p.x,p.y,15,t.col)",
+ "g.globalAlpha=Math.min(1,t.t*2);const big=t.s[0]==='-'&&+t.s.slice(1)>=20,fs=Math.round((big?19:15)*(1+Math.max(0,t.t-.86)*4.5));g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)';g.font=`bold ${fs}px \"Trebuchet MS\",system-ui,sans-serif`;g.textAlign='center';g.strokeText(t.s,p.x,p.y);text(t.s,p.x,p.y,fs,t.col)")
+# caméra plus proche : les ninjas et leurs animations se lisent mieux (la caméra suit le joueur)
+rep("function P(x,y,z=0){const v=PV(),s=scl(y);return{x:W/2+(x-v.x)*s-(cam.x-v.x)*scl(cam.y),y:Yc+(y-cam.y)*K-z*s,s}}\nfunction unP(mx,my){const v=PV(),y=cam.y+(my-Yc)/K;return{x:v.x+(mx-W/2+(cam.x-v.x)*scl(cam.y))/scl(y),y}}",
+ "const ZM=()=>state==='menu'?1:mode==='battle'?1.12:1.28;\nfunction P(x,y,z=0){const v=PV(),Z=ZM(),s=scl(y)*Z;return{x:W/2+((x-v.x)*scl(y)-(cam.x-v.x)*scl(cam.y))*Z,y:Yc+(y-cam.y)*K*Z-z*s,s}}\nfunction unP(mx,my){const v=PV(),Z=ZM(),y=cam.y+(my-Yc)/(K*Z);return{x:v.x+((mx-W/2)/Z+(cam.x-v.x)*scl(cam.y))/scl(y),y}}")
 s=s.replace("cam={x:CX,y:CY};Yc=377.5;","cam={x:CX,y:CY};Yc=390;")
 open(ROOT+'naruto/index.html','w').write(s)
 print('ok',len(s))

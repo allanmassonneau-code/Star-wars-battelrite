@@ -35,7 +35,7 @@ const JFX={
  kirin:(u)=>{jx({jfx:'flashsky',x:u.x,y:u.y,t:.5,m:.5})},
 };
 // effets à l'explosion d'une zone ou d'un projectile, selon l'élément
-function detoFx(x,y,r,v){if(!near(x,y))return;
+function detoFx(x,y,r,v){if(!near(x,y))return;if(DETO[v])return DETO[v](x,y,r);
  if(v==='bone'||v==='earth')jx({jfx:'spikes',x,y,r,t:.9,m:.9,bone:v==='bone'?1:0});
  else if(v==='fire'||v==='black'||v==='peacock')jx({jfx:'pillar',x,y,r,t:.7,m:.7,v});
  else if(v==='water')jx({jfx:'splash',x,y,r,t:.6,m:.6});
@@ -89,6 +89,7 @@ function drawJfx(f){const k=f.t/f.m,e=1-k,t=performance.now()/1000,u=UI(f),tg=TI
    if(f.v==='black'){gr.addColorStop(0,'rgba(20,10,24,0)');gr.addColorStop(1,'rgba(20,10,24,.9)')}else{gr.addColorStop(0,'rgba(255,120,40,0)');gr.addColorStop(.5,rgba('#ff8a2a',.6*k));gr.addColorStop(1,rgba('#fff3c0',.9*k))}g.fillStyle=gr;g.beginPath();g.ellipse(q.x,q.y-h/2,w,h/2,0,0,7);g.fill();break}
   case'splash':{const q=P(f.x,f.y,0);for(let i=0;i<10;i++){const a=i*.63,r=f.r*.7*e*q.s,hh=Math.sin(Math.PI*e)*40*q.s;circ(q.x+Math.cos(a)*r,q.y+Math.sin(a)*r*K-hh*(i%2?1:.6),(4+(i%3))*q.s,f.sand?'#d8b878':'rgba(160,210,255,.85)')}g.strokeStyle=f.sand?'rgba(200,160,90,.7)':'rgba(191,230,255,.8)';g.lineWidth=2;g.beginPath();g.ellipse(q.x,q.y,f.r*e*q.s,f.r*e*q.s*K,0,0,7);g.stroke();break}
   case'windsphere':{const q=P(f.x,f.y,20),R=f.r*(.4+e*.8)*q.s;g.globalCompositeOperation='lighter';g.fillStyle=rgba('#c8fff0',.25*k);g.beginPath();g.arc(q.x,q.y,R,0,7);g.fill();g.strokeStyle=rgba('#ffffff',.6*k);g.lineWidth=1;for(let i=0;i<24;i++){const a=i*.26+t*3,r0=R*.3,r1=R;g.beginPath();g.moveTo(q.x+Math.cos(a)*r0,q.y+Math.sin(a)*r0);g.lineTo(q.x+Math.cos(a+.15)*r1,q.y+Math.sin(a+.15)*r1);g.stroke()}break}
+  default:if(JFXD[f.jfx])JFXD[f.jfx](f,k,e,t,u,tg)
  }
  g.restore()}
 // états visibles : flammes noires d'Amaterasu, sommeil, parchemin collé, entrave d'ombre / de sable / d'eau

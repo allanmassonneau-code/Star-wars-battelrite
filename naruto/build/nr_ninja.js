@@ -43,7 +43,7 @@ const JD=[
  ['u',3,'S','gideon.3','Multiclonage','Deux clones qui lancent des kunai 7 s','smoke'],
  ['u',3,'A','han.3','Parchemin explosif','Se colle au premier ennemi et explose','tag'],
  ['u',3,'D','lando.3','Bombe fumigène','Fumée : ralentit les ennemis, cache les alliés','smoke'],
- ['u',3,'C','wicket.3','Piège ninja','Piège qui étourdit et repousse','steel'],
+ ['u',3,'C','wicket.3','Piège ninja','Piège caché qui étourdit','steel'],
  ['u',3,'C','cadbane.3','Genjutsu : Plumes','Les ennemis qui restent dedans s\'endorment','genjutsu'],
  ['u',3,'C','rex.3','Kunai explosifs','Explose puis se divise en 4','tag'],
  ['u',4,'B','rey.4','Shôsen','Soigne l\'allié le plus blessé','heal'],
@@ -66,14 +66,18 @@ const JD=[
  ['n0',1,'A','x.ka_tornado','Katon : Tornade de feu','Tornade de feu qui avance et brûle, sans emporter','fire'],
  ['n0',5,'S','x.ka_nuee','Katon : Nuée ardente','Canalise une nuée sur une zone, immobile ; relance pour relâcher : plus c\'est long, plus c\'est fort','fire'],
  ['n0',5,'S','x.ka_breath','Katon : Grand souffle de feu','Immobile, embrase une très large zone devant soi','fire'],
- // ---- Suiton
- ['n1',1,'B','luke.1','Suiton : Vague','Vague d\'eau qui repousse et ralentit','water'],
- ['n1',2,'C','deathtrooper.2','Suiton : Brume cachée','Recule dans un nuage de brume','water'],
- ['n1',3,'S','vader.3','Suiton : Prison aqueuse','Enferme la cible dans une bulle d\'eau','water'],
- ['n1',3,'D','bossk.1','Suiton : Balles d\'eau','Bulle qui rebondit 2 fois en éclatant','water'],
- ['n1',4,'B','mace.4','Suiton : Mur d\'eau','2 s : moitié moins de dégâts, renvoie 30 % au contact','water'],
- ['n1',5,'A','maul.5','Suiton : Grand requin','Requin d\'eau géant qui revient','water'],
- ['n1',5,'A','jyn.5','Suiton : Dragon aqueux','Un dragon d\'eau transperce toute une ligne','water'],
+ // ---- Suiton (kit sur mesure : contrôle, eau qui repousse, prisons)
+ ['n1',1,'D','x.su_ball','Suiton : Teppôdama','Balle d\'eau qui éclate à l\'impact et ralentit autour','water'],
+ ['n1',1,'D','x.su_wall','Suiton : Suijinheki','Dôme d\'eau autour de soi 1,5 s : arrête les tirs et repousse ceux qui sont collés','water'],
+ ['n1',1,'C','x.su_jet','Suiton : Mizurappa','Jet d\'eau puissant, immobile : repousse fort','water'],
+ ['n1',1,'C','x.su_shark','Suiton : Suikôdan','Requin d\'eau qui traque l\'ennemi le plus proche','water'],
+ ['n1',1,'B','x.su_prison','Suiton : Suirô','Bulle d\'eau : la cible est enfermée tant que tu restes sur place (2,5 s max)','water'],
+ ['n1',1,'B','x.su_mist','Suiton : Kirigakure','Brume épaisse 5 s : ennemis ralentis, alliés invisibles dedans','water'],
+ ['n1',1,'A','x.su_dragon','Suiton : Dragon aqueux','Dragon d\'eau qui transperce toute une ligne, repousse et ralentit','water'],
+ ['n1',1,'A','x.su_fall','Suiton : Daibakufu','Une cascade s\'abat sur la zone visée : gros dégâts, repousse, puis sol inondé qui ralentit','water'],
+ ['n1',2,'C','x.su_liquid','Suiton : Corps liquide','Se liquéfie et glisse vers l\'avant : intouchable pendant le glissement','water'],
+ ['n1',5,'S','x.su_big','Suiton : Daikôdan','Requin géant qui avale les jutsu ennemis sur sa route et explose en raz-de-marée','water'],
+ ['n1',5,'S','x.su_dome','Suiton : Dôme des requins','Grand dôme d\'eau 5 s : les ennemis dedans sont ralentis et perdent PV et chakra, que tu récupères','water'],
  // ---- Fûton (kit sur mesure)
  ['n2',1,'D','x.fu_wall','Fûton : Mur de vent','Mur de vent qui bloque les projectiles et le passage','wind'],
  ['n2',1,'D','x.fu_bullet','Fûton : Balle d\'air','Projectile de vent qui repousse légèrement','wind'],
@@ -85,40 +89,56 @@ const JD=[
  ['n2',1,'A','x.fu_breath','Fûton : Souffle','Canalise un souffle de vent qui repousse et blesse','wind'],
  ['n2',5,'S','x.fu_corridor','Fûton : Couloir de vent','Couloir de vent : dégâts croissants et silence pour ceux qui restent dedans','wind'],
  ['n2',5,'S','x.fu_tornado','Fûton : Tornade','Tornade qui avance, blesse et emporte les ennemis','wind'],
- // ---- Raiton
- ['n3',1,'B','rey.1','Chidori','Charge électrique qui traverse les ennemis et explose au bout','chidori'],
- ['n3',1,'C','palpatine.1','Raiton : Chaîne','Éclair qui rebondit entre les ennemis','lightning'],
- ['n3',2,'C','ig88.2','Raiton : Pas de l\'éclair','Fonce en éclair à travers les ennemis','lightning'],
- ['n3',3,'D','palpatine.3','Raiton : Orage','La foudre tombe sur une zone après un délai','lightning'],
- ['n3',3,'D','r2.3','Raiton : Piège électrique','Piège qui étourdit','lightning'],
- ['n3',4,'C','grievous.4','Raiton : Armure de foudre','Renvoie les tirs en avançant vite','lightning'],
- ['n3',4,'D','phasma.1','Raiton : Décharge','Décharge autour de soi qui étourdit','lightning'],
- ['n3',5,'A','dooku.5','Raiton : Kirin','Le dragon de foudre frappe en ligne','kirin'],
- // ---- Doton
- ['n4',1,'C','obiwan.1','Doton : Rocher','Projette un rocher qui envoie en l\'air','earth'],
- ['n4',2,'D','jyn.2','Doton : Taupe','Passe sous terre et ressort invisible','earth'],
- ['n4',3,'D','phasma.3','Doton : Mur de terre','Mur qui bloque les tirs','earth'],
- ['n4',4,'D','deathtrooper.4','Doton : Corps de roche','40 % de dégâts en moins','earth'],
- ['n4',5,'B','obiwan.5','Doton : Montagne écrasante','Saut très haut, projette tout le monde à l\'arrivée','earth'],
- ['n4',5,'C','gideon.5','Doton : Séisme','Grand coup de terre circulaire qui repousse','earth'],
+ // ---- Raiton (kit sur mesure : vitesse, perforation, étourdissements)
+ ['n3',1,'D','x.ra_bolt','Raiton : Éclair','Trait de foudre très rapide qui ralentit','lightning'],
+ ['n3',1,'D','x.ra_dis','Raiton : Décharge','Décharge autour de soi après un court instant : étourdit','lightning'],
+ ['n3',1,'C','x.ra_chain','Raiton : Chaîne d\'éclairs','Éclair qui rebondit sur 3 ennemis proches','lightning'],
+ ['n3',1,'C','x.ra_nagashi','Raiton : Chidori Nagashi','Courant électrique autour de soi : blesse et étourdit au contact, puis 2 s de riposte qui étourdit','lightning'],
+ ['n3',1,'B','x.ra_spear','Raiton : Chidori Eisô','Lance de foudre instantanée qui transperce en ligne et étourdit brièvement','lightning'],
+ ['n3',1,'B','x.ra_panther','Raiton : Panthère noire','Panthère de foudre qui traque la cible et l\'étourdit','lightning'],
+ ['n3',1,'A','x.ra_chidori','Chidori','Charge la foudre dans la main puis fonce : gros dégâts, étourdit et projette la première cible','chidori'],
+ ['n3',1,'A','x.ra_storm','Raiton : Orage','3 éclairs s\'abattent l\'un après l\'autre sur la zone visée : chacun étourdit brièvement','lightning'],
+ ['n3',2,'C','x.ra_step','Raiton : Pas de l\'éclair','Fonce en éclair à travers les ennemis, qu\'il blesse et ralentit','lightning'],
+ ['n3',5,'S','x.ra_kirin','Raiton : Kirin','Un dragon de foudre s\'abat du ciel sur la zone : énormes dégâts, étourdit','kirin'],
+ ['n3',5,'S','x.ra_armor','Raiton : Armure de foudre','8 s : très rapide, +35 % de dégâts et 25 % de dégâts en moins','lightning'],
+ // ---- Doton (kit sur mesure : murs, terrain, armure, projections)
+ ['n4',1,'D','x.do_rock','Doton : Rocher','Lance un lourd rocher qui repousse','earth'],
+ ['n4',1,'D','x.do_wall','Doton : Doryûheki','Grand mur de terre qui bloque tirs et passage pendant 6 s','earth'],
+ ['n4',1,'C','x.do_spikes','Doton : Doryûsô','Des pics de terre jaillissent en ligne devant soi et projettent en l\'air','earth'],
+ ['n4',1,'C','x.do_swamp','Doton : Yomi Numa','Marécage sous la zone visée : les ennemis s\'y enlisent','earth'],
+ ['n4',1,'B','x.do_armor','Doton : Kyôka','Corps de roche 4 s : 45 % de dégâts en moins et inarrêtable, mais plus lent','earth'],
+ ['n4',1,'B','x.do_hand','Doton : Main de terre','Une main de terre jaillit sous la zone visée et immobilise','earth'],
+ ['n4',1,'A','x.do_dragon','Doton : Dragon de terre','Un dragon de terre crache 3 boulets de boue qui explosent et ralentissent','earth'],
+ ['n4',1,'A','x.do_weight','Doton : Kajûgan','Projectile qui alourdit la cible : immobilisée 1,2 s puis ralentie','earth'],
+ ['n4',2,'D','x.do_mole','Doton : Taupe','Passe sous terre (intouchable), ressort plus loin et projette les ennemis proches','earth'],
+ ['n4',5,'S','x.do_mountain','Doton : Chute de montagne','Une montagne s\'écrase sur la zone : énormes dégâts, étourdit, puis un cercle de rochers enferme la zone','earth'],
+ ['n4',5,'S','x.do_quake','Doton : Grand séisme','Trois ondes de choc autour de soi : projettent en l\'air et repoussent','earth'],
  // ---- Uchiha
+ ['c0',1,'C','x.uc_kunai','Kunai guidés','3 kunai en éventail qui s\'incurvent vers la cible','kunai'],
+ ['c0',2,'B','x.uc_kamui','Kamui','Devient intangible 1 s et file vers l\'avant','genjutsu'],
+ ['c0',4,'A','x.uc_iza','Izanagi','5 s : si tu dois mourir, tu reviens à l\'endroit et aux PV du lancement','genjutsu'],
  ['c0',1,'D','anakin.1','Lame de Kusanagi','Coup de sabre chargé de chakra qui ignore les parades','steel'],
  ['c0',2,'C','maul.2','Shunshin Uchiha','Atterrit derrière l\'ennemi visé','genjutsu'],
  ['c0',3,'B','inquisitor.3','Sharingan : Genjutsu','Le regard terrifie la cible','genjutsu'],
  ['c0',4,'C','ahsoka.4','Sharingan','Lit le prochain coup, l\'évite et accélère','genjutsu'],
- ['c0',5,'S','ahsoka.5','Amaterasu','Flammes noires sur jusqu\'à 5 ennemis','black'],
- ['c0',5,'S','luke.5','Tsukuyomi','Immense cône qui projette et étourdit','tsukuyomi'],
+ ['c0',5,'S','x.uc_amat','Amaterasu','Flammes noires inextinguibles sur la cible regardée et jusqu\'à 4 ennemis près d\'elle : très longue brûlure','black'],
+ ['c0',5,'S','x.uc_tsuku','Tsukuyomi','Croise le regard de la cible : genjutsu, elle est paralysée 1,8 s et subit de gros dégâts','tsukuyomi'],
  ['c0',5,'A','kylo.5','Susanô : Totsuka','Trois coups dévastateurs autour de soi','susano'],
  // ---- Hyûga
  ['c1',1,'D','quigon.1','Hakke : Paume','Paume du vide qui étourdit devant soi','jyuken'],
  ['c1',2,'C','ahsoka.2','Pas du Hakke','2 bonds rapides','jyuken'],
  ['c1',3,'D','lando.4','Byakugan','Bloque le chakra de la cible (silence) et la révèle','byakugan'],
  ['c1',4,'C','obiwan.4','Kaiten','Tourbillon divin qui renvoie les tirs','kaiten'],
+ ['c1',1,'B','x.hy_kusho','Hakke Kûshô','Paume d\'air à distance qui repousse violemment','jyuken'],
+ ['c1',1,'A','x.hy_great','Hakke Kûhekishô','Grande paume du vide : souffle tout ce qui est devant soi, repousse très loin et étourdit','jyuken'],
+ ['c1',5,'S','x.hy_128','Hakke : 128 points','Fonce sur la cible et enchaîne les frappes : bloque son chakra (silence) puis l\'étourdit','jyuken'],
  ['c1',5,'C','mace.5','Hakke : 64 points','Tous les ennemis proches : dégâts, étourdis et vulnérables','hakke64'],
  // ---- Nara
  ['c2',1,'D','padme.1','Kage Mane','L\'ombre immobilise la cible','shadow'],
  ['c2',2,'C','grievous.2','Course de l\'ombre','Très rapide, insensible aux ralentissements','shadow'],
- ['c2',3,'B','maul.3','Kage Kubi Shibari','Des mains d\'ombre saisissent et attirent','shadow'],
+ ['c2',3,'B','x.na_kubi','Kage Kubi Shibari','Des mains d\'ombre saisissent la cible : immobilisée et étranglée','shadow'],
+ ['c2',1,'C','x.na_trap','Ombre explosive','Pose un parchemin dans l\'ombre : piège qui immobilise puis explose','shadow'],
+ ['c2',5,'S','x.na_nui','Kage Nui','Des aiguilles d\'ombre transpercent jusqu\'à 4 ennemis proches : dégâts et immobilise','shadow'],
  ['c2',4,'C','gideon.2','Ombre protectrice','Recule d\'un bond avec un bouclier d\'ombre','shadow'],
  ['c2',5,'A','rey.5','Ombres liées','Attire tous les ennemis proches puis les étourdit','shadow'],
  // ---- Akimichi
@@ -126,20 +146,30 @@ const JD=[
  ['c3',2,'D','chewie.2','Boulet humain','Roule et renverse','tai'],
  ['c3',3,'B','chewie.3','Décuplement partiel','Bras géant qui attrape et jette derrière soi','tai'],
  ['c3',4,'C','bossk.4','Pilule rouge','Soin rapide et se libère','heal'],
+ ['c3',1,'A','x.ak_slam','Chôdan Bakugeki','Ventre décuplé : écrase la zone devant soi après un instant et étourdit','tai'],
+ ['c3',4,'D','x.ak_pill','Pilule verte','Petit bouclier et vitesse 3 s','heal'],
+ ['c3',5,'S','x.ak_butterfly','Mode Papillon','7 s : ailes de chakra, énorme, rapide, +35 % de dégâts et bouclier','fox'],
  ['c3',5,'B','savage.5','Décuplement','Devient énorme 6 s : bouclier, dégâts et portée','gate'],
  // ---- Aburame
  ['c4',1,'B','lando.1','Insectes chercheurs','Nuée qui rebondit sur 3 ennemis','bugs'],
  ['c4',2,'B','lando.2','Clone d\'insectes','Se téléporte et laisse un clone d\'insectes','bugs'],
  ['c4',3,'A','boba.3','Essaim d\'insectes','3 nuées qui empoisonnent','bugs'],
- ['c4',4,'S','ventress.4','Insectes dévoreurs','Lien qui vole le chakra tant que la cible reste proche','bugs'],
+ ['c4',4,'B','x.ab_drain','Insectes dévoreurs','Lien d\'insectes : vole du chakra (et un peu de vie) tant que la cible reste proche','bugs'],
+ ['c4',1,'D','x.ab_spy','Insectes espions','Nuée lente qui traque la cible : la révèle et la rend vulnérable 3 s','bugs'],
+ ['c4',4,'C','x.ab_wall','Mur d\'insectes','2 s : un essaim t\'entoure et dévore les projectiles (rend du chakra)','bugs'],
  ['c4',5,'S','deathtrooper.5','Nuée destructrice','3 nuées qui attaquent 8 s','bugs'],
  // ---- Inuzuka
  ['c5',1,'B','rey.1','Gatsûga','Tornade-vrille qui traverse les ennemis','gatsuga'],
  ['c5',2,'C','bossk.2','Instinct bestial','Bondit sur l\'ennemi le plus blessé','tai'],
  ['c5',3,'S','iden.1','Ninken','Le chien ninja attaque à tes côtés 8 s','smoke'],
  ['c5',4,'C','ahsoka.4','Flair du chien','Évite le prochain coup et accélère','tai'],
+ ['c5',1,'C','x.in_tsuga','Tsûga','Petite vrille qui traverse les ennemis','gatsuga'],
+ ['c5',4,'D','x.in_beast','Shikyaku','À quatre pattes : très rapide et vol de vie 4 s','tai'],
+ ['c5',5,'S','x.in_wolf','Loup bicéphale','Fusion avec le chien : loup géant 6 s, rapide, +35 % de dégâts et vol de vie','smoke'],
  ['c5',5,'A','anakin.5','Garôga','Double vrille géante qui frappe jusqu\'à 4 ennemis','gatsuga'],
  // ---- Uzumaki
+ ['c6',1,'D','x.uz_kunai','Kunai de stockage','Un parchemin libère 3 kunai en éventail','kunai'],
+ ['c6',1,'A','x.uz_chains','Chaînes adamantines','Des chaînes jaillissent sous la zone visée : immobilisent tous les ennemis','chain'],
  ['c6',1,'C','cadbane.1','Chaînes de chakra','Attrape un ennemi et le ramène','chain'],
  ['c6',1,'S','savage.1','Rasengan','Fonce avec une sphère de chakra qui projette en l\'air','rasengan'],
  ['c6',2,'B','dooku.2','Sceau d\'échange','Échange sa place avec l\'ennemi touché','chain'],
@@ -150,7 +180,10 @@ const JD=[
  ['c6',5,'A','chewie.5','Chakra de Kyûbi','6 s : inarrêtable, régénération et dégâts','fox'],
  // ---- Yamanaka
  ['c7',1,'A','inquisitor.3','Shinranshin','Projectile mental qui terrifie','genjutsu'],
- ['c7',2,'C','thrawn.2','Transposition','Échange sa place avec un allié','genjutsu'],
+ ['c7',2,'C','x.ya_swap','Transposition','Échange sa place avec l\'allié visé ; sans allié, l\'esprit file au curseur en un éclair','genjutsu'],
+ ['c7',1,'D','x.ya_flower','Kunai fleuri','Kunai entouré de pétales qui transperce et ralentit','flower'],
+ ['c7',3,'C','x.ya_pollen','Pollen hypnotique','Nuage de pollen : les ennemis qui y restent s\'endorment','genjutsu'],
+ ['c7',4,'B','x.ya_storm','Tempête de pétales','Cône de pétales tranchants : dégâts et ralentit','flower'],
  ['c7',3,'S','kylo.3','Shintenshin','Lien : si la cible reste proche 2 s, gros dégâts et étourdie','mind'],
  ['c7',4,'S','quigon.3','Champ de fleurs','Aura de soin qui le suit 5 s','flower'],
  ['c7',5,'S','sister.5','Esprit destructeur','Coup fatal sur les ennemis blessés','mind'],
@@ -159,12 +192,18 @@ const JD=[
  ['c8',2,'C','cadbane.2','Sable volant','S\'élève sur un nuage de sable et retombe plus loin','sand'],
  ['c8',3,'D','cal.3','Sable mouvant','Zone où ennemis et tirs ralentissent','sand'],
  ['c8',4,'C','thrawn.4','Armure de sable','Bouclier de sable pour les alliés proches','sand'],
- ['c8',5,'B','grievous.5','Tsunami de sable','Tourbillon géant qui aspire','sand'],
+ ['c8',5,'B','x.sa_tsunami','Tsunami de sable','Vague de sable géante qui avance, repousse et ralentit tout sur son passage','sand'],
+ ['c8',5,'S','x.sa_funeral','Funérailles du désert','Le sable écrase la zone : énormes dégâts (×1,5 sur une cible immobilisée) et étourdit','sandcoffin'],
+ ['c8',4,'A','x.sa_shield','Bouclier absolu','3 s : dôme de sable qui arrête les projectiles ennemis, plus un bouclier','sand'],
+ ['c8',1,'B','x.sa_spears','Lances de sable','3 lances de sable perçantes tirées l\'une après l\'autre','sand'],
  // ---- Kaguya
  ['c9',1,'C','gideon.1','Doigts-balles','Tire un os comme une balle','bone'],
  ['c9',2,'B','savage.2','Bond d\'os','Bondit et repousse tout à l\'arrivée','bone'],
  ['c9',3,'B','iden.3','Forêt naissante','Des os jaillissent du sol et étourdissent','bone'],
  ['c9',4,'B','gideon.4','Armure d\'os','Inarrêtable, 30 % de dégâts en moins','bone'],
+ ['c9',1,'D','x.kg_willow','Danse du saule','Tourbillon de lames d\'os autour de soi, qui renvoie les tirs','bone'],
+ ['c9',4,'A','x.kg_larch','Danse du mélèze','Des os jaillissent de tout le corps : dégâts autour, puis 3 s d\'épines et inarrêtable','bone'],
+ ['c9',5,'S','x.kg_drill','Danse de la clématite','Foreuse d\'os géante : fonce à travers tout, énormes dégâts et projette','bone'],
  ['c9',5,'B','inquisitor.5','Forêt d\'os','Anneau d\'os qui jaillissent autour de soi','bone'],
  // ---- Taijutsuka (Fauves de jade) : que du taijutsu, de D à S
  ['c10',1,'D','maul.1','Konoha Senpû','Coup de pied tornade qui repousse et ralentit','tai'],
@@ -188,8 +227,10 @@ const JD=[
  ['c10',5,'S','sister.5','Nuit de la mort','8e porte : coup fatal sur les ennemis blessés','gate'],
 ];
 // réglages propres à certains jutsu (réglés par duels simulés)
-const JPAR={'Multiclonage':{d:1.2},'Ninken':{d:3},'Insectes dévoreurs':{dps:4},'Chidori':{sp:1}};
+const JPAR={'Multiclonage':{d:1.2},'Ninken':{d:3},'Insectes dévoreurs':{dps:4}};
 const JCD={'Lotus primaire':10,'Lotus caché':9}; // temps de recharge propres à certains jutsu
+// équilibrage par clan (-1 = sans clan) et par nature : [multiplicateur PV, multiplicateur puissance], réglés par duels simulés
+const CLANBAL={},NATBAL={};
 const JL=JD.map(([cat,slot,r,src,n,d,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,vfx,P:JPAR[n]}));
 const SLOTN=['Style de combat','Jutsu','Déplacement','Jutsu','Jutsu','Ultime'];
 const stype=s=>s===2?2:s===5?5:1; // 1 = jutsu (Clic D, Q, E), 2 = déplacement, 5 = ultime
@@ -234,9 +275,10 @@ function jutsu(id){const J=JL[id],b=srcAb(J.src),mud=J.cat==='u'||J.slot===2?0:M
 function styleAb(i){const S=STYLES[i],b=srcAb(S[2]);return Object.assign({},b,{n:S[0],d:S[1],ex:null,src:S[2].split('.')[0],vfx:S[3],style:i})}
 // stats : moyenne des persos d'origine (le style de combat compte pour 5 : un ninja à distance est fragile, un ninja au corps à corps solide), puis la voie
 function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=[styleAb(b.j[0])].concat(b.j.slice(1).map(id=>jutsu(id))),w=[5,1,1,1,1,1];let hp=0,pw=0,sp=0,W=0;
- abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie],S=STYLES[b.j[0]];hp*=S[6];pw*=S[7];if(b.clan===TAIJ){hp*=1.05;sp+=4*W} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
+ abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie],S=STYLES[b.j[0]];hp*=S[6];pw*=S[7];if(b.clan===TAIJ){hp*=1.05;sp+=4*W}
+ {const cb=CLANBAL[b.clan]||[1,1],nb=b.clan===TAIJ?[1,1]:NATBAL[b.nat]||[1,1];hp*=cb[0]*nb[0];pw*=cb[1]*nb[1]} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
  const lign=b.clan>=0?'Clan '+CLANS[b.clan][0]:'Sans clan';
- return{name:b.name,side:b.side,desc:`${lign}${b.clan===TAIJ?'':' · '+NATURES[b.nat][0]} · voie ${v[0].toLowerCase()}`,hp:Math.round(hp/W*v[1]),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,pref:200,pass:PASSK[b.pass],look:ninjaLook(b.l,b.clan,b.j[0]),abil,build:b}}
+ return{name:b.name,side:b.side,desc:`${lign}${b.clan===TAIJ?'':' · '+NATURES[b.nat][0]} · voie ${v[0].toLowerCase()}`,hp:Math.round(hp/W*v[1]),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,pref:200,taij:b.clan===TAIJ,pass:PASSK[b.pass],look:ninjaLook(b.l,b.clan,b.j[0]),abil,build:b}}
 // générateur pseudo-aléatoire déterministe (mêmes ninjas adverses chez tous les joueurs en ligne)
 const srnd=seed=>()=>(seed=seed*16807%2147483647)/2147483647;
 function randomKit(r,b){const k=a=>Math.floor(r()*a.length);b.nat=k(NATURES);b.clan=r()<.8?k(CLANS):-1;b.voie=k(VOIES);b.pass=k(PASSK);
@@ -250,5 +292,10 @@ const BOTN=[['Hayate','Kaito','Ren','Sora','Yuki','Haruto','Aiko','Daichi','Emi'
 const CH={};{const r=srnd(4242);for(let s=0;s<2;s++)BOTN[s].forEach((n,i)=>{const b=r()<.5?presetBuild(Math.floor(r()*PRESETS.length),n,s):randomBuild(r,s,n);if(b.clan>=0)b.name=n+' '+CLANS[b.clan][0];if(s&&r()<.6){b.l.t=2;b.l.v=6}CH['b'+(s*20+i)]=mkNinja(b,true)})}
 const HEROES=Object.keys(CH);
 // ton ninja (gardé dans le navigateur)
-let MY;try{MY=sanitizeBuild(JSON.parse(localStorage.getItem('nrBuild3')||'null')||presetBuild(0,'Ninja',0))}catch(e){MY=randomBuild(srnd(99),0,'Ninja')}
+// ton ninja : les jutsu sont gardés par leur nom (un ninja sauvegardé reste juste quand le catalogue évolue)
+const JLEG=["Rasengan", "Fûma Shuriken", "Coup de pied tornade", "Lotus primaire", "Shunshin", "Kawarimi", "Saut ninja", "Roulade", "Hiraishin", "Kunai à fil", "Multiclonage", "Parchemin explosif", "Bombe fumigène", "Piège ninja", "Genjutsu : Plumes", "Kunai explosifs", "Shôsen", "Zone de soin", "Contre du clone", "Pilule du soldat", "Concentration du chakra", "Invocation : Crapaud", "Pluie de parchemins", "Mode Ermite", "Invocation : Katsuyu", "Katon : Flamme", "Katon : Mur de feu", "Katon : Triple flamme", "Katon : Shuriken de feu aériens", "Katon : Fournaise", "Katon : Flammes chargées", "Katon : Dragon de feu", "Katon : Tornade de feu", "Katon : Nuée ardente", "Katon : Grand souffle de feu", "Suiton : Vague", "Suiton : Brume cachée", "Suiton : Prison aqueuse", "Suiton : Balles d'eau", "Suiton : Mur d'eau", "Suiton : Grand requin", "Suiton : Dragon aqueux", "Fûton : Mur de vent", "Fûton : Balle d'air", "Fûton : Triple balle d'air", "Fûton : Grande balle d'air", "Fûton : Rafale à bout portant", "Fûton : Balles chargées", "Fûton : Lame d'air", "Fûton : Souffle", "Fûton : Couloir de vent", "Fûton : Tornade", "Chidori", "Raiton : Chaîne", "Raiton : Pas de l'éclair", "Raiton : Orage", "Raiton : Piège électrique", "Raiton : Armure de foudre", "Raiton : Décharge", "Raiton : Kirin", "Doton : Rocher", "Doton : Taupe", "Doton : Mur de terre", "Doton : Corps de roche", "Doton : Montagne écrasante", "Doton : Séisme", "Lame de Kusanagi", "Shunshin Uchiha", "Sharingan : Genjutsu", "Sharingan", "Amaterasu", "Tsukuyomi", "Susanô : Totsuka", "Hakke : Paume", "Pas du Hakke", "Byakugan", "Kaiten", "Hakke : 64 points", "Kage Mane", "Course de l'ombre", "Kage Kubi Shibari", "Ombre protectrice", "Ombres liées", "Paume géante", "Boulet humain", "Décuplement partiel", "Pilule rouge", "Décuplement", "Insectes chercheurs", "Clone d'insectes", "Essaim d'insectes", "Insectes dévoreurs", "Nuée destructrice", "Gatsûga", "Instinct bestial", "Ninken", "Flair du chien", "Garôga", "Chaînes de chakra", "Rasengan", "Sceau d'échange", "Sceau", "Multiclonage", "Vitalité Uzumaki", "Rasen-shuriken", "Chakra de Kyûbi", "Shinranshin", "Transposition", "Shintenshin", "Champ de fleurs", "Esprit destructeur", "Cercueil de sable", "Sable volant", "Sable mouvant", "Armure de sable", "Tsunami de sable", "Doigts-balles", "Bond d'os", "Forêt naissante", "Armure d'os", "Forêt d'os", "Konoha Senpû", "Konoha Daisenpû", "Konoha Gôriki Senpû", "Lotus primaire", "Poids retirés", "Bond du fauve", "Vitesse du fauve", "Défi éternel", "Dynamic Entry", "Lotus caché", "Esquive du fauve", "Première Porte", "Porte de la Vie", "Corps de jade", "Éléphant de midi", "Huit Portes", "Paon du matin", "Tigre du soir", "Nuit de la mort"];
+const byName=n=>{const J=JL.find(j=>j.n===n);return J?J.id:-1};
+function loadMine(){let b=null;try{b=JSON.parse(localStorage.getItem('nrBuild4')||'null');if(b&&b.jn)b.j=[b.j[0],...b.jn.map(byName)];if(!b){const o=JSON.parse(localStorage.getItem('nrBuild3')||'null');if(o&&o.j){o.j=[o.j[0],...o.j.slice(1).map(i=>byName(JLEG[i]))];b=o}}}catch(e){b=null}
+ return sanitizeBuild(b||presetBuild(0,'Ninja',0))}
+let MY;try{MY=loadMine()}catch(e){MY=randomBuild(srnd(99),0,'Ninja')}
 CH.p0=mkNinja(MY);
