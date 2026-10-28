@@ -2132,12 +2132,16 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  const cur={};for(const [n] of BONES)cur[n]=new T.Quaternion();
  return{grp,mesh,out,mat,bones,skel,key:lookKey(u),cur,rootP:new T.Vector3(),rootR:new T.Euler(),yaw:Math.PI/2-(u.aim||0),used:0,face,sym,k}}
 // visage dessiné sur une petite toile (même style que le 2D : grands yeux à reflet, Sharingan, Byakugan…)
-function faceTexture(L){const h=L.head,key=[h.eye,h.acc,h.kaguya,h.brows,h.skin].join('|');if(N3.faceTex.has(key))return N3.faceTex.get(key);
+function faceTexture(L,mode='o'){const h=L.head,key=[h.eye,h.acc,h.kaguya,h.brows,h.skin,mode].join('|');if(N3.faceTex.has(key))return N3.faceTex.get(key);
  // toile = devant de la tête (≈ 9,7 px par unité, centre de la tête en 128,100) : mêmes proportions que le visage 2D
  const c=document.createElement('canvas');c.width=256;c.height=200;const x=c.getContext('2d'),U=9.7,ex=128,hy=100,ey=hy+2.2*U;
  if(h.acc==='marques'){x.fillStyle='#c22';for(const s of[-1,1]){x.beginPath();x.moveTo(ex+s*5*U,hy+4*U);x.lineTo(ex+s*8*U,hy+4*U);x.lineTo(ex+s*6.5*U,hy+9*U);x.fill()}}
  if(h.acc==='moust'){x.strokeStyle='#5a3a22';x.lineWidth=3;x.lineCap='round';for(const s of[-1,1])for(let q=0;q<3;q++){x.beginPath();x.moveTo(ex+s*5*U,hy+(4.6+q*1.6)*U);x.lineTo(ex+s*9.6*U,hy+(4+q*2.2)*U);x.stroke()}}
- for(const s of[-1,1]){const cx=ex+s*4.2*U;x.fillStyle='#fff';x.strokeStyle='#1a1410';x.lineWidth=4;x.beginPath();x.ellipse(cx,ey,2.7*U,3.3*U,0,0,7);x.fill();x.stroke();
+ for(const s of[-1,1]){const cx=ex+s*4.2*U;
+  if(mode==='c'){x.strokeStyle='#1a1410';x.lineWidth=5;x.lineCap='round';x.beginPath();x.moveTo(cx-2.4*U,ey+.4*U);x.quadraticCurveTo(cx,ey-1*U,cx+2.4*U,ey+.4*U);x.stroke();continue}
+  if(mode==='s'){x.strokeStyle='#1a1410';x.lineWidth=3.5;x.beginPath();for(let k=0;k<26;k++){const a=k*.55,r=(k/26)*2.6*U;x.lineTo(cx+Math.cos(a*s)*r,ey+Math.sin(a*s)*r)}x.stroke();continue}
+  if(mode==='x'){x.strokeStyle='#1a1410';x.lineWidth=5;x.lineCap='round';x.beginPath();x.moveTo(cx-2*U,ey-2*U);x.lineTo(cx+2*U,ey+2*U);x.moveTo(cx+2*U,ey-2*U);x.lineTo(cx-2*U,ey+2*U);x.stroke();continue}
+  x.fillStyle='#fff';x.strokeStyle='#1a1410';x.lineWidth=4;x.beginPath();x.ellipse(cx,ey,2.7*U,3.3*U,0,0,7);x.fill();x.stroke();
   const eye=h.eye||'#2a2a38',ix=cx+s*.5*U;
   if(h.eye==='#e8e8f8'){x.fillStyle='#d6d6ec';x.beginPath();x.ellipse(ix,ey+.3*U,1.9*U,2.6*U,0,0,7);x.fill();x.strokeStyle='#a8aed0';x.lineWidth=2;x.stroke()}
   else{x.fillStyle=eye;x.beginPath();x.ellipse(ix,ey+.3*U,1.8*U,2.5*U,0,0,7);x.fill();
@@ -2230,7 +2234,8 @@ function poseModel(u,rec,dt,t){const P={};basePose(u,t,rec,P);actionPose(u,t,rec
  const R=P.rootR;rec.rootR.x+=(R.x-rec.rootR.x)*k;rec.rootR.z+=(R.z-rec.rootR.z)*k;rec.rootR.y=R.y?R.y:rec.rootR.y*(1-k);rb.rotation.set(rec.rootR.x,rec.rootR.y,rec.rootR.z);
  // orientation : le ninja se tourne vers sa visée (au plus court), un peu en douceur
  const a=u.aim||0,want=Math.PI/2-Math.atan2(Math.sin(a)*.7+.42,Math.cos(a));let d=want-rec.yaw;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;rec.yaw+=d*(1-Math.exp(-20*dt));
- const f=u.flash>0&&!u.dead?Math.min(1,u.flash/.12):0;rec.mat.emissive.setRGB(f,f,f);rec.mat.emissiveIntensity=f?1:0}
+ const f=u.flash>0&&!u.dead?Math.min(1,u.flash/.12):0;rec.mat.emissive.setRGB(f,f,f);rec.mat.emissiveIntensity=f?1:0;
+ if(rec.face&&rec.face.material&&rec.face.material.map){const ph=(rec.ph??(rec.ph=Math.random()*4)),md=u.dead?'x':u.stun>0||u.sleepT<0?'s':f>.2||(t+ph)%4.1<.13?'c':'o';if(rec.fm!==md){rec.fm=md;rec.face.material.map=faceTexture(u.ch.look,md)}}}
 // taille de l'atlas : de 2 à 48 cases selon le nombre de ninjas visibles (agrandi aussitôt, réduit après un moment)
 function atlasSize(n){const caps=[2,4,8,16,24,32,48],cap=caps.find(c=>c>=n)||48,cols=Math.min(8,cap),rows=Math.ceil(cap/cols);
  if(cols*rows<n||cols>N3.cols||rows>N3.rows||(N3.small>180&&cols*rows<N3.cols*N3.rows)){N3.cols=cols;N3.rows=rows;N3.small=0;N3.r.setSize(cols*TPW,rows*TPH,false);
