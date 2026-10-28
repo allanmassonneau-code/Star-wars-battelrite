@@ -15,6 +15,8 @@ let presetI=-1;const presetBtn={x:428,y:640,w:180,h:30};
 const nameBtn={x:40,y:150,w:300,h:30},rndBtn={x:348,y:150,w:52,h:30},rndBuildBtn={x:428,y:600,w:180,h:34},fightBtn={x:1030,y:592,w:210,h:48};
 // description sur deux lignes si elle est trop longue
 function tfit2(s,x,y,size,col,w){g.font=`normal ${size}px "Trebuchet MS",system-ui,sans-serif`;if(g.measureText(s).width<=w)return tfit(s,x,y,size,col,w);let best=-1;for(let i=0;i<s.length;i++)if(s[i]===' '&&g.measureText(s.slice(0,i)).width<=w&&(best<0||Math.abs(i-s.length/2)<Math.abs(best-s.length/2)))best=i;if(best<0)return tfit(s,x,y,size,col,w);tfit(s.slice(0,best),x,y,size,col,w);tfit(s.slice(best+1),x,y+size+1.5,size,col,w)}
+// ninja d'aperçu du créateur : gardé d'une image à l'autre (son modèle 3D n'est refait que si l'apparence change)
+let MF=null;const menuFake=ch=>{if(!MF||MF.ch!==ch)MF=mkUnit('p0',0,0,ch.side);return MF};
 const pickRect=(s,i)=>{const n=s?avail(MY,s).length:stylesOf(MY).length,cols=n>16?3:2,w=cols>2?300:330,h=cols>2?54:60;return{x:W/2-(cols*(w+12)-12)/2+(i%cols)*(w+12),y:150+Math.floor(i/cols)*(h+(cols>2?5:8)),w,h}};
 function rebuildMine(){MY=sanitizeBuild(MY);try{localStorage.setItem('nrBuild4',JSON.stringify(Object.assign({},MY,{jn:MY.j.slice(1).map(id=>JL[id].n)})))}catch(e){}CH.p0=mkNinja(MY);
  if(net.role==='host'){net.ready=false;sendLobby()}else if(isGuest()&&coop()){net.ready=false;netSend({t:'build',b:MY});netSend({t:'ready',v:false})}}
@@ -46,10 +48,10 @@ function drawMenu(){
  g.fillStyle='rgba(20,14,10,.85)';g.strokeStyle='#5a3a1e';g.lineWidth=1;g.beginPath();g.roundRect(30,142,380,560,12);g.fill();g.stroke();
  {const h=inRect(mouse,nameBtn);g.fillStyle=h?'rgba(90,60,30,.6)':'rgba(0,0,0,.25)';g.beginPath();g.roundRect(nameBtn.x,nameBtn.y,nameBtn.w,nameBtn.h,8);g.fill();tfit(MY.name+'  ✎',nameBtn.x+10,nameBtn.y+22,20,ch.side?'#ff9a9a':'#ffd38a',280,'bold')}
  btn(rndBtn,'🎲',false);
- const fake=mkUnit('p0',0,0,ch.side);fake.aim=Math.PI/2+Math.sin(t*.8)*1.1;fake.moving=Math.sin(t*.5)>.3;fake.walk=t*13;fake.swing=0;
+ const fake=menuFake(ch);fake.aim=Math.PI/2+Math.sin(t*.8)*1.1;fake.moving=Math.sin(t*.5)>.3;fake.walk=t*13;fake.swing=0;
  g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(220,316,50,13,0,0,7);g.fill();
  {g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(220,300,0,220,300,140);gr.addColorStop(0,rgba(ch.look.weapon.col,.16));gr.addColorStop(1,rgba(ch.look.weapon.col,0));g.fillStyle=gr;g.fillRect(80,186,280,150);g.restore()}
- drawChar(fake,220,314,1.6);
+ drawChar3(fake,220,314,1.6);
  text(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2)}`,220,340,12,'#e8cfa8','center','normal');
  tfit(ch.desc,220-Math.min(340,(g.font='normal 11px "Trebuchet MS",system-ui,sans-serif',g.measureText(ch.desc).width))/2,356,11,'#b89a70',340);
  APP.forEach(([lab,list,k],i)=>{const R=appRow(i),L=list(),v=getB(k),it=L[v];text(lab,48,R.y,13,'#d8b888','left');
