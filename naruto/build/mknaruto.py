@@ -332,6 +332,11 @@ rep("sp=can?u.ch.spd*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.4:1)","sp=can?u
 rep("const e=u.tgt&&!u.tgt.dead?u.tgt:null;let mx=0,my=0;","const e=u.tgt&&!u.tgt.dead?u.tgt:null;let mx=0,my=0;u.aiSprint=!e?(u.run??100)>60:dist(u,e)>460&&(u.run??100)>45;")
 rep("const UK=['wet',","const UK=['sprint','wet',")
 rep("text(`${lbl.KeyF} parade`,396,72,","text(`${lbl.KeyF} parade · Maj sprint`,396,72,")
+# parade parfaite (F + clic gauche) : fenêtre courte, étourdit l'attaquant au corps à corps (coup de base), bloque la garde 5 s
+rep(" u.block=!!wantB;u.blockT=u.block?(u.blockT||0)+dt:0;"," if(u.parry>0)u.parry-=dt;\n if(wantB&&(ctl?!!(I&&I.p&&I.p.lmb):u.aiParry>0)){u.aiParry=0;if(I&&I.p)I.p.lmb=false;u.bufL=0;u.parry=PARRY_WIN;u.blockLock=PARRY_LOCK;u.swing=.2;u.swingA=u.aim;anim(u,'parry',.35);if(near(u.x,u.y))S('deflect',u)}\n u.block=!!wantB&&!(u.parry>0);u.blockT=u.block?(u.blockT||0)+dt:0;")
+rep(" if(src&&t.block&&o.melee&&!o.unblockable&&facing(t,src)){"," if(src&&src!==t&&t.parry>0&&o.melee&&BASIC&&!o.unblockable&&!src.dead){t.parry=0;src.stun=Math.max(src.stun,PARRY_STUN);src.cast=null;src.spin=null;const a=ang(t,src);src.kx+=Math.cos(a)*160;src.ky+=Math.sin(a)*160;if(near(t.x,t.y)){say(t,'PARADE PARFAITE !','#fff27a');say(src,'ÉTOURDI','#b8f');sparks(t.x,t.y,'#fff27a',18);jx({jfx:'shock',x:t.x,y:t.y,r:60,t:.35,m:.35,col:'#fff27a'});shake=Math.max(shake,.2);S('deflect',t)}return false}\n if(src&&t.block&&o.melee&&!o.unblockable&&facing(t,src)){")
+rep("const UK=['sprint',","const UK=['sprint','parry',")
+rep("text(`${lbl.KeyF} parade · Maj sprint`","text(`${lbl.KeyF} garde · ${lbl.KeyF}+clic parade · Maj sprint`")
 s=s.replace("cam={x:CX,y:CY};Yc=377.5;","cam={x:CX,y:CY};Yc=390;")
 open(ROOT+'naruto/index.html','w').write(s)
 print('ok',len(s))

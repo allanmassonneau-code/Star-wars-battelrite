@@ -573,6 +573,8 @@ function tryUse(u,i,td,ex){if(use(u,i,td,undefined,ex)){u.buf=null;return true}c
  if(ab&&u.energy>=jcost(ab)&&!(u.silence>0)&&(u.cast||u.dash||u.swing>0||u.spin||u.stun>0&&u.stun<.25||(u.cds[i]>0&&u.cds[i]<.35)))u.buf={i,t:.35,ex};return false}
 function bufTick(u,dt,td,I){if(I.l||I.p.lmb){if(!use(u,0,td)&&I.p.lmb&&u.stam>=(meleeU(u)?20:10)-.01)u.bufL=.28}else if(u.bufL>0){u.bufL-=dt;if(use(u,0,td))u.bufL=0}
  if(!u.buf)return;u.buf.t-=dt;const ab=u.ch.abil[u.buf.i];if(u.buf.t<=0||!ab||u.energy<jcost(ab)){u.buf=null;return}if(use(u,u.buf.i,td,undefined,u.buf.ex))u.buf=null}
+// parade parfaite : durée de la fenêtre, étourdissement infligé, garde indisponible ensuite
+const PARRY_WIN=.3,PARRY_STUN=1.3,PARRY_LOCK=5;
 // ---------- Natures sur mesure : Fûton et Katon (mécaniques propres) ----------
 // aux : objets de jeu spéciaux (couloir de vent, tornades, zones de brûlure progressives) mis à jour et dessinés à part
 let aux=[],seqs=[]; // seqs : tirs différés (rafales)
@@ -698,6 +700,8 @@ const S_=SP; // raccourci
 AFTER.push(()=>UK.push('run'));
 // jauge de course (séparée de l'endurance des coups et de la parade) : petit arc sous le joueur
 STATD.push((u,p,S)=>{if(u!==player||u.run==null||u.run>=99.5)return;g.save();g.lineWidth=3*S;g.strokeStyle='rgba(0,0,0,.45)';g.beginPath();g.ellipse(p.x,p.y+4*S,20*S,7*S,0,.3,Math.PI-.3);g.stroke();g.strokeStyle=u.sprintLock?'#ff7a5a':'#9ef0ff';g.beginPath();g.ellipse(p.x,p.y+4*S,20*S,7*S,0,Math.PI-.3-(Math.PI-.6)*u.run/100,Math.PI-.3);g.stroke();g.restore()});
+// parade parfaite : bras avant levé puis fouetté vers l'extérieur
+AFTER.push(()=>{ANIM.parry=(P,e)=>{const k=e<.4?e/.4:1-(e-.4)/.6;pz(P,'armR',-1.5*k,0,-.6*k+(e>.4?.9*(e-.4):0));pz(P,'foreR',-.9*k);pz(P,'armL',-.5*k,0,.5*k);pz(P,'chest',.2*k,-.35*k);P.root.z=-3*k}});
 
 // ===== Styles de combat (attaque de base, gratuite) =====
 // [nom, description, mécanique (x.clé = NAT[clé]), vfx, arme, clans autorisés (-1 = sans clan), modif. PV, modif. puissance]
@@ -6770,6 +6774,7 @@ function hit(t,src,dmg,o={}){
  if(src&&src!==t&&t.dodge>0&&!o.silent){t.dodge=0;t.haste=Math.max(t.haste,1.5);say(t,'ESQUIVE','#cf6');return false}
  if(src&&src!==t&&t.counter>0&&!o.silent&&!src.dead){t.counter=0;const b=ang(src,t)+Math.PI;t.x=src.x+Math.cos(b)*40;t.y=src.y+Math.sin(b)*40;collide(t);t.aim=ang(t,src);t.swing=.18;t.swingA=t.aim;say(t,'CONTRE !','#3f3');S('deflect',t);hit(src,t,20,{stun:t.counterS,unblockable:1});return false}
  if(src&&t.riposte>0&&o.melee&&!o.unblockable){t.riposte=0;src.silence=Math.max(src.silence,t.riposteS);src.stun=Math.max(src.stun,.5);say(t,'RIPOSTE','#f22');S('deflect',t);hit(src,t,12,{unblockable:1});return false}
+ if(src&&src!==t&&t.parry>0&&o.melee&&BASIC&&!o.unblockable&&!src.dead){t.parry=0;src.stun=Math.max(src.stun,PARRY_STUN);src.cast=null;src.spin=null;const a=ang(t,src);src.kx+=Math.cos(a)*160;src.ky+=Math.sin(a)*160;if(near(t.x,t.y)){say(t,'PARADE PARFAITE !','#fff27a');say(src,'ÉTOURDI','#b8f');sparks(t.x,t.y,'#fff27a',18);jx({jfx:'shock',x:t.x,y:t.y,r:60,t:.35,m:.35,col:'#fff27a'});shake=Math.max(shake,.2);S('deflect',t)}return false}
  if(src&&t.block&&o.melee&&!o.unblockable&&facing(t,src)){stamHit(t,o.ex?32:22);if(near(t.x,t.y)){say(t,'PARADE','#7df');sparks(t.x,t.y,saberCol(t),10);S('deflect',t)}const a=ang(t,src);src.kx+=Math.cos(a)*220;src.ky+=Math.sin(a)*220;return false}
  if(src&&t.deflect>0&&o.melee){src.stun=Math.max(src.stun,.9);src.cast=null;src.spin=null;t.deflect=0;say(t,'RENVOI !','#7df');say(src,'ÉTOURDI','#b8f');sparks(t.x,t.y,'#7df',14);S('deflect',t);return false}
  if(o.melee&&src&&src.cmbT>0&&src.cmbH&&meleeU(src)&&src.ch.abil[0]&&BASIC!==null){const c=src.cmbH,fin=c===5,an=ang(src,t);sparks(t.x,t.y,fin?'#ffd36a':'#fff',fin?18:7);ring(t.x+Math.cos(an+Math.PI)*8,t.y+Math.sin(an+Math.PI)*8,fin?38:14+c*3,fin?'#ffd36a':'#ffffff');if(fin){t.kx=(t.kx||0)+Math.cos(an)*160;t.ky=(t.ky||0)+Math.sin(an)*160;shake=Math.max(shake,.12)}else{t.kx=(t.kx||0)+Math.cos(an)*35;t.ky=(t.ky||0)+Math.sin(an)*35}}if((COMBO3&&o.basic)||(src&&src.c3T>0&&o.melee)){dmg*=1.35;o=Object.assign({},o,{stun:Math.max(o.stun||0,.35)})}dmg=traitDmg(t,src,dmg,o);if(dmg<0)return false;dmg=elemDmg(t,src,dmg,o);if(src&&src.ch.pw)dmg*=src.ch.pw;if(src&&src.rage>0)dmg*=1.35;if(o.ex)dmg*=1.2;
@@ -6895,7 +6900,9 @@ function updUnit(u,dt,active){
  const ctl=u.ctrl==='remote'&&!peerOf(u.rid)?null:u.ctrl,I=ctl==='local'?localInput():ctl==='remote'?remoteInput(u):null;
  // parade (F) : bloque et renvoie les tirs de face, consomme de l'endurance
  const wantB=canBlock(u)&&active&&u.stun<=0&&!u.cast&&!u.spin&&u.blockLock<=0&&u.stam>0&&(ctl?!!(I&&I.f):u.aiBlock>0);
- u.block=!!wantB;u.blockT=u.block?(u.blockT||0)+dt:0;
+ if(u.parry>0)u.parry-=dt;
+ if(wantB&&(ctl?!!(I&&I.p&&I.p.lmb):u.aiParry>0)){u.aiParry=0;if(I&&I.p)I.p.lmb=false;u.bufL=0;u.parry=PARRY_WIN;u.blockLock=PARRY_LOCK;u.swing=.2;u.swingA=u.aim;anim(u,'parry',.35);if(near(u.x,u.y))S('deflect',u)}
+ u.block=!!wantB&&!(u.parry>0);u.blockT=u.block?(u.blockT||0)+dt:0;
  u.chk=active&&!u.dead&&u.stun<=0&&!u.cast&&!u.dash&&!u.block&&!u.chan&&(ctl?!!(I&&I.r):(u.energy<35&&!nearE(u,u.x,u.y,360)));if(u.chk)u.energy=Math.min(100,u.energy+30*dt);
  {const want=ctl?!!(I&&I.sh)&&Math.hypot(I.mx,I.my)>.1:!!u.aiSprint&&u.moving;if(!want)u.sprintLock=0;u.sprint=active&&want&&!u.sprintLock&&u.stun<=0&&!u.cast&&!u.dash&&!u.block&&!u.chk&&!u.flame&&!u.spin&&!u.chan&&!(u.root>0)&&(u.run??100)>1;
   if(u.run==null)u.run=100;if(u.sprint){u.run=Math.max(0,u.run-SPRINT_COST*dt);u.runT=.6;if(u.run<=0){u.sprint=false;u.sprintLock=1}}else if((u.runT=(u.runT||0)-dt)<=0)u.run=Math.min(100,u.run+RUN_REGEN*dt)}
@@ -8160,7 +8167,7 @@ function drawBoard(y0,rh){units.forEach(stOf);const all=Object.values(STATS);if(
 function drawHud(){
  const p=player;
  text(p.ch.name+' (toi)',30,32,18,'#9fd4ff','left');bar(30,40,360,16,p.hp/p.max,'#4db8ff');eBar(30,59,360,p.energy/100);{const T=trait(p);if(T&&T.hud)try{T.hud(p,30,96)}catch(e){}}
- if(canBlock(p)){bar(30,67,360,4,p.stam/100,p.blockLock>0?'#a55':'#7df');text(`${lbl.KeyF} parade · Maj sprint`,396,72,10,'#7df','left','normal')}
+ if(canBlock(p)){bar(30,67,360,4,p.stam/100,p.blockLock>0?'#a55':'#7df');text(`${lbl.KeyF} garde · ${lbl.KeyF}+clic parade · Maj sprint`,396,72,10,'#7df','left','normal')}
  let ay=0;for(const m of units)if(m!==player&&m.team===player.team&&(m.human||mode!=='battle')){const yy=ay;ay+=30;text(m.ch.name+(m.human?' (coéquipier)':' (allié)'),30,94+yy,13,m.human?'#9f9':'#9fd4ff','left');bar(30,100+yy,220,8,m.hp/m.max,m.human?'#7f7':'#4db8ff');if(m.dead&&mode==='battle')text(`retour dans ${Math.ceil(m.respawn)} s`,258,108+yy,11,'#9f9','left','normal')}
  if(mode!=='battle'){const fo=units.filter(u=>u.team!==player.team),two=fo.length>1;fo.forEach((e,i)=>{const y=i*(fo.length>2?36:44);
   text(e.ch.name,W-30,(two?28:32)+y,two?14:18,'#ffa0a0','right');bar(W-390,(two?34:40)+y,360,two?10:16,e.hp/e.max,'#ff4d4d',1);eBar(W-390,(two?46:59)+y,360,e.energy/100,1)});
@@ -8290,7 +8297,7 @@ $('oMute').onchange=e=>{muted=e.target.checked};$('o3d').onchange=e=>{OPT.p3d=e.
 $('nHost').onclick=hostGame;$('nJoin').onclick=()=>joinGame($('nCode').value);$('nClose').onclick=()=>netUI(false);
 $('nCode').addEventListener('keydown',e=>{if(e.key==='Enter')joinGame($('nCode').value)});
 const rd=v=>typeof v==='number'?Math.round(v*100)/100:v;
-const UK=['sprint','wet','dotEl','anim','relT','thrT','phase','izT','chk','cmb','cmbH','cmbT','jstN','jstV','auraV','mk','stk','rootV','sleepT','c','team','x','y','z','hp','max','energy','aim','swing','swingA','moving','walk','dead','deadT','stun','deflect','shield','block','stam','blockLock','haste','rage','unstop','saberOut','flash','respawn','hero','r','human','slow','vx','vy','root','stealth','airT','silence','fear','taunt','disarm','vuln','dotT','counter','riposte','dodge','absorb','chrome','riot','giant','thorns','drT','ammo','chg'];
+const UK=['sprint','parry','wet','dotEl','anim','relT','thrT','phase','izT','chk','cmb','cmbH','cmbT','jstN','jstV','auraV','mk','stk','rootV','sleepT','c','team','x','y','z','hp','max','energy','aim','swing','swingA','moving','walk','dead','deadT','stun','deflect','shield','block','stam','blockLock','haste','rage','unstop','saberOut','flash','respawn','hero','r','human','slow','vx','vy','root','stealth','airT','silence','fear','taunt','disarm','vuln','dotT','counter','riposte','dodge','absorb','chrome','riot','giant','thorns','drT','ammo','chg'];
 const PK=['vfx','jn','dragon','shuri','kind','x','y','vx','vy','r','col','saber','big','grenade','rocket','ex','life','life0','rot','tx','ty','ar','hook','ox','oy','zapP','rock','spear'],ZK=['x','y','r','t','m','col','vfx','jn'];
 function pickK(o,ks){const r={};for(const k of ks){const v=o[k];r[k]=Array.isArray(v)?v.map(rd):v===undefined?null:rd(v)}return r}
 function snapU(u){const a=UK.map(k=>u[k]===undefined?null:rd(u[k]));a.push(u.cast?{i:u.cast.i,t:rd(u.cast.t),dur:u.cast.dur,td:rd(u.cast.td),aimOv:u.cast.aimOv??null,ex:u.cast.ex}:null,u.spin?{r:u.spin.r}:null,!!u.flame,!!u.dash);return a}

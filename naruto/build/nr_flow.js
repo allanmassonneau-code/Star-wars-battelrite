@@ -23,3 +23,5 @@ function tryUse(u,i,td,ex){if(use(u,i,td,undefined,ex)){u.buf=null;return true}c
  if(ab&&u.energy>=jcost(ab)&&!(u.silence>0)&&(u.cast||u.dash||u.swing>0||u.spin||u.stun>0&&u.stun<.25||(u.cds[i]>0&&u.cds[i]<.35)))u.buf={i,t:.35,ex};return false}
 function bufTick(u,dt,td,I){if(I.l||I.p.lmb){if(!use(u,0,td)&&I.p.lmb&&u.stam>=(meleeU(u)?20:10)-.01)u.bufL=.28}else if(u.bufL>0){u.bufL-=dt;if(use(u,0,td))u.bufL=0}
  if(!u.buf)return;u.buf.t-=dt;const ab=u.ch.abil[u.buf.i];if(u.buf.t<=0||!ab||u.energy<jcost(ab)){u.buf=null;return}if(use(u,u.buf.i,td,undefined,u.buf.ex))u.buf=null}
+// parade parfaite : durée de la fenêtre, étourdissement infligé, garde indisponible ensuite
+const PARRY_WIN=.3,PARRY_STUN=1.3,PARRY_LOCK=5;

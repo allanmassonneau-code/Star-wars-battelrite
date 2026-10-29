@@ -68,3 +68,5 @@ const S_=SP; // raccourci
 AFTER.push(()=>UK.push('run'));
 // jauge de course (séparée de l'endurance des coups et de la parade) : petit arc sous le joueur
 STATD.push((u,p,S)=>{if(u!==player||u.run==null||u.run>=99.5)return;g.save();g.lineWidth=3*S;g.strokeStyle='rgba(0,0,0,.45)';g.beginPath();g.ellipse(p.x,p.y+4*S,20*S,7*S,0,.3,Math.PI-.3);g.stroke();g.strokeStyle=u.sprintLock?'#ff7a5a':'#9ef0ff';g.beginPath();g.ellipse(p.x,p.y+4*S,20*S,7*S,0,Math.PI-.3-(Math.PI-.6)*u.run/100,Math.PI-.3);g.stroke();g.restore()});
+// parade parfaite : bras avant levé puis fouetté vers l'extérieur
+AFTER.push(()=>{ANIM.parry=(P,e)=>{const k=e<.4?e/.4:1-(e-.4)/.6;pz(P,'armR',-1.5*k,0,-.6*k+(e>.4?.9*(e-.4):0));pz(P,'foreR',-.9*k);pz(P,'armL',-.5*k,0,.5*k);pz(P,'chest',.2*k,-.35*k);P.root.z=-3*k}});
