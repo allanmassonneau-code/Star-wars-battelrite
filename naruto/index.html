@@ -6560,8 +6560,8 @@ function ninjaLook(l,clan,style){const v=VILLAGES[l.v],S=STYLES[style]||STYLES[0
 const srcAb=src=>{const [h,k]=src.split('.');return h==='x'?NAT[k]:SRC[h].abil[+k]};
 // personnage de référence pour les stats : option hero de la mécanique, sinon celui du préfixe (ka_, su_, sub_…)
 const srcHero=src=>{const [h,k]=src.split('.');return h==='x'?(NAT[k]&&NAT[k].hero)||NATHERO[k.split('_')[0]]||NATHERO[k.slice(0,2)]:h};
-// subjutsu et déplacements : pas de mudras (instantanés)
-function jutsu(id){const J=JL[id],b=srcAb(J.src),mud=J.cat==='u'||J.slot===2?0:MUDRAS[J.r];return Object.assign({},b,J.P?{P:Object.assign({},b.P,J.P)}:{},JCD[J.n]?{cd:JCD[J.n]}:{},b.ult?{cd:22}:{},{cast:mud?mud*MUDRA_T:b.cast,mud,noTele:!b.line&&!b.tele,n:J.n,d:J.d,ex:null,src:srcHero(J.src),vfx:J.vfx,rank:J.r,jid:id})}
+// subjutsu, jutsu de clan et déplacements : pas de mudras (instantanés)
+function jutsu(id){const J=JL[id],b=srcAb(J.src),mud=J.cat==='u'||J.cat[0]==='c'||J.slot===2?0:MUDRAS[J.r];return Object.assign({},b,J.P?{P:Object.assign({},b.P,J.P)}:{},JCD[J.n]?{cd:JCD[J.n]}:{},b.ult?{cd:22}:{},{cast:mud?mud*MUDRA_T:b.cast,mud,noTele:!b.line&&!b.tele,n:J.n,d:J.d,ex:null,src:srcHero(J.src),vfx:J.vfx,rank:J.r,jid:id})}
 function styleAb(i){const S=STYLES[i],b=srcAb(S[2]);return Object.assign({},b,{n:S[0],d:S[1],ex:null,src:srcHero(S[2]),vfx:S[3],style:i})}
 // stats : moyenne des persos d'origine (le style de combat compte pour 5 : un ninja à distance est fragile, un ninja au corps à corps solide), puis la voie
 function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=[styleAb(b.j[0])].concat(b.j.slice(1).map(id=>jutsu(id))),w=[5,1,1,1,1,1];let hp=0,pw=0,sp=0,W=0;
