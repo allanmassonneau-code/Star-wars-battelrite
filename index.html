@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Arènes · choix du jeu</title>
+<title>NaruArena · Télécharger</title>
 <style>
 /* Page d'accueil : choisir entre l'arène Star Wars et l'arène Naruto */
 :root{--bg:#07080f;--fg:#e8ecf6;--muted:#9aa6c0;color-scheme:dark}
@@ -29,11 +29,25 @@ h1{margin:0 0 6px;font-size:clamp(26px,5vw,42px);letter-spacing:.04em;text-align
 .sw .play{background:#ffe81f;color:#10131c}.nr .play{background:#ffb347;color:#1a1008}
 .art{position:absolute;right:-10px;top:-10px;font-size:90px;opacity:.12;pointer-events:none}
 footer{margin-top:26px;color:var(--muted);font-size:13px;text-align:center}
+.dl{display:flex;flex-direction:column;align-items:center;gap:10px;margin:0 0 30px;text-align:center}
+.dlb{display:inline-block;padding:18px 40px;border-radius:14px;background:#ff9a3a;color:#1a0f06;font-weight:bold;font-size:clamp(18px,3vw,24px);text-decoration:none;box-shadow:0 0 30px #ff9a3a55;transition:transform .15s}
+.dlb:hover{transform:translateY(-2px)}
+.dl small,.alt{color:var(--muted);font-size:14px}.alt a{color:#ffb347}
+.or{margin:0 0 16px;color:var(--muted);text-align:center}
 </style>
 </head>
 <body>
-<h1>Choisis ton arène</h1>
+<h1>NaruArena</h1>
 <p class="sub">Combats en vue plongeante façon Battlerite · seul contre l'ordinateur ou en ligne jusqu'à 8</p>
+<section class="dl">
+ <a class="dlb" id="dlb" href="https://github.com/allanmassonneau-code/Star-wars-battelrite/releases/latest/download/NaruArena-win.exe">⬇ Télécharger pour Windows</a>
+ <small>Launcher avec mises à jour automatiques · Naruto + Star Wars · jeu en ligne inclus</small>
+ <div class="alt">Autres systèmes : <a href="https://github.com/allanmassonneau-code/Star-wars-battelrite/releases/latest/download/NaruArena-win.exe">Windows</a> · <a href="https://github.com/allanmassonneau-code/Star-wars-battelrite/releases/latest/download/NaruArena-mac.zip">Mac</a> · <a href="https://github.com/allanmassonneau-code/Star-wars-battelrite/releases/latest/download/NaruArena-linux.AppImage">Linux</a></div>
+</section>
+<p class="or">— ou joue directement dans le navigateur —</p>
+<script>{const u=navigator.userAgent,b=document.getElementById('dlb'),R='https://github.com/allanmassonneau-code/Star-wars-battelrite/releases/latest/download/';
+if(/Mac/.test(u)&&!/iPhone|iPad/.test(u)){b.href=R+'NaruArena-mac.zip';b.textContent='⬇ Télécharger pour Mac'}
+else if(/Linux/.test(u)&&!/Android/.test(u)){b.href=R+'NaruArena-linux.AppImage';b.textContent='⬇ Télécharger pour Linux'}}</script>
 <main class="games">
  <a class="card sw" href="starwars/index.html">
   <span class="art" aria-hidden="true">✦</span>
@@ -52,7 +66,6 @@ footer{margin-top:26px;color:var(--muted);font-size:13px;text-align:center}
   <span class="play">Jouer ▶</span>
  </a>
 </main>
-<p style="text-align:center;margin:26px 0 6px"><a href="https://github.com/allanmassonneau-code/Star-wars-battelrite/releases/latest" style="display:inline-block;padding:14px 30px;border-radius:12px;background:#ff9a3a;color:#1a0f06;font-weight:bold;text-decoration:none;font-size:18px">⬇ Télécharger le jeu (PC · Mac · Linux)</a><br><small style="opacity:.7">Launcher avec mises à jour automatiques · jeu en ligne inclus</small></p>
 <footer>Dans chaque jeu, le bouton « ⇦ Changer de jeu » ramène ici.</footer>
 </body>
 </html>

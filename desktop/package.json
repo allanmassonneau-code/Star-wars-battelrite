@@ -21,7 +21,7 @@
   "build": {
     "appId": "io.github.allanmassonneau.naruarena",
     "productName": "NaruArena",
-    "artifactName": "NaruArena-${os}-${version}.${ext}",
+    "artifactName": "NaruArena-${os}.${ext}",
     "files": ["main.js", "preload.js", "launcher.html", "icon.png"],
     "extraResources": [
       { "from": "../index.html", "to": "game/index.html" },
