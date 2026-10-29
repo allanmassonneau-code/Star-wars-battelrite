@@ -1,6 +1,8 @@
 // ---------- Natures sur mesure : Fûton et Katon (mécaniques propres) ----------
 // aux : objets de jeu spéciaux (couloir de vent, tornades, zones de brûlure progressives) mis à jour et dessinés à part
 let aux=[],seqs=[]; // seqs : tirs différés (rafales)
+// sélection d'aux mise en cache tant que le tableau ne change pas (ajouts seulement en cours de frame)
+const auxSel=f=>{let A=null,N=-1,S=[];return()=>{if(A!==aux||N!==aux.length){A=aux;N=aux.length;S=aux.filter(f)}return S}};
 function seqUpdate(dt){for(const q of seqs){if(q.owner.dead||q.owner.stun>0){q.n=0;continue}q.t-=dt;if(q.t<=0&&q.n>0){q.n--;q.t=q.iv;VFX=q.vfx||null;CUR=q.owner;BASIC=false;EX=false;q.f(q.owner);CUR=null;VFX=null}}seqs=seqs.filter(q=>q.n>0)}
 const BURN=(dps=4,dur=3)=>({dps,dur});
 const wind=(u,a,o)=>proj(u,a,Object.assign({spd:820,r:7,dmg:10,life:.6,col:'#c8fff0',o:{kb:120}},o));

@@ -1,4 +1,4 @@
-import re,sys,os
+import re,sys,os,json
 # Génère naruto/index.html à partir du jeu Star Wars : python3 naruto/build/mknaruto.py
 SP=os.path.dirname(os.path.abspath(__file__))+'/'
 ROOT=os.path.abspath(SP+'../..')+'/'
@@ -135,7 +135,7 @@ rep("for(const f of fx){if(!f.ring&&!f.swing)continue;if(!near(f.x,f.y))continue
 rep("for(const f of fx){if(f.beam&&near(f.x,f.y)){const a=P(f.x,f.y,30),b=P(f.x2,f.y2,30);g.globalAlpha=f.t/f.m;g.lineCap='round';g.strokeStyle=f.col;g.lineWidth=f.w*a.s;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.strokeStyle='#fff';g.lineWidth=Math.max(1,f.w*a.s*.3);g.stroke()}",
     "for(const f of fx){if(f.beam&&near(f.x,f.y))drawBeamN(f);")
 rep("drawBolt(h.x,h.y,e.x,e.y,i%2?'#fff':f.col)","drawBolt(h.x,h.y,e.x,e.y,i%2?'#fff':vcol(f.vfx==='chakra'?null:f.vfx,f.col))")
-rep("const p=P(f.x,f.y,f.z??20);g.globalAlpha=f.t/f.m;g.fillStyle=f.col;g.beginPath();g.arc(p.x,p.y,f.r*p.s,0,7);g.fill()}g.globalAlpha=1;","const p=P(f.x,f.y,f.z??20);g.globalAlpha=f.t/f.m;drawPart(f,p)}g.globalAlpha=1;")
+rep("g.globalAlpha=f.t/f.m;g.fillStyle=f.col;g.beginPath();g.arc(p.x,p.y,f.r*p.s,0,7);g.fill()}g.globalAlpha=1;","g.globalAlpha=f.t/f.m;drawPart(f,p)}g.globalAlpha=1;")
 rep("for(const p of projs)if(near(p.x,p.y))glow(p.x,p.y,p.rocket?90:45,p.col,.3);","for(const p of projs)if(near(p.x,p.y)&&!DARKV[p.vfx])glow(p.x,p.y,p.rocket?90:45,p.vfx&&p.vfx!=='chakra'?vcol(p.vfx,p.col):p.col,.3);")
 rep("for(const f of fields){if(!near(f.x,f.y))continue;g.fillStyle=rgba(f.col,","for(const f of fields){if(!near(f.x,f.y))continue;if(drawFieldN(f,t))continue;g.fillStyle=rgba(f.col,")
 rep("for(const z of zones){if(!near(z.x,z.y))continue;const k=1-z.t/z.m;g.fillStyle=rgba(z.col,.12);gEll(z.x,z.y,z.r);g.fill();g.fillStyle=rgba(z.col,.3);gEll(z.x,z.y,z.r*k);g.fill();g.strokeStyle=z.col;",
@@ -197,7 +197,7 @@ rep(" for(let i=z0;i<zones.length;i++)zones[i].jn=zones[i].jn||ab.n;"," for(let 
 rep("const PK=['vfx',","const PK=['vfx','jn',")
 rep("else{sparks(z.x,z.y,z.col,22);fx.push({x:z.x,y:z.y,ring:z.r,t:.45,m:.45,col:z.col,vfx:z.vfx})}","else{sparks(z.x,z.y,z.col,22);fx.push({x:z.x,y:z.y,ring:z.r,t:.45,m:.45,col:z.col,vfx:z.vfx});detoFx(z.x,z.y,z.r,z.vfx)}")
 rep("if(near(p.x,p.y)){sparks(p.x,p.y,p.col,24);shake=Math.max(shake,.2);SFX.boom()}for(let i=fi0;","if(near(p.x,p.y)){sparks(p.x,p.y,p.col,24);shake=Math.max(shake,.2);SFX.boom();detoFx(p.x,p.y,p.ar||80,p.vfx)}for(let i=fi0;")
-rep(" list.sort((a,b)=>a.y-b.y).forEach(o=>o.d());"," list.sort((a,b)=>a.y-b.y).forEach(o=>o.d());\n for(const f of fx)if(f.jfx)drawJfx(f);")
+rep(" list.sort((a,b)=>a.y-b.y).forEach(o=>o.d());"," list.sort((a,b)=>a.y-b.y).forEach(o=>o.d());\n for(const f of fx)if(f.jfx){const u=UI(f),t=TI(f);if(!(scl(f.y)<=0)&&!(u&&scl(u.y)<=0)&&!(t&&scl(t.y)<=0))drawJfx(f)} // loin au nord : échelle négative, rien de visible (évite le rayon négatif)")
 rep("for(const f of fx){if(f.ring||f.swing||f.bolt||f.light||f.beam)continue;","for(const f of fx){if(f.ring||f.swing||f.bolt||f.light||f.beam||f.jfx)continue;")
 rep("if(u.stamT<=0)u.stam=Math.min(100,u.stam+22*dt)","if(u.stamT<=0)u.stam=Math.min(100,u.stam+(u.ch.taij?50:32)*dt)")
 rep("if(u.auraV&&!auraOn(u))u.auraV=null;","if(u.auraV&&!auraOn(u))u.auraV=null;u.mk=u.markB?1:0;u.stk=u.stick?1:0;if(u.root<=0)u.rootV=null;")
@@ -337,6 +337,36 @@ rep(" u.block=!!wantB;u.blockT=u.block?(u.blockT||0)+dt:0;"," if(u.parry>0)u.par
 rep(" if(src&&t.block&&o.melee&&!o.unblockable&&facing(t,src)){"," if(src&&src!==t&&t.parry>0&&o.melee&&BASIC&&!o.unblockable&&!src.dead){t.parry=0;src.stun=Math.max(src.stun,PARRY_STUN);src.cast=null;src.spin=null;const a=ang(t,src);src.kx+=Math.cos(a)*160;src.ky+=Math.sin(a)*160;if(near(t.x,t.y)){say(t,'PARADE PARFAITE !','#fff27a');say(src,'ÉTOURDI','#b8f');sparks(t.x,t.y,'#fff27a',18);jx({jfx:'shock',x:t.x,y:t.y,r:60,t:.35,m:.35,col:'#fff27a'});shake=Math.max(shake,.2);S('deflect',t)}return false}\n if(src&&t.block&&o.melee&&!o.unblockable&&facing(t,src)){")
 rep("const UK=['sprint',","const UK=['sprint','parry',")
 rep("text(`${lbl.KeyF} parade · Maj sprint`","text(`${lbl.KeyF} garde · ${lbl.KeyF}+clic parade · Maj sprint`")
+# forme cachée unique des unités : les champs ajoutés en cours de partie (kits, IA, dessin) sont déclarés d'avance à undefined dans mkUnit
+# (lire undefined = lire un champ absent : aucun changement de jeu ; les accès u.* deviennent monomorphes au lieu de mégamorphes)
+UXK_H="rid,wet,mk,stk,rootV,blockT,chk,sprintLock,sprint,run,runT,_tri,sub_nd,jstN,jstV,aiSprint,hy_byak,hy_stepB,hy_seen,uc_tm,uc_obs,uc_cpN,uc_cpT,uc_rcT,tj_g,tj_cT,tj_n,tj_cds,ak_cal,sa_shT,sa_cds,sa_arm,sa_armT,sa_sph,sa_fly,sa_brk,ab_eat,ab_tk,in_bcd,na_dk,kg_os,kg_osT,kg_armT,kg_larT,cmb,cmbH,cmbT,thrT,st_kn,st_kt,anim,relT,auraV,dmgBy,st_sh,uc_tmF,uc_cp,phase,uc_shB,uc_rec,uc_rdT,st_vp,ya_mkU,ya_mk,ya_mkB,uc_suT,tj_8,tj_red,ak_roll,shieldBy,ak_bf,ya_lnkT,ya_lnkU,dotSrc,dotEl,dotK,ya_pz,ya_pa,na_tT,in_flair,in_wolf,do_sw,jst,sa_sink,ab_last,ab_col,ab_colT,ab_src,ak_arm,ya_sl,ya_slI,sub_ctr,ak_spk,hy_tkN,hy_tk,hy_tkU,sub_slug,thirdImm,st_luT,do_ar,do_ac,chan,tj_life,tj_esq,na_pl,riposteS,hy_dg,uc_am,na_by,na_hT,hy_rvU,c3T,hy_imU,ka_ht,counterS,absorbEn,izT,izS,parry,aiParry,fearX,fearY,tauntSrc,su_pr,ab_vd,ab_vdT,ab_spyT,ab_spyS,uz_clT,_tr,_pz,_land,_dog3".split(',')
+def _mkBase():
+    i=s.index('function mkUnit(c,x,y,team){');j=s.index('return{',i)+7;d=0;k=j
+    while True:
+        c=s[k]
+        if c in '([{':d+=1
+        elif c in ')]}':
+            if d==0:break
+            d-=1
+        k+=1
+    P=[];d=0;cur=''
+    for c in s[j:k]:
+        if c in '([{':d+=1
+        elif c in ')]}':d-=1
+        if c==',' and d==0:P.append(cur);cur=''
+        else:cur+=c
+    P.append(cur)
+    return [q.split(':')[0].strip() for q in P]
+BASEK=_mkBase()
+UXK=[]
+for k in UXK_H+[m.group(1) for m in re.finditer(r"\bu\.([A-Za-z_$][\w$]*)\s*(?:=(?![=>])|\+\+|--|[-+*/|&?]{1,2}=)",s)]:
+    if k not in UXK:UXK.append(k)
+UXK=[k for k in UXK if k not in BASEK]
+assert not set(UXK)&set(BASEK)
+assert len(UXK)==len(set(UXK))
+rep("markB:null,stick:null}}","markB:null,stick:null,"+','.join(k+':undefined' for k in UXK)+"}}")
+rep("function mkUnit(c,x,y,team){","// UXK : champs ajoutés en cours de partie, déclarés d'avance (forme cachée unique)\nconst UXK="+json.dumps(UXK,separators=(',',':'))+";\nfunction mkUnit(c,x,y,team){")
+rep("n.rid=u.rid;n.energy=60;Object.assign(u,n);","n.rid=u.rid;n.energy=60;for(const k of UXK)if(k!=='rid')delete n[k];Object.assign(u,n);")
 s=s.replace("cam={x:CX,y:CY};Yc=377.5;","cam={x:CX,y:CY};Yc=390;")
 open(ROOT+'naruto/index.html','w').write(s)
 print('ok',len(s))

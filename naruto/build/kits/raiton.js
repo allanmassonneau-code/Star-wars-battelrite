@@ -44,7 +44,7 @@ function raChain(o,from,n,dmg,hs,j){let nb=null,bd=290;for(const e of enemies(o)
  later(o,.09,()=>{if(nb.dead)return;jx({jfx:'ra_arc',x:x0,y:y0,x2:nb.x,y2:nb.y,t:.3,m:.3});raHit(nb,o,dmg,{slow:.5});raPop(nb.x,nb.y,18);raS('zap',nb);if(n>1)raChain(o,nb,n-1,dmg*.85,hs,j+1)})}
 function raStack(o,t){jx({jfx:'ra_charge',ti:raUi(t),x:t.x,y:t.y,t:.95,m:.95});for(let i=1;i<=3;i++)later(o,i*.3,()=>{if(t.dead)return;raHit(t,o,3,{slow:.35});jx({jfx:'ra_zap',ti:raUi(t),x:t.x,y:t.y,t:.22,m:.22});raS('zap',t)})}
 // IA : les bots fuient aussi les objets « aux » marqués danger (nuage de Kirin, éclairs de l'Orage)
-AFTER.push(()=>{if(typeof dangers!=='function'||dangers.raW)return;const D0=dangers;dangers=function(u){const L=D0(u);for(const x of aux)if(x.danger&&x.team!==u.team)L.push({x:x.x,y:x.y,r:x.r});return L};dangers.raW=1});
+AFTER.push(()=>{if(typeof dangers!=='function'||dangers.raW)return;const D0=dangers,sel=auxSel(x=>x.danger);dangers=function(u){const L=D0(u);for(const x of sel())if(x.team!==u.team)L.push({x:x.x,y:x.y,r:x.r});return L};dangers.raW=1});
 
 Object.assign(NAT,{
  // ---- éclair : le tir le plus rapide du jeu, perce la ligne

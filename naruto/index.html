@@ -578,6 +578,8 @@ const PARRY_WIN=.3,PARRY_STUN=1.3,PARRY_LOCK=5;
 // ---------- Natures sur mesure : Fûton et Katon (mécaniques propres) ----------
 // aux : objets de jeu spéciaux (couloir de vent, tornades, zones de brûlure progressives) mis à jour et dessinés à part
 let aux=[],seqs=[]; // seqs : tirs différés (rafales)
+// sélection d'aux mise en cache tant que le tableau ne change pas (ajouts seulement en cours de frame)
+const auxSel=f=>{let A=null,N=-1,S=[];return()=>{if(A!==aux||N!==aux.length){A=aux;N=aux.length;S=aux.filter(f)}return S}};
 function seqUpdate(dt){for(const q of seqs){if(q.owner.dead||q.owner.stun>0){q.n=0;continue}q.t-=dt;if(q.t<=0&&q.n>0){q.n--;q.t=q.iv;VFX=q.vfx||null;CUR=q.owner;BASIC=false;EX=false;q.f(q.owner);CUR=null;VFX=null}}seqs=seqs.filter(q=>q.n>0)}
 const BURN=(dps=4,dur=3)=>({dps,dur});
 const wind=(u,a,o)=>proj(u,a,Object.assign({spd:820,r:7,dmg:10,life:.6,col:'#c8fff0',o:{kb:120}},o));
@@ -1119,7 +1121,7 @@ const subIdx=(u,k)=>u.ch.abil.findIndex(x=>x&&x.key===k);
 // ennemi le plus proche que les clones peuvent voir (un ennemi invisible n'est repéré qu'à moins de 140 px, comme pour les bots)
 function subNearE(u,x,y,r){let b=null,bd=r;for(const e of units){if(e.dead||e.team===u.team)continue;const d=Math.hypot(e.x-x,e.y-y);if(d<bd&&!(e.stealth>0&&d>140)){bd=d;b=e}}return b}
 // garde un point dans l'arène, hors des piliers
-function subFree(p,r){p.x=clamp(p.x,B.x+r,B.x+B.w-r);p.y=clamp(p.y,B.y+r,B.y+B.h-r);for(const o of OBST){const d=Math.hypot(p.x-o.x,p.y-o.y),m=o.r+r;if(d<m&&d>0){p.x=o.x+(p.x-o.x)/d*m;p.y=o.y+(p.y-o.y)/d*m}}return p}
+function subFree(p,r){p.x=clamp(p.x,B.x+r,B.x+B.w-r);p.y=clamp(p.y,B.y+r,B.y+B.h-r);for(const o of OBST){const m=o.r+r;if(Math.abs(p.x-o.x)>=m||Math.abs(p.y-o.y)>=m)continue;const d=Math.hypot(p.x-o.x,p.y-o.y);if(d<m&&d>0){p.x=o.x+(p.x-o.x)/d*m;p.y=o.y+(p.y-o.y)/d*m}}return p} // rejet rapide par boîte avant l'hypoténuse
 Object.assign(NAT,{
  // --- Rasengan : la sphère se forme (incantation courte, interruptible), puis on fonce ; la 1re cible est broyée puis projetée
  sub_rasen:S_('Rasengan','Forme une sphère puis fonce : broie et projette la 1re cible',11,{hero:'savage',cast:.28,line:{len:300,w:40},ai:{mode:'gap',min:60,max:300,p:.6}},(u,a,td)=>{S('rasengan',u);anim(u,'sub_rasen',.55);
@@ -2465,7 +2467,7 @@ AFTER.push(()=>{const base=drawTelegraphs;drawTelegraphs=()=>{base();for(const u
  const a=u.cast.aimOv??u.aim,k=Math.min(1,u.cast.t/u.cast.dur),col=u.team?'#ff5050':'#5ab8ff',pts=[P(u.x,u.y)];for(let i=0;i<=10;i++){const b=a-.5+i*.1;pts.push(P(u.x+Math.cos(b)*270,u.y+Math.sin(b)*270))}poly(pts,rgba(col,.15));
  g.strokeStyle=rgba(col,.7);g.lineWidth=2;g.beginPath();for(let i=0;i<=10;i++){const b=a-.5+i*.1,q=P(u.x+Math.cos(b)*270*k,u.y+Math.sin(b)*270*k);i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y)}g.stroke()}}});
 // l'IA voit les objets de vent (le moteur ne connaît que ses zones) : elle sort du couloir et du cône du Souffle, et s'écarte de la tornade
-AFTER.push(()=>{const base=dangers;dangers=u=>{const L=base(u);for(const x of aux){if(x.team===u.team)continue;
+AFTER.push(()=>{const base=dangers,sel=auxSel(x=>x.type==='fu_corr'||x.type==='fu_breath'||x.type==='fu_tornado');dangers=u=>{const L=base(u);for(const x of sel()){if(x.team===u.team)continue;
  if(x.type==='fu_corr'||x.type==='fu_breath'){const br=x.type==='fu_breath',a=br&&x.owner?x.owner.aim:x.a,c=Math.cos(a),s=Math.sin(a),dx=u.x-x.x,dy=u.y-x.y,f=dx*c+dy*s;
   if(f>-20&&f<x.len+20){const hw=br?Math.max(12,f*Math.tan(x.w)):x.w/2;if(Math.abs(-dx*s+dy*c)<hw+20)L.push({x:x.x+c*f,y:x.y+s*f,r:hw})}}
  else if(x.type==='fu_tornado')L.push({x:x.x,y:x.y,r:x.r+10})}return L}});
@@ -2630,7 +2632,7 @@ function raChain(o,from,n,dmg,hs,j){let nb=null,bd=290;for(const e of enemies(o)
  later(o,.09,()=>{if(nb.dead)return;jx({jfx:'ra_arc',x:x0,y:y0,x2:nb.x,y2:nb.y,t:.3,m:.3});raHit(nb,o,dmg,{slow:.5});raPop(nb.x,nb.y,18);raS('zap',nb);if(n>1)raChain(o,nb,n-1,dmg*.85,hs,j+1)})}
 function raStack(o,t){jx({jfx:'ra_charge',ti:raUi(t),x:t.x,y:t.y,t:.95,m:.95});for(let i=1;i<=3;i++)later(o,i*.3,()=>{if(t.dead)return;raHit(t,o,3,{slow:.35});jx({jfx:'ra_zap',ti:raUi(t),x:t.x,y:t.y,t:.22,m:.22});raS('zap',t)})}
 // IA : les bots fuient aussi les objets « aux » marqués danger (nuage de Kirin, éclairs de l'Orage)
-AFTER.push(()=>{if(typeof dangers!=='function'||dangers.raW)return;const D0=dangers;dangers=function(u){const L=D0(u);for(const x of aux)if(x.danger&&x.team!==u.team)L.push({x:x.x,y:x.y,r:x.r});return L};dangers.raW=1});
+AFTER.push(()=>{if(typeof dangers!=='function'||dangers.raW)return;const D0=dangers,sel=auxSel(x=>x.danger);dangers=function(u){const L=D0(u);for(const x of sel())if(x.team!==u.team)L.push({x:x.x,y:x.y,r:x.r});return L};dangers.raW=1});
 
 Object.assign(NAT,{
  // ---- éclair : le tir le plus rapide du jeu, perce la ligne
@@ -6644,9 +6646,9 @@ function presetBuild(i,name,side){const [lab,nat,clan,voie,pass,sty,names,l]=PRE
  return sanitizeBuild(b,true)}
 // ---------- Cartes de l'arène ----------
 const MAPS=[['Terrain d\'entraînement'],['Vallée de la Fin'],['Désert de Suna']];
-const THEME=()=>[{sky:['#2a2650','#a8506a','#f3a65a'],floor:['#3e5a2c','#4f6e34'],line:'rgba(30,50,20,.18)',wall:['#6a4426','#4a2e18'],post:['#4a2e18','#9a6a3a','#3a2210','#b88a52']},
+const THEMES=[{sky:['#2a2650','#a8506a','#f3a65a'],floor:['#3e5a2c','#4f6e34'],line:'rgba(30,50,20,.18)',wall:['#6a4426','#4a2e18'],post:['#4a2e18','#9a6a3a','#3a2210','#b88a52']},
  {sky:['#1a2a4a','#4a6a8a','#a8c0d0'],floor:['#3a6a8a','#4a7a9a'],line:'rgba(200,230,255,.12)',wall:['#5a5a62','#3a3a42'],post:['#4a4a52','#8a8a92','#2a2a32','#9a9aa4']},
- {sky:['#5a2a1a','#c87a3a','#f3c87a'],floor:['#c8a060','#d8b070'],line:'rgba(120,80,30,.15)',wall:['#a07040','#7a5028'],post:['#7a5028','#c89a60','#5a3a1a','#d8b078']}][CFG.map|0]||null;
+ {sky:['#5a2a1a','#c87a3a','#f3c87a'],floor:['#c8a060','#d8b070'],line:'rgba(120,80,30,.15)',wall:['#a07040','#7a5028'],post:['#7a5028','#c89a60','#5a3a1a','#d8b078']}];const THEME=()=>THEMES[CFG.map|0]||null; // table fixe : plus d'allocation par appel
 // ---------- Décor des jutsu marquants pendant leur délai ----------
 function drawZoneDeco(z){const k=1-z.t/z.m,p=P(z.x,z.y),s=p.s,t=performance.now()/1000;
  switch(z.jn){
@@ -6691,8 +6693,10 @@ const saveCfg=()=>{try{localStorage.setItem('nrCfg',JSON.stringify(CFG))}catch(e
 // taille d'équipe effective : en coop arène il faut au moins 2 par équipe
 const teamN=()=>Math.min(4,Math.max(mode==='arena'&&coop()?2:1,CFG.team,humansPer(0),humansPer(1)));
 const sdR=()=>mode!=='arena'||!CFG.sd||timer<SD_START?9999:lerp(1150,200,clamp((timer-SD_START)/SD_LEN,0,1));
+// UXK : champs ajoutés en cours de partie, déclarés d'avance (forme cachée unique)
+const UXK=["rid","wet","mk","stk","rootV","blockT","chk","sprintLock","sprint","run","runT","_tri","sub_nd","jstN","jstV","aiSprint","hy_byak","hy_stepB","hy_seen","uc_tm","uc_obs","uc_cpN","uc_cpT","uc_rcT","tj_g","tj_cT","tj_n","tj_cds","ak_cal","sa_shT","sa_cds","sa_arm","sa_armT","sa_sph","sa_fly","sa_brk","ab_eat","ab_tk","in_bcd","na_dk","kg_os","kg_osT","kg_armT","kg_larT","cmb","cmbH","cmbT","thrT","st_kn","st_kt","anim","relT","auraV","dmgBy","st_sh","uc_tmF","uc_cp","phase","uc_shB","uc_rec","uc_rdT","st_vp","ya_mkU","ya_mk","ya_mkB","uc_suT","tj_8","tj_red","ak_roll","shieldBy","ak_bf","ya_lnkT","ya_lnkU","dotSrc","dotEl","dotK","ya_pz","ya_pa","na_tT","in_flair","in_wolf","do_sw","jst","sa_sink","ab_last","ab_col","ab_colT","ab_src","ak_arm","ya_sl","ya_slI","sub_ctr","ak_spk","hy_tkN","hy_tk","hy_tkU","sub_slug","thirdImm","st_luT","do_ar","do_ac","chan","tj_life","tj_esq","na_pl","riposteS","hy_dg","uc_am","na_by","na_hT","hy_rvU","c3T","hy_imU","ka_ht","counterS","absorbEn","izT","izS","parry","aiParry","fearX","fearY","tauntSrc","su_pr","ab_vd","ab_vdT","ab_spyT","ab_spyS","uz_clT","_tr","_pz","_land","_dog3","buf","bufL","sub_hk","sub_sage","su_mA","do_mo","uc_gk","na_sh","ab_ven","in_four","uz_kyu","uz_fv","uz_clQ","uz_rf","gvx","gvy"];
 function mkUnit(c,x,y,team){const ch=CH[c];return{c,ch,x,y,z:0,vx:0,vy:0,kx:0,ky:0,r:18*(ch.look.scale>1?1.1:1),hp:ch.hp,max:ch.hp,energy:0,team,hero:!ch.trooper,cds:[0,0,0,0,0,0],stun:0,slow:0,haste:0,rage:0,rapid:0,unstop:0,deflect:0,shield:0,shieldT:0,
- stam:100,stamT:0,block:false,blockLock:0,aiBlock:0,dash:null,cast:null,spin:null,flame:null,aim:team?Math.PI:0,swing:0,swingA:0,saberOut:0,walk:0,moving:0,aiT:.3+rnd()*.4,strT:0,strDir:rnd()<.5?1:-1,flash:0,dead:false,deadT:0,respawn:0,tgt:null,lane:y,ctrl:null,human:false,nx:x,ny:y,root:0,stealth:0,ambush:0,airT:0,hits:0,chg:ch.abil.map(a=>a&&a.charges||0),ammo:ch.abil[0].ammo||0,silence:0,fear:0,taunt:0,disarm:0,vuln:0,counter:0,riposte:0,dodge:0,absorb:0,thorns:0,dr:0,drT:0,cdrHit:0,lsB:0,regenB:0,slowImm:0,giant:0,riot:0,chrome:0,parryAll:0,thornSlow:0,wallStun:0,critBuf:0,pierceBuf:0,dot:0,dotT:0,sleepT:0,markB:null,stick:null}}
+ stam:100,stamT:0,block:false,blockLock:0,aiBlock:0,dash:null,cast:null,spin:null,flame:null,aim:team?Math.PI:0,swing:0,swingA:0,saberOut:0,walk:0,moving:0,aiT:.3+rnd()*.4,strT:0,strDir:rnd()<.5?1:-1,flash:0,dead:false,deadT:0,respawn:0,tgt:null,lane:y,ctrl:null,human:false,nx:x,ny:y,root:0,stealth:0,ambush:0,airT:0,hits:0,chg:ch.abil.map(a=>a&&a.charges||0),ammo:ch.abil[0].ammo||0,silence:0,fear:0,taunt:0,disarm:0,vuln:0,counter:0,riposte:0,dodge:0,absorb:0,thorns:0,dr:0,drT:0,cdrHit:0,lsB:0,regenB:0,slowImm:0,giant:0,riot:0,chrome:0,parryAll:0,thornSlow:0,wallStun:0,critBuf:0,pierceBuf:0,dot:0,dotT:0,sleepT:0,markB:null,stick:null,rid:undefined,wet:undefined,mk:undefined,stk:undefined,rootV:undefined,blockT:undefined,chk:undefined,sprintLock:undefined,sprint:undefined,run:undefined,runT:undefined,_tri:undefined,sub_nd:undefined,jstN:undefined,jstV:undefined,aiSprint:undefined,hy_byak:undefined,hy_stepB:undefined,hy_seen:undefined,uc_tm:undefined,uc_obs:undefined,uc_cpN:undefined,uc_cpT:undefined,uc_rcT:undefined,tj_g:undefined,tj_cT:undefined,tj_n:undefined,tj_cds:undefined,ak_cal:undefined,sa_shT:undefined,sa_cds:undefined,sa_arm:undefined,sa_armT:undefined,sa_sph:undefined,sa_fly:undefined,sa_brk:undefined,ab_eat:undefined,ab_tk:undefined,in_bcd:undefined,na_dk:undefined,kg_os:undefined,kg_osT:undefined,kg_armT:undefined,kg_larT:undefined,cmb:undefined,cmbH:undefined,cmbT:undefined,thrT:undefined,st_kn:undefined,st_kt:undefined,anim:undefined,relT:undefined,auraV:undefined,dmgBy:undefined,st_sh:undefined,uc_tmF:undefined,uc_cp:undefined,phase:undefined,uc_shB:undefined,uc_rec:undefined,uc_rdT:undefined,st_vp:undefined,ya_mkU:undefined,ya_mk:undefined,ya_mkB:undefined,uc_suT:undefined,tj_8:undefined,tj_red:undefined,ak_roll:undefined,shieldBy:undefined,ak_bf:undefined,ya_lnkT:undefined,ya_lnkU:undefined,dotSrc:undefined,dotEl:undefined,dotK:undefined,ya_pz:undefined,ya_pa:undefined,na_tT:undefined,in_flair:undefined,in_wolf:undefined,do_sw:undefined,jst:undefined,sa_sink:undefined,ab_last:undefined,ab_col:undefined,ab_colT:undefined,ab_src:undefined,ak_arm:undefined,ya_sl:undefined,ya_slI:undefined,sub_ctr:undefined,ak_spk:undefined,hy_tkN:undefined,hy_tk:undefined,hy_tkU:undefined,sub_slug:undefined,thirdImm:undefined,st_luT:undefined,do_ar:undefined,do_ac:undefined,chan:undefined,tj_life:undefined,tj_esq:undefined,na_pl:undefined,riposteS:undefined,hy_dg:undefined,uc_am:undefined,na_by:undefined,na_hT:undefined,hy_rvU:undefined,c3T:undefined,hy_imU:undefined,ka_ht:undefined,counterS:undefined,absorbEn:undefined,izT:undefined,izS:undefined,parry:undefined,aiParry:undefined,fearX:undefined,fearY:undefined,tauntSrc:undefined,su_pr:undefined,ab_vd:undefined,ab_vdT:undefined,ab_spyT:undefined,ab_spyS:undefined,uz_clT:undefined,_tr:undefined,_pz:undefined,_land:undefined,_dog3:undefined,buf:undefined,bufL:undefined,sub_hk:undefined,sub_sage:undefined,su_mA:undefined,do_mo:undefined,uc_gk:undefined,na_sh:undefined,ab_ven:undefined,in_four:undefined,uz_kyu:undefined,uz_fv:undefined,uz_clQ:undefined,uz_rf:undefined,gvx:undefined,gvy:undefined}}
 // statistiques de la partie (éliminations, morts, assistances, dégâts infligés/subis, soins), par perso et par camp
 let STATS={},CUR=null;
 const stOf=u=>{const k=u.c+'|'+u.team;return STATS[k]||(STATS[k]={c:u.c,team:u.team,k:0,d:0,a:0,dmg:0,tk:0,heal:0,sh:0})};
@@ -6877,11 +6881,11 @@ function ai(u,dt){
 // ---------- Mise à jour ----------
 function collide(u){
  const bx=u.x,by=u.y;u.x=clamp(u.x,B.x+u.r,B.x+B.w-u.r);u.y=clamp(u.y,B.y+u.r,B.y+B.h-u.r);let bump=bx!==u.x||by!==u.y;
- for(const p of OBST){const d=Math.hypot(u.x-p.x,u.y-p.y),m=p.r+u.r;if(d<m&&d>0){u.x=p.x+(u.x-p.x)/d*m;u.y=p.y+(u.y-p.y)/d*m;bump=true}}
+ for(const p of OBST){const m=p.r+u.r;if(Math.abs(u.x-p.x)>=m||Math.abs(u.y-p.y)>=m)continue;const d=Math.hypot(u.x-p.x,u.y-p.y);if(d<m&&d>0){u.x=p.x+(u.x-p.x)/d*m;u.y=p.y+(u.y-p.y)/d*m;bump=true}} // rejet rapide par boîte avant l'hypoténuse
  if(bump&&u.wallStun>0&&Math.hypot(u.kx,u.ky)>150){u.stun=Math.max(u.stun,u.wallStun);u.wallStun=0;u.kx=u.ky=0;say(u,'ÉCRASÉ','#f22');sparks(u.x,u.y,'#fff',12)}
- for(const w of walls)if(w.team!==u.team){const d=Math.hypot(u.x-w.x,u.y-w.y),m=w.r+u.r;if(d<m&&d>0){u.x=w.x+(u.x-w.x)/d*m;u.y=w.y+(u.y-w.y)/d*m}}
+ for(const w of walls)if(w.team!==u.team){const m=w.r+u.r;if(Math.abs(u.x-w.x)>=m||Math.abs(u.y-w.y)>=m)continue;const d=Math.hypot(u.x-w.x,u.y-w.y);if(d<m&&d>0){u.x=w.x+(u.x-w.x)/d*m;u.y=w.y+(u.y-w.y)/d*m}}
 }
-function respawn(u){const p=spawnPos(u.team),n=mkUnit(u.c,p.x,p.y,u.team);n.lane=u.lane;n.ctrl=u.ctrl;n.human=u.human;n.rid=u.rid;n.energy=60;Object.assign(u,n);if(u===player)deathPos=null}
+function respawn(u){const p=spawnPos(u.team),n=mkUnit(u.c,p.x,p.y,u.team);n.lane=u.lane;n.ctrl=u.ctrl;n.human=u.human;n.rid=u.rid;n.energy=60;for(const k of UXK)if(k!=='rid')delete n[k];Object.assign(u,n);if(u===player)deathPos=null}
 function updUnit(u,dt,active){
  for(let i=0;i<6;i++){const ab=u.ch.abil[i];if(ab&&ab.charges){if(u.chg[i]<ab.charges){u.cds[i]-=dt;if(u.cds[i]<=0){u.chg[i]++;u.cds[i]=u.chg[i]<ab.charges?ab.cd:0}}}else u.cds[i]=Math.max(0,u.cds[i]-dt)}
  for(const k of['silence','fear','taunt','disarm','vuln','counter','riposte','dodge','absorb','thorns','drT','cdrHit','lsB','regenB','slowImm','giant','riot','chrome','parryAll','thornSlow','wallStun','stun','deflect','slow','haste','rage','rapid','unstop','swing','blockLock','aiBlock','root','stealth','ambush','wet'])u[k]=Math.max(0,u[k]-dt);u.flash-=dt;
@@ -7035,7 +7039,7 @@ function drawFloor(x0,y0,x1,y1,step){
  g.strokeStyle=T.line;g.lineWidth=1;
  for(let x=Math.ceil(x0/step)*step;x<=x1;x+=step){const a=P(x,y0),b=P(x,y1);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()}
  for(let y=Math.ceil(y0/step)*step;y<=y1;y+=step){const a=P(x0,y),b=P(x1,y);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()}
- g.fillStyle=(CFG.map|0)===1?'rgba(220,240,255,.14)':(CFG.map|0)===2?'rgba(150,100,40,.16)':'rgba(120,90,50,.18)';for(let x=Math.ceil(x0/step)*step;x<x1;x+=step)for(let y=Math.ceil(y0/step)*step;y<y1;y+=step)if(((x*7+y*13)/step)%5<1){const p=P(x+step*.4,y+step*.5);g.beginPath();g.ellipse(p.x,p.y,step*.3*p.s,step*.12*p.s,0,0,7);g.fill()}
+ g.fillStyle=(CFG.map|0)===1?'rgba(220,240,255,.14)':(CFG.map|0)===2?'rgba(150,100,40,.16)':'rgba(120,90,50,.18)';for(let x=Math.ceil(x0/step)*step;x<x1;x+=step)for(let y=Math.ceil(y0/step)*step;y<y1;y+=step)if(((x*7+y*13)/step)%5<1){const p=P(x+step*.4,y+step*.5);if(p.x<-80||p.x>W+80||p.y<-80||p.y>H+80)continue;g.beginPath();g.ellipse(p.x,p.y,step*.3*p.s,step*.12*p.s,0,0,7);g.fill()}
  floorDeco(x0,y0,x1,y1);
  return[tl,tr,br,bl];
 }
@@ -7083,7 +7087,7 @@ function drawDesert(){g.fillStyle='#c8905a';g.beginPath();g.moveTo(0,320);for(le
 
 // détails du sol (touffes, fleurs, cailloux / nénuphars / rides de sable), déterministes par case
 function floorDeco(x0,y0,x1,y1){const mp=CFG.map|0,S=70,t=performance.now()/1000;
- for(let x=Math.floor(x0/S)*S;x<x1;x+=S)for(let y=Math.floor(y0/S)*S;y<y1;y+=S){const hsh=((x*73856093)^(y*19349663))>>>0,r=n=>((hsh>>>n)&255)/255;const px=x+r(0)*S,py=y+r(8)*S;if(px<x0||px>x1||py<y0||py>y1)continue;const q=P(px,py);
+ for(let x=Math.floor(x0/S)*S;x<x1;x+=S)for(let y=Math.floor(y0/S)*S;y<y1;y+=S){const hsh=((x*73856093)^(y*19349663))>>>0,r=n=>((hsh>>>n)&255)/255;const px=x+r(0)*S,py=y+r(8)*S;if(px<x0||px>x1||py<y0||py>y1)continue;const q=P(px,py);if(q.x<-80||q.x>W+80||q.y<-80||q.y>H+80)continue; // hors écran
   if(mp===0){if(r(16)<.55){g.strokeStyle=r(4)<.5?'#2f4a22':'#5f8a3c';g.lineWidth=1.2;for(let k=-1;k<=1;k++){g.beginPath();g.moveTo(q.x+k*2*q.s,q.y);g.lineTo(q.x+k*3.5*q.s,q.y-(5+r(12)*4)*q.s);g.stroke()}}
    else if(r(16)<.66){circ(q.x,q.y-2*q.s,1.8*q.s,r(20)<.5?'#f4f0e0':'#f2d04a');circ(q.x+3*q.s,q.y-1*q.s,1.5*q.s,r(20)<.5?'#f4f0e0':'#e88ab0')}
    else if(r(16)<.74){g.fillStyle='#7a7466';g.beginPath();g.ellipse(q.x,q.y,4*q.s,2.4*q.s,0,0,7);g.fill()}}
@@ -7414,14 +7418,15 @@ function init3D(){if(N3.tried)return N3.ok;N3.tried=true;try{
  const outline=new THREE.ShaderMaterial({uniforms:{w:{value:1.05},col:{value:new THREE.Color(0x140c08)}},side:THREE.BackSide,
   vertexShader:'#include <common>\n#include <skinning_pars_vertex>\nuniform float w;\nvoid main(){\n#include <skinbase_vertex>\n#include <beginnormal_vertex>\n#include <skinnormal_vertex>\n#include <begin_vertex>\n#include <skinning_vertex>\ntransformed+=normalize(objectNormal)*w;\n#include <project_vertex>\n}',
   fragmentShader:'uniform vec3 col;void main(){gl_FragColor=vec4(col,1.0);}'});
- Object.assign(N3,{ok:true,r,cv,sc,cam,right,up,fwd,gm,outline,faceTex:new Map(),symTex:new Map(),cols:0,rows:0,small:0});atlasSize(2);
+ Object.assign(N3,{ok:true,r,cv,sc,cam,right,up,fwd,gm,outline,faceTex:new Map(),symTex:new Map(),geo:new Map(),faceGeo:new THREE.SphereGeometry(12.75,20,14,Math.PI/2-1.05,2.1,Math.PI/2-.8,1.6),symGeo:new THREE.PlaneGeometry(7.4,4.2),cols:0,rows:0,small:0});atlasSize(2);
  // l'ordre d'affichage : un projet Three.js ne reçoit pas les ombres portées (ombre ovale du 2D conservée)
  return true}catch(e){console.warn('3D indisponible, dessin 2D',e);N3.ok=false;return false}}
 // ----- fabrication du modèle (géométrie fusionnée, un os par pièce : pièces rigides, rendu en 2 appels par ninja)
 const col3=h=>new THREE.Color(h);
 function lookKey(u){const L=u.ch.look;return JSON.stringify([L,u.ch.look.weapon&&u.ch.look.weapon.k])}
-function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist',T=THREE;
- const P=[],N=[],C=[],SI=[],SW=[];const rest={};
+// géométrie fusionnée partagée par apparence (réapparition, retour à l'écran, clones : plus de reconstruction)
+function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist',T=THREE,key=lookKey(u);let G=N3.geo.get(key);
+ if(!G){const P=[],N=[],C=[],SI=[],SW=[];const rest={};
  for(const [n,p,o] of BONES){const v=new T.Vector3(...o);if(p)v.add(rest[p]);rest[n]=v}
  const M=new T.Matrix4(),Q=new T.Quaternion(),E=new T.Euler(),S=new T.Vector3(),V=new T.Vector3();
  // ajoute une pièce : g géométrie, bone os, c couleur, [x,y,z] position relative à l'os au repos, [rx,ry,rz], [sx,sy,sz]
@@ -7477,18 +7482,20 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  // géométrie fusionnée + squelette
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(P,3));geo.setAttribute('normal',new T.Float32BufferAttribute(N,3));geo.setAttribute('color',new T.Float32BufferAttribute(C,3));
  geo.setAttribute('skinIndex',new T.Uint16BufferAttribute(SI,4));geo.setAttribute('skinWeight',new T.Float32BufferAttribute(SW,4));
+ G={geo,n:0,last:0};N3.geo.set(key,G)}
+ G.n++;const geo=G.geo;
  const bones=BONES.map(([n,p,o])=>{const b=new T.Bone();b.name=n;b.position.set(...o);return b});BONES.forEach(([n,p],i)=>{if(p)bones[BI[p]].add(bones[i])});
  const mat=new T.MeshToonMaterial({vertexColors:true,gradientMap:N3.gm});
  const mesh=new T.SkinnedMesh(geo,mat);mesh.add(bones[0]);const skel=new T.Skeleton(bones);mesh.bind(skel);mesh.frustumCulled=false;
- const out=new T.SkinnedMesh(geo,N3.outline);out.bind(skel,mesh.bindMatrix);out.frustumCulled=false;
+ const out=new T.SkinnedMesh(geo,N3.outline);out.bind(skel,mesh.bindMatrix);out.frustumCulled=false;geo.boundingSphere||geo.computeBoundingSphere();mesh.boundingSphere=out.boundingSphere=geo.boundingSphere; // clé de tri seulement (évite le calcul skinné sur tous les sommets)
  const grp=new T.Group();grp.add(mesh);grp.add(out);
  // visage (yeux, bouche, marques, masque) et symbole du village : décalques sur la tête
- const face=new T.Mesh(new T.SphereGeometry(12.75,20,14,Math.PI/2-1.05,2.1,Math.PI/2-.8,1.6),new T.MeshBasicMaterial({map:faceTexture(L),transparent:true,depthWrite:false}));
+ const face=new T.Mesh(N3.faceGeo,new T.MeshBasicMaterial({map:faceTexture(L),transparent:true,depthWrite:false}));
  face.position.set(0,8,0);face.scale.set(1.03,.97,.96);bones[BI.head].add(face);
- const sym=new T.Mesh(new T.PlaneGeometry(7.4,4.2),new T.MeshBasicMaterial({map:symTexture(h.vil),transparent:true,depthWrite:false}));sym.position.set(0,15.3,12.05);sym.rotation.x=-.32;bones[BI.head].add(sym);
+ const sym=new T.Mesh(N3.symGeo,new T.MeshBasicMaterial({map:symTexture(h.vil),transparent:true,depthWrite:false}));sym.position.set(0,15.3,12.05);sym.rotation.x=-.32;bones[BI.head].add(sym);
  N3.sc.add(grp);
  const cur={};for(const [n] of BONES)cur[n]=new T.Quaternion();
- return{grp,mesh,out,mat,bones,skel,key:lookKey(u),cur,rootP:new T.Vector3(),rootR:new T.Euler(),yaw:Math.PI/2-(u.aim||0),used:0,face,sym,k}}
+ return{grp,mesh,out,mat,bones,skel,key,look:L,G,cur,rootP:new T.Vector3(),rootR:new T.Euler(),yaw:Math.PI/2-(u.aim||0),used:0,face,sym,k}}
 // visage dessiné sur une petite toile (même style que le 2D : grands yeux à reflet, Sharingan, Byakugan…)
 function faceTexture(L,mode='o'){const h=L.head,key=[h.eye,h.acc,h.kaguya,h.brows,h.skin,mode].join('|');if(N3.faceTex.has(key))return N3.faceTex.get(key);
  // toile = devant de la tête (≈ 9,7 px par unité, centre de la tête en 128,100) : mêmes proportions que le visage 2D
@@ -7595,8 +7602,9 @@ function poseModel(u,rec,dt,t){const P={};basePose(u,t,rec,P);actionPose(u,t,rec
  const f=u.flash>0&&!u.dead?Math.min(1,u.flash/.12):0;rec.mat.emissive.setRGB(f,f,f);rec.mat.emissiveIntensity=f?1:0;
  if(rec.face&&rec.face.material&&rec.face.material.map){const ph=(rec.ph??(rec.ph=Math.random()*4)),md=u.dead?'x':u.stun>0||u.sleepT<0?'s':f>.2||(t+ph)%4.1<.13?'c':'o';if(rec.fm!==md){rec.fm=md;rec.face.material.map=faceTexture(u.ch.look,md)}}}
 // taille de l'atlas : de 2 à 48 cases selon le nombre de ninjas visibles (agrandi aussitôt, réduit après un moment)
-function atlasSize(n){const caps=[2,4,8,16,24,32,48],cap=caps.find(c=>c>=n)||48,cols=Math.min(8,cap),rows=Math.ceil(cap/cols);
- if(cols*rows<n||cols>N3.cols||rows>N3.rows||(N3.small>180&&cols*rows<N3.cols*N3.rows)){N3.cols=cols;N3.rows=rows;N3.small=0;N3.r.setSize(cols*TPW,rows*TPH,false);
+// en combat on ne réduit jamais (réallouer le tampon WebGL = saccade) : on efface seulement les cases utilisées
+function atlasSize(n){const caps=[2,8,16,24,32,48],cap=caps.find(c=>c>=n)||48,cols=Math.min(8,cap),rows=Math.ceil(cap/cols),fight=state==='fight'||state==='countdown';
+ if(cols*rows<n||cols>N3.cols||rows>N3.rows||(!fight&&N3.small>180&&cols*rows<N3.cols*N3.rows)){N3.cols=cols;N3.rows=rows;N3.small=0;N3.r.setSize(cols*TPW,rows*TPH,false);
   Object.assign(N3.cam,{left:0,right:cols*TWU,top:rows*THU,bottom:0});N3.cam.updateProjectionMatrix()}else if(cols*rows<N3.cols*N3.rows)N3.small++;else N3.small=0}
 function render3D(){N3.tile.clear();if(!N3.on||OPT.p3d===false)return;if(!N3.tried&&!init3D())return;if(!N3.ok)return;
  const now=performance.now(),rdt=(now-(N3.last||now))/1000,dt=Math.min(.05,rdt)||1/60,t=now/1000;N3.last=now;N3.frame++;
@@ -7605,14 +7613,15 @@ function render3D(){N3.tile.clear();if(!N3.on||OPT.p3d===false)return;if(!N3.tri
  const want=[];for(const u of units)if(u&&!(u.dead&&u.deadT>1.6)&&u.ch&&u.ch.look&&u.ch.look.head.t==='ninja'&&near(u.x,u.y))want.push(u);for(const u of[...want])if(u.ch.look.dog&&!u.dead)want.push(u._dog3||(u._dog3={dog:1,owner:u,aim:0}));for(const u of N3.req)if(!want.includes(u))want.push(u);N3.req.clear();
  const n=Math.min(want.length,TCOLS*TROWS);atlasSize(Math.max(2,n));const CO=N3.cols,RO=N3.rows;
  for(const rec of N3.recs.values())rec.grp.visible=false;
- for(let i=0;i<n;i++){const u=want[i];let rec=N3.recs.get(u);if(rec&&!u.dog&&rec.key!==lookKey(u)){dispose3D(u,rec);rec=null}if(!rec){rec=u.dog?buildDog3D():buildNinja3D(u);N3.recs.set(u,rec)}
+ for(let i=0;i<n;i++){const u=want[i];let rec=N3.recs.get(u);if(rec&&!u.dog&&rec.look!==u.ch.look){if(rec.key!==lookKey(u)){dispose3D(u,rec);rec=null}else rec.look=u.ch.look}if(!rec){rec=u.dog?buildDog3D():buildNinja3D(u);N3.recs.set(u,rec)}
   rec.used=N3.frame;rec.grp.visible=true;if(rec.dog)poseDog(u,rec,dt,t);else poseModel(u,rec,dt,t);
   const c=i%CO,r=Math.floor(i/CO),cx=c*TWU+TWU/2,cy=(RO-1-r)*THU+FOOT;
   rec.grp.position.copy(N3.right).multiplyScalar(cx).addScaledVector(N3.up,cy).addScaledVector(N3.fwd,1200);rec.grp.rotation.set(0,rec.yaw,0);
   N3.tile.set(u,{sx:c*TPW,sy:r*TPH})}
- if(N3.frame%120===0)for(const [u,rec] of N3.recs)if(N3.frame-rec.used>240)dispose3D(u,rec);
+ if(N3.frame%120===0){for(const [u,rec] of N3.recs)if(N3.frame-rec.used>240)dispose3D(u,rec);for(const [k,G] of N3.geo)if(!G.n&&N3.frame-G.last>3600){G.geo.dispose();N3.geo.delete(k)}} // géométrie inutilisée depuis 1 min : libérée
+ const ur=Math.max(1,Math.ceil(n/CO));N3.r.setScissorTest(true);N3.r.setScissor(0,(RO-ur)*TPH,(ur>1?CO:Math.max(1,n))*TPW,ur*TPH); // efface et dessine seulement les cases utilisées
  N3.r.render(N3.sc,N3.cam)}
-function dispose3D(u,rec){N3.sc.remove(rec.grp);rec.mesh.geometry.dispose();rec.mat.dispose();rec.face.geometry.dispose();rec.face.material.dispose();rec.sym.geometry.dispose();rec.sym.material.dispose();N3.recs.delete(u)}
+function dispose3D(u,rec){N3.sc.remove(rec.grp);rec.mat.dispose();rec.face.material.dispose();rec.sym.material.dispose();rec.G&&(rec.G.n--,rec.G.last=N3.frame);N3.recs.delete(u)} // géométries partagées : gardées en cache
 // colle la case du ninja dans la scène 2D (même échelle et même point d'appui que le dessin 2D), sinon dessin 2D
 function drawChar3(u,bx,by,s,alpha){if(N3.ok)N3.req.add(u);const tl=N3.ok&&N3.tile.get(u);if(!tl)return drawChar(u,bx,by,s)
  const sk=u.ch.look.scale||1,w=TWU*s*sk,h=THU*s*sk;g.save();if(u.dead)g.globalAlpha*=Math.max(0,1-u.deadT*.6);if(u.phase>0)g.globalAlpha*=.35+Math.sin(performance.now()/33)*.1;if(alpha!=null)g.globalAlpha*=alpha;
@@ -7657,7 +7666,7 @@ Object.assign(ANIM,{
 // ----- chien ninja (Inuzuka) en 3D : même style, petit squelette à quatre pattes
 const DBONES=[['root',null,[0,0,0]],['body','root',[0,11,0]],['head','body',[0,4.5,8]],['legFL','body',[3.2,-3,5.5]],['legFR','body',[-3.2,-3,5.5]],['legBL','body',[3.2,-3,-5.5]],['legBR','body',[-3.2,-3,-5.5]],['tail','body',[0,2.5,-8.5]]];
 const DBI=Object.fromEntries(DBONES.map((b,i)=>[b[0],i]));
-function buildDog3D(){const T=THREE,P=[],N=[],C=[],SI=[],SW=[],rest={};for(const [n,p,o] of DBONES){const v=new T.Vector3(...o);if(p)v.add(rest[p]);rest[n]=v}
+function buildDog3D(){const T=THREE;let G=N3.geo.get('dog');if(!G){const P=[],N=[],C=[],SI=[],SW=[],rest={};for(const [n,p,o] of DBONES){const v=new T.Vector3(...o);if(p)v.add(rest[p]);rest[n]=v}
  const M=new T.Matrix4(),Q=new T.Quaternion(),E=new T.Euler(),S=new T.Vector3(),V=new T.Vector3();
  const add=(g,bone,c,pos=[0,0,0],rot=[0,0,0],scl=[1,1,1])=>{const gg=g.index?g.toNonIndexed():g;E.set(...rot);Q.setFromEuler(E);V.set(...pos).add(rest[bone]);S.set(...scl);M.compose(V,Q,S);gg.applyMatrix4(M);
   const a=gg.attributes.position,nn=gg.attributes.normal,cc=new T.Color(c),bi=DBI[bone];for(let i=0;i<a.count;i++){P.push(a.getX(i),a.getY(i),a.getZ(i));N.push(nn.getX(i),nn.getY(i),nn.getZ(i));C.push(cc.r,cc.g,cc.b);SI.push(bi,0,0,0);SW.push(1,0,0,0)}};
@@ -7668,11 +7677,13 @@ function buildDog3D(){const T=THREE,P=[],N=[],C=[],SI=[],SW=[],rest={};for(const
  add(new T.ConeGeometry(1.6,8,7),'tail',fur,[0,3,-1.5],[-.7,0,0]);add(new T.TorusGeometry(4.2,.7,6,14),'body','#c0303a',[0,3.2,5],[Math.PI/2-.4,0,0]);
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(P,3));geo.setAttribute('normal',new T.Float32BufferAttribute(N,3));geo.setAttribute('color',new T.Float32BufferAttribute(C,3));
  geo.setAttribute('skinIndex',new T.Uint16BufferAttribute(SI,4));geo.setAttribute('skinWeight',new T.Float32BufferAttribute(SW,4));
+ G={geo,n:0,last:0};N3.geo.set('dog',G)}
+ G.n++;const geo=G.geo;
  const bones=DBONES.map(([n,p,o])=>{const b=new T.Bone();b.name=n;b.position.set(...o);return b});DBONES.forEach(([n,p],i)=>{if(p)bones[DBI[p]].add(bones[i])});
  const mat=new T.MeshToonMaterial({vertexColors:true,gradientMap:N3.gm}),mesh=new T.SkinnedMesh(geo,mat);mesh.add(bones[0]);const skel=new T.Skeleton(bones);mesh.bind(skel);mesh.frustumCulled=false;
- const out=new T.SkinnedMesh(geo,N3.outline);out.bind(skel,mesh.bindMatrix);out.frustumCulled=false;const grp=new T.Group();grp.add(mesh);grp.add(out);N3.sc.add(grp);
+ const out=new T.SkinnedMesh(geo,N3.outline);out.bind(skel,mesh.bindMatrix);out.frustumCulled=false;geo.boundingSphere||geo.computeBoundingSphere();mesh.boundingSphere=out.boundingSphere=geo.boundingSphere;const grp=new T.Group();grp.add(mesh);grp.add(out);N3.sc.add(grp);
  const cur={};for(const [n] of DBONES)cur[n]=new T.Quaternion();
- return{grp,mesh,out,mat,bones,skel,key:'dog',cur,rootP:new T.Vector3(),rootR:new T.Euler(),yaw:0,used:0,dog:1,face:{geometry:{dispose(){}},material:{dispose(){}}},sym:{geometry:{dispose(){}},material:{dispose(){}}}}}
+ return{grp,mesh,out,mat,bones,skel,key:'dog',G,cur,rootP:new T.Vector3(),rootR:new T.Euler(),yaw:0,used:0,dog:1,face:{geometry:{dispose(){}},material:{dispose(){}}},sym:{geometry:{dispose(){}},material:{dispose(){}}}}}
 function poseDog(d,rec,dt,t){const u=d.owner,run=u.moving||u.dash,atk=u.swing>0||(u.anim&&u.anim.t>0),w=t*16,P={};
  const lg=(n,x)=>{P[n]=x};if(run){lg('legFL',Math.sin(w)*.8);lg('legBR',Math.sin(w)*.8);lg('legFR',-Math.sin(w)*.8);lg('legBL',-Math.sin(w)*.8)}
  let ry=0,rz=0,hx=Math.sin(t*2)*.05;if(atk){lg('legFL',-1.1);lg('legFR',-1.1);hx=-.35;rz=6}
@@ -8026,7 +8037,8 @@ function drawBattlefield(){
  if(x1===MAP.w){g.beginPath();g.moveTo(q[1].x,q[1].y);g.lineTo(q[2].x,q[2].y);g.stroke()}g.restore();
  for(const p of pickups)if(p.t<=0&&near(p.x,p.y))drawHolo(p.x,p.y,0);
 }
-function glow(x,y,r,col,a){const p=P(x,y),gr=g.createRadialGradient(p.x,p.y,0,p.x,p.y,r*p.s);gr.addColorStop(0,rgba(col,a));gr.addColorStop(1,rgba(col,0));g.fillStyle=gr;g.beginPath();g.ellipse(p.x,p.y,r*p.s,r*p.s*K,0,0,7);g.fill()}
+function glow(x,y,r,col,a){const p=P(x,y),R0=r*p.s;if(!(R0>0)||p.x+R0<-16||p.x-R0>W+16||p.y+R0<-16||p.y-R0>H+16)return; // hors écran ou loin au nord (rayon négatif)
+ const gr=g.createRadialGradient(p.x,p.y,0,p.x,p.y,R0);gr.addColorStop(0,rgba(col,a));gr.addColorStop(1,rgba(col,0));g.fillStyle=gr;g.beginPath();g.ellipse(p.x,p.y,r*p.s,r*p.s*K,0,0,7);g.fill()}
 function drawLights(){
  g.save();g.globalCompositeOperation='lighter';
  for(const u of units){if(u.dead||!near(u.x,u.y))continue;const w=u.ch.look.weapon;if(w.t==='saber'&&u.saberOut<=0)glow(u.x+Math.cos(u.aim)*20,u.y+Math.sin(u.aim)*20,85,w.col,.22);if(w.two)glow(u.x,u.y,60,w.two,.15);if(u.haste>0)glow(u.x,u.y,60,u.rage>0?'#f33':'#fc6',.2);if(u.flame)glow(u.x+Math.cos(u.aim)*90,u.y+Math.sin(u.aim)*90,120,'#f93',.3)}
@@ -8218,13 +8230,14 @@ function draw(){
   g.strokeStyle='rgba(120,200,255,.45)';g.lineWidth=3;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()}
  const list=[];for(const o of OBST)if(near(o.x,o.y))list.push({y:o.y,d:()=>drawObst(o)});for(const u of units)if(near(u.x,u.y))list.push({y:u.y,d:()=>drawUnit(u)});for(const p of projs)if(near(p.x,p.y))list.push({y:p.y,d:()=>drawProj(p)});for(const w of walls)if(near(w.x,w.y))list.push({y:w.y,d:()=>drawWall(w)});for(const tu of turrets)if(near(tu.x,tu.y))list.push({y:tu.y,d:()=>drawTurret(tu)});
  list.sort((a,b)=>a.y-b.y).forEach(o=>o.d());
- for(const f of fx)if(f.jfx)drawJfx(f);
+ for(const f of fx)if(f.jfx){const u=UI(f),t=TI(f);if(!(scl(f.y)<=0)&&!(u&&scl(u.y)<=0)&&!(t&&scl(t.y)<=0))drawJfx(f)} // loin au nord : échelle négative, rien de visible (évite le rayon négatif)
  g.save();g.globalCompositeOperation='lighter';
  for(const f of fx){if(f.beam&&near(f.x,f.y))drawBeamN(f);
   if(f.bolt===1&&!f.u.dead&&near(f.u.x,f.u.y)){const h=P(f.u.x,f.u.y,40);g.globalAlpha=f.t/f.m;for(let i=0;i<f.n;i++){const b=f.a+(rnd()-.5)*.8,e=P(f.u.x+Math.cos(b)*f.range,f.u.y+Math.sin(b)*f.range,25);f.vfx==='chain'?drawChainLine(h.x,h.y,e.x,e.y):drawBolt(h.x,h.y,e.x,e.y,i%2?'#fff':vcol(f.vfx==='chakra'?null:f.vfx,f.col))}}
   if(f.bolt===2&&near(f.x,f.y)){const top=P(f.x,f.y,300),bot=P(f.x,f.y);g.globalAlpha=f.t/f.m;drawBolt(top.x,top.y,bot.x,bot.y,f.col);drawBolt(top.x,top.y,bot.x,bot.y,'#fff')}}
  g.restore();g.globalAlpha=1;
- for(const f of fx){if(f.ring||f.swing||f.bolt||f.light||f.beam||f.jfx)continue;const p=P(f.x,f.y,f.z??20);g.globalAlpha=f.t/f.m;drawPart(f,p)}g.globalAlpha=1;
+ for(const f of fx){if(f.ring||f.swing||f.bolt||f.light||f.beam||f.jfx)continue;const p=P(f.x,f.y,f.z??20);if(p.x<-100||p.x>W+100||p.y<-100||p.y>H+100)continue; // hors écran (et rayon négatif loin au nord)
+ g.globalAlpha=f.t/f.m;drawPart(f,p)}g.globalAlpha=1;
  for(const t of txt){const p=P(t.x,t.y,t.z);g.globalAlpha=Math.min(1,t.t*2);const big=t.s[0]==='-'&&+t.s.slice(1)>=20,fs=Math.round((big?19:15)*(1+Math.max(0,t.t-.86)*4.5));g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)';g.font=`bold ${fs}px "Trebuchet MS",system-ui,sans-serif`;g.textAlign='center';g.strokeText(t.s,p.x,p.y);text(t.s,p.x,p.y,fs,t.col)}g.globalAlpha=1;
  g.restore();
  const vg=g.createRadialGradient(W/2,H/2,H*.45,W/2,H/2,H*.95);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');g.fillStyle=vg;g.fillRect(0,0,W,H);
@@ -8257,7 +8270,7 @@ function netUI(show){$('net').hidden=!show;if(show)$('nStat').textContent=net.st
 function setStat(s){net.status=s;$('nStat').textContent=s}
 function sendLobby(){netSend({t:'lobby',P:lobbyList(),mode,cfg:CFG})}
 function netSend(m){if(net.role==='host'){for(const p of livePeers())try{p.conn.send(m)}catch(e){}}else if(coop())try{net.conn.send(m)}catch(e){}}
-function netReset(){try{net.peer&&net.peer.destroy()}catch(e){}net=Object.assign(net,{seq:0,pend:[],role:null,peer:null,conn:null,mate:null,peers:[],nextId:1,myId:0,myTeam:0,lobby:[],ready:false,gp:{},live:false,ev:{fx:[],txt:[],snd:[],sp:[],ci:[]}})}
+function netReset(){try{net.peer&&net.peer.destroy()}catch(e){}net=Object.assign(net,{seq:0,pend:[],role:null,peer:null,conn:null,mate:null,peers:[],nextId:1,myId:0,myTeam:0,lobby:[],ready:false,gp:{},live:false,pU:null,gU:null,pK:{},gK:{},ev:{fx:[],txt:[],snd:[],sp:[],ci:[]}})}
 const noPeer=()=>{if(typeof Peer!=='undefined')return false;setStat('Le coop ne peut pas démarrer ici : la connexion réseau est bloquée. Ouvre le jeu depuis un site hébergé.');return true};
 function hostGame(){if(noPeer())return;netReset();net.myPick='p0';const code=Math.random().toString(36).slice(2,6).toUpperCase();net.role='host';net.code=code;setStat('Ouverture du salon…');
  const p=new Peer('nrarena-'+code);net.peer=p;
@@ -8265,7 +8278,7 @@ function hostGame(){if(noPeer())return;netReset();net.myPick='p0';const code=Mat
  p.on('open',()=>setStat(cnt()));
  p.on('connection',c=>{const P={id:net.nextId++,conn:c,c:null,ready:false,team:0,in:null,pressed:{},gcam:null};
   c.on('open',()=>{if(livePeers().length>=MAXP||state!=='menu'){c.send({t:'full',v:state!=='menu'});setTimeout(()=>c.close(),400);return}
-   net.peers.push(P);setStat(cnt());c.send({t:'hello',mode,cfg:CFG,id:P.id});net.ready=false;for(const q of net.peers)q.ready=false;sendLobby()});
+   net.peers.push(P);net.pU=null;setStat(cnt());c.send({t:'hello',mode,cfg:CFG,id:P.id});net.ready=false;for(const q of net.peers)q.ready=false;sendLobby()});
   c.on('data',d=>{if(!d||typeof d!=='object'||!net.peers.includes(P))return;
    if(d.t==='build'){P.b=sanitizeBuild(d.b,true);P.c='p'+P.id;CH[P.c]=mkNinja(P.b,true);P.ready=false;sendLobby()}
    if(d.t==='ready'){P.ready=!!d.v&&!!P.c;sendLobby()}
@@ -8277,7 +8290,7 @@ function joinGame(code){if(noPeer())return;code=(code||'').trim().toUpperCase();
  netReset();net.role='guest';setStat('Connexion…');const p=new Peer();net.peer=p;
  p.on('open',()=>{const c=p.connect('nrarena-'+code,{reliable:true,serialization:'binary'});net.conn=c;
   c.on('open',()=>{netSend({t:'build',b:MY});setStat(`Connecté au salon ${code}. Crée ton ninja puis clique PRÊT.`);netUI(false)});
-  c.on('data',d=>{if(!d)return;if(d.t==='snap')applySnap(d);else if(d.t==='hello'){mode=d.mode;if(d.cfg)Object.assign(CFG,d.cfg);if(d.id){net.myId=d.id;netSend({t:'build',b:MY})}}
+  c.on('data',d=>{if(!d)return;if(d.t==='snap'){const s=d.j?netDec(d):(net.gU=null,d);if(s)applySnap(s)}else if(d.t==='hello'){mode=d.mode;if(d.cfg)Object.assign(CFG,d.cfg);if(d.id){net.myId=d.id;netSend({t:'build',b:MY})}}
    else if(d.t==='lobby'){if(d.cfg)Object.assign(CFG,d.cfg);mode=d.mode;net.lobby=d.P||[];for(const x of net.lobby)if(x.b&&x.c)CH[x.c]=mkNinja(x.b,true);const me=net.lobby.find(x=>x.id===net.myId);if(me){net.mate=me.c;net.ready=me.ready;net.myTeam=me.team}}
    else if(d.t==='full')setStat(d.v?'La partie a déjà commencé : attends la fin et reconnecte-toi.':`Salon complet (${MAXP} joueurs maximum).`)});
   c.on('close',()=>{netReset();state='menu';setStat('L\'hôte a fermé la partie.')})});
@@ -8300,7 +8313,8 @@ const rd=v=>typeof v==='number'?Math.round(v*100)/100:v;
 const UK=['sprint','parry','wet','dotEl','anim','relT','thrT','phase','izT','chk','cmb','cmbH','cmbT','jstN','jstV','auraV','mk','stk','rootV','sleepT','c','team','x','y','z','hp','max','energy','aim','swing','swingA','moving','walk','dead','deadT','stun','deflect','shield','block','stam','blockLock','haste','rage','unstop','saberOut','flash','respawn','hero','r','human','slow','vx','vy','root','stealth','airT','silence','fear','taunt','disarm','vuln','dotT','counter','riposte','dodge','absorb','chrome','riot','giant','thorns','drT','ammo','chg'];
 const PK=['vfx','jn','dragon','shuri','kind','x','y','vx','vy','r','col','saber','big','grenade','rocket','ex','life','life0','rot','tx','ty','ar','hook','ox','oy','zapP','rock','spear'],ZK=['x','y','r','t','m','col','vfx','jn'];
 function pickK(o,ks){const r={};for(const k of ks){const v=o[k];r[k]=Array.isArray(v)?v.map(rd):v===undefined?null:rd(v)}return r}
-function snapU(u){const a=UK.map(k=>u[k]===undefined?null:rd(u[k]));a.push(u.cast?{i:u.cast.i,t:rd(u.cast.t),dur:u.cast.dur,td:rd(u.cast.td),aimOv:u.cast.aimOv??null,ex:u.cast.ex}:null,u.spin?{r:u.spin.r}:null,!!u.flame,!!u.dash);return a}
+function snapU(u){const a=UK.map(k=>u[k]===undefined?null:rd(u[k]));const fi=UK.indexOf('flash');if(a[fi]<0)a[fi]=0; // flash négatif = pas d'éclair (toujours testé >0) : 0 évite une différence à chaque envoi
+ a.push(u.cast?{i:u.cast.i,t:rd(u.cast.t),dur:u.cast.dur,td:rd(u.cast.td),aimOv:u.cast.aimOv??null,ex:u.cast.ex}:null,u.spin?{r:u.spin.r}:null,!!u.flame,!!u.dash);return a}
 function netCapture(fx0,tx0){if(net.role!=='host'||!coop())return;for(let i=fx0;i<fx.length&&net.ev.fx.length<150;i++){if(fx[i].vx!==undefined)continue;const f=Object.assign({},fx[i]);if(f.u)f.u=units.indexOf(f.u);for(const k in f)f[k]=rd(f[k]);net.ev.fx.push(f)}for(let i=tx0;i<txt.length;i++)net.ev.txt.push(Object.assign({},txt[i]))}
 function makeSnap(){if(state==='menu')return{t:'snap',st:'menu',mode,cfg:CFG};
  net.stc=(net.stc||0)+1;const SS=net.stc%10===0||state!=='fight'?Object.values(STATS).map(x=>[x.c,x.team,x.k,x.d,x.a,Math.round(x.dmg),Math.round(x.tk),Math.round(x.heal),Math.round(x.sh||0)]):undefined;
@@ -8312,10 +8326,10 @@ function applySnap(s){if(s.cfg)Object.assign(CFG,s.cfg);if(s.SS){STATS={};for(co
  if(!net.live||mode!==s.mode){mode=s.mode;if(mode!=='battle'){B=A;OBST=ARENA_OBST;cam={x:CX,y:CY};Yc=390;GLOW=18}else{B=MAP;OBST=battleObstacles();Yc=390;GLOW=6}fx=[];txt=[]}
  const first=!net.live;net.live=true;
  state=s.st;stateT=s.stT;score=s.score;round=s.round;timer=s.timer;tickets=s.tickets;killfeed=s.kf;banner=s.banner;orb=s.orb;pickups=s.pk;winner=s.win;
- const n=UK.length;
- units=s.U.map((a,i)=>{const d={};UK.forEach((k,j)=>d[k]=a[j]);d.cast=a[n];d.spin=a[n+1];d.flame=a[n+2];d.dash=a[n+3];
+ const n=UK.length,CI=UK.indexOf('c'),XI=UK.indexOf('x'),YI=UK.indexOf('y'),TI=UK.indexOf('team'),DI=UK.indexOf('dead');
+ units=s.U.map((a,i)=>{const d={c:a[CI],x:a[XI],y:a[YI],team:a[TI],dead:a[DI],dash:a[n+3]}; // champs lus plus bas ; le reste est écrit directement dans l'unité
   let u=units[i];const fresh=!u||u.c!==d.c;if(fresh)u=mkUnit(d.c,d.x,d.y,d.team);const ox=u.x,oy=u.y,oa=u.aim,ow=u.walk,jump=Math.hypot(ox-d.x,oy-d.y)>150;
-  Object.assign(u,d);u.ch=CH[d.c];u.nx=d.x;u.ny=d.y;
+  for(let j=0;j<n;j++)u[UK[j]]=a[j];u.cast=a[n];u.spin=a[n+1];u.flame=a[n+2];u.dash=a[n+3];u.ch=CH[d.c];u.nx=d.x;u.ny=d.y;
   if(i===s.you&&!fresh){u.aim=oa;u.walk=ow;
    // réconciliation : position de l'hôte + commandes pas encore prises en compte
    net.pend=net.pend.filter(p=>p.seq>s.ack);if(!d.dash&&!d.dead&&!jump){for(const p of net.pend){u.x+=p.vx*p.dt;u.y+=p.vy*p.dt}collide(u);if(Math.hypot(ox-u.x,oy-u.y)<45){u.x=lerp(ox,u.x,.25);u.y=lerp(oy,u.y,.25)}}}
@@ -8336,9 +8350,23 @@ function guestFrame(dt){for(const k in pressed)net.gp[k]=1;
  for(const z of zones)z.t=Math.max(0,z.t-dt);
  ageFx(dt);shake=Math.max(0,shake-dt);
  if(player){const c=Math.min(1,dt*6);const la=player.dead||!isFinite(player.aim)?0:1;cam.x+=(clamp(player.x+la*Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)-cam.x)*c*.8;cam.y+=(clamp(player.y+la*Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*c*.8}}
+// instantané encodé une seule fois par tick (JSON) ; lignes d'unités en différences par rapport au dernier envoi (K : image clé, sans référence)
+const NSEC=['Pj','Z','Tr','Tu','Fi','Wl','Ax'];
+function netEnc(s){const P=net.pU,K=!P,ci=UK.indexOf('c'),U=s.U.map((a,i)=>{const q=!K&&P[i];if(!q||q.length!==a.length||q[ci]!==a[ci])return{f:a};const d=[];for(let j=0;j<a.length;j++){const v=a[j],w=q[j];if((v!==w&&!(v!==v&&w!==w))||(v!==null&&typeof v==='object'))d.push(j,v)}return d.length?d:0});
+ const o=Object.assign({},s,{U,K:K?1:0});if(K||!net.pK)net.pK={};
+ // listes (projectiles, zones, aux…) en tableaux positionnels : noms des clés envoyés seulement quand ils changent (KS), nulls de fin retirés
+ for(const k of NSEC){const L=o[k];if(!L||!L.length)continue;const ks=Object.keys(L[0]),sig=ks.join();if(!L.every(x=>{const q=Object.keys(x);return q.length===ks.length&&q.every((n,j)=>n===ks[j])}))continue;
+  if(K||net.pK[k]!==sig){(o.KS=o.KS||{})[k]=ks;net.pK[k]=sig}o[k]=L.map(x=>{const v=ks.map(n=>x[n]===undefined?null:x[n]);let m=v.length;while(m&&v[m-1]===null)m--;v.length=m;return v})}
+ const j=JSON.stringify(o);net.pU=s.U;return j}
+function netDec(d){const s=JSON.parse(d.j);if(s.K)net.gU=[];else if(!net.gU)return null;const R=net.gU;
+ s.U=s.U.map((e,i)=>{if(e===0)return R[i];if(!Array.isArray(e))return R[i]=e.f;const a=R[i].slice();for(let j=0;j<e.length;j+=2)a[e[j]]=e[j+1];return R[i]=a});R.length=s.U.length;
+ if(s.K||!net.gK)net.gK={};if(s.KS)Object.assign(net.gK,s.KS);delete s.KS;
+ for(const k of NSEC){const L=s[k],ks=net.gK[k];if(!L||!L.length||!Array.isArray(L[0])||!ks)continue;s[k]=L.map(v=>{const o={};for(let j=0;j<ks.length;j++)o[ks[j]]=j<v.length?v[j]:null;return o})}
+ s.you=d.you;s.mc=d.mc;s.ack=d.ack;return s}
 function netTick(dt){if(!coop())return;net.sendT-=dt;if(net.sendT>0)return;
- if(net.role==='host'){net.sendT=state==='menu'?.5:mode==='battle'?.05:.033;const base=makeSnap();
-  for(const P of livePeers()){const i=units.findIndex(u=>u.ctrl==='remote'&&u.rid===P.id);try{P.conn.send(state==='menu'?base:Object.assign({},base,{you:i,mc:i>=0?units[i].cds:null,ack:P.in?P.in.seq||0:0}))}catch(e){}}
+ if(net.role==='host'){net.sendT=state==='menu'?.5:mode==='battle'?.05:.033;const base=makeSnap();if((net.kf=(net.kf||0)+1)%100===0)net.pU=null; // état complet régulier : un invité désynchronisé se recale
+ let j=null;if(state==='menu'){net.pU=null;net.pK={}}else try{j=netEnc(base)}catch(e){net.pU=null}
+  for(const P of livePeers()){if(state!=='menu'&&j===null)continue;const i=units.findIndex(u=>u.ctrl==='remote'&&u.rid===P.id);try{P.conn.send(state==='menu'?base:{t:'snap',j,you:i,mc:i>=0?units[i].cds:null,ack:P.in?P.in.seq||0:0})}catch(e){}}
   net.ev={fx:[],txt:[],snd:[],sp:[],ci:[]}}
  else if(net.live){net.sendT=0;const I=localInput();netSend({t:'in',seq:net.seq,mx:I.mx,my:I.my,ax:rd(I.ax),ay:rd(I.ay),l:!!mouse.l,p:Object.keys(net.gp),sh:!!I.sh,f:!!I.f,r:!!I.r,cx:rd(cam.x),cy:rd(cam.y)});net.gp={}}}
 function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;

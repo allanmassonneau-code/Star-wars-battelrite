@@ -213,7 +213,7 @@ AFTER.push(()=>{const base=drawTelegraphs;drawTelegraphs=()=>{base();for(const u
  const a=u.cast.aimOv??u.aim,k=Math.min(1,u.cast.t/u.cast.dur),col=u.team?'#ff5050':'#5ab8ff',pts=[P(u.x,u.y)];for(let i=0;i<=10;i++){const b=a-.5+i*.1;pts.push(P(u.x+Math.cos(b)*270,u.y+Math.sin(b)*270))}poly(pts,rgba(col,.15));
  g.strokeStyle=rgba(col,.7);g.lineWidth=2;g.beginPath();for(let i=0;i<=10;i++){const b=a-.5+i*.1,q=P(u.x+Math.cos(b)*270*k,u.y+Math.sin(b)*270*k);i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y)}g.stroke()}}});
 // l'IA voit les objets de vent (le moteur ne connaît que ses zones) : elle sort du couloir et du cône du Souffle, et s'écarte de la tornade
-AFTER.push(()=>{const base=dangers;dangers=u=>{const L=base(u);for(const x of aux){if(x.team===u.team)continue;
+AFTER.push(()=>{const base=dangers,sel=auxSel(x=>x.type==='fu_corr'||x.type==='fu_breath'||x.type==='fu_tornado');dangers=u=>{const L=base(u);for(const x of sel()){if(x.team===u.team)continue;
  if(x.type==='fu_corr'||x.type==='fu_breath'){const br=x.type==='fu_breath',a=br&&x.owner?x.owner.aim:x.a,c=Math.cos(a),s=Math.sin(a),dx=u.x-x.x,dy=u.y-x.y,f=dx*c+dy*s;
   if(f>-20&&f<x.len+20){const hw=br?Math.max(12,f*Math.tan(x.w)):x.w/2;if(Math.abs(-dx*s+dy*c)<hw+20)L.push({x:x.x+c*f,y:x.y+s*f,r:hw})}}
  else if(x.type==='fu_tornado')L.push({x:x.x,y:x.y,r:x.r+10})}return L}});

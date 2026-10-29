@@ -72,6 +72,7 @@ un projectile de feu qui traverse un **vent** allié (mur, tornade, couloir, zon
   Effets existants : `rasengan chidori hiraishin redmoon veins dome trigram palms sandcoffin shadowhands shadowstar waterprison wave mouthfire mind seal drill peacock gateburst slugs flashsky spikes pillar splash windsphere aura clash shock bigbolt mountain blackfire needles`.
 - `PROJD.cle=(p,R,ra,t)=>{…}` dessine un projectile `kind:'cle'` (repère : origine = projectile, axe x = sa direction après `g.rotate(ra)`, unité ≈ pixel).
 - `AUXF.type=(x,dt)=>{…}` logique d'un objet `aux.push({type,x,y,r,t,m,team,owner,vfx,k,…})` ; `AUXD.type=(x,k,t)=>{…}` son dessin.
+- Ne jamais modifier `x.type` ni `x.danger` d'un objet `aux` après sa création, et seulement ajouter à `aux` par `push` (jamais `splice` ni `aux[i]=`) : l'IA met en cache la sélection des objets dangereux (`auxSel`) tant que le tableau ne change pas.
 - `DETO.cle=(x,y,r)=>{…}` effet d'explosion (zones avec `.deto`, détonations).
 - Dessin : `g` (contexte 2D), `P(x,y,z)` (→ écran `{x,y,s}`), `gEll(x,y,r)`, `circ(x,y,r,col)`, `poly(pts,col)`, `rgba(hex,a)`, `vcol(vfx,col,i)`,
   palettes `VP.fire` etc., `sparks(x,y,col,n,vfx)`, `ring(x,y,r,col)`, `beamFx(x,y,x2,y2,col,w)`, `fx.push({...particule})`, `say(u,'TEXTE',col)`, `shake`, `flashS`.

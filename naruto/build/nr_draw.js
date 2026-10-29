@@ -16,7 +16,7 @@ function drawFloor(x0,y0,x1,y1,step){
  g.strokeStyle=T.line;g.lineWidth=1;
  for(let x=Math.ceil(x0/step)*step;x<=x1;x+=step){const a=P(x,y0),b=P(x,y1);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()}
  for(let y=Math.ceil(y0/step)*step;y<=y1;y+=step){const a=P(x0,y),b=P(x1,y);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()}
- g.fillStyle=(CFG.map|0)===1?'rgba(220,240,255,.14)':(CFG.map|0)===2?'rgba(150,100,40,.16)':'rgba(120,90,50,.18)';for(let x=Math.ceil(x0/step)*step;x<x1;x+=step)for(let y=Math.ceil(y0/step)*step;y<y1;y+=step)if(((x*7+y*13)/step)%5<1){const p=P(x+step*.4,y+step*.5);g.beginPath();g.ellipse(p.x,p.y,step*.3*p.s,step*.12*p.s,0,0,7);g.fill()}
+ g.fillStyle=(CFG.map|0)===1?'rgba(220,240,255,.14)':(CFG.map|0)===2?'rgba(150,100,40,.16)':'rgba(120,90,50,.18)';for(let x=Math.ceil(x0/step)*step;x<x1;x+=step)for(let y=Math.ceil(y0/step)*step;y<y1;y+=step)if(((x*7+y*13)/step)%5<1){const p=P(x+step*.4,y+step*.5);if(p.x<-80||p.x>W+80||p.y<-80||p.y>H+80)continue;g.beginPath();g.ellipse(p.x,p.y,step*.3*p.s,step*.12*p.s,0,0,7);g.fill()}
  floorDeco(x0,y0,x1,y1);
  return[tl,tr,br,bl];
 }
@@ -64,7 +64,7 @@ function drawDesert(){g.fillStyle='#c8905a';g.beginPath();g.moveTo(0,320);for(le
 
 // détails du sol (touffes, fleurs, cailloux / nénuphars / rides de sable), déterministes par case
 function floorDeco(x0,y0,x1,y1){const mp=CFG.map|0,S=70,t=performance.now()/1000;
- for(let x=Math.floor(x0/S)*S;x<x1;x+=S)for(let y=Math.floor(y0/S)*S;y<y1;y+=S){const hsh=((x*73856093)^(y*19349663))>>>0,r=n=>((hsh>>>n)&255)/255;const px=x+r(0)*S,py=y+r(8)*S;if(px<x0||px>x1||py<y0||py>y1)continue;const q=P(px,py);
+ for(let x=Math.floor(x0/S)*S;x<x1;x+=S)for(let y=Math.floor(y0/S)*S;y<y1;y+=S){const hsh=((x*73856093)^(y*19349663))>>>0,r=n=>((hsh>>>n)&255)/255;const px=x+r(0)*S,py=y+r(8)*S;if(px<x0||px>x1||py<y0||py>y1)continue;const q=P(px,py);if(q.x<-80||q.x>W+80||q.y<-80||q.y>H+80)continue; // hors écran
   if(mp===0){if(r(16)<.55){g.strokeStyle=r(4)<.5?'#2f4a22':'#5f8a3c';g.lineWidth=1.2;for(let k=-1;k<=1;k++){g.beginPath();g.moveTo(q.x+k*2*q.s,q.y);g.lineTo(q.x+k*3.5*q.s,q.y-(5+r(12)*4)*q.s);g.stroke()}}
    else if(r(16)<.66){circ(q.x,q.y-2*q.s,1.8*q.s,r(20)<.5?'#f4f0e0':'#f2d04a');circ(q.x+3*q.s,q.y-1*q.s,1.5*q.s,r(20)<.5?'#f4f0e0':'#e88ab0')}
    else if(r(16)<.74){g.fillStyle='#7a7466';g.beginPath();g.ellipse(q.x,q.y,4*q.s,2.4*q.s,0,0,7);g.fill()}}

@@ -58,9 +58,9 @@ function presetBuild(i,name,side){const [lab,nat,clan,voie,pass,sty,names,l]=PRE
  return sanitizeBuild(b,true)}
 // ---------- Cartes de l'arène ----------
 const MAPS=[['Terrain d\'entraînement'],['Vallée de la Fin'],['Désert de Suna']];
-const THEME=()=>[{sky:['#2a2650','#a8506a','#f3a65a'],floor:['#3e5a2c','#4f6e34'],line:'rgba(30,50,20,.18)',wall:['#6a4426','#4a2e18'],post:['#4a2e18','#9a6a3a','#3a2210','#b88a52']},
+const THEMES=[{sky:['#2a2650','#a8506a','#f3a65a'],floor:['#3e5a2c','#4f6e34'],line:'rgba(30,50,20,.18)',wall:['#6a4426','#4a2e18'],post:['#4a2e18','#9a6a3a','#3a2210','#b88a52']},
  {sky:['#1a2a4a','#4a6a8a','#a8c0d0'],floor:['#3a6a8a','#4a7a9a'],line:'rgba(200,230,255,.12)',wall:['#5a5a62','#3a3a42'],post:['#4a4a52','#8a8a92','#2a2a32','#9a9aa4']},
- {sky:['#5a2a1a','#c87a3a','#f3c87a'],floor:['#c8a060','#d8b070'],line:'rgba(120,80,30,.15)',wall:['#a07040','#7a5028'],post:['#7a5028','#c89a60','#5a3a1a','#d8b078']}][CFG.map|0]||null;
+ {sky:['#5a2a1a','#c87a3a','#f3c87a'],floor:['#c8a060','#d8b070'],line:'rgba(120,80,30,.15)',wall:['#a07040','#7a5028'],post:['#7a5028','#c89a60','#5a3a1a','#d8b078']}];const THEME=()=>THEMES[CFG.map|0]||null; // table fixe : plus d'allocation par appel
 // ---------- Décor des jutsu marquants pendant leur délai ----------
 function drawZoneDeco(z){const k=1-z.t/z.m,p=P(z.x,z.y),s=p.s,t=performance.now()/1000;
  switch(z.jn){

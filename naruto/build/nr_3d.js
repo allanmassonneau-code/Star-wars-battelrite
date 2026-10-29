@@ -26,14 +26,15 @@ function init3D(){if(N3.tried)return N3.ok;N3.tried=true;try{
  const outline=new THREE.ShaderMaterial({uniforms:{w:{value:1.05},col:{value:new THREE.Color(0x140c08)}},side:THREE.BackSide,
   vertexShader:'#include <common>\n#include <skinning_pars_vertex>\nuniform float w;\nvoid main(){\n#include <skinbase_vertex>\n#include <beginnormal_vertex>\n#include <skinnormal_vertex>\n#include <begin_vertex>\n#include <skinning_vertex>\ntransformed+=normalize(objectNormal)*w;\n#include <project_vertex>\n}',
   fragmentShader:'uniform vec3 col;void main(){gl_FragColor=vec4(col,1.0);}'});
- Object.assign(N3,{ok:true,r,cv,sc,cam,right,up,fwd,gm,outline,faceTex:new Map(),symTex:new Map(),cols:0,rows:0,small:0});atlasSize(2);
+ Object.assign(N3,{ok:true,r,cv,sc,cam,right,up,fwd,gm,outline,faceTex:new Map(),symTex:new Map(),geo:new Map(),faceGeo:new THREE.SphereGeometry(12.75,20,14,Math.PI/2-1.05,2.1,Math.PI/2-.8,1.6),symGeo:new THREE.PlaneGeometry(7.4,4.2),cols:0,rows:0,small:0});atlasSize(2);
  // l'ordre d'affichage : un projet Three.js ne reçoit pas les ombres portées (ombre ovale du 2D conservée)
  return true}catch(e){console.warn('3D indisponible, dessin 2D',e);N3.ok=false;return false}}
 // ----- fabrication du modèle (géométrie fusionnée, un os par pièce : pièces rigides, rendu en 2 appels par ninja)
 const col3=h=>new THREE.Color(h);
 function lookKey(u){const L=u.ch.look;return JSON.stringify([L,u.ch.look.weapon&&u.ch.look.weapon.k])}
-function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist',T=THREE;
- const P=[],N=[],C=[],SI=[],SW=[];const rest={};
+// géométrie fusionnée partagée par apparence (réapparition, retour à l'écran, clones : plus de reconstruction)
+function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist',T=THREE,key=lookKey(u);let G=N3.geo.get(key);
+ if(!G){const P=[],N=[],C=[],SI=[],SW=[];const rest={};
  for(const [n,p,o] of BONES){const v=new T.Vector3(...o);if(p)v.add(rest[p]);rest[n]=v}
  const M=new T.Matrix4(),Q=new T.Quaternion(),E=new T.Euler(),S=new T.Vector3(),V=new T.Vector3();
  // ajoute une pièce : g géométrie, bone os, c couleur, [x,y,z] position relative à l'os au repos, [rx,ry,rz], [sx,sy,sz]
@@ -89,18 +90,20 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  // géométrie fusionnée + squelette
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(P,3));geo.setAttribute('normal',new T.Float32BufferAttribute(N,3));geo.setAttribute('color',new T.Float32BufferAttribute(C,3));
  geo.setAttribute('skinIndex',new T.Uint16BufferAttribute(SI,4));geo.setAttribute('skinWeight',new T.Float32BufferAttribute(SW,4));
+ G={geo,n:0,last:0};N3.geo.set(key,G)}
+ G.n++;const geo=G.geo;
  const bones=BONES.map(([n,p,o])=>{const b=new T.Bone();b.name=n;b.position.set(...o);return b});BONES.forEach(([n,p],i)=>{if(p)bones[BI[p]].add(bones[i])});
  const mat=new T.MeshToonMaterial({vertexColors:true,gradientMap:N3.gm});
  const mesh=new T.SkinnedMesh(geo,mat);mesh.add(bones[0]);const skel=new T.Skeleton(bones);mesh.bind(skel);mesh.frustumCulled=false;
- const out=new T.SkinnedMesh(geo,N3.outline);out.bind(skel,mesh.bindMatrix);out.frustumCulled=false;
+ const out=new T.SkinnedMesh(geo,N3.outline);out.bind(skel,mesh.bindMatrix);out.frustumCulled=false;geo.boundingSphere||geo.computeBoundingSphere();mesh.boundingSphere=out.boundingSphere=geo.boundingSphere; // clé de tri seulement (évite le calcul skinné sur tous les sommets)
  const grp=new T.Group();grp.add(mesh);grp.add(out);
  // visage (yeux, bouche, marques, masque) et symbole du village : décalques sur la tête
- const face=new T.Mesh(new T.SphereGeometry(12.75,20,14,Math.PI/2-1.05,2.1,Math.PI/2-.8,1.6),new T.MeshBasicMaterial({map:faceTexture(L),transparent:true,depthWrite:false}));
+ const face=new T.Mesh(N3.faceGeo,new T.MeshBasicMaterial({map:faceTexture(L),transparent:true,depthWrite:false}));
  face.position.set(0,8,0);face.scale.set(1.03,.97,.96);bones[BI.head].add(face);
- const sym=new T.Mesh(new T.PlaneGeometry(7.4,4.2),new T.MeshBasicMaterial({map:symTexture(h.vil),transparent:true,depthWrite:false}));sym.position.set(0,15.3,12.05);sym.rotation.x=-.32;bones[BI.head].add(sym);
+ const sym=new T.Mesh(N3.symGeo,new T.MeshBasicMaterial({map:symTexture(h.vil),transparent:true,depthWrite:false}));sym.position.set(0,15.3,12.05);sym.rotation.x=-.32;bones[BI.head].add(sym);
  N3.sc.add(grp);
  const cur={};for(const [n] of BONES)cur[n]=new T.Quaternion();
- return{grp,mesh,out,mat,bones,skel,key:lookKey(u),cur,rootP:new T.Vector3(),rootR:new T.Euler(),yaw:Math.PI/2-(u.aim||0),used:0,face,sym,k}}
+ return{grp,mesh,out,mat,bones,skel,key,look:L,G,cur,rootP:new T.Vector3(),rootR:new T.Euler(),yaw:Math.PI/2-(u.aim||0),used:0,face,sym,k}}
 // visage dessiné sur une petite toile (même style que le 2D : grands yeux à reflet, Sharingan, Byakugan…)
 function faceTexture(L,mode='o'){const h=L.head,key=[h.eye,h.acc,h.kaguya,h.brows,h.skin,mode].join('|');if(N3.faceTex.has(key))return N3.faceTex.get(key);
  // toile = devant de la tête (≈ 9,7 px par unité, centre de la tête en 128,100) : mêmes proportions que le visage 2D
@@ -207,8 +210,9 @@ function poseModel(u,rec,dt,t){const P={};basePose(u,t,rec,P);actionPose(u,t,rec
  const f=u.flash>0&&!u.dead?Math.min(1,u.flash/.12):0;rec.mat.emissive.setRGB(f,f,f);rec.mat.emissiveIntensity=f?1:0;
  if(rec.face&&rec.face.material&&rec.face.material.map){const ph=(rec.ph??(rec.ph=Math.random()*4)),md=u.dead?'x':u.stun>0||u.sleepT<0?'s':f>.2||(t+ph)%4.1<.13?'c':'o';if(rec.fm!==md){rec.fm=md;rec.face.material.map=faceTexture(u.ch.look,md)}}}
 // taille de l'atlas : de 2 à 48 cases selon le nombre de ninjas visibles (agrandi aussitôt, réduit après un moment)
-function atlasSize(n){const caps=[2,4,8,16,24,32,48],cap=caps.find(c=>c>=n)||48,cols=Math.min(8,cap),rows=Math.ceil(cap/cols);
- if(cols*rows<n||cols>N3.cols||rows>N3.rows||(N3.small>180&&cols*rows<N3.cols*N3.rows)){N3.cols=cols;N3.rows=rows;N3.small=0;N3.r.setSize(cols*TPW,rows*TPH,false);
+// en combat on ne réduit jamais (réallouer le tampon WebGL = saccade) : on efface seulement les cases utilisées
+function atlasSize(n){const caps=[2,8,16,24,32,48],cap=caps.find(c=>c>=n)||48,cols=Math.min(8,cap),rows=Math.ceil(cap/cols),fight=state==='fight'||state==='countdown';
+ if(cols*rows<n||cols>N3.cols||rows>N3.rows||(!fight&&N3.small>180&&cols*rows<N3.cols*N3.rows)){N3.cols=cols;N3.rows=rows;N3.small=0;N3.r.setSize(cols*TPW,rows*TPH,false);
   Object.assign(N3.cam,{left:0,right:cols*TWU,top:rows*THU,bottom:0});N3.cam.updateProjectionMatrix()}else if(cols*rows<N3.cols*N3.rows)N3.small++;else N3.small=0}
 function render3D(){N3.tile.clear();if(!N3.on||OPT.p3d===false)return;if(!N3.tried&&!init3D())return;if(!N3.ok)return;
  const now=performance.now(),rdt=(now-(N3.last||now))/1000,dt=Math.min(.05,rdt)||1/60,t=now/1000;N3.last=now;N3.frame++;
@@ -217,14 +221,15 @@ function render3D(){N3.tile.clear();if(!N3.on||OPT.p3d===false)return;if(!N3.tri
  const want=[];for(const u of units)if(u&&!(u.dead&&u.deadT>1.6)&&u.ch&&u.ch.look&&u.ch.look.head.t==='ninja'&&near(u.x,u.y))want.push(u);for(const u of[...want])if(u.ch.look.dog&&!u.dead)want.push(u._dog3||(u._dog3={dog:1,owner:u,aim:0}));for(const u of N3.req)if(!want.includes(u))want.push(u);N3.req.clear();
  const n=Math.min(want.length,TCOLS*TROWS);atlasSize(Math.max(2,n));const CO=N3.cols,RO=N3.rows;
  for(const rec of N3.recs.values())rec.grp.visible=false;
- for(let i=0;i<n;i++){const u=want[i];let rec=N3.recs.get(u);if(rec&&!u.dog&&rec.key!==lookKey(u)){dispose3D(u,rec);rec=null}if(!rec){rec=u.dog?buildDog3D():buildNinja3D(u);N3.recs.set(u,rec)}
+ for(let i=0;i<n;i++){const u=want[i];let rec=N3.recs.get(u);if(rec&&!u.dog&&rec.look!==u.ch.look){if(rec.key!==lookKey(u)){dispose3D(u,rec);rec=null}else rec.look=u.ch.look}if(!rec){rec=u.dog?buildDog3D():buildNinja3D(u);N3.recs.set(u,rec)}
   rec.used=N3.frame;rec.grp.visible=true;if(rec.dog)poseDog(u,rec,dt,t);else poseModel(u,rec,dt,t);
   const c=i%CO,r=Math.floor(i/CO),cx=c*TWU+TWU/2,cy=(RO-1-r)*THU+FOOT;
   rec.grp.position.copy(N3.right).multiplyScalar(cx).addScaledVector(N3.up,cy).addScaledVector(N3.fwd,1200);rec.grp.rotation.set(0,rec.yaw,0);
   N3.tile.set(u,{sx:c*TPW,sy:r*TPH})}
- if(N3.frame%120===0)for(const [u,rec] of N3.recs)if(N3.frame-rec.used>240)dispose3D(u,rec);
+ if(N3.frame%120===0){for(const [u,rec] of N3.recs)if(N3.frame-rec.used>240)dispose3D(u,rec);for(const [k,G] of N3.geo)if(!G.n&&N3.frame-G.last>3600){G.geo.dispose();N3.geo.delete(k)}} // géométrie inutilisée depuis 1 min : libérée
+ const ur=Math.max(1,Math.ceil(n/CO));N3.r.setScissorTest(true);N3.r.setScissor(0,(RO-ur)*TPH,(ur>1?CO:Math.max(1,n))*TPW,ur*TPH); // efface et dessine seulement les cases utilisées
  N3.r.render(N3.sc,N3.cam)}
-function dispose3D(u,rec){N3.sc.remove(rec.grp);rec.mesh.geometry.dispose();rec.mat.dispose();rec.face.geometry.dispose();rec.face.material.dispose();rec.sym.geometry.dispose();rec.sym.material.dispose();N3.recs.delete(u)}
+function dispose3D(u,rec){N3.sc.remove(rec.grp);rec.mat.dispose();rec.face.material.dispose();rec.sym.material.dispose();rec.G&&(rec.G.n--,rec.G.last=N3.frame);N3.recs.delete(u)} // géométries partagées : gardées en cache
 // colle la case du ninja dans la scène 2D (même échelle et même point d'appui que le dessin 2D), sinon dessin 2D
 function drawChar3(u,bx,by,s,alpha){if(N3.ok)N3.req.add(u);const tl=N3.ok&&N3.tile.get(u);if(!tl)return drawChar(u,bx,by,s)
  const sk=u.ch.look.scale||1,w=TWU*s*sk,h=THU*s*sk;g.save();if(u.dead)g.globalAlpha*=Math.max(0,1-u.deadT*.6);if(u.phase>0)g.globalAlpha*=.35+Math.sin(performance.now()/33)*.1;if(alpha!=null)g.globalAlpha*=alpha;
@@ -269,7 +274,7 @@ Object.assign(ANIM,{
 // ----- chien ninja (Inuzuka) en 3D : même style, petit squelette à quatre pattes
 const DBONES=[['root',null,[0,0,0]],['body','root',[0,11,0]],['head','body',[0,4.5,8]],['legFL','body',[3.2,-3,5.5]],['legFR','body',[-3.2,-3,5.5]],['legBL','body',[3.2,-3,-5.5]],['legBR','body',[-3.2,-3,-5.5]],['tail','body',[0,2.5,-8.5]]];
 const DBI=Object.fromEntries(DBONES.map((b,i)=>[b[0],i]));
-function buildDog3D(){const T=THREE,P=[],N=[],C=[],SI=[],SW=[],rest={};for(const [n,p,o] of DBONES){const v=new T.Vector3(...o);if(p)v.add(rest[p]);rest[n]=v}
+function buildDog3D(){const T=THREE;let G=N3.geo.get('dog');if(!G){const P=[],N=[],C=[],SI=[],SW=[],rest={};for(const [n,p,o] of DBONES){const v=new T.Vector3(...o);if(p)v.add(rest[p]);rest[n]=v}
  const M=new T.Matrix4(),Q=new T.Quaternion(),E=new T.Euler(),S=new T.Vector3(),V=new T.Vector3();
  const add=(g,bone,c,pos=[0,0,0],rot=[0,0,0],scl=[1,1,1])=>{const gg=g.index?g.toNonIndexed():g;E.set(...rot);Q.setFromEuler(E);V.set(...pos).add(rest[bone]);S.set(...scl);M.compose(V,Q,S);gg.applyMatrix4(M);
   const a=gg.attributes.position,nn=gg.attributes.normal,cc=new T.Color(c),bi=DBI[bone];for(let i=0;i<a.count;i++){P.push(a.getX(i),a.getY(i),a.getZ(i));N.push(nn.getX(i),nn.getY(i),nn.getZ(i));C.push(cc.r,cc.g,cc.b);SI.push(bi,0,0,0);SW.push(1,0,0,0)}};
@@ -280,11 +285,13 @@ function buildDog3D(){const T=THREE,P=[],N=[],C=[],SI=[],SW=[],rest={};for(const
  add(new T.ConeGeometry(1.6,8,7),'tail',fur,[0,3,-1.5],[-.7,0,0]);add(new T.TorusGeometry(4.2,.7,6,14),'body','#c0303a',[0,3.2,5],[Math.PI/2-.4,0,0]);
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(P,3));geo.setAttribute('normal',new T.Float32BufferAttribute(N,3));geo.setAttribute('color',new T.Float32BufferAttribute(C,3));
  geo.setAttribute('skinIndex',new T.Uint16BufferAttribute(SI,4));geo.setAttribute('skinWeight',new T.Float32BufferAttribute(SW,4));
+ G={geo,n:0,last:0};N3.geo.set('dog',G)}
+ G.n++;const geo=G.geo;
  const bones=DBONES.map(([n,p,o])=>{const b=new T.Bone();b.name=n;b.position.set(...o);return b});DBONES.forEach(([n,p],i)=>{if(p)bones[DBI[p]].add(bones[i])});
  const mat=new T.MeshToonMaterial({vertexColors:true,gradientMap:N3.gm}),mesh=new T.SkinnedMesh(geo,mat);mesh.add(bones[0]);const skel=new T.Skeleton(bones);mesh.bind(skel);mesh.frustumCulled=false;
- const out=new T.SkinnedMesh(geo,N3.outline);out.bind(skel,mesh.bindMatrix);out.frustumCulled=false;const grp=new T.Group();grp.add(mesh);grp.add(out);N3.sc.add(grp);
+ const out=new T.SkinnedMesh(geo,N3.outline);out.bind(skel,mesh.bindMatrix);out.frustumCulled=false;geo.boundingSphere||geo.computeBoundingSphere();mesh.boundingSphere=out.boundingSphere=geo.boundingSphere;const grp=new T.Group();grp.add(mesh);grp.add(out);N3.sc.add(grp);
  const cur={};for(const [n] of DBONES)cur[n]=new T.Quaternion();
- return{grp,mesh,out,mat,bones,skel,key:'dog',cur,rootP:new T.Vector3(),rootR:new T.Euler(),yaw:0,used:0,dog:1,face:{geometry:{dispose(){}},material:{dispose(){}}},sym:{geometry:{dispose(){}},material:{dispose(){}}}}}
+ return{grp,mesh,out,mat,bones,skel,key:'dog',G,cur,rootP:new T.Vector3(),rootR:new T.Euler(),yaw:0,used:0,dog:1,face:{geometry:{dispose(){}},material:{dispose(){}}},sym:{geometry:{dispose(){}},material:{dispose(){}}}}}
 function poseDog(d,rec,dt,t){const u=d.owner,run=u.moving||u.dash,atk=u.swing>0||(u.anim&&u.anim.t>0),w=t*16,P={};
  const lg=(n,x)=>{P[n]=x};if(run){lg('legFL',Math.sin(w)*.8);lg('legBR',Math.sin(w)*.8);lg('legFR',-Math.sin(w)*.8);lg('legBL',-Math.sin(w)*.8)}
  let ry=0,rz=0,hx=Math.sin(t*2)*.05;if(atk){lg('legFL',-1.1);lg('legFR',-1.1);hx=-.35;rz=6}

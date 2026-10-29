@@ -711,9 +711,9 @@ function ai(u,dt){
 // ---------- Mise à jour ----------
 function collide(u){
  const bx=u.x,by=u.y;u.x=clamp(u.x,B.x+u.r,B.x+B.w-u.r);u.y=clamp(u.y,B.y+u.r,B.y+B.h-u.r);let bump=bx!==u.x||by!==u.y;
- for(const p of OBST){const d=Math.hypot(u.x-p.x,u.y-p.y),m=p.r+u.r;if(d<m&&d>0){u.x=p.x+(u.x-p.x)/d*m;u.y=p.y+(u.y-p.y)/d*m;bump=true}}
+ for(const p of OBST){const m=p.r+u.r;if(Math.abs(u.x-p.x)>=m||Math.abs(u.y-p.y)>=m)continue;const d=Math.hypot(u.x-p.x,u.y-p.y);if(d<m&&d>0){u.x=p.x+(u.x-p.x)/d*m;u.y=p.y+(u.y-p.y)/d*m;bump=true}} // rejet rapide par boîte avant l'hypoténuse
  if(bump&&u.wallStun>0&&Math.hypot(u.kx,u.ky)>150){u.stun=Math.max(u.stun,u.wallStun);u.wallStun=0;u.kx=u.ky=0;say(u,'ÉCRASÉ','#f22');sparks(u.x,u.y,'#fff',12)}
- for(const w of walls)if(w.team!==u.team){const d=Math.hypot(u.x-w.x,u.y-w.y),m=w.r+u.r;if(d<m&&d>0){u.x=w.x+(u.x-w.x)/d*m;u.y=w.y+(u.y-w.y)/d*m}}
+ for(const w of walls)if(w.team!==u.team){const m=w.r+u.r;if(Math.abs(u.x-w.x)>=m||Math.abs(u.y-w.y)>=m)continue;const d=Math.hypot(u.x-w.x,u.y-w.y);if(d<m&&d>0){u.x=w.x+(u.x-w.x)/d*m;u.y=w.y+(u.y-w.y)/d*m}}
 }
 function respawn(u){const p=spawnPos(u.team),n=mkUnit(u.c,p.x,p.y,u.team);n.lane=u.lane;n.ctrl=u.ctrl;n.human=u.human;n.rid=u.rid;n.energy=u.hero?30:0;Object.assign(u,n);if(u===player)deathPos=null}
 function updUnit(u,dt,active){
@@ -1058,7 +1058,8 @@ function drawBattlefield(){
  if(x1===MAP.w){g.beginPath();g.moveTo(q[1].x,q[1].y);g.lineTo(q[2].x,q[2].y);g.stroke()}g.restore();
  for(const p of pickups)if(p.t<=0&&near(p.x,p.y))drawHolo(p.x,p.y,0);
 }
-function glow(x,y,r,col,a){const p=P(x,y),gr=g.createRadialGradient(p.x,p.y,0,p.x,p.y,r*p.s);gr.addColorStop(0,rgba(col,a));gr.addColorStop(1,rgba(col,0));g.fillStyle=gr;g.beginPath();g.ellipse(p.x,p.y,r*p.s,r*p.s*K,0,0,7);g.fill()}
+function glow(x,y,r,col,a){const p=P(x,y),R0=r*p.s;if(!(R0>0)||p.x+R0<-16||p.x-R0>W+16||p.y+R0<-16||p.y-R0>H+16)return; // hors écran ou loin au nord (rayon négatif)
+ const gr=g.createRadialGradient(p.x,p.y,0,p.x,p.y,R0);gr.addColorStop(0,rgba(col,a));gr.addColorStop(1,rgba(col,0));g.fillStyle=gr;g.beginPath();g.ellipse(p.x,p.y,r*p.s,r*p.s*K,0,0,7);g.fill()}
 function drawLights(){
  g.save();g.globalCompositeOperation='lighter';
  for(const u of units){if(u.dead||!near(u.x,u.y))continue;const w=u.ch.look.weapon;if(w.t==='saber'&&u.saberOut<=0)glow(u.x+Math.cos(u.aim)*20,u.y+Math.sin(u.aim)*20,85,w.col,.22);if(w.two)glow(u.x,u.y,60,w.two,.15);if(u.haste>0)glow(u.x,u.y,60,u.rage>0?'#f33':'#fc6',.2);if(u.flame)glow(u.x+Math.cos(u.aim)*90,u.y+Math.sin(u.aim)*90,120,'#f93',.3)}
@@ -1196,7 +1197,8 @@ function draw(){
   if(f.bolt===1&&!f.u.dead&&near(f.u.x,f.u.y)){const h=P(f.u.x,f.u.y,40);g.globalAlpha=f.t/f.m;for(let i=0;i<f.n;i++){const b=f.a+(rnd()-.5)*.8,e=P(f.u.x+Math.cos(b)*f.range,f.u.y+Math.sin(b)*f.range,25);drawBolt(h.x,h.y,e.x,e.y,i%2?'#fff':f.col)}}
   if(f.bolt===2&&near(f.x,f.y)){const top=P(f.x,f.y,300),bot=P(f.x,f.y);g.globalAlpha=f.t/f.m;drawBolt(top.x,top.y,bot.x,bot.y,f.col);drawBolt(top.x,top.y,bot.x,bot.y,'#fff')}}
  g.restore();g.globalAlpha=1;
- for(const f of fx){if(f.ring||f.swing||f.bolt||f.light||f.beam)continue;const p=P(f.x,f.y,f.z??20);g.globalAlpha=f.t/f.m;g.fillStyle=f.col;g.beginPath();g.arc(p.x,p.y,f.r*p.s,0,7);g.fill()}g.globalAlpha=1;
+ for(const f of fx){if(f.ring||f.swing||f.bolt||f.light||f.beam)continue;const p=P(f.x,f.y,f.z??20);if(p.x<-100||p.x>W+100||p.y<-100||p.y>H+100)continue; // hors écran (et rayon négatif loin au nord)
+ g.globalAlpha=f.t/f.m;g.fillStyle=f.col;g.beginPath();g.arc(p.x,p.y,f.r*p.s,0,7);g.fill()}g.globalAlpha=1;
  for(const t of txt){const p=P(t.x,t.y,t.z);g.globalAlpha=Math.min(1,t.t*2);g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)';g.font='bold 15px "Trebuchet MS",system-ui,sans-serif';g.textAlign='center';g.strokeText(t.s,p.x,p.y);text(t.s,p.x,p.y,15,t.col)}g.globalAlpha=1;
  g.restore();
  const vg=g.createRadialGradient(W/2,H/2,H*.45,W/2,H/2,H*.95);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');g.fillStyle=vg;g.fillRect(0,0,W,H);
@@ -1229,7 +1231,7 @@ function netUI(show){$('net').hidden=!show;if(show)$('nStat').textContent=net.st
 function setStat(s){net.status=s;$('nStat').textContent=s}
 function sendLobby(){netSend({t:'lobby',P:lobbyList(),mode,cfg:CFG})}
 function netSend(m){if(net.role==='host'){for(const p of livePeers())try{p.conn.send(m)}catch(e){}}else if(coop())try{net.conn.send(m)}catch(e){}}
-function netReset(){try{net.peer&&net.peer.destroy()}catch(e){}net=Object.assign(net,{seq:0,pend:[],role:null,peer:null,conn:null,mate:null,peers:[],nextId:1,myId:0,myTeam:0,lobby:[],ready:false,gp:{},live:false,ev:{fx:[],txt:[],snd:[],sp:[]}})}
+function netReset(){try{net.peer&&net.peer.destroy()}catch(e){}net=Object.assign(net,{seq:0,pend:[],role:null,peer:null,conn:null,mate:null,peers:[],nextId:1,myId:0,myTeam:0,lobby:[],ready:false,gp:{},live:false,pU:null,gU:null,pK:{},gK:{},ev:{fx:[],txt:[],snd:[],sp:[]}})}
 const noPeer=()=>{if(typeof Peer!=='undefined')return false;setStat('Le coop ne peut pas démarrer ici : la connexion réseau est bloquée. Ouvre le jeu depuis un site hébergé.');return true};
 function hostGame(){if(noPeer())return;netReset();const code=Math.random().toString(36).slice(2,6).toUpperCase();net.role='host';net.code=code;setStat('Ouverture du salon…');
  const p=new Peer('swarena-'+code);net.peer=p;
@@ -1237,7 +1239,7 @@ function hostGame(){if(noPeer())return;netReset();const code=Math.random().toStr
  p.on('open',()=>setStat(cnt()));
  p.on('connection',c=>{const P={id:net.nextId++,conn:c,c:null,ready:false,team:0,in:null,pressed:{},gcam:null};
   c.on('open',()=>{if(livePeers().length>=MAXP||state!=='menu'){c.send({t:'full',v:state!=='menu'});setTimeout(()=>c.close(),400);return}
-   net.peers.push(P);setStat(cnt());c.send({t:'hello',mode,cfg:CFG,id:P.id});net.ready=false;for(const q of net.peers)q.ready=false;sendLobby()});
+   net.peers.push(P);net.pU=null;setStat(cnt());c.send({t:'hello',mode,cfg:CFG,id:P.id});net.ready=false;for(const q of net.peers)q.ready=false;sendLobby()});
   c.on('data',d=>{if(!d||typeof d!=='object'||!net.peers.includes(P))return;
    if(d.t==='hero'&&CH[d.c]&&!CH[d.c].trooper&&!lobbyList().some(x=>x.id!==P.id&&x.c===d.c)){P.c=d.c;P.ready=false;sendLobby()}
    else if(d.t==='hero')sendLobby();
@@ -1250,7 +1252,7 @@ function joinGame(code){if(noPeer())return;code=(code||'').trim().toUpperCase();
  netReset();net.role='guest';setStat('Connexion…');const p=new Peer();net.peer=p;
  p.on('open',()=>{const c=p.connect('swarena-'+code,{reliable:true,serialization:'binary'});net.conn=c;
   c.on('open',()=>{setStat(`Connecté au salon ${code}. Choisis ton héros.`);netUI(false)});
-  c.on('data',d=>{if(!d)return;if(d.t==='snap')applySnap(d);else if(d.t==='hello'){mode=d.mode;if(d.cfg)Object.assign(CFG,d.cfg);if(d.id)net.myId=d.id}
+  c.on('data',d=>{if(!d)return;if(d.t==='snap'){const s=d.j?netDec(d):(net.gU=null,d);if(s)applySnap(s)}else if(d.t==='hello'){mode=d.mode;if(d.cfg)Object.assign(CFG,d.cfg);if(d.id)net.myId=d.id}
    else if(d.t==='lobby'){if(d.cfg)Object.assign(CFG,d.cfg);mode=d.mode;net.lobby=d.P||[];const me=net.lobby.find(x=>x.id===net.myId);if(me){net.mate=me.c;net.ready=me.ready;net.myTeam=me.team}}
    else if(d.t==='full')setStat(d.v?'La partie a déjà commencé : attends la fin et reconnecte-toi.':`Salon complet (${MAXP} joueurs maximum).`)});
   c.on('close',()=>{netReset();state='menu';setStat('L\'hôte a fermé la partie.')})});
@@ -1273,7 +1275,8 @@ const rd=v=>typeof v==='number'?Math.round(v*100)/100:v;
 const UK=['c','team','x','y','z','hp','max','energy','aim','swing','swingA','moving','walk','dead','deadT','stun','deflect','shield','block','stam','blockLock','haste','rage','unstop','saberOut','flash','respawn','hero','r','human','slow','vx','vy','root','stealth','airT','silence','fear','taunt','disarm','vuln','dotT','counter','riposte','dodge','absorb','chrome','riot','giant','thorns','drT','ammo','chg'];
 const PK=['x','y','vx','vy','r','col','saber','big','grenade','rocket','ex','life','life0','rot','tx','ty','ar','hook','ox','oy','zapP','rock','spear'],ZK=['x','y','r','t','m','col'];
 function pickK(o,ks){const r={};for(const k of ks){const v=o[k];r[k]=Array.isArray(v)?v.map(rd):v===undefined?null:rd(v)}return r}
-function snapU(u){const a=UK.map(k=>u[k]===undefined?null:rd(u[k]));a.push(u.cast?{i:u.cast.i,t:rd(u.cast.t),dur:u.cast.dur,td:rd(u.cast.td),aimOv:u.cast.aimOv??null,ex:u.cast.ex}:null,u.spin?{r:u.spin.r}:null,!!u.flame,!!u.dash);return a}
+function snapU(u){const a=UK.map(k=>u[k]===undefined?null:rd(u[k]));const fi=UK.indexOf('flash');if(a[fi]<0)a[fi]=0; // flash négatif = pas d'éclair (toujours testé >0) : 0 évite une différence à chaque envoi
+ a.push(u.cast?{i:u.cast.i,t:rd(u.cast.t),dur:u.cast.dur,td:rd(u.cast.td),aimOv:u.cast.aimOv??null,ex:u.cast.ex}:null,u.spin?{r:u.spin.r}:null,!!u.flame,!!u.dash);return a}
 function netCapture(fx0,tx0){if(net.role!=='host'||!coop())return;for(let i=fx0;i<fx.length&&net.ev.fx.length<150;i++){if(fx[i].vx!==undefined)continue;const f=Object.assign({},fx[i]);if(f.u)f.u=units.indexOf(f.u);for(const k in f)f[k]=rd(f[k]);net.ev.fx.push(f)}for(let i=tx0;i<txt.length;i++)net.ev.txt.push(Object.assign({},txt[i]))}
 function makeSnap(){if(state==='menu')return{t:'snap',st:'menu',mode,cfg:CFG};
  net.stc=(net.stc||0)+1;const SS=net.stc%10===0||state!=='fight'?Object.values(STATS).map(x=>[x.c,x.team,x.k,x.d,x.a,Math.round(x.dmg),Math.round(x.tk),Math.round(x.heal),Math.round(x.sh||0)]):undefined;
@@ -1285,10 +1288,10 @@ function applySnap(s){if(s.cfg)Object.assign(CFG,s.cfg);if(s.SS){STATS={};for(co
  if(!net.live||mode!==s.mode){mode=s.mode;if(mode!=='battle'){B=A;OBST=ARENA_OBST;cam={x:CX,y:CY};Yc=377.5;GLOW=18}else{B=MAP;OBST=battleObstacles();Yc=390;GLOW=6}fx=[];txt=[]}
  const first=!net.live;net.live=true;
  state=s.st;stateT=s.stT;score=s.score;round=s.round;timer=s.timer;tickets=s.tickets;killfeed=s.kf;banner=s.banner;orb=s.orb;pickups=s.pk;winner=s.win;
- const n=UK.length;
- units=s.U.map((a,i)=>{const d={};UK.forEach((k,j)=>d[k]=a[j]);d.cast=a[n];d.spin=a[n+1];d.flame=a[n+2];d.dash=a[n+3];
+ const n=UK.length,CI=UK.indexOf('c'),XI=UK.indexOf('x'),YI=UK.indexOf('y'),TI=UK.indexOf('team'),DI=UK.indexOf('dead');
+ units=s.U.map((a,i)=>{const d={c:a[CI],x:a[XI],y:a[YI],team:a[TI],dead:a[DI],dash:a[n+3]}; // champs lus plus bas ; le reste est écrit directement dans l'unité
   let u=units[i];const fresh=!u||u.c!==d.c;if(fresh)u=mkUnit(d.c,d.x,d.y,d.team);const ox=u.x,oy=u.y,oa=u.aim,ow=u.walk,jump=Math.hypot(ox-d.x,oy-d.y)>150;
-  Object.assign(u,d);u.ch=CH[d.c];u.nx=d.x;u.ny=d.y;
+  for(let j=0;j<n;j++)u[UK[j]]=a[j];u.cast=a[n];u.spin=a[n+1];u.flame=a[n+2];u.dash=a[n+3];u.ch=CH[d.c];u.nx=d.x;u.ny=d.y;
   if(i===s.you&&!fresh){u.aim=oa;u.walk=ow;
    // réconciliation : position de l'hôte + commandes pas encore prises en compte
    net.pend=net.pend.filter(p=>p.seq>s.ack);if(!d.dash&&!d.dead&&!jump){for(const p of net.pend){u.x+=p.vx*p.dt;u.y+=p.vy*p.dt}collide(u);if(Math.hypot(ox-u.x,oy-u.y)<45){u.x=lerp(ox,u.x,.25);u.y=lerp(oy,u.y,.25)}}}
@@ -1309,9 +1312,23 @@ function guestFrame(dt){for(const k in pressed)net.gp[k]=1;
  for(const z of zones)z.t=Math.max(0,z.t-dt);
  ageFx(dt);shake=Math.max(0,shake-dt);
  if(mode==='battle'&&player){const c=Math.min(1,dt*6);cam.x+=(clamp(player.x,420,MAP.w-420)-cam.x)*c;cam.y+=(clamp(player.y,240,MAP.h-170)-cam.y)*c}}
+// instantané encodé une seule fois par tick (JSON) ; lignes d'unités en différences par rapport au dernier envoi (K : image clé, sans référence)
+const NSEC=['Pj','Z','Tr','Tu','Fi','Wl','Ax'];
+function netEnc(s){const P=net.pU,K=!P,ci=UK.indexOf('c'),U=s.U.map((a,i)=>{const q=!K&&P[i];if(!q||q.length!==a.length||q[ci]!==a[ci])return{f:a};const d=[];for(let j=0;j<a.length;j++){const v=a[j],w=q[j];if((v!==w&&!(v!==v&&w!==w))||(v!==null&&typeof v==='object'))d.push(j,v)}return d.length?d:0});
+ const o=Object.assign({},s,{U,K:K?1:0});if(K||!net.pK)net.pK={};
+ // listes (projectiles, zones, aux…) en tableaux positionnels : noms des clés envoyés seulement quand ils changent (KS), nulls de fin retirés
+ for(const k of NSEC){const L=o[k];if(!L||!L.length)continue;const ks=Object.keys(L[0]),sig=ks.join();if(!L.every(x=>{const q=Object.keys(x);return q.length===ks.length&&q.every((n,j)=>n===ks[j])}))continue;
+  if(K||net.pK[k]!==sig){(o.KS=o.KS||{})[k]=ks;net.pK[k]=sig}o[k]=L.map(x=>{const v=ks.map(n=>x[n]===undefined?null:x[n]);let m=v.length;while(m&&v[m-1]===null)m--;v.length=m;return v})}
+ const j=JSON.stringify(o);net.pU=s.U;return j}
+function netDec(d){const s=JSON.parse(d.j);if(s.K)net.gU=[];else if(!net.gU)return null;const R=net.gU;
+ s.U=s.U.map((e,i)=>{if(e===0)return R[i];if(!Array.isArray(e))return R[i]=e.f;const a=R[i].slice();for(let j=0;j<e.length;j+=2)a[e[j]]=e[j+1];return R[i]=a});R.length=s.U.length;
+ if(s.K||!net.gK)net.gK={};if(s.KS)Object.assign(net.gK,s.KS);delete s.KS;
+ for(const k of NSEC){const L=s[k],ks=net.gK[k];if(!L||!L.length||!Array.isArray(L[0])||!ks)continue;s[k]=L.map(v=>{const o={};for(let j=0;j<ks.length;j++)o[ks[j]]=j<v.length?v[j]:null;return o})}
+ s.you=d.you;s.mc=d.mc;s.ack=d.ack;return s}
 function netTick(dt){if(!coop())return;net.sendT-=dt;if(net.sendT>0)return;
- if(net.role==='host'){net.sendT=state==='menu'?.5:mode==='battle'?.05:.033;const base=makeSnap();
-  for(const P of livePeers()){const i=units.findIndex(u=>u.ctrl==='remote'&&u.rid===P.id);try{P.conn.send(state==='menu'?base:Object.assign({},base,{you:i,mc:i>=0?units[i].cds:null,ack:P.in?P.in.seq||0:0}))}catch(e){}}
+ if(net.role==='host'){net.sendT=state==='menu'?.5:mode==='battle'?.05:.033;const base=makeSnap();if((net.kf=(net.kf||0)+1)%100===0)net.pU=null; // état complet régulier : un invité désynchronisé se recale
+ let j=null;if(state==='menu'){net.pU=null;net.pK={}}else try{j=netEnc(base)}catch(e){net.pU=null}
+  for(const P of livePeers()){if(state!=='menu'&&j===null)continue;const i=units.findIndex(u=>u.ctrl==='remote'&&u.rid===P.id);try{P.conn.send(state==='menu'?base:{t:'snap',j,you:i,mc:i>=0?units[i].cds:null,ack:P.in?P.in.seq||0:0})}catch(e){}}
   net.ev={fx:[],txt:[],snd:[],sp:[]}}
  else if(net.live){net.sendT=0;const I=localInput();netSend({t:'in',seq:net.seq,mx:I.mx,my:I.my,ax:rd(I.ax),ay:rd(I.ay),l:!!mouse.l,p:Object.keys(net.gp),sh:!!I.sh,f:!!I.f,cx:rd(cam.x),cy:rd(cam.y)});net.gp={}}}
 function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;
