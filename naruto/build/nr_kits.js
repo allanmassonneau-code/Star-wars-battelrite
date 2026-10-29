@@ -65,3 +65,6 @@ JFXD.shock=(f,k,e)=>{g.strokeStyle=rgba(f.col||'#c8a070',.8*k);g.lineWidth=6*k+1
 
 const S_=SP; // raccourci
 
+AFTER.push(()=>UK.push('run'));
+// jauge de course (séparée de l'endurance des coups et de la parade) : petit arc sous le joueur
+STATD.push((u,p,S)=>{if(u!==player||u.run==null||u.run>=99.5)return;g.save();g.lineWidth=3*S;g.strokeStyle='rgba(0,0,0,.45)';g.beginPath();g.ellipse(p.x,p.y+4*S,20*S,7*S,0,.3,Math.PI-.3);g.stroke();g.strokeStyle=u.sprintLock?'#ff7a5a':'#9ef0ff';g.beginPath();g.ellipse(p.x,p.y+4*S,20*S,7*S,0,Math.PI-.3-(Math.PI-.6)*u.run/100,Math.PI-.3);g.stroke();g.restore()});

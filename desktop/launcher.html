@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="fr"><head><meta charset="utf-8"><title>NaruArena</title>
+<meta http-equiv="Content-Security-Policy" content="default-src 'self'; style-src 'self' 'unsafe-inline'; script-src 'self' 'unsafe-inline'">
+<style>
+body{margin:0;height:100vh;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:22px;font-family:"Trebuchet MS",system-ui,sans-serif;color:#f4e6cc;
+ background:radial-gradient(ellipse at 50% 30%,#3a2412 0%,#140c08 70%);user-select:none}
+h1{margin:0;font-size:46px;color:#ffb347;text-shadow:0 0 24px rgba(255,140,40,.5);letter-spacing:2px}
+.sub{color:#b89a70;margin-top:-14px}
+.cards{display:flex;gap:22px}
+button{font:inherit;cursor:pointer;border-radius:14px;border:2px solid #8a5a2a;background:rgba(40,28,18,.92);color:#fff;padding:22px 34px;font-size:20px;font-weight:bold;min-width:250px;transition:.15s}
+button:hover:not(:disabled){border-color:#ffb347;background:rgba(90,60,30,.95);transform:translateY(-2px)}
+button.main{background:#ff9a3a;color:#1a0f06;border-color:#ffb347}
+button:disabled{opacity:.45;cursor:default}
+#status{min-height:22px;color:#e8cfa8}
+.bar{width:420px;height:8px;background:rgba(255,255,255,.1);border-radius:4px;overflow:hidden}
+.bar div{height:100%;width:0;background:#ffb347;transition:width .2s}
+#ver{position:fixed;bottom:10px;right:14px;color:#7a6a58;font-size:12px}
+#inst{display:none}
+</style></head><body>
+<h1>NARUARENA</h1><div class="sub">Naruto · Arène ninja — et l'arène Star Wars</div>
+<div class="cards"><button class="main" id="pN">🍥 Jouer — Naruto</button><button id="pS">⚔ Jouer — Star Wars</button></div>
+<div id="status">Démarrage…</div><div class="bar"><div id="pct"></div></div>
+<button id="inst">Redémarrer et mettre à jour</button>
+<div id="ver"></div>
+<script>
+const $=id=>document.getElementById(id);
+$('pN').onclick=()=>launcher.play('naruto');$('pS').onclick=()=>launcher.play('starwars');$('inst').onclick=()=>launcher.install();
+launcher.on('version',v=>$('ver').textContent='version '+v);
+launcher.on('status',s=>{$('status').textContent=s.text;$('pct').style.width=(s.pct!=null?s.pct:(s.state==='busy'?0:100))+'%';$('inst').style.display=s.state==='install'?'block':'none'});
+</script></body></html>

@@ -62,7 +62,7 @@ canvas{width:min(100vw,177.78vh);height:min(56.25vw,100vh);display:block;cursor:
  <button id="nClose" class="alt">Fermer</button>
 </div>
 <script src="three.min.js"></script>
-<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
+<script src="peerjs.min.js"></script>
 <script>
 const cv=document.getElementById('c'),g=cv.getContext('2d'),W=1280,H=720;
 // rendu à la résolution réelle de l'écran (sinon le canvas 1280x720 est étiré et flou)
@@ -567,7 +567,7 @@ function drawFlowN(u,p,S,sk){const t=performance.now()/1000,col=u.ch.look.weapon
 // ---------- Fluidité : accélération, mémoire des touches, caméra ----------
 const ACCEL=30; // le ninja prend et perd sa vitesse en un éclair, sans à-coups
 // déplacement plus vif (le jeu reste à 80 %) et sprint (Maj maintenue) : plus rapide, consomme l'endurance
-const SPD_K=1.12,SPRINT_K=1.45,SPRINT_COST=18;
+const SPD_K=1.12,SPRINT_K=1.45,SPRINT_COST=22,RUN_REGEN=26;
 // mémoire des touches : un jutsu demandé pendant un coup, une incantation ou une fin de recharge part dès que possible
 function tryUse(u,i,td,ex){if(use(u,i,td,undefined,ex)){u.buf=null;return true}const ab=u.ch.abil[i];
  if(ab&&u.energy>=jcost(ab)&&!(u.silence>0)&&(u.cast||u.dash||u.swing>0||u.spin||u.stun>0&&u.stun<.25||(u.cds[i]>0&&u.cds[i]<.35)))u.buf={i,t:.35,ex};return false}
@@ -695,6 +695,9 @@ JFXD.shock=(f,k,e)=>{g.strokeStyle=rgba(f.col||'#c8a070',.8*k);g.lineWidth=6*k+1
 
 const S_=SP; // raccourci
 
+AFTER.push(()=>UK.push('run'));
+// jauge de course (séparée de l'endurance des coups et de la parade) : petit arc sous le joueur
+STATD.push((u,p,S)=>{if(u!==player||u.run==null||u.run>=99.5)return;g.save();g.lineWidth=3*S;g.strokeStyle='rgba(0,0,0,.45)';g.beginPath();g.ellipse(p.x,p.y+4*S,20*S,7*S,0,.3,Math.PI-.3);g.stroke();g.strokeStyle=u.sprintLock?'#ff7a5a':'#9ef0ff';g.beginPath();g.ellipse(p.x,p.y+4*S,20*S,7*S,0,Math.PI-.3-(Math.PI-.6)*u.run/100,Math.PI-.3);g.stroke();g.restore()});
 
 // ===== Styles de combat (attaque de base, gratuite) =====
 // [nom, description, mécanique (x.clé = NAT[clé]), vfx, arme, clans autorisés (-1 = sans clan), modif. PV, modif. puissance]
@@ -6831,7 +6834,7 @@ function dangers(u){const L=[];for(const z of zones)if(z.owner.team!==u.team)L.p
 function pickTarget(u){let best=null,bd=mode!=='battle'?1e9:800;for(const e of units){if(e.team===u.team||e.dead||(e.stealth>0&&dist(u,e)>140))continue;const d=dist(u,e)-(e.human?60:0);if(d<bd){bd=d;best=e}}return best}
 function ai(u,dt){
  if((u.aiT-=dt)<=0)u.tgt=pickTarget(u);
- const e=u.tgt&&!u.tgt.dead?u.tgt:null;let mx=0,my=0;u.aiSprint=!e?u.stam>60:dist(u,e)>460&&u.stam>45;
+ const e=u.tgt&&!u.tgt.dead?u.tgt:null;let mx=0,my=0;u.aiSprint=!e?(u.run??100)>60:dist(u,e)>460&&(u.run??100)>45;
  if(!e){const gx=u.team?MAP.x+200:MAP.w-200,a=Math.atan2(u.lane-u.y,gx-u.x);
   return[Math.cos(a)*.9,Math.sin(a)*.9+clamp((u.lane-u.y)/300,-.5,.5)]}
  const d=dist(u,e),a=ang(u,e),tt=d/800;
@@ -6894,8 +6897,9 @@ function updUnit(u,dt,active){
  const wantB=canBlock(u)&&active&&u.stun<=0&&!u.cast&&!u.spin&&u.blockLock<=0&&u.stam>0&&(ctl?!!(I&&I.f):u.aiBlock>0);
  u.block=!!wantB;u.blockT=u.block?(u.blockT||0)+dt:0;
  u.chk=active&&!u.dead&&u.stun<=0&&!u.cast&&!u.dash&&!u.block&&!u.chan&&(ctl?!!(I&&I.r):(u.energy<35&&!nearE(u,u.x,u.y,360)));if(u.chk)u.energy=Math.min(100,u.energy+30*dt);
- {const want=ctl?!!(I&&I.sh)&&Math.hypot(I.mx,I.my)>.1:!!u.aiSprint&&u.moving;if(!want)u.sprintLock=0;u.sprint=active&&want&&!u.sprintLock&&u.stun<=0&&!u.cast&&!u.dash&&!u.block&&!u.chk&&!u.flame&&!u.spin&&!u.chan&&!(u.root>0)&&u.stam>1}
- if(u.block){u.stam-=12*dt;u.stamT=.9;if(u.stam<=0)stamHit(u,0)}else if(u.sprint){u.stam=Math.max(0,u.stam-SPRINT_COST*dt);u.stamT=.5;if(u.stam<=0){u.sprint=false;u.sprintLock=1}}else{u.stamT-=dt;if(u.stamT<=0)u.stam=Math.min(100,u.stam+(u.ch.taij?50:32)*dt)}
+ {const want=ctl?!!(I&&I.sh)&&Math.hypot(I.mx,I.my)>.1:!!u.aiSprint&&u.moving;if(!want)u.sprintLock=0;u.sprint=active&&want&&!u.sprintLock&&u.stun<=0&&!u.cast&&!u.dash&&!u.block&&!u.chk&&!u.flame&&!u.spin&&!u.chan&&!(u.root>0)&&(u.run??100)>1;
+  if(u.run==null)u.run=100;if(u.sprint){u.run=Math.max(0,u.run-SPRINT_COST*dt);u.runT=.6;if(u.run<=0){u.sprint=false;u.sprintLock=1}}else if((u.runT=(u.runT||0)-dt)<=0)u.run=Math.min(100,u.run+RUN_REGEN*dt)}
+ if(u.block){u.stam-=12*dt;u.stamT=.9;if(u.stam<=0)stamHit(u,0)}else{u.stamT-=dt;if(u.stamT<=0)u.stam=Math.min(100,u.stam+(u.ch.taij?50:32)*dt)}
  if(active&&u.stun<=0&&u.fear>0){const a=Math.atan2(u.y-u.fearY,u.x-u.fearX);mx=Math.cos(a);my=Math.sin(a);u.aim=a}
  else if(active&&u.stun<=0&&u.taunt>0&&u.tauntSrc&&!u.tauntSrc.dead){const e=u.tauntSrc,a=ang(u,e);u.aim=a;if(dist(u,e)>70){mx=Math.cos(a);my=Math.sin(a)}use(u,0,dist(u,e))}
  else if(active&&u.stun<=0){
@@ -8318,7 +8322,7 @@ function guestFrame(dt){for(const k in pressed)net.gp[k]=1;
  const k=Math.min(1,dt*14);for(const u of units)if(u!==player){u.x+=(u.nx-u.x)*k;u.y+=(u.ny-u.y)*k}
  // prédiction : le coéquipier voit son personnage bouger tout de suite, sans attendre l'hôte
  const u=player;if(u&&!u.dead&&state==='fight'){const I=localInput();u.aim=Math.atan2(I.ay-u.y,I.ax-u.x);let mx=I.mx,my=I.my;const l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l}
-  const can=u.stun<=0&&!u.dash&&!(u.root>0)&&!I.r,sp=can?u.ch.spd*SPD_K*(I.sh&&u.stam>1&&!I.f?SPRINT_K:1)*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.5:1)*(u.flame?(u.flame.still?0:.5):1)*(u.spin?.8:1)*(I.f&&canBlock(u)&&u.stam>0?.55:1)*(u.ch.pass==='speed'?1.1:1):0;
+  const can=u.stun<=0&&!u.dash&&!(u.root>0)&&!I.r,sp=can?u.ch.spd*SPD_K*(I.sh&&(u.run??100)>1&&!I.f?SPRINT_K:1)*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.5:1)*(u.flame?(u.flame.still?0:.5):1)*(u.spin?.8:1)*(I.f&&canBlock(u)&&u.stam>0?.55:1)*(u.ch.pass==='speed'?1.1:1):0;
   const ac=sp?1-Math.exp(-ACCEL*dt):1;u.gvx=(u.gvx||0)+(mx*sp-(u.gvx||0))*ac;u.gvy=(u.gvy||0)+(my*sp-(u.gvy||0))*ac;const vx=u.gvx,vy=u.gvy;u.x+=vx*dt;u.y+=vy*dt;collide(u);u.moving=l>.1&&sp>0;if(u.moving)u.walk+=dt*13;
   net.seq++;net.pend.push({seq:net.seq,vx,vy,dt});if(net.pend.length>180)net.pend.shift()}
  for(const p of projs){p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot=(p.rot||0)+dt*25;if(p.life0)p.life=Math.max(.001,p.life-dt)}

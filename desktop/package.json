@@ -1,0 +1,38 @@
+{
+  "name": "naruarena",
+  "productName": "NaruArena",
+  "version": "1.0.0",
+  "description": "Naruto · Arène ninja et Star Wars Battlerite — launcher avec mises à jour automatiques",
+  "main": "main.js",
+  "author": "allanmassonneau-code",
+  "license": "UNLICENSED",
+  "scripts": {
+    "start": "electron .",
+    "dist": "electron-builder --publish never",
+    "release": "electron-builder --publish always"
+  },
+  "dependencies": {
+    "electron-updater": "^6.3.9"
+  },
+  "devDependencies": {
+    "electron": "^33.2.1",
+    "electron-builder": "^25.1.8"
+  },
+  "build": {
+    "appId": "io.github.allanmassonneau.naruarena",
+    "productName": "NaruArena",
+    "artifactName": "NaruArena-${os}-${version}.${ext}",
+    "files": ["main.js", "preload.js", "launcher.html", "icon.png"],
+    "extraResources": [
+      { "from": "../index.html", "to": "game/index.html" },
+      { "from": "../naruto", "to": "game/naruto", "filter": ["**/*", "!build/**"] },
+      { "from": "../starwars", "to": "game/starwars" }
+    ],
+    "icon": "icon.png",
+    "publish": [{ "provider": "github", "owner": "allanmassonneau-code", "repo": "Star-wars-battelrite", "releaseType": "release" }],
+    "win": { "target": "nsis" },
+    "nsis": { "oneClick": true, "perMachine": false, "createDesktopShortcut": true, "shortcutName": "NaruArena" },
+    "linux": { "target": "AppImage", "category": "Game" },
+    "mac": { "target": "zip", "category": "public.app-category.games" }
+  }
+}
