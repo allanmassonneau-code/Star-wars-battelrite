@@ -228,7 +228,7 @@ Object.assign(ANIM,{
  uz_absorb:(P,e)=>{const k=Math.min(1,e/.12);pz(P,'armL',-1.58*k,0,-.08);pz(P,'foreL',-.05);pz(P,'armR',-1.2*k,0,.4*k);pz(P,'foreR',-1.15*k);pz(P,'chest',.12*k,-.25*k)},
 });
 // ---- trait de clan : Force vitale (réserves de chakra immenses ; sous 30 % de PV, le chakra se change en vie)
-TRAITS[6]={nom:'Force vitale',desc:'80 de chakra au départ et recharge (R) 40 % plus rapide ; sous 30 % de PV, son chakra se change en vie',
+TRAITS[6]={nom:'Force vitale',desc:'Réserves immenses : recharge (R) plus rapide (+12 chakra/s) ; sous 30 % de PV, son chakra se change en vie',
  init(u){u.energy=Math.max(u.energy,80)},
  update(u,dt){if(u.chk)u.energy=Math.min(100,u.energy+12*dt);
   if(u.hp<u.max*.3&&u.energy>.5){const c=Math.min(u.energy,2.5*dt);u.energy-=c;gain(u,c*2,u);u.uz_fv=.3}else if(u.uz_fv>0)u.uz_fv=Math.max(0,u.uz_fv-dt);
@@ -244,7 +244,7 @@ TRAITS[6]={nom:'Force vitale',desc:'80 de chakra au départ et recharge (R) 40 %
    for(let i=0;i<9;i++){const b=i*.7+t*2.2,x=p.x+Math.cos(b)*17*S,y=cy+Math.sin(b)*30*S*sk,hh=(9+Math.sin(t*12+i*2)*4)*S;g.fillStyle=i%2?rgba('#ff6a2a',.4*a):rgba('#ff2a1a',.35*a);g.beginPath();g.moveTo(x-5*S,y);g.quadraticCurveTo(x,y-hh*2.2,x+5*S,y);g.fill()}
    const hy=p.y-72*S*sk;g.fillStyle=rgba('#ff5a1a',.8*a);for(const sx of[-1,1]){g.beginPath();g.moveTo(p.x+sx*4*S,hy);g.lineTo(p.x+sx*15*S,hy-17*S);g.lineTo(p.x+sx*16*S,hy+2*S);g.closePath();g.fill()}g.fillStyle=rgba('#ffd36a',.6*a);for(const sx of[-1,1]){g.beginPath();g.moveTo(p.x+sx*8*S,hy-1*S);g.lineTo(p.x+sx*14*S,hy-11*S);g.lineTo(p.x+sx*14*S,hy);g.closePath();g.fill()}g.restore()}},
  hud(u,x,y){const on=u.uz_fv>0,lo=u.hp<u.max*.3;g.save();uzSpiral(x+7,y-4,7,performance.now()/300,1,on?'#7fe07f':'#e0503a',1.8);text('Force vitale',x+18,y,12,on?'#9fffa0':'#ffb08a','left');
-  text(on?'le chakra se change en vie':lo?'plus de chakra !':'charge du chakra +40 %',x+96,y,11,on?'#cfffcf':lo?'#ff8a7a':'#c8a890','left','normal');g.restore()}};
+  text(on?'le chakra se change en vie':lo?'plus de chakra !':'recharge (R) +12/s',x+96,y,11,on?'#cfffcf':lo?'#ff8a7a':'#c8a890','left','normal');g.restore()}};
 // champs synchronisés pour les invités (manteau du Kyûbi, Force vitale active)
 AFTER.push(()=>UK.push('uz_kyu','uz_fv'));
 // ---- équilibre (contournement en attendant le moteur, voir les demandes au moteur) : CLANBAL['6'] = PV ×1,12 et puissance ×1,14 date de l'ancien kit.

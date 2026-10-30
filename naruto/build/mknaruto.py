@@ -341,7 +341,8 @@ rep(" u.block=!!wantB;u.blockT=u.block?(u.blockT||0)+dt:0;"," if(u.parry>0)u.par
 rep(" if(src&&t.block&&o.melee&&!o.unblockable&&facing(t,src)){"," if(src&&src!==t&&t.parry>0&&o.melee&&BASIC&&!o.unblockable&&!src.dead){t.parry=0;src.stun=Math.max(src.stun,PARRY_STUN);src.cast=null;src.spin=null;const a=ang(t,src);src.kx+=Math.cos(a)*160;src.ky+=Math.sin(a)*160;if(near(t.x,t.y)){say(t,'PARADE PARFAITE !','#fff27a');say(src,'ÉTOURDI','#b8f');sparks(t.x,t.y,'#fff27a',18);jx({jfx:'shock',x:t.x,y:t.y,r:60,t:.35,m:.35,col:'#fff27a'});shake=Math.max(shake,.2);S('deflect',t)}return false}\n if(src&&t.block&&o.melee&&!o.unblockable&&facing(t,src)){")
 rep("const UK=['sprint',","const UK=['sprint','parry',")
 rep("text(`${lbl.KeyF} parade · Maj sprint`","text(`${lbl.KeyF} garde · ${lbl.KeyF}+clic parade · Maj sprint`")
-# ---------- ambiance NRP (nr_pace.js) : PV ×2,2, chakra rare (R pour se recharger, épuisement), soin commun (H)
+rep("+clic parade · Maj sprint`,396,72,","+clic parade · Maj sprint`,424,73,") # décalé : ne chevauche plus le chiffre de chakra (ckHud)
+# ---------- ambiance NRP (nr_pace.js) : PV ×1,2, chakra rare (R pour se recharger, épuisement), soin commun (H)
 # plus de chakra gagné en frappant / en étant frappé : on marque le combat, une recharge (R) est brisée par un coup franc et prend +20 % de dégâts
 rep("if(src)src.energy=Math.min(100,src.energy+dmg*(ps==='energy'?.9:.6));if(t.hero)t.energy=Math.min(100,t.energy+dmg*.2);","ckHit(t,src,dmg,o);")
 rep("if(t.vuln>0)dmg*=1.25;","if(t.vuln>0)dmg*=1.25;if(t.chk)dmg*=CK.vuln;")

@@ -7,7 +7,7 @@ KIT('u',[
  [3,'A','x.sub_soryu','Sôshôryû','Deux parchemins s\'élèvent en dragons jumeaux : une pluie d\'armes s\'abat 1 s sur la zone visée (jusqu\'à 40 dégâts) et ralentit','kunai'],
  [1,'C','x.sub_kshu','Multiclonage de shuriken','Lance un shuriken qui se multiplie en éventail de 12 : plus l\'ennemi est proche, plus il en prend (4 au plus) ; à partir du 3e, il est ralenti','shuriken'],
  [3,'B','x.sub_dogs','Chiens ninja','La meute creuse sous l\'ennemi visé et jaillit du sol 0,6 s plus tard : morsures (16) et entravé 1,2 s ; s\'éloigner à temps permet d\'y échapper','claws'],
- [1,'S','x.sub_raiki','Raikiri','Charge la foudre au poing 0,4 s puis fonce en ligne droite : transperce le 1er ennemi (40 dégâts, étourdi 0,4 s) et blesse les suivants ; ×1,35 sur une cible trempée','lightning'],
+ [1,'S','x.sub_raiki','Raikiri','Charge la foudre au poing 0,4 s puis fonce en ligne droite : transperce le 1er ennemi (34 dégâts, étourdi 0,4 s) et blesse les suivants ; ×1,35 sur une cible trempée','lightning'],
  [3,'B','x.sub_clay','Argile explosive','Lâche 3 oiseaux d\'argile qui poursuivent les ennemis et explosent au contact ; relance : « Katsu ! », ils explosent tous aussitôt','tag'],
 ]);
 // ---------- aides ----------
@@ -82,12 +82,12 @@ AUXF.sub_dhole=()=>{};
 // Raikiri : pendant la ruée, le 1er ennemi rencontré est transpercé, les suivants blessés (chacun une seule fois)
 AUXF.sub_raiki=x=>{const u=x.owner;if(u.dead){x.t=0;return}x.x=u.x;x.y=u.y;
  for(const e of enemies(u)){if(x.hs.has(e)||e.phase>0||Math.hypot(e.x-u.x,e.y-u.y)>u.r+e.r+14)continue;x.hs.add(e);const V=VFX;VFX='lightning';
-  if(!x.n){if(hit(e,u,40,{melee:1,unblockable:1,stun:.4,fx:u.x,fy:u.y})){x.n=1;say(e,'TRANSPERCÉ','#bfe6ff');jx({jfx:'sub_raihit',ti:units.indexOf(e),x:e.x,y:e.y,a:x.a,t:.55,m:.55});
+  if(!x.n){if(hit(e,u,34,{melee:1,unblockable:1,stun:.4,fx:u.x,fy:u.y})){x.n=1;say(e,'TRANSPERCÉ','#bfe6ff');jx({jfx:'sub_raihit',ti:units.indexOf(e),x:e.x,y:e.y,a:x.a,t:.55,m:.55});
    if(near(e.x,e.y)){S('boom',u);S('chidori',u);shake=Math.max(shake,.35)}if(u===player||e===player)hs=Math.max(hs,.1)}}
   else hit(e,u,14,{melee:1,unblockable:1,slow:.8});VFX=V}
  if(!u.dash)x.t=0};
 // Argile explosive : les oiseaux tournent vers leur proie (2,8 rad/s) ; chaque explosion (contact, relance, fin de vol) a son nuage
-function subClayBoom(p){const o=p.owner,V=VFX;VFX='sub_clay';aoe(o,p.x,p.y,62,11,{kb:180,unblockable:1,quiet:1},'#ffe0b0');VFX=V;jx({jfx:'sub_cboom',x:p.x,y:p.y,r:62,t:.65,m:.65});
+function subClayBoom(p){const o=p.owner,V=VFX;VFX='sub_clay';aoe(o,p.x,p.y,62,9,{kb:180,unblockable:1,quiet:1},'#ffe0b0');VFX=V;jx({jfx:'sub_cboom',x:p.x,y:p.y,r:62,t:.65,m:.65});
  if(near(p.x,p.y)){sparks(p.x,p.y,'#f4efe4',14);S('boom',o);shake=Math.max(shake,.18)}}
 AUXF.sub_clay=(x,dt)=>{const u=x.owner;let alive=0;
  for(const p of x.L){if(p.dead||p.life<=0){if(!p.cbD){p.cbD=1;subClayBoom(p)}continue}alive++;

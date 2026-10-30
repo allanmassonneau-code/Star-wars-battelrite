@@ -23,8 +23,8 @@ KIT('c5',[
  [5,'S','x.in_wolf','Loup bicéphale',IN_D.wolf,'claws'],
  [5,'A','x.in_garoga','Garôga',IN_D.garoga,'tai'],
 ]);
-// équilibrage du clan : CLANBAL[5] (PV ×1,13, puissance ×1,17, dans nr_ninja.js) a été réglé pour l'ancien kit ; ce facteur sur les dégâts
-// infligés par un Inuzuka le compense en attendant qu'il soit reporté dans CLANBAL (puis remis à 1)
+// équilibrage du clan : facteur sur les dégâts infligés par un Inuzuka ; CLANBAL[5] (PV ×1,4, puissance ×1,4, dans nr_ninja.js) a été réglé
+// en tenant compte de ce facteur (ambiance NRP)
 const IN_BAL=.86;
 // ---------- outils : le ninken partenaire ----------
 const in_I=u=>units.indexOf(u);

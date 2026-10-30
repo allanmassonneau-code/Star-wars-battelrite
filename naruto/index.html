@@ -715,9 +715,9 @@ STATD.push((u,p,S)=>{if(u!==player||u.run==null||u.run>=99.5)return;g.save();g.l
 AFTER.push(()=>{ANIM.parry=(P,e)=>{const k=e<.4?e/.4:1-(e-.4)/.6;pz(P,'armR',-1.5*k,0,-.6*k+(e>.4?.9*(e-.4):0));pz(P,'foreR',-.9*k);pz(P,'armL',-.5*k,0,.5*k);pz(P,'chest',.2*k,-.35*k);P.root.z=-3*k}});
 
 // ---------- Ambiance NRP : combats plus longs et posés, chakra qui compte, soin commun à tous (H) ----------
-// PV ×1,4 pour tous (dans mkNinja, sans toucher l'équilibre entre les kits) : avec le chakra rare, la course plus lente et la mort subite
-// repoussée, un duel IA contre IA dure ~58 s (médiane) au lieu de ~24 s ; le soin (H) l'allonge encore (~77 s)
-const HPK=1.4;
+// PV ×1,2 pour tous (dans mkNinja, sans toucher l'équilibre entre les kits) : avec le chakra rare, la course plus lente et la mort subite
+// repoussée, un duel IA contre IA dure ~55-60 s (médiane, kits aléatoires et persos de l'anime) ; le soin (H) l'allonge encore
+const HPK=1.2;
 // chakra : une jauge pleine = 5 jutsu environ ; presque pas de régénération en combat ; R (maintenu) est LA façon de se recharger,
 // mais on est immobile, on prend +20 % de dégâts et un coup franc brise la concentration ; à sec, le ninja est épuisé
 const CK={spawn:100, // chakra au début d'une manche / à la réapparition
@@ -1702,7 +1702,7 @@ KIT('u',[
  [3,'A','x.sub_soryu','Sôshôryû','Deux parchemins s\'élèvent en dragons jumeaux : une pluie d\'armes s\'abat 1 s sur la zone visée (jusqu\'à 40 dégâts) et ralentit','kunai'],
  [1,'C','x.sub_kshu','Multiclonage de shuriken','Lance un shuriken qui se multiplie en éventail de 12 : plus l\'ennemi est proche, plus il en prend (4 au plus) ; à partir du 3e, il est ralenti','shuriken'],
  [3,'B','x.sub_dogs','Chiens ninja','La meute creuse sous l\'ennemi visé et jaillit du sol 0,6 s plus tard : morsures (16) et entravé 1,2 s ; s\'éloigner à temps permet d\'y échapper','claws'],
- [1,'S','x.sub_raiki','Raikiri','Charge la foudre au poing 0,4 s puis fonce en ligne droite : transperce le 1er ennemi (40 dégâts, étourdi 0,4 s) et blesse les suivants ; ×1,35 sur une cible trempée','lightning'],
+ [1,'S','x.sub_raiki','Raikiri','Charge la foudre au poing 0,4 s puis fonce en ligne droite : transperce le 1er ennemi (34 dégâts, étourdi 0,4 s) et blesse les suivants ; ×1,35 sur une cible trempée','lightning'],
  [3,'B','x.sub_clay','Argile explosive','Lâche 3 oiseaux d\'argile qui poursuivent les ennemis et explosent au contact ; relance : « Katsu ! », ils explosent tous aussitôt','tag'],
 ]);
 // ---------- aides ----------
@@ -1777,12 +1777,12 @@ AUXF.sub_dhole=()=>{};
 // Raikiri : pendant la ruée, le 1er ennemi rencontré est transpercé, les suivants blessés (chacun une seule fois)
 AUXF.sub_raiki=x=>{const u=x.owner;if(u.dead){x.t=0;return}x.x=u.x;x.y=u.y;
  for(const e of enemies(u)){if(x.hs.has(e)||e.phase>0||Math.hypot(e.x-u.x,e.y-u.y)>u.r+e.r+14)continue;x.hs.add(e);const V=VFX;VFX='lightning';
-  if(!x.n){if(hit(e,u,40,{melee:1,unblockable:1,stun:.4,fx:u.x,fy:u.y})){x.n=1;say(e,'TRANSPERCÉ','#bfe6ff');jx({jfx:'sub_raihit',ti:units.indexOf(e),x:e.x,y:e.y,a:x.a,t:.55,m:.55});
+  if(!x.n){if(hit(e,u,34,{melee:1,unblockable:1,stun:.4,fx:u.x,fy:u.y})){x.n=1;say(e,'TRANSPERCÉ','#bfe6ff');jx({jfx:'sub_raihit',ti:units.indexOf(e),x:e.x,y:e.y,a:x.a,t:.55,m:.55});
    if(near(e.x,e.y)){S('boom',u);S('chidori',u);shake=Math.max(shake,.35)}if(u===player||e===player)hs=Math.max(hs,.1)}}
   else hit(e,u,14,{melee:1,unblockable:1,slow:.8});VFX=V}
  if(!u.dash)x.t=0};
 // Argile explosive : les oiseaux tournent vers leur proie (2,8 rad/s) ; chaque explosion (contact, relance, fin de vol) a son nuage
-function subClayBoom(p){const o=p.owner,V=VFX;VFX='sub_clay';aoe(o,p.x,p.y,62,11,{kb:180,unblockable:1,quiet:1},'#ffe0b0');VFX=V;jx({jfx:'sub_cboom',x:p.x,y:p.y,r:62,t:.65,m:.65});
+function subClayBoom(p){const o=p.owner,V=VFX;VFX='sub_clay';aoe(o,p.x,p.y,62,9,{kb:180,unblockable:1,quiet:1},'#ffe0b0');VFX=V;jx({jfx:'sub_cboom',x:p.x,y:p.y,r:62,t:.65,m:.65});
  if(near(p.x,p.y)){sparks(p.x,p.y,'#f4efe4',14);S('boom',o);shake=Math.max(shake,.18)}}
 AUXF.sub_clay=(x,dt)=>{const u=x.owner;let alive=0;
  for(const p of x.L){if(p.dead||p.life<=0){if(!p.cbD){p.cbD=1;subClayBoom(p)}continue}alive++;
@@ -1993,7 +1993,7 @@ KIT('u',[
  [4,'A','x.sub_shishi','Barrière Shishienjin','Quatre flammes violettes dressent un dôme au curseur : 3 s, les ennemis pris dedans ne peuvent plus en sortir (8 dégâts, le mur brûle et repousse)','genjutsu'],
  [4,'S','x.sub_byakugo','Byakugô','Losange sur le front : 4 s, chaque dégât subi est régénéré 1 s plus tard, en brûlant ton chakra (1 chakra pour 4 PV ; sans chakra, plus rien)','heal'],
  [5,'S','x.sub_manda','Invocation : Manda','Un serpent géant charge tout droit à travers l\'arène et avale le 1er ennemi touché : caché et neutralisé 1,5 s, puis recraché (42 dégâts au total)','smoke'],
- [5,'S','x.sub_rsk','Fûton : Rasenshuriken','Lancer longue portée : explose en sphère de lames de vent (jusqu\'à 45 dégâts) qui tranche le chakra : -30 chakra et plus aucun chakra récupéré 3 s','rasenshuriken'],
+ [5,'S','x.sub_rsk','Fûton : Rasenshuriken','Lancer longue portée : explose en sphère de lames de vent (jusqu\'à 40 dégâts) qui tranche le chakra : -30 chakra et plus aucun chakra récupéré 3 s','rasenshuriken'],
 ]);
 // ---------- aides ----------
 const subBI=u=>units.indexOf(u);
@@ -2033,7 +2033,7 @@ Object.assign(NAT,{
   u.stealth=Math.max(u.stealth,1.5);
   for(const e of units)if(e.team!==u.team&&e.tgt===u)e.tgt=D}),
  // --- Barrière Shishienjin : quatre flammes violettes puis le dôme ; enfermés dedans, ou tenus dehors
- sub_shishi:S_('Barrière Shishienjin','Dôme violet : les ennemis enfermés ne sortent plus',14,{cast:.25,tele:{r:150,max:420},ai:RG(400,.55)},(u,a,td)=>{const p=subFree(atP(u,a,td,420),60);anim(u,'sub_shishi',.75);S('genjutsu',u);
+ sub_shishi:S_('Barrière Shishienjin','Dôme violet : les ennemis enfermés ne sortent plus',17,{cast:.25,tele:{r:150,max:420},ai:RG(400,.55)},(u,a,td)=>{const p=subFree(atP(u,a,td,420),60);anim(u,'sub_shishi',.75);S('genjutsu',u);
   aux.push({type:'sub_shishi',x:p.x,y:p.y,r:150,t:3.45,m:3.45,team:u.team,owner:u,n:0,side:new Map(),bt:new Map()});jx({jfx:'sub_shishiup',x:p.x,y:p.y,r:150,t:.45,m:.45})}),
  // --- Byakugô (Tsunade) : le sceau libère le chakra stocké ; chaque blessure se referme 1 s plus tard, tant qu'il reste du chakra
  sub_byakugo:S_('Byakugô','4 s : régénère les dégâts subis 1 s plus tard',18,{ai:{mode:'self',max:280,p:.45}},(u)=>{anim(u,'sub_byk',.75);S('ignite',u);S('orb',u);u.sub_byk=4;
@@ -2113,7 +2113,7 @@ function subBCut(u,e){const lost=Math.min(e.energy,30);e.energy-=lost;if(near(e.
  const o=aux.find(a=>a.type==='sub_ckc'&&a.tg===e);if(o){o.t=o.m=3;o.cap=e.energy}else aux.push({type:'sub_ckc',x:e.x,y:e.y,r:0,t:3,m:3,team:u.team,owner:u,tg:e,ti:subBI(e),cap:e.energy,sh:0});e.sub_ckc=3}
 AUXF.sub_rskd=x=>{const u=x.owner;if(!u)return;
  if(x.k<=0&&x.t>.05){x.k=.15;VFX='rasenshuriken';for(const e of enemies(u)){if(Math.hypot(e.x-x.x,e.y-x.y)>=x.r+e.r)continue;if(hit(e,u,3,{unblockable:1,slow:.5,pull:150,fx:x.x,fy:x.y})&&!x.hs.has(e)){x.hs.add(e);subBCut(u,e)}}VFX=null}
- if(x.t<=0&&!x.done){x.done=1;VFX='rasenshuriken';for(const e of enemies(u))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)hit(e,u,14,{kb:380,unblockable:1,fx:x.x,fy:x.y});VFX=null;detoFx(x.x,x.y,x.r,'rasenshuriken');if(near(x.x,x.y)){S('boom',u);shake=Math.max(shake,.3)}}};
+ if(x.t<=0&&!x.done){x.done=1;VFX='rasenshuriken';for(const e of enemies(u))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)hit(e,u,10,{kb:380,unblockable:1,fx:x.x,fy:x.y});VFX=null;detoFx(x.x,x.y,x.r,'rasenshuriken');if(near(x.x,x.y)){S('boom',u);shake=Math.max(shake,.3)}}};
 // chakra tranché : le chakra de la cible ne peut plus remonter (charge, coups, pilules…)
 AUXF.sub_ckc=(x,dt)=>{const e=x.tg;if(!e||e.dead){if(e)e.sub_ckc=0;x.t=0;return}x.x=e.x;x.y=e.y;e.sub_ckc=Math.max(0,x.t);x.sh-=dt;
  if(e.energy>x.cap+.01){e.energy=x.cap;if(x.sh<=0&&e.chk){x.sh=1.2;if(near(e.x,e.y))say(e,'CHAKRA COUPÉ','#4ab0ff')}}else x.cap=e.energy;if(x.t<=0)e.sub_ckc=0};
@@ -5457,8 +5457,8 @@ KIT('c5',[
  [5,'S','x.in_wolf','Loup bicéphale',IN_D.wolf,'claws'],
  [5,'A','x.in_garoga','Garôga',IN_D.garoga,'tai'],
 ]);
-// équilibrage du clan : CLANBAL[5] (PV ×1,13, puissance ×1,17, dans nr_ninja.js) a été réglé pour l'ancien kit ; ce facteur sur les dégâts
-// infligés par un Inuzuka le compense en attendant qu'il soit reporté dans CLANBAL (puis remis à 1)
+// équilibrage du clan : facteur sur les dégâts infligés par un Inuzuka ; CLANBAL[5] (PV ×1,4, puissance ×1,4, dans nr_ninja.js) a été réglé
+// en tenant compte de ce facteur (ambiance NRP)
 const IN_BAL=.86;
 // ---------- outils : le ninken partenaire ----------
 const in_I=u=>units.indexOf(u);
@@ -5960,7 +5960,7 @@ Object.assign(ANIM,{
  uz_absorb:(P,e)=>{const k=Math.min(1,e/.12);pz(P,'armL',-1.58*k,0,-.08);pz(P,'foreL',-.05);pz(P,'armR',-1.2*k,0,.4*k);pz(P,'foreR',-1.15*k);pz(P,'chest',.12*k,-.25*k)},
 });
 // ---- trait de clan : Force vitale (réserves de chakra immenses ; sous 30 % de PV, le chakra se change en vie)
-TRAITS[6]={nom:'Force vitale',desc:'80 de chakra au départ et recharge (R) 40 % plus rapide ; sous 30 % de PV, son chakra se change en vie',
+TRAITS[6]={nom:'Force vitale',desc:'Réserves immenses : recharge (R) plus rapide (+12 chakra/s) ; sous 30 % de PV, son chakra se change en vie',
  init(u){u.energy=Math.max(u.energy,80)},
  update(u,dt){if(u.chk)u.energy=Math.min(100,u.energy+12*dt);
   if(u.hp<u.max*.3&&u.energy>.5){const c=Math.min(u.energy,2.5*dt);u.energy-=c;gain(u,c*2,u);u.uz_fv=.3}else if(u.uz_fv>0)u.uz_fv=Math.max(0,u.uz_fv-dt);
@@ -5976,7 +5976,7 @@ TRAITS[6]={nom:'Force vitale',desc:'80 de chakra au départ et recharge (R) 40 %
    for(let i=0;i<9;i++){const b=i*.7+t*2.2,x=p.x+Math.cos(b)*17*S,y=cy+Math.sin(b)*30*S*sk,hh=(9+Math.sin(t*12+i*2)*4)*S;g.fillStyle=i%2?rgba('#ff6a2a',.4*a):rgba('#ff2a1a',.35*a);g.beginPath();g.moveTo(x-5*S,y);g.quadraticCurveTo(x,y-hh*2.2,x+5*S,y);g.fill()}
    const hy=p.y-72*S*sk;g.fillStyle=rgba('#ff5a1a',.8*a);for(const sx of[-1,1]){g.beginPath();g.moveTo(p.x+sx*4*S,hy);g.lineTo(p.x+sx*15*S,hy-17*S);g.lineTo(p.x+sx*16*S,hy+2*S);g.closePath();g.fill()}g.fillStyle=rgba('#ffd36a',.6*a);for(const sx of[-1,1]){g.beginPath();g.moveTo(p.x+sx*8*S,hy-1*S);g.lineTo(p.x+sx*14*S,hy-11*S);g.lineTo(p.x+sx*14*S,hy);g.closePath();g.fill()}g.restore()}},
  hud(u,x,y){const on=u.uz_fv>0,lo=u.hp<u.max*.3;g.save();uzSpiral(x+7,y-4,7,performance.now()/300,1,on?'#7fe07f':'#e0503a',1.8);text('Force vitale',x+18,y,12,on?'#9fffa0':'#ffb08a','left');
-  text(on?'le chakra se change en vie':lo?'plus de chakra !':'charge du chakra +40 %',x+96,y,11,on?'#cfffcf':lo?'#ff8a7a':'#c8a890','left','normal');g.restore()}};
+  text(on?'le chakra se change en vie':lo?'plus de chakra !':'recharge (R) +12/s',x+96,y,11,on?'#cfffcf':lo?'#ff8a7a':'#c8a890','left','normal');g.restore()}};
 // champs synchronisés pour les invités (manteau du Kyûbi, Force vitale active)
 AFTER.push(()=>UK.push('uz_kyu','uz_fv'));
 // ---- équilibre (contournement en attendant le moteur, voir les demandes au moteur) : CLANBAL['6'] = PV ×1,12 et puissance ×1,14 date de l'ancien kit.
@@ -7215,7 +7215,8 @@ const JD=KITROWS; // le catalogue est assemblé par les fichiers kits/*.js (un p
 const JPAR={'Multiclonage':{d:1.2},'Ninken':{d:3},'Insectes dévoreurs':{dps:4}};
 const JCD={'Lotus primaire':10,'Lotus caché':9}; // temps de recharge propres à certains jutsu
 // équilibrage par clan (-1 = sans clan) et par nature : [multiplicateur PV, multiplicateur puissance], réglés par duels simulés
-const CLANBAL={"0":[0.82,0.78],"1":[0.78,0.75],"2":[1.2,1.26],"3":[0.97,0.96],"4":[1.08,1.08],"5":[1.13,1.17],"6":[1.12,1.14],"7":[1.11,1.11],"8":[0.83,0.79],"9":[0.97,0.98],"10":[1.04,1.04],"-1":[0.99,1]},NATBAL={"0":[0.98,0.95],"1":[1.04,1.04],"2":[0.96,0.93],"3":[1.02,1.01],"4":[1,1]},STYLEBAL={}; // STYLEBAL[style] = [PV, puissance]
+// réglés à nouveau pour l'ambiance NRP (PV ×1,2, chakra rare) : duels simulés de chaque clan / nature contre des kits aléatoires, 45-55 % visés
+const CLANBAL={"0":[0.79,0.75],"1":[0.8,0.77],"2":[1.31,1.38],"3":[1.04,1.03],"4":[1,1],"5":[1.4,1.4],"6":[1.08,0.94],"7":[1.01,1.01],"8":[0.84,0.8],"9":[0.97,0.98],"10":[0.94,0.93],"-1":[0.9,0.91]},NATBAL={"0":[1.02,0.99],"1":[1.06,1.06],"2":[0.96,0.93],"3":[1.02,1.01],"4":[0.98,0.98]},STYLEBAL={}; // STYLEBAL[style] = [PV, puissance]
 const JL=JD.map(([cat,slot,r,src,n,d,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,vfx,P:JPAR[n]}));
 const SLOTN=['Style de combat','Jutsu','Déplacement','Jutsu','Jutsu','Ultime'];
 const stype=s=>s===2?2:s===5?5:1; // 1 = jutsu (Clic D, Q, E), 2 = déplacement, 5 = ultime
@@ -9289,7 +9290,7 @@ function drawBoard(y0,rh){units.forEach(stOf);const all=Object.values(STATS);if(
 function drawHud(){
  const p=player;
  text(p.ch.name+' (toi)',30,32,18,'#9fd4ff','left');bar(30,40,360,16,p.hp/p.max,'#4db8ff');eBar(30,59,360,p.energy/100);ckHud(p,30,59,360);{const T=trait(p);if(T&&T.hud)try{T.hud(p,30,96)}catch(e){}}
- if(canBlock(p)){bar(30,67,360,4,p.stam/100,p.blockLock>0?'#a55':'#7df');text(`${lbl.KeyF} garde · ${lbl.KeyF}+clic parade · Maj sprint`,396,72,10,'#7df','left','normal')}
+ if(canBlock(p)){bar(30,67,360,4,p.stam/100,p.blockLock>0?'#a55':'#7df');text(`${lbl.KeyF} garde · ${lbl.KeyF}+clic parade · Maj sprint`,424,73,10,'#7df','left','normal')}
  let ay=0;for(const m of units)if(m!==player&&m.team===player.team&&(m.human||mode!=='battle')){const yy=ay;ay+=30;text(m.ch.name+(m.human?' (coéquipier)':' (allié)'),30,94+yy,13,m.human?'#9f9':'#9fd4ff','left');bar(30,100+yy,220,8,m.hp/m.max,m.human?'#7f7':'#4db8ff');if(m.dead&&mode==='battle')text(`retour dans ${Math.ceil(m.respawn)} s`,258,108+yy,11,'#9f9','left','normal')}
  if(mode!=='battle'){const fo=units.filter(u=>u.team!==player.team),two=fo.length>1;fo.forEach((e,i)=>{const y=i*(fo.length>2?36:44);
   text(e.ch.name,W-30,(two?28:32)+y,two?14:18,'#ffa0a0','right');bar(W-390,(two?34:40)+y,360,two?10:16,e.hp/e.max,'#ff4d4d',1);eBar(W-390,(two?46:59)+y,360,e.energy/100,1)});

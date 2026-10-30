@@ -7,7 +7,7 @@ KIT('u',[
  [4,'A','x.sub_shishi','Barrière Shishienjin','Quatre flammes violettes dressent un dôme au curseur : 3 s, les ennemis pris dedans ne peuvent plus en sortir (8 dégâts, le mur brûle et repousse)','genjutsu'],
  [4,'S','x.sub_byakugo','Byakugô','Losange sur le front : 4 s, chaque dégât subi est régénéré 1 s plus tard, en brûlant ton chakra (1 chakra pour 4 PV ; sans chakra, plus rien)','heal'],
  [5,'S','x.sub_manda','Invocation : Manda','Un serpent géant charge tout droit à travers l\'arène et avale le 1er ennemi touché : caché et neutralisé 1,5 s, puis recraché (42 dégâts au total)','smoke'],
- [5,'S','x.sub_rsk','Fûton : Rasenshuriken','Lancer longue portée : explose en sphère de lames de vent (jusqu\'à 45 dégâts) qui tranche le chakra : -30 chakra et plus aucun chakra récupéré 3 s','rasenshuriken'],
+ [5,'S','x.sub_rsk','Fûton : Rasenshuriken','Lancer longue portée : explose en sphère de lames de vent (jusqu\'à 40 dégâts) qui tranche le chakra : -30 chakra et plus aucun chakra récupéré 3 s','rasenshuriken'],
 ]);
 // ---------- aides ----------
 const subBI=u=>units.indexOf(u);
@@ -47,7 +47,7 @@ Object.assign(NAT,{
   u.stealth=Math.max(u.stealth,1.5);
   for(const e of units)if(e.team!==u.team&&e.tgt===u)e.tgt=D}),
  // --- Barrière Shishienjin : quatre flammes violettes puis le dôme ; enfermés dedans, ou tenus dehors
- sub_shishi:S_('Barrière Shishienjin','Dôme violet : les ennemis enfermés ne sortent plus',14,{cast:.25,tele:{r:150,max:420},ai:RG(400,.55)},(u,a,td)=>{const p=subFree(atP(u,a,td,420),60);anim(u,'sub_shishi',.75);S('genjutsu',u);
+ sub_shishi:S_('Barrière Shishienjin','Dôme violet : les ennemis enfermés ne sortent plus',17,{cast:.25,tele:{r:150,max:420},ai:RG(400,.55)},(u,a,td)=>{const p=subFree(atP(u,a,td,420),60);anim(u,'sub_shishi',.75);S('genjutsu',u);
   aux.push({type:'sub_shishi',x:p.x,y:p.y,r:150,t:3.45,m:3.45,team:u.team,owner:u,n:0,side:new Map(),bt:new Map()});jx({jfx:'sub_shishiup',x:p.x,y:p.y,r:150,t:.45,m:.45})}),
  // --- Byakugô (Tsunade) : le sceau libère le chakra stocké ; chaque blessure se referme 1 s plus tard, tant qu'il reste du chakra
  sub_byakugo:S_('Byakugô','4 s : régénère les dégâts subis 1 s plus tard',18,{ai:{mode:'self',max:280,p:.45}},(u)=>{anim(u,'sub_byk',.75);S('ignite',u);S('orb',u);u.sub_byk=4;
@@ -127,7 +127,7 @@ function subBCut(u,e){const lost=Math.min(e.energy,30);e.energy-=lost;if(near(e.
  const o=aux.find(a=>a.type==='sub_ckc'&&a.tg===e);if(o){o.t=o.m=3;o.cap=e.energy}else aux.push({type:'sub_ckc',x:e.x,y:e.y,r:0,t:3,m:3,team:u.team,owner:u,tg:e,ti:subBI(e),cap:e.energy,sh:0});e.sub_ckc=3}
 AUXF.sub_rskd=x=>{const u=x.owner;if(!u)return;
  if(x.k<=0&&x.t>.05){x.k=.15;VFX='rasenshuriken';for(const e of enemies(u)){if(Math.hypot(e.x-x.x,e.y-x.y)>=x.r+e.r)continue;if(hit(e,u,3,{unblockable:1,slow:.5,pull:150,fx:x.x,fy:x.y})&&!x.hs.has(e)){x.hs.add(e);subBCut(u,e)}}VFX=null}
- if(x.t<=0&&!x.done){x.done=1;VFX='rasenshuriken';for(const e of enemies(u))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)hit(e,u,14,{kb:380,unblockable:1,fx:x.x,fy:x.y});VFX=null;detoFx(x.x,x.y,x.r,'rasenshuriken');if(near(x.x,x.y)){S('boom',u);shake=Math.max(shake,.3)}}};
+ if(x.t<=0&&!x.done){x.done=1;VFX='rasenshuriken';for(const e of enemies(u))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)hit(e,u,10,{kb:380,unblockable:1,fx:x.x,fy:x.y});VFX=null;detoFx(x.x,x.y,x.r,'rasenshuriken');if(near(x.x,x.y)){S('boom',u);shake=Math.max(shake,.3)}}};
 // chakra tranché : le chakra de la cible ne peut plus remonter (charge, coups, pilules…)
 AUXF.sub_ckc=(x,dt)=>{const e=x.tg;if(!e||e.dead){if(e)e.sub_ckc=0;x.t=0;return}x.x=e.x;x.y=e.y;e.sub_ckc=Math.max(0,x.t);x.sh-=dt;
  if(e.energy>x.cap+.01){e.energy=x.cap;if(x.sh<=0&&e.chk){x.sh=1.2;if(near(e.x,e.y))say(e,'CHAKRA COUPÉ','#4ab0ff')}}else x.cap=e.energy;if(x.t<=0)e.sub_ckc=0};
