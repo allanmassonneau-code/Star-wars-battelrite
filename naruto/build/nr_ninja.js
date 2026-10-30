@@ -23,7 +23,9 @@ const JPAR={'Multiclonage':{d:1.2},'Ninken':{d:3},'Insectes dévoreurs':{dps:4}}
 const JCD={'Lotus primaire':10,'Lotus caché':9}; // temps de recharge propres à certains jutsu
 // équilibrage par clan (-1 = sans clan) et par nature : [multiplicateur PV, multiplicateur puissance], réglés par duels simulés
 // réglés à nouveau pour l'ambiance NRP (PV ×1,2 puis ×1,1, chakra rare) : duels simulés de chaque clan / nature contre des kits aléatoires, 45-55 % visés
-const CLANBAL={"0":[0.78,0.74],"1":[0.82,0.79],"2":[1.38,1.45],"3":[1.04,1.03],"4":[1,1],"5":[1.4,1.4],"6":[1.08,0.94],"7":[0.99,0.99],"8":[0.87,0.83],"9":[0.97,0.98],"10":[0.94,0.93],"-1":[0.9,0.91]},NATBAL={"0":[1.02,0.99],"1":[1.06,1.06],"2":[0.96,0.93],"3":[1.02,1.01],"4":[0.98,0.98]},STYLEBAL={}; // STYLEBAL[style] = [PV, puissance]
+// puis pour les 21 clans (Hoki … Yuki, refonte Uzumaki) : duels 1v1 sans soin, 46-56 % pour chaque clan / nature ; les clans aux combats trop courts
+// (Nara, Uzumaki, Hoki, Shirogane, Chinoike, Hôzuki, Katon) ont plus de PV et moins de puissance : duel médian ≈ 50 s
+const CLANBAL={"0":[0.78,0.72],"1":[0.82,0.75],"2":[1.64,1.2],"3":[1.04,1.03],"4":[0.99,0.99],"5":[1.4,1.32],"6":[1.16,0.84],"7":[0.95,0.93],"8":[0.87,0.83],"9":[0.95,0.93],"10":[0.95,0.95],"11":[1.17,0.81],"12":[0.9,0.87],"13":[1.03,1.02],"14":[1.27,0.87],"15":[1.15,0.88],"17":[1.03,1.03],"18":[1.04,1.04],"19":[1.12,0.98],"20":[0.95,0.9],"-1":[0.93,0.95]},NATBAL={"0":[1.15,0.9],"1":[1.05,1.03],"2":[0.95,0.91],"3":[1.02,1.01],"4":[0.98,0.98]},STYLEBAL={}; // STYLEBAL[style] = [PV, puissance]
 const JL=JD.map(([cat,slot,r,src,n,d,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,vfx,P:JPAR[n]}));
 const SLOTN=['Style de combat','Jutsu','Déplacement','Jutsu','Jutsu','Ultime'];
 const stype=s=>s===2?2:s===5?5:1; // 1 = jutsu (Clic D, Q, E), 2 = déplacement, 5 = ultime

@@ -47,7 +47,7 @@ function subNearE(u,x,y,r){let b=null,bd=r;for(const e of units){if(e.dead||e.te
 function subFree(p,r){p.x=clamp(p.x,B.x+r,B.x+B.w-r);p.y=clamp(p.y,B.y+r,B.y+B.h-r);for(const o of OBST){const m=o.r+r;if(Math.abs(p.x-o.x)>=m||Math.abs(p.y-o.y)>=m)continue;const d=Math.hypot(p.x-o.x,p.y-o.y);if(d<m&&d>0){p.x=o.x+(p.x-o.x)/d*m;p.y=o.y+(p.y-o.y)/d*m}}return p} // rejet rapide par boîte avant l'hypoténuse
 Object.assign(NAT,{
  // --- Rasengan : la sphère se forme (incantation courte, interruptible), puis on fonce ; la 1re cible est broyée puis projetée
- sub_rasen:S_('Rasengan','Forme une sphère puis fonce : broie et projette la 1re cible',11,{hero:'savage',cast:.28,line:{len:300,w:40},ai:{mode:'gap',min:60,max:300,p:.6}},(u,a,td)=>{S('rasengan',u);anim(u,'sub_rasen',.55);
+ sub_rasen:S_('Rasengan','Forme une sphère puis fonce : broie et projette la 1re cible',10,{hero:'savage',cast:.28,line:{len:300,w:40},ai:{mode:'gap',min:60,max:300,p:.6}},(u,a,td)=>{S('rasengan',u);anim(u,'sub_rasen',.55);
   // un clone vivant aide à façonner la sphère : Ôdama Rasengan (plus gros, plus fort)
   const C=aux.find(o=>o.type==='sub_clones'&&o.owner===u&&o.L.some(p=>p.life>0)),cl=C&&C.L.find(p=>p.life>0);if(cl){cl.life=0;subPoof(cl.x,cl.y,30,u);say(u,'ÔDAMA RASENGAN !','#7fc8ff');jx({jfx:'sub_bigras',ui:units.indexOf(u),x:u.x,y:u.y,t:.75,m:.75})}
   const d=clamp((td||250)+30,140,300);dash(u,a,d,d/950,{});aux.push({type:'sub_rasen',x:u.x,y:u.y,a,r:0,t:1.2,m:1.2,team:u.team,owner:u,ui:units.indexOf(u),k:0,n:0,ph:1,big:cl?1:0})}),

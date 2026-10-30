@@ -5,8 +5,8 @@ KIT('u',[
  [4,'B','x.sub_nr_kyubi','Chakra de Kyûbi','Rugissement qui repousse (8), puis 5 s : régénère, tes coups de base lancent des griffes de chakra (7, une par seconde) ; insensible au contrôle 2 s','fox'],
 ]);
 Object.assign(NAT,{
- sub_nr_kyubi:S_('Chakra de Kyûbi','Rugissement qui repousse (8), puis 5 s : régénère, tes coups de base lancent des griffes de chakra (7, une par seconde) ; insensible au contrôle 2 s',16,{hero:'chewie',tele:{self:1,r:150},ai:SELF(200,.7)},(u)=>{S('heavy',u);S('roar',u);anim(u,'roar',.8);
-  u.unstop=Math.max(u.unstop,2);u.regenB=Math.max(u.regenB,5);u.sub_nr_kyu=5;VFX='fox';aoe(u,u.x,u.y,150,8,{kb:290,unblockable:1},'#ff6a2a');VFX=null;
+ sub_nr_kyubi:S_('Chakra de Kyûbi','Rugissement qui repousse (8), puis 5 s : régénère, tes coups de base lancent des griffes de chakra (7, une par seconde) ; insensible au contrôle 2 s',20,{hero:'chewie',tele:{self:1,r:150},ai:SELF(200,.7)},(u)=>{S('heavy',u);S('roar',u);anim(u,'roar',.8);
+  u.unstop=Math.max(u.unstop,2);u.regenB=Math.max(u.regenB,4);u.sub_nr_kyu=5;VFX='fox';aoe(u,u.x,u.y,150,8,{kb:290,unblockable:1},'#ff6a2a');VFX=null;
   jx({jfx:'sub_nr_roar',ui:units.indexOf(u),x:u.x,y:u.y,t:.7,m:.7});if(near(u.x,u.y))shake=Math.max(shake,.35)}),
 });
 // ---- logique (hôte) : la durée du manteau, et les griffes lancées par les coups de base (au plus une par seconde)
