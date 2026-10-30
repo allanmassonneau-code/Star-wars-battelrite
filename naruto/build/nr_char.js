@@ -277,6 +277,7 @@ function drawNinjaHead(u,h,fx,fy,back,fl,t,run){const hx=fx*1.5,hy=-53,ex=hx+fx*
  if(h.acc==='masque'||L.collar)outlined(()=>{g.moveTo(ex-11,hy+2.5);g.lineTo(ex+11,hy+2.5);g.lineTo(ex+9,hy+11);g.lineTo(ex-9,hy+11)},L.collar&&h.acc!=='masque'?(fl?'#fff':L.collar):'#2a3550');
  if(h.acc==='lunettes'){g.fillStyle='rgba(30,30,40,.93)';g.beginPath();g.roundRect(ex-8.4,hy-2,6.6,5.4,1.6);g.roundRect(ex+1.8,hy-2,6.6,5.4,1.6);g.fill();g.fillRect(ex-2,hy-.2,4,1.1)}
  if(h.acc==='anbu'){outlined(()=>{g.ellipse(ex,hy+2,10.5,10,0,0,7)},'#f2f0ea');g.fillStyle='#1a1414';for(const s of[-1,1]){g.beginPath();g.ellipse(ex+s*4,hy+1,2,1.4,0,0,7);g.fill()}g.strokeStyle='#c02a2a';g.lineWidth=1.2;for(const s of[-1,1]){g.beginPath();g.moveTo(ex+s*2,hy-5);g.lineTo(ex+s*3.5,hy-1.8);g.moveTo(ex+s*6.5,hy+4);g.lineTo(ex+s*4.5,hy+7);g.stroke()}}
+ if(h.acc==='oinin')yu_mask(g,ex,hy,1,1); // clan Yuki : masque de chasseur de déserteurs (kits/yuki.js)
  if(h.acc==='visee'){g.strokeStyle='#3a3f4a';g.lineWidth=1.2;g.beginPath();g.moveTo(ex+4,hy-1.5);g.lineTo(hx+R,hy-3);g.stroke();blob(ex+4.2,hy+1.5,2.5,'#5a6a7a');circ(ex+4.2,hy+1.5,1.5,'#6ad8ff')}
  if(h.acc==='fleur'){const fx2=hx+(fx>=0?-8:8);for(let i=0;i<5;i++){const a=i*1.26;blob(fx2+Math.cos(a)*2.6,hy-11+Math.sin(a)*2.6,2,fl?'#fff':'#e4e8f8')}circ(fx2,hy-11,1.4,'#8e9ede')}
  if(HP)drawHair2D(HP,2,hx,hy,hc,fl,back);
