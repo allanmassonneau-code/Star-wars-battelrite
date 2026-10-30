@@ -6,15 +6,15 @@
 const KMD={
  shuri:'3 shuriken de papier en éventail serré (6 dégâts chacun) ; dépense jusqu\'à 2 feuilles : +1 shuriken par feuille',
  lance:'Lance de papier comprimé qui transperce (17 dégâts) ; le premier ennemi touché est cloué au sol 0,6 s',
- corps:'Ton corps se disperse en feuilles 1 s : intouchable et plus rapide, sans attaquer ; en se reformant, elles tranchent autour de toi (12 dégâts, ralentit)',
+ corps:'Ton corps se disperse en feuilles 0,8 s : intouchable et plus rapide, sans attaquer ; en se reformant, elles tranchent autour de toi (12 dégâts, ralentit)',
  bfly:'4 papillons de papier traquent l\'ennemi le plus proche (5 dégâts chacun, ralentit, révèle) ; +1 papillon par feuille dépensée (3 max)',
  chakram:'Chakram de papier qui revient : 13 dégâts à l\'aller, 13 au retour, et le retour ralentit 1,2 s',
  wall:'Mur de papier plié devant toi 3 s : il arrête les tirs ennemis ; en retombant, ses feuilles rejoignent ta réserve (+3)',
  cocoon:'Les feuilles s\'enroulent sur la zone visée (0,5 s) : 10 dégâts, entravé 1,1 s ; puis le cocon explose (20 dégâts, repousse)',
  wings:'Ailes de papier : tu voles jusqu\'au point visé (300 max) ; à l\'atterrissage, un coup d\'ailes repousse les ennemis proches (6 dégâts)',
- clone:'Tu files de 200 max en laissant un double de papier : il arrête un tir, puis explose au contact d\'un ennemi ou au bout de 1,5 s (12 dégâts, ralentit)',
- sea:'Mer de papiers explosifs sur la zone (ralentit) ; au bout de 1,5 s, tout explose : 40 dégâts, repousse, étourdit 0,4 s ; +12 au centre, +2 par feuille dépensée',
- angel:'Grandes ailes d\'ange 6 s : plus rapide, insensible aux ralentissements et entraves, feuilles 2× plus vite ; chaque seconde, 2 lames de papier filent vers l\'ennemi le plus proche (5 dégâts chacune)'};
+ clone:'Tu files de 200 max en laissant un double de papier : il arrête un tir ennemi et explose alors, ou au contact d\'un ennemi, ou au bout de 1,5 s (12 dégâts, ralentit)',
+ sea:'Mer de papiers explosifs sur la zone (ralentit) ; au bout de 1,5 s, tout explose : 40 dégâts, repousse, étourdit 0,4 s ; +12 au centre ; dépense toutes tes feuilles : +2 dégâts par feuille',
+ angel:'Grandes ailes d\'ange 6 s : plus rapide, insensible aux ralentissements et entraves, feuilles 2× plus vite ; chaque seconde, 2 lames de papier filent vers l\'ennemi le plus proche (4 dégâts chacune)'};
 KIT('c16',[
  [1,'D','x.km_shuri','Shuriken de papier',KMD.shuri,'km_paper'],
  [2,'C','x.km_wings','Ailes de papier',KMD.wings,'km_paper'],
@@ -29,13 +29,13 @@ KIT('c16',[
  [5,'A','x.km_angel','Ange de papier',KMD.angel,'km_paper'],
 ]);
 // style de combat propre (ajouté à la fin de STYLES)
-STYLES.push(['Feuilles tranchantes','Feuilles de papier tranchantes à moyenne portée ; tous les 3 tirs qui touchent, une feuille rejoint ta réserve','x.km_style','km_paper','sand',[16],.66,.72]);
+STYLES.push(['Feuilles tranchantes','Feuilles de papier tranchantes à moyenne portée ; tous les 3 tirs qui touchent, une feuille rejoint ta réserve','x.km_style','km_paper','sand',[16],.66,.70]);
 // apparence du clan : yeux ambrés et fleur de papier dans les cheveux (si aucun accessoire choisi)
 CLOOK[16]=(look)=>{look.head.eye='#d89a3a';if(!look.head.acc)look.head.acc='fleur'};
 
 // ---------- outils ----------
 const KMC={w:'#f6f3ea',s:'#d6d0c0',b:'#7a9ae0',l:'#c8d6f4',o:'#2a3050',r:'#c8302a',y:'#ffb04a'}; // papier, ombre, bleu du clan, bleu clair, contour, encre rouge, feu
-const KM_MAX=6,KM_REG=3,KM_TEAR=12,KM_ABS=3; // feuilles max, une toutes les 2,5 s, un coup ≥ 10 en déchire une qui en absorbe 4
+const KM_MAX=6,KM_REG=3,KM_TEAR=12,KM_ABS=3; // feuilles max, une toutes les 3 s, un coup ≥ 12 en déchire une qui en absorbe 3
 const km_I=u=>units.indexOf(u);
 const km_S=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son brut
 // dépense jusqu'à n feuilles de la réserve, renvoie le nombre dépensé
@@ -51,14 +51,14 @@ Object.assign(NAT,{
  // Shuriken de papier : éventail, +1 shuriken par feuille dépensée (2 max)
  km_shuri:SP('Shuriken de papier',KMD.shuri,5,{line:{len:520,w:60},ai:RG(480,.7)},(u,a)=>{const n=3+km_spend(u,2);S('wind',u);km_S('saber',u);anim(u,'km_flick',.42);
   jx({jfx:'km_fold',ui:km_I(u),x:u.x,y:u.y,a,t:.35,m:.35});
-  for(let i=0;i<n;i++)proj(u,a+(i-(n-1)/2)*.085,{vfx:'km_paper',spd:860,r:7,dmg:6,life:.62,col:KMC.w,kind:'km_shuri'})}),
+  for(let i=0;i<n;i++)proj(u,a+(i-(n-1)/2)*.06,{vfx:'km_paper',spd:860,r:7,dmg:6,life:.62,col:KMC.w,kind:'km_shuri'})}),
  // Lance de papier : perce, le premier ennemi touché est cloué
  km_lance:SP('Lance de papier',KMD.lance,8,{line:{len:560,w:22},ai:RG(540,.6)},(u,a)=>{S('wind',u);km_S('saber',u);anim(u,'km_spear',.5);let pin=0;
   jx({jfx:'km_fold',ui:km_I(u),x:u.x,y:u.y,a,t:.35,m:.35,big:1});
   proj(u,a,{vfx:'km_paper',spd:1050,r:9,dmg:17,life:.55,col:KMC.w,pierce:1,kind:'km_spear',onHit:(p,t)=>{if(pin||t.dead)return;pin=1;hit(t,p.owner,0,{root:.6,silent:1});
    if(t.root>0){jx({jfx:'km_pin',ti:km_I(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.7,m:.7});km_S('rock',t)}}})}),
  // Corps de papier : intangible 1 s, plus rapide, ne peut ni frapper ni lancer de jutsu ; se reforme en tranchant autour de soi
- km_corps:SP('Corps de papier',KMD.corps,13,{hero:'ahsoka',ai:DEF},(u)=>{const D=1;u.phase=Math.max(u.phase||0,D);u.haste=Math.max(u.haste,D);u.disarm=Math.max(u.disarm,D);u.silence=Math.max(u.silence,D);u.km_sc=D;
+ km_corps:SP('Corps de papier',KMD.corps,13,{hero:'ahsoka',ai:DEF},(u)=>{const D=.8;u.phase=Math.max(u.phase||0,D);u.haste=Math.max(u.haste,D);u.disarm=Math.max(u.disarm,D);u.silence=Math.max(u.silence,D);u.km_sc=D;
   S('wind',u);km_S('poof',u);anim(u,'km_scatter',D);jx({jfx:'km_swirl',ui:km_I(u),x:u.x,y:u.y,t:D,m:D});
   later(u,D,()=>{if(u.dead)return;u.km_sc=0;VFX='km_paper';aoe(u,u.x,u.y,90,12,{slow:.8,unblockable:1,quiet:1},KMC.l);VFX=null;jx({jfx:'km_reform',x:u.x,y:u.y,r:90,t:.45,m:.45});km_S('saber',u);anim(u,'km_open',.35)})}),
  // Papillons shikigami : nuée qui traque, +1 papillon par feuille (3 max)
@@ -120,14 +120,14 @@ AUXF.km_wings=x=>{const u=x.owner;if(!u||u.dead||(x.big&&!(u.km_ang>0))){x.t=Mat
 // ---------- trait de clan : Danse du shikigami ----------
 TRAITS[16]={nom:'Danse du shikigami',desc:'Jusqu\'à 6 feuilles de papier tournent autour de toi (une de plus toutes les 3 s). Un coup reçu de 12 dégâts ou plus en déchire une, qui en absorbe 3. Shuriken, Papillons et Mer de papiers dépensent ces feuilles pour frapper plus fort',
  init(u){u.km_pp=2;u.km_ppT=0},
- update(u,dt){if(u.km_cds!==u.cds){u.km_cds=u.cds;u.km_pp=2;u.km_ppT=0;u.km_ang=0;u.km_sc=0;u.km_hc=0} // nouveau ninja ou réapparition
+ update(u,dt){if(u.km_rs!==u.chg){if(u.km_rs){u.km_pp=2;u.km_ppT=0;u.km_ang=0;u.km_sc=0;u.km_hc=0}u.km_rs=u.chg} // nouveau ninja ou réapparition (mkUnit recrée u.chg ; les outils de test remplacent souvent u.cds, pas u.chg)
   if(u.km_sc>0)u.km_sc=Math.max(0,u.km_sc-dt);
   if(u.km_ang>0){u.km_ang=Math.max(0,u.km_ang-dt);u.root=0;u.km_angK-=dt;
    if(u.km_angK<=0){u.km_angK=1;let tg=null,bd=520;for(const e of enemies(u)){if(e.stealth>0)continue;const d=dist(u,e);if(d<bd){bd=d;tg=e}}
-    if(tg){const a=ang(u,tg);VFX='km_paper';for(const o of[-.22,.22])proj(u,a+o,{vfx:'km_paper',spd:720,r:6,dmg:5,life:.8,col:KMC.w,home:1,noClash:1,kind:'km_blade'});VFX=null;if(near(u.x,u.y))km_S('saber',u)}}}
+    if(tg){const a=ang(u,tg);VFX='km_paper';for(const o of[-.22,.22])proj(u,a+o,{vfx:'km_paper',spd:720,r:6,dmg:4,life:.8,col:KMC.w,home:1,noClash:1,kind:'km_blade'});VFX=null;if(near(u.x,u.y))km_S('saber',u)}}}
   if((u.km_pp|0)<KM_MAX){u.km_ppT=(u.km_ppT||0)+dt*(u.km_ang>0?2:1);if(u.km_ppT>=KM_REG){u.km_ppT=0;u.km_pp=(u.km_pp|0)+1}}else u.km_ppT=0},
  // un gros coup déchire une feuille, qui en absorbe une partie
- take(t,src,dmg,o){if(dmg>=KM_TEAR&&src&&src!==t&&(t.km_pp|0)>0&&!o.silent){t.km_pp--;dmg=Math.max(0,dmg-KM_ABS);jx({jfx:'km_tear',ui:km_I(t),x:t.x,y:t.y,a:Math.atan2(t.y-src.y,t.x-src.x),t:.5,m:.5})}return dmg},
+ take(t,src,dmg,o){if(dmg>=KM_TEAR&&src&&src!==t&&src.team!==t.team&&(t.km_pp|0)>0&&!o.silent){t.km_pp--;dmg=Math.max(0,dmg-KM_ABS);jx({jfx:'km_tear',ui:km_I(t),x:t.x,y:t.y,a:Math.atan2(t.y-src.y,t.x-src.x),t:.5,m:.5})}return dmg},
  // feuilles qui tournent autour du ninja (en arrière : plus petites et pâles)
  draw(u,p,S,sk){const n=u.km_pp|0;if(!n||u.km_sc>0)return;const t=performance.now()/1000,cy=p.y-36*S*(sk||1);
   for(let i=0;i<n;i++){const b=t*1.5+i*Math.PI*2/n,c=Math.cos(b),s=Math.sin(b),y=cy+s*9*S+Math.sin(t*2.4+i*1.7)*4*S,fr=s<0?.75:1;
