@@ -715,9 +715,9 @@ STATD.push((u,p,S)=>{if(u!==player||u.run==null||u.run>=99.5)return;g.save();g.l
 AFTER.push(()=>{ANIM.parry=(P,e)=>{const k=e<.4?e/.4:1-(e-.4)/.6;pz(P,'armR',-1.5*k,0,-.6*k+(e>.4?.9*(e-.4):0));pz(P,'foreR',-.9*k);pz(P,'armL',-.5*k,0,.5*k);pz(P,'chest',.2*k,-.35*k);P.root.z=-3*k}});
 
 // ---------- Ambiance NRP : combats plus longs et posés, chakra qui compte, soin commun à tous (H) ----------
-// PV ×1,2 pour tous (dans mkNinja, sans toucher l'équilibre entre les kits) : avec le chakra rare, la course plus lente et la mort subite
-// repoussée, un duel IA contre IA dure ~55-60 s (médiane, kits aléatoires et persos de l'anime) ; le soin (H) l'allonge encore
-const HPK=1.2;
+// PV ×1,1 pour tous (dans mkNinja, sans toucher l'équilibre entre les kits) : avec le chakra rare, la course plus lente, la mort subite
+// repoussée et le soin (H), une manche IA contre IA dure ~55 s (médiane, kits aléatoires et persos de l'anime ; ×1,2 donnait ~61 s)
+const HPK=1.1;
 // chakra : une jauge pleine = 5 jutsu environ ; presque pas de régénération en combat ; R (maintenu) est LA façon de se recharger,
 // mais on est immobile, on prend +20 % de dégâts et un coup franc brise la concentration ; à sec, le ninja est épuisé
 const CK={spawn:100, // chakra au début d'une manche / à la réapparition
@@ -7215,7 +7215,7 @@ const JD=KITROWS; // le catalogue est assemblé par les fichiers kits/*.js (un p
 const JPAR={'Multiclonage':{d:1.2},'Ninken':{d:3},'Insectes dévoreurs':{dps:4}};
 const JCD={'Lotus primaire':10,'Lotus caché':9}; // temps de recharge propres à certains jutsu
 // équilibrage par clan (-1 = sans clan) et par nature : [multiplicateur PV, multiplicateur puissance], réglés par duels simulés
-// réglés à nouveau pour l'ambiance NRP (PV ×1,2, chakra rare) : duels simulés de chaque clan / nature contre des kits aléatoires, 45-55 % visés
+// réglés à nouveau pour l'ambiance NRP (PV ×1,2 puis ×1,1, chakra rare) : duels simulés de chaque clan / nature contre des kits aléatoires, 45-55 % visés
 const CLANBAL={"0":[0.78,0.74],"1":[0.82,0.79],"2":[1.38,1.45],"3":[1.04,1.03],"4":[1,1],"5":[1.4,1.4],"6":[1.08,0.94],"7":[0.99,0.99],"8":[0.87,0.83],"9":[0.97,0.98],"10":[0.94,0.93],"-1":[0.9,0.91]},NATBAL={"0":[1.02,0.99],"1":[1.06,1.06],"2":[0.96,0.93],"3":[1.02,1.01],"4":[0.98,0.98]},STYLEBAL={}; // STYLEBAL[style] = [PV, puissance]
 const JL=JD.map(([cat,slot,r,src,n,d,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,vfx,P:JPAR[n]}));
 const SLOTN=['Style de combat','Jutsu','Déplacement','Jutsu','Jutsu','Ultime'];
@@ -9291,7 +9291,7 @@ function drawHud(){
  const p=player;
  text(p.ch.name+' (toi)',30,32,18,'#9fd4ff','left');bar(30,40,360,16,p.hp/p.max,'#4db8ff');eBar(30,59,360,p.energy/100);ckHud(p,30,59,360);{const T=trait(p);if(T&&T.hud)try{T.hud(p,30,96)}catch(e){}}
  if(canBlock(p)){bar(30,67,360,4,p.stam/100,p.blockLock>0?'#a55':'#7df');text(`${lbl.KeyF} garde · ${lbl.KeyF}+clic parade · Maj sprint`,424,73,10,'#7df','left','normal')}
- let ay=0;for(const m of units)if(m!==player&&m.team===player.team&&(m.human||mode!=='battle')){const yy=ay;ay+=30;text(m.ch.name+(m.human?' (coéquipier)':' (allié)'),30,94+yy,13,m.human?'#9f9':'#9fd4ff','left');bar(30,100+yy,220,8,m.hp/m.max,m.human?'#7f7':'#4db8ff');if(m.dead&&mode==='battle')text(`retour dans ${Math.ceil(m.respawn)} s`,258,108+yy,11,'#9f9','left','normal')}
+ let ay=(T=>T&&T.hud?22:0)(trait(p));for(const m of units)if(m!==player&&m.team===player.team&&(m.human||mode!=='battle')){const yy=ay;ay+=30;text(m.ch.name+(m.human?' (coéquipier)':' (allié)'),30,94+yy,13,m.human?'#9f9':'#9fd4ff','left');bar(30,100+yy,220,8,m.hp/m.max,m.human?'#7f7':'#4db8ff');if(m.dead&&mode==='battle')text(`retour dans ${Math.ceil(m.respawn)} s`,258,108+yy,11,'#9f9','left','normal')}
  if(mode!=='battle'){const fo=units.filter(u=>u.team!==player.team),two=fo.length>1;fo.forEach((e,i)=>{const y=i*(fo.length>2?36:44);
   text(e.ch.name,W-30,(two?28:32)+y,two?14:18,'#ffa0a0','right');bar(W-390,(two?34:40)+y,360,two?10:16,e.hp/e.max,'#ff4d4d',1);eBar(W-390,(two?46:59)+y,360,e.energy/100,1)});
   text(`${score[player.team]}  —  ${score[1-player.team]}`,W/2,40,30,'#ffe81f');

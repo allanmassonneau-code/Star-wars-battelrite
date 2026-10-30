@@ -367,6 +367,8 @@ rep("if(ab.cast)text(`${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');","i
 rep("if(ab.ult&&!ready){g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-p.energy/100),s,sh*p.energy/100)}","if(ab.ult&&!ready&&p.cds[i]<=0){const f=Math.min(1,p.energy/Math.max(1,jcost(ab)));g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-f),s,sh*f)}")
 rep("text(muted?`${lbl.KeyM} : son coupé`","drawHealHud(p,x0+n*(s+gap)+6,y,sh);text(muted?`${lbl.KeyM} : son coupé`")
 rep("eBar(30,59,360,p.energy/100);{const T=trait(p);","eBar(30,59,360,p.energy/100);ckHud(p,30,59,360);{const T=trait(p);")
+# liste des alliés décalée sous la ligne du trait de clan (sinon les deux textes se chevauchent en équipe)
+rep("let ay=0;for(const m of units)if(m!==player&&m.team===player.team","let ay=(T=>T&&T.hud?22:0)(trait(p));for(const m of units)if(m!==player&&m.team===player.team")
 # mort subite plus tardive : les duels durent plus longtemps
 rep("const SD_START=45,SD_LEN=35;","const SD_START=90,SD_LEN=55;")
 # forme cachée unique des unités : les champs ajoutés en cours de partie (kits, IA, dessin) sont déclarés d'avance à undefined dans mkUnit

@@ -17,7 +17,7 @@ const JD=KITROWS; // le catalogue est assemblé par les fichiers kits/*.js (un p
 const JPAR={'Multiclonage':{d:1.2},'Ninken':{d:3},'Insectes dévoreurs':{dps:4}};
 const JCD={'Lotus primaire':10,'Lotus caché':9}; // temps de recharge propres à certains jutsu
 // équilibrage par clan (-1 = sans clan) et par nature : [multiplicateur PV, multiplicateur puissance], réglés par duels simulés
-// réglés à nouveau pour l'ambiance NRP (PV ×1,2, chakra rare) : duels simulés de chaque clan / nature contre des kits aléatoires, 45-55 % visés
+// réglés à nouveau pour l'ambiance NRP (PV ×1,2 puis ×1,1, chakra rare) : duels simulés de chaque clan / nature contre des kits aléatoires, 45-55 % visés
 const CLANBAL={"0":[0.78,0.74],"1":[0.82,0.79],"2":[1.38,1.45],"3":[1.04,1.03],"4":[1,1],"5":[1.4,1.4],"6":[1.08,0.94],"7":[0.99,0.99],"8":[0.87,0.83],"9":[0.97,0.98],"10":[0.94,0.93],"-1":[0.9,0.91]},NATBAL={"0":[1.02,0.99],"1":[1.06,1.06],"2":[0.96,0.93],"3":[1.02,1.01],"4":[0.98,0.98]},STYLEBAL={}; // STYLEBAL[style] = [PV, puissance]
 const JL=JD.map(([cat,slot,r,src,n,d,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,vfx,P:JPAR[n]}));
 const SLOTN=['Style de combat','Jutsu','Déplacement','Jutsu','Jutsu','Ultime'];

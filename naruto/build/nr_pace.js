@@ -1,8 +1,8 @@
 
 // ---------- Ambiance NRP : combats plus longs et posés, chakra qui compte, soin commun à tous (H) ----------
-// PV ×1,2 pour tous (dans mkNinja, sans toucher l'équilibre entre les kits) : avec le chakra rare, la course plus lente et la mort subite
-// repoussée, un duel IA contre IA dure ~55-60 s (médiane, kits aléatoires et persos de l'anime) ; le soin (H) l'allonge encore
-const HPK=1.2;
+// PV ×1,1 pour tous (dans mkNinja, sans toucher l'équilibre entre les kits) : avec le chakra rare, la course plus lente, la mort subite
+// repoussée et le soin (H), une manche IA contre IA dure ~55 s (médiane, kits aléatoires et persos de l'anime ; ×1,2 donnait ~61 s)
+const HPK=1.1;
 // chakra : une jauge pleine = 5 jutsu environ ; presque pas de régénération en combat ; R (maintenu) est LA façon de se recharger,
 // mais on est immobile, on prend +20 % de dégâts et un coup franc brise la concentration ; à sec, le ninja est épuisé
 const CK={spawn:100, // chakra au début d'une manche / à la réapparition
