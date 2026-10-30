@@ -119,7 +119,10 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  // armes selon le style
  const wpn=W.col||'#3af';
  if(k==='kunai'){add(box(2.6,4.2,3),'thighR','#3a3a44',[-3,-3,1.6]);add(cyl(.7,.7,4,6),'handR','#3a3a44',[0,-3.2,1.2],[0,0,0]);add(cone(1.6,6,4),'handR','#d3d8e2',[0,-7.8,1.2],[Math.PI,0,0]);add(tor(1.1,.35,8),'handR','#3a3a44',[0,-.6,1.2])}
- if(k==='sword'){add(cyl(.8,.8,6,6),'handR','#2a2a33',[0,-1,2.8],[Math.PI/2,0,0]);add(cyl(2.2,2.2,.6,10),'handR','#c8a040',[0,-1,5.6],[Math.PI/2,0,0]);add(box(1.2,.5,32),'handR','#e8ecf2',[0,-1,22]);add(box(1,4,20),'chest','#2a2a33',[6,-2,-8],[0,0,.7])}
+ // clan Hoshigaki : Samehada en main (style « Samehada ») : grosse lame bandée, écailles
+ if(k==='sword'&&W.same){add(cyl(1,1,8,6),'handR','#5a4a3a',[0,-1,2.6],[Math.PI/2,0,0]);add(cap(3.6,26,10),'handR','#3a4a7a',[0,-1,22],[Math.PI/2,0,0],[1,.75,1]);for(const z of[12,18,24,30])add(tor(3.5,.55,12),'handR','#7a8ab8',[0,-1,z],[0,0,0],[1,.78,1]);
+  for(const z of[14,21,28])for(const sd of[-1,1])add(cone(1.1,3.2,4),'handR','#9ab8cc',[sd*3.6,-1,z],[0,0,-sd*Math.PI/2])}
+ else if(k==='sword'){add(cyl(.8,.8,6,6),'handR','#2a2a33',[0,-1,2.8],[Math.PI/2,0,0]);add(cyl(2.2,2.2,.6,10),'handR','#c8a040',[0,-1,5.6],[Math.PI/2,0,0]);add(box(1.2,.5,32),'handR','#e8ecf2',[0,-1,22]);add(box(1,4,20),'chest','#2a2a33',[6,-2,-8],[0,0,.7])}
  if(k==='bone'){add(cone(1.9,24,6),'foreR','#f2efe6',[0,-14,-1.5],[Math.PI-.15,0,0]);add(cone(1.4,10,6),'foreL','#f2efe6',[0,-8,-1.5],[Math.PI-.4,0,0])}
  if(k==='claws')for(const s of['L','R'])for(const x of[-1.2,0,1.2])add(cone(.6,4.6,4),'hand'+s,'#f4f0e8',[x,-4.4,1.4],[Math.PI+.3,0,0]);
  if(k==='senbon')for(const x of[-1,0,1])add(cyl(.18,.18,9,4),'handR','#e8eef6',[x,-3,2.6],[1.2,0,0]);
