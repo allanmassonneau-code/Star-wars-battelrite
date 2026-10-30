@@ -75,7 +75,7 @@ function pickData(p){const BUD=budgetOf(MY),c0=kitCost(MY);
     return{v:J.id,n:J.n,col:catCol(J.cat),ic:J.cat,ult:ab.ult,rank:J.r,tab:catName(J.cat),l2:`${jcost(ab)} chakra · ${fmtCd(ab.cd)} · ${ab.mud?ab.mud+' mudras':'sans mudra'}`,d:J.d,sel,used:o,nc,BUD}})}}
  if(p==='pass')return{kind:'o',title:'Passif',sub:'Un bonus permanent et gratuit',items:PASSK.map((k,i)=>({v:i,n:PASS[k][0],col:'#7fd87f',ic:'p',d:PASS[k][1],sel:MY.pass===i}))};
  if(p==='preset')return{kind:'o',title:'Persos de l\'anime · modèles de kit',sub:'Remplace ton build et ton apparence par ceux d\'un ninja célèbre (ton nom et ton camp sont gardés)',
-  items:PRESETS.map((P,i)=>({v:i,n:P[0],col:P[2]>=0?CLANS[P[2]][1]:NATURES[P[1]][2],ic:P[2]>=0?'c'+P[2]:'n'+P[1],d:`${P[2]>=0?'Clan '+CLANS[P[2]][0]:'Sans clan'}${P[2]===TAIJ?'':' · '+NATURES[P[1]][0]} · ${P[6].join(', ')}`,sel:presetI===i}))};
+  items:PRESETS.map((P,i)=>({v:i,n:P.full,col:P.clan>=0?CLANS[P.clan][1]:NATURES[P.nat][2],ic:P.clan>=0?'c'+P.clan:'n'+P.nat,d:`${presetLine(P)} · ${P.j.join(', ')}`,sel:presetI===i}))};
  const a=APP.find(x=>x[2]===p);if(!a)return null;const L=a[1](),look=p.startsWith('l.');
  return{kind:look?'a':'o',title:a[0],sub:look?'Clique une option : l\'aperçu à gauche change tout de suite':'',items:L.map((it,v)=>({v,n:itN(it),col:swCol(it)||'#e8cfa8',sw:swCol(it),ic:p==='nat'?'n'+v:p==='clan'?(v?'c'+(v-1):'u'):undefined,d:optDesc(p,v),sel:getB(p)===v}))}}
 // le panneau prend la hauteur de son contenu (au plus jusqu'en bas de l'écran, puis défilement)
@@ -87,15 +87,66 @@ const cardRect=(G,i)=>({x:G.gx+(i%G.cols)*(G.cw+10),y:G.gy+Math.floor(i/G.cols)*
 const closeRect=B=>({x:B.x+B.w-44,y:B.y+12,w:32,h:32});
 function tabRects(D,B){if(!D.tabs)return[];let x=B.x+20;g.font=FNT(13,'bold');return D.tabs.map((t,i)=>{const n=i?D.items.filter(it=>it.tab===t).length:D.items.length,s=`${t} (${n})`,w=g.measureText(s).width+28,R={x,y:B.y+66,w,h:28,s};x+=w+8;return R})}
 function openPicker(p){picker=p;pickTab=0;pickScroll=0;const D=pickData(p);if(!D){picker=null;return}const G=pickGrid(D),i=D.items.findIndex(x=>x.sel);if(i>=0)pickScroll=Math.max(0,Math.min(pickMax(D,G),Math.floor(i/G.cols)*G.step-G.gh/2+G.ch/2))}
-// le bouton « Persos de l'anime » ouvre la galerie si elle existe (openPresetGallery), sinon la liste des modèles de kit
-function openAnime(){if(typeof openPresetGallery==='function')openPresetGallery();else openPicker('preset')}
+// le bouton « Persos de l'anime » ouvre la galerie (openPresetGallery), « Modèles de kit » la liste des mêmes persos
+function openAnime(){openPresetGallery()}
+// ---------- Galerie « Persos de l'anime » : une carte par perso (aperçu 3D ou 2D, nom, clan et nature, jeu en une ligne), rangées par équipe ----------
+// clic sur une carte = ce perso devient ton ninja (kit et apparence) ; en ligne, l'invité l'envoie à l'hôte comme tout changement (rebuildMine)
+const presetLine=P=>`${P.clan>=0?'Clan '+CLANS[P.clan][0]:'Sans clan'}${P.clan===TAIJ?'':' · '+NATURES[P.nat][0]}`;
+const GB={x:36,y:46,w:1208,h:628};let GALF=null,GALL=null;
+// ninjas d'aperçu : faits une fois (leur modèle 3D est gardé tant que la galerie s'affiche)
+const galFakes=()=>GALF||(GALF=PRESETS.map((P,i)=>{const ch=mkNinja(presetBuild(i,P.n,P.side)),o=CH.p0;CH.p0=ch;const u=mkUnit('p0',0,0,ch.side);CH.p0=o;return u}));
+function galLayout(){if(GALL)return GALL;const cols=7,gx=GB.x+20,gw=GB.w-40-14,cw=(gw-(cols-1)*12)/cols,ch=216,L=[],Hd=[];let y=0;
+ GALG.forEach((gn,g)=>{const ids=PRESETS.map((_,i)=>i).filter(i=>PRESETS[i].g===g);if(!ids.length)return;Hd.push({g,y,n:ids.length});y+=28;
+  ids.forEach((id,k)=>L.push({id,x:gx+(k%cols)*(cw+12),y:y+Math.floor(k/cols)*(ch+12),w:cw,h:ch}));y+=Math.ceil(ids.length/cols)*(ch+12)+8});
+ const gy=GB.y+104;return GALL={L,Hd,gx,gw,gy,gh:GB.y+GB.h-30-gy,total:y-8}}
+const galMax=()=>{const G=galLayout();return Math.max(0,G.total-G.gh)};
+function galTabs(){const G=galLayout();let x=GB.x+20;g.font=FNT(13,'bold');return G.Hd.map(h=>{const s=`${GALG[h.g]} (${h.n})`,w=g.measureText(s).width+28,R={x,y:GB.y+66,w,h:28,s,g:h.g,top:h.y};x+=w+8;return R})}
+function openPresetGallery(){picker='gallery';pickScroll=0;const G=galLayout(),c=G.L.find(c=>c.id===presetI);if(c)pickScroll=Math.min(galMax(),Math.max(0,c.y-40))}
+function galleryClick(){if(!inRect(mouse,GB)||inRect(mouse,closeRect(GB))){picker=null;return true}
+ for(const R of galTabs())if(inRect(mouse,R)){pickScroll=Math.min(galMax(),R.top);return true}
+ const G=galLayout(),mx=galMax();if(mx>0&&inRect(mouse,{x:G.gx+G.gw,y:G.gy,w:20,h:G.gh})){pickScroll=clamp((mouse.y-G.gy)/G.gh,0,1)*mx;return true}
+ if(inRect(mouse,{x:G.gx,y:G.gy,w:G.gw,h:G.gh}))for(const c of G.L)if(inRect(mouse,{x:c.x,y:G.gy+c.y-pickScroll,w:c.w,h:c.h})){picker=null;applyPreset(c.id);return true}
+ return true}
+function galCard(c,R,hov,t){const P=PRESETS[c.id],u=galFakes()[c.id],ch=u.ch,col=GALC[P.g],sel=presetI===c.id,kc=ch.look.weapon.col;
+ rr(R,10,sel?'rgba(96,62,28,.98)':hov?'rgba(66,44,24,.98)':'rgba(30,20,12,.97)',sel?'#ffb347':hov?col:'#5a3a1e',sel?2.5:hov?2:1);
+ // aperçu : halo à la couleur du chakra, ombre au sol, le ninja de face (il pivote quand on le survole)
+ const px=R.x+R.w/2,fy=R.y+124;g.save();g.beginPath();g.roundRect(R.x+4,R.y+4,R.w-8,124,8);g.clip();
+ {const gr=g.createLinearGradient(0,R.y,0,R.y+128);gr.addColorStop(0,rgba(col,.22));gr.addColorStop(1,rgba(col,.04));g.fillStyle=gr;g.fillRect(R.x,R.y,R.w,128)}
+ {g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(px,fy-50,0,px,fy-50,70);gr.addColorStop(0,rgba(kc,hov?.28:.16));gr.addColorStop(1,rgba(kc,0));g.fillStyle=gr;g.fillRect(R.x,R.y,R.w,128);g.globalCompositeOperation='source-over'}
+ g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(px,fy-4,30,8,0,0,7);g.fill();
+ u.aim=hov?Math.PI/2+Math.sin(t*1.6)*1.3:Math.PI/2-.35;u.moving=false;u.swing=0;drawChar3(u,px,fy,1.42*(ch.look.scale>1?.9:1));g.restore();
+ g.fillStyle=col;g.fillRect(R.x+10,R.y+130,R.w-20,2);
+ fitT(P.n,R.x+R.w/2,R.y+150,16,sel?'#ffe0a0':'#ffd38a',R.w-14,'bold',11,'center');
+ fitT(P.full!==P.n?P.full:CAMPS[P.side],R.x+R.w/2,R.y+164,10.5,'#a88a68',R.w-14,'normal',9,'center');
+ // clan et nature : icônes + texte
+ {const ic=[];if(P.clan>=0)ic.push(['c'+P.clan,CLANS[P.clan][1]]);else ic.push(['u','#c8b89a']);if(P.clan!==TAIJ)ic.push(['n'+P.nat,NATURES[P.nat][2]]);
+  const s=(P.clan>=0?CLANS[P.clan][0]:'Sans clan')+(P.clan!==TAIJ?' · '+NATURES[P.nat][0]:''),z=10.5;g.font=FNT(z,'bold');const tw=Math.min(R.w-20-ic.length*19,g.measureText(s).width),x0=R.x+R.w/2-(ic.length*19+tw)/2;
+  ic.forEach(([k,c2],i)=>jIcon(x0+8+i*19,R.y+176,8,c2,k));fitT(s,x0+ic.length*19+2,R.y+180,z,'#e8cfa8',tw+1,'bold',8.5)}
+ const Lw=wrapL(P.d,R.w-16,FNT(10));fitT(Lw[0]||'',R.x+R.w/2,R.y+196,10,'#cdb898',R.w-14,'normal',8.5,'center');if(Lw[1])fitT(Lw.slice(1).join(' '),R.x+R.w/2,R.y+209,10,'#cdb898',R.w-14,'normal',8.5,'center');
+ if(sel){rr({x:R.x+R.w-58,y:R.y+8,w:50,h:17},5,'#ffb347');text('CHOISI',R.x+R.w-33,R.y+20.5,10,'#1a1008')}}
+function drawGallery(){const G=galLayout(),mx=galMax(),t=performance.now()/1000;pickScroll=clamp(pickScroll,0,mx);
+ g.fillStyle='rgba(0,0,0,.66)';g.fillRect(0,0,W,H);g.save();g.shadowColor='rgba(0,0,0,.7)';g.shadowBlur=24;rr(GB,14,'rgba(26,17,10,.98)','#8a5a2a',2);g.restore();
+ g.fillStyle='#ff9a3a';g.fillRect(GB.x+14,GB.y+56,GB.w-28,1.5);
+ fitT('⭐ Persos de l\'anime',GB.x+20,GB.y+32,21,'#ffb347',420,'bold',13);fitT('Clique un ninja : son apparence et son kit (style, 5 jutsu, voie, passif) deviennent les tiens, à retoucher ensuite. Ton camp est gardé.',GB.x+20,GB.y+50,12,'#d8b888',GB.w-120,'normal',10);
+ {const R=closeRect(GB),h=inRect(mouse,R);rr(R,8,h?'#ff9a3a':'rgba(50,34,20,.95)','#8a5a2a');text('✕',R.x+16,R.y+22,16,h?'#1a1008':'#f3d9b0')}
+ // onglets : un par équipe (clic = aller à l'équipe) ; celui de l'équipe en haut de la vue est allumé
+ const T=galTabs();let cur=0;T.forEach((R,i)=>{if(pickScroll>=R.top-30)cur=i});
+ T.forEach((R,i)=>{const on=i===cur,h=inRect(mouse,R),c=GALC[R.g];rr(R,14,on?c:h?'rgba(90,60,30,.95)':'rgba(40,28,18,.92)',c,1.5);text(R.s,R.x+R.w/2,R.y+19,13,on?(lum(c)>.45?'#1a1008':'#fff'):'#f3d9b0')});
+ const inG=inRect(mouse,{x:G.gx,y:G.gy,w:G.gw,h:G.gh});g.save();g.beginPath();g.rect(G.gx-6,G.gy-4,G.gw+12,G.gh+8);g.clip();
+ for(const h of G.Hd){const y=G.gy+h.y-pickScroll;if(y<G.gy-30||y>G.gy+G.gh)continue;const c=GALC[h.g];text(GALG[h.g].toUpperCase(),G.gx+2,y+17,13,c,'left','bold');g.font=FNT(13,'bold');const w=g.measureText(GALG[h.g].toUpperCase()).width;g.fillStyle=rgba(c,.5);g.fillRect(G.gx+w+12,y+11,G.gw-w-14,1.5)}
+ for(const c of G.L){const R={x:c.x,y:G.gy+c.y-pickScroll,w:c.w,h:c.h};if(R.y+R.h<G.gy-4||R.y>G.gy+G.gh+4)continue;const hov=inG&&inRect(mouse,R);galCard(c,R,hov,t);
+  if(hov){const P=PRESETS[c.id],ch=galFakes()[c.id].ch,b=ch.build,col=GALC[P.g];hoverTip('gal'+c.id,()=>({t:P.full,col,l:[[`${presetLine(P)} · voie ${VOIES[P.voie][0].toLowerCase()} · ${STYLES[b.j[0]][0]}`,P.clan>=0?CLANS[P.clan][1]:NATURES[P.nat][2]],[`${ch.hp} PV · vitesse ${ch.spd} · passif ${PASS[PASSK[b.pass]][0]} · ${kitCost(b)} / ${budgetOf(b)} points`,'#d8b888']].concat(b.j.slice(1).map((id,k)=>[`${lbl[SLOTS[k+1]]} · ${JL[id].n} (${JL[id].r})`,catCol(JL[id].cat)])),d:P.d,f:'Clic : jouer ce ninja'}))}}
+ g.restore();
+ if(mx>0){const tr={x:G.gx+G.gw+6,y:G.gy,w:6,h:G.gh},k=G.gh/(G.gh+mx);rr(tr,3,'rgba(255,255,255,.08)');rr({x:tr.x,y:tr.y+(G.gh-G.gh*k)*pickScroll/mx,w:6,h:G.gh*k},3,'#c08040');
+  if(pickScroll<mx)text('▼ molette pour voir la suite',GB.x+GB.w/2,GB.y+GB.h-10,11,'#ffb347','center','bold')}
+ text('Échap, ✕ ou clic hors du cadre pour fermer · ↑ ↓ défiler',GB.x+20,GB.y+GB.h-10,11,'#9a8060','left','normal')}
 function applyPick(it){const p=picker;
  if(typeof p==='number'){if(p&&it.used)MY.j[it.used]=MY.j[p];MY.j[p]=it.v;picker=null}
- else if(p==='pass'){MY.pass=it.v;picker=null}else if(p==='preset'){MY=presetBuild(it.v,MY.name,MY.side);presetI=it.v;picker=null}
+ else if(p==='pass'){MY.pass=it.v;picker=null}else if(p==='preset'){picker=null;applyPreset(it.v);return}
  else{setB(p,it.v);if(!p.startsWith('l.'))picker=null}
  rebuildMine()}
 try{cv.addEventListener('wheel',e=>{if(state==='menu'&&picker!==null){pickScroll+=e.deltaY*(e.deltaMode?40:1);e.preventDefault()}},{passive:false})}catch(e){}
-function pickerClick(){const D=pickData(picker);if(!D){picker=null;return true}const G=pickGrid(D),B=G.B;
+function pickerClick(){if(picker==='gallery')return galleryClick();const D=pickData(picker);if(!D){picker=null;return true}const G=pickGrid(D),B=G.B;
  if(!inRect(mouse,B)||inRect(mouse,closeRect(B))){picker=null;return true}
  const T=tabRects(D,B);for(let i=0;i<T.length;i++)if(inRect(mouse,T[i])){pickTab=i;pickScroll=0;return true}
  const mx=pickMax(D,G);if(mx>0&&inRect(mouse,{x:G.gx+G.gw,y:G.gy,w:20,h:G.gh})){pickScroll=clamp((mouse.y-G.gy)/G.gh,0,1)*mx;return true}
@@ -127,7 +178,7 @@ function drawCard(D,it,R,hov){const j=D.kind==='j',a=D.kind==='a';
   if(it.nc!=null&&!it.sel)text(`→ ${it.nc}/${it.BUD}`,R.x+R.w-10,R.y+40,11,it.nc>it.BUD?'#ff6a5a':'#8fd88f','right','bold');fitT(it.d,x,R.y+55,11,'#bfa888',w,'normal',10)}
  else{const L=wrapL(it.d,w,FNT(11));g.fillStyle='#bfa888';fitT(L[0]||'',x,R.y+38,11,'#cdb898',w,'normal',10);if(L[1])fitT(L.slice(1).join(' '),x,R.y+53,11,'#cdb898',w,'normal',10)}
  if(it.used){g.fillStyle='rgba(12,8,5,.6)';g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,8);g.fill();rr({x:R.x+R.w-216,y:R.y+R.h-23,w:208,h:19},9.5,'rgba(40,26,14,.97)','#8a5a2a');text(`Déjà en ${lbl[SLOTS[it.used]]} · clic : échanger`,R.x+R.w-112,R.y+R.h-9.5,11,'#ffb347')}}
-function drawPicker(){const D=pickData(picker);if(!D){picker=null;return}const G=pickGrid(D),B=G.B,L=pickList(D),mx=pickMax(D,G);pickScroll=clamp(pickScroll,0,mx);
+function drawPicker(){if(picker==='gallery')return drawGallery();const D=pickData(picker);if(!D){picker=null;return}const G=pickGrid(D),B=G.B,L=pickList(D),mx=pickMax(D,G);pickScroll=clamp(pickScroll,0,mx);
  g.fillStyle='rgba(0,0,0,.62)';g.fillRect(0,0,W,H);g.save();g.shadowColor='rgba(0,0,0,.7)';g.shadowBlur=24;rr(B,14,'rgba(26,17,10,.98)','#8a5a2a',2);g.restore();
  g.fillStyle='#ff9a3a';g.fillRect(B.x+14,B.y+56,B.w-28,1.5);
  fitT(D.title,B.x+20,B.y+32,20,'#ffb347',B.w-300,'bold',13);if(D.sub)fitT(D.sub,B.x+20,B.y+50,12,'#d8b888',B.w-120,'normal',10);
@@ -144,7 +195,7 @@ function drawPicker(){const D=pickData(picker);if(!D){picker=null;return}const G
  text('Échap, ✕ ou clic hors du cadre pour fermer'+(D.tabs?' · ← → onglets':''),B.x+20,B.y+B.h-12,11,'#9a8060','left','normal')}
 function drawMenu(){TIP=null;{const now=performance.now();if(now-menuLast>1500)picker=null;menuLast=now} // retour au menu après un match : panneau fermé
  // clavier du panneau de choix : Échap ferme, flèches haut/bas défilent, gauche/droite changent d'onglet
- if(picker!==null){if(pressed.Escape)picker=null;else{const D=pickData(picker);if(D){const G=pickGrid(D);if(pressed.ArrowDown||pressed.PageDown)pickScroll+=pressed.PageDown?G.gh:G.step;if(pressed.ArrowUp||pressed.PageUp)pickScroll-=pressed.PageUp?G.gh:G.step;
+ if(picker!==null){if(pressed.Escape)picker=null;else if(picker==='gallery'){const st=218;if(pressed.ArrowDown||pressed.PageDown)pickScroll+=pressed.PageDown?galLayout().gh:st;if(pressed.ArrowUp||pressed.PageUp)pickScroll-=pressed.PageUp?galLayout().gh:st}else{const D=pickData(picker);if(D){const G=pickGrid(D);if(pressed.ArrowDown||pressed.PageDown)pickScroll+=pressed.PageDown?G.gh:G.step;if(pressed.ArrowUp||pressed.PageUp)pickScroll-=pressed.PageUp?G.gh:G.step;
   if(D.tabs&&(pressed.ArrowLeft||pressed.ArrowRight)){pickTab=(pickTab+(pressed.ArrowRight?1:-1)+D.tabs.length)%D.tabs.length;pickScroll=0}}}}
  const free=picker===null,hv=R=>free&&inRect(mouse,R);
  g.save();g.shadowColor='#ff9a3a';g.shadowBlur=18;text('NARUTO · ARÈNE NINJA',W/2,52,42,'#ffb347');g.restore();
@@ -171,7 +222,7 @@ function drawMenu(){TIP=null;{const now=performance.now();if(now-menuLast>1500)p
   fitT(itN(it),R.v.x+(sw?12+z:8),R.y,z,'#fff',R.v.w-(sw?52:44),'bold',9);text(`${v+1}/${L.length}`,R.v.x+R.v.w-6,R.y,Math.min(10,z-1),'#8a7458','right','normal');
   if(h)hoverTip('lk'+k,()=>({t:lab+' : '+itN(it),d:`${L.length} choix. Clic : ouvrir la grille · ◀ ▶ : précédent / suivant.`}))});
  {const R=animeBtn,h=hv(R);g.save();if(h){g.shadowColor='#ffb347';g.shadowBlur=12}rr(R,R.h/2,h?'#ffb347':'rgba(70,44,18,.95)','#ffb347',2);g.restore();text('⭐ Persos de l\'anime',R.x+R.w/2,R.y+21,14,h?'#1a1008':'#ffd38a');
-  if(h)hoverTip('anime',()=>({t:'Persos de l\'anime',d:'Choisis un ninja célèbre : son apparence et son kit remplacent les tiens (ton nom est gardé). Tu peux ensuite tout retoucher.'}))}
+  if(h)hoverTip('anime',()=>({t:'Persos de l\'anime',d:`${PRESETS.length} ninjas célèbres (Équipe 7, Akatsuki, Sannin et Hokage, Konoha et Gaara) : son apparence et son kit remplacent les tiens (ton camp est gardé). Tu peux ensuite tout retoucher.`}))}
  // ===== colonne de droite : build de combat
  // camp, voie, clan, nature : ◀ ▶ pour défiler, clic au centre pour la grille
  buildKeys().forEach(([lab,list,k],i)=>{const R=selRect(i),L=list(),v=getB(k),it=L[v],off=appOff(k),h=hv(R)&&!off,sw=swCol(it);
@@ -213,7 +264,7 @@ function drawMenu(){TIP=null;{const now=performance.now();if(now-menuLast>1500)p
   fitT(over?`${pts(c-BUD)} de trop : remplace un jutsu par un de rang plus bas (le plus cher : ${mxJ.n}, rang ${mxJ.r})`:c<BUD?`${pts(BUD-c)} libre${BUD-c>1?'s':''} · rang D = 1 point, C = 2, B = 3, A = 4, S = 5${MY.clan<0?' · sans clan : +2 points':''}`:`Budget pile atteint · rang D = 1 point, C = 2, B = 3, A = 4, S = 5${MY.clan<0?' · sans clan : +2':''}`,R.x+12,R.y+44,11.5,over?'#ff8a7a':'#c8a878',R.w-24,over?'bold':'normal',9)}
  btn(rndBuildBtn,'🎲 Kit aléatoire',false);btn(presetBtn,'📜 Modèles de kit',false);
  if(hv(rndBuildBtn))hoverTip('rndK',()=>({t:'Kit aléatoire',d:'Tire au hasard clan, nature, voie, passif et jutsu. Ton apparence ne change pas.'}));
- if(hv(presetBtn))hoverTip('pre',()=>({t:'Modèles de kit',d:'Kits inspirés des ninjas célèbres (Naruto, Sasuke, Gaara…) : un bon point de départ à retoucher.'}));
+ if(hv(presetBtn))hoverTip('pre',()=>({t:'Modèles de kit',d:'Les mêmes persos de l\'anime en liste, avec leurs 5 jutsu : un bon point de départ à retoucher.'}));
  ['D','C','B','A','S'].forEach((r,i)=>{const x=BX+408+i*35;rr({x,y:643,w:31,h:22},6,RANKC[r]);text(`${r}·${RANKS[r]}`,x+15.5,659,11,'#14100a')});if(free&&inRect(mouse,{x:BX+408,y:640,w:175,h:28}))hoverTip('rk',()=>({t:'Rangs des jutsu',d:'Chaque rang coûte des points du kit (D = 1 … S = 5) et du chakra à chaque lancer (D = ${CKCOST.D}, C = ${CKCOST.C}, B = ${CKCOST.B}, A = ${CKCOST.A}, S = ${CKCOST.S} ; +14 pour un ultime). Les jutsu de nature demandent aussi des mudras (D = 2 … S = 6).'}));
  if(!coop()){const R=fightBtn,ob=overBudget(),h=hv(R)&&!ob;g.save();if(!ob){g.shadowColor='#ff9a3a';g.shadowBlur=h?22:10}rr(R,R.h/2,ob?'rgba(120,50,40,.9)':h?'#ffb347':'#ff9a3a',ob?'#a55':'#ffd38a',2);g.restore();
   text(ob?'TROP DE POINTS':'COMBATTRE ▶',R.x+R.w/2,R.y+R.h/2+(ob?0:6),ob?15:18,ob?'#ffd0c8':'#1a1008');if(ob)text('baisse un rang pour jouer',R.x+R.w/2,R.y+R.h/2+16,10.5,'#ffb0a0','center','normal')}

@@ -41,6 +41,8 @@ rep("const CH={\n","const SRC={\n")
 rep("for(const k in BAL){const [hp,pw,spd]=BAL[k];Object.assign(CH[k],{hp,pw,spd})}","for(const k in BAL){const [hp,pw,spd]=BAL[k];Object.assign(SRC[k],{hp,pw,spd})}")
 rep("const HEROES=Object.keys(CH).filter(k=>!CH[k].trooper);",open(SP+'nr_ninja.js').read().replace('/*NR_PASS*/',open(SP+'nr_pass.js').read()).replace('/*NR_NATURE*/',open(SP+'nr_flow.js').read()+open(SP+'nr_nature.js').read()+open(SP+'nr_kits.js').read()+open(SP+'nr_pace.js').read()+KITS))
 rep("playerChamp='luke',aiChamp='vader'","playerChamp='p0',aiChamp='b20'")
+# bots : jamais deux fois le même perso de l'anime (un bot ne prend pas le nom d'un joueur, ex. le joueur Naruto n'affronte pas un bot Naruto)
+rep("const pick=t=>{let o=HEROES.filter(h=>CH[h].side===sides[t]&&!used.has(h));","const nm=new Set(H.filter(h=>h.c&&CH[h.c]).map(h=>CH[h.c].name)),pick=t=>{let o=HEROES.filter(h=>CH[h].side===sides[t]&&!used.has(h)&&!nm.has(CH[h].name));")
 rep(",hover='luke';",",hover='p0';")
 rep("const saberCol=u=>u.ch.look.weapon.col||'#ccc';\nconst canBlock=u=>u.ch.look.weapon.t==='saber';",
     "const saberCol=u=>u.ch.look.weapon.col||'#ccc';\nconst canBlock=u=>u.ch.look.weapon.t==='saber'||u.ch.look.weapon.t==='kunai';")
