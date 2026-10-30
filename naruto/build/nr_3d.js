@@ -183,6 +183,8 @@ function actionPose(u,t,rec,P){const k=u.ch.look.weapon.k;
  if(u.dead)return P;
  if(u.block){P.root.y=-2;pz(P,'armL',-1.35,0,-.55);pz(P,'foreL',-1.25);pz(P,'armR',-1.35,0,.55);pz(P,'foreR',-1.25);pz(P,'chest',.15);pz(P,'thighL',-.3);pz(P,'shinL',.5);pz(P,'shinR',.4)}
  if(u.chk){P.root.y=-3.5+Math.sin(t*40)*.25;pz(P,'thighL',-.1,0,.42);pz(P,'thighR',-.1,0,-.42);pz(P,'shinL',.55);pz(P,'shinR',.55);pz(P,'armL',.15,0,.55);pz(P,'armR',.15,0,-.55);pz(P,'foreL',-.5);pz(P,'foreR',-.5);pz(P,'chest',-.12);pz(P,'head',-.18)}
+ // épuisé (chakra à sec) : dos voûté, tête basse, bras ballants, souffle court
+ if(u.exh&&!u.chk&&!u.cast&&!u.block&&!(u.swing>0)&&!u.dash){const b=Math.sin(t*7);padd(P,'chest',.28+b*.05);padd(P,'head',.22+b*.06);pz(P,'armL',.2,0,.22);pz(P,'armR',.2,0,-.22);pz(P,'foreL',-.35);pz(P,'foreR',-.35);P.root.y=(P.root.y||0)-2+b*.6}
  const md=typeof mudraOf==='function'?mudraOf(u):null;
  if(md){const m=MUDP[(MUDP.length+((md.sg&&SIGNS.indexOf(md.sg))||0))%MUDP.length],snap=md.q<.25?Math.sin(md.q/.25*Math.PI)*.18:0;
   pz(P,'armL',m[0]-snap,0,m[1]);pz(P,'foreL',m[2]);pz(P,'armR',m[3]-snap,0,m[4]);pz(P,'foreR',m[5]);pz(P,'head',.22);pz(P,'chest',.08);P.root.y=-1.2}
