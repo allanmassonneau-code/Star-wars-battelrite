@@ -11,7 +11,7 @@ KIT('c11',[
  [4,'C','x.hk_hedge','Mur de ronces','Haie de ronces 3,5 s en travers de ta visée : arrête les ennemis et leurs tirs ; la toucher pique (6 dégâts) et ralentit','leaf'],
  [3,'B','x.hk_trap','Fleur carnivore','Une fleur géante éclôt au point visé puis mord 5 s l\'ennemi le plus proche (portée 130) : 10 dégâts, ralentit et attire','leaf'],
  [3,'B','x.hk_spore','Nuage de spores','Pollen toxique 4 s (rayon 105) : ralentit, ronge 3 PV/s et ajoute une dose toutes les 0,75 s. Le vent le disperse','flower'],
- [4,'A','x.hk_sap','Cocon de sève','Toi ou l\'allié le plus proche du curseur : la sève rend 30 PV en 3 s, réduit les dégâts subis de 25 % et libère des entraves','leaf'],
+ [4,'A','x.hk_sap','Cocon de sève','Toi ou l\'allié le plus proche du curseur : la sève rend 30 PV en 3 s, réduit les dégâts subis de 25 % et libère des entraves ; à la fin, la sève éclabousse et ralentit les ennemis proches','leaf'],
  [2,'C','x.hk_swing','Liane-grappin','Une liane s\'accroche au point visé (380 max) et t\'y hisse ; une pousse germe à l\'arrivée','leaf'],
  [2,'B','x.hk_merge','Fusion végétale','Tu fonds dans le sol (intangible 0,55 s) et ressurgis au point visé (300 max) ou dans ta pousse la plus proche du curseur (650 max) : elle te rend 10 PV','leaf'],
  [5,'S','x.hk_bloom','Floraison mortelle','Après 0,8 s, des épines géantes jaillissent (rayon 160) : 38 dégâts, entrave 1 s. Toutes tes pousses éclosent : 16 dégâts et +2 doses autour (2 max par cible)','leaf'],
@@ -34,7 +34,7 @@ function hk_plant(u,x,y){if(!u||u.dead&&mode!=='battle')return null;x=clamp(x,B.
  if(near(x,y))sparks(x,y,'#6a9a3a',3,'leaf');return s}
 // pollen sur un ennemi : doses (u.hk_pol, 0-5) qui rongent et, à 5, font éternuer (étourdi 0,5 s, puis 6 s d'immunité)
 function hk_pol(u,src,n){if(!u||u.dead||!src||u.team===src.team||n<=0)return;if((u.hk_imm||0)>SIMT)return;
- u.hk_pol=Math.min(HK_POL,(u.hk_pol||0)+n);u.hk_polT=4;u.hk_polS=src;if(u.hk_pol>=HK_POL)hk_sneeze(u,src)}
+ u.hk_pol=Math.min(HK_POL,(u.hk_pol||0)+n);u.hk_polT=4;u.hk_polS=src;u.hk_polN=0;if(u.hk_pol>=HK_POL)hk_sneeze(u,src)}
 function hk_sneeze(u,src){u.hk_pol=0;u.hk_imm=SIMT+6;const V=VFX;VFX='flower';hit(u,src,8,{stun:.5,unblockable:1});VFX=V;
  if(near(u.x,u.y)){say(u,'ATCHOUM !','#ffe070');jx({jfx:'hk_sneeze',ti:hk_i(u),x:u.x,y:u.y,a:u.aim,t:.9,m:.9});S('wind',u)}}
 // bouffée de pollen visible
@@ -47,15 +47,15 @@ function hk_decor(o,kind,x,y,life,ex){const p=Object.assign({x,y,vx:0,vy:0,owner
 function hk_keep(x,kind,ex,key){const K0=key||'dp';let p=x[K0];if(!p||p.dead||p.life<=0||projs.indexOf(p)<0)p=x[K0]=hk_decor(x.owner,kind,x.x,x.y,Math.max(.05,x.t),Object.assign({life0:x.m},ex));p.life=Math.max(.02,x.t);return p}
 const hk_scr=()=>{g.restore();g.save()}; // dans un décor : revenir au repère de l'écran
 
-TRAITS[11]={nom:'Jardin vivant',desc:'Là où tu combats, des pousses germent : une à tes pieds toutes les 4 s et une là où tombent tes graines (6 max). Mûres (1,5 s), elles soufflent du pollen sur les ennemis proches (+1 dose/s ; chaque dose ronge 0,6 PV/s ; à 5 doses, la cible éternue : 8 dégâts, étourdie 0,5 s) et soignent tes alliés (2 PV/s). Le feu les brûle et un ennemi écrase celles qui germent.',
+TRAITS[11]={nom:'Jardin vivant',desc:'Là où tu combats, des pousses germent : une à tes pieds toutes les 4 s et une là où tombent tes graines (6 max). Mûres (1,5 s), elles soufflent du pollen sur les ennemis proches (+1 dose/s ; chaque dose ronge 0,6 PV/s ; à 5 doses, la cible éternue : 8 dégâts, étourdie 0,5 s) et te soignent, toi et tes alliés (1,5 PV/s). Le feu les brûle et un ennemi écrase celles qui germent.',
  init(u){u.hk_gT=2},
  update(u,dt){
   // une pousse germe à tes pieds quand un ennemi est proche
   if(state==='fight'){u.hk_gT=(u.hk_gT??2)-dt;if(u.hk_gT<=0){let ok=false;for(const e of units)if(e.team!==u.team&&!e.dead&&Math.abs(e.x-u.x)<650&&Math.hypot(e.x-u.x,e.y-u.y)<650){ok=true;break}
    if(ok&&!u.dash){const a=rnd()*6.28;hk_plant(u,u.x+Math.cos(a)*22,u.y+Math.sin(a)*16);u.hk_gT=4}else u.hk_gT=.5}}
   // pollen : les doses s'effacent peu à peu et rongent la cible (celles d'un Hoki mort s'effacent sans ronger)
-  for(const e of units){if(!(e.hk_pol>0))continue;const s=e.hk_polS;if(s&&s!==u&&!s.dead)continue;if(e.dead){e.hk_pol=0;continue}
-   e.hk_polT=(e.hk_polT||0)-dt;if(e.hk_polT<=0){e.hk_pol--;e.hk_polT=1.5;continue}if(s!==u)continue;
+  for(const e of units){if(!(e.hk_pol>0))continue;let s=e.hk_polS;if(s&&s!==u){if(!s.dead)continue;e.hk_polS=s=u;e.hk_polN=1}if(e.dead){e.hk_pol=0;continue}
+   e.hk_polT=(e.hk_polT||0)-dt;if(e.hk_polT<=0){e.hk_pol--;e.hk_polT=1.5;continue}if(s!==u||e.hk_polN)continue;
    e.hk_dk=(e.hk_dk||0)-dt;if(e.hk_dk<=0){e.hk_dk=.5;VFX='flower';hit(e,u,.3*e.hk_pol,{silent:1});VFX=null}}},
  // sur le Hoki : deux lianes qui s'enroulent autour des jambes, quelques feuilles qui tournent
  draw(u,p,S,sk){const t=performance.now()/1000,H=S*sk;g.save();g.lineCap='round';
@@ -79,13 +79,13 @@ Object.assign(NAT,{
   anim(u,u.hk_sh?'hk_lashr':'hk_lashl',.28)}),
  // Graine épineuse : graine rapide ; touche (pollen) ou tombe, et une pousse germe à cet endroit
  hk_seed:SP('Graine épineuse','',5,{hero:'lando',line:{len:510,w:18},ai:RG(500,.7)},(u,a)=>{anim(u,'hk_flick',.4);S('blaster',u);
-  proj(u,a,{spd:820,r:8,dmg:14,life:.6,col:'#8ad05a',kind:'hk_seed',onHit:(p,t)=>{hk_pol(t,p.owner,1);hk_plant(p.owner,t.x+(rnd()-.5)*30,t.y+(rnd()-.5)*20)}});
+  proj(u,a,{spd:820,r:8,dmg:14,life:.6,col:'#8ad05a',kind:'hk_seed',onHit:(p,t)=>{const o=p.owner;hk_pol(t,o,1);if(!o)return;const b=Math.atan2(o.y-t.y,o.x-t.x)+(rnd()-.5)*.8,d=t.r+22;hk_plant(o,t.x+Math.cos(b)*d,t.y+Math.sin(b)*d)}});
   aux.push({type:'hk_seedw',x:u.x,y:u.y,r:0,t:1,m:1,team:u.team,owner:u,p:projs[projs.length-1],k:0})}),
  // Liane étrangleuse : la liane file au sol (950/s, 460 max) et s'enroule sur le premier ennemi touché
  hk_vine:SP('Liane étrangleuse','',9,{hero:'lando',line:{len:460,w:30},ai:RG(440,.65)},(u,a)=>{anim(u,'hk_slam',.5);S('shadow',u);const c=fwd(u,a,14);
   aux.push({type:'hk_vine',x:c.x,y:c.y,a,len:0,L:460,w:30,t:1.3,m:1.3,team:u.team,owner:u,n:0,ti:-1,k:0});if(near(c.x,c.y))sparks(c.x,c.y,'#7a5a3a',8,'smoke')}),
  // Mur de ronces : haie perpendiculaire à la visée, à 90 devant soi
- hk_hedge:SP('Mur de ronces','',11,{hero:'lando',ai:DEF},(u,a)=>{anim(u,'hk_wall',.6);S('rock',u);const c=fwd(u,a,90);
+ hk_hedge:SP('Mur de ronces','',12,{hero:'lando',ai:DEF},(u,a)=>{anim(u,'hk_wall',.6);S('rock',u);const c=fwd(u,a,90);
   aux.push({type:'hk_hedge',x:c.x,y:c.y,a,len:230,w:28,r:115,t:3.5,m:3.5,team:u.team,owner:u,k:0,n:0,hs:{}});if(near(c.x,c.y)){jx({jfx:'hk_dirt',x:c.x,y:c.y,a:a+Math.PI/2,len:230,t:.6,m:.6});shake=Math.max(shake,.1)}}),
  // Fleur carnivore : éclôt au point visé (0,6 s), mord toutes les 1,25 s l'ennemi le plus proche ; une seule à la fois ; le feu la brûle
  hk_trap:SP('Fleur carnivore','',12,{hero:'lando',tele:{r:130,max:420},ai:RG(420,.6)},(u,a,td)=>{const p=atP(u,a,td,420);anim(u,'hk_plant',.6);S('rock',u);
@@ -95,14 +95,14 @@ Object.assign(NAT,{
  hk_spore:SP('Nuage de spores','',11,{hero:'lando',tele:{r:105,max:440},ai:RG(440,.65)},(u,a,td)=>{const p=atP(u,a,td,440);anim(u,'hk_spore',.6);S('wind',u);
   aux.push({type:'hk_spore',x:p.x,y:p.y,r:105,t:4,m:4,team:u.team,owner:u,k:0,n:0,hs:{},danger:1});jx({jfx:'hk_blow',ui:hk_i(u),x:u.x,y:u.y,x2:p.x,y2:p.y,t:.5,m:.5})}),
  // Cocon de sève : soin sur la durée, réduction de dégâts, libère des entraves (soi ou l'allié le plus proche du curseur)
- hk_sap:SP('Cocon de sève','',15,{hero:'lando',ai:HEALM},(u,a,td)=>{const cx=u.x+Math.cos(a)*(td||0),cy=u.y+Math.sin(a)*(td||0);let t=u,bd=110;
+ hk_sap:SP('Cocon de sève','',17,{hero:'lando',ai:HEALM},(u,a,td)=>{const cx=u.x+Math.cos(a)*(td||0),cy=u.y+Math.sin(a)*(td||0);let t=u,bd=110;
   if(u.ctrl)for(const x of units)if(x!==u&&x.team===u.team&&!x.dead&&dist(x,u)<480){const d=Math.hypot(x.x-cx,x.y-cy);if(d<bd){bd=d;t=x}}
   if(!u.ctrl){let lo=u.hp/u.max;for(const x of units)if(x!==u&&x.team===u.team&&!x.dead&&dist(x,u)<420&&x.hp/x.max<lo-.15){lo=x.hp/x.max;t=x}}
   for(const x of aux)if(x.type==='hk_sapx'&&x.tg===t)x.t=0;
   t.root=0;t.slow=0;t.rootV=null;t.drT=Math.max(t.drT||0,3);t.dr=Math.max(t.drT>3.01?t.dr||0:0,.25);t.hk_sap=3;anim(u,'hk_sap',.7);S('water',u);
   aux.push({type:'hk_sapx',x:t.x,y:t.y,r:0,t:3,m:3,team:u.team,owner:u,tg:t,ti:hk_i(t),k:.25,n:0});if(t!==u)jx({jfx:'hk_sapline',x:u.x,y:u.y,ui:hk_i(u),ti:hk_i(t),t:.5,m:.5});say(t,'COCON DE SÈVE','#ffc060')}),
  // Liane-grappin : la liane s'accroche et hisse le Hoki (0,3 s) ; une pousse germe à l'arrivée
- hk_swing:SP('Liane-grappin','',8,{hero:'lando',ai:ESC},(u,a,td)=>{const d=clamp(td||300,120,380),e=fwd(u,a,d);anim(u,'hk_swing',.4);S('dash',u);
+ hk_swing:SP('Liane-grappin','',7,{hero:'lando',ai:ESC},(u,a,td)=>{const d=clamp(td||300,120,380),e=fwd(u,a,d);anim(u,'hk_swing',.4);S('dash',u);
   jx({jfx:'hk_rope',ui:hk_i(u),x:u.x,y:u.y,x2:e.x,y2:e.y,t:.42,m:.42});dash(u,a,Math.hypot(e.x-u.x,e.y-u.y),.3,{jump:42,end:()=>{hk_plant(u,u.x,u.y);if(near(u.x,u.y))sparks(u.x,u.y,'#5aa83a',10,'leaf')}})}),
  // Fusion végétale (façon Zetsu) : s'enfonce dans le sol, ressurgit au point visé ou dans une de ses pousses (consommée : +10 PV)
  hk_merge:SP('Fusion végétale','',11,{hero:'lando',ai:ESC},(u,a,td)=>{const cx=u.x+Math.cos(a)*(td||300),cy=u.y+Math.sin(a)*(td||300);let sp=null,bd=150;
@@ -116,8 +116,8 @@ Object.assign(NAT,{
  // Floraison mortelle : épines géantes sur la zone ; toutes les pousses du Hoki éclosent en même temps
  hk_bloom:ULT('Floraison mortelle','',{hero:'kylo',tele:{r:160,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);anim(u,'hk_raise',.85);S('rock',u);
   zone(u,p.x,p.y,160,38,.8,{root:1},'#9ad860');lastZ().deto='hk_bloom';jx({jfx:'hk_buds',x:p.x,y:p.y,r:160,t:.8,m:.8});
-  for(const s of aux)if(s.type==='hk_sprout'&&s.owner===u&&s.t>.3)jx({jfx:'hk_buds',x:s.x,y:s.y,r:60,t:.8,m:.8,small:1});
-  later(u,.8,()=>{const cnt=new Map();VFX='leaf';for(const s of aux){if(s.type!=='hk_sprout'||s.owner!==u||s.t<=.3)continue;s.t=0;if(near(s.x,s.y))jx({jfx:'hk_thorns',x:s.x,y:s.y,r:75,t:.7,m:.7,n:7});
+  for(const s of aux)if(s.type==='hk_sprout'&&s.owner===u&&s.t>.5)jx({jfx:'hk_buds',x:s.x,y:s.y,r:60,t:.8,m:.8,small:1});
+  later(u,.8,()=>{const cnt=new Map();VFX='leaf';for(const s of aux){if(s.type!=='hk_sprout'||s.owner!==u||s.t<=.5)continue;s.t=0;if(near(s.x,s.y))jx({jfx:'hk_thorns',x:s.x,y:s.y,r:75,t:.7,m:.7,n:7});
     for(const e of units){if(e.dead||e.team===u.team||Math.hypot(e.x-s.x,e.y-s.y)>75+e.r)continue;const c=cnt.get(e)||0;if(c>=2)continue;cnt.set(e,c+1);if(hit(e,u,16,{unblockable:1,fx:s.x,fy:s.y}))hk_pol(e,u,2)}}VFX=null;if(near(u.x,u.y))S('bone',u)})}),
  // Arbre millénaire : arbre géant 6 s ; ses branches fouettent, son ombre soigne, il pleut du pollen ; il laisse 3 pousses
  hk_tree:ULT('Arbre millénaire','',{hero:'kylo',tele:{r:210,max:380},ai:{max:380,p:.8}},(u,a,td)=>{const p=atP(u,a,Math.min(td||200,380),380);anim(u,'hk_tree',.9);S('rock',u);S('heavy',u);
@@ -138,7 +138,7 @@ AUXF.hk_sprout=(x,dt)=>{const o=x.owner;if(o.dead&&mode!=='battle'&&x.t>.5)x.t=.
  if(x.k>0)return;x.k=.5;
  for(const f2 of fields)if(f2.team!==x.team&&(f2.vfx==='fire'||f2.vfx==='black')&&Math.hypot(f2.x-x.x,f2.y-x.y)<f2.r){x.t=.5;if(near(x.x,x.y))sparks(x.x,x.y,'#ff9a3a',8,'fire');return}
  let puff=0;for(const e of units){if(e.dead||Math.abs(e.x-x.x)>100||Math.hypot(e.x-x.x,e.y-x.y)>75+e.r)continue;
-  if(e.team===x.team){if(SIMT-(e.hk_hT||-9)>=.48&&e.hp<e.max){e.hk_hT=SIMT;gain(e,1/HEALX,o)}}
+  if(e.team===x.team){if(SIMT-(e.hk_hT||-9)>=.65&&e.hp<e.max){e.hk_hT=SIMT;gain(e,1/HEALX,o)}}
   else if(SIMT-(e.hk_sT||-9)>=.98){e.hk_sT=SIMT;hk_pol(e,o,1);puff=1}}
  if(puff)hk_puff(x.x,x.y,5)};
 // liane : avance au sol, s'enroule sur le premier ennemi touché
