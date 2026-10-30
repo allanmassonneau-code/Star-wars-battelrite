@@ -2,11 +2,11 @@
 let picker=null; // emplacement dont on choisit le jutsu (liste ouverte)
 // lignes de gauche : [libellé, liste, clé] ; le clan a une entrée « Sans clan » (valeur -1), la 2e nature n'existe que sans clan
 const CLANL=[['Sans clan','#888']].concat(CLANS),NATL=NATURES.map(n=>[n[0]+' ('+n[1]+')',n[2]]);
-const APP=[['Camp',()=>CAMPS,'side'],['Voie',()=>VOIES,'voie'],['Clan',()=>CLANL,'clan'],['Nature',()=>NATL,'nat'],['Village',()=>VILLAGES,'l.v'],['Tenue',()=>TENUES,'l.t'],['Coiffure',()=>COIFS,'l.c'],['Cheveux',()=>HAIRC,'l.h'],['Peau',()=>PEAUX,'l.p'],['Chakra',()=>CHAKRAS,'l.k'],['Accessoire',()=>ACCS,'l.a']];
+const APP=[['Camp',()=>CAMPS,'side'],['Voie',()=>VOIES,'voie'],['Clan',()=>CLANL,'clan'],['Nature',()=>NATL,'nat'],['Village',()=>VILLAGES,'l.v'],['Tenue',()=>TENUES,'l.t'],['Coiffure',()=>COIFS,'l.c'],['Cheveux',()=>HAIRC,'l.h'],['Peau',()=>PEAUX,'l.p'],['Chakra',()=>CHAKRAS,'l.k'],['Accessoire',()=>ACCS,'l.a'],['Visage',()=>FACES,'l.f'],['Bandeau',()=>BANDS,'l.b'],['Dos',()=>BACKS,'l.d']];
 const getB=k=>k==='clan'?MY.clan+1:k.startsWith('l.')?MY.l[k[2]]:MY[k],setB=(k,v)=>{if(k==='clan')MY.clan=v-1;else if(k.startsWith('l.'))MY.l[k[2]]=v;else MY[k]=v};
 const appOff=k=>k==='nat'&&MY.clan===TAIJ;
 const stylesOf=b=>STYLES.map((_,i)=>i).filter(i=>styleOk(i,b.clan));
-const appRow=i=>({y:398+i*25,l:{x:200,y:383+i*25,w:26,h:21},r:{x:374,y:383+i*25,w:26,h:21}});
+const APPH=APP.length>11?22:25,appRow=i=>({y:398+i*APPH,l:{x:200,y:383+i*APPH,w:26,h:20},r:{x:374,y:383+i*APPH,w:26,h:20}});
 const overBudget=()=>kitCost(MY)>budgetOf(MY);
 const cycleJ=(s,d)=>{if(!s){const L=stylesOf(MY),i=L.indexOf(MY.j[0]);MY.j[0]=L[(i+d+L.length)%L.length];return}const A=avail(MY,s).filter(j=>j.id===MY.j[s]||!MY.j.slice(1).includes(j.id)),i=A.findIndex(j=>j.id===MY.j[s]);MY.j[s]=A[(i+d+A.length)%A.length].id};
 const slotRow=s=>({x:428,y:150+s*64,w:812,h:58});
