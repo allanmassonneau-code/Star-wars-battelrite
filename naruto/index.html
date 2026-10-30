@@ -5306,7 +5306,7 @@ AFTER.push(()=>UK.push('uz_kyu','uz_fv'));
 // Tant que le moteur garde cette ancienne valeur, on la remplace ici et on refait les ninjas déjà créés ; dès que le moteur la change, ce bloc ne fait plus rien.
 const UZBAL=[1,.87]; // multiplicateurs proposés (PV, puissance) pour le clan Uzumaki
 AFTER.push(()=>{const c=CLANBAL['6'];if(!c||c[0]!==1.12||c[1]!==1.14)return;c[0]=UZBAL[0];c[1]=UZBAL[1];
- for(const k in CH){const n=CH[k];if(n&&n.clan===6&&n.build)CH[k]=mkNinja(n.build,k!=='p0')}});
+ for(const k in CH){const n=CH[k];if(n&&n.clan===6&&n.build)CH[k]=mkNinja(n.build,k!=='p0')};MYCH=CH.p0});
 
 // ===== Clan Yamanaka =====
 // Techniques de l'esprit (Shintenshin, Shinranshin, Shinden, Esprit destructeur) et fleurs de la boutique Yamanaka.
@@ -6686,6 +6686,8 @@ function loadMine(){let b=null;try{b=JSON.parse(localStorage.getItem('nrBuild4')
  return sanitizeBuild(b||presetBuild(0,'Ninja',0))}
 let MY;try{MY=loadMine()}catch(e){MY=randomBuild(srnd(99),0,'Ninja')}
 CH.p0=mkNinja(MY);
+// ninja du créateur (toujours le sien) : en ligne, côté ami, CH.p0 est le ninja de l'hôte
+let MYCH=CH.p0;
 
 const saberCol=u=>u.ch.look.weapon.col||'#ccc';
 const canBlock=u=>u.ch.look.weapon.t==='saber'||u.ch.look.weapon.t==='kunai';
@@ -8093,9 +8095,9 @@ const nameBtn={x:40,y:150,w:300,h:30},rndBtn={x:348,y:150,w:52,h:30},rndBuildBtn
 // description sur deux lignes si elle est trop longue
 function tfit2(s,x,y,size,col,w){g.font=`normal ${size}px "Trebuchet MS",system-ui,sans-serif`;if(g.measureText(s).width<=w)return tfit(s,x,y,size,col,w);let best=-1;for(let i=0;i<s.length;i++)if(s[i]===' '&&g.measureText(s.slice(0,i)).width<=w&&(best<0||Math.abs(i-s.length/2)<Math.abs(best-s.length/2)))best=i;if(best<0)return tfit(s,x,y,size,col,w);tfit(s.slice(0,best),x,y,size,col,w);tfit(s.slice(best+1),x,y+size+1.5,size,col,w)}
 // ninja d'aperçu du créateur : gardé d'une image à l'autre (son modèle 3D n'est refait que si l'apparence change)
-let MF=null;const menuFake=ch=>{if(!MF||MF.ch!==ch)MF=mkUnit('p0',0,0,ch.side);return MF};
+let MF=null;const menuFake=ch=>{if(!MF||MF.ch!==ch){const o=CH.p0;CH.p0=ch;MF=mkUnit('p0',0,0,ch.side);CH.p0=o}return MF};
 const pickRect=(s,i)=>{const n=s?avail(MY,s).length:stylesOf(MY).length,cols=n>16?3:2,w=cols>2?300:330,h=cols>2?54:60;return{x:W/2-(cols*(w+12)-12)/2+(i%cols)*(w+12),y:150+Math.floor(i/cols)*(h+(cols>2?5:8)),w,h}};
-function rebuildMine(){MY=sanitizeBuild(MY);try{localStorage.setItem('nrBuild4',JSON.stringify(Object.assign({},MY,{jn:MY.j.slice(1).map(id=>JL[id].n)})))}catch(e){}CH.p0=mkNinja(MY);
+function rebuildMine(){MY=sanitizeBuild(MY);try{localStorage.setItem('nrBuild4',JSON.stringify(Object.assign({},MY,{jn:MY.j.slice(1).map(id=>JL[id].n)})))}catch(e){}MYCH=mkNinja(MY);if(!isGuest())CH.p0=MYCH;
  if(net.role==='host'){net.ready=false;sendLobby()}else if(isGuest()&&coop()){net.ready=false;netSend({t:'build',b:MY});netSend({t:'ready',v:false})}}
 function creatorClick(){
  if(picker!==null){const A=picker?avail(MY,picker).map(j=>j.id):stylesOf(MY);for(let i=0;i<A.length;i++)if(inRect(mouse,pickRect(picker,i))){if(picker&&A[i]!==MY.j[picker]&&MY.j.slice(1).includes(A[i]))break;MY.j[picker]=A[i];rebuildMine();break}picker=null;return true}
@@ -8120,7 +8122,7 @@ function drawMenu(){
  if(net.role){const m=!coop()?net.status:lobbyList().map(x=>`${who(x)} : ${x.c&&CH[x.c]?CH[x.c].name:'…'}${mode==='arena'?'':x.team?' [B]':' [A]'}${x.ready?' ✓':''}`).join('  ·  ');g.font='normal 12px "Trebuchet MS",system-ui,sans-serif';tfit(m,1222-Math.min(1060,g.measureText(m).width),131,12,'#9f9',1060)}
  for(const b of modeBtns){const on=mode===b.m,h=inRect(mouse,b);g.fillStyle=on?'#ff9a3a':h?'rgba(90,60,30,.95)':'rgba(40,28,18,.9)';g.strokeStyle=on?'#ff9a3a':'#8a5a2a';g.lineWidth=1.5;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,15);g.fill();g.stroke();text(modeLabel(b),b.x+b.w/2,b.y+20,13,on?'#1a1008':'#f3d9b0')}
  text(menuDesc(),W/2,net.role?116:130,13,'#e8cfa8','center','normal');
- const t=performance.now()/1000,ch=CH.p0;
+ const t=performance.now()/1000,ch=MYCH;
  // --- colonne de gauche : apparence
  g.fillStyle='rgba(20,14,10,.85)';g.strokeStyle='#5a3a1e';g.lineWidth=1;g.beginPath();g.roundRect(30,142,380,560,12);g.fill();g.stroke();
  {const h=inRect(mouse,nameBtn);g.fillStyle=h?'rgba(90,60,30,.6)':'rgba(0,0,0,.25)';g.beginPath();g.roundRect(nameBtn.x,nameBtn.y,nameBtn.w,nameBtn.h,8);g.fill();tfit(MY.name+'  ✎',nameBtn.x+10,nameBtn.y+22,20,ch.side?'#ff9a9a':'#ffd38a',280,'bold')}
@@ -8279,7 +8281,7 @@ function netUI(show){$('net').hidden=!show;if(show)$('nStat').textContent=net.st
 function setStat(s){net.status=s;$('nStat').textContent=s}
 function sendLobby(){netSend({t:'lobby',P:lobbyList(),mode,cfg:CFG})}
 function netSend(m){if(net.role==='host'){for(const p of livePeers())try{p.conn.send(m)}catch(e){}}else if(coop())try{net.conn.send(m)}catch(e){}}
-function netReset(){try{net.peer&&net.peer.destroy()}catch(e){}net=Object.assign(net,{seq:0,pend:[],role:null,peer:null,conn:null,mate:null,peers:[],nextId:1,myId:0,myTeam:0,lobby:[],ready:false,gp:{},live:false,pU:null,gU:null,pK:{},gK:{},ev:{fx:[],txt:[],snd:[],sp:[],ci:[]}})}
+function netReset(){CH.p0=MYCH;try{net.peer&&net.peer.destroy()}catch(e){}net=Object.assign(net,{seq:0,pend:[],role:null,peer:null,conn:null,mate:null,peers:[],nextId:1,myId:0,myTeam:0,lobby:[],ready:false,gp:{},live:false,pU:null,gU:null,pK:{},gK:{},ev:{fx:[],txt:[],snd:[],sp:[],ci:[]}})}
 const noPeer=()=>{if(typeof Peer!=='undefined')return false;setStat('Le coop ne peut pas démarrer ici : la connexion réseau est bloquée. Ouvre le jeu depuis un site hébergé.');return true};
 function hostGame(){if(noPeer())return;netReset();net.myPick='p0';const code=Math.random().toString(36).slice(2,6).toUpperCase();net.role='host';net.code=code;setStat('Ouverture du salon…');
  const p=new Peer('nrarena-'+code);net.peer=p;

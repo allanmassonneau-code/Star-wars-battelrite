@@ -89,3 +89,5 @@ function loadMine(){let b=null;try{b=JSON.parse(localStorage.getItem('nrBuild4')
  return sanitizeBuild(b||presetBuild(0,'Ninja',0))}
 let MY;try{MY=loadMine()}catch(e){MY=randomBuild(srnd(99),0,'Ninja')}
 CH.p0=mkNinja(MY);
+// ninja du créateur (toujours le sien) : en ligne, côté ami, CH.p0 est le ninja de l'hôte
+let MYCH=CH.p0;

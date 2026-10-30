@@ -252,4 +252,4 @@ AFTER.push(()=>UK.push('uz_kyu','uz_fv'));
 // Tant que le moteur garde cette ancienne valeur, on la remplace ici et on refait les ninjas déjà créés ; dès que le moteur la change, ce bloc ne fait plus rien.
 const UZBAL=[1,.87]; // multiplicateurs proposés (PV, puissance) pour le clan Uzumaki
 AFTER.push(()=>{const c=CLANBAL['6'];if(!c||c[0]!==1.12||c[1]!==1.14)return;c[0]=UZBAL[0];c[1]=UZBAL[1];
- for(const k in CH){const n=CH[k];if(n&&n.clan===6&&n.build)CH[k]=mkNinja(n.build,k!=='p0')}});
+ for(const k in CH){const n=CH[k];if(n&&n.clan===6&&n.build)CH[k]=mkNinja(n.build,k!=='p0')};MYCH=CH.p0});
