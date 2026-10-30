@@ -7243,17 +7243,17 @@ Object.assign(NATHERO,{hk:'kylo'});
 // Style propre : Éventail de combat (lames de vent à moyenne portée). Apparence : l'éventail géant dans le dos.
 const RRD={
  st:'Coups d\'éventail : lames de vent à moyenne portée ; tous les 3 coups, une bourrasque large qui perce et repousse',
- kama:'Une faux de vent perçante file en ligne : 16 dégâts, ralentit ; +30 % sur une cible projetée en l\'air',
+ kama:'Une faux de vent perçante file en ligne : 14 dégâts, ralentit ; +30 % sur une cible projetée en l\'air',
  gale:'Grand coup d\'éventail devant toi : 18 dégâts, repousse loin, interrompt les mudras et balaie les tirs ennemis',
- up:'Une colonne de vent jaillit au point visé après 0,6 s : 14 dégâts, projette en l\'air (étourdit 0,5 s)',
- wall:'Plante l\'éventail ouvert devant toi 2 s : il renvoie les tirs ennemis et repousse les ennemis qui approchent',
- storm:'Tempête de lames au point visé (2,5 s) : aspire, ralentit et coupe 6 fois (3 dégâts), puis explose : 8 dégâts, repousse',
+ up:'Une colonne de vent jaillit au point visé après 0,6 s : 12 dégâts, projette en l\'air (étourdit 0,5 s)',
+ wall:'Plante l\'éventail ouvert devant toi 2 s : il renvoie les tirs ennemis et repousse les ennemis qui approchent (4 dégâts)',
+ storm:'Tempête de lames au point visé (2,5 s) : aspire, ralentit et coupe 6 fois (3 dégâts), puis explose : 6 dégâts, repousse',
  dai:'Éventail grand ouvert (0,3 s) : une vague de faux traverse tout sur 560 : 28 dégâts, repousse, saigne (8 en 3 s), avale les tirs',
  glide:'Plane 0,8 s sur l\'éventail (dirigé à la souris) : insensible aux ralentissements, les coups au corps à corps te ratent ; l\'atterrissage repousse (6 dégâts)',
  back:'L\'éventail frappe le sol : 14 dégâts autour de toi, repousse et ralentit ; le contrecoup te projette de 260 vers le point visé',
- kamatari:'Kamatari, la belette à la faux, traverse la ligne (640) à l\'aller puis au retour : 32 dégâts et projette en l\'air, puis 16 ; avale les tirs',
- typh:'Immobile 1 s, l\'éventail bat 3 fois devant toi : 14, 14 puis 20 dégâts, repousse ; le 3e ralentit 2 s ; chaque battement balaie les tirs',
- trait:'Chaque jutsu Roran (hors déplacements) qui touche ouvre une lune de l\'éventail (3 max ; sans toucher, elles se referment une à une après 6 s). Chaque lune : +5 % de dégâts Roran. À 3 lunes, ton prochain jutsu Roran part éventail grand ouvert : +25 % de dégâts et +20 % de taille',
+ kamatari:'Kamatari, la belette à la faux, traverse la ligne (640) à l\'aller puis au retour : 28 dégâts et projette en l\'air, puis 14 ; avale les tirs',
+ typh:'Immobile 1 s, l\'éventail bat 3 fois devant toi : 12, 12 puis 16 dégâts, repousse ; le 3e ralentit 2 s ; chaque battement balaie les tirs',
+ trait:'Chaque jutsu Roran (hors déplacements) qui touche ouvre une lune de l\'éventail (3 max ; sans toucher, elles se referment une à une après 6 s). Chaque lune : +4 % de dégâts Roran. À 3 lunes, ton prochain jutsu Roran part éventail grand ouvert : +20 % de dégâts et +20 % de taille',
 };
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
 KIT('c12',[
@@ -7277,9 +7277,9 @@ const RRC={paper:'#f4ecd8',fold:'#ddd0b0',rib:'#3a2a1e',moon:'#7a4aa8',moonL:'#d
 const rrS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son « brut » (sans la teinte vent)
 const rrI=u=>units.indexOf(u);
 let RR_ID=0;
-// début d'un jutsu Roran : à 3 lunes, l'éventail part grand ouvert (+25 % de dégâts, +20 % de taille) et se referme
+// début d'un jutsu Roran : à 3 lunes, l'éventail part grand ouvert (+20 % de dégâts, +20 % de taille) et se referme
 function rrOpen(u){RR_ID=RR_ID%1e6+1;const full=(u.rr_mn|0)>=3;if(full){u.rr_mn=0;u.rr_mT=0;say(u,'ÉVENTAIL GRAND OUVERT','#e8d8ff');jx({jfx:'rr_moons',ui:rrI(u),x:u.x,y:u.y,t:.8,m:.8})}
- return {id:RR_ID,F:full?1.25:1,G:full?1.2:1,full:full?1:0}}
+ return {id:RR_ID,F:full?1.2:1,G:full?1.2:1,full:full?1:0}}
 // geste : l'éventail ouvert dans les mains (n : 1 taille en diagonale, 2 balayage large, 3 de bas en haut, 4 au-dessus de la tête puis abattu)
 const rrFan=(u,a,d,n,full)=>jx({jfx:'rr_fan',ui:rrI(u),x:u.x,y:u.y,a,n,full:full?1:0,t:d,m:d});
 // le vent balaie les tirs ennemis dans un cône
@@ -7295,8 +7295,8 @@ Object.assign(NAT,{
   proj(u,a,{vfx:'wind',spd:big?760:880,r:big?16:9,dmg:big?7:6,life:big?.54:.47,col:RRC.wind,kind:'rr_gust',pierce:big?1:0,o:big?{kb:300}:{}});
   rrFan(u,a,big?.34:.26,big?2:1);anim(u,big?'rr_st3':u.rr_sN===1?'rr_st1':'rr_st2',big?.34:.26)}),
  // ---- Kamaitachi : faux de vent perçante ; +30 % sur une cible en l'air (trait)
- rr_kama:SP('Kamaitachi',RRD.kama,6,{line:{len:480,w:30},ai:RG(460,.7)},(u,a)=>{const c=rrOpen(u);anim(u,'rr_swing',.42);rrS('saber',u);S('wind',u);rrFan(u,a,.38,1,c.full);
-  proj(u,a,{vfx:'wind',spd:900,r:14*c.G,dmg:16*c.F,life:.55,col:RRC.wind,pierce:1,slow:.8,kind:'rr_sickle',o:{rr:c.id,rrAir:1},onHit:(p,t)=>{if(near(t.x,t.y))jx({jfx:'rr_cut',ti:rrI(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.35,m:.35})}})}),
+ rr_kama:SP('Kamaitachi',RRD.kama,7,{line:{len:480,w:30},ai:RG(460,.7)},(u,a)=>{const c=rrOpen(u);anim(u,'rr_swing',.42);rrS('saber',u);S('wind',u);rrFan(u,a,.38,1,c.full);
+  proj(u,a,{vfx:'wind',spd:900,r:14*c.G,dmg:14*c.F,life:.55,col:RRC.wind,pierce:1,slow:.8,kind:'rr_sickle',o:{rr:c.id,rrAir:1},onHit:(p,t)=>{if(near(t.x,t.y))jx({jfx:'rr_cut',ti:rrI(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.35,m:.35})}})}),
  // ---- Rafale : grand coup d'éventail en cône, repousse loin, interrompt, balaie les tirs
  rr_gale:SP('Rafale de l\'éventail',RRD.gale,8,{line:{len:230,w:220},ai:RG(200,.75)},(u,a)=>{const c=rrOpen(u),R=230*c.G,A=1.6;anim(u,'rr_sweep',.45);rrS('heavy',u);S('wind',u);rrFan(u,a,.42,2,c.full);
   jx({jfx:'rr_gust',x:u.x,y:u.y,a,r:R,w:A,t:.45,m:.45});rrSweep(u,u.x,u.y,a,R,A);
@@ -7306,18 +7306,18 @@ Object.assign(NAT,{
  rr_up:SP('Vent ascendant',RRD.up,11,{tele:{r:80,max:440},ai:RG(420,.55)},(u,a,td)=>{const c=rrOpen(u),p=atP(u,a,td,440),R=80*c.G;anim(u,'rr_lift',.5);rrS('dash',u);rrFan(u,a,.45,3,c.full);
   jx({jfx:'rr_swirl',x:p.x,y:p.y,r:R,t:.6,m:.6});
   later(u,.6,()=>{jx({jfx:'rr_column',x:p.x,y:p.y,r:R,t:.75,m:.75});rrS('boom',u);S('wind',u);
-   for(const e of units)if(!e.dead&&e.team!==u.team&&Math.hypot(e.x-p.x,e.y-p.y)<R+e.r)hit(e,u,14*c.F,{air:.5,rr:c.id,unblockable:1,fx:p.x,fy:p.y})},{x:p.x,y:p.y,r:R})}),
+   for(const e of units)if(!e.dead&&e.team!==u.team&&Math.hypot(e.x-p.x,e.y-p.y)<R+e.r)hit(e,u,12*c.F,{air:.5,rr:c.id,unblockable:1,fx:p.x,fy:p.y})},{x:p.x,y:p.y,r:R})}),
  // ---- Barrière : l'éventail planté renvoie les tirs et repousse (logique : AUXF.rr_wall)
  rr_wall:SP('Barrière de l\'éventail',RRD.wall,14,{ai:DEF},(u,a)=>{const c=rrOpen(u),L=150*c.G,T=2,x0=u.x+Math.cos(a)*48,y0=u.y+Math.sin(a)*48;anim(u,'rr_plant',.45);rrS('heavy',u);S('wind',u);
-  aux.push({type:'rr_wall',x:x0,y:y0,a,len:L,r:L/2,t:T,m:T,team:u.team,owner:u,vfx:'wind',k:0,id:c.id,F:c.F,hs:new Map()});
+  aux.push({type:'rr_wall',x:x0,y:y0,a,len:L,r:L/2,t:T,m:T,team:u.team,owner:u,ui:rrI(u),vfx:'wind',k:0,id:c.id,F:c.F,hs:new Map()});
   jx({jfx:'rr_dust',x:x0,y:y0,r:L/2,t:.45,m:.45})}),
  // ---- Tempête tranchante : tourbillon de lames au point visé (logique : AUXF.rr_storm)
  rr_storm:SP('Tempête tranchante',RRD.storm,12,{tele:{r:110,max:420},ai:RG(400,.55)},(u,a,td)=>{const c=rrOpen(u),p=atP(u,a,td,420),R=110*c.G,T=2.5;anim(u,'rr_whirl',.55);S('wind',u);rrS('saber',u);rrFan(u,a,.5,2,c.full);
-  aux.push({type:'rr_storm',x:p.x,y:p.y,r:R,t:T,m:T,team:u.team,owner:u,vfx:'wind',k:.42,id:c.id,F:c.F,n:0,danger:1})}),
+  aux.push({type:'rr_storm',x:p.x,y:p.y,r:R,t:T,m:T,team:u.team,owner:u,vfx:'wind',k:.36,id:c.id,F:c.F,n:0,danger:1})}),
  // ---- Grande Kamaitachi : 0,3 s pour ouvrir l'éventail, puis une vague de faux qui traverse tout
  rr_dai:SP('Grande Kamaitachi',RRD.dai,13,{line:{len:560,w:110},ai:RG(520,.6)},(u,a)=>{const c=rrOpen(u),R=44*c.G;u.root=Math.max(u.root,.4);anim(u,'rr_big',.75);rrS('heavy',u);rrFan(u,a,.7,4,c.full);
   jx({jfx:'rr_tline',x:u.x,y:u.y,a,len:560,w:2*R+36,t:.3,m:.3});
-  later(u,.3,()=>{if(u.dead)return;rrS('boom',u);S('wind',u);if(near(u.x,u.y))shake=Math.max(shake,.2);
+  later(u,.3,()=>{if(u.dead||u.stun>0)return;rrS('boom',u);S('wind',u);if(near(u.x,u.y))shake=Math.max(shake,.2);
    proj(u,a,{vfx:'wind',spd:760,r:R,dmg:28*c.F,life:.74,col:RRC.wind,pierce:1,noClash:1,kind:'rr_wave',o:{rr:c.id,dot:{dps:8/3,dur:3}},
     onHit:(p,t)=>{if(t.dead)return;if(t.unstop<=0){const b=Math.atan2(p.vy,p.vx);t.kx+=Math.cos(b)*650;t.ky+=Math.sin(b)*650}if(near(t.x,t.y))jx({jfx:'rr_cut',ti:rrI(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),big:1,t:.5,m:.5})}});
    aux.push({type:'rr_wavec',x:u.x,y:u.y,r:0,t:1,m:1,team:u.team,owner:u,p:projs[projs.length-1]})})}),
@@ -7337,7 +7337,7 @@ Object.assign(NAT,{
  // ---- Tempête de l'éventail : 3 battements en cône (suivent la visée)
  rr_typh:ULT('Tempête de l\'éventail',RRD.typh,{line:{len:380,w:240},ai:{max:340,p:.8}},(u,a)=>{const c=rrOpen(u),D=1.05,R=380*c.G;u.root=Math.max(u.root,D);anim(u,'rr_beat',D);rrS('heavy',u);
   for(let i=0;i<3;i++)later(u,.12+i*.4,()=>{if(u.dead||u.stun>0)return;const A=u.aim,last=i===2;rrFan(u,A,.36,2,c.full);jx({jfx:'rr_gust',x:u.x,y:u.y,a:A,r:R,w:1.3,t:.5,m:.5});S('wind',u);rrS(last?'boom':'heavy',u);rrSweep(u,u.x,u.y,A,R,1.3);
-   for(const e of units)if(!e.dead&&e.team!==u.team&&dist(u,e)<R+e.r&&angDiff(ang(u,e),A)<.65)hit(e,u,(last?20:14)*c.F,{kb:last?800:520,slow:last?2:0,rr:c.id,unblockable:1});
+   for(const e of units)if(!e.dead&&e.team!==u.team&&dist(u,e)<R+e.r&&angDiff(ang(u,e),A)<.65)hit(e,u,(last?16:12)*c.F,{kb:last?800:520,slow:last?2:0,rr:c.id,unblockable:1});
    if(near(u.x,u.y))shake=Math.max(shake,last?.3:.15)})}),
 });
 Object.assign(NATHERO,{rr:'kylo'});
@@ -7357,15 +7357,15 @@ AUXF.rr_wall=(x,dt)=>{const o=x.owner,ca=Math.cos(x.a),sa=Math.sin(x.a),H=x.len/
 AUXF.rr_storm=(x,dt)=>{const o=x.owner;
  for(const e of units){if(e.dead||e.team===x.team)continue;const d=Math.hypot(e.x-x.x,e.y-x.y);if(d>x.r+e.r)continue;
   if(!(e.unstop>0)&&!e.dash&&!(e.slowImm>0)){if(d>8){const v=Math.min(d,28*dt);e.x+=(x.x-e.x)/d*v;e.y+=(x.y-e.y)/d*v}e.slow=Math.max(e.slow,.3)}}
- if(x.k<=0&&x.n<6){x.k=.42;x.n++;VFX='wind';for(const e of units){if(e.dead||e.team===x.team||Math.hypot(e.x-x.x,e.y-x.y)>x.r+e.r)continue;if(hit(e,o,3*x.F,{rr:x.id,unblockable:1})&&near(e.x,e.y))jx({jfx:'rr_cut',ti:rrI(e),x:e.x,y:e.y,a:rnd()*7,t:.3,m:.3})}VFX=null;if(near(x.x,x.y))rrS('saber',o)}
- if(x.t<=0&&!x.done){x.done=1;VFX='wind';for(const e of units)if(!e.dead&&e.team!==x.team&&Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r+20)hit(e,o,8*x.F,{kb:520,fx:x.x,fy:x.y,rr:x.id,unblockable:1});VFX=null;
+ if(x.k<=0&&x.n<6){x.k=.4;x.n++;VFX='wind';for(const e of units){if(e.dead||e.team===x.team||Math.hypot(e.x-x.x,e.y-x.y)>x.r+e.r)continue;if(hit(e,o,3*x.F,{rr:x.id,unblockable:1})&&near(e.x,e.y))jx({jfx:'rr_cut',ti:rrI(e),x:e.x,y:e.y,a:rnd()*7,t:.3,m:.3})}VFX=null;if(near(x.x,x.y))rrS('saber',o)}
+ if(x.t<=0&&!x.done){x.done=1;VFX='wind';for(const e of units)if(!e.dead&&e.team!==x.team&&Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r+20)hit(e,o,6*x.F,{kb:520,fx:x.x,fy:x.y,rr:x.id,unblockable:1});VFX=null;
   jx({jfx:'rr_burst',x:x.x,y:x.y,r:x.r+20,t:.5,m:.5});if(near(x.x,x.y)){rrS('boom',o);shake=Math.max(shake,.18)}}};
 // vague de la Grande Kamaitachi : elle avale les tirs ennemis qu'elle croise
 AUXF.rr_wavec=x=>{const p=x.p;if(!p||p.dead||p.life<=0||projs.indexOf(p)<0){x.t=0;return}x.x=p.x;x.y=p.y;const sp=Math.hypot(p.vx,p.vy)||1,cx=p.vx/sp,cy=p.vy/sp;
  for(const q of projs){if(q===p||q.dead||q.life<=0||q.grenade||!q.owner||q.owner.team===x.team)continue;const dx=q.x-p.x,dy=q.y-p.y;if(Math.abs(dx*cx+dy*cy)<30+q.r&&Math.abs(-dx*cy+dy*cx)<p.r+12+q.r){q.life=0;if(q.rocket)q.boom=1;if(near(q.x,q.y))sparks(q.x,q.y,RRC.wind,6,'wind')}}};
 // vol plané : le lanceur avance à vitesse fixe ; un joueur le dirige à la souris (virage limité), un bot garde son cap ; un étourdissement le fait tomber
-AUXF.rr_glide=(x,dt)=>{const u=x.owner;if(!u||u.dead){x.t=0;return}
- if(u.stun>0||u.airT>0||!(u.rr_gl>0)){x.t=0;u.rr_gl=0;return}
+AUXF.rr_glide=(x,dt)=>{const u=x.owner;if(!u||u.dead){x.t=0;if(u)u.rr_gl=0;return}
+ if(u.stun>0||u.airT>0||!(u.rr_gl>0)){x.t=0;if(u.rr_gl>0&&!(u.airT>0))u.z=0;u.rr_gl=0;return}
  if(u.ctrl==='local'||u.ctrl==='remote'){let d=u.aim-x.a;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;x.a+=clamp(d,-3.6*dt,3.6*dt)}
  u.x-=u.vx*dt;u.y-=u.vy*dt;const v=430;u.x=clamp(u.x+Math.cos(x.a)*v*dt,B.x+u.r,B.x+B.w-u.r);u.y=clamp(u.y+Math.sin(x.a)*v*dt,B.y+u.r,B.y+B.h-u.r);collide(u);x.x=u.x;x.y=u.y;
  const el=x.m-x.t;u.z=30*Math.min(1,el/.15,Math.max(0,x.t)/.15);u.moving=0;u.rr_gl=Math.max(0,x.t);u.rr_gh=x.a;
@@ -7378,7 +7378,7 @@ AUXF.rr_weasel=(x,dt)=>{const o=x.owner;
  const back=x.n===3,tx=back?x.sx:x.ex,ty=back?x.sy:x.ey,dx=tx-x.x,dy=ty-x.y,d=Math.hypot(dx,dy),st=Math.min(d,1500*dt),px=x.x,py=x.y;
  if(d>.01){x.x+=dx/d*st;x.y+=dy/d*st}
  for(const e of units){if(e.dead||e.team===x.team||x.hs.has(e))continue;if(rrSeg(e.x,e.y,px,py,x.x,x.y)>x.w/2+e.r)continue;x.hs.add(e);VFX='wind';
-  const ok=hit(e,o,(back?16:32)*x.F,back?{kb:300,fx:px,fy:py,rr:x.id,unblockable:1}:{air:.5,rr:x.id,unblockable:1});VFX=null;if(ok&&near(e.x,e.y))jx({jfx:'rr_cut',ti:rrI(e),x:e.x,y:e.y,a:x.a,big:1,t:.5,m:.5})}
+  const ok=hit(e,o,(back?14:28)*x.F,back?{kb:300,fx:px,fy:py,rr:x.id,unblockable:1}:{air:.5,rr:x.id,unblockable:1});VFX=null;if(ok&&near(e.x,e.y))jx({jfx:'rr_cut',ti:rrI(e),x:e.x,y:e.y,a:x.a,big:1,t:.5,m:.5})}
  for(const p of projs)if(!p.dead&&p.life>0&&!p.grenade&&p.owner&&p.owner.team!==x.team&&Math.hypot(p.x-x.x,p.y-x.y)<x.w/2+p.r+8){p.life=0;if(p.rocket)p.boom=1;if(near(p.x,p.y))sparks(p.x,p.y,RRC.wind,6,'wind')}
  if(st>=d-.5){if(!back){x.n=2;x.k=.3;x.hs.clear();x.a+=Math.PI;if(near(x.x,x.y))jx({jfx:'rr_dust',x:x.x,y:x.y,r:60,t:.4,m:.4})}else{x.n=4;x.t=Math.min(x.t,.4);jx({jfx:'rr_poof',x:x.x,y:x.y,r:40,t:.5,m:.5});rrS('poof',o)}}};
 
@@ -7389,10 +7389,9 @@ TRAITS[12]={nom:'Trois lunes',desc:RRD.trait,
  init(u){u.rr_mn=u.rr_mn|0;u.rr_mT=u.rr_mT||0},
  update(u,dt){if(u.rr_cds!==u.cds){u.rr_cds=u.cds;u.rr_mn=0;u.rr_mT=0} // nouveau ninja ou réapparition
   if(u.rr_mF>0)u.rr_mF-=dt;if(u.rr_mn>0){u.rr_mT-=dt;if(u.rr_mT<=0){u.rr_mn--;u.rr_mT=RR_MT2}}
-  // IA de la Rafale : de près, frapper ; de loin, balayer les tirs qui arrivent
-  if(u.rr_gi==null)u.rr_gi=u.ch.abil.findIndex(a=>a&&a.key==='rr_gale');if(u.rr_gi>0){const e=u.tgt&&!u.tgt.dead?u.tgt:null;u.ch.abil[u.rr_gi].ai=e&&dist(u,e)<250?RR_GA:RR_GD}},
- // dégâts des jutsu Roran : +5 % par lune ; +30 % pour une Kamaitachi sur une cible en l'air ; le 1er coup au but d'un jutsu ouvre une lune
- deal(src,t,dmg,o){if(!o.rr)return dmg;dmg*=1+.05*(src.rr_mn|0);if(o.rrAir&&t.airT>0){dmg*=1.3;say(t,'EN L\'AIR ×1,3','#e8fff8')}
+  },
+ // dégâts des jutsu Roran : +4 % par lune ; +30 % pour une Kamaitachi sur une cible en l'air ; le 1er coup au but d'un jutsu ouvre une lune
+ deal(src,t,dmg,o){if(!o.rr)return dmg;dmg*=1+.04*(src.rr_mn|0);if(o.rrAir&&t.airT>0){dmg*=1.3;say(t,'EN L\'AIR ×1,3','#e8fff8')}
   if(src.rr_cid!==o.rr){src.rr_cid=o.rr;if((src.rr_mn|0)<3){src.rr_mn=(src.rr_mn|0)+1;src.rr_mF=.6;if(src.rr_mn===3)say(src,'TROISIÈME LUNE','#d8b8ff')}}src.rr_mT=RR_MT;return dmg},
  // en vol sur l'éventail, les coups au corps à corps passent dessous
  take(t,src,dmg,o){if(t.rr_gl>0&&o.melee&&src&&src!==t&&src.team!==t.team){if(!(SIMT<(t.rr_mss||0))){t.rr_mss=SIMT+.5;say(t,'EN VOL','#e8fff8')}return -1}return dmg},
@@ -7404,6 +7403,8 @@ TRAITS[12]={nom:'Trois lunes',desc:RRD.trait,
   rrFanDraw(X,Y+7,13,-Math.PI/2,.45+n*.35,1,n,0);
   text(n>=3?'Trois lunes : éventail grand ouvert prêt':'Trois lunes '+n+'/3',X+18,Y+4,12,n>=3?rgba('#e8d0ff',.8+.2*Math.sin(t*6)):'#d8c8e8','left');g.restore()}};
 AFTER.push(()=>UK.push('rr_mn','rr_gl','rr_gh'));
+// IA de la Rafale : de près, frapper ; de loin, balayer les tirs qui arrivent (réglée juste avant l'IA de chaque ninja : les bots d'un même perso partagent leur fiche)
+AFTER.push(()=>{const A0=ai;ai=function(u,dt){if(u.ch.clan===12){const L=u.ch.abil;let i=L.rr_gi;if(i==null)i=L.rr_gi=L.findIndex(a=>a&&a.key==='rr_gale');if(i>0){const e=u.tgt&&!u.tgt.dead?u.tgt:null;L[i].ai=e&&dist(u,e)<250?RR_GA:RR_GD}}return A0(u,dt)}});
 
 // ---- apparence : l'éventail géant dans le dos
 CLOOK[12]=(look)=>{look.back='eventail';delete look.gourd};
@@ -7413,7 +7414,9 @@ function rrBackFan(x0,y0,x1,y1,w,lit){const a=Math.atan2(y1-y0,x1-x0),L=Math.hyp
  g.fillStyle='#5a4230';g.fillRect(L*.08,-w*.2,L*.86,w*.12);
  for(let i=0;i<3;i++){const mx=L*(.5+i*.17),mr=w*.3;circ(mx,0,mr,i<lit?RRC.moonL:RRC.moon);g.strokeStyle='#1a120c';g.lineWidth=.8;g.beginPath();g.arc(mx,0,mr,0,7);g.stroke()}
  circ(0,0,w*.32,'#9aa2ae');g.restore()}
-STATD.push((u,p,S,sk)=>{if(u.ch.clan!==12||u.dead||u.ch.look.back!=='eventail'||u.rr_gl>0||(u.anim&&String(u.anim.k).startsWith('rr_')))return;
+// l'éventail planté en Barrière n'est plus dans le dos (ui synchronisé : marche aussi chez l'invité)
+function rrWallUp(u){const i=units.indexOf(u);for(const x of aux)if(x.type==='rr_wall'&&x.ui===i&&x.t>0)return true;return false}
+STATD.push((u,p,S,sk)=>{if(u.ch.clan!==12||u.dead||u.ch.look.back!=='eventail'||u.rr_gl>0||(u.anim&&String(u.anim.k).startsWith('rr_'))||rrWallUp(u))return;
  const k=S*(sk||1),fy=Math.sin(u.aim||0),side=Math.cos(u.aim||0)>=0?-1:1,z=(u.z||0)*S,lit=u.rr_mn|0;
  if(fy<-.3)rrBackFan(p.x-9*k,p.y-z-22*k,p.x+13*k,p.y-z-90*k,9*k,lit);else rrBackFan(p.x+side*12*k,p.y-z-46*k,p.x+side*24*k,p.y-z-94*k,9*k,lit)});
 
@@ -7545,7 +7548,8 @@ JFXD.rr_ride=(f,k,e,t,u)=>{if(!u||u.dead||!(u.rr_gl>0))return;const h=u.rr_gh??f
 AUXD.rr_wall=(x,k,t)=>{const ca=Math.cos(x.a),sa=Math.sin(x.a),H=x.len/2,R=H*1.05,n=10,sp=2.2,b0=-sp/2;const W=(s,z)=>P(x.x-sa*s,x.y+ca*s,z);
  poly([W(-H,0),W(H,0),P(x.x+ca*70-sa*H,x.y+sa*70+ca*H,0),P(x.x+ca*70+sa*H,x.y+sa*70-ca*H,0)],rgba('#c8fff0',.1*k));
  g.lineCap='round';for(let i=0;i<10;i++){const s=((i*.618)%1-.5)*x.len,d=((t*2.4+i*.13)%1),a=P(x.x+ca*(10+d*70)-sa*s,x.y+sa*(10+d*70)+ca*s,10+(i%4)*12),b=P(x.x+ca*(10+d*70+26)-sa*s,x.y+sa*(10+d*70+26)+ca*s,10+(i%4)*12);g.strokeStyle=rgba(RRC.wind,.7*k*(1-d));g.lineWidth=2;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()}
- const rise=Math.min(1,(x.m-x.t)/.2),pt=(b,r)=>{const s=Math.sin(b)*r,l=Math.cos(b)*r*.55*rise;return P(x.x-sa*s-ca*l,x.y+ca*s-sa*l,Math.cos(b)*r*.8*rise+4)}; // l'éventail penche vers le lanceur (lisible de profil)g.globalAlpha=k;
+ const rise=Math.min(1,(x.m-x.t)/.2),pt=(b,r)=>{const s=Math.sin(b)*r,l=Math.cos(b)*r*.55*rise;return P(x.x-sa*s-ca*l,x.y+ca*s-sa*l,Math.cos(b)*r*.8*rise+4)}; // l'éventail penche vers le lanceur (lisible de profil)
+ g.globalAlpha=k;
  g.fillStyle=RRC.paper;g.strokeStyle=RRC.rib;g.lineWidth=2;g.beginPath();for(let i=0;i<=n;i++){const p=pt(b0+sp*i/n,R);i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)}for(let i=n;i>=0;i--){const p=pt(b0+sp*i/n,R*.26);g.lineTo(p.x,p.y)}g.closePath();g.fill();
  g.fillStyle=RRC.fold;for(let i=0;i<n;i+=2){g.beginPath();const a=pt(b0+sp*i/n,R),b=pt(b0+sp*(i+1)/n,R),c=pt(b0+sp*(i+1)/n,R*.26),d=pt(b0+sp*i/n,R*.26);g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.lineTo(c.x,c.y);g.lineTo(d.x,d.y);g.closePath();g.fill()}
  g.beginPath();for(let i=0;i<=n;i++){const p=pt(b0+sp*i/n,R);i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)}for(let i=n;i>=0;i--){const p=pt(b0+sp*i/n,R*.26);g.lineTo(p.x,p.y)}g.closePath();g.stroke();
@@ -7940,9 +7944,9 @@ const saveCfg=()=>{try{localStorage.setItem('nrCfg',JSON.stringify(CFG))}catch(e
 const teamN=()=>Math.min(4,Math.max(mode==='arena'&&coop()?2:1,CFG.team,humansPer(0),humansPer(1)));
 const sdR=()=>mode!=='arena'||!CFG.sd||timer<SD_START?9999:lerp(1150,70,clamp((timer-SD_START)/SD_LEN,0,1));
 // UXK : champs ajoutés en cours de partie, déclarés d'avance (forme cachée unique)
-const UXK=["rid","wet","mk","stk","rootV","blockT","chk","sprintLock","sprint","run","runT","_tri","sub_nd","jstN","jstV","aiSprint","hy_byak","hy_stepB","hy_seen","uc_tm","uc_obs","uc_cpN","uc_cpT","uc_rcT","tj_g","tj_cT","tj_n","tj_cds","ak_cal","sa_shT","sa_cds","sa_arm","sa_armT","sa_sph","sa_fly","sa_brk","ab_eat","ab_tk","in_bcd","na_dk","kg_os","kg_osT","kg_armT","kg_larT","cmb","cmbH","cmbT","thrT","st_kn","st_kt","anim","relT","auraV","dmgBy","st_sh","uc_tmF","uc_cp","phase","uc_shB","uc_rec","uc_rdT","st_vp","ya_mkU","ya_mk","ya_mkB","uc_suT","tj_8","tj_red","ak_roll","shieldBy","ak_bf","ya_lnkT","ya_lnkU","dotSrc","dotEl","dotK","ya_pz","ya_pa","na_tT","in_flair","in_wolf","do_sw","jst","sa_sink","ab_last","ab_col","ab_colT","ab_src","ak_arm","ya_sl","ya_slI","sub_ctr","ak_spk","hy_tkN","hy_tk","hy_tkU","sub_slug","thirdImm","st_luT","do_ar","do_ac","chan","tj_life","tj_esq","na_pl","riposteS","hy_dg","uc_am","na_by","na_hT","hy_rvU","c3T","hy_imU","ka_ht","counterS","absorbEn","izT","izS","parry","aiParry","fearX","fearY","tauntSrc","su_pr","ab_vd","ab_vdT","ab_spyT","ab_spyS","uz_clT","_tr","_pz","_land","_dog3","buf","bufL","ckLock","chkT","exh","ckMsg","aiCkLo","aiLowT","aiCkSt","aiCkTo","hlC","hlTg","hlCd","hlN","hlR","hlMsg","hlQ","sub_hk","sub_sage","sub_byk","su_mA","do_mo","uc_gk","na_sh","ab_ven","in_four","uz_kyu","uz_fv","uz_clQ","uz_rf","rr_mn","rr_mT","rr_sN","rr_sT","rr_gl","rr_gh","rr_cds","rr_mF","rr_gi","gvx","gvy"];
+const UXK=["rid","wet","mk","stk","rootV","blockT","chk","sprintLock","sprint","run","runT","_tri","sub_nd","jstN","jstV","aiSprint","hy_byak","hy_stepB","hy_seen","uc_tm","uc_obs","uc_cpN","uc_cpT","uc_rcT","tj_g","tj_cT","tj_n","tj_cds","ak_cal","sa_shT","sa_cds","sa_arm","sa_armT","sa_sph","sa_fly","sa_brk","ab_eat","ab_tk","in_bcd","na_dk","kg_os","kg_osT","kg_armT","kg_larT","cmb","cmbH","cmbT","thrT","st_kn","st_kt","anim","relT","auraV","dmgBy","st_sh","uc_tmF","uc_cp","phase","uc_shB","uc_rec","uc_rdT","st_vp","ya_mkU","ya_mk","ya_mkB","uc_suT","tj_8","tj_red","ak_roll","shieldBy","ak_bf","ya_lnkT","ya_lnkU","dotSrc","dotEl","dotK","ya_pz","ya_pa","na_tT","in_flair","in_wolf","do_sw","jst","sa_sink","ab_last","ab_col","ab_colT","ab_src","ak_arm","ya_sl","ya_slI","sub_ctr","ak_spk","hy_tkN","hy_tk","hy_tkU","sub_slug","thirdImm","st_luT","do_ar","do_ac","chan","tj_life","tj_esq","na_pl","riposteS","hy_dg","uc_am","na_by","na_hT","hy_rvU","c3T","hy_imU","ka_ht","counterS","absorbEn","izT","izS","parry","aiParry","fearX","fearY","tauntSrc","su_pr","ab_vd","ab_vdT","ab_spyT","ab_spyS","uz_clT","_tr","_pz","_land","_dog3","buf","bufL","ckLock","chkT","exh","ckMsg","aiCkLo","aiLowT","aiCkSt","aiCkTo","hlC","hlTg","hlCd","hlN","hlR","hlMsg","hlQ","sub_hk","sub_sage","sub_byk","su_mA","do_mo","uc_gk","na_sh","ab_ven","in_four","uz_kyu","uz_fv","uz_clQ","uz_rf","rr_mn","rr_mT","rr_sN","rr_sT","rr_gl","rr_gh","rr_cds","rr_mF","gvx","gvy"];
 function mkUnit(c,x,y,team){const ch=CH[c];return{c,ch,x,y,z:0,vx:0,vy:0,kx:0,ky:0,r:18*(ch.look.scale>1?1.1:1),hp:ch.hp,max:ch.hp,energy:0,team,hero:!ch.trooper,cds:[0,0,0,0,0,0],stun:0,slow:0,haste:0,rage:0,rapid:0,unstop:0,deflect:0,shield:0,shieldT:0,
- stam:100,stamT:0,block:false,blockLock:0,aiBlock:0,dash:null,cast:null,spin:null,flame:null,aim:team?Math.PI:0,swing:0,swingA:0,saberOut:0,walk:0,moving:0,aiT:.3+rnd()*.4,strT:0,strDir:rnd()<.5?1:-1,flash:0,dead:false,deadT:0,respawn:0,tgt:null,lane:y,ctrl:null,human:false,nx:x,ny:y,root:0,stealth:0,ambush:0,airT:0,hits:0,chg:ch.abil.map(a=>a&&a.charges||0),ammo:ch.abil[0].ammo||0,silence:0,fear:0,taunt:0,disarm:0,vuln:0,counter:0,riposte:0,dodge:0,absorb:0,thorns:0,dr:0,drT:0,cdrHit:0,lsB:0,regenB:0,slowImm:0,giant:0,riot:0,chrome:0,parryAll:0,thornSlow:0,wallStun:0,critBuf:0,pierceBuf:0,dot:0,dotT:0,sleepT:0,markB:null,stick:null,rid:undefined,wet:undefined,mk:undefined,stk:undefined,rootV:undefined,blockT:undefined,chk:undefined,sprintLock:undefined,sprint:undefined,run:undefined,runT:undefined,_tri:undefined,sub_nd:undefined,jstN:undefined,jstV:undefined,aiSprint:undefined,hy_byak:undefined,hy_stepB:undefined,hy_seen:undefined,uc_tm:undefined,uc_obs:undefined,uc_cpN:undefined,uc_cpT:undefined,uc_rcT:undefined,tj_g:undefined,tj_cT:undefined,tj_n:undefined,tj_cds:undefined,ak_cal:undefined,sa_shT:undefined,sa_cds:undefined,sa_arm:undefined,sa_armT:undefined,sa_sph:undefined,sa_fly:undefined,sa_brk:undefined,ab_eat:undefined,ab_tk:undefined,in_bcd:undefined,na_dk:undefined,kg_os:undefined,kg_osT:undefined,kg_armT:undefined,kg_larT:undefined,cmb:undefined,cmbH:undefined,cmbT:undefined,thrT:undefined,st_kn:undefined,st_kt:undefined,anim:undefined,relT:undefined,auraV:undefined,dmgBy:undefined,st_sh:undefined,uc_tmF:undefined,uc_cp:undefined,phase:undefined,uc_shB:undefined,uc_rec:undefined,uc_rdT:undefined,st_vp:undefined,ya_mkU:undefined,ya_mk:undefined,ya_mkB:undefined,uc_suT:undefined,tj_8:undefined,tj_red:undefined,ak_roll:undefined,shieldBy:undefined,ak_bf:undefined,ya_lnkT:undefined,ya_lnkU:undefined,dotSrc:undefined,dotEl:undefined,dotK:undefined,ya_pz:undefined,ya_pa:undefined,na_tT:undefined,in_flair:undefined,in_wolf:undefined,do_sw:undefined,jst:undefined,sa_sink:undefined,ab_last:undefined,ab_col:undefined,ab_colT:undefined,ab_src:undefined,ak_arm:undefined,ya_sl:undefined,ya_slI:undefined,sub_ctr:undefined,ak_spk:undefined,hy_tkN:undefined,hy_tk:undefined,hy_tkU:undefined,sub_slug:undefined,thirdImm:undefined,st_luT:undefined,do_ar:undefined,do_ac:undefined,chan:undefined,tj_life:undefined,tj_esq:undefined,na_pl:undefined,riposteS:undefined,hy_dg:undefined,uc_am:undefined,na_by:undefined,na_hT:undefined,hy_rvU:undefined,c3T:undefined,hy_imU:undefined,ka_ht:undefined,counterS:undefined,absorbEn:undefined,izT:undefined,izS:undefined,parry:undefined,aiParry:undefined,fearX:undefined,fearY:undefined,tauntSrc:undefined,su_pr:undefined,ab_vd:undefined,ab_vdT:undefined,ab_spyT:undefined,ab_spyS:undefined,uz_clT:undefined,_tr:undefined,_pz:undefined,_land:undefined,_dog3:undefined,buf:undefined,bufL:undefined,ckLock:undefined,chkT:undefined,exh:undefined,ckMsg:undefined,aiCkLo:undefined,aiLowT:undefined,aiCkSt:undefined,aiCkTo:undefined,hlC:undefined,hlTg:undefined,hlCd:undefined,hlN:undefined,hlR:undefined,hlMsg:undefined,hlQ:undefined,sub_hk:undefined,sub_sage:undefined,sub_byk:undefined,su_mA:undefined,do_mo:undefined,uc_gk:undefined,na_sh:undefined,ab_ven:undefined,in_four:undefined,uz_kyu:undefined,uz_fv:undefined,uz_clQ:undefined,uz_rf:undefined,rr_mn:undefined,rr_mT:undefined,rr_sN:undefined,rr_sT:undefined,rr_gl:undefined,rr_gh:undefined,rr_cds:undefined,rr_mF:undefined,rr_gi:undefined,gvx:undefined,gvy:undefined}}
+ stam:100,stamT:0,block:false,blockLock:0,aiBlock:0,dash:null,cast:null,spin:null,flame:null,aim:team?Math.PI:0,swing:0,swingA:0,saberOut:0,walk:0,moving:0,aiT:.3+rnd()*.4,strT:0,strDir:rnd()<.5?1:-1,flash:0,dead:false,deadT:0,respawn:0,tgt:null,lane:y,ctrl:null,human:false,nx:x,ny:y,root:0,stealth:0,ambush:0,airT:0,hits:0,chg:ch.abil.map(a=>a&&a.charges||0),ammo:ch.abil[0].ammo||0,silence:0,fear:0,taunt:0,disarm:0,vuln:0,counter:0,riposte:0,dodge:0,absorb:0,thorns:0,dr:0,drT:0,cdrHit:0,lsB:0,regenB:0,slowImm:0,giant:0,riot:0,chrome:0,parryAll:0,thornSlow:0,wallStun:0,critBuf:0,pierceBuf:0,dot:0,dotT:0,sleepT:0,markB:null,stick:null,rid:undefined,wet:undefined,mk:undefined,stk:undefined,rootV:undefined,blockT:undefined,chk:undefined,sprintLock:undefined,sprint:undefined,run:undefined,runT:undefined,_tri:undefined,sub_nd:undefined,jstN:undefined,jstV:undefined,aiSprint:undefined,hy_byak:undefined,hy_stepB:undefined,hy_seen:undefined,uc_tm:undefined,uc_obs:undefined,uc_cpN:undefined,uc_cpT:undefined,uc_rcT:undefined,tj_g:undefined,tj_cT:undefined,tj_n:undefined,tj_cds:undefined,ak_cal:undefined,sa_shT:undefined,sa_cds:undefined,sa_arm:undefined,sa_armT:undefined,sa_sph:undefined,sa_fly:undefined,sa_brk:undefined,ab_eat:undefined,ab_tk:undefined,in_bcd:undefined,na_dk:undefined,kg_os:undefined,kg_osT:undefined,kg_armT:undefined,kg_larT:undefined,cmb:undefined,cmbH:undefined,cmbT:undefined,thrT:undefined,st_kn:undefined,st_kt:undefined,anim:undefined,relT:undefined,auraV:undefined,dmgBy:undefined,st_sh:undefined,uc_tmF:undefined,uc_cp:undefined,phase:undefined,uc_shB:undefined,uc_rec:undefined,uc_rdT:undefined,st_vp:undefined,ya_mkU:undefined,ya_mk:undefined,ya_mkB:undefined,uc_suT:undefined,tj_8:undefined,tj_red:undefined,ak_roll:undefined,shieldBy:undefined,ak_bf:undefined,ya_lnkT:undefined,ya_lnkU:undefined,dotSrc:undefined,dotEl:undefined,dotK:undefined,ya_pz:undefined,ya_pa:undefined,na_tT:undefined,in_flair:undefined,in_wolf:undefined,do_sw:undefined,jst:undefined,sa_sink:undefined,ab_last:undefined,ab_col:undefined,ab_colT:undefined,ab_src:undefined,ak_arm:undefined,ya_sl:undefined,ya_slI:undefined,sub_ctr:undefined,ak_spk:undefined,hy_tkN:undefined,hy_tk:undefined,hy_tkU:undefined,sub_slug:undefined,thirdImm:undefined,st_luT:undefined,do_ar:undefined,do_ac:undefined,chan:undefined,tj_life:undefined,tj_esq:undefined,na_pl:undefined,riposteS:undefined,hy_dg:undefined,uc_am:undefined,na_by:undefined,na_hT:undefined,hy_rvU:undefined,c3T:undefined,hy_imU:undefined,ka_ht:undefined,counterS:undefined,absorbEn:undefined,izT:undefined,izS:undefined,parry:undefined,aiParry:undefined,fearX:undefined,fearY:undefined,tauntSrc:undefined,su_pr:undefined,ab_vd:undefined,ab_vdT:undefined,ab_spyT:undefined,ab_spyS:undefined,uz_clT:undefined,_tr:undefined,_pz:undefined,_land:undefined,_dog3:undefined,buf:undefined,bufL:undefined,ckLock:undefined,chkT:undefined,exh:undefined,ckMsg:undefined,aiCkLo:undefined,aiLowT:undefined,aiCkSt:undefined,aiCkTo:undefined,hlC:undefined,hlTg:undefined,hlCd:undefined,hlN:undefined,hlR:undefined,hlMsg:undefined,hlQ:undefined,sub_hk:undefined,sub_sage:undefined,sub_byk:undefined,su_mA:undefined,do_mo:undefined,uc_gk:undefined,na_sh:undefined,ab_ven:undefined,in_four:undefined,uz_kyu:undefined,uz_fv:undefined,uz_clQ:undefined,uz_rf:undefined,rr_mn:undefined,rr_mT:undefined,rr_sN:undefined,rr_sT:undefined,rr_gl:undefined,rr_gh:undefined,rr_cds:undefined,rr_mF:undefined,gvx:undefined,gvy:undefined}}
 // statistiques de la partie (éliminations, morts, assistances, dégâts infligés/subis, soins), par perso et par camp
 let STATS={},CUR=null;
 const stOf=u=>{const k=u.c+'|'+u.team;return STATS[k]||(STATS[k]={c:u.c,team:u.team,k:0,d:0,a:0,dmg:0,tk:0,heal:0,sh:0})};
