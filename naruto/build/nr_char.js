@@ -125,7 +125,7 @@ function backItem2D(k,ox,col){g.save();g.translate(ox,0);
   case'samehada':g.translate(0,-30);g.rotate(-.5);outlined(()=>{g.roundRect(-4.5,-24,9,40,4.5)},col('#3a4a7a'));g.strokeStyle=col('#6a7ab0');g.lineWidth=1;for(let i=0;i<5;i++){g.beginPath();g.moveTo(-4,-18+i*7);g.lineTo(4,-15+i*7);g.stroke()}outlined(()=>{g.rect(-1.6,-31,3.2,8)},col('#5a4a3a'));break;
   case'faux':g.translate(0,-28);g.rotate(.55);limb(0,-30,0,-5,0,22,2.2,col('#4a3426'));for(let k=0;k<3;k++)outlined(()=>{g.moveTo(0,-31+k*5);g.quadraticCurveTo(10,-34+k*5,17,-25+k*5);g.quadraticCurveTo(9,-28+k*5,0,-27+k*5)},col('#c42a2a'));break;
   case'eventail':g.translate(0,-30);g.rotate(-.35);outlined(()=>{g.roundRect(-4,-28,8,46,2.5)},col('#4a3a2a'));for(let i=0;i<3;i++)circ(0,-20+i*9,2.2,col('#8a5ab8'));break;
-  case'fuma':g.translate(0,-30);for(let i=0;i<4;i++){g.rotate(Math.PI/2);outlined(()=>{g.moveTo(-2.6,-2);g.lineTo(0,-15);g.lineTo(2.6,-2)},col('#9aa2ae'))}blob(0,0,3,col('#5a5f6a'));break;
+  case'fuma':g.translate(0,-30);g.rotate(.4);for(let i=0;i<4;i++){g.rotate(Math.PI/2);outlined(()=>{g.moveTo(-3.4,-2);g.quadraticCurveTo(-1.5,-14,3,-22);g.lineTo(3.4,-2)},col('#9aa2ae'))}blob(0,0,4,col('#5a5f6a'));break;
   case'katana':g.translate(0,-22);g.rotate(1.05);outlined(()=>{g.roundRect(-1.8,-14,3.6,30,1.6)},col('#24242c'));outlined(()=>{g.rect(-1.5,-22,3,8)},col('#d8d0c0'));break}
  g.restore()}
 // images rémanentes : silhouettes qui s'effacent derrière un ninja qui file
@@ -188,7 +188,7 @@ function drawNinja(u,bx,by,s,ghost){
   if(L.tunic){g.fillStyle=col('#ffffff');g.beginPath();g.arc(0,-31,5,Math.PI,0);g.fill();g.fillStyle=col('#d02a2a');g.beginPath();g.arc(0,-31,5,0,Math.PI);g.fill()}
   if(L.clouds&&!fl){g.fillStyle='#c0202a';g.beginPath();g.ellipse(0,-28,5,3,0,0,7);g.fill()}
   if(L.cape)outlined(()=>{g.moveTo(-12,-41);g.lineTo(12,-41);g.lineTo(15-step,-6);g.lineTo(-15-step,-6)},col(L.cape));
-  if(L.gourd)gourd();
+  if(L.gourd)gourd();if(L.back&&!L.gourd)backItem2D(L.back,0,col); // vu de dos : l'objet porté dans le dos passe devant le torse
   if(L.disc&&!fl){g.strokeStyle=L.disc;g.lineWidth=2.2;g.beginPath();g.arc(0,-31,5,0,7);g.stroke()}
   if(L.fan&&!fl){g.fillStyle='#ffffff';g.beginPath();g.arc(0,-31,5,Math.PI,0);g.fill();g.fillStyle='#d02a2a';g.beginPath();g.arc(0,-31,5,0,Math.PI);g.fill()}
  }
