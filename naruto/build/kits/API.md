@@ -1,12 +1,39 @@
 # Écrire un kit (kits/<catégorie>.js)
 
 Chaque fichier de `naruto/build/kits/` décrit **une catégorie** : `styles` (attaques de base), `sub` (subjutsu, sans clan),
-les 5 natures (`katon`, `suiton`, `futon`, `raiton`, `doton`) et les 11 clans (`uchiha` … `taijutsuka`).
+les 5 natures (`katon`, `suiton`, `futon`, `raiton`, `doton`) et les 21 clans (`uchiha` … `yuki`, voir la table ci-dessous).
 Le générateur `python3 naruto/build/mknaruto.py` assemble tout dans `naruto/index.html`.
+
+## Clans (`CLANS` dans `nr_ninja.js` : [nom, couleur, sigle de l'icône])
+| cat. | clan | fichier | préfixe | | cat. | clan | fichier | préfixe |
+|---|---|---|---|---|---|---|---|---|
+| c0 | Uchiha | uchiha.js | uc_ | | c11 | Hoki (plantes) | hoki.js | hk_ |
+| c1 | Hyûga | hyuga.js | hy_ | | c12 | Roran (éventail, façon Temari) | roran.js | rr_ |
+| c2 | Nara | nara.js | na_ | | c13 | Hakumei (araignées assassines) | hakumei.js | hm_ |
+| c3 | Akimichi | akimichi.js | ak_ | | c14 | Shirogane (marionnettes) | shirogane.js | sg_ |
+| c4 | Aburame | aburame.js | ab_ | | c15 | Chinoike | chinoike.js | ci_ |
+| c5 | Inuzuka | inuzuka.js | in_ | | c16 | Kami | kami.js | km_ |
+| c6 | Uzumaki (fûinjutsu) | uzumaki.js | uz_ | | c17 | Fûma (shuriken) | fuma.js | fm_ |
+| c7 | Yamanaka | yamanaka.js | ya_ | | c18 | Hoshigaki | hoshigaki.js | hs_ |
+| c8 | Sabaku | sabaku.js | sa_ | | c19 | Hôzuki | hozuki.js | hz_ |
+| c9 | Kaguya | kaguya.js | kg_ | | c20 | Yuki | yuki.js | yu_ |
+| c10 | Taijutsuka (`TAIJ`, sans nature) | taijutsuka.js | tj_ | | | | | |
+
+Les indices sont figés (sauvegardes, `PRESETS`, réseau) : ne jamais réordonner `CLANS`. Un clan ajouté a par défaut `CLANBAL` = [1, 1], aucun trait, aucun style propre.
+
+## Points d'extension d'un clan (tout depuis son propre fichier)
+- `KIT('c<n>',[…])` + `Object.assign(NAT,{…})` + `Object.assign(NATHERO,{<préfixe>:'perso'})` (obligatoire : stats de référence de tes mécaniques).
+- `TRAITS[<n>]={…}` : trait du clan (voir plus bas).
+- **Style de combat propre** : `STYLES.push(['Nom','desc','x.<préfixe>_style','vfx','arme',[<n>],modPV,modPuissance])` (arme : `fist bigfist palm claws bone sword` corps à corps, `kunai senbon sand bugs shadow chain` distance).
+  Tant qu'aucun style ne liste ton clan, il prend les styles « sans clan » (Taijutsu, Kunai). Toujours **ajouter à la fin** (`push`), jamais insérer : les sauvegardes gardent l'indice du style.
+  Un style existant peut aussi être ouvert à ton clan : `STYLES.find(s=>s[0]==='Marionnette')[5].push(14)`.
+- **Apparence imposée** : `CLOOK[<n>]=(look,l,style)=>{look.head.eye='#c8e8ff';look.scale=1.05;…}` (appelé par `ninjaLook`, en 3D et en 2D ; `look.head` : `skin hair style eye eyeT face acc`, `look.back` : objet dans le dos, `look.dog`, `look.gourd`…).
+- Équilibrage par clan : `CLANBAL["<n>"]` dans `nr_ninja.js` (laisser [1, 1] tant que la simulation n'a pas tourné).
+- Sigle de l'icône de jutsu : 3e champ de `CLANS` (`clanTag(c)`).
 
 ## Règles d'or
 - **Préfixe** : toutes les clés que tu crées (NAT, PROJD, AUXF/AUXD, JFXD, DETO, ANIM, champs ajoutés aux ninjas) commencent par le préfixe de ta catégorie
-  (`ka_`, `su_`, `fu_`, `ra_`, `do_`, `uc_`, `hy_`, `na_`, `ak_`, `ab_`, `in_`, `uz_`, `ya_`, `sa_`, `kg_`, `tj_` pour Taijutsuka, `sub_` pour Subjutsu, `st_` pour les styles).
+  (`ka_`, `su_`, `fu_`, `ra_`, `do_`, `uc_`, `hy_`, `na_`, `ak_`, `ab_`, `in_`, `uz_`, `ya_`, `sa_`, `kg_`, `tj_` pour Taijutsuka, `hk_ rr_ hm_ sg_ ci_ km_ fm_ hs_ hz_ yu_` pour les clans c11-c20, `sub_` pour Subjutsu (fichier `sub_naruto.js` : `sub_nr_…` conseillé), `st_` pour les styles).
 - **Au chargement du fichier**, n'utilise que : `KIT`, `NAT`, `SP`, `ULT`, `RG`, `SELF`, `DEF`, `ESC`, `GAP`, `HEALM`, `ALLY`, `S_`, `BURN`, les registres
   (`PROJD AUXF AUXD JFXD DETO ANIM TRAITS STATD AFTER NATHERO`) et des fonctions. Tout le reste (VP, VSND, UK, units…) seulement **dans des fonctions**
   ou dans `AFTER.push(()=>{…})` (exécuté une fois tout le jeu chargé).
@@ -15,7 +42,7 @@ Le générateur `python3 naruto/build/mknaruto.py` assemble tout dans `naruto/in
 
 ## Catalogue
 ```js
-KIT('n0',[ // catégorie : 'u' subjutsu, 'n0'…'n4' natures, 'c0'…'c10' clans
+KIT('n0',[ // catégorie : 'u' subjutsu, 'n0'…'n4' natures, 'c0'…'c20' clans
  [1,'D','x.ka_ball','Katon : Flamme','Projectile de feu qui brûle quelques secondes','fire'],
  // [emplacement, rang, mécanique, nom, description, élément visuel]
 ]);

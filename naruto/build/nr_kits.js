@@ -9,7 +9,8 @@ function KIT(cat,rows){for(const r of rows)KITROWS.push([cat,...r])}
 // ANIM : animations 3D nommées, ANIM.nom=(P,e,u,t)=>{…} modifie la pose P (e = avancement 0 → 1) ; lancer avec anim(u,'nom',durée)
 // TRAITS[clan] : trait de clan {nom,desc,init(u),update(u,dt),deal(src,t,dmg,o)→dmg,take(t,src,dmg,o)→dmg (<0 = annule),draw(u,p,S,sk),hud(u,x,y)}
 // STATD : dessins d'états supplémentaires sur les ninjas, (u,p,S,sk)=>{…}
-const AFTER=[],ANIM={},TRAITS={},STATD=[];
+// CLOOK[clan] : apparence imposée par le clan, (look, l, style)=>{…} modifie look (ex. look.head.eye='#c8e8ff', look.head.skin=…, look.scale=…)
+const AFTER=[],ANIM={},TRAITS={},STATD=[],CLOOK={};
 const anim=(u,k,d=.5)=>{u.anim={k,t:d,m:d}};
 const trait=u=>u&&u.ch&&TRAITS[u.ch.clan]||null;
 function traitDmg(t,src,dmg,o){const a=src&&src!==t?trait(src):null,d=trait(t);if(a&&a.deal)dmg=a.deal(src,t,dmg,o);if(dmg>=0&&d&&d.take)dmg=d.take(t,src,dmg,o);return dmg}

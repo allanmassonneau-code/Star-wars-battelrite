@@ -541,13 +541,18 @@ for(const k in BAL){const [hp,pw,spd]=BAL[k];Object.assign(SRC[k],{hp,pw,spd})}
 // Rangs D C B A S = coût en points ; le kit (5 jutsu) a un budget maximum. Pas de versions EX dans ce jeu.
 const RANKS={D:1,C:2,B:3,A:4,S:5},RANKC={D:'#9aa3ad',C:'#6fcf6f',B:'#5ab4ff',A:'#c07aff',S:'#ffc53a'},BUDGET=17;
 const NATURES=[['Katon','Feu','#ff7a2a'],['Suiton','Eau','#3aa8ff'],['Fûton','Vent','#9fe8c8'],['Raiton','Foudre','#ffe14a'],['Doton','Terre','#b08850']];
-const CLANS=[['Uchiha','#c0202a'],['Hyûga','#d8d0f0'],['Nara','#5a6a3a'],['Akimichi','#d87a3a'],['Aburame','#4a6a5a'],['Inuzuka','#a04a2a'],['Uzumaki','#e0503a'],['Yamanaka','#c8a0e0'],['Sabaku','#c8a060'],['Kaguya','#e8e8e0'],['Taijutsuka','#4aa83a']];
+const CLANS=[['Uchiha','#c0202a'],['Hyûga','#d8d0f0'],['Nara','#5a6a3a'],['Akimichi','#d87a3a'],['Aburame','#4a6a5a'],['Inuzuka','#a04a2a'],['Uzumaki','#e0503a'],['Yamanaka','#c8a0e0'],['Sabaku','#c8a060'],['Kaguya','#e8e8e0'],['Taijutsuka','#4aa83a'],
+ // clans ajoutés (c11-c20) : 3e champ = sigle de l'icône (le 1er lettre ne suffit plus à les distinguer)
+ ['Hoki','#8ab83a','Hk'],['Roran','#e0b84a','Ro'],['Hakumei','#6a4a8a','Hm'],['Shirogane','#a8b4c8','Sg'],['Chinoike','#9a1424','Ci'],
+ ['Kami','#7a9ae0','Km'],['Fûma','#5a5a6e','Fm'],['Hoshigaki','#4a7a9a','Hs'],['Hôzuki','#4ac8d8','Hz'],['Yuki','#bfe6ff','Yu']];
+const clanTag=c=>CLANS[c]?CLANS[c][2]||CLANS[c][0][0]:'?'; // sigle d'un clan (icônes)
 const TAIJ=10; // le clan Taijutsuka n'a pas de nature : uniquement du taijutsu
 // styles de combat (attaque de base) : [nom, description, source, vfx, arme, clans autorisés (-1 = sans clan), modif. PV, modif. puissance]
 // styles de combat : voir kits/styles.js
-const styleOk=(s,clan)=>STYLES[s][5].includes(clan);
+// un clan qui n'a (encore) aucun style propre peut prendre les styles « sans clan » (Taijutsu, Kunai)
+const styleOk=(s,clan)=>STYLES[s][5].includes(clan)||(clan>=0&&STYLES[s][5].includes(-1)&&!STYLES.some(x=>x[5].includes(clan)));
 // [catégorie, emplacement 1-5, rang, source perso.sort, nom, description, effet visuel]
-// catégorie : 'u' Subjutsu (sans clan), 'n0'..'n4' nature, 'c0'..'c10' clan
+// catégorie : 'u' Subjutsu (sans clan), 'n0'..'n4' nature, 'c0'..'c20' clan (CLANS.length)
 // ---------- Rythme Naruto : chakra, mudras, combo, endurance ----------
 const GSPEED=.8; // tout le jeu tourne à 80 % : combats plus lisibles
 const CKCOST={D:10,C:16,B:21,A:28,S:36},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
@@ -652,7 +657,8 @@ function KIT(cat,rows){for(const r of rows)KITROWS.push([cat,...r])}
 // ANIM : animations 3D nommées, ANIM.nom=(P,e,u,t)=>{…} modifie la pose P (e = avancement 0 → 1) ; lancer avec anim(u,'nom',durée)
 // TRAITS[clan] : trait de clan {nom,desc,init(u),update(u,dt),deal(src,t,dmg,o)→dmg,take(t,src,dmg,o)→dmg (<0 = annule),draw(u,p,S,sk),hud(u,x,y)}
 // STATD : dessins d'états supplémentaires sur les ninjas, (u,p,S,sk)=>{…}
-const AFTER=[],ANIM={},TRAITS={},STATD=[];
+// CLOOK[clan] : apparence imposée par le clan, (look, l, style)=>{…} modifie look (ex. look.head.eye='#c8e8ff', look.head.skin=…, look.scale=…)
+const AFTER=[],ANIM={},TRAITS={},STATD=[],CLOOK={};
 const anim=(u,k,d=.5)=>{u.anim={k,t:d,m:d}};
 const trait=u=>u&&u.ch&&TRAITS[u.ch.clan]||null;
 function traitDmg(t,src,dmg,o){const a=src&&src!==t?trait(src):null,d=trait(t);if(a&&a.deal)dmg=a.deal(src,t,dmg,o);if(dmg>=0&&d&&d.take)dmg=d.take(t,src,dmg,o);return dmg}
@@ -2272,6 +2278,10 @@ Object.assign(ANIM,{
  sub_rskw:(P)=>{pz(P,'armR',-3.05,0,-.22);pz(P,'foreR',-.25);pz(P,'armL',-1.15,0,.55);pz(P,'foreL',-.4);pz(P,'chest',-.22,.3);pz(P,'head',-.15);P.root.y=-1.5;pz(P,'thighL',-.3);pz(P,'shinL',.4)},
  sub_rsk:(P,e)=>{const k=ezo(Math.min(1,e/.22)),r=e>.65?(e-.65)/.35:0;pz(P,'armR',-3.05+1.6*k+.3*r,0,-.22+.1*k);pz(P,'foreR',-.25+.15*k);pz(P,'armL',-1.15+1.4*k,0,.55);pz(P,'chest',(-.22+.75*k)*(1-r),(.3-.7*k)*(1-r));pz(P,'head',.15*k);P.root.z=10*k*(1-r);P.root.y=-4*k*(1-r);pz(P,'thighL',-.9*k*(1-r));pz(P,'shinL',.7*k*(1-r));pz(P,'thighR',.5*k*(1-r));pz(P,'shinR',.6*k*(1-r))},
 });
+
+// ===== Subjutsu, lot Naruto (préfixe sub_ comme les autres subjutsu ; clés conseillées sub_nr_…) =====
+// Vide pour l'instant : l'agent Uzumaki y met les techniques de Naruto devenues subjutsu (Rasengan, chakra du Kyûbi, clones…).
+KIT('u',[]);
 
 // ===== Katon (feu) =====
 // Identité : brûlures (dégâts sur la durée), murs et zones de feu, grosses boules, dragon. Le vent allié attise le feu (moteur), le feu sèche les cibles trempées.
@@ -7208,6 +7218,176 @@ JFXD.tj_dragon=(f,k,e,t)=>{const el=f.m-f.t,pr=Math.min(1,el/f.dur),L=f.len*pr,c
  g.fillStyle='#ffe14a';g.beginPath();g.ellipse(12,-8,4.5,2.4,-.2,0,7);g.fill();g.fillStyle='#3a0a06';g.fillRect(11,-9.5,2,3);
  g.strokeStyle='#ffd0c0';g.lineWidth=2;g.beginPath();g.moveTo(36,-4);g.quadraticCurveTo(14,-34,-20,-26);g.moveTo(30,14);g.quadraticCurveTo(8,34,-24,30);g.stroke();g.restore()};
 
+// ===== Clan Hoki (c11, préfixe hk_) : plantes =====
+// KIT TEMPORAIRE (fondation) : 3 jutsu génériques pour que le clan soit jouable. L'agent du clan remplace tout ce fichier.
+// À faire : kit complet (emplacements 1-5), trait TRAITS[11], style(s) de combat propres (STYLES.push([…,[11],…])),
+// apparence éventuelle (CLOOK[11]=(look,l,style)=>{…}), stats de référence (NATHERO.hk), équilibrage (CLANBAL["11"] dans nr_ninja.js).
+// Tant qu'aucun style ne liste le clan 11, il peut prendre les styles « sans clan » (Taijutsu, Kunai).
+KIT('c11',[
+ [1,'C','x.hk_tmp1','Graine épineuse','Lance une graine épineuse qui ralentit la cible','leaf'],
+ [2,'C','x.hk_tmp2','Pas de racine','Bondit vers le curseur','leaf'],
+ [5,'A','x.hk_tmp5','Floraison géante','Une fleur géante éclôt au curseur : dégâts et étourdit','leaf'],
+]);
+Object.assign(NAT,{
+ hk_tmp1:SP('Graine épineuse','Lance une graine épineuse qui ralentit la cible',7,{line:{len:520,w:20},ai:RG(520,.7)},(u,a)=>{anim(u,'throw2',.35);S('blaster',u);proj(u,a,{spd:760,r:8,dmg:20,life:.7,col:'#8ab83a',slow:1})}),
+ hk_tmp2:SP('Pas de racine','Bondit vers le curseur',8,{ai:ESC},(u,a,td)=>{anim(u,'leap',.3);S('dash',u);dash(u,a,clamp(td||220,100,240),.25,{jump:30})}),
+ hk_tmp5:ULT('Floraison géante','Une fleur géante éclôt au curseur : dégâts et étourdit',{tele:{r:120,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);anim(u,'raise',.5);S('boom',u);zone(u,p.x,p.y,120,50,.6,{stun:.6},'#8ab83a')}),
+});
+Object.assign(NATHERO,{hk:'kylo'});
+
+// ===== Clan Roran (c12, préfixe rr_) : éventail et vent (style Temari) =====
+// KIT TEMPORAIRE (fondation) : 3 jutsu génériques pour que le clan soit jouable. L'agent du clan remplace tout ce fichier.
+// À faire : kit complet (emplacements 1-5), trait TRAITS[12], style(s) de combat propres (STYLES.push([…,[12],…])),
+// apparence éventuelle (CLOOK[12]=(look,l,style)=>{…}), stats de référence (NATHERO.rr), équilibrage (CLANBAL["12"] dans nr_ninja.js).
+// Tant qu'aucun style ne liste le clan 12, il peut prendre les styles « sans clan » (Taijutsu, Kunai).
+KIT('c12',[
+ [1,'C','x.rr_tmp1','Lame d\'éventail','Lame de vent rapide qui repousse','wind'],
+ [2,'C','x.rr_tmp2','Bourrasque','Bondit porté par le vent','wind'],
+ [5,'A','x.rr_tmp5','Grande faux du vent','Le vent s\'abat sur la zone visée : dégâts et étourdit','wind'],
+]);
+Object.assign(NAT,{
+ rr_tmp1:SP('Lame d\'éventail','Lame de vent rapide qui repousse',7,{line:{len:520,w:20},ai:RG(520,.7)},(u,a)=>{anim(u,'throw2',.35);S('blaster',u);proj(u,a,{spd:760,r:8,dmg:20,life:.7,col:'#e0b84a',slow:1})}),
+ rr_tmp2:SP('Bourrasque','Bondit porté par le vent',8,{ai:ESC},(u,a,td)=>{anim(u,'leap',.3);S('dash',u);dash(u,a,clamp(td||220,100,240),.25,{jump:30})}),
+ rr_tmp5:ULT('Grande faux du vent','Le vent s\'abat sur la zone visée : dégâts et étourdit',{tele:{r:120,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);anim(u,'raise',.5);S('boom',u);zone(u,p.x,p.y,120,50,.6,{stun:.6},'#e0b84a')}),
+});
+Object.assign(NATHERO,{rr:'kylo'});
+
+// ===== Clan Hakumei (c13, préfixe hm_) : araignées assassines =====
+// KIT TEMPORAIRE (fondation) : 3 jutsu génériques pour que le clan soit jouable. L'agent du clan remplace tout ce fichier.
+// À faire : kit complet (emplacements 1-5), trait TRAITS[13], style(s) de combat propres (STYLES.push([…,[13],…])),
+// apparence éventuelle (CLOOK[13]=(look,l,style)=>{…}), stats de référence (NATHERO.hm), équilibrage (CLANBAL["13"] dans nr_ninja.js).
+// Tant qu'aucun style ne liste le clan 13, il peut prendre les styles « sans clan » (Taijutsu, Kunai).
+KIT('c13',[
+ [1,'C','x.hm_tmp1','Fil d\'araignée','Fil collant qui ralentit la cible','bugs'],
+ [2,'C','x.hm_tmp2','Pas de l\'araignée','Bondit vers le curseur','bugs'],
+ [5,'A','x.hm_tmp5','Toile mortelle','Une toile s\'abat sur la zone : dégâts et étourdit','bugs'],
+]);
+Object.assign(NAT,{
+ hm_tmp1:SP('Fil d\'araignée','Fil collant qui ralentit la cible',7,{line:{len:520,w:20},ai:RG(520,.7)},(u,a)=>{anim(u,'throw2',.35);S('blaster',u);proj(u,a,{spd:760,r:8,dmg:20,life:.7,col:'#6a4a8a',slow:1})}),
+ hm_tmp2:SP('Pas de l\'araignée','Bondit vers le curseur',8,{ai:ESC},(u,a,td)=>{anim(u,'leap',.3);S('dash',u);dash(u,a,clamp(td||220,100,240),.25,{jump:30})}),
+ hm_tmp5:ULT('Toile mortelle','Une toile s\'abat sur la zone : dégâts et étourdit',{tele:{r:120,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);anim(u,'raise',.5);S('boom',u);zone(u,p.x,p.y,120,50,.6,{stun:.6},'#6a4a8a')}),
+});
+Object.assign(NATHERO,{hm:'kylo'});
+
+// ===== Clan Shirogane (c14, préfixe sg_) : marionnettes =====
+// KIT TEMPORAIRE (fondation) : 3 jutsu génériques pour que le clan soit jouable. L'agent du clan remplace tout ce fichier.
+// À faire : kit complet (emplacements 1-5), trait TRAITS[14], style(s) de combat propres (STYLES.push([…,[14],…])),
+// apparence éventuelle (CLOOK[14]=(look,l,style)=>{…}), stats de référence (NATHERO.sg), équilibrage (CLANBAL["14"] dans nr_ninja.js).
+// Tant qu'aucun style ne liste le clan 14, il peut prendre les styles « sans clan » (Taijutsu, Kunai).
+KIT('c14',[
+ [1,'C','x.sg_tmp1','Lame de marionnette','Lame lancée par des fils qui ralentit','chain'],
+ [2,'C','x.sg_tmp2','Fils de chakra','Se tire vers le curseur','chain'],
+ [5,'A','x.sg_tmp5','Ballet des marionnettes','Les marionnettes frappent la zone : dégâts et étourdit','chain'],
+]);
+Object.assign(NAT,{
+ sg_tmp1:SP('Lame de marionnette','Lame lancée par des fils qui ralentit',7,{line:{len:520,w:20},ai:RG(520,.7)},(u,a)=>{anim(u,'throw2',.35);S('blaster',u);proj(u,a,{spd:760,r:8,dmg:20,life:.7,col:'#a8b4c8',slow:1})}),
+ sg_tmp2:SP('Fils de chakra','Se tire vers le curseur',8,{ai:ESC},(u,a,td)=>{anim(u,'leap',.3);S('dash',u);dash(u,a,clamp(td||220,100,240),.25,{jump:30})}),
+ sg_tmp5:ULT('Ballet des marionnettes','Les marionnettes frappent la zone : dégâts et étourdit',{tele:{r:120,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);anim(u,'raise',.5);S('boom',u);zone(u,p.x,p.y,120,50,.6,{stun:.6},'#a8b4c8')}),
+});
+Object.assign(NATHERO,{sg:'kylo'});
+
+// ===== Clan Chinoike (c15, préfixe ci_) : sang et genjutsu =====
+// KIT TEMPORAIRE (fondation) : 3 jutsu génériques pour que le clan soit jouable. L'agent du clan remplace tout ce fichier.
+// À faire : kit complet (emplacements 1-5), trait TRAITS[15], style(s) de combat propres (STYLES.push([…,[15],…])),
+// apparence éventuelle (CLOOK[15]=(look,l,style)=>{…}), stats de référence (NATHERO.ci), équilibrage (CLANBAL["15"] dans nr_ninja.js).
+// Tant qu'aucun style ne liste le clan 15, il peut prendre les styles « sans clan » (Taijutsu, Kunai).
+KIT('c15',[
+ [1,'C','x.ci_tmp1','Œil ensanglanté','Trait de sang qui ralentit la cible','genjutsu'],
+ [2,'C','x.ci_tmp2','Pas sanglant','Bondit vers le curseur','genjutsu'],
+ [5,'A','x.ci_tmp5','Lune de sang','Genjutsu sur la zone : dégâts et étourdit','genjutsu'],
+]);
+Object.assign(NAT,{
+ ci_tmp1:SP('Œil ensanglanté','Trait de sang qui ralentit la cible',7,{line:{len:520,w:20},ai:RG(520,.7)},(u,a)=>{anim(u,'throw2',.35);S('blaster',u);proj(u,a,{spd:760,r:8,dmg:20,life:.7,col:'#9a1424',slow:1})}),
+ ci_tmp2:SP('Pas sanglant','Bondit vers le curseur',8,{ai:ESC},(u,a,td)=>{anim(u,'leap',.3);S('dash',u);dash(u,a,clamp(td||220,100,240),.25,{jump:30})}),
+ ci_tmp5:ULT('Lune de sang','Genjutsu sur la zone : dégâts et étourdit',{tele:{r:120,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);anim(u,'raise',.5);S('boom',u);zone(u,p.x,p.y,120,50,.6,{stun:.6},'#9a1424')}),
+});
+Object.assign(NATHERO,{ci:'kylo'});
+
+// ===== Clan Kami (c16, préfixe km_) : papier =====
+// KIT TEMPORAIRE (fondation) : 3 jutsu génériques pour que le clan soit jouable. L'agent du clan remplace tout ce fichier.
+// À faire : kit complet (emplacements 1-5), trait TRAITS[16], style(s) de combat propres (STYLES.push([…,[16],…])),
+// apparence éventuelle (CLOOK[16]=(look,l,style)=>{…}), stats de référence (NATHERO.km), équilibrage (CLANBAL["16"] dans nr_ninja.js).
+// Tant qu'aucun style ne liste le clan 16, il peut prendre les styles « sans clan » (Taijutsu, Kunai).
+KIT('c16',[
+ [1,'C','x.km_tmp1','Papier tranchant','Feuille tranchante qui ralentit la cible','tag'],
+ [2,'C','x.km_tmp2','Envol de papier','Bondit vers le curseur','tag'],
+ [5,'A','x.km_tmp5','Tempête de papier','Des feuilles explosent sur la zone : dégâts et étourdit','tag'],
+]);
+Object.assign(NAT,{
+ km_tmp1:SP('Papier tranchant','Feuille tranchante qui ralentit la cible',7,{line:{len:520,w:20},ai:RG(520,.7)},(u,a)=>{anim(u,'throw2',.35);S('blaster',u);proj(u,a,{spd:760,r:8,dmg:20,life:.7,col:'#7a9ae0',slow:1})}),
+ km_tmp2:SP('Envol de papier','Bondit vers le curseur',8,{ai:ESC},(u,a,td)=>{anim(u,'leap',.3);S('dash',u);dash(u,a,clamp(td||220,100,240),.25,{jump:30})}),
+ km_tmp5:ULT('Tempête de papier','Des feuilles explosent sur la zone : dégâts et étourdit',{tele:{r:120,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);anim(u,'raise',.5);S('boom',u);zone(u,p.x,p.y,120,50,.6,{stun:.6},'#7a9ae0')}),
+});
+Object.assign(NATHERO,{km:'kylo'});
+
+// ===== Clan Fûma (c17, préfixe fm_) : assassins aux shuriken =====
+// KIT TEMPORAIRE (fondation) : 3 jutsu génériques pour que le clan soit jouable. L'agent du clan remplace tout ce fichier.
+// À faire : kit complet (emplacements 1-5), trait TRAITS[17], style(s) de combat propres (STYLES.push([…,[17],…])),
+// apparence éventuelle (CLOOK[17]=(look,l,style)=>{…}), stats de référence (NATHERO.fm), équilibrage (CLANBAL["17"] dans nr_ninja.js).
+// Tant qu'aucun style ne liste le clan 17, il peut prendre les styles « sans clan » (Taijutsu, Kunai).
+KIT('c17',[
+ [1,'C','x.fm_tmp1','Fûma shuriken','Grand shuriken qui ralentit la cible','shuriken'],
+ [2,'C','x.fm_tmp2','Saut de l\'ombre','Bondit vers le curseur','shuriken'],
+ [5,'A','x.fm_tmp5','Pluie de shuriken','Des shuriken s\'abattent sur la zone : dégâts et étourdit','shuriken'],
+]);
+Object.assign(NAT,{
+ fm_tmp1:SP('Fûma shuriken','Grand shuriken qui ralentit la cible',7,{line:{len:520,w:20},ai:RG(520,.7)},(u,a)=>{anim(u,'throw2',.35);S('blaster',u);proj(u,a,{spd:760,r:8,dmg:20,life:.7,col:'#5a5a6e',slow:1})}),
+ fm_tmp2:SP('Saut de l\'ombre','Bondit vers le curseur',8,{ai:ESC},(u,a,td)=>{anim(u,'leap',.3);S('dash',u);dash(u,a,clamp(td||220,100,240),.25,{jump:30})}),
+ fm_tmp5:ULT('Pluie de shuriken','Des shuriken s\'abattent sur la zone : dégâts et étourdit',{tele:{r:120,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);anim(u,'raise',.5);S('boom',u);zone(u,p.x,p.y,120,50,.6,{stun:.6},'#5a5a6e')}),
+});
+Object.assign(NATHERO,{fm:'kylo'});
+
+// ===== Clan Hoshigaki (c18, préfixe hs_) : requins et eau =====
+// KIT TEMPORAIRE (fondation) : 3 jutsu génériques pour que le clan soit jouable. L'agent du clan remplace tout ce fichier.
+// À faire : kit complet (emplacements 1-5), trait TRAITS[18], style(s) de combat propres (STYLES.push([…,[18],…])),
+// apparence éventuelle (CLOOK[18]=(look,l,style)=>{…}), stats de référence (NATHERO.hs), équilibrage (CLANBAL["18"] dans nr_ninja.js).
+// Tant qu'aucun style ne liste le clan 18, il peut prendre les styles « sans clan » (Taijutsu, Kunai).
+KIT('c18',[
+ [1,'C','x.hs_tmp1','Requin d\'eau','Requin d\'eau qui ralentit la cible','water'],
+ [2,'C','x.hs_tmp2','Nage du requin','Bondit vers le curseur','water'],
+ [5,'A','x.hs_tmp5','Gueule du requin','Un requin géant jaillit sur la zone : dégâts et étourdit','water'],
+]);
+Object.assign(NAT,{
+ hs_tmp1:SP('Requin d\'eau','Requin d\'eau qui ralentit la cible',7,{line:{len:520,w:20},ai:RG(520,.7)},(u,a)=>{anim(u,'throw2',.35);S('blaster',u);proj(u,a,{spd:760,r:8,dmg:20,life:.7,col:'#4a7a9a',slow:1})}),
+ hs_tmp2:SP('Nage du requin','Bondit vers le curseur',8,{ai:ESC},(u,a,td)=>{anim(u,'leap',.3);S('dash',u);dash(u,a,clamp(td||220,100,240),.25,{jump:30})}),
+ hs_tmp5:ULT('Gueule du requin','Un requin géant jaillit sur la zone : dégâts et étourdit',{tele:{r:120,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);anim(u,'raise',.5);S('boom',u);zone(u,p.x,p.y,120,50,.6,{stun:.6},'#4a7a9a')}),
+});
+Object.assign(NATHERO,{hs:'kylo'});
+
+// ===== Clan Hôzuki (c19, préfixe hz_) : corps liquide =====
+// KIT TEMPORAIRE (fondation) : 3 jutsu génériques pour que le clan soit jouable. L'agent du clan remplace tout ce fichier.
+// À faire : kit complet (emplacements 1-5), trait TRAITS[19], style(s) de combat propres (STYLES.push([…,[19],…])),
+// apparence éventuelle (CLOOK[19]=(look,l,style)=>{…}), stats de référence (NATHERO.hz), équilibrage (CLANBAL["19"] dans nr_ninja.js).
+// Tant qu'aucun style ne liste le clan 19, il peut prendre les styles « sans clan » (Taijutsu, Kunai).
+KIT('c19',[
+ [1,'C','x.hz_tmp1','Pistolet à eau','Goutte sous pression qui ralentit la cible','water'],
+ [2,'C','x.hz_tmp2','Corps liquide','Glisse vers le curseur','water'],
+ [5,'A','x.hz_tmp5','Vague hydrique','Une vague s\'abat sur la zone : dégâts et étourdit','water'],
+]);
+Object.assign(NAT,{
+ hz_tmp1:SP('Pistolet à eau','Goutte sous pression qui ralentit la cible',7,{line:{len:520,w:20},ai:RG(520,.7)},(u,a)=>{anim(u,'throw2',.35);S('blaster',u);proj(u,a,{spd:760,r:8,dmg:20,life:.7,col:'#4ac8d8',slow:1})}),
+ hz_tmp2:SP('Corps liquide','Glisse vers le curseur',8,{ai:ESC},(u,a,td)=>{anim(u,'leap',.3);S('dash',u);dash(u,a,clamp(td||220,100,240),.25,{jump:30})}),
+ hz_tmp5:ULT('Vague hydrique','Une vague s\'abat sur la zone : dégâts et étourdit',{tele:{r:120,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);anim(u,'raise',.5);S('boom',u);zone(u,p.x,p.y,120,50,.6,{stun:.6},'#4ac8d8')}),
+});
+Object.assign(NATHERO,{hz:'kylo'});
+
+// ===== Clan Yuki (c20, préfixe yu_) : glace =====
+// KIT TEMPORAIRE (fondation) : 3 jutsu génériques pour que le clan soit jouable. L'agent du clan remplace tout ce fichier.
+// À faire : kit complet (emplacements 1-5), trait TRAITS[20], style(s) de combat propres (STYLES.push([…,[20],…])),
+// apparence éventuelle (CLOOK[20]=(look,l,style)=>{…}), stats de référence (NATHERO.yu), équilibrage (CLANBAL["20"] dans nr_ninja.js).
+// Tant qu'aucun style ne liste le clan 20, il peut prendre les styles « sans clan » (Taijutsu, Kunai).
+KIT('c20',[
+ [1,'C','x.yu_tmp1','Aiguilles de glace','Aiguilles de glace qui ralentissent la cible','senbon'],
+ [2,'C','x.yu_tmp2','Glissade de glace','Glisse vers le curseur','senbon'],
+ [5,'A','x.yu_tmp5','Miroirs de glace','La glace éclate sur la zone : dégâts et étourdit','senbon'],
+]);
+Object.assign(NAT,{
+ yu_tmp1:SP('Aiguilles de glace','Aiguilles de glace qui ralentissent la cible',7,{line:{len:520,w:20},ai:RG(520,.7)},(u,a)=>{anim(u,'throw2',.35);S('blaster',u);proj(u,a,{spd:760,r:8,dmg:20,life:.7,col:'#bfe6ff',slow:1})}),
+ yu_tmp2:SP('Glissade de glace','Glisse vers le curseur',8,{ai:ESC},(u,a,td)=>{anim(u,'leap',.3);S('dash',u);dash(u,a,clamp(td||220,100,240),.25,{jump:30})}),
+ yu_tmp5:ULT('Miroirs de glace','La glace éclate sur la zone : dégâts et étourdit',{tele:{r:120,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);anim(u,'raise',.5);S('boom',u);zone(u,p.x,p.y,120,50,.6,{stun:.6},'#bfe6ff')}),
+});
+Object.assign(NATHERO,{yu:'kylo'});
+
 for(const k in NAT)NAT[k].key=k;
 
 const JD=KITROWS; // le catalogue est assemblé par les fichiers kits/*.js (un par catégorie)
@@ -7275,8 +7455,8 @@ function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Ma
  return o}
 // le clan se voit : Sharingan, Byakugan, carrure Akimichi, marques Kaguya, chien Inuzuka, gourde Sabaku (pas pour les marionnettistes) ; l'arme suit le style de combat
 function ninjaLook(l,clan,style){const v=VILLAGES[l.v],S=STYLES[style]||STYLES[0],T=TENUES[l.t][1],sk=PEAUX[l.p][1],f=FACES[l.f|0][1],bk=BACKS[l.d|0][1];
- return Object.assign({},T,T.arm==='skin'?{arm:sk}:{},clan===3?{scale:1.14}:{},clan===5?{dog:1}:{},(clan===8&&S[0]!=='Marionnette')||bk==='gourde'?{gourd:1}:{},bk&&bk!=='gourde'?{back:bk}:{},
- {head:{t:'ninja',skin:sk,hair:HAIRC[l.h][1],style:COIFS[l.c][1],band:v[1],vil:l.v,bs:BANDS[l.b|0][1],acc:ACCS[l.a][1],face:f,eyeT:EYEF[f]||null,eye:clan===0?'#e01a1a':clan===1?'#e8e8f8':null,kaguya:clan===9,brows:clan===TAIJ||f==='sourcils'},weapon:{t:'kunai',k:S[4],col:CHAKRAS[l.k][1]}})}
+ const o=Object.assign({},T,T.arm==='skin'?{arm:sk}:{},clan===3?{scale:1.14}:{},clan===5?{dog:1}:{},(clan===8&&S[0]!=='Marionnette')||bk==='gourde'?{gourd:1}:{},bk&&bk!=='gourde'?{back:bk}:{},
+ {head:{t:'ninja',skin:sk,hair:HAIRC[l.h][1],style:COIFS[l.c][1],band:v[1],vil:l.v,bs:BANDS[l.b|0][1],acc:ACCS[l.a][1],face:f,eyeT:EYEF[f]||null,eye:clan===0?'#e01a1a':clan===1?'#e8e8f8':null,kaguya:clan===9,brows:clan===TAIJ||f==='sourcils'},weapon:{t:'kunai',k:S[4],col:CHAKRAS[l.k][1]}});if(CLOOK[clan])CLOOK[clan](o,l,S);return o}
 const srcAb=src=>{const [h,k]=src.split('.');return h==='x'?NAT[k]:SRC[h].abil[+k]};
 // personnage de référence pour les stats : option hero de la mécanique, sinon celui du préfixe (ka_, su_, sub_…)
 const srcHero=src=>{const [h,k]=src.split('.');return h==='x'?(NAT[k]&&NAT[k].hero)||NATHERO[k.split('_')[0]]||NATHERO[k.slice(0,2)]:h};
@@ -9042,7 +9222,7 @@ function jIcon(x,y,r,col,cat,ult){g.save();g.fillStyle=col;g.strokeStyle='#14100
   case'n3':g.moveTo(3,-12);g.lineTo(-7,2);g.lineTo(-1,2);g.lineTo(-4,12);g.lineTo(7,-3);g.lineTo(1,-3);g.lineTo(5,-12);g.closePath();g.fill();break
   case'n4':g.moveTo(-11,8);g.lineTo(-4,-5);g.lineTo(0,1);g.lineTo(4,-9);g.lineTo(11,8);g.closePath();g.fill();break
   case'u':g.moveTo(0,-12);g.lineTo(3,-3);g.lineTo(12,0);g.lineTo(3,3);g.lineTo(0,12);g.lineTo(-3,3);g.lineTo(-12,0);g.lineTo(-3,-3);g.closePath();g.fill();g.fillStyle=col;g.beginPath();g.arc(0,0,2.4,0,7);g.fill();break
-  case'c':text(CLANS[+cat.slice(1)][0][0],0,6,17,f);break
+  case'c':{const t=clanTag(+cat.slice(1));text(t,0,t.length>1?5:6,t.length>1?13:17,f)}break
   case'p':g.arc(0,0,7,0,7);g.stroke();g.beginPath();g.arc(0,0,2.5,0,7);g.fill();break
   default:g.moveTo(-7,7);g.lineTo(1,-1);g.stroke();g.beginPath();g.moveTo(-1,-5);g.lineTo(10,-10);g.lineTo(5,1);g.closePath();g.fill();g.beginPath();g.arc(-9,9,2.6,0,7);g.stroke()}
  g.restore()}
@@ -9074,8 +9254,8 @@ function pickData(p){const BUD=budgetOf(MY),c0=kitCost(MY);
  const a=APP.find(x=>x[2]===p);if(!a)return null;const L=a[1](),look=p.startsWith('l.');
  return{kind:look?'a':'o',title:a[0],sub:look?'Clique une option : l\'aperçu à gauche change tout de suite':'',items:L.map((it,v)=>({v,n:itN(it),col:swCol(it)||'#e8cfa8',sw:swCol(it),ic:p==='nat'?'n'+v:p==='clan'?(v?'c'+(v-1):'u'):undefined,d:optDesc(p,v),sel:getB(p)===v}))}}
 // le panneau prend la hauteur de son contenu (au plus jusqu'en bas de l'écran, puis défilement)
-const pickBox=D=>typeof picker==='string'&&picker.startsWith('l.')?{x:BX,y:142,w:BW,h:530}:{x:150,y:118,w:980,h:Math.min(556,Math.max(230,(D&&D.tabs?104:70)+Math.ceil((D?D.items.length:30)/3)*70-8+44))};
-function pickGrid(D){const B=pickBox(D),cols=D.kind==='a'?4:3,ch=D.kind==='a'?40:62,gx=B.x+20,gy=B.y+(D.tabs?104:70),gw=B.w-40-14,gh=B.y+B.h-32-gy;return{B,gx,gy,gw,gh,cols,ch,cw:(gw-(cols-1)*10)/cols,step:ch+8}}
+const pickBox=D=>typeof picker==='string'&&picker.startsWith('l.')?{x:BX,y:142,w:BW,h:530}:{x:150,y:118,w:980,h:Math.min(556,Math.max(230,(D&&D.tabs?104:70)+Math.ceil((D?D.items.length:30)/(picker==='clan'?4:3))*70-8+44))};
+function pickGrid(D){const B=pickBox(D),cols=D.kind==='a'||picker==='clan'?4:3,ch=D.kind==='a'?40:62,gx=B.x+20,gy=B.y+(D.tabs?104:70),gw=B.w-40-14,gh=B.y+B.h-32-gy;return{B,gx,gy,gw,gh,cols,ch,cw:(gw-(cols-1)*10)/cols,step:ch+8}}
 const pickList=D=>D.tabs&&pickTab>0?D.items.filter(it=>it.tab===D.tabs[pickTab]):D.items;
 const pickMax=(D,G)=>Math.max(0,Math.ceil(pickList(D).length/G.cols)*G.step-8-G.gh);
 const cardRect=(G,i)=>({x:G.gx+(i%G.cols)*(G.cw+10),y:G.gy+Math.floor(i/G.cols)*G.step-pickScroll,w:G.cw,h:G.ch});

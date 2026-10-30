@@ -4,7 +4,7 @@ SP=os.path.dirname(os.path.abspath(__file__))+'/'
 ROOT=os.path.abspath(SP+'../..')+'/'
 src=open(ROOT+'starwars/index.html').read()
 # kits : un fichier par catégorie (ordre fixe = ordre du catalogue)
-KIT_ORDER=['styles','sub','sub_nrp1','sub_nrp2','katon','suiton','futon','raiton','doton','uchiha','hyuga','nara','akimichi','aburame','inuzuka','uzumaki','yamanaka','sabaku','kaguya','taijutsuka']
+KIT_ORDER=['styles','sub','sub_nrp1','sub_nrp2','sub_naruto','katon','suiton','futon','raiton','doton','uchiha','hyuga','nara','akimichi','aburame','inuzuka','uzumaki','yamanaka','sabaku','kaguya','taijutsuka','hoki','roran','hakumei','shirogane','chinoike','kami','fuma','hoshigaki','hozuki','yuki']
 KITS=''.join('\n'+open(SP+'kits/'+k+'.js').read() for k in KIT_ORDER)+'\nfor(const k in NAT)NAT[k].key=k;\n'
 s=src
 def rep(a,b,n=1):
