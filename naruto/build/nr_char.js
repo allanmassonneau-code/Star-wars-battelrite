@@ -290,7 +290,8 @@ function drawNinjaWeapon(u,L,W,k,hf,hb,fx,fy,back,fl,t){const [x,y]=hf,a=Math.at
   case'palm':fist(x,y,3,u.ch.look.head.skin);if(act){g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba('#9fc8ff',.6);g.beginPath();g.arc(x,y,5+rnd()*2,0,7);g.fill();g.restore()}break;
   case'claws':fist(x,y,3,u.ch.look.head.skin);g.strokeStyle='#eee';g.lineWidth=1.2;for(let q=-1;q<=1;q++){g.beginPath();g.moveTo(x+Math.cos(a+q*.35)*2,y+Math.sin(a+q*.35)*2);g.lineTo(x+Math.cos(a+q*.35)*7,y+Math.sin(a+q*.35)*7);g.stroke()}break;
   case'bone':fist(x,y,3,u.ch.look.head.skin);g.save();g.translate(x,y);g.rotate(a);outlined(()=>{g.moveTo(0,-2.5);g.lineTo(22,0);g.lineTo(0,2.5)},'#f2efe6');g.restore();break;
-  case'sword':{fist(x,y,3,u.ch.look.head.skin);g.save();g.translate(x,y);g.rotate(u.block?a-1.3:a+(u.swing>0?0:.5));g.fillStyle='#3a3a44';g.fillRect(-7,-1.6,8,3.2);g.fillStyle='#c8a040';g.fillRect(1,-3,2,6);
+  case'sword':if(W.same){fist(x,y,3,u.ch.look.head.skin);g.save();g.translate(x,y);g.rotate(u.block?a-1.3:a+(u.swing>0?0:.5));g.translate(19,0);hs_sameD(.75,0,act);g.restore();break} // clan Hoshigaki : Samehada en main
+  {fist(x,y,3,u.ch.look.head.skin);g.save();g.translate(x,y);g.rotate(u.block?a-1.3:a+(u.swing>0?0:.5));g.fillStyle='#3a3a44';g.fillRect(-7,-1.6,8,3.2);g.fillStyle='#c8a040';g.fillRect(1,-3,2,6);
    if(act){g.shadowColor=c;g.shadowBlur=8*RS}g.fillStyle='#e8ecf2';g.beginPath();g.moveTo(3,-1.4);g.lineTo(33,-.6);g.lineTo(35,.6);g.lineTo(3,1.4);g.fill();g.restore();break}
   case'chain':fist(x,y,3,u.ch.look.head.skin);g.strokeStyle='#e8c860';g.lineWidth=1.3;for(let q=0;q<4;q++){g.beginPath();g.ellipse(x-fx*q*3,y+4+q*3,2.2,1.4,q,0,7);g.stroke()}break;
   case'bugs':fist(x,y,3,u.ch.look.head.skin);g.fillStyle='#26302a';for(let q=0;q<6;q++){const b=t*6+q*1.1;g.fillRect(x+Math.cos(b)*6,y+Math.sin(b*1.3)*5,1.6,1.6)}break;
