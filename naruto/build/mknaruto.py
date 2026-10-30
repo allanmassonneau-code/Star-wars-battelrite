@@ -57,7 +57,9 @@ rep("`${CFG.bsize} personnages contre ${CFG.bsize}","`${CFG.bsize} ninjas contre
 # ---------- menu : créateur de ninja
 cut("// ---------- Menu : mode + panel de personnages ----------","function bar(x,y,w,h,v,col,right)",open(SP+'nr_menu.js').read())
 rep("const coopBtn={x:1040,y:76,w:158,h:30},readyBtn={x:1052,y:550,w:158,h:32},teamBtn={x:880,y:550,w:160,h:32};",
-    "const coopBtn={x:1040,y:76,w:158,h:30},readyBtn={x:1060,y:598,w:180,h:36},teamBtn={x:868,y:598,w:180,h:36};")
+    "const coopBtn={x:1040,y:76,w:158,h:30},readyBtn={x:1030,y:576,w:210,h:54},teamBtn={x:1030,y:636,w:210,h:34};")
+# panneau de choix du créateur ouvert : il capte le clic (pas de bouton de mode, PRÊT ou ÉQUIPE en dessous)
+rep("if(state==='menu'){if(pressed.lmb){if(inRect(mouse,coopBtn))","if(state==='menu'){if(pressed.lmb&&picker!==null){creatorClick();pressed.lmb=0}if(pressed.lmb){if(inRect(mouse,coopBtn))")
 rep("cards.forEach(c=>{if(inRect(mouse,c)){if(takenBy(c.c))return;if(isGuest()){net.mate=c.c;net.ready=false;netSend({t:'hero',c:c.c})}else if(coop()){net.myPick=c.c;net.ready=false;sendLobby()}else startMatch(c.c)}});",
     "if(creatorClick()){pressed.lmb=0}")
 # ---------- en ligne : chacun envoie son build, l'hôte le diffuse dans le salon
