@@ -367,6 +367,15 @@ rep("if(ab.cast)text(`${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');","i
 rep("if(ab.ult&&!ready){g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-p.energy/100),s,sh*p.energy/100)}","if(ab.ult&&!ready&&p.cds[i]<=0){const f=Math.min(1,p.energy/Math.max(1,jcost(ab)));g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-f),s,sh*f)}")
 rep("text(muted?`${lbl.KeyM} : son coupé`","drawHealHud(p,x0+n*(s+gap)+6,y,sh);text(muted?`${lbl.KeyM} : son coupé`")
 rep("eBar(30,59,360,p.energy/100);{const T=trait(p);","eBar(30,59,360,p.energy/100);ckHud(p,30,59,360);{const T=trait(p);")
+# clan Chinoike : « prix du sang », jutsu payés en PV au lieu du chakra (option ab.hpc = part des PV max, ex. hpc:.06) ; générique, sans effet sur les jutsu sans hpc
+# (jamais mortel : refusé s'il ne reste pas assez de PV ; les bots ne paient plus sous 30 % de PV ; coût affiché en rouge dans la barre de jutsu et le créateur)
+rep("const jcost=ab=>ab&&ab.rank?CKCOST[ab.rank]+(ab.ult?14:0):0;","const jcost=ab=>ab&&ab.rank&&!ab.hpc?CKCOST[ab.rank]+(ab.ult?14:0):0;\nconst hpcost=(u,ab)=>ab&&ab.hpc?Math.max(1,Math.round(u.max*ab.hpc)):0,jcostT=ab=>ab&&ab.hpc?Math.round(ab.hpc*100)+' % des PV max':jcost(ab)+' chakra';") # clan Chinoike
+rep("if(u.energy<ck){ckLack(u,i);return false}","if(u.energy<ck){ckLack(u,i);return false}const hpc=i>0&&!rec?hpcost(u,ab):0;if(hpc&&u.hp<=hpc+1){hpLack(u,i);return false}") # clan Chinoike
+rep("u.energy-=ck;if(ab.ult&&ck){","u.energy-=ck;if(hpc)hpPay(u,hpc,ab);if(ab.ult&&ck){") # clan Chinoike
+rep("if(!h||u.cds[i]>0||u.energy<jcost(ab)||aiSave(u,i,h))continue;","if(!h||u.cds[i]>0||u.energy<jcost(ab)||aiSave(u,i,h)||(ab.hpc&&u.hp<u.max*.3+hpcost(u,ab)))continue;") # clan Chinoike
+rep("function hudCost(p,ab,i,x,y,s,sh){if(!i)return;","function hudCost(p,ab,i,x,y,s,sh){if(!i)return;if(ab&&ab.hpc){hudHpc(p,ab,x,y,s,sh);return}") # clan Chinoike
+rep("${jcost(ab)} chakra","${jcostT(ab)}",2) # clan Chinoike (créateur : ligne de coût)
+rep("[s?String(jcost(ab)):'—','chakra','#7fc8ff']","[s?ab.hpc?Math.round(ab.hpc*100)+' %':String(jcost(ab)):'—',s&&ab.hpc?'PV max':'chakra',s&&ab.hpc?'#ff6a7a':'#7fc8ff']") # clan Chinoike
 # mort subite plus tardive : les duels durent plus longtemps
 rep("const SD_START=45,SD_LEN=35;","const SD_START=90,SD_LEN=55;")
 # forme cachée unique des unités : les champs ajoutés en cours de partie (kits, IA, dessin) sont déclarés d'avance à undefined dans mkUnit

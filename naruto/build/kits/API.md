@@ -67,6 +67,7 @@ Object.assign(NAT,{
 - Options : `ai` (indice pour les bots) : `RG(portéeMax, proba, portéeMin)`, `SELF(portée)`, `DEF`, `ESC` (fuite), `{mode:'gap',min,max,p}` (engagement),
   `HEALM` (si PV < 60 %), `ALLY`, `{mode:'exec',max}` ; télégraphes : `line:{len,w}` (rectangle) ou `tele:{r,max}` (cercle au sol) / `tele:{self:1,r}`.
   `charges:n` (plusieurs charges), `cast` (ignoré : les mudras fixent l'incantation).
+  `hpc:.05` (« prix du sang », clan Chinoike) : le jutsu coûte cette part des PV max au lieu du chakra (refusé s'il ne reste pas assez de PV ; coût affiché en rouge dans la barre et le créateur).
 - Aides de mécanique : `stackAb(cle,n,tirUnique)` (charges à relancer 5 s), `chanAb(cle)` (canalisation relâchée par relance),
   `later(u,délai,f,{x,y,r})` (effet différé avec cercle d'alerte si `r`), `seqs.push({owner:u,n,t,iv,vfx,f:o=>{…}})` (rafale),
   `wallLine(u,a,n,{wind:1|burn:1|earth:1|water:1,t})`, `ringHit(u,x,y,r0,r1,dmg,o)`, `atP(u,a,td,R)` (point visé), `pick(u,a,td,R)` (ennemi visé),
