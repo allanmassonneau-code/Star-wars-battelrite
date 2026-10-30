@@ -7352,7 +7352,7 @@ const HS_D={
  swim:'Tu plonges et nages jusqu\'au curseur (intouchable 0,3 s) ; tu jaillis : 10 dégâts, ralentit et vole 4 de chakra autour',
  wave:'Tu files sur une vague vers le curseur ; le reflux part derrière toi : 8 dégâts, repousse et trempe',
  dai:'Requin géant en ligne : il avale le 1er ennemi (10 ; étourdi 0,8 s, 12 de chakra volés) puis le recrache (34, repousse ; 12 autour)',
- sea:'Une mer t\'entoure 5 s et te suit : ennemis trempés et attirés ; toutes les 0,6 s, un requin mord (proie d\'abord) : 7 dégâts et 3 de chakra'};
+ sea:'Une mer t\'entoure 5 s et te suit : ennemis trempés et attirés ; toutes les 0,5 s, un requin mord (proie d\'abord) : 7 dégâts et 3 de chakra'};
 KIT('c18',[
  [1,'D','x.hs_bite','Samehada : Morsure',HS_D.bite,'steel'],
  [2,'C','x.hs_swim','Nage du requin',HS_D.swim,'water'],
@@ -7412,7 +7412,7 @@ Object.assign(NAT,{
  hs_prison:SP('Suiton : Prison aqueuse',HS_D.prison,12,{ai:RG(380,.6),line:{len:400,w:28}},(u,a)=>{S('water',u);anim(u,'hs_grasp',.5);
   proj(u,a,{spd:620,r:13,dmg:8,life:.62,col:'#5ac8e8',kind:'hs_bubble',stun:.9,onHit:(p,t)=>{if(t.dead)return;const o=p.owner,D=t.stun>0?Math.min(.9,t.stun):0;
    if(!D){jx({jfx:'hs_splash',x:t.x,y:t.y,r:40,t:.45,m:.45});return} // insensible au contrôle : la bulle éclate tout de suite
-   say(t,'PRISON AQUEUSE','#9fe0ff');aux.push({type:'hs_prison',x:t.x,y:t.y,r:34,t:D,m:D,team:o.team,owner:o,vfx:'water',k:.25,ti:hs_i(t),tg:t,n:0});jx({jfx:'hs_bubbleT',ti:hs_i(t),x:t.x,y:t.y,t:D,m:D})}})}),
+   say(t,'PRISON AQUEUSE','#9fe0ff');aux.push({type:'hs_prison',x:t.x,y:t.y,r:34,t:D,m:D,team:o.team,owner:o,vfx:'water',k:.2,ti:hs_i(t),tg:t,n:0});jx({jfx:'hs_bubbleT',ti:hs_i(t),x:t.x,y:t.y,t:D,m:D})}})}),
  // ---------- Écailles de Samehada (C) : armure d'écailles (gérée par le trait) ----------
  hs_scales:SP('Écailles de Samehada',HS_D.scales,12,{ai:DEF},(u)=>{hs_S('saber',u);hs_S('deflect',u);u.hs_scl=3;anim(u,'hs_guard',.55);jx({jfx:'hs_scaleUp',ui:hs_i(u),x:u.x,y:u.y,t:.5,m:.5});sparks(u.x,u.y,HSC.lt,10)}),
  // ---------- Fusion avec Samehada (A) : forme d'homme-requin (gérée par le trait) ----------
@@ -7443,24 +7443,25 @@ Object.assign(NAT,{
 Object.assign(NATHERO,{hs:'kylo'});
 
 // ---- logique des objets
+// (auxUpdate décompte déjà x.t et x.k à chaque image)
 // prison : la bulle suit la cible ; toutes les 0,3 s Samehada boit 3 de chakra ; à la fin la bulle éclate
 AUXF.hs_prison=(x,dt)=>{const e=x.tg,o=x.owner;if(x.done)return;if(!e||e.dead){x.t=0;x.done=1;return}x.x=e.x;x.y=e.y;
- if((x.k-=dt)<=0&&x.n<3){x.k+=.3;x.n++;x.dr=(x.dr||0)+hs_drain(o,e,3,1)}
+ if(x.k<=0&&x.n<3){x.k+=.3;x.n++;x.dr=(x.dr||0)+hs_drain(o,e,3,1)}
  if(x.t<=0){x.done=1;if(o)hs_hit(e,o,6,{});if(x.dr>=1)say(e,'-'+Math.round(x.dr)+' CHAKRA','#7fd8ff');jx({jfx:'hs_splash',x:e.x,y:e.y,r:48,t:.5,m:.5});if(near(e.x,e.y))S('water',e)}};
 AUXD.hs_prison=()=>{};
 // Daikôdan : la cible est dans la gueule (étourdie) ; Samehada boit 4 de chakra 3 fois ; puis le requin la recrache
 AUXF.hs_maw=(x,dt)=>{const e=x.tg,o=x.owner;if(x.done)return;if(!e||e.dead){x.t=0;x.done=1;return}x.x=e.x;x.y=e.y;e.kx=e.ky=0;
- if((x.k-=dt)<=0&&x.n<3){x.k+=.22;x.n++;x.dr=(x.dr||0)+hs_drain(o,e,4,1)}
+ if(x.k<=0&&x.n<3){x.k+=.22;x.n++;x.dr=(x.dr||0)+hs_drain(o,e,4,1)}
  if(x.t<=0){x.done=1;if(x.dr>=1)say(e,'-'+Math.round(x.dr)+' CHAKRA','#7fd8ff');const V=VFX;VFX='water';hit(e,o,34,{kb:260,fx:e.x-Math.cos(x.a)*30,fy:e.y-Math.sin(x.a)*30,unblockable:1});
   for(const f of enemies(o))if(f!==e&&Math.hypot(f.x-e.x,f.y-e.y)<90+f.r)hit(f,o,12,{fx:e.x,fy:e.y,kb:120});VFX=V;
   jx({jfx:'hs_spit',x:e.x,y:e.y,a:x.a,r:90,t:.7,m:.7});if(near(e.x,e.y)){S('water',e);hs_S('boom',e);shake=Math.max(shake,.3)}}};
 AUXD.hs_maw=()=>{};
-// mer des requins : suit le lanceur ; trempe et attire les ennemis ; un requin mord toutes les 0,6 s (proie d'abord, sinon le plus proche du centre)
+// mer des requins : suit le lanceur ; trempe et attire les ennemis ; un requin mord toutes les 0,5 s (proie d'abord, sinon le plus proche du centre)
 AUXF.hs_sea=(x,dt)=>{const o=x.owner;if(!o||o.dead){x.t=Math.min(x.t,.25);return}x.x=o.x;x.y=o.y;if(x.t<=0)return;o.slowImm=Math.max(o.slowImm||0,.2);
  let tg=null,bs=1e9;for(const e of enemies(o)){const dx=x.x-e.x,dy=x.y-e.y,d=Math.hypot(dx,dy);if(d>x.r+e.r)continue;e.wet=Math.max(e.wet||0,1);
-  if(d>12&&e.unstop<=0&&!e.dash){const v=Math.min(d-12,26*dt);e.x+=dx/d*v;e.y+=dy/d*v}
+  if(d>12&&e.unstop<=0&&!e.dash){const v=Math.min(d-12,40*dt);e.x+=dx/d*v;e.y+=dy/d*v}
   const sc=d-((e.energy||0)<HS_PREY?1000:0);if(sc<bs&&!(e.stealth>0&&d>120)){bs=sc;tg=e}}
- if((x.k-=dt)<=0){x.k+=.6;if(tg){const a=Math.atan2(tg.y-x.y,tg.x-x.x);jx({jfx:'hs_leap',ti:hs_i(tg),x:tg.x,y:tg.y,a,t:.42,m:.42});
+ if(x.k<=0){x.k+=.5;if(tg){const a=Math.atan2(tg.y-x.y,tg.x-x.x);jx({jfx:'hs_leap',ti:hs_i(tg),x:tg.x,y:tg.y,a,t:.42,m:.42});
   later(o,.18,()=>{if(tg.dead||o.dead||Math.hypot(tg.x-x.x,tg.y-x.y)>x.r+tg.r+30)return;if(hs_hit(tg,o,7,{}))hs_drain(o,tg,3)})}}};
 
 // ---- trait de clan : Samehada (le chakra volé soigne ; un ennemi à sec est une proie)
@@ -7483,7 +7484,7 @@ AFTER.push(()=>UK.push('hs_fus','hs_scl','hs_eat'));
 // ---- apparence : peau bleu-gris (nuance selon la peau choisie), branchies, yeux de requin ; Samehada en main (style) ou dans le dos
 const HS_SKIN=['#94b0c4','#86a4ba','#7898ae','#6a889e','#a0b8c8','#7c9cb4','#a8bece','#9ab6ca'];
 CLOOK[18]=(look,l,S)=>{const h=look.head;h.skin=HS_SKIN[l.p|0]||'#86a4ba';if(look.arm&&T_isSkin(look,l))look.arm=h.skin;h.eyeT='req';if(!h.face)h.face='branchies';
- if(S&&S[0]==='Samehada')look.weapon.same=1;else if(!look.back&&!look.gourd)look.back='samehada'};
+ if(S&&S[0]==='Samehada'){look.weapon.same=1;if(look.back==='samehada')look.back=''}else if(!look.back&&!look.gourd)look.back='samehada'}; // pas de seconde Samehada dans le dos quand elle est en main
 function T_isSkin(look,l){const T=TENUES[l.t];return T&&T[1].arm==='skin'}
 
 // ---- animations 3D (le sabre est tenu à deux mains : la main gauche rejoint la poignée)
@@ -7805,7 +7806,7 @@ const PRESETS=[
  {n:'Kakashi',full:'Kakashi Hatake',g:0,side:0,nat:3,clan:-1,voie:1,pass:'crit',sty:'Kunai',j:['Raikiri','Shunshin','Chiens ninja','Raiton : Kage Bunshin','Raiton : Kirin'],l:{v:0,t:1,c:8,h:8,p:0,k:0,a:1,f:0,b:1,d:0},d:'Ninja copieur : ses chiens entravent, le Raikiri transperce'},
  {n:'Itachi',full:'Itachi Uchiha',g:1,side:1,nat:0,clan:0,voie:2,pass:'energy',sty:'Taijutsu Uchiha',j:['Katon : Gôkakyû','Shunshin Uchiha','Sharingan : Genjutsu','Sharingan','Tsukuyomi'],l:{v:0,t:2,c:9,h:1,p:0,k:1,a:0,f:3,b:2,d:0},d:'Maître du genjutsu : corbeaux, regard qui paralyse, Tsukuyomi'},
  {n:'Deidara',full:'Deidara',g:1,side:1,nat:4,clan:-1,voie:2,pass:'crit',sty:'Kunai',j:['Argile explosive','Saut ninja','Clone explosif','Parchemin explosif','Pluie de parchemins'],l:{v:4,t:2,c:10,h:0,p:0,k:4,a:3,f:0,b:2,d:0},d:'L\'art est une explosion : oiseaux d\'argile, clones piégés, « Katsu ! »'},
- {n:'Kisame',full:'Kisame Hoshigaki',g:1,side:1,nat:1,clan:-1,voie:0,pass:'lifesteal',sty:'Taijutsu',j:['Suiton : Suikôdan','Suiton : Corps liquide','Suiton : Suirô','Suiton : Daibakufu','Suiton : Dôme des requins'],l:{v:2,t:2,c:11,h:13,p:5,k:0,a:0,f:8,b:2,d:3},d:'Requin de Kiri : requins d\'eau, prison aqueuse, Samehada qui dévore le chakra'},
+ {n:'Kisame',full:'Kisame Hoshigaki',g:1,side:1,nat:1,clan:18,voie:0,pass:'lifesteal',sty:'Samehada',j:['Suiton : Requins voraces','Nage du requin','Suiton : Prison aqueuse','Fusion avec Samehada','Suiton : Daikôdan'],l:{v:2,t:2,c:11,h:13,p:5,k:0,a:0,f:8,b:2,d:3},d:'Requin de Kiri : requins d\'eau, prison aqueuse, Samehada qui dévore le chakra'},
  {n:'Sasori',full:'Sasori',g:1,side:1,nat:0,clan:8,voie:2,pass:'slow',sty:'Marionnette',j:['Lances de sable','Sable volant','Katon : Triple flamme','Armure de sable','Tsunami de sable'],l:{v:1,t:2,c:12,h:7,p:0,k:1,a:0,f:0,b:2,d:0},d:'Marionnettiste : sa marionnette empoisonne, le sable de fer pique de loin'},
  {n:'Hidan',full:'Hidan',g:1,side:1,nat:3,clan:-1,voie:0,pass:'armor',sty:'Taijutsu',j:['Fûma Shuriken','Kunai à fil','Byakugô','Barrière Shishienjin','Raiton : Armure de foudre'],l:{v:8,t:2,c:13,h:8,p:4,k:1,a:0,f:0,b:2,d:4},d:'Immortel de Jashin : faux à câble, plaies qui se referment, rituel sans issue'},
  {n:'Pain',full:'Pain (Nagato)',g:1,side:1,nat:4,clan:6,voie:2,pass:'energy',sty:'Chaîne scellante',j:['Chaînes de chakra','Sceau d\'échange','Doton : Kajûgan','Sceau absorbant','Doton : Chute de montagne'],l:{v:7,t:2,c:14,h:10,p:0,k:3,a:0,f:9,b:2,d:0},d:'Rinnegan : il attire, absorbe les jutsu et écrase tout par la gravité'},
