@@ -168,6 +168,7 @@ function faceTexture(L,mode='o'){const h=L.head,key=[h.eye,h.acc,h.kaguya,h.brow
  faceMarks(x,h,ex,hy,ey,U,3.2,1);
  if(h.acc==='anbu'){x.fillStyle='#f2f0ea';x.strokeStyle='#1a1410';x.lineWidth=4;x.beginPath();x.ellipse(ex,hy+1.6*U,10.4*U,9.6*U,0,0,7);x.fill();x.stroke();x.fillStyle='#1a1414';for(const s of[-1,1]){x.beginPath();x.ellipse(ex+s*4*U,ey-.6*U,2*U,1.3*U,0,0,7);x.fill()}
   x.strokeStyle='#c02a2a';x.lineWidth=5;x.lineCap='round';for(const s of[-1,1]){x.beginPath();x.moveTo(ex+s*2*U,hy-5*U);x.lineTo(ex+s*3.6*U,hy-1.6*U);x.moveTo(ex+s*6.6*U,hy+4*U);x.lineTo(ex+s*4.6*U,hy+7*U);x.stroke()}}
+ if(h.acc==='oinin')yu_mask(x,ex,hy,U,4); // clan Yuki : masque de chasseur de déserteurs (kits/yuki.js)
  if(h.acc==='lunettes'){x.fillStyle='rgba(30,30,40,.93)';for(const s of[-1,1]){x.beginPath();x.roundRect(ex+s*4.2*U-3.1*U,ey-2.1*U,6.2*U,4.2*U,1.2*U);x.fill()}x.fillRect(ex-1.3*U,ey-.6*U,2.6*U,1*U)}
  const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;N3.faceTex.set(key,t);return t}
 function symTexture(v,bs){const sk=v+'|'+(bs==='barre'||bs==='cornes'?bs:'');if(N3.symTex.has(sk))return N3.symTex.get(sk);const c=document.createElement('canvas');c.width=96;c.height=56;const x=c.getContext('2d');const ex=48,hy=28;
