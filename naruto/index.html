@@ -7384,7 +7384,7 @@ const YU_D={
  mirror:'Un miroir de glace se dresse devant toi 2,5 s : il renvoie les projectiles ennemis vers leur lanceur, puis éclate (10 dégâts et 1 givre devant lui)',
  dragon:'Dragon de glace en ligne : 30 dégâts et 2 givres au premier touché, puis il éclate (12 dégâts, 1 givre et ralentit autour)',
  slide:'Tu glisses vers le curseur à travers les ennemis (8 dégâts, ralentit) ; ta piste de glace (3 s) ralentit les ennemis (1 givre au premier passage) et t\'accélère',
- step:'Tu traverses un miroir jusqu\'au curseur (260 max), ou jusqu\'à ton Miroir de glace s\'il est près du curseur ; un petit miroir (1,5 s) reste derrière toi',
+ step:'Tu traverses un miroir jusqu\'au curseur (260 max), ou jusqu\'à ton Miroir de glace (560 max) s\'il est près du curseur ; intangible 0,2 s ; un petit miroir (1,5 s) reste derrière toi',
  bliz:'Un blizzard t\'entoure 4 s et te porte (plus rapide) : ennemis ralentis, 6 dégâts et 1 givre toutes les 0,8 s ; à la fin, tout gèle (16 dégâts, 1 givre)',
  makyo:'Dôme de 8 miroirs (3,6 s) qui enferme les ennemis (un déplacement en sort) : tu sautes de miroir en miroir et cribles de senbon (2 × 3 dégâts par saut, 1 givre), −40 % de dégâts subis ; à la fin, les miroirs éclatent (10)'};
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
@@ -7441,9 +7441,9 @@ Object.assign(NAT,{
   const o={spd:1150,r:ice?5:4,dmg:ice?7:5.5,life:.56,col:ice?YUC.md:'#e8eef6',kind:ice?'yu_icen':'yu_sen'};if(ice){o.pierce=1;o.onHit=(p,t)=>{if(near(t.x,t.y))sparks(t.x,t.y,YUC.ice,5,'yu_ice')}}
   proj(u,a,o);if(ice)projs[projs.length-1].vfx='yu_ice';anim(u,u.yu_sh?'st_flickr':'st_flickl',.22)}),
  // ---------- Tsubame Fubuki (D) : 5 hirondelles de neige qui convergent vers le point visé ----------
- yu_swallow:SP('Hyôton : Tsubame Fubuki',YU_D.swallow,6,{ai:RG(460,.7),line:{len:460,w:90}},(u,a,td)=>{const c=atP(u,a,td,460),D={},ps=[];yu_S('wind',u);yu_S('blaster',u);anim(u,'yu_sweep',.45);
+ yu_swallow:SP('Hyôton : Tsubame Fubuki',YU_D.swallow,6,{ai:RG(460,.7),line:{len:460,w:90}},(u,a,td)=>{const c=atP(u,a,td,460),D=new Map(),ps=[];yu_S('wind',u);yu_S('blaster',u);anim(u,'yu_sweep',.45);
   jx({jfx:'yu_gust',ui:yu_i(u),x:u.x,y:u.y,a,t:.45,m:.45});
-  for(let i=0;i<5;i++){proj(u,a+(i-2)*.3,{spd:560,r:7,dmg:4,life:1,col:YUC.ice,kind:'yu_swl',onHit:(p,t)=>{const k=t.c+'|'+t.team;D[k]=(D[k]||0)+1;if(D[k]<=2)yu_frost(p.owner,t,1)}});ps.push(projs[projs.length-1])}
+  for(let i=0;i<5;i++){proj(u,a+(i-2)*.3,{spd:560,r:7,dmg:4,life:1,col:YUC.ice,kind:'yu_swl',onHit:(p,t)=>{const n=(D.get(t)||0)+1;D.set(t,n);if(n<=2)yu_frost(p.owner,t,1)}});ps.push(projs[projs.length-1])}
   aux.push({type:'yu_swl',x:c.x,y:c.y,r:0,t:1.2,m:1.2,team:u.team,owner:u,ps,tx:c.x,ty:c.y})}),
  // ---------- Sensatsu Suishô (C) : les aiguilles encerclent la zone puis se referment ----------
  yu_needles:SP('Hyôton : Sensatsu Suishô',YU_D.needles,9,{tele:{r:80,max:420},ai:RG(420,.6)},(u,a,td)=>{const p=atP(u,a,td,420),R=80,D=.65;yu_S('water',u);anim(u,'yu_seal',.55);
@@ -7479,7 +7479,7 @@ Object.assign(NAT,{
   u.dash=null;u.kx=u.ky=0;u.phase=Math.max(u.phase||0,.2);u.x=clamp(p.x,B.x+u.r,B.x+B.w-u.r);u.y=clamp(p.y,B.y+u.r,B.y+B.h-u.r);collide(u);
   jx({jfx:'yu_hop',x:x0,y:y0,x2:u.x,y2:u.y,t:.4,m:.4});jx({jfx:'yu_flash',x:u.x,y:u.y,a,t:.4,m:.4});if(near(u.x,u.y))sparks(u.x,u.y,YUC.lt,10,'yu_ice')}),
  // ---------- Blizzard (A, ultime) : la tempête suit le lanceur (logique : AUXF.yu_bliz) ----------
- yu_blizzard:ULT('Hyôton : Blizzard',YU_D.bliz,{tele:{self:1,r:170},ai:SELF(170,.8)},(u)=>{yu_S('wind',u);yu_S('heavy',u);anim(u,'yu_storm',.8);u.slowImm=Math.max(u.slowImm||0,4);u.slow=0;u.haste=Math.max(u.haste||0,4);
+ yu_blizzard:ULT('Hyôton : Blizzard',YU_D.bliz,{tele:{self:1,r:170},ai:SELF(220,.8)},(u)=>{yu_S('wind',u);yu_S('heavy',u);anim(u,'yu_storm',.8);u.slowImm=Math.max(u.slowImm||0,4);u.slow=0;u.haste=Math.max(u.haste||0,4);
   aux.push({type:'yu_bliz',x:u.x,y:u.y,r:170,t:4,m:4,team:u.team,owner:u,ui:yu_i(u),vfx:'yu_ice',k:.8,n:0});jx({jfx:'shock',x:u.x,y:u.y,r:170,t:.5,m:.5,col:YUC.lt});if(near(u.x,u.y))shake=Math.max(shake,.2)}),
  // ---------- Makyô Hyôshô (S, ultime) : dôme de miroirs (logique : AUXF.yu_dome) ----------
  yu_makyo:ULT('Makyô Hyôshô',YU_D.makyo,{tele:{r:150,max:300},ai:{max:300,p:.85}},(u,a,td)=>{const c=atP(u,a,td,300),R=150,N=8,D=3.6;
@@ -7506,8 +7506,8 @@ AUXF.yu_spk=(x,dt)=>{const o=x.owner;if(x.t<=0||!o)return;const el=x.m-x.t,front
 // miroir : renvoie les projectiles ennemis qui le touchent (rebond sur sa face, ×1,1) ; grappins et échanges se brisent dessus
 AUXF.yu_mir=(x,dt)=>{if(x.t<=0){if(x.big&&!x.done){x.done=1;const o=x.owner;if(o&&!o.dead)yu_burst(o,x.x+Math.cos(x.a)*30,x.y+Math.sin(x.a)*30,null,70,10)}return}const nx=Math.cos(x.a),ny=Math.sin(x.a),tx=-ny,ty=nx,L=x.len/2;
  for(const p of projs){if(p.dead||p.life<=0||p.grenade||!p.owner||p.owner.team===x.team)continue;
-  const dx=p.x-x.x,dy=p.y-x.y,dn=dx*nx+dy*ny,dl=dx*tx+dy*ty;if(Math.abs(dl)>L+p.r||Math.abs(dn)>p.r+12)continue;
-  const vn=p.vx*nx+p.vy*ny;if(vn*dn>=0)continue; // s'éloigne déjà du miroir
+  const dx=p.x-x.x,dy=p.y-x.y,dn=dx*nx+dy*ny,dl=dx*tx+dy*ty,vn=p.vx*nx+p.vy*ny;if(Math.abs(dl)>L+p.r||vn*dn>=0)continue; // à côté, ou s'éloigne déjà du miroir
+  if(Math.abs(dn)>p.r+12&&Math.abs(dn)>Math.abs(vn)*dt+p.r)continue; // pas encore au contact (un tir rapide qui traverserait le miroir pendant cette image est renvoyé)
   if(p.hook||p.anchor||p.swap||p.drag){p.life=0;if(near(p.x,p.y))sparks(p.x,p.y,YUC.lt,8,'yu_ice');continue}
   p.vx=(p.vx-2*vn*nx)*1.1;p.vy=(p.vy-2*vn*ny)*1.1;p.owner=x.owner;p.hitSet=null;p.home=0;p.steer=0;p.life=Math.max(p.life,.6);
   const sd=dn>=0?1:-1;p.x=x.x+nx*sd*(p.r+14)+tx*dl;p.y=x.y+ny*sd*(p.r+14)+ty*dl;
@@ -7517,7 +7517,7 @@ AUXF.yu_trail=(x,dt)=>{const o=x.owner;if(x.t<=0||!o)return;const ca=Math.cos(x.
  {const dx=o.x-x.x,dy=o.y-x.y,f=dx*ca+dy*sa;if(!o.dead&&f>-o.r&&f<x.len+o.r&&Math.abs(-dx*sa+dy*ca)<x.w/2+o.r)o.haste=Math.max(o.haste||0,.2)} // le lanceur file sur sa glace
  for(const e of enemies(o)){if(e.dash&&e.dash.jump)continue;const dx=e.x-x.x,dy=e.y-x.y,f=dx*ca+dy*sa,s=Math.abs(-dx*sa+dy*ca);if(f<-e.r*.5||f>x.len+e.r*.5||s>x.w/2+e.r*.5)continue;
   if(e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.3);if(!x.hs.has(e)){x.hs.add(e);if(yu_frost(o,e,1)&&near(e.x,e.y))sparks(e.x,e.y,YUC.lt,6,'yu_ice')}}};
-// blizzard : suit le lanceur ; ralentit ; toutes les 0,8 s : 5 dégâts et 1 givre ; à la fin, tout gèle (14 dégâts, 1 givre)
+// blizzard : suit le lanceur ; ralentit ; toutes les 0,8 s : 6 dégâts et 1 givre ; à la fin, tout gèle (16 dégâts, 1 givre)
 AUXF.yu_bliz=(x,dt)=>{const o=x.owner;if(x.done)return;if(!o||o.dead){x.done=1;x.t=0;return}x.x=o.x;x.y=o.y;const ins=e=>Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r;
  if(x.t<=0){x.done=1;let n=0;for(const e of enemies(o))if(ins(e)&&yu_hit(e,o,16,{slow:1,unblockable:1})){n++;yu_frost(o,e,1)}
   jx({jfx:'yu_shatter',x:x.x,y:x.y,r:x.r,big:1,t:.8,m:.8});if(near(x.x,x.y)){yu_S('rock',o);yu_S('boom',o);shake=Math.max(shake,n?.3:.15)}return}
@@ -7699,7 +7699,8 @@ function yu_domeDraw(x,front,t,o){const el=x.m-x.t,rise=ezo(Math.min(1,el/.35)),
   yu_pane(m.x,m.y,b,54,H*end,front?.5:.92,i===ci?0:.55,i===ci?1:0,t+i*.37)}}
 AUXD.yu_dome=(x,k,t)=>{const al=Math.min(1,x.t/.3);g.fillStyle=rgba(YUC.ice,.14*al);gEll(x.x,x.y,x.r);g.fill();g.strokeStyle=rgba(YUC.lt,.7*al);g.lineWidth=3;gEll(x.x,x.y,x.r);g.stroke();
  g.strokeStyle=rgba(YUC.dk,.35*al);g.lineWidth=1.2;g.setLineDash([3,7]);gEll(x.x,x.y,x.r*.7);g.stroke();g.setLineDash([]);yu_domeDraw(x,false,t,units[x.ui])};
-JFXD.yu_domeF=(f,k,e,t,u)=>{const x={x:f.x,y:f.y,r:f.r,a:f.a,n:f.n,t:f.t,m:f.m};yu_domeDraw(x,true,t,u)};
+JFXD.yu_domeF=(f,k,e,t,u)=>{if(!u||u.dead||!(u.yu_mk>0))return; // dôme fini plus tôt (lanceur tombé) : plus de miroirs devant
+ const x={x:f.x,y:f.y,r:f.r,a:f.a,n:f.n,t:f.t,m:f.m};yu_domeDraw(x,true,t,u)};
 // états visibles : givre (cristaux aux pieds, un par givre) et gel (bloc de glace jusqu'à la poitrine)
 STATD.push((u,p,S,sk)=>{const gv=u.yu_gv|0,fz=u.yu_frz||0;if(!gv&&!(fz>0))return;const t=performance.now()/1000;g.save();
  if(gv){g.fillStyle=rgba(YUC.ice,.18+gv*.06);g.beginPath();g.ellipse(p.x,p.y,(16+gv*3)*S*sk,(6+gv)*S*sk,0,0,7);g.fill();
