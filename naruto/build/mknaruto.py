@@ -327,6 +327,8 @@ rep("$('oSpat').checked=OPT.spat;$('oMute').checked=muted}","$('oSpat').checked=
 rep("$('oMute').onchange=e=>{muted=e.target.checked};","$('oMute').onchange=e=>{muted=e.target.checked};$('o3d').onchange=e=>{OPT.p3d=e.target.checked;N3.on=true;N3.slow=0;applyOpt()};")
 # clones (Multiclonage, nuées…) dessinés comme les ninjas : en 3D si disponible
 rep("drawChar(f,p.x,p.y,p.s*1.15*(tu.big?1.2:1))","drawChar3(f,p.x,p.y,p.s*1.15*(tu.big?1.2:1))")
+# clan Shirogane : la marionnette est triée en profondeur avec les ninjas (sgList dans kits/shirogane.js)
+rep("for(const tu of turrets)if(near(tu.x,tu.y))list.push({y:tu.y,d:()=>drawTurret(tu)});","for(const tu of turrets)if(near(tu.x,tu.y))list.push({y:tu.y,d:()=>drawTurret(tu)});sgList(list);")
 # déplacement plus léger + sprint (Maj maintenue) : plus rapide, consomme l'endurance ; les bots sprintent pour rejoindre leur cible
 rep("const sp=u.ch.spd*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.4:1)","const sp=u.ch.spd*SPD_K*(u.sprint?SPRINT_K:1)*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.5:1)")
 rep("if(u.chk)u.energy=Math.min(100,u.energy+30*dt);","if(u.chk)u.energy=Math.min(100,u.energy+30*dt);\n {const want=ctl?!!(I&&I.sh)&&Math.hypot(I.mx,I.my)>.1:!!u.aiSprint&&u.moving;if(!want)u.sprintLock=0;u.sprint=active&&want&&!u.sprintLock&&u.stun<=0&&!u.cast&&!u.dash&&!u.block&&!u.chk&&!u.flame&&!u.spin&&!u.chan&&!(u.root>0)&&(u.run??100)>1;\n  if(u.run==null)u.run=100;if(u.sprint){u.run=Math.max(0,u.run-SPRINT_COST*dt);u.runT=.6;if(u.run<=0){u.sprint=false;u.sprintLock=1}}else if((u.runT=(u.runT||0)-dt)<=0)u.run=Math.min(100,u.run+RUN_REGEN*dt)}")
