@@ -222,7 +222,7 @@ function drawMenu(){TIP=null;{const now=performance.now();if(now-menuLast>1500)p
   fitT(itN(it),R.v.x+(sw?12+z:8),R.y,z,'#fff',R.v.w-(sw?52:44),'bold',9);text(`${v+1}/${L.length}`,R.v.x+R.v.w-6,R.y,Math.min(10,z-1),'#8a7458','right','normal');
   if(h)hoverTip('lk'+k,()=>({t:lab+' : '+itN(it),d:`${L.length} choix. Clic : ouvrir la grille · ◀ ▶ : précédent / suivant.`}))});
  {const R=animeBtn,h=hv(R);g.save();if(h){g.shadowColor='#ffb347';g.shadowBlur=12}rr(R,R.h/2,h?'#ffb347':'rgba(70,44,18,.95)','#ffb347',2);g.restore();text('⭐ Persos de l\'anime',R.x+R.w/2,R.y+21,14,h?'#1a1008':'#ffd38a');
-  if(h)hoverTip('anime',()=>({t:'Persos de l\'anime',d:`${PRESETS.length} ninjas célèbres (Équipe 7, Akatsuki, Sannin et Hokage, Konoha et Gaara) : son apparence et son kit remplacent les tiens (ton camp est gardé). Tu peux ensuite tout retoucher.`}))}
+  if(h)hoverTip('anime',()=>({t:'Persos de l\'anime',d:`${PRESETS.length} ninjas célèbres (${GALG.join(', ')}) : son apparence et son kit remplacent les tiens (ton camp est gardé). Tu peux ensuite tout retoucher.`}))}
  // ===== colonne de droite : build de combat
  // camp, voie, clan, nature : ◀ ▶ pour défiler, clic au centre pour la grille
  buildKeys().forEach(([lab,list,k],i)=>{const R=selRect(i),L=list(),v=getB(k),it=L[v],off=appOff(k),h=hv(R)&&!off,sw=swCol(it);

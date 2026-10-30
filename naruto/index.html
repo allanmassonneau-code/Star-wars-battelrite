@@ -9912,7 +9912,7 @@ KIT('c19',[
  [5,'A','x.hz_giant','Suika : Corps-déluge',HZD.giant,'water'],
 ]);
 // ---- styles de combat propres au clan (ajoutés à la fin de STYLES)
-STYLES.push(['Kubikiribôchô','Sabre géant aux coups très larges ; 3e coup : ralentit ; 5e : abattu d\'en haut, repousse. Le sang reforge la lame : chaque coup rend 10 % de ses dégâts en PV','x.hz_st_kubi','steel','sword',[19],.97,.94],
+STYLES.push(['Kubikiribôchô','Sabre géant aux coups très larges ; 3e coup : ralentit ; 5e : abattu d\'en haut, repousse. Le sang reforge la lame : chaque coup rend 10 % de ses dégâts en PV','x.hz_st_kubi','steel','sword',[19,-1],.97,.94],
  ['Taijutsu liquide','Les bras s\'allongent en eau : longue allonge ; 3e coup : trempe ; 5e : fouet d\'eau qui ramène la cible et ralentit','x.hz_st_liq','tai','fist',[19],1.,.96]);
 
 // ---- petites aides du clan
@@ -10041,6 +10041,8 @@ AFTER.push(()=>{UK.push('hz_w','hz_zap','hz_ctr','hz_arm','hz_armB','hz_pud','hz
 
 // ---- apparence : yeux violets, dents pointues, cheveux décolorés blanc-bleu ; le Kubikiribôchô à la main
 CLOOK[19]=(look,l,S)=>{const h=look.head;h.eye='#8a5ad0';h.hz_teeth=1;h.hair=hzMix(h.hair,'#e4f2fa',.72);if(S&&S[0]==='Kubikiribôchô')look.weapon=Object.assign({},look.weapon,{hz:1})};
+// Kubikiribôchô sans clan (Zabuza) : même lame géante, sans les traits Hôzuki
+CLOOK[-1]=(look,l,S)=>{if(S&&S[0]==='Kubikiribôchô')look.weapon=Object.assign({},look.weapon,{hz:1})};
 AFTER.push(()=>{
  // 2D : dents pointues (sourire de requin) par-dessus la bouche
  if(typeof drawNinjaHead==='function'){const DH=drawNinjaHead;drawNinjaHead=function(u,h,fx,fy,back,fl,t,run){DH.apply(this,arguments);if(!h||!h.hz_teeth||back||h.acc==='masque'||h.acc==='anbu'||u.ch.look.collar)return;
@@ -10605,7 +10607,7 @@ const TENUES=[['Tenue orange',{legs:'#2a3550',torso:'#f08a24',arm:'#f08a24',belt
 const COIFS=[['Pics','pics'],['Lisses','lisse'],['Queue haute','queue'],['Courts','courts'],['Chignons','chignons'],['Crâne rasé','chauve'],
  ['Mèches de canard','sasuke'],['Carré court','carre'],['Pics obliques','kakashi'],['Queue basse','itachi'],['Demi-queue et mèche','deidara'],['Pics de requin','requin'],['Ébouriffés','sasori'],['Plaqués en arrière','plaque'],
  ['Pics hérissés','pain'],['Chignon et fleur','konan'],['Crinière d\'ermite','jiraiya'],['Deux queues basses','tsunade'],['Longs raides','orochimaru'],['Pics et longues mèches','minato'],['Longs attachés','neji'],
- ['Coupe au bol','bol'],['Ananas','ananas'],['Pics sous bandeau','choji'],['Longue queue et mèche','ino'],['Sauvages','kiba'],['Coupe hime','hinata'],['Courts en pics','gaara']];
+ ['Coupe au bol','bol'],['Ananas','ananas'],['Pics sous bandeau','choji'],['Longue queue et mèche','ino'],['Sauvages','kiba'],['Coupe hime','hinata'],['Courts en pics','gaara'],['Quatre couettes','temari']];
 const HAIRC=[['Blond','#f2c84a'],['Noir','#1a1a22'],['Rose','#f08ab0'],['Roux','#c0482a'],['Blanc','#e8e8f0'],['Brun','#6b4a2a'],['Bleu nuit','#2a3a6a'],['Rouge','#b8202a'],['Argenté','#c8ccd6'],['Gris','#8a8a92'],['Orange','#e8702a'],['Lavande','#7a6ab8'],['Blond pâle','#f2e09a'],['Bleu acier','#3a5a8a'],['Châtain foncé','#3a2618'],['Noir bleuté','#1c2238']];
 const PEAUX=[['Claire','#f6d6b4'],['Mate','#e0b08a'],['Hâlée','#b8805a'],['Foncée','#7a5038'],['Pâle','#e8e0e8'],['Bleu requin','#7c9cb4'],['Blafarde','#f0eee6'],['Rosée','#fae2d0']];
 const CHAKRAS=[['Bleu','#3af'],['Rouge','#f33'],['Vert','#3f6'],['Violet','#a5f'],['Orange','#f93'],['Blanc','#eef'],['Jaune','#fd3']];
@@ -10689,7 +10691,7 @@ function drawCutin(){if(!cutin)return;cutin.t-=1/60;if(cutin.t<=0){cutin=null;re
 // ---------- Persos de l'anime : kits préfaits (apparence + build fidèles au personnage) ----------
 // n nom court (aussi le nom du bot), full nom complet, g groupe de la galerie (GALG), side camp du bot (0 Alliance, 1 Akatsuki), nat, clan (-1 sans), voie (0 taijutsu, 1 équilibré, 2 ninjutsu),
 // pass passif, sty style de combat, j 5 jutsu (Clic D, Espace, Q, E, T), l apparence {v village,t tenue,c coiffure,h cheveux,p peau,k chakra,a accessoire,f visage,b bandeau,d dos}, d jeu en une ligne
-const GALG=['Équipe 7','Akatsuki','Sannin & Hokage','Konoha & Gaara','Oto'],GALC=['#ff9a3a','#e0383a','#e8c040','#5ab45a','#9a6ad8'];
+const GALG=['Équipe 7','Akatsuki','Sannin & Hokage','Konoha','Suna','Oto','Kiri','Autres clans'],GALC=['#ff9a3a','#e0383a','#e8c040','#5ab45a','#d8a860','#9a6ad8','#5ab8d8','#c86a8a'];
 const PRESETS=[
  {n:'Naruto',full:'Naruto Uzumaki',g:0,side:0,nat:2,clan:-1,voie:0,pass:'regen',sty:'Taijutsu',j:['Rasengan','Roulade','Multiclonage','Chakra de Kyûbi','Fûton : Rasenshuriken'],l:{v:0,t:8,c:0,h:0,p:0,k:4,a:0,f:1,b:0,d:0},d:'Fonceur increvable : clones, Rasengan au contact, chakra de Kyûbi et Rasenshuriken'},
  {n:'Sasuke',full:'Sasuke Uchiha',g:0,side:1,nat:3,clan:0,voie:2,pass:'crit',sty:'Kenjutsu',j:['Chidori','Shunshin Uchiha','Katon : Gôkakyû','Sharingan','Raiton : Kirin'],l:{v:0,t:9,c:6,h:15,p:0,k:3,a:0,f:0,b:8,d:0},d:'Sabre et foudre : Chidori qui perce, Sharingan qui lit, Kirin qui achève'},
@@ -10698,10 +10700,10 @@ const PRESETS=[
  {n:'Itachi',full:'Itachi Uchiha',g:1,side:1,nat:0,clan:0,voie:2,pass:'energy',sty:'Taijutsu Uchiha',j:['Katon : Gôkakyû','Shunshin Uchiha','Sharingan : Genjutsu','Sharingan','Tsukuyomi'],l:{v:0,t:2,c:9,h:1,p:0,k:1,a:0,f:3,b:2,d:0},d:'Maître du genjutsu : corbeaux, regard qui paralyse, Tsukuyomi'},
  {n:'Deidara',full:'Deidara',g:1,side:1,nat:4,clan:-1,voie:2,pass:'crit',sty:'Kunai',j:['Argile explosive','Saut ninja','Clone explosif','Parchemin explosif','Pluie de parchemins'],l:{v:4,t:2,c:10,h:0,p:0,k:4,a:3,f:0,b:2,d:0},d:'L\'art est une explosion : oiseaux d\'argile, clones piégés, « Katsu ! »'},
  {n:'Kisame',full:'Kisame Hoshigaki',g:1,side:1,nat:1,clan:18,voie:0,pass:'lifesteal',sty:'Samehada',j:['Suiton : Requins voraces','Nage du requin','Suiton : Prison aqueuse','Fusion avec Samehada','Suiton : Daikôdan'],l:{v:2,t:2,c:11,h:13,p:5,k:0,a:0,f:8,b:2,d:3},d:'Requin de Kiri : requins d\'eau, prison aqueuse, Samehada qui dévore le chakra'},
- {n:'Sasori',full:'Sasori',g:1,side:1,nat:0,clan:8,voie:2,pass:'slow',sty:'Marionnette',j:['Lances de sable','Sable volant','Katon : Triple flamme','Armure de sable','Tsunami de sable'],l:{v:1,t:2,c:12,h:7,p:0,k:1,a:0,f:0,b:2,d:0},d:'Marionnettiste : sa marionnette empoisonne, le sable de fer pique de loin'},
+ {n:'Sasori',full:'Sasori',g:1,side:1,nat:0,clan:14,voie:2,pass:'slow',sty:'Lames de marionnette',j:['Senbon empoisonnés','Repli du marionnettiste','Brume toxique','Fils de chakra','Armée de marionnettes'],l:{v:1,t:2,c:12,h:7,p:0,k:1,a:0,f:0,b:2,d:0},d:'Marionnettiste : senbon et brume empoisonnés, fils de chakra, puis son armée de marionnettes'},
  {n:'Hidan',full:'Hidan',g:1,side:1,nat:3,clan:-1,voie:0,pass:'armor',sty:'Taijutsu',j:['Fûma Shuriken','Kunai à fil','Byakugô','Barrière Shishienjin','Raiton : Armure de foudre'],l:{v:8,t:2,c:13,h:8,p:4,k:1,a:0,f:0,b:2,d:4},d:'Immortel de Jashin : faux à câble, plaies qui se referment, rituel sans issue'},
  {n:'Pain',full:'Pain (Nagato)',g:1,side:1,nat:4,clan:6,voie:2,pass:'energy',sty:'Chaîne scellante',j:['Chaîne-harpon','Sceau d\'échange','Doton : Kajûgan','Parchemin de stockage','Doton : Chute de montagne'],l:{v:7,t:2,c:14,h:10,p:0,k:3,a:0,f:9,b:2,d:0},d:'Rinnegan : il attire, absorbe les jutsu et écrase tout par la gravité'},
- {n:'Konan',full:'Konan',g:1,side:1,nat:2,clan:-1,voie:2,pass:'energy',sty:'Kunai',j:['Multiclonage de shuriken','Kage Bunshin : leurre','Parchemin explosif','Genjutsu : Plumes','Pluie de parchemins'],l:{v:7,t:2,c:15,h:11,p:4,k:5,a:0,f:0,b:8,d:0},d:'Ange de papier : nuées de shuriken, bombes de papier, pluie explosive'},
+ {n:'Konan',full:'Konan',g:1,side:1,nat:2,clan:16,voie:2,pass:'energy',sty:'Feuilles tranchantes',j:['Papillons shikigami','Ailes de papier','Cocon de papier','Corps de papier','Mer de papiers explosifs'],l:{v:7,t:2,c:15,h:11,p:4,k:5,a:0,f:0,b:8,d:0},d:'Ange de papier : papillons qui traquent, cocon qui enserre, mer de papiers explosifs'},
  {n:'Jiraiya',full:'Jiraiya',g:2,side:0,nat:4,clan:-1,voie:1,pass:'rage',sty:'Taijutsu',j:['Rasengan','Saut ninja','Doton : Yomi Numa','Multiclonage','Mode Ermite'],l:{v:0,t:14,c:16,h:4,p:0,k:0,a:0,f:7,b:7,d:2},d:'Ermite des crapauds : marécage, clones, Rasengan, puis le Mode Ermite'},
  {n:'Tsunade',full:'Tsunade',g:2,side:0,nat:4,clan:-1,voie:0,pass:'regen',sty:'Taijutsu',j:['Ôkashô','Shunshin','Byakugô','Shôsen','Invocation : Katsuyu'],l:{v:0,t:15,c:17,h:0,p:0,k:2,a:0,f:5,b:8,d:0},d:'Princesse des limaces : force titanesque, Byakugô et soins de Katsuyu'},
  {n:'Orochimaru',full:'Orochimaru',g:2,side:1,nat:2,clan:-1,voie:2,pass:'energy',sty:'Taijutsu',j:['Serpents de l\'ombre','Kage Bunshin : leurre','Rashômon','Barrière Shishienjin','Invocation : Manda'],l:{v:5,t:16,c:18,h:1,p:6,k:3,a:0,f:10,b:8,d:0},d:'Sannin des serpents : morsures qui attirent, portail Rashômon et Manda'},
@@ -10717,8 +10719,17 @@ const PRESETS=[
  {n:'Shino',full:'Shino Aburame',g:3,side:0,nat:4,clan:4,voie:1,pass:'lifesteal',sty:'Nuée d\'insectes',j:['Insectes chercheurs','Clone d\'insectes','Essaim d\'insectes','Mur d\'insectes','Nuée destructrice'],l:{v:0,t:18,c:3,h:14,p:0,k:2,a:2,f:0,b:0,d:0},d:'Maître des insectes : nuées qui traquent, rongent le chakra, dévorent les tirs'},
  {n:'Hinata',full:'Hinata Hyûga',g:3,side:0,nat:0,clan:1,voie:1,pass:'slow',sty:'Poing souple',j:['Jûho Sôshiken','Pas du Hakke','Byakugan','Kaiten','Hakke : 64 points'],l:{v:0,t:17,c:26,h:6,p:0,k:0,a:0,f:0,b:4,d:0},d:'Douceur du Jûken : lions jumeaux et protection des 64 points'},
  {n:'Tenten',full:'Tenten',g:3,side:0,nat:2,clan:-1,voie:1,pass:'crit',sty:'Kunai',j:['Fûma Shuriken','Kunai à fil','Sôshôryû','Piège ninja','Fûton : Tornade'],l:{v:0,t:24,c:4,h:5,p:0,k:0,a:0,f:0,b:0,d:2},d:'Maîtresse des armes : dragons de parchemins, pièges, tornade du Bashôsen'},
- {n:'Gaara',full:'Gaara',g:3,side:0,nat:2,clan:8,voie:2,pass:'armor',sty:'Balles de sable',j:['Cercueil de sable','Sable volant','Sable mouvant','Bouclier absolu','Funérailles du désert'],l:{v:1,t:20,c:27,h:3,p:0,k:4,a:0,f:4,b:8,d:1},d:'Bouclier de sable absolu : il emprisonne, enlise et ensevelit'},
- {n:'Kimimaro',full:'Kimimaro Kaguya',g:4,side:1,nat:4,clan:9,voie:0,pass:'third',sty:'Danse des os',j:['Doigts-balles','Bond d\'os','Forêt naissante','Danse du mélèze','Danse de la clématite'],l:{v:5,t:4,c:1,h:4,p:4,k:5,a:0,f:0,b:8,d:0},d:'Os vivants : balles d\'os, forêt d\'os et foreuse de la clématite'},
+ {n:'Gaara',full:'Gaara',g:4,side:0,nat:2,clan:8,voie:2,pass:'armor',sty:'Balles de sable',j:['Cercueil de sable','Sable volant','Sable mouvant','Bouclier absolu','Funérailles du désert'],l:{v:1,t:20,c:27,h:3,p:0,k:4,a:0,f:4,b:8,d:1},d:'Bouclier de sable absolu : il emprisonne, enlise et ensevelit'},
+ {n:'Kimimaro',full:'Kimimaro Kaguya',g:5,side:1,nat:4,clan:9,voie:0,pass:'third',sty:'Danse des os',j:['Doigts-balles','Bond d\'os','Forêt naissante','Danse du mélèze','Danse de la clématite'],l:{v:5,t:4,c:1,h:4,p:4,k:5,a:0,f:0,b:8,d:0},d:'Os vivants : balles d\'os, forêt d\'os et foreuse de la clématite'},
+ {n:'Kushina',full:'Kushina Uzumaki',g:3,side:0,nat:1,clan:6,voie:1,pass:'regen',sty:'Chaîne scellante',j:['Chaîne-harpon','Bond des chaînes','Cage adamantine','Rempart de chaînes','Entrave du démon'],l:{v:0,t:1,c:18,h:7,p:0,k:6,a:0,f:0,b:8,d:0},d:'Habanero sanglant : chaînes adamantines qui harponnent, enferment et enchaînent'},
+ {n:'Temari',full:'Temari',g:4,side:0,nat:2,clan:12,voie:2,pass:'crit',sty:'Éventail de combat',j:['Grande Kamaitachi','Vol sur l\'éventail','Rafale de l\'éventail','Tempête tranchante','Invocation : Kamatari'],l:{v:1,t:23,c:28,h:0,p:0,k:2,a:0,f:0,b:4,d:5},d:'Vent de Suna : grand éventail, faux de vent et la belette Kamatari'},
+ {n:'Kankurô',full:'Kankurô',g:4,side:0,nat:2,clan:14,voie:2,pass:'slow',sty:'Lames de marionnette',j:['Lames cachées','Kawarimi de marionnette','Kuroari','Sanshôuo','Mère et Père'],l:{v:1,t:21,c:3,h:5,p:0,k:3,a:0,f:13,b:0,d:2},d:'Marionnettiste de Suna : Karasu aux lames cachées, Kuroari qui enferme, Sanshôuo qui protège'},
+ {n:'Kidômaru',full:'Kidômaru',g:5,side:1,nat:4,clan:13,voie:2,pass:'crit',sty:'Soie dorée',j:['Filet d\'araignée','Filin d\'araignée','Nuée d\'araignées','Armure d\'or','Arc d\'or : Kumo Senkyû'],l:{v:5,t:16,c:2,h:5,p:2,k:6,a:0,f:0,b:0,d:0},d:'Araignée du Son : toiles, araignées, soie d\'or et flèche Kumo Senkyû'},
+ {n:'Haku',full:'Haku Yuki',g:6,side:1,nat:1,clan:20,voie:1,pass:'speed',sty:'Senbon de glace',j:['Hyôton : Sensatsu Suishô','Pas du miroir','Hyôton : Tsubame Fubuki','Miroir de glace','Makyô Hyôshô'],l:{v:2,t:15,c:18,h:1,p:4,k:0,a:5,f:0,b:8,d:0},d:'Glace du Hyôton : senbon, aiguilles d\'eau gelée et dôme des miroirs démoniaques'},
+ {n:'Zabuza',full:'Zabuza Momochi',g:6,side:1,nat:1,clan:-1,voie:0,pass:'crit',sty:'Kubikiribôchô',j:['Suiton : Dragon aqueux','Shunshin','Suiton : Suirô','Suiton : Kirigakure','Suiton : Bakusui Shôha'],l:{v:2,t:3,c:3,h:1,p:1,k:0,a:1,f:0,b:0,d:0},d:'Démon du Brouillard : sabre géant, brume, prison aqueuse et dragon d\'eau'},
+ {n:'Suigetsu',full:'Suigetsu Hôzuki',g:6,side:1,nat:1,clan:19,voie:0,pass:'third',sty:'Kubikiribôchô',j:['Mizudeppô : Grand jet','Liquéfaction','Suika : Gôwan','Suika : Contre-courant','Suika : Corps-déluge'],l:{v:2,t:23,c:1,h:4,p:0,k:0,a:0,f:0,b:8,d:0},d:'Corps d\'eau : il se liquéfie, gonfle ses bras et tranche avec Kubikiribôchô'},
+ {n:'Chino',full:'Chino Chinoike',g:7,side:1,nat:0,clan:15,voie:2,pass:'energy',sty:'Kunai',j:['Ketsuryûgan : Sang bouillant','Marée de sang','Ketsuryûgan : Paralysie','Ketsuryûgan : Mirage','Ketsuryûgan : Lune de sang'],l:{v:6,t:3,c:1,h:1,p:4,k:1,a:0,f:0,b:8,d:0},d:'Ketsuryûgan : son regard paralyse, son sang bout et la lune de sang dévore'},
+ {n:'Sasame',full:'Sasame Fûma',g:7,side:0,nat:2,clan:17,voie:1,pass:'crit',sty:'Shuriken Fûma',j:['Fûma shuriken','Shunshin de l\'ombre','Kage shuriken','Shuriken tournoyants','Pluie de shuriken'],l:{v:6,t:24,c:26,h:10,p:0,k:4,a:0,f:0,b:8,d:0},d:'Kunoichi Fûma : shuriken cachés dans l\'ombre, bouclier tournoyant, pluie d\'acier'},
 ];
 const PASSI=k=>Math.max(0,PASSK.indexOf(k));
 // i : index dans PRESETS ; le nom et le camp du joueur sont gardés (sinon ceux du perso)
@@ -11366,6 +11377,9 @@ const HAIRS={
  kiba:{f:'zig',p:[['s',.3,.4,8,3.4],['s',.4,-.8,8,3.4],['s',.6,1.8,8,3.4],['s',.6,-1.9,8,3.4],['s',.5,2.7,8,3.4],['s',.8,3.14,8,3.4],['s',1,2.2,8,3.4],['s',1,-2.3,8,3.4],['s',1.3,1.6,7,3.2],['s',1.3,-1.6,7,3.2],['s',1.2,2.8,8,3.4],['s',1.2,-2.8,8,3.4],
   ['s',.9,1,7,3.2],['s',.9,-1.1,7,3.2],['s',1.15,.35,7,3],['s',1.15,-.35,7,3],['s',1.2,0,6,2.8],['s',1.25,.75,6,2.8],['s',1.25,-.75,6,2.8]]},
  hinata:{f:'flat',cap:0,p:[['sh',13.7,1.38,0],['c',[0,-4,-6.5],11.4,13,[.08,0,0],[1.05,1,.5]],['c',[10.6,2.5,6.8],2.6,8,[0,0,0],[1,1,.8]],['c',[-10.6,2.5,6.8],2.6,8,[0,0,0],[1,1,.8]],['sh',13.6,1.75,1.05]]},
+ // Temari : quatre petites couettes à l'arrière
+ temari:{f:'zig',p:[['o',[9.5,14,-6],2.3,[1,1,1],'h','#3a2a20'],['o',[-9.5,14,-6],2.3,[1,1,1],'h','#3a2a20'],['k',[13.1,14,-7.8],3,8,[-1.6,0,-1.1],'h'],['k',[-13.1,14,-7.8],3,8,[-1.6,0,1.1],'h'],
+  ['o',[9.5,4,-7],2.3,[1,1,1],'h','#3a2a20'],['o',[-9.5,4,-7],2.3,[1,1,1],'h','#3a2a20'],['k',[12.9,2.7,-8.7],3,8,[-2.2,0,-1],'h'],['k',[-12.9,2.7,-8.7],3,8,[-2.2,0,1],'h'],['c',[10.4,3.5,6.5],2.2,8,[.08,0,.1],[1,1,.7]],['c',[-10.4,3.5,6.5],2.2,8,[.08,0,-.1],[1,1,.7]]]},
  gaara:{f:'none',p:[['s',.3,.1,8,3.6],['s',.5,1.1,8,3.6],['s',.5,-1.1,8,3.6],['s',.6,2.1,8,3.6],['s',.6,-2.1,8,3.6],['s',.7,3.14,8,3.6],['s',1.05,2.6,8,3.4],['s',1.05,-2.6,8,3.4],['s',1.2,1.5,7,3.2],['s',1.2,-1.5,7,3.2],
   ['s',1.1,-.35,8,3.2],['s',1.15,-.05,7,3],['s',1.2,.55,5,2.6]]}};
 const HAIRB=[0,10,-9]; // position de l'os des cheveux dans le repère de la tête
@@ -12577,7 +12591,7 @@ function drawMenu(){TIP=null;{const now=performance.now();if(now-menuLast>1500)p
   fitT(itN(it),R.v.x+(sw?12+z:8),R.y,z,'#fff',R.v.w-(sw?52:44),'bold',9);text(`${v+1}/${L.length}`,R.v.x+R.v.w-6,R.y,Math.min(10,z-1),'#8a7458','right','normal');
   if(h)hoverTip('lk'+k,()=>({t:lab+' : '+itN(it),d:`${L.length} choix. Clic : ouvrir la grille · ◀ ▶ : précédent / suivant.`}))});
  {const R=animeBtn,h=hv(R);g.save();if(h){g.shadowColor='#ffb347';g.shadowBlur=12}rr(R,R.h/2,h?'#ffb347':'rgba(70,44,18,.95)','#ffb347',2);g.restore();text('⭐ Persos de l\'anime',R.x+R.w/2,R.y+21,14,h?'#1a1008':'#ffd38a');
-  if(h)hoverTip('anime',()=>({t:'Persos de l\'anime',d:`${PRESETS.length} ninjas célèbres (Équipe 7, Akatsuki, Sannin et Hokage, Konoha et Gaara) : son apparence et son kit remplacent les tiens (ton camp est gardé). Tu peux ensuite tout retoucher.`}))}
+  if(h)hoverTip('anime',()=>({t:'Persos de l\'anime',d:`${PRESETS.length} ninjas célèbres (${GALG.join(', ')}) : son apparence et son kit remplacent les tiens (ton camp est gardé). Tu peux ensuite tout retoucher.`}))}
  // ===== colonne de droite : build de combat
  // camp, voie, clan, nature : ◀ ▶ pour défiler, clic au centre pour la grille
  buildKeys().forEach(([lab,list,k],i)=>{const R=selRect(i),L=list(),v=getB(k),it=L[v],off=appOff(k),h=hv(R)&&!off,sw=swCol(it);

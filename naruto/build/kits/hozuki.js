@@ -26,7 +26,7 @@ KIT('c19',[
  [5,'A','x.hz_giant','Suika : Corps-déluge',HZD.giant,'water'],
 ]);
 // ---- styles de combat propres au clan (ajoutés à la fin de STYLES)
-STYLES.push(['Kubikiribôchô','Sabre géant aux coups très larges ; 3e coup : ralentit ; 5e : abattu d\'en haut, repousse. Le sang reforge la lame : chaque coup rend 10 % de ses dégâts en PV','x.hz_st_kubi','steel','sword',[19],.97,.94],
+STYLES.push(['Kubikiribôchô','Sabre géant aux coups très larges ; 3e coup : ralentit ; 5e : abattu d\'en haut, repousse. Le sang reforge la lame : chaque coup rend 10 % de ses dégâts en PV','x.hz_st_kubi','steel','sword',[19,-1],.97,.94],
  ['Taijutsu liquide','Les bras s\'allongent en eau : longue allonge ; 3e coup : trempe ; 5e : fouet d\'eau qui ramène la cible et ralentit','x.hz_st_liq','tai','fist',[19],1.,.96]);
 
 // ---- petites aides du clan
@@ -155,6 +155,8 @@ AFTER.push(()=>{UK.push('hz_w','hz_zap','hz_ctr','hz_arm','hz_armB','hz_pud','hz
 
 // ---- apparence : yeux violets, dents pointues, cheveux décolorés blanc-bleu ; le Kubikiribôchô à la main
 CLOOK[19]=(look,l,S)=>{const h=look.head;h.eye='#8a5ad0';h.hz_teeth=1;h.hair=hzMix(h.hair,'#e4f2fa',.72);if(S&&S[0]==='Kubikiribôchô')look.weapon=Object.assign({},look.weapon,{hz:1})};
+// Kubikiribôchô sans clan (Zabuza) : même lame géante, sans les traits Hôzuki
+CLOOK[-1]=(look,l,S)=>{if(S&&S[0]==='Kubikiribôchô')look.weapon=Object.assign({},look.weapon,{hz:1})};
 AFTER.push(()=>{
  // 2D : dents pointues (sourire de requin) par-dessus la bouche
  if(typeof drawNinjaHead==='function'){const DH=drawNinjaHead;drawNinjaHead=function(u,h,fx,fy,back,fl,t,run){DH.apply(this,arguments);if(!h||!h.hz_teeth||back||h.acc==='masque'||h.acc==='anbu'||u.ch.look.collar)return;
