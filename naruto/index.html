@@ -7261,13 +7261,13 @@ const HMD={
  fil:'Fil collant (12 dégâts, 1 fil) ; la cible reste liée 2 s, ralentie, puis le fil se rétracte et la tire vers toi',
  toile:'Boule de soie (8 dégâts) qui tisse une toile 5 s : ralentit ; 1 s dessus = entravé 0,5 s et 1 fil. Sur ta toile, tu cours plus vite',
  filet:'Grand filet qui arrête les tirs ennemis ; la 1re cible est emmaillotée : 16 dégâts, entravée 1 s, 2 fils',
- nuee:'Un cocon éclate en 5 bébés araignées qui traquent les ennemis : chaque morsure fait 4 dégâts, ralentit et pose ½ fil',
+ nuee:'Un cocon (5 dégâts) éclate en 5 bébés araignées qui traquent les ennemis : chaque morsure fait 4 dégâts, ralentit et pose ½ fil',
  armure:'Armure d\'or (Kumo Nenkin) : bouclier de 26 pendant 3,5 s ; qui te frappe au corps à corps prend 1 fil et est ralenti',
  etreinte:'Des fils s\'ancrent autour de la cible ; 0,6 s après, ceux restés dans le cercle sont étranglés : 22 dégâts +8 par fil (consommés), silence 0,9 s',
  filin:'Un fil t\'arrache jusqu\'au point visé ; une petite toile reste à ton point de départ (3 s)',
  mue:'Tu laisses ta mue et fuis invisible 1,5 s (prochain coup +50 %) ; la mue explose en fils si un ennemi l\'approche : 10 dégâts, entravé 0,7 s, 1 fil',
- geante:'Une araignée géante s\'abat sur la zone (34 dégâts, étourdit 0,7 s), tisse une toile et crache 4 fois de la soie sur les ennemis (7 dégâts, 1 fil)',
- arc:'Bande l\'arc d\'or jusqu\'à 1,2 s (relancer pour tirer plus tôt) : flèche guidée par ta visée, 32 à 62 dégâts, perce chargée à 60 %, 1 à 2 fils'};
+ geante:'Une araignée géante s\'abat sur la zone (30 dégâts, étourdit 0,7 s), tisse une toile et crache 3 fois de la soie sur les ennemis (7 dégâts, 1 fil)',
+ arc:'Bande l\'arc d\'or jusqu\'à 1,2 s (relancer pour tirer plus tôt) : flèche guidée par ta visée, 34 à 64 dégâts, perce chargée à 60 %, 1 à 2 fils'};
 KIT('c13',[
  [1,'D','x.hm_fil','Fil d\'araignée',HMD.fil,'silk'],
  [3,'C','x.hm_toile','Toile collante',HMD.toile,'silk'],
@@ -7296,7 +7296,9 @@ function hm_fil(src,t,n){if(!t||t.dead||!src||t.team===src.team||state!=='fight'
   jx({jfx:'hm_cocoon',ti:hm_I(t),x:t.x,y:t.y,t:.8,m:.8});if(near(t.x,t.y)){sparks(t.x,t.y,HMC.silk,10);S('bone',t)}}}
 // tient compte des fils et de la faiblesse sur tous les ninjas (l'hôte calcule, les invités reçoivent hm_fil et hm_glu)
 function hm_tick(){for(const e of units){if(e.hm_fil>0&&!((e.hm_filE||0)>SIMT))e.hm_fil=0;if(e.hm_glu>0)e.hm_glu=Math.max(0,(e.hm_gluE||0)-SIMT)}}
-AFTER.push(()=>{const A=auxUpdate;auxUpdate=function(dt){A(dt);hm_tick()};UK.push('hm_fil','hm_glu','hm_bow','hm_arm');Object.assign(VP,{silk:[HMC.silk,HMC.vio,HMC.gold]})});
+AFTER.push(()=>{const A=auxUpdate;auxUpdate=function(dt){A(dt);hm_tick()};
+ // relance de l'Arc d'or pendant qu'on bande : on tire sans repasser par l'annonce d'ultime (pas de 2e cut-in, de cri ni de nom affiché)
+ const F=fire;fire=function(u,ab,a,td,ex){if(ab&&ab.key==='hm_arc'&&u.hm_bw){if(u.human||u.hm_bw.t>=1.1){const C=CUR;CUR=u;hm_loose(u);CUR=C}else u.cds[u.hm_bw.i]=.3;return}return F(u,ab,a,td,ex)};UK.push('hm_fil','hm_glu','hm_bow','hm_arm');Object.assign(VP,{silk:[HMC.silk,HMC.vio,HMC.gold]})});
 const hm_free=e=>e.unstop<=0&&!(e.slowImm>0)&&!e.dead; // un ninja qu'on peut freiner
 // toile au sol (Toile collante, Filin, Araignée géante) : n = graine de la forme
 function hm_web(u,x,y,r,t){aux.push({type:'hm_web',x,y,r,t,m:t,team:u.team,owner:u,ui:hm_I(u),n:(rnd()*6.28*100|0)/100,k:0,in:new Map(),done:new Set(),danger:1})}
@@ -7327,7 +7329,7 @@ Object.assign(NAT,{
  hm_etreinte:SP('Étreinte de soie',HMD.etreinte,12,{hero:'kylo',tele:{r:80,max:420},ai:RG(400,.55)},(u,a,td)=>{const e=pick(u,a,td||300,420),p=e&&dist(u,e)<460?{x:e.x,y:e.y}:atP(u,a,td,420);
   S('shadow',u);anim(u,'hm_pull',.85);aux.push({type:'hm_strg',x:p.x,y:p.y,r:80,t:.6,m:.6,team:u.team,owner:u,ui:hm_I(u),k:0,danger:1});jx({jfx:'hm_cast',ui:hm_I(u),x:u.x,y:u.y,a:Math.atan2(p.y-u.y,p.x-u.x),len:Math.hypot(p.x-u.x,p.y-u.y),t:.6,m:.6})}),
  // Filin : le fil s'accroche au point visé et arrache le ninja ; une petite toile reste au départ
- hm_filin:SP('Filin d\'araignée',HMD.filin,9,{hero:'boba',ai:{mode:'gap',min:160,max:340,p:.45}},(u,a,td)=>{const d=clamp(td||280,100,300),p=fwd(u,a,d),sx=u.x,sy=u.y;S('dash',u);S('blaster',u);anim(u,'hm_swing',.42);
+ hm_filin:SP('Filin d\'araignée',HMD.filin,8,{hero:'boba',ai:{mode:'esc',max:190,p:.5}},(u,a,td)=>{const d=clamp(td||280,100,300),p=fwd(u,a,d),sx=u.x,sy=u.y;S('dash',u);S('blaster',u);anim(u,'hm_swing',.42);
   jx({jfx:'hm_zip',ui:hm_I(u),x:p.x,y:p.y,sx,sy,t:.45,m:.45});hm_web(u,sx,sy,70,3);dash(u,Math.atan2(p.y-u.y,p.x-u.x),Math.hypot(p.x-u.x,p.y-u.y),.3,{jump:46,end:()=>{sparks(u.x,u.y,HMC.silk,6)}})}),
  // Mue : la mue reste (piège), le ninja fuit invisible
  hm_mue:SP('Mue de l\'araignée',HMD.mue,15,{hero:'ahsoka',ai:ESC},(u,a,td)=>{const d=clamp(td||220,120,240);S('poof',u);S('dash',u);
@@ -7335,14 +7337,14 @@ Object.assign(NAT,{
   anim(u,'hm_crouch',.3);dash(u,a,d,.28,{jump:22,end:()=>{u.stealth=Math.max(u.stealth||0,1.5)}});u.stealth=Math.max(u.stealth||0,1.8)}),
  // Kuchiyose : araignée géante (chute, toile, crachats)
  hm_geante:ULT('Invocation : Araignée géante',HMD.geante,{hero:'iden',tele:{r:120,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);S('poof',u);S('roar',u);anim(u,'hm_summon',.7);
-  zone(u,p.x,p.y,120,34,.75,{stun:.7},HMC.pur);lastZ().deto='hm_quake';
-  aux.push({type:'hm_giant',x:p.x,y:p.y,a:Math.atan2(p.y-u.y,p.x-u.x),r:60,t:6.75,m:6.75,team:u.team,owner:u,ui:hm_I(u),n:4,k:1.65,ti:-1});
+  zone(u,p.x,p.y,120,30,.75,{stun:.7},HMC.pur);lastZ().deto='hm_quake';
+  aux.push({type:'hm_giant',x:p.x,y:p.y,a:Math.atan2(p.y-u.y,p.x-u.x),r:60,t:6.75,m:6.75,team:u.team,owner:u,ui:hm_I(u),n:3,k:1.65,ti:-1});
   later(u,.75,()=>{if(state==='fight')hm_web(u,p.x,p.y,130,6)})}),
  // Kumo Senkyû : bander l'arc d'or (relancer pour tirer), sinon la flèche part seule à pleine charge
- hm_arc:ULT('Arc d\'or : Kumo Senkyû',HMD.arc,{hero:'boba',line:{len:900,w:24},ai:RG(820,.8,160)},(u,a)=>{const i=u.ch.abil.findIndex(x=>x.key==='hm_arc');if(i<0)return;
-  if(u.hm_bw){if(!u.human&&u.hm_bw.t<1.1){u.cds[i]=.3;return} // les bots tirent à pleine charge
+ hm_arc:ULT('Arc d\'or : Kumo Senkyû',HMD.arc,{hero:'boba',line:{len:900,w:24},ai:RG(680,.8,160)},(u,a)=>{const i=u.ch.abil.findIndex(x=>x.key==='hm_arc');if(i<0)return;
+  if(u.hm_bw){if(!u.human&&u.hm_bw.t<1.1){u.cds[i]=.3;return} // les bots tirent à pleine charge (relance normalement interceptée par fire, voir AFTER)
    hm_loose(u);return}
-  u.hm_bw={t:0,i,cd:u.ch.abil[i].cd};u.jst={key:'hm_arc',i,n:0,t:2.5,cd:u.ch.abil[i].cd,v:'silk'};u.cds[i]=.3;u.hm_bow=.01;anim(u,'hm_draw',1.6);S('deflect',u);
+  u.hm_bw={t:0,i,cd:u.ch.abil[i].cd};u.jst={key:'hm_arc',i,n:0,t:2.5,cd:u.ch.abil[i].cd,v:'silk'};u.cds[i]=u.human?.3:1.3;u.hm_bow=.01;anim(u,'hm_draw',1.6);S('deflect',u);
   jx({jfx:'hm_forge',ui:hm_I(u),x:u.x,y:u.y,t:.45,m:.45})}),
  // ---------- styles ----------
  // Soie dorée : kunai d'or ; le 5e lancer tire un fil (ralentit, 1 fil)
@@ -7362,7 +7364,7 @@ Object.assign(NATHERO,{hm:'kylo'});
 // tir de l'arc : la puissance suit le temps passé à bander
 function hm_loose(u){const bw=u.hm_bw;if(!bw)return;const c=clamp((bw.t-.1)/1.1,0,1),a=u.aim,full=c>=.6;u.hm_bw=null;u.hm_bow=0;if(u.jst&&u.jst.key==='hm_arc')u.jst=null;u.cds[bw.i]=bw.cd;
  const V=VFX;VFX='silk';S('blaster',u);S('wind',u);anim(u,'hm_loose',.4);
- proj(u,a,{spd:1150,r:7+c*4,dmg:32+30*c,life:(600+420*c)/1150,col:HMC.gold,kind:'hm_arrow',steer:1,pierce:full?1:0,noClash:full?1:0,o:{kb:60+100*c},
+ proj(u,a,{spd:1150,r:8+c*5,dmg:34+30*c,life:(600+420*c)/1150,col:HMC.gold,kind:'hm_arrow',vfx:'silk',jn:'Arc d\'or : Kumo Senkyû',steer:1,pierce:full?1:0,noClash:full?1:0,o:{kb:60+100*c},
   onHit:(p,t)=>{hm_fil(p.owner,t,c>=.99?2:1);jx({jfx:'hm_pierce',x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.45,m:.45,big:full?1:0});if(near(t.x,t.y)){sparks(t.x,t.y,HMC.gold,full?12:6);S('bone',t)}}});
  jx({jfx:'hm_snap',ui:hm_I(u),x:u.x,y:u.y,a,t:.35,m:.35,big:full?1:0});if(full&&near(u.x,u.y))shake=Math.max(shake,.15);VFX=V;if(c>=.99)say(u,'PLEINE CHARGE','#ffe08a')}
 
@@ -7399,15 +7401,17 @@ AUXF.hm_husk=x=>{const o=x.owner;if(!o||x.done)return;if(x.t<=0){jx({jfx:'hm_she
  let tr=false;for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r){tr=true;break}if(!tr)return;x.done=1;x.t=Math.min(x.t,.05);
  VFX='silk';for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<90+e.r&&hit(e,o,10,{root:.7,unblockable:1})){hm_fil(o,e,1);jx({jfx:'hm_wrap',ti:hm_I(e),x:e.x,y:e.y,t:.7,m:.7})}VFX=null;
  jx({jfx:'hm_burst',x:x.x,y:x.y,r:90,t:.55,m:.55});if(near(x.x,x.y)){S('bugs',o);S('bone',o)}};
-// araignée géante : après la chute, crache 4 fois de la soie sur l'ennemi le plus proche
+// araignée géante : après la chute, crache 3 fois de la soie sur l'ennemi le plus proche
 AUXF.hm_giant=(x,dt)=>{const o=x.owner;if(!o||o.dead||state!=='fight'){x.t=Math.min(x.t,.3);return}const e=nearE(o,x.x,x.y,460);x.ti=e?hm_I(e):-1;
  if(e){const b=Math.atan2(e.y-x.y,e.x-x.x);let df=b-x.a;while(df>Math.PI)df-=2*Math.PI;while(df<-Math.PI)df+=2*Math.PI;x.a+=clamp(df,-3*dt,3*dt)}
  if(x.k>0||x.n<=0||x.t<.3)return;if(!e){x.k=.3;return}x.k=1.25;x.n--;const a=Math.atan2(e.y-x.y,e.x-x.x),V=VFX;VFX='silk';
- proj(o,a,{x:x.x+Math.cos(a)*40,y:x.y+Math.sin(a)*40,spd:640,r:10,dmg:7,life:.7,col:HMC.silk,kind:'hm_spit',slow:.8,noClash:1,onHit:(p,t)=>{hm_fil(p.owner,t,1);jx({jfx:'hm_wrap',ti:hm_I(t),x:t.x,y:t.y,t:.45,m:.45,low:1})}});
+ // la bouche est à 40 px du centre ; une cible sous l'araignée est crachée à bout portant (sinon le crachat partirait derrière elle)
+ const m0=Math.max(0,Math.min(40,Math.hypot(e.x-x.x,e.y-x.y)-e.r-14));
+ proj(o,a,{x:x.x+Math.cos(a)*m0,y:x.y+Math.sin(a)*m0,jn:'Invocation : Araignée géante',spd:640,r:10,dmg:7,life:.7,col:HMC.silk,kind:'hm_spit',slow:.8,noClash:1,onHit:(p,t)=>{hm_fil(p.owner,t,1);jx({jfx:'hm_wrap',ti:hm_I(t),x:t.x,y:t.y,t:.45,m:.45,low:1})}});
  VFX=V;jx({jfx:'hm_gspit',x:x.x,y:x.y,a,t:.3,m:.3});S('bugs',o)};
 
 // ---------- trait de clan : Soie d'araignée ----------
-TRAITS[13]={nom:'Soie d\'araignée',desc:'Tes jutsu posent des fils sur l\'ennemi (5 s). Au 4e fil, il est englué : entravé 0,7 s, puis il subit +20 % de dégâts des Hakumei pendant 3 s (ensuite, 4 s sans fils). Des pattes d\'araignée sortent de ton dos',
+TRAITS[13]={nom:'Soie d\'araignée',desc:'Tes jutsu posent des fils sur l\'ennemi (5 s). Au 4e fil, il est englué : entravé 0,7 s et il subit +20 % de dégâts des Hakumei pendant 3 s ; aucun fil ne prend sur lui pendant 4 s. Des pattes d\'araignée sortent de ton dos',
  init(u){u.hm_cd0=u.cds},
  update(u,dt){if(u.hm_cd0!==u.cds){u.hm_cd0=u.cds;u.hm_bw=null;u.hm_bow=0;u.hm_armE=0;u.hm_arm=0} // nouveau ninja ou réapparition
   if(u.hm_arm>0)u.hm_arm=Math.max(0,(u.hm_armE||0)-SIMT);
@@ -7493,7 +7497,7 @@ PROJD.hm_gk=(p,R,ra)=>{g.rotate(ra);g.strokeStyle='rgba(255,230,150,.35)';g.line
  g.fillStyle=HMC.gold2;g.fillRect(-11,-1.2,7,2.4);g.strokeStyle=HMC.gold;g.beginPath();g.arc(-13,0,2.2,0,7);g.stroke()};
 PROJD.hm_gkt=(p,R,ra,t)=>{const sp=Math.hypot(p.vx,p.vy)||1,L=Math.min(160,((p.life0||1)-p.life)*sp);g.save();g.rotate(ra);g.strokeStyle=rgba(HMC.silk,.85);g.lineWidth=1.2;g.beginPath();g.moveTo(-13,0);for(let i=1;i<=5;i++)g.lineTo(-13-L*i/5,Math.sin(t/35+i*2)*2*(i/5));g.stroke();g.restore();PROJD.hm_gk(p,R,ra,t)};
 // flèche d'or : longue hampe, pointe en tête d'araignée, sillage doré et fil de guidage
-PROJD.hm_arrow=(p,R,ra,t)=>{const c=clamp((R-7)/4,0,1),sp=Math.hypot(p.vx,p.vy)||1,L=Math.min(220,((p.life0||1)-p.life)*sp);g.rotate(ra);g.lineCap='round';
+PROJD.hm_arrow=(p,R,ra,t)=>{const c=clamp((R-8)/5,0,1),sp=Math.hypot(p.vx,p.vy)||1,L=Math.min(220,((p.life0||1)-p.life)*sp);g.rotate(ra);g.lineCap='round';
  g.strokeStyle=rgba(HMC.silk,.55);g.lineWidth=1;g.beginPath();g.moveTo(-30,0);for(let i=1;i<=8;i++)g.lineTo(-30-L*i/8,Math.sin(t/30+i*1.3)*3*(i/8));g.stroke();
  g.save();g.globalCompositeOperation='lighter';const gr=g.createLinearGradient(-90-60*c,0,10,0);gr.addColorStop(0,'rgba(240,192,64,0)');gr.addColorStop(1,rgba('#ffd860',.55+.3*c));g.fillStyle=gr;g.beginPath();g.moveTo(10,-(4+5*c));g.lineTo(-90-60*c,0);g.lineTo(10,4+5*c);g.closePath();g.fill();g.restore();
  g.strokeStyle='#5a3a08';g.lineWidth=4.2;g.beginPath();g.moveTo(-30,0);g.lineTo(14,0);g.stroke();g.strokeStyle=HMC.gold;g.lineWidth=2.6;g.stroke();
@@ -7559,7 +7563,7 @@ AUXD.hm_giant=(x,k,t)=>{const el=x.m-x.t,D=.75,fall=el<D?1-el/D:0,z=fall*fall*42
 STATD.push((u,p,S,sk)=>{const n=Math.floor(u.hm_fil||0),gl=u.hm_glu||0;if(!n&&!(gl>0))return;const t=performance.now()/1000,s=S*sk;g.save();g.lineCap='round';
  for(let i=0;i<n;i++){const a=i*1.57+.6,bx=p.x+Math.cos(a)*24*S,by=p.y+Math.sin(a)*9*S,hx=p.x+Math.cos(a)*5*s,hy=p.y-(20+i*7)*s+Math.sin(t*3+i)*1.2;
   hm_strand(hx,hy,bx,by,-4*S,HMC.vio,3,.35);hm_strand(hx,hy,bx,by,-4*S,HMC.silk,1.2,.9);g.fillStyle=HMC.silk;g.beginPath();g.arc(bx,by,1.8*S,0,7);g.fill()}
- if(gl>0){const f=gl>HM_GLU-.7?1:.45,cy=p.y-30*s;g.strokeStyle=rgba(HMC.silk,.85*f);g.lineWidth=1.6;for(let i=0;i<7;i++){const y=cy+(i-3)*7*s,w=16*s*Math.sqrt(1-((i-3)/4.2)**2);g.beginPath();g.ellipse(p.x,y,w,3.2*s,.18*(i%2?1:-1),0,7);g.stroke()}
+ if(gl>0){const f=gl>HM_GLU-.7?1:.6,cy=p.y-30*s;g.fillStyle=rgba(HMC.silk,.16*f);g.beginPath();g.ellipse(p.x,cy,17*s,29*s,0,0,7);g.fill();g.strokeStyle=rgba(HMC.silk,.85*f);g.lineWidth=1.6;for(let i=0;i<7;i++){const y=cy+(i-3)*7*s,w=16*s*Math.sqrt(1-((i-3)/4.2)**2);g.beginPath();g.ellipse(p.x,y,w,3.2*s,.18*(i%2?1:-1),0,7);g.stroke()}
   g.strokeStyle=rgba(HMC.vio,.5*f);g.lineWidth=1;g.beginPath();g.ellipse(p.x,cy,18*s,30*s,0,0,7);g.stroke();g.fillStyle=rgba('#ffffff',.8*f);for(let i=0;i<3;i++)g.fillRect(p.x+Math.sin(t*2+i*2)*12*s,cy-(i-1)*14*s,1.8,1.8)}
  g.restore()});
 // armure d'or : plaques dorées autour du corps
