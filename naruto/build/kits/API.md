@@ -22,7 +22,7 @@ KIT('n0',[ // catégorie : 'u' subjutsu, 'n0'…'n4' natures, 'c0'…'c10' clans
 ```
 - **Emplacement** : `1` = jutsu (va dans Clic D, Q ou E), `2` = déplacement (Espace), `5` = ultime (T). (3 et 4 = jutsu aussi.)
 - **Rang** D C B A S = 1 à 5 points (budget 17 par kit, 19 sans clan). Le rang fixe les **mudras** (D 2 … S 6, sauf subjutsu et déplacements)
-  et le **coût en chakra** (D 8, C 12, B 16, A 22, S 30, ultime +12). Les ultimes ont 22 s de recharge.
+  et le **coût en chakra** (D 10, C 16, B 21, A 28, S 36, ultime +14 : une jauge pleine ≈ 5 jutsu). Les ultimes ont 22 s de recharge.
 - **Mécanique** : `'x.cle'` = `NAT.cle` (toujours préférer des mécaniques sur mesure). Les anciennes sources `perso.n` (moteur Star Wars) sont à remplacer.
 - **Élément visuel** (`vfx`) : couleur/style des effets génériques et du son (`fire water wind lightning earth sand shadow bugs bone tag smoke genjutsu jyuken black fox heal leaf gate chain kunai shuriken senbon steel tai flower mind seal chidori kirin rasengan rasenshuriken hiraishin sandcoffin tsukuyomi susano gatsuga peacock sage byakugan kaiten hakke64 claws chakra`).
 - Statistiques : chaque mécanique a un personnage de référence (PV/vitesse/puissance du ninja). Par défaut celui du préfixe (`NATHERO.ka='boba'`, déjà réglé).
@@ -59,7 +59,7 @@ Object.assign(NAT,{
 - `u.flame={t,k:0,R,arc,d,kb,still,v,dot}` (souffle canalisé), `u.spin={t,k:0,r,dmg,pull}` (toupie).
 - `hit(cible,src,dmg,o)` — options : `stun root slow silence fear taunt disarm vuln air (projeté) kb pull fx fy (centre) dot:{dps,dur} exec unblockable melee silent reveal el` (élément forcé 0-4).
 - Effets sur le ninja (secondes) : `haste rage(+35 % dégâts) unstop(insensible au contrôle) drT+dr(réduction) giant lsB(vol de vie) regenB dodge counter deflect absorb thorns riposte stealth phase(intangible) slowImm`
-  + `markB={t,dmg,src}` (marque qui explose), `stick`, `energy` (chakra 0-100), `stam`, `cds[]`, `kx,ky` (élan).
+  + `markB={t,dmg,src}` (marque qui explose), `stick`, `energy` (chakra 0-100 : rare, se recharge surtout avec R, voir `CK` dans `nr_pace.js` ; `exh` = épuisé), `stam`, `cds[]`, `kx,ky` (élan).
 
 ## Éléments (automatique d'après le `vfx`, ou `o.el`)
 Katon bat Fûton, Fûton bat Raiton, Raiton bat Doton, Doton bat Suiton, Suiton bat Katon (×1,15 / ×0,9 selon la nature de la cible).
@@ -94,7 +94,8 @@ Champs synchronisés : projectiles (`kind` et les clés de base), objets `aux` (
 Pour synchroniser un nouveau champ de ninja : `AFTER.push(()=>UK.push('ka_monChamp'))`. Les effets créés avec `jx`/`fx`/`sparks` côté hôte sont envoyés aux invités.
 
 ## Équilibre (repères)
-PV des ninjas ≈ 250-350 ; coup de base ≈ 10-15. Par rang (recharge entre parenthèses) :
+PV des ninjas ≈ 250-350 avant le multiplicateur commun `HPK` (×1,4, ambiance NRP : combats plus longs) ; coup de base ≈ 10-15.
+Le chakra ne revient plus en frappant : un jutsu qui **vole ou brûle du chakra** pèse donc lourd (il peut pousser la cible à l'épuisement). Par rang (recharge entre parenthèses) :
 D (4-8 s) ≈ 10-18 dégâts ou petite utilité · C (6-10 s) ≈ 16-26 ou contrôle modéré (étourdir ≤ 0,6 s, entraver ≤ 1,2 s) ·
 B (8-12 s) ≈ 22-34 ou contrôle fort (≤ 1 s) / bonne défense · A (10-14 s) ≈ 30-45 + effet · S (ultime, 22 s) ≈ 45-70 ou effet décisif.
 Tout contrôle doit être **lisible** (télégraphe, projectile visible, délai) et **contrable** (esquivable, bloquable, interrompable).

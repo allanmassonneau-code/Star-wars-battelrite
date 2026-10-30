@@ -1,8 +1,8 @@
 // ---------- Rythme Naruto : chakra, mudras, combo, endurance ----------
 const GSPEED=.8; // tout le jeu tourne à 80 % : combats plus lisibles
-const CKCOST={D:8,C:12,B:16,A:22,S:30},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
-// coût en chakra d'un jutsu (les ultimes coûtent 12 de plus)
-const jcost=ab=>ab&&ab.rank?CKCOST[ab.rank]+(ab.ult?12:0):0;
+const CKCOST={D:10,C:16,B:21,A:28,S:36},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
+// coût en chakra d'un jutsu (les ultimes coûtent 14 de plus) : une jauge pleine = 5 jutsu environ
+const jcost=ab=>ab&&ab.rank?CKCOST[ab.rank]+(ab.ult?14:0):0;
 let COMBO3=false; // vrai pendant le 5e coup du combo corps à corps (petit étourdissement)
 // corps à corps : combo de 5 coups (20 d'endurance chacun = un combo complet) ; distance : 10 d'endurance par tir, sans combo
 const MELEEK=new Set(['fist','bigfist','palm','claws','bone','sword']);
@@ -25,8 +25,8 @@ function drawFlowN(u,p,S,sk){const t=performance.now()/1000,col=u.ch.look.weapon
 
 // ---------- Fluidité : accélération, mémoire des touches, caméra ----------
 const ACCEL=30; // le ninja prend et perd sa vitesse en un éclair, sans à-coups
-// déplacement plus vif (le jeu reste à 80 %) et sprint (Maj maintenue) : plus rapide, consomme l'endurance
-const SPD_K=1.12,SPRINT_K=1.45,SPRINT_COST=22,RUN_REGEN=26;
+// déplacement posé (ambiance NRP : course 10 % plus lente qu'avant) et sprint (Maj maintenue) : plus rapide, consomme l'endurance
+const SPD_K=1,SPRINT_K=1.45,SPRINT_COST=22,RUN_REGEN=26;
 // mémoire des touches : un jutsu demandé pendant un coup, une incantation ou une fin de recharge part dès que possible
 function tryUse(u,i,td,ex){if(use(u,i,td,undefined,ex)){u.buf=null;return true}const ab=u.ch.abil[i];
  if(ab&&u.energy>=jcost(ab)&&!(u.silence>0)&&(u.cast||u.dash||u.swing>0||u.spin||u.stun>0&&u.stun<.25||(u.cds[i]>0&&u.cds[i]<.35)))u.buf={i,t:.35,ex};return false}

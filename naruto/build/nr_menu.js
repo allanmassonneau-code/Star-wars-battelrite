@@ -73,6 +73,8 @@ function drawMenu(){
   tfit(ab.d||'',R.x+160,R.y+36,12,'#e8cfa8',590);if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+160,R.y+51,11,'#d8c060',590)}
  {const R=passRow,ps=PASS[ch.pass],h=inRect(mouse,R)&&picker===null;g.fillStyle=h?'rgba(70,46,24,.95)':'rgba(20,14,10,.85)';g.strokeStyle='#3a6a3a';g.lineWidth=1;g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,10);g.fill();g.stroke();
   text('◀',R.x+16,R.y+26,15,'#9f9');text('▶',R.x+R.w-20,R.y+26,15,'#9f9');text('Passif',R.x+40,R.y+25,13,'#9f9','left');tfit(`${ps[0]} : ${ps[1]}`,R.x+160,R.y+25,13,'#cfe8c0',590,'bold')}
+ // sort commun à tous les ninjas : soin (H)
+ tfit(`${lbl.KeyH} · Soin (tous les ninjas) : l'allié visé (ou toi) récupère 25 % de ses PV + 8 % en 2 s · 0,3 s · ${HLS.cd} s de recharge · sans chakra`,passRow.x+40,passRow.y+passRow.h+16,11,'#9fdfaa',770,'normal');
  btn(rndBuildBtn,'🎲 Kit aléatoire',false);btn(presetBtn,'📜 Modèle suivant',false);if(presetI>=0)text('Modèle : '+PRESETS[presetI][0],presetBtn.x,presetBtn.y+50,12,'#ffd38a','left');
  {const BUD=budgetOf(MY),c=kitCost(MY),over=c>BUD,x=628,y=604;text('Points du kit',x,y+2,12,'#b89a70','left','normal');for(let i=0;i<BUD;i++){g.fillStyle=i<c?(over?'#ff5a4a':'#ffb347'):'rgba(255,255,255,.12)';g.fillRect(x+i*13,y+8,11,10)}
   if(c>BUD)for(let i=BUD;i<c;i++){g.fillStyle='#ff5a4a';g.fillRect(x+i*13,y+8,11,10)}
@@ -89,6 +91,6 @@ function drawMenu(){
    tfit(`${ab.n} · ${ab.cd}s${picker?` · ${ab.mud?ab.mud+' mudras':'sans mudra'} · ${jcost(ab)} chakra`:''}`,R.x+62,R.y+20,14,'#ffd38a',R.w-150,'bold');
    tfit2(ab.d||'',R.x+12,R.y+(R.h>56?35:33),R.h>56?11.5:11,'#e8cfa8',R.w-24);if(used){g.fillStyle='rgba(10,6,4,.7)';g.fillRect(R.x,R.y,R.w,R.h);text('DÉJÀ DANS TON KIT',R.x+R.w/2,R.y+36,12,'#ffb347')}if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+12,R.y+52,11,'#d8c060',R.w-24)});
   text('Clique ailleurs pour fermer',W/2,710,12,'#b89a70','center','normal')}
- else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · ${lbl.KeyR} maintenu = chakra · Maj = sprint · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
+ else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · ${lbl.KeyR} maintenu = chakra · ${lbl.KeyH} soin · Maj = sprint · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
  drawCursor();
 }

@@ -74,8 +74,8 @@ const ARENA_OBST=[[-330,-190],[330,-190],[-330,190],[330,190],[-620,0],[620,0],[
 const stars=Array.from({length:180},()=>({x:Math.random()*W,y:Math.random()*H,s:Math.random()*1.6+.2}));
 const keys={},mouse={x:CX,y:CY,l:0};let pressed={};
 const SLOTS=['lmb','rmb','Space','KeyQ','KeyE','KeyT'];
-const lbl={lmb:'Clic G',rmb:'Clic D',Space:'Espace',KeyQ:'Q',KeyE:'E',KeyR:'R',KeyT:'T',KeyW:'W',KeyA:'A',KeyS:'S',KeyD:'D',KeyM:'M',KeyF:'F'};
-try{navigator.keyboard&&navigator.keyboard.getLayoutMap().then(m=>{for(const c of['KeyQ','KeyE','KeyR','KeyT','KeyW','KeyA','KeyS','KeyD','KeyM','KeyF'])if(m.get(c))lbl[c]=m.get(c).toUpperCase()}).catch(()=>{})}catch(e){}
+const lbl={lmb:'Clic G',rmb:'Clic D',Space:'Espace',KeyQ:'Q',KeyE:'E',KeyR:'R',KeyT:'T',KeyH:'H',KeyW:'W',KeyA:'A',KeyS:'S',KeyD:'D',KeyM:'M',KeyF:'F'};
+try{navigator.keyboard&&navigator.keyboard.getLayoutMap().then(m=>{for(const c of['KeyQ','KeyE','KeyR','KeyT','KeyH','KeyW','KeyA','KeyS','KeyD','KeyM','KeyF'])if(m.get(c))lbl[c]=m.get(c).toUpperCase()}).catch(()=>{})}catch(e){}
 const wake=()=>{const a=ac();if(a&&a.state==='suspended')a.resume()};
 addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;wake();if(!keys[e.code])pressed[e.code]=1;keys[e.code]=1;if(e.code==='Space'||e.code==='Tab'||e.code.startsWith('Arrow'))e.preventDefault();if(e.code==='KeyM'){muted=!muted;syncOpt()}if(e.code==='KeyO')toggleOpt()});
 addEventListener('keyup',e=>{keys[e.code]=0});
@@ -550,9 +550,9 @@ const styleOk=(s,clan)=>STYLES[s][5].includes(clan);
 // catégorie : 'u' Subjutsu (sans clan), 'n0'..'n4' nature, 'c0'..'c10' clan
 // ---------- Rythme Naruto : chakra, mudras, combo, endurance ----------
 const GSPEED=.8; // tout le jeu tourne à 80 % : combats plus lisibles
-const CKCOST={D:8,C:12,B:16,A:22,S:30},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
-// coût en chakra d'un jutsu (les ultimes coûtent 12 de plus)
-const jcost=ab=>ab&&ab.rank?CKCOST[ab.rank]+(ab.ult?12:0):0;
+const CKCOST={D:10,C:16,B:21,A:28,S:36},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
+// coût en chakra d'un jutsu (les ultimes coûtent 14 de plus) : une jauge pleine = 5 jutsu environ
+const jcost=ab=>ab&&ab.rank?CKCOST[ab.rank]+(ab.ult?14:0):0;
 let COMBO3=false; // vrai pendant le 5e coup du combo corps à corps (petit étourdissement)
 // corps à corps : combo de 5 coups (20 d'endurance chacun = un combo complet) ; distance : 10 d'endurance par tir, sans combo
 const MELEEK=new Set(['fist','bigfist','palm','claws','bone','sword']);
@@ -575,8 +575,8 @@ function drawFlowN(u,p,S,sk){const t=performance.now()/1000,col=u.ch.look.weapon
 
 // ---------- Fluidité : accélération, mémoire des touches, caméra ----------
 const ACCEL=30; // le ninja prend et perd sa vitesse en un éclair, sans à-coups
-// déplacement plus vif (le jeu reste à 80 %) et sprint (Maj maintenue) : plus rapide, consomme l'endurance
-const SPD_K=1.12,SPRINT_K=1.45,SPRINT_COST=22,RUN_REGEN=26;
+// déplacement posé (ambiance NRP : course 10 % plus lente qu'avant) et sprint (Maj maintenue) : plus rapide, consomme l'endurance
+const SPD_K=1,SPRINT_K=1.45,SPRINT_COST=22,RUN_REGEN=26;
 // mémoire des touches : un jutsu demandé pendant un coup, une incantation ou une fin de recharge part dès que possible
 function tryUse(u,i,td,ex){if(use(u,i,td,undefined,ex)){u.buf=null;return true}const ab=u.ch.abil[i];
  if(ab&&u.energy>=jcost(ab)&&!(u.silence>0)&&(u.cast||u.dash||u.swing>0||u.spin||u.stun>0&&u.stun<.25||(u.cds[i]>0&&u.cds[i]<.35)))u.buf={i,t:.35,ex};return false}
@@ -713,6 +713,104 @@ AFTER.push(()=>UK.push('run'));
 STATD.push((u,p,S)=>{if(u!==player||u.run==null||u.run>=99.5)return;g.save();g.lineWidth=3*S;g.strokeStyle='rgba(0,0,0,.45)';g.beginPath();g.ellipse(p.x,p.y+4*S,20*S,7*S,0,.3,Math.PI-.3);g.stroke();g.strokeStyle=u.sprintLock?'#ff7a5a':'#9ef0ff';g.beginPath();g.ellipse(p.x,p.y+4*S,20*S,7*S,0,Math.PI-.3-(Math.PI-.6)*u.run/100,Math.PI-.3);g.stroke();g.restore()});
 // parade parfaite : bras avant levé puis fouetté vers l'extérieur
 AFTER.push(()=>{ANIM.parry=(P,e)=>{const k=e<.4?e/.4:1-(e-.4)/.6;pz(P,'armR',-1.5*k,0,-.6*k+(e>.4?.9*(e-.4):0));pz(P,'foreR',-.9*k);pz(P,'armL',-.5*k,0,.5*k);pz(P,'chest',.2*k,-.35*k);P.root.z=-3*k}});
+
+// ---------- Ambiance NRP : combats plus longs et posés, chakra qui compte, soin commun à tous (H) ----------
+// PV ×1,4 pour tous (dans mkNinja, sans toucher l'équilibre entre les kits) : avec le chakra rare, la course plus lente et la mort subite
+// repoussée, un duel IA contre IA dure ~58 s (médiane) au lieu de ~24 s ; le soin (H) l'allonge encore (~77 s)
+const HPK=1.4;
+// chakra : une jauge pleine = 5 jutsu environ ; presque pas de régénération en combat ; R (maintenu) est LA façon de se recharger,
+// mais on est immobile, on prend +20 % de dégâts et un coup franc brise la concentration ; à sec, le ninja est épuisé
+const CK={spawn:100, // chakra au début d'une manche / à la réapparition
+ regen:.8,regenOut:4,outT:5, // régénération passive par seconde : en combat / hors combat (aucun coup donné ni reçu depuis outT s)
+ rate0:16,rate1:38,ramp:1.4, // recharge (R) : 16/s au début, monte à 38/s en 1,4 s de concentration
+ vuln:1.2,brk:6,lock:.7, // en recharge : dégâts ×1,2 ; un coup de 6+ brise la concentration (pas de recharge pendant 0,7 s)
+ exhIn:6,exhOut:25,exhSpd:.82,exhStam:.55,exhBlock:1.6, // épuisement : sous 6 de chakra (jusqu'à 25) : vitesse ×0,82, endurance ×0,55, garde ×1,6, pas de sprint
+ aiLo:26,aiLoR:18,aiSafe:390,aiStop:250}; // IA : recharge sous 26-44 si aucun ennemi à moins de 390 (s'arrête s'il approche à 250)
+const ckPm=u=>u.ch.pass==='energy'?1.5:1; // passif « Contrôle du chakra »
+// au contact : marque le combat, brise la concentration (R) d'un ninja qui se recharge
+function ckHit(t,src,dmg,o){t.cbT=SIMT;if(src&&src!==t)src.cbT=SIMT;
+ if(t.chk&&dmg>=CK.brk&&src&&src.team!==t.team){t.chk=false;t.chkT=0;t.ckLock=CK.lock;if(near(t.x,t.y)){say(t,'CONCENTRATION BRISÉE','#8fd0ff');sparks(t.x,t.y,'#8fd0ff',10)}}}
+// chaque image : recharge (R), régénération passive, épuisement
+function ckTick(u,dt){if(u.dead)return;const pm=ckPm(u);if(u.ckLock>0)u.ckLock-=dt;
+ if(u.chk){u.chkT=(u.chkT||0)+dt;const r=CK.rate0+(CK.rate1-CK.rate0)*Math.min(1,u.chkT/CK.ramp);u.energy=Math.min(100,u.energy+r*pm*dt)}else u.chkT=0;
+ const oc=u.cbT==null||SIMT-u.cbT>CK.outT;u.energy=Math.min(100,u.energy+(oc?CK.regenOut:CK.regen)*pm*dt);
+ if(!u.exh&&u.energy<CK.exhIn){u.exh=1;if(near(u.x,u.y)){say(u,'ÉPUISÉ','#8aa0c8');sparks(u.x,u.y,'#8aa0c8',8)}}else if(u.exh&&u.energy>=CK.exhOut)u.exh=0}
+// « pas assez de chakra » : message (limité) et éclat de la case sur la barre de jutsu
+function ckLack(u,i){if(u.ckMsg>SIMT)return;u.ckMsg=SIMT+.7;if(u===player||u.human)say(u,'CHAKRA INSUFFISANT ('+lbl.KeyR+')','#4ab0ff');if(u===player){ckFl.i=i;ckFl.t=performance.now()+450}}
+const ckFl={i:-1,t:0};
+// IA : se recharger quand c'est sûr (personne autour, ou l'adversaire est neutralisé / se recharge aussi)
+function aiChk(u,dt){if(u.sub_sage>0)return false;const lo=u.aiCkLo||(u.aiCkLo=CK.aiLo+rnd()*CK.aiLoR),e=nearE(u,u.x,u.y,CK.aiSafe+250),d=e?dist(u,e):1e9,
+  busy=e&&(e.stun>.5||e.sleepT<0||e.chk||e.root>.8||e.dead);
+ if(u.chk)return u.energy<(u.aiCkTo||95)&&!(e&&d<(u.aiCkSt||CK.aiStop)&&!busy);
+ if(u.energy>=lo){u.aiLowT=0;return false}u.aiLowT=(u.aiLowT||0)+dt; // à sec depuis longtemps sans fenêtre sûre : prend le risque plus près
+ const safe=u.aiLowT>6?CK.aiStop-30:u.exh?CK.aiSafe-80:CK.aiSafe;
+ if(!e||d>safe||(busy&&d>150)){if(threat(u))return false;u.aiCkSt=Math.min(CK.aiStop,safe-50);u.aiCkTo=(u.aiLowT>6?55:72)+rnd()*28;u.aiLowT=0;return true}return false}
+// IA à court de chakra : prend ses distances pour pouvoir se recharger (sauf pour achever un adversaire)
+const aiLow=u=>u.energy<(u.aiCkLo||CK.aiLo)&&!(u.sub_sage>0);
+const aiPref=(u,e)=>aiLow(u)&&e.hp>e.max*.3?Math.max(u.ch.pref,CK.aiSafe+70):u.ch.pref;
+// IA : ne se met pas à sec sans raison (sauf pour fuir, se défendre ou achever) et garde de quoi lancer l'ultime quand il est presque prêt
+function aiSave(u,i,h){if(h.mode==='esc'||h.mode==='def'||h.mode==='heal')return false;const c=jcost(u.ch.abil[i]),e=u.tgt;
+ if(u.energy-c<CK.exhIn&&!(e&&!e.dead&&e.hp<e.max*.3))return true;const U=u.ch.abil[5];if(i===5||!U||u.cds[5]>3)return false;return u.energy-c<jcost(U)}
+// HUD : chiffre de chakra, avertissement d'épuisement
+function ckHud(p,x,y,w){const lo=p.energy<30,t=performance.now()/1000,cy=H-84;text(String(Math.floor(p.energy)),x+w+6,y+4,10,p.exh?'#ff8a8a':'#7fc4ff','left');if(p.dead)return;
+ if(p.exh){g.fillStyle=rgba('#ff4a4a',.25+.2*Math.sin(t*8));g.fillRect(x,y,w,5);text(`ÉPUISÉ : plus lent, endurance lente · ${lbl.KeyR} maintenu = chakra`,W/2,cy,13,'#ff9a9a','center')}
+ else if(p.chk)text(`Concentration du chakra… ${Math.floor(p.energy)} / 100`,W/2,cy,13,'#8fd0ff','center');
+ else if(lo)text(`Chakra bas · ${lbl.KeyR} maintenu = chakra (immobile, à l'abri)`,W/2,cy,12,rgba('#8fd0ff',.65+.35*Math.sin(t*6)),'center','normal')}
+// barre de jutsu : coût en chakra de chaque case, case grisée « CHAKRA » si la jauge ne suffit pas
+function hudCost(p,ab,i,x,y,s,sh){if(!i)return;const c=jcost(ab);if(!c)return;const lack=p.energy<c;
+ if(lack){g.fillStyle='rgba(20,40,110,.55)';g.fillRect(x,y,s,sh);if(p.cds[i]<=0)text('CHAKRA',x+s/2,y+44,10,'#7fb8ff','center')}
+ {const fl=(ckFl.t-performance.now())/450;if(ckFl.i===i&&fl>0){g.strokeStyle=rgba('#4ab0ff',fl);g.lineWidth=4;g.strokeRect(x-2,y-2,s+4,sh+4)}}
+ g.fillStyle=lack?'#5a1c1c':'#123a6a';g.beginPath();g.roundRect(x+3,y+3,26,13,4);g.fill();text(String(c),x+16,y+13,10,lack?'#ff8a8a':'#bfe4ff','center')}
+// état visible : épuisé (sueur, souffle court, teinte terne)
+STATD.push((u,p,S,sk)=>{if(!u.exh||u.dead)return;const t=performance.now()/1000;g.save();
+ {const gr=g.createRadialGradient(p.x,p.y,0,p.x,p.y,30*S);gr.addColorStop(0,'rgba(60,70,100,.35)');gr.addColorStop(1,'rgba(60,70,100,0)');g.fillStyle=gr;g.beginPath();g.ellipse(p.x,p.y,30*S,11*S,0,0,7);g.fill()}
+ for(let i=0;i<3;i++){const k=(t*1.3+i/3)%1,x=p.x+(i-1)*13*S,y=p.y-(84-k*26)*S*(sk||1);g.fillStyle=rgba('#d8ecff',.95*(1-k));g.strokeStyle=rgba('#2a3a5a',.8*(1-k));g.lineWidth=1.2;g.beginPath();g.moveTo(x,y-5*S);g.quadraticCurveTo(x+3.2*S,y+1*S,x,y+2.6*S);g.quadraticCurveTo(x-3.2*S,y+1*S,x,y-5*S);g.fill();g.stroke()}
+ {const k=(t*.9)%1,x=p.x+Math.cos(u.aim||0)*(10+k*14)*S,y=p.y-62*S*(sk||1)-k*8*S;g.fillStyle=rgba('#e8eef8',.45*(1-k));g.beginPath();g.arc(x,y,(3+k*5)*S,0,7);g.fill()}
+ g.strokeStyle=rgba('#8aa0c8',.5+.2*Math.sin(t*5));g.lineWidth=2*S;g.setLineDash([4*S,4*S]);g.beginPath();g.ellipse(p.x,p.y,22*S,8*S,0,0,7);g.stroke();g.setLineDash([]);g.restore()});
+
+// ---------- Soin (H) : sort commun à tous les ninjas (comme un sort d'invocateur) ----------
+// soigne l'allié le plus proche du curseur à moins de 600 (toi-même si tu te vises ou si personne n'est à portée) :
+// 25 % des PV max tout de suite + 8 % en 2 s ; 0,3 s d'incantation (un étourdissement l'interrompt), 60 s de recharge, sans chakra
+const HLS={on:true,cd:60,cast:.3,pct:.25,reg:.08,regT:2,range:600};
+function hlTarget(u,ax,ay){let b=u,bd=Math.hypot(ax-u.x,ay-u.y);for(const x of units)if(x!==u&&x.team===u.team&&!x.dead&&dist(u,x)<=HLS.range){const d=Math.hypot(ax-x.x,ay-x.y);if(d<bd){bd=d;b=x}}return b}
+const hlCan=u=>HLS.on&&state==='fight'&&!u.dead&&!(u.hlCd>0)&&!(u.hlC>0)&&u.stun<=0&&!u.dash&&!u.cast&&!u.chan&&!u.spin&&!u.flame&&!(u.sleepT<0);
+function hlTry(u,ax,ay){if(!hlCan(u))return false;const t=hlTarget(u,ax,ay);u.chk=false;u.hlC=HLS.cast;u.hlTg=t;u.aim=t===u?u.aim:ang(u,t);anim(u,'hl_heal',HLS.cast+.3);
+ jx({jfx:'hl_cast',ui:units.indexOf(u),x:u.x,y:u.y,t:HLS.cast+.05,m:HLS.cast+.05});if(near(u.x,u.y))S('ignite',u);return true}
+function hlFire(u){let t=u.hlTg;u.hlTg=null;if(!t||t.dead||t.team!==u.team||dist(u,t)>HLS.range+120)t=u;
+ const r=gain(t,t.max*HLS.pct/HEALX,u);t.hlR=HLS.regT;t.hlRv=t.max*HLS.reg/HLS.regT;u.hlCd=HLS.cd;u.hlN=(u.hlN||0)+1;
+ jx({jfx:'hl_heal',ui:units.indexOf(u),ti:units.indexOf(t),x:t.x,y:t.y,t:1.1,m:1.1});if(near(t.x,t.y)){say(t,'+'+Math.round(r)+' SOIN','#7dff9a');sparks(t.x,t.y,'#bfffd0',16);S('orb',t)}}
+function hlTick(u,dt,active){if(u.hlCd>0)u.hlCd=Math.max(0,u.hlCd-dt);if(u.dead){u.hlC=0;u.hlR=0;return}
+ if(u.hlR>0){u.hlR-=dt;gain(u,u.hlRv*dt/HEALX,u)}
+ if(u.hlC>0){if(u.stun>0||u.sleepT<0||!active){u.hlC=0;u.hlTg=null;u.hlCd=Math.max(u.hlCd,3);if(u.anim&&u.anim.k==='hl_heal')u.anim=null;if(near(u.x,u.y))say(u,'SOIN INTERROMPU','#fc6')}
+  else if((u.hlC-=dt)<=0){u.hlC=0;hlFire(u)}}}
+// joueur (local ou ami en ligne : la touche H voyage dans la liste des touches pressées) : mémorisée 0,35 s
+function hlInput(u,dt,I){if(I.p&&I.p.KeyH){if(u.hlCd>0&&(u===player||u.human)&&!(u.hlMsg>SIMT)){u.hlMsg=SIMT+.6;say(u,'SOIN : '+Math.ceil(u.hlCd)+' s','#9fdfaa')}else u.hlQ=.35}
+ if(u.hlQ>0){u.hlQ-=dt;if(hlTry(u,I.ax,I.ay))u.hlQ=0}}
+// IA : soigne un allié (ou soi) sous 35 % à portée, le plus mal en point d'abord
+function hlAI(u){if(!hlCan(u)||rnd()>.65)return false;let b=null,bk=.35;for(const x of units)if(x.team===u.team&&!x.dead&&(x===u||dist(u,x)<=HLS.range)){const k=x.hp/x.max;if(k<bk){bk=k;b=x}}
+ return b?hlTry(u,b.x,b.y):false}
+// HUD : case du soin à droite de la barre de jutsu (touche, recharge en cercle, incantation)
+function drawHealHud(p,x,y,sh){const s=60,rd=!(p.hlCd>0)&&HLS.on,cx=x+s/2,cy=y+sh/2-2;g.fillStyle='rgba(13,26,20,.92)';g.fillRect(x,y,s,sh);g.strokeStyle=rd?'#5fe08a':'#24402e';g.lineWidth=2;g.strokeRect(x,y,s,sh);
+ g.save();if(rd){g.shadowColor='#7dff9a';g.shadowBlur=10}g.fillStyle=rd?'#7dff9a':'#3d6a4a';g.fillRect(cx-4,cy-12,8,24);g.fillRect(cx-12,cy-4,24,8);g.fillStyle=rd?'#ffffff':'#6a8a72';g.fillRect(cx-2,cy-10,4,20);g.fillRect(cx-10,cy-2,20,4);g.restore();
+ if(p.hlCd>0){const k=Math.min(1,p.hlCd/HLS.cd);g.save();g.beginPath();g.rect(x,y,s,sh);g.clip();g.fillStyle='rgba(0,0,0,.62)';g.beginPath();g.moveTo(cx,cy);g.arc(cx,cy,48,-Math.PI/2,-Math.PI/2+k*Math.PI*2);g.closePath();g.fill();g.restore();text(String(Math.ceil(p.hlCd)),cx,cy+6,15,'#ffe81f')}
+ if(p.hlC>0){g.fillStyle='#bfffd0';g.fillRect(x,y+sh-4,s*(1-p.hlC/HLS.cast),4)}
+ text(lbl.KeyH||'H',x+6,y+14,12,rd?'#fff':'#889','left');text('Soin',x+s/2,y+sh+13,10,'#9fdfaa','center','normal')}
+// effets : lueur dans les mains pendant l'incantation, puis rayon du lanceur vers la cible et colonne verte et blanche
+JFXD.hl_cast=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x+Math.cos(u.aim)*14,u.y+Math.sin(u.aim)*14,40),s=q.s;g.globalCompositeOperation='lighter';
+ const R=(8+e*16)*s,gr=g.createRadialGradient(q.x,q.y,0,q.x,q.y,R);gr.addColorStop(0,'rgba(255,255,255,.95)');gr.addColorStop(.4,rgba('#7dff9a',.7));gr.addColorStop(1,rgba('#2fbf5a',0));g.fillStyle=gr;g.beginPath();g.arc(q.x,q.y,R,0,7);g.fill();
+ for(let i=0;i<6;i++){const a=i*1.047+t*5,r=(26-e*18)*s;g.fillStyle=rgba('#d8ffe0',.9);g.beginPath();g.arc(q.x+Math.cos(a)*r,q.y+Math.sin(a)*r*.7,1.8*s,0,7);g.fill()}
+ const b=P(u.x,u.y,0);g.strokeStyle=rgba('#7dff9a',.6*e);g.lineWidth=2*s;g.beginPath();g.ellipse(b.x,b.y,(18+e*14)*s,(7+e*5)*s,0,0,7);g.stroke()};
+JFXD.hl_heal=(f,k,e,t,u,tg)=>{const T=tg&&!tg.dead?tg:null,tx=T?T.x:f.x,ty=T?T.y:f.y,b=P(tx,ty,0),s=b.s;g.globalCompositeOperation='lighter';
+ if(u&&T&&u!==T&&e<.55){const a=P(u.x,u.y,42),c=P(tx,ty,42),al=Math.min(1,(.55-e)/.2);g.lineCap='round';g.strokeStyle=rgba('#7dff9a',.55*al);g.lineWidth=10*s;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(c.x,c.y);g.stroke();g.strokeStyle=rgba('#ffffff',.9*al);g.lineWidth=3*s;g.stroke();
+  for(let i=0;i<5;i++){const m=(e*2.2+i/5)%1;g.fillStyle=rgba('#ffffff',al);g.beginPath();g.arc(a.x+(c.x-a.x)*m,a.y+(c.y-a.y)*m,3*s,0,7);g.fill()}}
+ const H=120*s*Math.min(1,e*5),w=(26+8*Math.sin(t*9))*s*Math.min(1,k*2.2),gr=g.createLinearGradient(0,b.y-H,0,b.y);gr.addColorStop(0,'rgba(125,255,154,0)');gr.addColorStop(.6,rgba('#7dff9a',.35*k));gr.addColorStop(1,rgba('#ffffff',.6*k));
+ g.fillStyle=gr;g.beginPath();g.ellipse(b.x,b.y-H/2,w,H/2,0,0,7);g.fill();
+ for(let j=0;j<2;j++){const r=(16+e*46+j*14)*s;g.strokeStyle=rgba(j?'#ffffff':'#7dff9a',.85*k);g.lineWidth=(3-j)*s;g.beginPath();g.ellipse(b.x,b.y,r,r*.38,0,0,7);g.stroke()}
+ for(let i=0;i<7;i++){const m=(e*1.4+i/7)%1,x=b.x+Math.sin(i*2.7)*22*s,y=b.y-(14+m*96)*s,z=(4+(i%3))*s;g.fillStyle=rgba(i%2?'#ffffff':'#9dffb4',.9*(1-m)*Math.min(1,k*3));g.fillRect(x-z/2,y-z*1.5,z,z*3);g.fillRect(x-z*1.5,y-z/2,z*3,z)}};
+// geste 3D : main tendue vers la cible, l'autre forme un signe devant la poitrine, puis les bras s'ouvrent
+ANIM.hl_heal=(P,e)=>{const k=Math.min(1,e/.3),o=e>.65?(e-.65)/.35:0;pz(P,'armR',-1.5*k+.5*o,0,.1+.5*o);pz(P,'foreR',-.15);pz(P,'armL',-1.1*k,0,-.5*k);pz(P,'foreL',-1.7*k);pz(P,'chest',.12*k,-.25*k);pz(P,'head',.05);P.root.y=-1.5*k};
+// réseau : les amis voient la recharge du soin, l'incantation et l'épuisement
+AFTER.push(()=>UK.push('hlCd','hlC','exh'));
 
 // ===== Styles de combat (attaque de base, gratuite) =====
 // [nom, description, mécanique (x.clé = NAT[clé]), vfx, arme, clans autorisés (-1 = sans clan), modif. PV, modif. puissance]
@@ -6548,7 +6646,7 @@ const avail=(b,slot)=>JL.filter(j=>stype(j.slot)===stype(slot)&&((b.clan>=0?j.ca
 const kitCost=b=>b.j.slice(1).reduce((a,id)=>a+JL[id].cost,0);
 // passifs renommés
 Object.assign(PASS,{third:['Taijutsu',PASS.third[1]],crit:['Précision ninja',PASS.crit[1]],slow:['Fils de chakra',PASS.slow[1]],lifesteal:['Vol de chakra',PASS.lifesteal[1]],rage:['Volonté du feu',PASS.rage[1]],
- armor:['Corps endurci',PASS.armor[1]],regen:['Sang Uzumaki',PASS.regen[1]],speed:['Pieds légers',PASS.speed[1]],energy:['Contrôle du chakra','Récupère 50 % de chakra en plus']});
+ armor:['Corps endurci',PASS.armor[1]],regen:['Sang Uzumaki',PASS.regen[1]],speed:['Pieds légers',PASS.speed[1]],energy:['Contrôle du chakra','Recharge (R) et régénération du chakra +50 %']});
 const PASSK=Object.keys(PASS);
 // voies : modifient PV, vitesse et puissance
 const VOIES=[['Taijutsu',1.12,6,.95],['Équilibré',1,0,1],['Ninjutsu',.9,-4,1.08]];
@@ -6586,7 +6684,7 @@ function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=[styleAb(b.j[0])
  abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie],S=STYLES[b.j[0]];hp*=S[6];pw*=S[7];if(b.clan===TAIJ){hp*=1.05;sp+=4*W}
  {const cb=CLANBAL[b.clan]||[1,1],nb=b.clan===TAIJ?[1,1]:NATBAL[b.nat]||[1,1],sb=STYLEBAL[b.j[0]]||[1,1];hp*=cb[0]*nb[0]*sb[0];pw*=cb[1]*nb[1]*sb[1]} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
  const lign=b.clan>=0?'Clan '+CLANS[b.clan][0]:'Sans clan';
- return{name:b.name,side:b.side,desc:`${lign}${b.clan===TAIJ?'':' · '+NATURES[b.nat][0]} · voie ${v[0].toLowerCase()}`,hp:Math.round(hp/W*v[1]),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,clan:b.clan,nat:b.clan===TAIJ?-1:b.nat,pref:{fist:75,bigfist:85,palm:75,claws:75,bone:90,sword:90,shadow:170,chain:170}[S[4]]||320,taij:b.clan===TAIJ,pass:PASSK[b.pass],look:ninjaLook(b.l,b.clan,b.j[0]),abil,build:b}}
+ return{name:b.name,side:b.side,desc:`${lign}${b.clan===TAIJ?'':' · '+NATURES[b.nat][0]} · voie ${v[0].toLowerCase()}`,hp:Math.round(hp/W*v[1]*HPK),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,clan:b.clan,nat:b.clan===TAIJ?-1:b.nat,pref:{fist:75,bigfist:85,palm:75,claws:75,bone:90,sword:90,shadow:170,chain:170}[S[4]]||320,taij:b.clan===TAIJ,pass:PASSK[b.pass],look:ninjaLook(b.l,b.clan,b.j[0]),abil,build:b}}
 // générateur pseudo-aléatoire déterministe (mêmes ninjas adverses chez tous les joueurs en ligne)
 const srnd=seed=>()=>(seed=seed*16807%2147483647)/2147483647;
 function randomKit(r,b){const k=a=>Math.floor(r()*a.length);b.nat=k(NATURES);b.clan=r()<.8?k(CLANS):-1;b.voie=k(VOIES);b.pass=k(PASSK);
@@ -6696,23 +6794,23 @@ const canBlock=u=>u.ch.look.weapon.t==='saber'||u.ch.look.weapon.t==='kunai';
 let mode='arena',state='menu',units=[],player=null,projs=[],fx=[],txt=[],zones=[],orb=null,orbUsed=false,score=[0,0],round=1,timer=0,stateT=0,playerChamp='p0',aiChamp='b20',winner=0,shake=0,hs=0,flashS=0,banner=null,hover='p0';
 let tethers=[],traps=[],turrets=[],fields=[],walls=[],BASIC=false,GLOW=18;
 let B=A,OBST=ARENA_OBST,tickets=[100,100],killfeed=[],pickups=[],deathPos=null;
-const SD_START=45,SD_LEN=35;
+const SD_START=90,SD_LEN=55;
 // configuration de partie (réglée par l'hôte en ligne, gardée dans le navigateur)
-const CFG={team:1,wins:2,bsize:20,tickets:60,sd:true,orb:true,pk:true,map:0};
+const CFG={team:1,wins:2,bsize:20,tickets:40,sd:true,orb:true,pk:true,map:0};
 try{Object.assign(CFG,JSON.parse(localStorage.getItem('nrCfg')||'{}'))}catch(e){}
 const saveCfg=()=>{try{localStorage.setItem('nrCfg',JSON.stringify(CFG))}catch(e){}};
 // taille d'équipe effective : en coop arène il faut au moins 2 par équipe
 const teamN=()=>Math.min(4,Math.max(mode==='arena'&&coop()?2:1,CFG.team,humansPer(0),humansPer(1)));
-const sdR=()=>mode!=='arena'||!CFG.sd||timer<SD_START?9999:lerp(1150,200,clamp((timer-SD_START)/SD_LEN,0,1));
+const sdR=()=>mode!=='arena'||!CFG.sd||timer<SD_START?9999:lerp(1150,70,clamp((timer-SD_START)/SD_LEN,0,1));
 // UXK : champs ajoutés en cours de partie, déclarés d'avance (forme cachée unique)
-const UXK=["rid","wet","mk","stk","rootV","blockT","chk","sprintLock","sprint","run","runT","_tri","sub_nd","jstN","jstV","aiSprint","hy_byak","hy_stepB","hy_seen","uc_tm","uc_obs","uc_cpN","uc_cpT","uc_rcT","tj_g","tj_cT","tj_n","tj_cds","ak_cal","sa_shT","sa_cds","sa_arm","sa_armT","sa_sph","sa_fly","sa_brk","ab_eat","ab_tk","in_bcd","na_dk","kg_os","kg_osT","kg_armT","kg_larT","cmb","cmbH","cmbT","thrT","st_kn","st_kt","anim","relT","auraV","dmgBy","st_sh","uc_tmF","uc_cp","phase","uc_shB","uc_rec","uc_rdT","st_vp","ya_mkU","ya_mk","ya_mkB","uc_suT","tj_8","tj_red","ak_roll","shieldBy","ak_bf","ya_lnkT","ya_lnkU","dotSrc","dotEl","dotK","ya_pz","ya_pa","na_tT","in_flair","in_wolf","do_sw","jst","sa_sink","ab_last","ab_col","ab_colT","ab_src","ak_arm","ya_sl","ya_slI","sub_ctr","ak_spk","hy_tkN","hy_tk","hy_tkU","sub_slug","thirdImm","st_luT","do_ar","do_ac","chan","tj_life","tj_esq","na_pl","riposteS","hy_dg","uc_am","na_by","na_hT","hy_rvU","c3T","hy_imU","ka_ht","counterS","absorbEn","izT","izS","parry","aiParry","fearX","fearY","tauntSrc","su_pr","ab_vd","ab_vdT","ab_spyT","ab_spyS","uz_clT","_tr","_pz","_land","_dog3","buf","bufL","sub_hk","sub_sage","su_mA","do_mo","uc_gk","na_sh","ab_ven","in_four","uz_kyu","uz_fv","uz_clQ","uz_rf","gvx","gvy"];
+const UXK=["rid","wet","mk","stk","rootV","blockT","chk","sprintLock","sprint","run","runT","_tri","sub_nd","jstN","jstV","aiSprint","hy_byak","hy_stepB","hy_seen","uc_tm","uc_obs","uc_cpN","uc_cpT","uc_rcT","tj_g","tj_cT","tj_n","tj_cds","ak_cal","sa_shT","sa_cds","sa_arm","sa_armT","sa_sph","sa_fly","sa_brk","ab_eat","ab_tk","in_bcd","na_dk","kg_os","kg_osT","kg_armT","kg_larT","cmb","cmbH","cmbT","thrT","st_kn","st_kt","anim","relT","auraV","dmgBy","st_sh","uc_tmF","uc_cp","phase","uc_shB","uc_rec","uc_rdT","st_vp","ya_mkU","ya_mk","ya_mkB","uc_suT","tj_8","tj_red","ak_roll","shieldBy","ak_bf","ya_lnkT","ya_lnkU","dotSrc","dotEl","dotK","ya_pz","ya_pa","na_tT","in_flair","in_wolf","do_sw","jst","sa_sink","ab_last","ab_col","ab_colT","ab_src","ak_arm","ya_sl","ya_slI","sub_ctr","ak_spk","hy_tkN","hy_tk","hy_tkU","sub_slug","thirdImm","st_luT","do_ar","do_ac","chan","tj_life","tj_esq","na_pl","riposteS","hy_dg","uc_am","na_by","na_hT","hy_rvU","c3T","hy_imU","ka_ht","counterS","absorbEn","izT","izS","parry","aiParry","fearX","fearY","tauntSrc","su_pr","ab_vd","ab_vdT","ab_spyT","ab_spyS","uz_clT","_tr","_pz","_land","_dog3","buf","bufL","ckLock","chkT","exh","ckMsg","aiCkLo","aiLowT","aiCkSt","aiCkTo","hlC","hlTg","hlCd","hlN","hlR","hlMsg","hlQ","sub_hk","sub_sage","su_mA","do_mo","uc_gk","na_sh","ab_ven","in_four","uz_kyu","uz_fv","uz_clQ","uz_rf","gvx","gvy"];
 function mkUnit(c,x,y,team){const ch=CH[c];return{c,ch,x,y,z:0,vx:0,vy:0,kx:0,ky:0,r:18*(ch.look.scale>1?1.1:1),hp:ch.hp,max:ch.hp,energy:0,team,hero:!ch.trooper,cds:[0,0,0,0,0,0],stun:0,slow:0,haste:0,rage:0,rapid:0,unstop:0,deflect:0,shield:0,shieldT:0,
- stam:100,stamT:0,block:false,blockLock:0,aiBlock:0,dash:null,cast:null,spin:null,flame:null,aim:team?Math.PI:0,swing:0,swingA:0,saberOut:0,walk:0,moving:0,aiT:.3+rnd()*.4,strT:0,strDir:rnd()<.5?1:-1,flash:0,dead:false,deadT:0,respawn:0,tgt:null,lane:y,ctrl:null,human:false,nx:x,ny:y,root:0,stealth:0,ambush:0,airT:0,hits:0,chg:ch.abil.map(a=>a&&a.charges||0),ammo:ch.abil[0].ammo||0,silence:0,fear:0,taunt:0,disarm:0,vuln:0,counter:0,riposte:0,dodge:0,absorb:0,thorns:0,dr:0,drT:0,cdrHit:0,lsB:0,regenB:0,slowImm:0,giant:0,riot:0,chrome:0,parryAll:0,thornSlow:0,wallStun:0,critBuf:0,pierceBuf:0,dot:0,dotT:0,sleepT:0,markB:null,stick:null,rid:undefined,wet:undefined,mk:undefined,stk:undefined,rootV:undefined,blockT:undefined,chk:undefined,sprintLock:undefined,sprint:undefined,run:undefined,runT:undefined,_tri:undefined,sub_nd:undefined,jstN:undefined,jstV:undefined,aiSprint:undefined,hy_byak:undefined,hy_stepB:undefined,hy_seen:undefined,uc_tm:undefined,uc_obs:undefined,uc_cpN:undefined,uc_cpT:undefined,uc_rcT:undefined,tj_g:undefined,tj_cT:undefined,tj_n:undefined,tj_cds:undefined,ak_cal:undefined,sa_shT:undefined,sa_cds:undefined,sa_arm:undefined,sa_armT:undefined,sa_sph:undefined,sa_fly:undefined,sa_brk:undefined,ab_eat:undefined,ab_tk:undefined,in_bcd:undefined,na_dk:undefined,kg_os:undefined,kg_osT:undefined,kg_armT:undefined,kg_larT:undefined,cmb:undefined,cmbH:undefined,cmbT:undefined,thrT:undefined,st_kn:undefined,st_kt:undefined,anim:undefined,relT:undefined,auraV:undefined,dmgBy:undefined,st_sh:undefined,uc_tmF:undefined,uc_cp:undefined,phase:undefined,uc_shB:undefined,uc_rec:undefined,uc_rdT:undefined,st_vp:undefined,ya_mkU:undefined,ya_mk:undefined,ya_mkB:undefined,uc_suT:undefined,tj_8:undefined,tj_red:undefined,ak_roll:undefined,shieldBy:undefined,ak_bf:undefined,ya_lnkT:undefined,ya_lnkU:undefined,dotSrc:undefined,dotEl:undefined,dotK:undefined,ya_pz:undefined,ya_pa:undefined,na_tT:undefined,in_flair:undefined,in_wolf:undefined,do_sw:undefined,jst:undefined,sa_sink:undefined,ab_last:undefined,ab_col:undefined,ab_colT:undefined,ab_src:undefined,ak_arm:undefined,ya_sl:undefined,ya_slI:undefined,sub_ctr:undefined,ak_spk:undefined,hy_tkN:undefined,hy_tk:undefined,hy_tkU:undefined,sub_slug:undefined,thirdImm:undefined,st_luT:undefined,do_ar:undefined,do_ac:undefined,chan:undefined,tj_life:undefined,tj_esq:undefined,na_pl:undefined,riposteS:undefined,hy_dg:undefined,uc_am:undefined,na_by:undefined,na_hT:undefined,hy_rvU:undefined,c3T:undefined,hy_imU:undefined,ka_ht:undefined,counterS:undefined,absorbEn:undefined,izT:undefined,izS:undefined,parry:undefined,aiParry:undefined,fearX:undefined,fearY:undefined,tauntSrc:undefined,su_pr:undefined,ab_vd:undefined,ab_vdT:undefined,ab_spyT:undefined,ab_spyS:undefined,uz_clT:undefined,_tr:undefined,_pz:undefined,_land:undefined,_dog3:undefined,buf:undefined,bufL:undefined,sub_hk:undefined,sub_sage:undefined,su_mA:undefined,do_mo:undefined,uc_gk:undefined,na_sh:undefined,ab_ven:undefined,in_four:undefined,uz_kyu:undefined,uz_fv:undefined,uz_clQ:undefined,uz_rf:undefined,gvx:undefined,gvy:undefined}}
+ stam:100,stamT:0,block:false,blockLock:0,aiBlock:0,dash:null,cast:null,spin:null,flame:null,aim:team?Math.PI:0,swing:0,swingA:0,saberOut:0,walk:0,moving:0,aiT:.3+rnd()*.4,strT:0,strDir:rnd()<.5?1:-1,flash:0,dead:false,deadT:0,respawn:0,tgt:null,lane:y,ctrl:null,human:false,nx:x,ny:y,root:0,stealth:0,ambush:0,airT:0,hits:0,chg:ch.abil.map(a=>a&&a.charges||0),ammo:ch.abil[0].ammo||0,silence:0,fear:0,taunt:0,disarm:0,vuln:0,counter:0,riposte:0,dodge:0,absorb:0,thorns:0,dr:0,drT:0,cdrHit:0,lsB:0,regenB:0,slowImm:0,giant:0,riot:0,chrome:0,parryAll:0,thornSlow:0,wallStun:0,critBuf:0,pierceBuf:0,dot:0,dotT:0,sleepT:0,markB:null,stick:null,rid:undefined,wet:undefined,mk:undefined,stk:undefined,rootV:undefined,blockT:undefined,chk:undefined,sprintLock:undefined,sprint:undefined,run:undefined,runT:undefined,_tri:undefined,sub_nd:undefined,jstN:undefined,jstV:undefined,aiSprint:undefined,hy_byak:undefined,hy_stepB:undefined,hy_seen:undefined,uc_tm:undefined,uc_obs:undefined,uc_cpN:undefined,uc_cpT:undefined,uc_rcT:undefined,tj_g:undefined,tj_cT:undefined,tj_n:undefined,tj_cds:undefined,ak_cal:undefined,sa_shT:undefined,sa_cds:undefined,sa_arm:undefined,sa_armT:undefined,sa_sph:undefined,sa_fly:undefined,sa_brk:undefined,ab_eat:undefined,ab_tk:undefined,in_bcd:undefined,na_dk:undefined,kg_os:undefined,kg_osT:undefined,kg_armT:undefined,kg_larT:undefined,cmb:undefined,cmbH:undefined,cmbT:undefined,thrT:undefined,st_kn:undefined,st_kt:undefined,anim:undefined,relT:undefined,auraV:undefined,dmgBy:undefined,st_sh:undefined,uc_tmF:undefined,uc_cp:undefined,phase:undefined,uc_shB:undefined,uc_rec:undefined,uc_rdT:undefined,st_vp:undefined,ya_mkU:undefined,ya_mk:undefined,ya_mkB:undefined,uc_suT:undefined,tj_8:undefined,tj_red:undefined,ak_roll:undefined,shieldBy:undefined,ak_bf:undefined,ya_lnkT:undefined,ya_lnkU:undefined,dotSrc:undefined,dotEl:undefined,dotK:undefined,ya_pz:undefined,ya_pa:undefined,na_tT:undefined,in_flair:undefined,in_wolf:undefined,do_sw:undefined,jst:undefined,sa_sink:undefined,ab_last:undefined,ab_col:undefined,ab_colT:undefined,ab_src:undefined,ak_arm:undefined,ya_sl:undefined,ya_slI:undefined,sub_ctr:undefined,ak_spk:undefined,hy_tkN:undefined,hy_tk:undefined,hy_tkU:undefined,sub_slug:undefined,thirdImm:undefined,st_luT:undefined,do_ar:undefined,do_ac:undefined,chan:undefined,tj_life:undefined,tj_esq:undefined,na_pl:undefined,riposteS:undefined,hy_dg:undefined,uc_am:undefined,na_by:undefined,na_hT:undefined,hy_rvU:undefined,c3T:undefined,hy_imU:undefined,ka_ht:undefined,counterS:undefined,absorbEn:undefined,izT:undefined,izS:undefined,parry:undefined,aiParry:undefined,fearX:undefined,fearY:undefined,tauntSrc:undefined,su_pr:undefined,ab_vd:undefined,ab_vdT:undefined,ab_spyT:undefined,ab_spyS:undefined,uz_clT:undefined,_tr:undefined,_pz:undefined,_land:undefined,_dog3:undefined,buf:undefined,bufL:undefined,ckLock:undefined,chkT:undefined,exh:undefined,ckMsg:undefined,aiCkLo:undefined,aiLowT:undefined,aiCkSt:undefined,aiCkTo:undefined,hlC:undefined,hlTg:undefined,hlCd:undefined,hlN:undefined,hlR:undefined,hlMsg:undefined,hlQ:undefined,sub_hk:undefined,sub_sage:undefined,su_mA:undefined,do_mo:undefined,uc_gk:undefined,na_sh:undefined,ab_ven:undefined,in_four:undefined,uz_kyu:undefined,uz_fv:undefined,uz_clQ:undefined,uz_rf:undefined,gvx:undefined,gvy:undefined}}
 // statistiques de la partie (éliminations, morts, assistances, dégâts infligés/subis, soins), par perso et par camp
 let STATS={},CUR=null;
 const stOf=u=>{const k=u.c+'|'+u.team;return STATS[k]||(STATS[k]={c:u.c,team:u.team,k:0,d:0,a:0,dmg:0,tk:0,heal:0,sh:0})};
 function startMatch(c){playerChamp=c;STATS={};const o=HEROES.filter(x=>CH[x].side!==CH[c].side);aiChamp=o[Math.floor(rnd()*o.length)];score=[0,0];round=1;MT=mode!=='battle'?buildTeams(teamN()):null;mode!=='battle'?startRound():startBattle()}
-function resetWorld(){cutin=null;aux=[];for(const u of units)u.energy=Math.max(u.energy,60);if(player)cam={x:player.x,y:player.y};seqs=[];tethers=[];traps=[];turrets=[];fields=[];walls=[];projs=[];fx=[];txt=[];zones=[];orb=null;orbUsed=false;timer=0;banner=null;killfeed=[];state='countdown';stateT=3}
+function resetWorld(){cutin=null;aux=[];for(const u of units)u.energy=Math.max(u.energy,CK.spawn);if(player)cam={x:player.x,y:player.y};seqs=[];tethers=[];traps=[];turrets=[];fields=[];walls=[];projs=[];fx=[];txt=[];zones=[];orb=null;orbUsed=false;timer=0;banner=null;killfeed=[];state='countdown';stateT=3}
 // joueurs humains : l'hôte (local) + les amis connectés (remote). Arène = tous ensemble contre des bots ; duel = deux équipes de joueurs
 function humanList(){const L=lobbyList().map(x=>({c:x.c&&CH[x.c]?x.c:null,team:x.team,ctrl:x.id===0?'local':'remote',rid:x.id}));if(!L.length)L.push({c:playerChamp,team:0,ctrl:'local',rid:0});
  if(net.role!=='guest')L[0].c=playerChamp;
@@ -6747,7 +6845,7 @@ function battleObstacles(){let s=7;const r=()=>(s=s*16807%2147483647)/2147483647
 const enemies=u=>units.filter(e=>e.team!==u.team&&!e.dead);
 
 // ---------- Mécaniques ----------
-function use(u,i,td,aimOv,ex){let ab=u.ch.abil[i];const chg=ab&&ab.charges;if(!ab||(chg?u.chg[i]<=0:u.cds[i]>0)||(i>0&&u.silence>0)||(i===0&&u.disarm>0)||u.stun>0||u.dash||u.cast||u.spin||u.flame||u.block)return false;const rec=(u.chan&&u.chan.i===i)||(u.jst&&u.jst.i===i),ck=i>0&&!rec?jcost(ab):0;if(u.energy<ck){if(u===player)say(u,'CHAKRA ! ('+lbl.KeyR+')','#4ab0ff');return false}if((ab.throw||ab.melee)&&u.saberOut>0)return false;
+function use(u,i,td,aimOv,ex){let ab=u.ch.abil[i];const chg=ab&&ab.charges;if(!ab||(chg?u.chg[i]<=0:u.cds[i]>0)||(i>0&&u.silence>0)||(i===0&&u.disarm>0)||u.stun>0||u.dash||u.cast||u.spin||u.flame||u.block||u.hlC>0)return false;const rec=(u.chan&&u.chan.i===i)||(u.jst&&u.jst.i===i),ck=i>0&&!rec?jcost(ab):0;if(u.energy<ck){ckLack(u,i);return false}if((ab.throw||ab.melee)&&u.saberOut>0)return false;
  ex=false;if(i===0){const ml=meleeU(u),sc=ml?20:10;if(u.stam<sc-.01){if(u===player)say(u,'ENDURANCE !','#7df');return false}u.stam-=sc;u.stamT=Math.max(u.stamT||0,.6);u.cmb=ml?(u.cmbT>0?u.cmb||0:0)%5+1:0;u.cmbH=u.cmb;u.cmbT=1.1}if(ex){u.energy-=25;if(ab.ex)ab=exAb(ab)}if(u.stealth>0){u.stealth=0;u.ambush=2}
  if(chg){u.chg[i]--;if(u.cds[i]<=0)u.cds[i]=ab.cd}else u.cds[i]=(ab.cd||1)*(i===0&&u.rapid>0?.45:1);
  if(ab.ammo){if(u.ammo<=0)u.ammo=ab.ammo;u.ammo--;if(u.ammo<=0){u.ammo=ab.ammo;u.cds[i]=ab.reload}}u.energy-=ck;if(ab.ult&&ck){S('v_'+u.c,u);if(u===player)flashS=.25;if(near(u.x,u.y))shake=.3}
@@ -6797,14 +6895,14 @@ function hit(t,src,dmg,o={}){
  if(ps&&o.basic){if(ps==='third'&&++src.hits%3===0){dmg*=1.6;if(!(SIMT<(t.thirdImm||0))){t.thirdImm=SIMT+2.5;o=Object.assign({},o,{stun:Math.max(o.stun||0,.5)})}say(src,'3e COUP','#ffe81f')}if(ps==='crit'&&rnd()<.25){dmg*=2;say(t,'CRITIQUE','#ffb03a')}if(ps==='slow')o=Object.assign({},o,{slow:Math.max(o.slow||0,.8)})}
  if(ps==='rage'&&src.hp<src.max*.5)dmg*=1.25;if(src&&src.ambush>0){dmg*=1.5;src.ambush=0;say(t,'EMBUSCADE','#ffb03a')}
  if(o.exec)dmg+=(t.max-t.hp)*o.exec;if(t.ch.pass==='armor')dmg*=.85;
- if(t.vuln>0)dmg*=1.25;if(t.drT>0)dmg*=1-t.dr;if(t.giant>0)dmg*=.8;if(src&&src.giant>0)dmg*=1.2;
+ if(t.vuln>0)dmg*=1.25;if(t.chk)dmg*=CK.vuln;if(t.drT>0)dmg*=1-t.dr;if(t.giant>0)dmg*=.8;if(src&&src.giant>0)dmg*=1.2;
  if(src&&src.critBuf>0&&o.basic){dmg*=2;src.critBuf--;say(t,'CRITIQUE','#ffb03a')}
  if(src&&src.cdrHit>0)for(let i=1;i<5;i++)src.cds[i]=Math.max(0,src.cds[i]-.4);
  let d=dmg;if(t.shield>0){const ab=Math.min(t.shield,d);t.shield-=ab;d-=ab;const sb=STATS[t.shieldBy]||stOf(t);sb.sh=(sb.sh||0)+ab}
  if(d>0){const real=Math.min(d,Math.max(0,t.hp));stOf(t).tk+=real;if(src&&src!==t&&src.team!==t.team){stOf(src).dmg+=real;(t.dmgBy||(t.dmgBy={}))[src.c+'|'+src.team]=SIMT}}
  t.hp-=d;if(ps==='lifesteal'&&d>0)gain(src,d*.3,src);if(src&&src.lsB>0&&d>0)gain(src,d*.35,src);
  if(src&&o.melee&&!o.thorn){if(t.thorns>0)hit(src,t,dmg*.3,{silent:1,thorn:1});if(t.thornSlow>0)src.slow=Math.max(src.slow,1)}
- if(!o.silent){t.flash=.12;if(src)src.energy=Math.min(100,src.energy+dmg*(ps==='energy'?.9:.6));if(t.hero)t.energy=Math.min(100,t.energy+dmg*.2);
+ if(!o.silent){t.flash=.12;ckHit(t,src,dmg,o);
   if(near(t.x,t.y)){if(Math.round(d)>0)say(t,'-'+Math.round(d),d<dmg?'#fc6':o.ex?'#ffe81f':'#fff');sparks(t.x,t.y,t.team?'#f66':'#6cf',6);sparks(t.x,t.y,VFX&&VP[VFX]?VP[VFX][0]:'#ffffff',d>18?2:1,'imp');if(t===player||src===player)shake=Math.max(shake,.08);S('hit',t)}}
  const hard=t.unstop<=0,xm=o.ex?1.4:1;
  if(o.stun&&hard){t.stun=Math.max(t.stun,o.stun*xm);say(t,'ÉTOURDI','#b8f')}
@@ -6860,7 +6958,7 @@ function ai(u,dt){
  const d=dist(u,e),a=ang(u,e),tt=d/800;
  u.aim=Math.atan2(e.y+e.vy*tt*.6-u.y,e.x+e.vx*tt*.6-u.x)+(rnd()-.5)*(u.hero?.15:.3);
  if((u.strT-=dt)<0){u.strT=.8+rnd()*1.5;u.strDir*=-1}
- const pref=u.ch.pref,rad=d>pref+40?1:d<pref-40?-1:0,sw=pref>200?.9:.5;
+ const pref=aiPref(u,e),rad=d>pref+40?1:d<pref-40?-1:0,sw=pref>200?.9:.5;
  mx=Math.cos(a)*rad+Math.cos(a+Math.PI/2)*u.strDir*sw;my=Math.sin(a)*rad+Math.sin(a+Math.PI/2)*u.strDir*sw;
  if(mode!=='battle'){if(orb&&(dist(u,orb)<dist(e,orb)||u.hp<u.max*.5)){const oa=ang(u,orb);mx=Math.cos(oa);my=Math.sin(oa)}
   if(dist(u,{x:CX,y:CY})>sdR()-60){const ca=ang(u,{x:CX,y:CY});mx=Math.cos(ca);my=Math.sin(ca)}}
@@ -6868,11 +6966,11 @@ function ai(u,dt){
  for(const z of dangers(u))if(Math.hypot(u.x-z.x,u.y-z.y)<z.r+28){const za=Math.atan2(u.y-z.y,u.x-z.x);mx=Math.cos(za);my=Math.sin(za)}
  if(u.aiT>0)return[mx,my];
  u.aiT=(u.hero?.13:.25)+rnd()*.17;
- const th=threat(u);
+ const th=threat(u);if(hlAI(u))return[mx,my];
  // parade : les porteurs de sabre bloquent les tirs pour s'approcher des tireurs
  if(canBlock(u)&&u.stam>25){if(th&&rnd()<.7){u.aiBlock=.4+rnd()*.6;if(rnd()<.6&&Math.hypot(th.x-u.x,th.y-u.y)<160)u.blockT=0}else if(e.ch.pref>200&&d>150&&d<650&&rnd()<.3)u.aiBlock=.5+rnd()*.8}
  if(u.aiBlock>0)return[mx,my];
- for(const i of[5,3,1,2,4]){const ab=u.ch.abil[i],h=ab&&ab.ai;if(!h||u.cds[i]>0||u.energy<jcost(ab))continue;
+ for(const i of[5,3,1,2,4]){const ab=u.ch.abil[i],h=ab&&ab.ai;if(!h||u.cds[i]>0||u.energy<jcost(ab)||aiSave(u,i,h))continue;
   let ok=false,aimO,td=d;
   switch(h.mode||'atk'){
    case'atk':ok=d>=(h.min||0)&&d<=h.max;break;
@@ -6896,8 +6994,8 @@ function collide(u){
  if(bump&&u.wallStun>0&&Math.hypot(u.kx,u.ky)>150){u.stun=Math.max(u.stun,u.wallStun);u.wallStun=0;u.kx=u.ky=0;say(u,'ÉCRASÉ','#f22');sparks(u.x,u.y,'#fff',12)}
  for(const w of walls)if(w.team!==u.team){const m=w.r+u.r;if(Math.abs(u.x-w.x)>=m||Math.abs(u.y-w.y)>=m)continue;const d=Math.hypot(u.x-w.x,u.y-w.y);if(d<m&&d>0){u.x=w.x+(u.x-w.x)/d*m;u.y=w.y+(u.y-w.y)/d*m}}
 }
-function respawn(u){const p=spawnPos(u.team),n=mkUnit(u.c,p.x,p.y,u.team);n.lane=u.lane;n.ctrl=u.ctrl;n.human=u.human;n.rid=u.rid;n.energy=60;for(const k of UXK)if(k!=='rid')delete n[k];Object.assign(u,n);if(u===player)deathPos=null}
-function updUnit(u,dt,active){
+function respawn(u){const p=spawnPos(u.team),n=mkUnit(u.c,p.x,p.y,u.team);n.lane=u.lane;n.ctrl=u.ctrl;n.human=u.human;n.rid=u.rid;n.energy=CK.spawn;for(const k of UXK)if(k!=='rid')delete n[k];Object.assign(u,n);if(u===player)deathPos=null}
+function updUnit(u,dt,active){hlTick(u,dt,active);
  for(let i=0;i<6;i++){const ab=u.ch.abil[i];if(ab&&ab.charges){if(u.chg[i]<ab.charges){u.cds[i]-=dt;if(u.cds[i]<=0){u.chg[i]++;u.cds[i]=u.chg[i]<ab.charges?ab.cd:0}}}else u.cds[i]=Math.max(0,u.cds[i]-dt)}
  for(const k of['silence','fear','taunt','disarm','vuln','counter','riposte','dodge','absorb','thorns','drT','cdrHit','lsB','regenB','slowImm','giant','riot','chrome','parryAll','thornSlow','wallStun','stun','deflect','slow','haste','rage','rapid','unstop','swing','blockLock','aiBlock','root','stealth','ambush','wet'])u[k]=Math.max(0,u[k]-dt);u.flash-=dt;
  if(u.shieldT>0){u.shieldT-=dt;if(u.shieldT<=0)u.shield=0}
@@ -6918,16 +7016,16 @@ function updUnit(u,dt,active){
  if(u.parry>0)u.parry-=dt;
  if(wantB&&(ctl?!!(I&&I.p&&I.p.lmb):u.aiParry>0)){u.aiParry=0;if(I&&I.p)I.p.lmb=false;u.bufL=0;u.parry=PARRY_WIN;u.blockLock=PARRY_LOCK;u.swing=.2;u.swingA=u.aim;anim(u,'parry',.35);if(near(u.x,u.y))S('deflect',u)}
  u.block=!!wantB&&!(u.parry>0);u.blockT=u.block?(u.blockT||0)+dt:0;
- u.chk=active&&!u.dead&&u.stun<=0&&!u.cast&&!u.dash&&!u.block&&!u.chan&&(ctl?!!(I&&I.r):(u.energy<35&&!nearE(u,u.x,u.y,360)));if(u.chk)u.energy=Math.min(100,u.energy+30*dt);
- {const want=ctl?!!(I&&I.sh)&&Math.hypot(I.mx,I.my)>.1:!!u.aiSprint&&u.moving;if(!want)u.sprintLock=0;u.sprint=active&&want&&!u.sprintLock&&u.stun<=0&&!u.cast&&!u.dash&&!u.block&&!u.chk&&!u.flame&&!u.spin&&!u.chan&&!(u.root>0)&&(u.run??100)>1;
+ u.chk=active&&!u.dead&&u.stun<=0&&!u.cast&&!u.dash&&!u.block&&!u.chan&&!(u.ckLock>0)&&!(u.hlC>0)&&(ctl?!!(I&&I.r):aiChk(u,dt));ckTick(u,dt);
+ {const want=ctl?!!(I&&I.sh)&&Math.hypot(I.mx,I.my)>.1:!!u.aiSprint&&u.moving;if(!want)u.sprintLock=0;u.sprint=active&&want&&!u.sprintLock&&u.stun<=0&&!u.cast&&!u.dash&&!u.block&&!u.chk&&!u.flame&&!u.spin&&!u.chan&&!(u.root>0)&&!u.exh&&(u.run??100)>1;
   if(u.run==null)u.run=100;if(u.sprint){u.run=Math.max(0,u.run-SPRINT_COST*dt);u.runT=.6;if(u.run<=0){u.sprint=false;u.sprintLock=1}}else if((u.runT=(u.runT||0)-dt)<=0)u.run=Math.min(100,u.run+RUN_REGEN*dt)}
- if(u.block){u.stam-=12*dt;u.stamT=.9;if(u.stam<=0)stamHit(u,0)}else{u.stamT-=dt;if(u.stamT<=0)u.stam=Math.min(100,u.stam+(u.ch.taij?50:32)*dt)}
+ if(u.block){u.stam-=12*(u.exh?CK.exhBlock:1)*dt;u.stamT=.9;if(u.stam<=0)stamHit(u,0)}else{u.stamT-=dt;if(u.stamT<=0)u.stam=Math.min(100,u.stam+(u.ch.taij?50:32)*(u.exh?CK.exhStam:1)*dt)}
  if(active&&u.stun<=0&&u.fear>0){const a=Math.atan2(u.y-u.fearY,u.x-u.fearX);mx=Math.cos(a);my=Math.sin(a);u.aim=a}
  else if(active&&u.stun<=0&&u.taunt>0&&u.tauntSrc&&!u.tauntSrc.dead){const e=u.tauntSrc,a=ang(u,e);u.aim=a;if(dist(u,e)>70){mx=Math.cos(a);my=Math.sin(a)}use(u,0,dist(u,e))}
  else if(active&&u.stun<=0){
   if(ctl){if(I){mx=I.mx;my=I.my;u.aim=Math.atan2(I.ay-u.y,I.ax-u.x);const td=Math.hypot(I.ax-u.x,I.ay-u.y),p=I.p,ex=I.sh;
    if(u.cast)u.cast.td=td;
-   if(p.rmb)tryUse(u,1,td,ex);if(p.Space)tryUse(u,2,td,ex);if(p.KeyQ)tryUse(u,3,td,ex);if(p.KeyE)tryUse(u,4,td,ex);if(p.KeyT)tryUse(u,5,td,false);bufTick(u,dt,td,I)}
+   if(p.rmb)tryUse(u,1,td,ex);if(p.Space)tryUse(u,2,td,ex);if(p.KeyQ)tryUse(u,3,td,ex);if(p.KeyE)tryUse(u,4,td,ex);if(p.KeyT)tryUse(u,5,td,false);bufTick(u,dt,td,I);hlInput(u,dt,I)}
   }else[mx,my]=ai(u,dt);
  }
  if(u.cast){u.cast.t+=dt;if(u.cast.t>=u.cast.dur){const c=u.cast;u.cast=null;fire(u,castAb(u,c),c.aimOv??u.aim,c.td,c.ex)}}
@@ -6935,7 +7033,7 @@ function updUnit(u,dt,active){
  if(u.flame){const f=u.flame;f.t-=dt;f.k-=dt;const FR=f.R||175,FA=f.arc||.4,wv=f.v==='wind';if(near(u.x,u.y))for(let i=0;i<(FR>200?5:3);i++){const b=u.aim+(rnd()-.5)*FA*1.5,s=(350+rnd()*150)*FR/175;fx.push({x:u.x+Math.cos(u.aim)*20,y:u.y+Math.sin(u.aim)*20,z:26,vx:Math.cos(b)*s,vy:Math.sin(b)*s,t:.4,m:.4,col:wv?'#e8fff8':rnd()<.5?'#f93':'#fc4',r:4+rnd()*3,vfx:f.v||'fire'})}
   if(f.k<=0){f.k=.12;VFX=f.v||'fire';S('flame',u);for(const e of enemies(u))if(dist(u,e)<FR+e.r&&angDiff(ang(u,e),u.aim)<FA)hit(e,u,f.d||3.5,{slow:.5,unblockable:1,kb:f.kb,dot:f.dot,silent:!!f.kb});VFX=null}if(f.t<=0)u.flame=null}
  const l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l}
- const sp=u.ch.spd*SPD_K*(u.sprint?SPRINT_K:1)*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.5:1)*(u.flame?(u.flame.still?0:.5):1)*(u.spin?.8:1)*(u.block?.55:1)*(u.root>0?0:1)*(u.chk?0:1)*(u.ch.pass==='speed'?1.1:1);{const ac=sp?1-Math.exp(-ACCEL*dt):1;u.vx+=(mx*sp-u.vx)*ac;u.vy+=(my*sp-u.vy)*ac}
+ const sp=u.ch.spd*SPD_K*(u.sprint?SPRINT_K:1)*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.5:1)*(u.flame?(u.flame.still?0:.5):1)*(u.spin?.8:1)*(u.block?.55:1)*(u.root>0?0:1)*(u.chk?0:1)*(u.exh?CK.exhSpd:1)*(u.hlC>0?.5:1)*(u.ch.pass==='speed'?1.1:1);{const ac=sp?1-Math.exp(-ACCEL*dt):1;u.vx+=(mx*sp-u.vx)*ac;u.vy+=(my*sp-u.vy)*ac}
  u.x+=(u.vx+u.kx)*dt;u.y+=(u.vy+u.ky)*dt;const dec=Math.exp(-7*dt);u.kx*=dec;u.ky*=dec;
  u.moving=l>.1;if(u.moving){u.walk+=dt*13*(u.haste>0?1.4:1)*(u.sprint?1.35:1);if(rnd()<dt*(u.sprint?26:9)&&near(u.x,u.y))fx.push({x:u.x+(rnd()-.5)*10,y:u.y+4,z:2,vx:(rnd()-.5)*30,vy:(rnd()-.5)*20,t:.5,m:.5,col:'#5a6478',r:3})}
  if(u.haste>0&&rnd()<dt*20&&near(u.x,u.y))fx.push({x:u.x,y:u.y,z:20+rnd()*30,vx:(rnd()-.5)*40,vy:(rnd()-.5)*40,t:.4,m:.4,col:u.rage>0?'#f44':'#fc6',r:3});
@@ -7586,6 +7684,8 @@ function actionPose(u,t,rec,P){const k=u.ch.look.weapon.k;
  if(u.dead)return P;
  if(u.block){P.root.y=-2;pz(P,'armL',-1.35,0,-.55);pz(P,'foreL',-1.25);pz(P,'armR',-1.35,0,.55);pz(P,'foreR',-1.25);pz(P,'chest',.15);pz(P,'thighL',-.3);pz(P,'shinL',.5);pz(P,'shinR',.4)}
  if(u.chk){P.root.y=-3.5+Math.sin(t*40)*.25;pz(P,'thighL',-.1,0,.42);pz(P,'thighR',-.1,0,-.42);pz(P,'shinL',.55);pz(P,'shinR',.55);pz(P,'armL',.15,0,.55);pz(P,'armR',.15,0,-.55);pz(P,'foreL',-.5);pz(P,'foreR',-.5);pz(P,'chest',-.12);pz(P,'head',-.18)}
+ // épuisé (chakra à sec) : dos voûté, tête basse, bras ballants, souffle court
+ if(u.exh&&!u.chk&&!u.cast&&!u.block&&!(u.swing>0)&&!u.dash){const b=Math.sin(t*7);padd(P,'chest',.28+b*.05);padd(P,'head',.22+b*.06);pz(P,'armL',.2,0,.22);pz(P,'armR',.2,0,-.22);pz(P,'foreL',-.35);pz(P,'foreR',-.35);P.root.y=(P.root.y||0)-2+b*.6}
  const md=typeof mudraOf==='function'?mudraOf(u):null;
  if(md){const m=MUDP[(MUDP.length+((md.sg&&SIGNS.indexOf(md.sg))||0))%MUDP.length],snap=md.q<.25?Math.sin(md.q/.25*Math.PI)*.18:0;
   pz(P,'armL',m[0]-snap,0,m[1]);pz(P,'foreL',m[2]);pz(P,'armR',m[3]-snap,0,m[4]);pz(P,'foreR',m[5]);pz(P,'head',.22);pz(P,'chest',.08);P.root.y=-1.2}
@@ -8152,6 +8252,8 @@ function drawMenu(){
   tfit(ab.d||'',R.x+160,R.y+36,12,'#e8cfa8',590);if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+160,R.y+51,11,'#d8c060',590)}
  {const R=passRow,ps=PASS[ch.pass],h=inRect(mouse,R)&&picker===null;g.fillStyle=h?'rgba(70,46,24,.95)':'rgba(20,14,10,.85)';g.strokeStyle='#3a6a3a';g.lineWidth=1;g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,10);g.fill();g.stroke();
   text('◀',R.x+16,R.y+26,15,'#9f9');text('▶',R.x+R.w-20,R.y+26,15,'#9f9');text('Passif',R.x+40,R.y+25,13,'#9f9','left');tfit(`${ps[0]} : ${ps[1]}`,R.x+160,R.y+25,13,'#cfe8c0',590,'bold')}
+ // sort commun à tous les ninjas : soin (H)
+ tfit(`${lbl.KeyH} · Soin (tous les ninjas) : l'allié visé (ou toi) récupère 25 % de ses PV + 8 % en 2 s · 0,3 s · ${HLS.cd} s de recharge · sans chakra`,passRow.x+40,passRow.y+passRow.h+16,11,'#9fdfaa',770,'normal');
  btn(rndBuildBtn,'🎲 Kit aléatoire',false);btn(presetBtn,'📜 Modèle suivant',false);if(presetI>=0)text('Modèle : '+PRESETS[presetI][0],presetBtn.x,presetBtn.y+50,12,'#ffd38a','left');
  {const BUD=budgetOf(MY),c=kitCost(MY),over=c>BUD,x=628,y=604;text('Points du kit',x,y+2,12,'#b89a70','left','normal');for(let i=0;i<BUD;i++){g.fillStyle=i<c?(over?'#ff5a4a':'#ffb347'):'rgba(255,255,255,.12)';g.fillRect(x+i*13,y+8,11,10)}
   if(c>BUD)for(let i=BUD;i<c;i++){g.fillStyle='#ff5a4a';g.fillRect(x+i*13,y+8,11,10)}
@@ -8168,7 +8270,7 @@ function drawMenu(){
    tfit(`${ab.n} · ${ab.cd}s${picker?` · ${ab.mud?ab.mud+' mudras':'sans mudra'} · ${jcost(ab)} chakra`:''}`,R.x+62,R.y+20,14,'#ffd38a',R.w-150,'bold');
    tfit2(ab.d||'',R.x+12,R.y+(R.h>56?35:33),R.h>56?11.5:11,'#e8cfa8',R.w-24);if(used){g.fillStyle='rgba(10,6,4,.7)';g.fillRect(R.x,R.y,R.w,R.h);text('DÉJÀ DANS TON KIT',R.x+R.w/2,R.y+36,12,'#ffb347')}if(ab.ex)tfit(`EX · ${ab.ex.n} : ${ab.ex.d}`,R.x+12,R.y+52,11,'#d8c060',R.w-24)});
   text('Clique ailleurs pour fermer',W/2,710,12,'#b89a70','center','normal')}
- else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · ${lbl.KeyR} maintenu = chakra · Maj = sprint · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
+ else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · ${lbl.KeyR} maintenu = chakra · ${lbl.KeyH} soin · Maj = sprint · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
  drawCursor();
 }
 function bar(x,y,w,h,v,col,right){g.fillStyle='rgba(0,0,0,.6)';g.fillRect(x,y,w,h);g.fillStyle=col;const vw=w*clamp(v,0,1);g.fillRect(right?x+w-vw:x,y,vw,h);g.strokeStyle='#2a3a5a';g.lineWidth=1;g.strokeRect(x,y,w,h)}
@@ -8189,7 +8291,7 @@ function drawBoard(y0,rh){units.forEach(stOf);const all=Object.values(STATS);if(
    [[st.k,178],[st.d,208],[st.a,238],[Math.round(st.dmg),302],[Math.round(st.tk),362],[Math.round(st.heal),424],[Math.round(st.sh||0),496]].forEach(([v,cx])=>text(String(v),x+cx,y,f,'#dfe8ff','right','normal'))})})}
 function drawHud(){
  const p=player;
- text(p.ch.name+' (toi)',30,32,18,'#9fd4ff','left');bar(30,40,360,16,p.hp/p.max,'#4db8ff');eBar(30,59,360,p.energy/100);{const T=trait(p);if(T&&T.hud)try{T.hud(p,30,96)}catch(e){}}
+ text(p.ch.name+' (toi)',30,32,18,'#9fd4ff','left');bar(30,40,360,16,p.hp/p.max,'#4db8ff');eBar(30,59,360,p.energy/100);ckHud(p,30,59,360);{const T=trait(p);if(T&&T.hud)try{T.hud(p,30,96)}catch(e){}}
  if(canBlock(p)){bar(30,67,360,4,p.stam/100,p.blockLock>0?'#a55':'#7df');text(`${lbl.KeyF} garde · ${lbl.KeyF}+clic parade · Maj sprint`,396,72,10,'#7df','left','normal')}
  let ay=0;for(const m of units)if(m!==player&&m.team===player.team&&(m.human||mode!=='battle')){const yy=ay;ay+=30;text(m.ch.name+(m.human?' (coéquipier)':' (allié)'),30,94+yy,13,m.human?'#9f9':'#9fd4ff','left');bar(30,100+yy,220,8,m.hp/m.max,m.human?'#7f7':'#4db8ff');if(m.dead&&mode==='battle')text(`retour dans ${Math.ceil(m.respawn)} s`,258,108+yy,11,'#9f9','left','normal')}
  if(mode!=='battle'){const fo=units.filter(u=>u.team!==player.team),two=fo.length>1;fo.forEach((e,i)=>{const y=i*(fo.length>2?36:44);
@@ -8212,11 +8314,11 @@ function drawHud(){
   text(k,x+s/2,y+24,k.length>2?13:20,ready?'#fff':'#667','center');
   if(exS)text('EX',x+5,y+13,10,'#ffe81f','left');
   if(ab.charges)text('×'+p.chg[i],x+s-5,y+sh-5,12,'#7df','right');if(ab.ammo)text(p.ammo+'/'+ab.ammo,x+s-5,y+sh-5,11,'#ffb03a','right');
-  if(ab.cast)text(`${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');
+  if(ab.cast)text(`${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');hudCost(p,ab,i,x,y,s,sh);
   if(!ab.ult&&p.cds[i]>0&&!(ab.charges&&p.chg[i]>0)){const kk=Math.min(1,p.cds[i]/ab.cd);g.fillStyle='rgba(0,0,0,.6)';g.fillRect(x,y+sh*(1-kk),s,sh*kk);text(p.cds[i].toFixed(1),x+s/2,y+42,13,'#ffe81f')}
-  if(ab.ult&&!ready){g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-p.energy/100),s,sh*p.energy/100)}
+  if(ab.ult&&!ready&&p.cds[i]<=0){const f=Math.min(1,p.energy/Math.max(1,jcost(ab)));g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-f),s,sh*f)}
   text(exS&&ab.ex?ab.ex.n:ab.n,x+s/2,y+sh+13,10,exS&&ab.ex?'#ffe81f':'#9fb3d9','center','normal')});
- text(muted?`${lbl.KeyM} : son coupé`:`${lbl.KeyM} : son`,20,H-14,11,'#55607a','left','normal');
+ drawHealHud(p,x0+n*(s+gap)+6,y,sh);text(muted?`${lbl.KeyM} : son coupé`:`${lbl.KeyM} : son`,20,H-14,11,'#55607a','left','normal');
 }
 function drawMinimap(){const w=230,h=w*MAP.h/MAP.w,x=W-w-20,y=H-h-90,k=w/MAP.w;
  g.fillStyle='rgba(8,12,22,.85)';g.fillRect(x,y,w,h);g.strokeStyle='#2a3a5a';g.lineWidth=1;g.strokeRect(x,y,w,h);
@@ -8354,7 +8456,7 @@ function guestFrame(dt){for(const k in pressed)net.gp[k]=1;
  const k=Math.min(1,dt*14);for(const u of units)if(u!==player){u.x+=(u.nx-u.x)*k;u.y+=(u.ny-u.y)*k}
  // prédiction : le coéquipier voit son personnage bouger tout de suite, sans attendre l'hôte
  const u=player;if(u&&!u.dead&&state==='fight'){const I=localInput();u.aim=Math.atan2(I.ay-u.y,I.ax-u.x);let mx=I.mx,my=I.my;const l=Math.hypot(mx,my);if(l>1){mx/=l;my/=l}
-  const can=u.stun<=0&&!u.dash&&!(u.root>0)&&!I.r,sp=can?u.ch.spd*SPD_K*(I.sh&&(u.run??100)>1&&!I.f?SPRINT_K:1)*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.5:1)*(u.flame?(u.flame.still?0:.5):1)*(u.spin?.8:1)*(I.f&&canBlock(u)&&u.stam>0?.55:1)*(u.ch.pass==='speed'?1.1:1):0;
+  const can=u.stun<=0&&!u.dash&&!(u.root>0)&&!I.r,sp=can?u.ch.spd*SPD_K*(I.sh&&(u.run??100)>1&&!I.f&&!u.exh?SPRINT_K:1)*(u.slow>0?.55:1)*(u.haste>0?1.4:1)*(u.cast?.5:1)*(u.flame?(u.flame.still?0:.5):1)*(u.spin?.8:1)*(I.f&&canBlock(u)&&u.stam>0?.55:1)*(u.exh?CK.exhSpd:1)*(u.hlC>0?.5:1)*(u.ch.pass==='speed'?1.1:1):0;
   const ac=sp?1-Math.exp(-ACCEL*dt):1;u.gvx=(u.gvx||0)+(mx*sp-(u.gvx||0))*ac;u.gvy=(u.gvy||0)+(my*sp-(u.gvy||0))*ac;const vx=u.gvx,vy=u.gvy;u.x+=vx*dt;u.y+=vy*dt;collide(u);u.moving=l>.1&&sp>0;if(u.moving)u.walk+=dt*13;
   net.seq++;net.pend.push({seq:net.seq,vx,vy,dt});if(net.pend.length>180)net.pend.shift()}
  for(const p of projs){p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot=(p.rot||0)+dt*25;if(p.life0)p.life=Math.max(.001,p.life-dt)}
