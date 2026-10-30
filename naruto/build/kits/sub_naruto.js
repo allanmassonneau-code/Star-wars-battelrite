@@ -2,10 +2,10 @@
 // Le Rasengan, le Multiclonage et le Rasenshuriken sont déjà des subjutsu (sub.js, sub_nrp2.js) ; ce lot ajoute le chakra de Kyûbi,
 // sorti du clan Uzumaki (les Uzumaki sont des maîtres du fûinjutsu, pas des réceptacles de démon).
 KIT('u',[
- [4,'B','x.sub_nr_kyubi','Chakra de Kyûbi','Rugissement qui repousse (8), puis 5 s : régénère, tes coups de base lancent des griffes de chakra ; insensible au contrôle 2 s','fox'],
+ [4,'B','x.sub_nr_kyubi','Chakra de Kyûbi','Rugissement qui repousse (8), puis 5 s : régénère, tes coups de base lancent des griffes de chakra (7, une par seconde) ; insensible au contrôle 2 s','fox'],
 ]);
 Object.assign(NAT,{
- sub_nr_kyubi:S_('Chakra de Kyûbi','Rugissement qui repousse (8), puis 5 s : régénère, tes coups de base lancent des griffes de chakra ; insensible au contrôle 2 s',16,{hero:'chewie',tele:{self:1,r:150},ai:SELF(200,.7)},(u)=>{S('heavy',u);S('roar',u);anim(u,'roar',.8);
+ sub_nr_kyubi:S_('Chakra de Kyûbi','Rugissement qui repousse (8), puis 5 s : régénère, tes coups de base lancent des griffes de chakra (7, une par seconde) ; insensible au contrôle 2 s',16,{hero:'chewie',tele:{self:1,r:150},ai:SELF(200,.7)},(u)=>{S('heavy',u);S('roar',u);anim(u,'roar',.8);
   u.unstop=Math.max(u.unstop,2);u.regenB=Math.max(u.regenB,5);u.sub_nr_kyu=5;VFX='fox';aoe(u,u.x,u.y,150,8,{kb:290,unblockable:1},'#ff6a2a');VFX=null;
   jx({jfx:'sub_nr_roar',ui:units.indexOf(u),x:u.x,y:u.y,t:.7,m:.7});if(near(u.x,u.y))shake=Math.max(shake,.35)}),
 });

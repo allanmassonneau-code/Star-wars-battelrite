@@ -19,6 +19,7 @@ KIT('c6',[
 const UZ_MKT=8,UZ_KAIR=480,UZ_BL=170,UZ_WL=230,UZ_KAI_AI={max:UZ_KAIR-20,p:.75},UZ_ST_AI={max:520,p:.9},UZ_ST_DEF={mode:'def',p:.6};
 const uzMk=t=>t&&!t.dead&&SIMT<t.uz_mkE?t.uz_mk|0:0;
 function uzMark(o,t,n=1){if(!o||!t||t.dead||t.team===o.team)return;const m0=uzMk(t);t.uz_mk=Math.min(3,m0+n);t.uz_mkE=SIMT+UZ_MKT;
+ if(!aux.some(x=>x.type==='uz_mkt'&&x.tg===t&&x.t>0))aux.push({type:'uz_mkt',x:t.x,y:t.y,r:0,t:UZ_MKT,m:UZ_MKT,team:o.team,owner:o,tg:t,k:0})
  if(t.uz_mk>m0)jx({jfx:'uz_mkon',ti:units.indexOf(t),x:t.x,y:t.y,t:.45,m:.45});
  if(t.uz_mk>=3&&m0<3&&!(SIMT<t.uz_sealE)){t.uz_sealE=SIMT+UZ_MKT;t.energy=Math.max(0,t.energy-15);t.chk=false;t.ckLock=Math.max(t.ckLock||0,2);
   say(t,'CHAKRA SCELLÉ','#ffd36a');if(near(t.x,t.y))S('genjutsu',o);jx({jfx:'uz_lock',ti:units.indexOf(t),x:t.x,y:t.y,t:2,m:2})}}
@@ -67,13 +68,13 @@ Object.assign(NAT,{
   jx({jfx:'uz_leapc',x:u.x,y:u.y,a,t:.5,m:.5});
   dash(u,a,L,.38,{jump:46,end:()=>{if(u.dead)return;VFX='chain';for(const e of enemies(u))if(dist(u,e)<92+e.r){hit(e,u,12,{root:.5,unblockable:1});uzMark(u,e,1)}VFX=null;
    jx({jfx:'uz_lash',x:u.x,y:u.y,t:.5,m:.5});if(near(u.x,u.y)){S('heavy',u);shake=Math.max(shake,.12)}}})}),
- uz_shiki:ULT('Shiki Fûjin','Coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34, puis âme scellée 3 s (12/s, ralenti, ni jutsu ni recharge) ; +8 par sceau',{hero:'thrawn',line:{len:520,w:36},ai:{max:480,p:.8}},(u,a)=>{S('genjutsu',u);S('roar',u);anim(u,'uz_shiki',1.1);u.root=Math.max(u.root,.75);
+ uz_shiki:ULT('Shiki Fûjin','Coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34, puis âme scellée 3 s (12/s, ralenti, ni jutsu ni recharge) ; +8 par sceau',{hero:'thrawn',line:{len:520,w:36},ai:{max:480,p:.8}},(u,a)=>{S('genjutsu',u);S('roar',u);anim(u,'uz_shiki',1.1);u.root=Math.max(u.root,.75);u.uz_rtE=SIMT+.7;u.uz_rtB=0;
   jx({jfx:'uz_shini',ui:units.indexOf(u),x:u.x,y:u.y,a,t:1.35,m:1.35});
-  later(u,.7,()=>{if(u.dead||u.stun>0||u.sleepT<0){say(u,'RITUEL BRISÉ','#c8a8ff');return}const h0=u.hp;u.hp=Math.max(1,u.hp-Math.round(u.max*.12));say(u,'-'+Math.round(h0-u.hp)+' PV : LE PRIX DU SCEAU','#c8a8ff');S('shadow',u);
-   proj(u,u.aim,{spd:950,r:16,dmg:34,life:.55,col:'#d8c8ff',kind:'uz_shand',noClash:1,o:{unblockable:1},onHit:(p,t)=>uzSoul(p.owner,t)});if(near(u.x,u.y))shake=Math.max(shake,.25)})}),
- uz_bind:ULT('Entrave du démon','Après 0,4 s, des chaînes saisissent 3 ennemis à moins de 380 : entravés 0,6 s puis enchaînés à toi 3 s (170 au plus, ralentis), 8 dégâts par 0,5 s et un sceau par seconde ; tu restes immobile, un étourdissement les brise',{tele:{self:1,r:380},ai:SELF(330,.8)},(u)=>{S('heavy',u);S('deflect',u);anim(u,'uz_bind',3.5);u.root=Math.max(u.root,.45);
+  later(u,.7,()=>{if(u.dead||u.uz_rtB||u.stun>0||u.sleepT<0){say(u,'RITUEL BRISÉ','#c8a8ff');return}const h0=u.hp;u.hp=Math.max(1,u.hp-Math.round(u.max*.12));say(u,'-'+Math.round(h0-u.hp)+' PV : LE PRIX DU SCEAU','#c8a8ff');S('shadow',u);
+   proj(u,u.aim,{spd:950,r:16,dmg:34,life:.55,col:'#d8c8ff',kind:'uz_shand',vfx:'chakra',noClash:1,o:{unblockable:1},onHit:(p,t)=>uzSoul(p.owner,t)});if(near(u.x,u.y))shake=Math.max(shake,.25)})}),
+ uz_bind:ULT('Entrave du démon','Après 0,4 s, des chaînes saisissent 3 ennemis à moins de 380 : entravés 0,6 s puis enchaînés à toi 3 s (170 au plus, ralentis), 8 dégâts par 0,5 s et un sceau par seconde ; tu restes immobile, un étourdissement les brise',{tele:{self:1,r:380},ai:SELF(330,.8)},(u)=>{S('heavy',u);S('deflect',u);anim(u,'uz_bind',3.5);u.root=Math.max(u.root,.45);u.uz_rtE=SIMT+.4;u.uz_rtB=0;
   const ui=units.indexOf(u);jx({jfx:'uz_bindw',ui,x:u.x,y:u.y,t:.45,m:.45});
-  later(u,.4,()=>{if(u.dead||u.stun>0||u.sleepT<0){say(u,'CHAÎNES BRISÉES','#e8c860');if(u.anim&&u.anim.k==='uz_bind')u.anim=null;return}
+  later(u,.4,()=>{if(u.dead||u.uz_rtB||u.stun>0||u.sleepT<0){say(u,'CHAÎNES BRISÉES','#e8c860');if(u.anim&&u.anim.k==='uz_bind')u.anim=null;return}
    const L=enemies(u).filter(e=>dist(u,e)<380+e.r&&!(e.stealth>0)).sort((p,q)=>dist(u,p)-dist(u,q)).slice(0,3);if(!L.length){say(u,'PERSONNE À ENCHAÎNER','#e8c860');if(u.anim&&u.anim.k==='uz_bind')u.anim=null;return}
    if(near(u.x,u.y)){S('heavy',u);shake=Math.max(shake,.3)}
    for(const e of L){aux.push({type:'uz_bind',x:e.x,y:e.y,r:0,t:3,m:3,team:u.team,owner:u,tg:e,ui,ti:units.indexOf(e),k:.5,n:0});VFX='chain';hit(e,u,8,{root:.6,unblockable:1});VFX=null;uzMark(u,e,1);if(near(e.x,e.y))sparks(e.x,e.y,'#e8c860',10,'chain')}})}),
@@ -113,7 +114,9 @@ AUXF.uz_bind=(x,dt)=>{const o=x.owner,e=x.tg;
  if(d>UZ_BL&&e.unstop<=0){const a=ang(e,o),m=Math.min(d-UZ_BL,620*dt);e.x+=Math.cos(a)*m;e.y+=Math.sin(a)*m;e.kx*=.5;e.ky*=.5;if(e.dash&&d>UZ_BL+24)e.dash=null;collide(e)}
  if(e.unstop<=0)e.slow=Math.max(e.slow,.2);
  if(x.k<=0&&x.t>.05){x.k=.5;x.n++;VFX='chain';hit(e,o,8,{unblockable:1});VFX=null;if(x.n%2===0)uzMark(o,e,1)}};
-AUXD.uz_swapk=AUXD.uz_soul=()=>{};
+// suivi des sceaux d'une cible : ils disparaissent 8 s après le dernier posé, à la mort de la cible, ou après une Détonation
+AUXF.uz_mkt=x=>{const e=x.tg;if(!e||e.dead||!(e.uz_mk>0)||!(SIMT<e.uz_mkE)){if(e)e.uz_mk=0;x.t=0;return}x.t=1;x.x=e.x;x.y=e.y};
+AUXD.uz_swapk=AUXD.uz_soul=AUXD.uz_mkt=()=>{};
 // ---- aides de dessin : spirale Uzumaki, formule de sceau, chaînes dorées
 // spirale (coordonnées de l'écran) : centre, rayon, rotation, aplatissement
 function uzSpiral(x,y,R,rot,fl,col,lw){g.strokeStyle=col;g.lineWidth=lw;g.beginPath();for(let i=0;i<=24;i++){const b=rot+i*.45,r=R*i/24;i?g.lineTo(x+Math.cos(b)*r,y+Math.sin(b)*r*fl):g.moveTo(x,y)}g.stroke()}
@@ -281,12 +284,12 @@ Object.assign(ANIM,{
  uz_bind:(P,e,u,t)=>{const k=ezo(Math.min(1,e/.1)),w=Math.sin((t||0)*30)*.04*k;pz(P,'armL',-.45*k,0,1.25*k+w);pz(P,'armR',-.45*k,0,-1.25*k-w);pz(P,'foreL',-.35*k);pz(P,'foreR',-.35*k);pz(P,'chest',-.38*k);pz(P,'head',-.32*k);pz(P,'thighL',-.25*k,0,.18*k);pz(P,'thighR',.15*k,0,-.18*k);P.root.y=-3*k},
 });
 // ---- trait de clan : Fûinjutsu (les sceaux du clan, et la vitalité Uzumaki : sous 30 % de PV, le chakra se change en vie)
-TRAITS[6]={nom:'Fûinjutsu',desc:'Tes jutsu de clan posent des sceaux (3 max, 8 s) ; au 3e, le chakra de la cible est scellé : −15 et pas de recharge (R) 2 s. Réserves Uzumaki : recharge (R) +14/s. Sous 30 % de PV, ton chakra se change en vie',
- update(u,dt){if(u.chk)u.energy=Math.min(100,u.energy+14*dt);if(u.hp<u.max*.3&&u.energy>.5){const c=Math.min(u.energy,2.5*dt);u.energy-=c;gain(u,c*2,u);u.uz_fv=.3}else if(u.uz_fv>0)u.uz_fv=Math.max(0,u.uz_fv-dt);
+TRAITS[6]={nom:'Fûinjutsu',desc:'Kunai, chaînes et sceaux du clan marquent l\'ennemi (3 sceaux max, 8 s) ; au 3e, son chakra est scellé : −15 et pas de recharge (R) 2 s (une fois par 8 s). Réserves Uzumaki : recharge (R) +14/s. Sous 30 % de PV, ton chakra se change en vie',
+ update(u,dt){if(SIMT<u.uz_rtE&&(u.stun>0||u.sleepT<0))u.uz_rtB=1;if(u.chk)u.energy=Math.min(100,u.energy+14*dt);if(u.hp<u.max*.3&&u.energy>.5){const c=Math.min(u.energy,2.5*dt);u.energy-=c;gain(u,c*2,u);u.uz_fv=.3}else if(u.uz_fv>0)u.uz_fv=Math.max(0,u.uz_fv-dt);
   // sceaux expirés ; pour les bots : Détonation seulement s'il y a des sceaux à faire exploser, relance du parchemin
-  let best=0;for(const e of units){if(e.dead||e.team===u.team||!(e.uz_mk>0))continue;if(!(SIMT<e.uz_mkE)){e.uz_mk=0;continue}if(dist(u,e)<UZ_KAIR-30)best=Math.max(best,e.uz_mk)}
+  let best=0,late=0;for(const e of units){if(e.dead||e.team===u.team||!(e.uz_mk>0))continue;if(!(SIMT<e.uz_mkE)){e.uz_mk=0;continue}if(dist(u,e)<UZ_KAIR-30){best=Math.max(best,e.uz_mk);if(e.uz_mkE-SIMT<1.5)late=1}}
   const A=u.ch.abil,tg=u.tgt;for(let i=1;i<A.length;i++){const ab=A[i];if(!ab)continue;
-   if(ab.key==='uz_kai')ab.ai=best>=2||(best>=1&&tg&&!tg.dead&&tg.hp<tg.max*.25)?UZ_KAI_AI:null;
+   if(ab.key==='uz_kai')ab.ai=best>=2||(best>=1&&(late&&u.energy>45||tg&&!tg.dead&&tg.hp<tg.max*.25))?UZ_KAI_AI:null;
    else if(ab.key==='uz_store')ab.ai=u.jst&&u.jst.key==='uz_store'?(u.uz_st||SIMT>u.uz_scE?UZ_ST_AI:null):UZ_ST_DEF}},
  draw(u,p,S,sk){if(!(u.uz_fv>0))return;const t=performance.now()/1000;sk=sk||1;g.save();uzSpiral(p.x,p.y,24*S,t*4,K,'rgba(224,80,58,.75)',2.2);g.globalCompositeOperation='lighter';
   for(let i=0;i<4;i++){const h=(t*1.2+i*.25)%1,x=p.x+Math.sin(i*2.1+t*2)*12*S,y=p.y-(8+h*56)*S*sk;g.fillStyle=rgba(h<.5?'#ff7a5a':'#7fe07f',.7*(1-h));g.fillRect(x-1,y-4*S,2,8*S);g.fillRect(x-4*S,y-1,8*S,2)}g.restore()},
