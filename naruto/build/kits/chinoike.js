@@ -6,15 +6,15 @@
 // Combo signature : ouvrir des entailles (aiguilles, fouet, lame) → Ketsuryûgan : Paralysie ou Sang bouillant (qui consume les entailles).
 const ciD={
  ndl:'3 aiguilles de sang en éventail ; chaque aiguille qui touche ouvre une entaille (2 max par lancer)',
- whip:'Prix du sang (5 % des PV max) : le fouet de sang frappe toute la ligne, ouvre 2 entailles et ramène les ennemis vers toi',
- spear:'Prix du sang (7 % des PV max) : lance de sang perçante ; dans une cible qui saigne déjà, elle éclate (+45 % de dégâts) et l\'entrave 0,5 s',
+ whip:'Prix du sang (6 % des PV max) : le fouet de sang frappe toute la ligne, ouvre 2 entailles et ramène les ennemis vers toi',
+ spear:'Prix du sang (8 % des PV max) : lance de sang perçante ; dans une cible qui saigne déjà, elle éclate (+45 % de dégâts) et l\'entrave 0,5 s',
  gaze:'Regard droit devant : qui saigne est paralysé 0,9 s, les autres sont ralentis 1,2 s',
- boil:'Fait bouillir le sang de l\'ennemi visé : réduit au silence 0,8 s, 3 brûlures en 1,5 s, plus fortes par entaille, puis les entailles sont consumées',
+ boil:'Fait bouillir le sang de l\'ennemi visé : silence 0,8 s, puis 3 brûlures en 1,5 s qui ralentissent, plus fortes par entaille ; ses entailles sont ensuite consumées. Rompu si tu es étourdi',
  mir:'Tu disparais 1,6 s (plus rapide) et laisses un double de sang ; les ennemis proches qui te regardaient fuient, terrifiés 0,7 s',
  step:'Fonce au travers des ennemis jusqu\'au point visé (240 max) : chaque ennemi traversé est entaillé',
- tide:'Prix du sang (4 % des PV max) : tu fonds en une flaque intouchable qui glisse au point visé (300 max), puis jaillis : dégâts, entaille, ralentit',
+ tide:'Prix du sang (5 % des PV max) : tu fonds en une flaque intouchable qui glisse au point visé (300 max), puis jaillis : dégâts, entaille, ralentit',
  moon:'Lune de sang sur la zone 4 s : les ennemis dedans sont ralentis, gagnent une entaille par seconde et leur sang te soigne 2 fois plus ; à la fin, les entailles explosent et étourdissent 0,5 s',
- stk:'Prix du sang (10 % des PV max) : 3 vagues de pieux de sang jaillissent en ligne devant toi : gros dégâts, entrave 0,7 s, 2 entailles',
+ stk:'Prix du sang (12 % des PV max) : 3 vagues de pieux de sang jaillissent en ligne devant toi : gros dégâts, entrave 0,7 s, 2 entailles',
 };
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
 KIT('c15',[
@@ -30,13 +30,13 @@ KIT('c15',[
  [5,'A','x.ci_stk','Forêt de pieux de sang',ciD.stk,'ci_blood'],
 ]);
 // style de combat propre (lame de sang cristallisé) ; le clan garde aussi les kunai pour jouer à distance
-STYLES.push(['Lame de sang','Sabre de sang cristallisé à longue allonge ; 5e coup : grande entaille en arc qui ouvre 2 entailles','x.ci_style','ci_blood','sword',[15],1.3,1.24]);
+STYLES.push(['Lame de sang','Sabre de sang cristallisé à longue allonge ; 5e coup : grande entaille en arc qui ouvre 2 entailles','x.ci_style','ci_blood','sword',[15],1.24,1.18]);
 STYLES.find(s=>s[0]==='Kunai')[5].push(15);
 
 // ---- réglages (dégâts de base avant la puissance du ninja)
 const ciK={
- bl:{max:5,dur:4,dps:1,heal:.5,ck:.3}, // entailles : 5 max, 4 s (relancées à chaque nouvelle entaille), dégâts/s par entaille, part du sang bu en PV, chakra par PV saigné à PV pleins
- ndl:{d:6,sp:.13,n:2},whip:{L:270,w:44,d:20,pull:240},spr:{d:24,bon:.45,root:.5},gaze:{L:340,w:110,d:10,st:.9,sl:1.2},
+ bl:{max:5,dur:4,dps:.75,heal:.5,ck:.3}, // entailles : 5 max, 4 s (relancées à chaque nouvelle entaille), dégâts/s par entaille, part du sang bu en PV, chakra par PV saigné à PV pleins
+ ndl:{d:6,sp:.13,n:2},whip:{L:270,w:44,d:20,pull:420},spr:{d:24,bon:.45,root:.5},gaze:{L:340,w:110,d:10,st:.9,sl:1.2},
  boil:{d:6,ps:2.5,sil:.8},mir:{t:1.6,fear:.7,R:300},step:{D:240,d:6},tide:{D:300,r:95,d:12},moon:{r:190,t:4,b:8,det:6,st:.5},stk:{L:450,d:26,root:.7}};
 const ciAI={gzOn:RG(320,.75),gzOff:RG(320,.1),bOn:RG(420,.8),bOff:RG(420,.18),spOn:RG(500,.7),spOff:RG(500,.35)};
 const CIR=['#c0142a','#ff4a5a','#5a0610','#ff9aa4'];
@@ -71,7 +71,7 @@ function ciDrop(x,y,r,col){g.fillStyle=col;g.beginPath();g.moveTo(x,y-r*2.2);g.q
 // ninja qui saigne : gouttes qui tombent du corps + rangée d'entailles sous les pieds (lisible : combien d'entailles)
 STATD.push((u,p,S,sk)=>{const n=u.ci_bl|0;if(!n||u.dead)return;if(!isGuest()&&!ciBl(u)){u.ci_bl=0;return}const t=performance.now()/1000;g.save();
  for(let i=0;i<Math.min(5,n+1);i++){const k=(t*1.5+i*.29)%1,x=p.x+((i*13)%22-11)*S,y0=p.y-(44+(i*7)%16)*S*sk,y=y0+ezio(k)*(p.y-y0);ciDrop(x,y,(1.7+.3*(i%2))*S,rgba(i%2?'#c0142a':'#8a0a18',.95*(1-k*.5)))}
- for(let i=0;i<3;i++){const y=p.y-(30+i*9)*S*sk;g.strokeStyle=rgba('#d01828',i<n?.8:0);g.lineWidth=1.6*S;g.beginPath();g.moveTo(p.x-6*S,y-2*S);g.lineTo(p.x+5*S,y+2*S);g.stroke()} // entailles sur le torse
+ for(let i=0;i<3;i++){const y=p.y-(17+i*6)*S*sk;g.strokeStyle=rgba('#d01828',i<n?.8:0);g.lineWidth=1.6*S;g.beginPath();g.moveTo(p.x-6*S,y-2*S);g.lineTo(p.x+5*S,y+2*S);g.stroke()} // entailles sur le torse
  const W=7*S;for(let i=0;i<n;i++)ciDrop(p.x+(i-(n-1)/2)*W,p.y+15*S,2.2*S,i===4?'#ff4a5a':'#c0142a');g.restore()});
 
 // ---- prix du sang (moteur générique : option hpc d'un jutsu, voir mknaruto.py) : paiement, refus, case de la barre de jutsu
@@ -86,14 +86,14 @@ const ciSlotP=(p,ab)=>{const i=p.ch.abil.indexOf(ab);return i<0?1:i};
 // ---- mécaniques
 Object.assign(NAT,{
  // Aiguilles de sang : éventail de 3 aiguilles ; chacune entaille (2 entailles max par lancer et par cible)
- ci_ndl:SP('Aiguilles de sang',ciD.ndl,5,{line:{len:470,w:60},ai:RG(440,.7)},(u,a)=>{const n={};ciS('blaster',u);anim(u,'ci_flick',.3);jx({jfx:'ci_forge',ui:ciI(u),x:u.x,y:u.y,a,t:.3,m:.3});
+ ci_ndl:SP('Aiguilles de sang',ciD.ndl,6,{line:{len:470,w:60},ai:RG(440,.7)},(u,a)=>{const n={};ciS('blaster',u);anim(u,'ci_flick',.3);jx({jfx:'ci_forge',ui:ciI(u),x:u.x,y:u.y,a,t:.3,m:.3});
   for(const o of[-ciK.ndl.sp,0,ciK.ndl.sp])proj(u,a+o,{vfx:'ci_blood',spd:940,r:5,dmg:ciK.ndl.d,life:.5,col:CIR[0],kind:'ci_ndl',onHit:(p,t)=>{const k=ciI(t);if((n[k]=(n[k]||0)+1)<=ciK.ndl.n)ciBleed(p.owner,t,1)}})}),
  // Fouet de sang (prix du sang) : coup de fouet instantané sur toute la ligne, ramène vers le lanceur
- ci_whip:SP('Fouet de sang',ciD.whip,7,{hpc:.05,line:{len:ciK.whip.L,w:ciK.whip.w},ai:RG(250,.6)},(u,a)=>{const W=ciK.whip;ciS('saber',u);ciS('water',u);anim(u,'ci_lash',.45);
+ ci_whip:SP('Fouet de sang',ciD.whip,7,{hpc:.06,line:{len:ciK.whip.L,w:ciK.whip.w},ai:RG(250,.6)},(u,a)=>{const W=ciK.whip;ciS('saber',u);ciS('water',u);anim(u,'ci_lash',.45);
   jx({jfx:'ci_whip',ui:ciI(u),x:u.x,y:u.y,a,L:W.L,t:.45,m:.45});
   for(const e of ciLine(u,a,W.L,W.w))if(hit(e,u,W.d,{pull:W.pull,fx:u.x,fy:u.y,el:-1})){ciBleed(u,e,2);jx({jfx:'ci_splash',x:e.x,y:e.y,a,t:.5,m:.5,n:8})}}),
  // Lance de sang cristallisé (prix du sang) : perçante ; éclate dans une cible qui saignait déjà
- ci_spear:SP('Lance de sang cristallisé',ciD.spear,9,{hpc:.07,line:{len:540,w:24},ai:ciAI.spOff},(u,a)=>{const K=ciK.spr;ciS('bone',u);ciS('blaster',u);anim(u,'ci_throw',.45);
+ ci_spear:SP('Lance de sang cristallisé',ciD.spear,9,{hpc:.08,line:{len:540,w:24},ai:ciAI.spOff},(u,a)=>{const K=ciK.spr;ciS('bone',u);ciS('blaster',u);anim(u,'ci_throw',.45);
   jx({jfx:'ci_forge',ui:ciI(u),x:u.x,y:u.y,a,t:.35,m:.35,big:1});
   proj(u,a,{vfx:'ci_blood',spd:860,r:9,dmg:K.d,life:.63,col:CIR[0],pierce:1,kind:'ci_spear',onHit:(p,t)=>{const o=p.owner;if(t.dead)return;
    if((t.ci_bl|0)>0){if(hit(t,o,K.d*K.bon,{unblockable:1,root:K.root,el:-1})){jx({jfx:'ci_shatter',ti:ciI(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.6,m:.6});ciSay(t,'ÉCLATE !','#ff4a5a',24);ciS('rock',t)}}
@@ -119,7 +119,7 @@ Object.assign(NAT,{
   const x={type:'ci_stp',x:u.x,y:u.y,r:0,t:.4,m:.4,team:u.team,owner:u,hs:new Set()};aux.push(x);
   dash(u,a,D,.22,{through:1,end:()=>{x.t=Math.min(x.t,.04);jx({jfx:'ci_trail',x:x0,y:y0,x2:u.x,y2:u.y,t:.9,m:.9})}})}),
  // Marée de sang (prix du sang) : flaque intouchable qui glisse, puis jaillit
- ci_tide:SP('Marée de sang',ciD.tide,11,{hpc:.04,tele:{r:ciK.tide.r,max:ciK.tide.D},ai:ESC},(u,a,td)=>{const K=ciK.tide,d=clamp(td||K.D,90,K.D),T=.42;ciS('water',u);anim(u,'ci_melt',T+.1);
+ ci_tide:SP('Marée de sang',ciD.tide,11,{hpc:.05,tele:{r:ciK.tide.r,max:ciK.tide.D},ai:ESC},(u,a,td)=>{const K=ciK.tide,d=clamp(td||K.D,90,K.D),T=.42;ciS('water',u);anim(u,'ci_melt',T+.1);
   u.phase=Math.max(u.phase||0,T+.04);u.stealth=Math.max(u.stealth||0,T);jx({jfx:'ci_pool',ui:ciI(u),x:u.x,y:u.y,t:T+.1,m:T+.1});
   dash(u,a,d,T,{end:()=>{ciS('water',u);ciS('heavy',u);anim(u,'ci_rise',.4);jx({jfx:'ci_splash',x:u.x,y:u.y,a:-1,t:.7,m:.7,n:16,big:1});
    for(const e of enemies(u))if(ciIn(u.x,u.y,e,K.r)&&hit(e,u,K.d,{slow:1,el:-1,fx:u.x,fy:u.y}))ciBleed(u,e,1);if(near(u.x,u.y))shake=Math.max(shake,.15)}})}),
@@ -127,7 +127,7 @@ Object.assign(NAT,{
  ci_moon:ULT('Ketsuryûgan : Lune de sang',ciD.moon,{tele:{r:ciK.moon.r,max:460},ai:{max:440,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460),K=ciK.moon;ciS('genjutsu',u);ciS('roar',u);anim(u,'ci_moon',1.1);
   jx({jfx:'ci_eye',ui:ciI(u),x:u.x,y:u.y,t:1.2,m:1.2,big:1});aux.push({type:'ci_moon',x:p.x,y:p.y,r:K.r,t:K.t,m:K.t,team:u.team,owner:u,k:.5,danger:1});if(near(p.x,p.y))shake=Math.max(shake,.25)}),
  // Forêt de pieux (prix du sang) : 3 vagues de pieux en ligne, chacune touche une fois
- ci_stk:ULT('Forêt de pieux de sang',ciD.stk,{hpc:.10,line:{len:ciK.stk.L,w:150},ai:{max:420,p:.8}},(u,a)=>{const K=ciK.stk,done=new Set();ciS('bone',u);anim(u,'ci_price',1);
+ ci_stk:ULT('Forêt de pieux de sang',ciD.stk,{hpc:.12,line:{len:ciK.stk.L,w:150},ai:{max:420,p:.8}},(u,a)=>{const K=ciK.stk,done=new Set();ciS('bone',u);anim(u,'ci_price',1);
   for(let i=0;i<3;i++){const p=fwd(u,a,90+i*140);later(u,.28+i*.2,()=>{ciS('rock',u);if(i===2)ciS('boom',u);jx({jfx:'ci_stakes',x:p.x,y:p.y,a,t:1.1,m:1.1,s:i});
    for(const e of enemies(u)){if(done.has(e)||!ciIn(p.x,p.y,e,78))continue;done.add(e);if(hit(e,u,K.d,{root:K.root,unblockable:1,el:-1})){ciBleed(u,e,2);if(e.root>0)ciSay(e,'EMPALÉ','#ff4a5a',26)}}
    if(near(p.x,p.y))shake=Math.max(shake,i===2?.3:.16)},{x:p.x,y:p.y,r:78})}}),
@@ -144,9 +144,9 @@ Object.assign(NATHERO,{ci:'kylo'});
 // Pas sanglant : entaille chaque ennemi frôlé pendant l'élan
 AUXF.ci_stp=x=>{const u=x.owner;if(!u||u.dead){x.t=0;return}x.x=u.x;x.y=u.y;if(!u.dash)return;for(const e of enemies(u)){if(x.hs.has(e)||dist(u,e)>u.r+e.r+18)continue;x.hs.add(e);if(hit(e,u,ciK.step.d,{el:-1})){ciBleed(u,e,1);sparks(e.x,e.y,CIR[1],6,'ci_blood')}}};
 AUXD.ci_stp=()=>{};
-// Sang bouillant : suit la cible ; 3 brûlures (silence à la 1re), entailles consumées à la 3e ; rompu si le lanceur est étourdi ou meurt
+// Sang bouillant : suit la cible ; 3 brûlures à 0,05 s, 0,75 s et 1,45 s (silence à la 1re), entailles consumées à la 3e ; rompu si le lanceur est étourdi ou meurt
 AUXF.ci_boil=(x,dt)=>{const e=x.tg,u=x.owner;if(x.done)return;if(!e||e.dead||!u||u.dead||u.stun>0){x.done=1;x.t=Math.min(x.t,.15);if(e&&!e.dead&&u&&u.stun>0)ciSay(e,'REGARD ROMPU','#ffb0b8',30);return}
- x.x=e.x;x.y=e.y;if(x.k>0)return;x.k+=.5;x.n++;const K=ciK.boil,bl=e.ci_bl|0,last=x.n>=3;
+ x.x=e.x;x.y=e.y;if(x.k>0)return;x.k+=.7;x.n++;const K=ciK.boil,bl=e.ci_bl|0,last=x.n>=3;
  if(hit(e,u,K.d+K.ps*bl,{unblockable:1,el:-1,silence:x.n===1?K.sil:0,slow:.6}))jx({jfx:'ci_pop',ti:ciI(e),x:e.x,y:e.y,t:.45,m:.45,n:bl});ciS('fire',e);
  if(last){x.done=1;x.t=Math.min(x.t,.3);const m=ciTake(e);if(m)ciSay(e,m+' ENTAILLE'+(m>1?'S':'')+' CONSUMÉE'+(m>1?'S':''),'#ff8a5a',44)}};
 // Lune de sang : ralentit, ajoute une entaille par seconde, double le sang bu ; à la fin, chaque entaille explose
@@ -170,7 +170,7 @@ AFTER.push(()=>{UK.push('ci_bl','ci_hp','ci_pd');
  VP.ci_blood=['#c0142a','#ff4a5a','#7a0612'];
  // Ketsuryûgan : œil rouge à pupille en goutte (3D et 2D), imposé par le clan (CLOOK) via le type d'œil 'ci_k'
  const E0=eyeSpecial;eyeSpecial=function(x,h,cx,cy,U,lw){if(!h.eye&&h.eyeT==='ci_k')return ciEyeTex(x,cx,cy,U,lw);return E0(x,h,cx,cy,U,lw)}});
-CLOOK[15]=(look,l,S)=>{look.head.eye=null;look.head.eyeT='ci_k';if(S&&S[0]==='Lame de sang')look.weapon.col='#d01828'};
+CLOOK[15]=(look,l,S)=>{look.head.eye=null;look.head.eyeT='ci_k';if(S&&S[0]==='Lame de sang'){look.weapon.col='#d01828';look.weapon.blade='#c0142a'}};
 function ciEyeTex(x,cx,cy,U,lw){x.strokeStyle='#1a1410';x.lineWidth=1.3*lw;x.fillStyle='#fff4f4';x.beginPath();x.ellipse(cx,cy,2.5*U,3*U,0,0,7);x.fill();x.stroke();
  x.fillStyle='#c4101e';x.beginPath();x.ellipse(cx,cy+.35*U,1.95*U,2.45*U,0,0,7);x.fill();x.strokeStyle='#4a0008';x.lineWidth=.6*lw;x.beginPath();x.ellipse(cx,cy+.35*U,1.2*U,1.5*U,0,0,7);x.stroke();
  x.fillStyle='#14000a';x.beginPath();x.moveTo(cx,cy-.75*U);x.quadraticCurveTo(cx+.6*U,cy+.35*U,cx+.45*U,cy+.75*U);x.arc(cx,cy+.75*U,.45*U,0,Math.PI);x.quadraticCurveTo(cx-.6*U,cy+.35*U,cx,cy-.75*U);x.fill();
