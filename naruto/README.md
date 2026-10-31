@@ -2,6 +2,13 @@
 
 Même moteur que l'arène Star Wars (vue 3/4 façon Battlerite, arène, bataille, duel, en ligne jusqu'à 8), mais dans le monde de Naruto, et **on joue son propre ninja**.
 
+## Choisir ou créer son perso
+- L'écran d'accueil est la **liste des persos**, rangée par village et par groupe (Mes ninjas, Konoha, Suna, Kiri, Oto, Akatsuki, autres ninjas…) : onglets pour sauter à une section, molette ou flèches pour défiler, champ de recherche (nom, village, clan, nature).
+- Survoler un perso affiche sa **fiche** en bas : village, clan, nature, voie, PV, vitesse, puissance, passif, trait de clan et ses 6 emplacements (Clic G, Clic D, Espace, Q, E, T) avec leur rang.
+- **Arène** et **duel** hors ligne : clic sur ton perso, puis sur ton **adversaire** (ou « Adversaire au hasard », Échap pour revenir). **Bataille** : clic = combat direct. **En ligne** : chacun choisit son perso dans la liste puis clique PRÊT.
+- **+ Créer un perso** ouvre la création (ci-dessous) sur un nouveau ninja ; « Enregistrer » le range dans **Mes ninjas** (autant qu'on veut, gardés dans le navigateur). Sur la fiche ou la carte survolée : **Modifier**, **Dupliquer**, **Supprimer** (tes ninjas).
+- Les **37 persos de l'anime** se retouchent aussi (kit et apparence) : la retouche est gardée par perso, **Rétablir l'original** le remet comme dans l'anime.
+
 ## Créer son ninja
 - **Clan** (ou sans clan) : Uchiha, Hyûga, Nara, Akimichi, Aburame, Inuzuka, Uzumaki, Yamanaka, Sabaku, Kaguya, Taijutsuka (style Rock Lee / Gai).
 - **Style de combat** (attaque de base, gratuit) selon le clan :
@@ -19,7 +26,7 @@ Même moteur que l'arène Star Wars (vue 3/4 façon Battlerite, arène, bataille
 - **Clans** : chacun a ses techniques de D à S (ex. Uchiha : Kamui, Izanagi, Amaterasu, Tsukuyomi, Susanô ; Hyûga : 128 points ; Nara : Kage Nui ; Akimichi : Mode Papillon ; Sabaku : Bouclier absolu, Funérailles du désert ; Kaguya : danses du saule, du mélèze et de la clématite…)
 - **Rangs D, C, B, A, S** = 1 à 5 points, budget de **17 points** par kit. Pas de versions EX.
 - **Voie** (Taijutsu, Équilibré, Ninjutsu), **passif**, apparence complète (village, tenue, coiffure, cheveux, peau, couleur du chakra, accessoire).
-- **18 modèles** inspirés des ninjas célèbres (style Naruto, Sasuke, Itachi, Gaara, Neji, Shikamaru, Kakashi, Rock Lee, Gai, Kiba, Shino, Sakura, Chôji, Ino, Kimimaro, Jiraiya, Minato, Deidara).
+- **Modèles de kit** : le kit et l'apparence d'un perso de l'anime comme point de départ, à retoucher.
 
 ## En jeu
 - L'arme suit le style, et chaque clan a son style de corps à corps : poings bandés, kunai au poing, sabre, paume lumineuse, poing géant, griffes + chien, os, gantelets de sable, chaînes, senbon fleuris, paumes d'insectes, mains d'ombre, griffes de ronces, éventail fermé, lames d'or, mains-lames de papier, shuriken en main, frappes de glace, marionnette qui frappe au contact.

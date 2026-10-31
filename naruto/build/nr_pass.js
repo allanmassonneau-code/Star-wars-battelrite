@@ -31,7 +31,7 @@ function drawCutin(){if(!cutin)return;cutin.t-=1/60;if(cutin.t<=0){cutin=null;re
  g.save();g.globalAlpha=a;g.translate((1-in_)*-300,0);g.fillStyle='rgba(10,6,4,.78)';g.beginPath();g.moveTo(0,y-40);g.lineTo(W,y-62);g.lineTo(W,y+22);g.lineTo(0,y+44);g.fill();
  g.fillStyle=cutin.col;g.fillRect(0,y+38,W,3);g.save();g.translate(W*.5,y);g.rotate(-.018);g.shadowColor=cutin.col;g.shadowBlur=24;text(cutin.s,0,6,46,'#fff4d8');g.restore();text(cutin.who,W*.5,y+30,15,cutin.col,'center');g.restore()}
 // ---------- Persos de l'anime : kits préfaits (apparence + build fidèles au personnage) ----------
-// n nom court (aussi le nom du bot), full nom complet, g groupe de la galerie (GALG), side camp du bot (0 Alliance, 1 Akatsuki), nat, clan (-1 sans), voie (0 taijutsu, 1 équilibré, 2 ninjutsu),
+// n nom court (aussi le nom du bot), full nom complet, g groupe (GALG : sous-titre de la carte dans la liste des persos ; la section de la liste vient de sec, sinon de g, voir rosSec), side camp du bot (0 Alliance, 1 Akatsuki), nat, clan (-1 sans), voie (0 taijutsu, 1 équilibré, 2 ninjutsu),
 // pass passif, sty style de combat, j 5 jutsu (Clic D, Espace, Q, E, T), l apparence {v village,t tenue,c coiffure,h cheveux,p peau,k chakra,a accessoire,f visage,b bandeau,d dos}, d jeu en une ligne
 const GALG=['Équipe 7','Akatsuki','Sannin & Hokage','Konoha','Suna','Oto','Kiri','Autres clans'],GALC=['#ff9a3a','#e0383a','#e8c040','#5ab45a','#d8a860','#9a6ad8','#5ab8d8','#c86a8a'];
 const PRESETS=[
@@ -48,7 +48,7 @@ const PRESETS=[
  {n:'Konan',full:'Konan',g:1,side:1,nat:2,clan:16,voie:2,pass:'energy',sty:'Mains-lames de papier',j:['Papillons shikigami','Ailes de papier','Cocon de papier','Corps de papier','Mer de papiers explosifs'],l:{v:7,t:2,c:15,h:11,p:4,k:5,a:0,f:0,b:8,d:0},d:'Ange de papier : papillons qui traquent, cocon qui enserre, mer de papiers explosifs'},
  {n:'Jiraiya',full:'Jiraiya',g:2,side:0,nat:4,clan:-1,voie:1,pass:'rage',sty:'Taijutsu',j:['Rasengan','Saut ninja','Doton : Yomi Numa','Multiclonage','Mode Ermite'],l:{v:0,t:14,c:16,h:4,p:0,k:0,a:0,f:7,b:7,d:2},d:'Ermite des crapauds : marécage, clones, Rasengan, puis le Mode Ermite'},
  {n:'Tsunade',full:'Tsunade',g:2,side:0,nat:4,clan:-1,voie:0,pass:'regen',sty:'Taijutsu',j:['Ôkashô','Shunshin','Byakugô','Shôsen','Invocation : Katsuyu'],l:{v:0,t:15,c:17,h:0,p:0,k:2,a:0,f:5,b:8,d:0},d:'Princesse des limaces : force titanesque, Byakugô et soins de Katsuyu'},
- {n:'Orochimaru',full:'Orochimaru',g:2,side:1,nat:2,clan:-1,voie:2,pass:'energy',sty:'Taijutsu',j:['Serpents de l\'ombre','Kage Bunshin : leurre','Rashômon','Barrière Shishienjin','Invocation : Manda'],l:{v:5,t:16,c:18,h:1,p:6,k:3,a:0,f:10,b:8,d:0},d:'Sannin des serpents : morsures qui attirent, portail Rashômon et Manda'},
+ {n:'Orochimaru',full:'Orochimaru',g:2,sec:'Oto',side:1,nat:2,clan:-1,voie:2,pass:'energy',sty:'Taijutsu',j:['Serpents de l\'ombre','Kage Bunshin : leurre','Rashômon','Barrière Shishienjin','Invocation : Manda'],l:{v:5,t:16,c:18,h:1,p:6,k:3,a:0,f:10,b:8,d:0},d:'Sannin des serpents : morsures qui attirent, portail Rashômon et Manda'},
  {n:'Hiruzen',full:'Hiruzen Sarutobi',g:2,side:0,nat:0,clan:-1,voie:1,pass:'energy',sty:'Kunai au poing',j:['Multiclonage de shuriken','Shunshin','Katon : Dragon de feu','Multiclonage','Katon : Grand souffle de feu'],l:{v:0,t:12,c:3,h:9,p:1,k:4,a:4,f:11,b:8,d:0},d:'Professeur aux mille jutsu : shuriken démultipliés, dragon et souffle de feu'},
  {n:'Minato',full:'Minato Namikaze',g:2,side:0,nat:2,clan:-1,voie:1,pass:'speed',sty:'Kunai au poing',j:['Rasengan','Hiraishin','Kunai explosifs','Contre du clone','Invocation : Crapaud'],l:{v:0,t:13,c:19,h:0,p:0,k:6,a:0,f:0,b:0,d:0},d:'Éclair jaune : kunai marqués, téléportation et Rasengan éclair'},
  {n:'Neji',full:'Neji Hyûga',g:3,side:0,nat:2,clan:1,voie:0,pass:'crit',sty:'Poing souple',j:['Hakke Kûshô','Pas du Hakke','Byakugan','Kaiten','Hakke : 128 points'],l:{v:0,t:4,c:20,h:14,p:0,k:5,a:0,f:0,b:0,d:0},d:'Génie du Jûken : paumes à distance, Kaiten qui renvoie tout, 128 points'},
@@ -78,8 +78,8 @@ const PASSI=k=>Math.max(0,PASSK.indexOf(k));
 function presetBuild(i,name,side){const P=PRESETS[i],clan=P.clan,nat=P.nat;
  const b={name:name||(typeof MY!=='undefined'&&MY?MY.name:P.n),side:side??P.side,voie:P.voie,nat,clan,pass:PASSI(P.pass),l:Object.assign({},P.l),j:[STYLES.findIndex(x=>x[0]===P.sty)].concat(P.j.map((n,k)=>{const J=JL.find(j=>j.n===n&&stype(j.slot)===stype(k+1)&&(j.cat==='c'+clan||(clan!==TAIJ&&j.cat==='n'+nat)||(clan<0&&j.cat==='u')));return J?J.id:-1}))};
  return sanitizeBuild(b,true)}
-// charge un perso dans ton ninja : ton nom est gardé, sauf « Ninja » ou le nom d'un autre perso (il prend alors celui du perso)
-function applyPreset(i){const P=PRESETS[i],nm=!MY.name||MY.name==='Ninja'||PRESETS.some(q=>q.n===MY.name)?P.n:MY.name;MY=presetBuild(i,nm,MY.side);presetI=i;rebuildMine()}
+// « Modèles de kit » (création) : le perso en cours prend le kit et l'apparence du perso de l'anime ; son nom est gardé, sauf « Ninja », « Nouveau ninja » ou le nom d'un autre perso (il prend alors celui du perso)
+function applyPreset(i){const P=PRESETS[i],nm=!EB.name||EB.name==='Ninja'||EB.name==='Nouveau ninja'||PRESETS.some(q=>q.n===EB.name)?P.n:EB.name;EB=presetBuild(i,nm,EB.side);presetI=i;edRebuild()}
 // ---------- Cartes de l'arène ----------
 const MAPS=[['Terrain d\'entraînement'],['Vallée de la Fin'],['Désert de Suna']];
 const THEMES=[{sky:['#2a2650','#a8506a','#f3a65a'],floor:['#3e5a2c','#4f6e34'],line:'rgba(30,50,20,.18)',wall:['#6a4426','#4a2e18'],post:['#4a2e18','#9a6a3a','#3a2210','#b88a52']},

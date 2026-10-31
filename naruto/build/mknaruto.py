@@ -42,7 +42,12 @@ rep("for(const k in BAL){const [hp,pw,spd]=BAL[k];Object.assign(CH[k],{hp,pw,spd
 rep("const HEROES=Object.keys(CH).filter(k=>!CH[k].trooper);",open(SP+'nr_ninja.js').read().replace('/*NR_PASS*/',open(SP+'nr_pass.js').read()).replace('/*NR_NATURE*/',open(SP+'nr_flow.js').read()+open(SP+'nr_nature.js').read()+open(SP+'nr_kits.js').read()+open(SP+'nr_pace.js').read()+KITS))
 rep("playerChamp='luke',aiChamp='vader'","playerChamp='p0',aiChamp='b20'")
 # bots : jamais deux fois le même perso de l'anime (un bot ne prend pas le nom d'un joueur, ex. le joueur Naruto n'affronte pas un bot Naruto)
-rep("const pick=t=>{let o=HEROES.filter(h=>CH[h].side===sides[t]&&!used.has(h));","const nm=new Set(H.filter(h=>h.c&&CH[h.c]).map(h=>CH[h.c].name)),pick=t=>{let o=HEROES.filter(h=>CH[h].side===sides[t]&&!used.has(h)&&!nm.has(CH[h].name));")
+rep("const pick=t=>{let o=HEROES.filter(h=>CH[h].side===sides[t]&&!used.has(h));","const nm=new Set(H.filter(h=>h.c&&CH[h.c]).map(h=>CH[h.c].name).concat(aiChamp==='o0'&&CH.o0?[CH.o0.name]:[])),pick=t=>{let o=HEROES.filter(h=>CH[h].side===sides[t]&&!used.has(h)&&!nm.has(CH[h].name));")
+# arène / duel hors ligne : l'adversaire choisi dans la liste (CH.o0, OPPK) remplace le tirage, même en 2 contre 2 ou 3 contre 3 (ses alliés restent des bots)
+rep("aiChamp=o[Math.floor(rnd()*o.length)];","aiChamp=OPPK&&CH[OPPK]?OPPK:o[Math.floor(rnd()*o.length)];OPPK=null;")
+rep("if(mode!=='battle'&&H.length===1&&n===1&&!used.has(aiChamp))","if(mode!=='battle'&&H.length===1&&(n===1||aiChamp==='o0')&&!used.has(aiChamp))")
+# champ de recherche de la liste des persos : placé sur le canevas, caché hors du menu
+rep("backB.hidden=state!=='menu';quitB.hidden=state==='menu';","backB.hidden=state!=='menu';rosQSync();quitB.hidden=state==='menu';")
 rep(",hover='luke';",",hover='p0';")
 rep("const saberCol=u=>u.ch.look.weapon.col||'#ccc';\nconst canBlock=u=>u.ch.look.weapon.t==='saber';",
     "const saberCol=u=>u.ch.look.weapon.col||'#ccc';\nconst canBlock=u=>u.ch.look.weapon.t==='saber'||u.ch.look.weapon.t==='kunai';")
@@ -54,16 +59,17 @@ rep("say(u,'+30 HOLOCRON','#6f9')","say(u,'+30 PILULE','#6f9')")
 rep("text(`${side?'Empire':'Alliance'}${team===player.team?' (ton camp)':''}`","text(`${CAMPS[side]}${team===player.team?' (ton camp)':''}`")
 rep("nA=side?'Empire':'Alliance',nB=side?'Alliance':'Empire';","nA=CAMPS[side],nB=CAMPS[1-side];")
 rep("(win===light?'La Force est avec toi.':'Le côté obscur l\\'emporte…')","(win===light?'La Volonté du Feu l\\'emporte !':'L\\'Akatsuki triomphe…')")
-rep("Ton adversaire sera un personnage du camp opposé","Ton adversaire sera un ninja du camp opposé")
+rep("Ton adversaire sera un personnage du camp opposé","Clique ton perso, puis ton adversaire")
 rep("`${CFG.bsize} personnages contre ${CFG.bsize}","`${CFG.bsize} ninjas contre ${CFG.bsize}")
 # ---------- menu : créateur de ninja
-cut("// ---------- Menu : mode + panel de personnages ----------","function bar(x,y,w,h,v,col,right)",open(SP+'nr_menu.js').read())
+cut("// ---------- Menu : mode + panel de personnages ----------","function bar(x,y,w,h,v,col,right)",open(SP+'nr_menu.js').read()+open(SP+'nr_roster.js').read())
 rep("const coopBtn={x:1040,y:76,w:158,h:30},readyBtn={x:1052,y:550,w:158,h:32},teamBtn={x:880,y:550,w:160,h:32};",
-    "const coopBtn={x:1040,y:76,w:158,h:30},readyBtn={x:1030,y:576,w:210,h:54},teamBtn={x:1030,y:636,w:210,h:34};")
+    "const coopBtn={x:1040,y:76,w:158,h:30},readyBtn={x:850,y:677,w:230,h:36},teamBtn={x:610,y:677,w:230,h:36};")
 # panneau de choix du créateur ouvert : il capte le clic (pas de bouton de mode, PRÊT ou ÉQUIPE en dessous)
-rep("if(state==='menu'){if(pressed.lmb){if(inRect(mouse,coopBtn))","if(state==='menu'){if(pressed.lmb&&picker!==null){creatorClick();pressed.lmb=0}if(pressed.lmb){if(inRect(mouse,coopBtn))")
+# écran du menu (création, étape adversaire, fenêtre de confirmation) : il prend tous les clics ; sinon la liste des persos les reçoit après les boutons de mode et EN LIGNE
+rep("if(state==='menu'){if(pressed.lmb){if(inRect(mouse,coopBtn))","if(state==='menu'){if(pressed.lmb&&menuGrab()){menuClick();pressed.lmb=0}if(pressed.lmb){if(inRect(mouse,coopBtn))")
 rep("cards.forEach(c=>{if(inRect(mouse,c)){if(takenBy(c.c))return;if(isGuest()){net.mate=c.c;net.ready=false;netSend({t:'hero',c:c.c})}else if(coop()){net.myPick=c.c;net.ready=false;sendLobby()}else startMatch(c.c)}});",
-    "if(creatorClick()){pressed.lmb=0}")
+    "if(menuClick()){pressed.lmb=0}")
 # ---------- en ligne : chacun envoie son build, l'hôte le diffuse dans le salon
 rep("function lobbyList(){return net.role==='host'?[{id:0,c:net.myPick||null,ready:!!net.ready,team:0}].concat(livePeers().map(p=>({id:p.id,c:p.c,ready:!!p.ready,team:p.team}))):net.role==='guest'?net.lobby:[]}",
     "function lobbyList(){return net.role==='host'?[{id:0,c:'p0',ready:!!net.ready,team:0,b:MY}].concat(livePeers().map(p=>({id:p.id,c:p.c,ready:!!p.ready,team:p.team,b:p.b}))):net.role==='guest'?net.lobby:[]}")
@@ -115,7 +121,8 @@ rep(" if(w.t==='none')return;"," if(w.t==='none')return;\n if(w.t==='kunai'){if(
 rep(" if(L.robe)poly([{x:-12,y:-40},{x:12,y:-40},{x:17+step*2,y:-6},{x:-17+step*2,y:-6}],fl?'#fff':L.robe);",
     " if(L.robe)poly([{x:-12,y:-40},{x:12,y:-40},{x:17+step*2,y:-6},{x:-17+step*2,y:-6}],fl?'#fff':L.robe);\n if(L.clouds&&!fl)for(const [cx,cy] of back?[[-5,-30],[6,-14]]:[[-8,-12],[7,-26]]){g.fillStyle='#fff';g.beginPath();g.ellipse(cx,cy,6.5,3.6,0,0,7);g.fill();g.fillStyle='#c0202a';g.beginPath();g.ellipse(cx,cy,5.3,2.6,0,0,7);g.fill()}")
 # indices et bannières
-rep("Choisis ton héros.`","Crée ton ninja puis clique PRÊT.`")
+rep("Choisis ton héros.`","Choisis ton perso dans la liste puis clique PRÊT.`")
+rep("'Duel : connecte un ami avec « Coop en ligne » pour l\\'affronter (sinon, contre l\\'ordinateur)'","'Duel : connecte un ami avec « EN LIGNE » pour l\\'affronter (sinon contre l\\'ordinateur : clique ton perso, puis ton adversaire)'")
 rep("if(coop()&&inRect(mouse,readyBtn)&&(isGuest()?net.mate:net.myPick)){","if(coop()&&inRect(mouse,readyBtn)&&(isGuest()?net.mate:net.myPick)&&!overBudget()){")
 
 # ---------- effets visuels ninja : chaque jutsu marque ce qu'il crée avec son élément (vfx)

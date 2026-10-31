@@ -126,7 +126,15 @@ Un trait = **la mécanique qui fait l'identité du clan** (passif, jauge, état�
 Crochets facultatifs :
 - `landed(src,t,dmg,o)` : effets de l'attaquant **une fois le coup confirmé** (après `take` de la cible ; pas appelé si la défense l'annule). Mettre ici les vols de chakra, griffes, etc., pas dans `deal`.
 - `drawB(u,p,S,sk)` : dessin **derrière** le ninja (appelé avant lui) ; `draw` dessine devant.
-- `prev(u,p,S,front)` : signe du trait dans les aperçus (galerie, créateur), appelé derrière (`front` faux) puis devant (`front` vrai) le ninja.
+- `prev(u,p,S,front)` : signe du trait dans les aperçus (cartes et fiche de la liste des persos, création), appelé derrière (`front` faux) puis devant (`front` vrai) le ninja.
+
+## Menu : liste des persos et création (`nr_roster.js`, `nr_menu.js`)
+- `scr` = écran du menu : `'list'` (liste + fiche), `'opp'` (arène / duel hors ligne : choix de l'adversaire), `'edit'` (création, `drawCreator`). `drawMenu` choisit l'écran ; `menuClick` reçoit les clics (`menuGrab()` vrai : il les prend tous, avant les boutons de mode).
+- Persos : `rosEntries()` = `{k, b, sec, P?, i?, mod?, id?}` ; clés `'m'+id` (« Mes ninjas ») et `'a:'+nom` (perso de l'anime, `PRESETS`). Section : `SECS` (village ou groupe) ; celle d'un perso de l'anime vient de `P.sec`, sinon de son groupe `g` (`rosSec`). Un nouveau perso de l'anime n'a rien d'autre à déclarer.
+- `MY` = build du perso joué (`MEK`), `CH.p0` = son ninja ; `rebuildMine()` le recalcule et, en ligne, l'envoie (`{t:'build'}`) ou diffuse le salon, comme avant. Le perso en création est `EB` (`edRebuild`), rien n'est gardé ni envoyé avant `edSave()`.
+- Adversaire choisi : `CH.o0` + `OPPK='o0'`, lu par `startMatch` à la place du tirage (aussi en 2 contre 2 / 3 contre 3, ses alliés restent des bots).
+- Sauvegarde `localStorage['nrRoster1']` = `{v, nid, mine:[{id,build}], anime:{nom:build}, last:{me,opp}}` ; chaque build garde le nom de ses jutsu (`jn`) et de son style (`sn`) et repasse par `sanitizeBuild` au chargement (`bIn`) ; JSON illisible = liste vide. Première fois : l'ancien `nrBuild4` devient le premier de « Mes ninjas » (sauf perso de l'anime tel quel). `'nrBuild4'` reste écrit (perso joué). Le simulateur (`?sim=1`) n'écrit rien.
+- Aperçus : un ninja par carte (`rosFake`, refait si la build change) ; la case 3D de l'atlas est copiée dans une image propre à la carte (`cardChar`) : seul le ninja survolé (et la fiche) est rendu en 3D à chaque image.
 
 ## Réseau
 Champs synchronisés : projectiles (`kind` et les clés de base), objets `aux` (`type x y a len w r t m team vfx k ti ui kind col n`), ninjas (champs listés dans `UK`).

@@ -11110,7 +11110,7 @@ function drawCutin(){if(!cutin)return;cutin.t-=1/60;if(cutin.t<=0){cutin=null;re
  g.save();g.globalAlpha=a;g.translate((1-in_)*-300,0);g.fillStyle='rgba(10,6,4,.78)';g.beginPath();g.moveTo(0,y-40);g.lineTo(W,y-62);g.lineTo(W,y+22);g.lineTo(0,y+44);g.fill();
  g.fillStyle=cutin.col;g.fillRect(0,y+38,W,3);g.save();g.translate(W*.5,y);g.rotate(-.018);g.shadowColor=cutin.col;g.shadowBlur=24;text(cutin.s,0,6,46,'#fff4d8');g.restore();text(cutin.who,W*.5,y+30,15,cutin.col,'center');g.restore()}
 // ---------- Persos de l'anime : kits préfaits (apparence + build fidèles au personnage) ----------
-// n nom court (aussi le nom du bot), full nom complet, g groupe de la galerie (GALG), side camp du bot (0 Alliance, 1 Akatsuki), nat, clan (-1 sans), voie (0 taijutsu, 1 équilibré, 2 ninjutsu),
+// n nom court (aussi le nom du bot), full nom complet, g groupe (GALG : sous-titre de la carte dans la liste des persos ; la section de la liste vient de sec, sinon de g, voir rosSec), side camp du bot (0 Alliance, 1 Akatsuki), nat, clan (-1 sans), voie (0 taijutsu, 1 équilibré, 2 ninjutsu),
 // pass passif, sty style de combat, j 5 jutsu (Clic D, Espace, Q, E, T), l apparence {v village,t tenue,c coiffure,h cheveux,p peau,k chakra,a accessoire,f visage,b bandeau,d dos}, d jeu en une ligne
 const GALG=['Équipe 7','Akatsuki','Sannin & Hokage','Konoha','Suna','Oto','Kiri','Autres clans'],GALC=['#ff9a3a','#e0383a','#e8c040','#5ab45a','#d8a860','#9a6ad8','#5ab8d8','#c86a8a'];
 const PRESETS=[
@@ -11127,7 +11127,7 @@ const PRESETS=[
  {n:'Konan',full:'Konan',g:1,side:1,nat:2,clan:16,voie:2,pass:'energy',sty:'Mains-lames de papier',j:['Papillons shikigami','Ailes de papier','Cocon de papier','Corps de papier','Mer de papiers explosifs'],l:{v:7,t:2,c:15,h:11,p:4,k:5,a:0,f:0,b:8,d:0},d:'Ange de papier : papillons qui traquent, cocon qui enserre, mer de papiers explosifs'},
  {n:'Jiraiya',full:'Jiraiya',g:2,side:0,nat:4,clan:-1,voie:1,pass:'rage',sty:'Taijutsu',j:['Rasengan','Saut ninja','Doton : Yomi Numa','Multiclonage','Mode Ermite'],l:{v:0,t:14,c:16,h:4,p:0,k:0,a:0,f:7,b:7,d:2},d:'Ermite des crapauds : marécage, clones, Rasengan, puis le Mode Ermite'},
  {n:'Tsunade',full:'Tsunade',g:2,side:0,nat:4,clan:-1,voie:0,pass:'regen',sty:'Taijutsu',j:['Ôkashô','Shunshin','Byakugô','Shôsen','Invocation : Katsuyu'],l:{v:0,t:15,c:17,h:0,p:0,k:2,a:0,f:5,b:8,d:0},d:'Princesse des limaces : force titanesque, Byakugô et soins de Katsuyu'},
- {n:'Orochimaru',full:'Orochimaru',g:2,side:1,nat:2,clan:-1,voie:2,pass:'energy',sty:'Taijutsu',j:['Serpents de l\'ombre','Kage Bunshin : leurre','Rashômon','Barrière Shishienjin','Invocation : Manda'],l:{v:5,t:16,c:18,h:1,p:6,k:3,a:0,f:10,b:8,d:0},d:'Sannin des serpents : morsures qui attirent, portail Rashômon et Manda'},
+ {n:'Orochimaru',full:'Orochimaru',g:2,sec:'Oto',side:1,nat:2,clan:-1,voie:2,pass:'energy',sty:'Taijutsu',j:['Serpents de l\'ombre','Kage Bunshin : leurre','Rashômon','Barrière Shishienjin','Invocation : Manda'],l:{v:5,t:16,c:18,h:1,p:6,k:3,a:0,f:10,b:8,d:0},d:'Sannin des serpents : morsures qui attirent, portail Rashômon et Manda'},
  {n:'Hiruzen',full:'Hiruzen Sarutobi',g:2,side:0,nat:0,clan:-1,voie:1,pass:'energy',sty:'Kunai au poing',j:['Multiclonage de shuriken','Shunshin','Katon : Dragon de feu','Multiclonage','Katon : Grand souffle de feu'],l:{v:0,t:12,c:3,h:9,p:1,k:4,a:4,f:11,b:8,d:0},d:'Professeur aux mille jutsu : shuriken démultipliés, dragon et souffle de feu'},
  {n:'Minato',full:'Minato Namikaze',g:2,side:0,nat:2,clan:-1,voie:1,pass:'speed',sty:'Kunai au poing',j:['Rasengan','Hiraishin','Kunai explosifs','Contre du clone','Invocation : Crapaud'],l:{v:0,t:13,c:19,h:0,p:0,k:6,a:0,f:0,b:0,d:0},d:'Éclair jaune : kunai marqués, téléportation et Rasengan éclair'},
  {n:'Neji',full:'Neji Hyûga',g:3,side:0,nat:2,clan:1,voie:0,pass:'crit',sty:'Poing souple',j:['Hakke Kûshô','Pas du Hakke','Byakugan','Kaiten','Hakke : 128 points'],l:{v:0,t:4,c:20,h:14,p:0,k:5,a:0,f:0,b:0,d:0},d:'Génie du Jûken : paumes à distance, Kaiten qui renvoie tout, 128 points'},
@@ -11157,8 +11157,8 @@ const PASSI=k=>Math.max(0,PASSK.indexOf(k));
 function presetBuild(i,name,side){const P=PRESETS[i],clan=P.clan,nat=P.nat;
  const b={name:name||(typeof MY!=='undefined'&&MY?MY.name:P.n),side:side??P.side,voie:P.voie,nat,clan,pass:PASSI(P.pass),l:Object.assign({},P.l),j:[STYLES.findIndex(x=>x[0]===P.sty)].concat(P.j.map((n,k)=>{const J=JL.find(j=>j.n===n&&stype(j.slot)===stype(k+1)&&(j.cat==='c'+clan||(clan!==TAIJ&&j.cat==='n'+nat)||(clan<0&&j.cat==='u')));return J?J.id:-1}))};
  return sanitizeBuild(b,true)}
-// charge un perso dans ton ninja : ton nom est gardé, sauf « Ninja » ou le nom d'un autre perso (il prend alors celui du perso)
-function applyPreset(i){const P=PRESETS[i],nm=!MY.name||MY.name==='Ninja'||PRESETS.some(q=>q.n===MY.name)?P.n:MY.name;MY=presetBuild(i,nm,MY.side);presetI=i;rebuildMine()}
+// « Modèles de kit » (création) : le perso en cours prend le kit et l'apparence du perso de l'anime ; son nom est gardé, sauf « Ninja », « Nouveau ninja » ou le nom d'un autre perso (il prend alors celui du perso)
+function applyPreset(i){const P=PRESETS[i],nm=!EB.name||EB.name==='Ninja'||EB.name==='Nouveau ninja'||PRESETS.some(q=>q.n===EB.name)?P.n:EB.name;EB=presetBuild(i,nm,EB.side);presetI=i;edRebuild()}
 // ---------- Cartes de l'arène ----------
 const MAPS=[['Terrain d\'entraînement'],['Vallée de la Fin'],['Désert de Suna']];
 const THEMES=[{sky:['#2a2650','#a8506a','#f3a65a'],floor:['#3e5a2c','#4f6e34'],line:'rgba(30,50,20,.18)',wall:['#6a4426','#4a2e18'],post:['#4a2e18','#9a6a3a','#3a2210','#b88a52']},
@@ -11220,7 +11220,7 @@ function mkUnit(c,x,y,team){const ch=CH[c];return{c,ch,x,y,z:0,vx:0,vy:0,kx:0,ky
 // statistiques de la partie (éliminations, morts, assistances, dégâts infligés/subis, soins), par perso et par camp
 let STATS={},CUR=null;
 const stOf=u=>{const k=u.c+'|'+u.team;return STATS[k]||(STATS[k]={c:u.c,team:u.team,k:0,d:0,a:0,dmg:0,tk:0,heal:0,sh:0})};
-function startMatch(c){playerChamp=c;STATS={};const o=HEROES.filter(x=>CH[x].side!==CH[c].side);aiChamp=o[Math.floor(rnd()*o.length)];score=[0,0];round=1;MT=mode!=='battle'?buildTeams(teamN()):null;mode!=='battle'?startRound():startBattle()}
+function startMatch(c){playerChamp=c;STATS={};const o=HEROES.filter(x=>CH[x].side!==CH[c].side);aiChamp=OPPK&&CH[OPPK]?OPPK:o[Math.floor(rnd()*o.length)];OPPK=null;score=[0,0];round=1;MT=mode!=='battle'?buildTeams(teamN()):null;mode!=='battle'?startRound():startBattle()}
 function resetWorld(){cutin=null;aux=[];for(const u of units)u.energy=Math.max(u.energy,CK.spawn);if(player)cam={x:player.x,y:player.y};seqs=[];tethers=[];traps=[];turrets=[];fields=[];walls=[];projs=[];fx=[];txt=[];zones=[];orb=null;orbUsed=false;timer=0;banner=null;killfeed=[];state='countdown';stateT=3}
 // joueurs humains : l'hôte (local) + les amis connectés (remote). Arène = tous ensemble contre des bots ; duel = deux équipes de joueurs
 function humanList(){const L=lobbyList().map(x=>({c:x.c&&CH[x.c]?x.c:null,team:x.team,ctrl:x.id===0?'local':'remote',rid:x.id}));if(!L.length)L.push({c:playerChamp,team:0,ctrl:'local',rid:0});
@@ -11232,9 +11232,9 @@ const humansPer=t=>humanList().filter(h=>h.team===t).length;
 // compose les deux équipes : joueurs d'abord, puis des bots du bon camp (sans doublon)
 function buildTeams(n){const H=humanList(),used=new Set(H.filter(h=>h.c).map(h=>h.c)),T=[[],[]];
  const hs=t=>{const h=H.find(x=>x.team===t&&x.c);return h?CH[h.c].side:null},s0=hs(0)??CH[playerChamp].side,sides=[s0,hs(1)??1-s0];
- const nm=new Set(H.filter(h=>h.c&&CH[h.c]).map(h=>CH[h.c].name)),pick=t=>{let o=HEROES.filter(h=>CH[h].side===sides[t]&&!used.has(h)&&!nm.has(CH[h].name));if(!o.length)o=HEROES.filter(h=>!used.has(h));const c=o[Math.floor(rnd()*o.length)];used.add(c);return c};
+ const nm=new Set(H.filter(h=>h.c&&CH[h.c]).map(h=>CH[h.c].name).concat(aiChamp==='o0'&&CH.o0?[CH.o0.name]:[])),pick=t=>{let o=HEROES.filter(h=>CH[h].side===sides[t]&&!used.has(h)&&!nm.has(CH[h].name));if(!o.length)o=HEROES.filter(h=>!used.has(h));const c=o[Math.floor(rnd()*o.length)];used.add(c);return c};
  for(const h of H){if(!h.c)h.c=pick(h.team);T[h.team].push(h)}
- if(mode!=='battle'&&H.length===1&&n===1&&!used.has(aiChamp)){used.add(aiChamp);T[1].push({c:aiChamp,team:1})}
+ if(mode!=='battle'&&H.length===1&&(n===1||aiChamp==='o0')&&!used.has(aiChamp)){used.add(aiChamp);T[1].push({c:aiChamp,team:1})}
  for(const t of[0,1])while(T[t].length<n)T[t].push({c:pick(t),team:t});
  return T}
 let MT=null;
@@ -11455,8 +11455,8 @@ function localInput(){const Kd=c=>keys[c]?1:0,mw=unP(mouse.x,mouse.y);return{mx:
 function remoteInput(u){const P=peerOf(u.rid),r=P&&P.in;if(!r)return null;const I={mx:clamp(+r.mx||0,-1,1),my:clamp(+r.my||0,-1,1),ax:+r.ax||0,ay:+r.ay||0,l:!!r.l,p:P.pressed,sh:!!r.sh,f:!!r.f,r:!!r.r};P.pressed={};return I}
 let SIMT=0;
 function update(dt){SIMT+=dt;
- if(state==='menu'){if(pressed.lmb&&picker!==null){creatorClick();pressed.lmb=0}if(pressed.lmb){if(inRect(mouse,coopBtn))netUI(true);if(!isGuest())for(const b of modeBtns)if(inRect(mouse,b)){mode=b.m;netSend({t:'hello',mode,cfg:CFG})}
-  if(creatorClick()){pressed.lmb=0}
+ if(state==='menu'){if(pressed.lmb&&menuGrab()){menuClick();pressed.lmb=0}if(pressed.lmb){if(inRect(mouse,coopBtn))netUI(true);if(!isGuest())for(const b of modeBtns)if(inRect(mouse,b)){mode=b.m;netSend({t:'hello',mode,cfg:CFG})}
+  if(menuClick()){pressed.lmb=0}
   if(isGuest()&&mode!=='arena'&&inRect(mouse,teamBtn))netSend({t:'team',v:net.myTeam?0:1});
   if(coop()&&inRect(mouse,readyBtn)&&(isGuest()?net.mate:net.myPick)&&!overBudget()){net.ready=!net.ready;if(isGuest())netSend({t:'ready',v:net.ready});else sendLobby()}}
   // la partie démarre quand l'hôte et le coéquipier sont prêts
@@ -11530,9 +11530,9 @@ const LIGHT=HEROES.filter(h=>!CH[h].side),DARK=HEROES.filter(h=>CH[h].side),CW=1
 const cards=[...LIGHT.map((c,i)=>({x:58+(i%10)*117,y:136+Math.floor(i/10)*97,w:CW,h:CHt,c})),...DARK.map((c,i)=>({x:58+(i%10)*117,y:346+Math.floor(i/10)*97,w:CW,h:CHt,c}))];
 const modeBtns=[{x:290,y:76,w:220,h:30,m:'arena',t:'ARÈNE · 1 contre 1'},{x:520,y:76,w:220,h:30,m:'battle',t:'BATAILLE · 20 contre 20'},{x:750,y:76,w:220,h:30,m:'duel',t:'DUEL · 1v1 contre ton ami'}];
 const bo=()=>CFG.wins===1?'en une manche':`au meilleur des ${CFG.wins*2-1} manches`;
-const menuDesc=()=>{const n=teamN(),bots=n>1?` (complété par des bots)`:'';return mode==='duel'?(coop()?`Duel entre joueurs : ${n} contre ${n}${bots}, ${bo()} · chacun choisit son équipe (A/B)`:'Duel : connecte un ami avec « Coop en ligne » pour l\'affronter (sinon, contre l\'ordinateur)'):mode!=='battle'?(coop()?`${n} contre ${n} : tous les joueurs ensemble contre des bots, ${bo()}`:n>1?`${n} contre ${n} avec des alliés bots, ${bo()}`:`Ton adversaire sera un ninja du camp opposé, ${bo()}`):`${CFG.bsize} ninjas contre ${CFG.bsize} · ${CFG.tickets} renforts par camp, chaque élimination en coûte 1 · ⚙ pour configurer`};
+const menuDesc=()=>{const n=teamN(),bots=n>1?` (complété par des bots)`:'';return mode==='duel'?(coop()?`Duel entre joueurs : ${n} contre ${n}${bots}, ${bo()} · chacun choisit son équipe (A/B)`:'Duel : connecte un ami avec « EN LIGNE » pour l\'affronter (sinon contre l\'ordinateur : clique ton perso, puis ton adversaire)'):mode!=='battle'?(coop()?`${n} contre ${n} : tous les joueurs ensemble contre des bots, ${bo()}`:n>1?`${n} contre ${n} avec des alliés bots, ${bo()}`:`Clique ton perso, puis ton adversaire, ${bo()}`):`${CFG.bsize} ninjas contre ${CFG.bsize} · ${CFG.tickets} renforts par camp, chaque élimination en coûte 1 · ⚙ pour configurer`};
 const modeLabel=b=>{const m0=mode;mode=b.m;const n=teamN();mode=m0;return b.m==='arena'?`ARÈNE · ${n} contre ${n}${coop()?' (bots)':''}`:b.m==='battle'?`BATAILLE · ${CFG.bsize} contre ${CFG.bsize}`:`DUEL · ${n}v${n} entre amis`};
-const coopBtn={x:1040,y:76,w:158,h:30},readyBtn={x:1030,y:576,w:210,h:54},teamBtn={x:1030,y:636,w:210,h:34};
+const coopBtn={x:1040,y:76,w:158,h:30},readyBtn={x:850,y:677,w:230,h:36},teamBtn={x:610,y:677,w:230,h:36};
 // héros déjà pris par un autre joueur du salon
 const takenBy=c=>{const me=isGuest()?net.myId:0;return lobbyList().find(x=>x.id!==me&&x.c===c)};
 const who=x=>x.id===(isGuest()?net.myId:0)?'Toi':x.id===0?'Hôte':'Ami '+x.id;
@@ -12806,17 +12806,17 @@ function drawTelegraphs(){
 }
 function drawBolt(x0,y0,x1,y1,col){g.strokeStyle=col;g.lineWidth=2.5;g.beginPath();g.moveTo(x0,y0);const n=7;for(let i=1;i<=n;i++){const k=i/n;g.lineTo(lerp(x0,x1,k)+(i<n?(rnd()-.5)*22:0),lerp(y0,y1,k)+(i<n?(rnd()-.5)*22:0))}g.stroke()}
 
-// ---------- Menu : créateur de ninja (apparence + build) ----------
+// ---------- Menu : écran de création / modification d'un perso (apparence + build ; la liste des persos est dans nr_roster.js) ----------
 let picker=null; // emplacement dont on choisit le jutsu (liste ouverte)
 // lignes de gauche : [libellé, liste, clé] ; le clan a une entrée « Sans clan » (valeur -1), la 2e nature n'existe que sans clan
 const CLANL=[['Sans clan','#888']].concat(CLANS),NATL=NATURES.map(n=>[n[0]+' ('+n[1]+')',n[2]]);
 const APP=[['Camp',()=>CAMPS,'side'],['Voie',()=>VOIES,'voie'],['Clan',()=>CLANL,'clan'],['Nature',()=>NATL,'nat'],['Village',()=>VILLAGES,'l.v'],['Tenue',()=>TENUES,'l.t'],['Coiffure',()=>COIFS,'l.c'],['Cheveux',()=>HAIRC,'l.h'],['Peau',()=>PEAUX,'l.p'],['Chakra',()=>CHAKRAS,'l.k'],['Accessoire',()=>ACCS,'l.a'],['Visage',()=>FACES,'l.f'],['Bandeau',()=>BANDS,'l.b'],['Dos',()=>BACKS,'l.d']];
-const getB=k=>k==='clan'?MY.clan+1:k.startsWith('l.')?MY.l[k[2]]:MY[k],setB=(k,v)=>{if(k==='clan'){MY.clan=v-1;const cs=clanStyle(MY.clan);if(cs>=0&&!(STYLES[MY.j[0]]&&STYLES[MY.j[0]][5].includes(MY.clan)&&!STYLES[MY.j[0]][5].includes(-1)))MY.j[0]=cs} // nouveau clan : son style signature est équipé
- else if(k.startsWith('l.'))MY.l[k[2]]=v;else MY[k]=v};
-const appOff=k=>k==='nat'&&MY.clan===TAIJ;
+const getB=k=>k==='clan'?EB.clan+1:k.startsWith('l.')?EB.l[k[2]]:EB[k],setB=(k,v)=>{if(k==='clan'){EB.clan=v-1;const cs=clanStyle(EB.clan);if(cs>=0&&!(STYLES[EB.j[0]]&&STYLES[EB.j[0]][5].includes(EB.clan)&&!STYLES[EB.j[0]][5].includes(-1)))EB.j[0]=cs} // nouveau clan : son style signature est équipé
+ else if(k.startsWith('l.'))EB.l[k[2]]=v;else EB[k]=v};
+const appOff=k=>k==='nat'&&EB.clan===TAIJ;
 const stylesOf=b=>STYLES.map((_,i)=>i).filter(i=>styleOk(i,b.clan));
-const overBudget=()=>kitCost(MY)>budgetOf(MY);
-const cycleJ=(s,d)=>{if(!s){const L=stylesOf(MY),i=L.indexOf(MY.j[0]);MY.j[0]=L[(i+d+L.length)%L.length];return}const A=avail(MY,s).filter(j=>j.id===MY.j[s]||!MY.j.slice(1).includes(j.id)),i=A.findIndex(j=>j.id===MY.j[s]);MY.j[s]=A[(i+d+A.length)%A.length].id};
+const edOver=()=>kitCost(EB)>budgetOf(EB),overBudget=()=>kitCost(MY)>budgetOf(MY); // kit en cours de création / kit joué (bouton PRÊT)
+const cycleJ=(s,d)=>{if(!s){const L=stylesOf(EB),i=L.indexOf(EB.j[0]);EB.j[0]=L[(i+d+L.length)%L.length];return}const A=avail(EB,s).filter(j=>j.id===EB.j[s]||!EB.j.slice(1).includes(j.id)),i=A.findIndex(j=>j.id===EB.j[s]);EB.j[s]=A[(i+d+A.length)%A.length].id};
 // --- disposition : à gauche ton ninja et son APPARENCE (lignes l.*), à droite son BUILD DE COMBAT (camp, voie, clan, nature, 6 emplacements, passif, budget)
 // picker : panneau de choix ouvert = n° d'emplacement (0 style, 1-5 jutsu), 'pass', 'preset' ou une clé de APP ('clan', 'nat', 'l.c'…)
 const BX=428,BW=812,buildKeys=()=>APP.filter(a=>!a[2].startsWith('l.')),lookKeys=()=>APP.filter(a=>a[2].startsWith('l.'));
@@ -12825,8 +12825,9 @@ const slotRow=s=>({x:BX,y:218+s*51,w:BW,h:46});
 const passRow={x:BX,y:525,w:BW,h:40},budBox={x:BX,y:576,w:582,h:54};
 // les listes d'apparence peuvent s'allonger : la hauteur des lignes s'adapte (et chaque valeur ouvre une grille de choix)
 const lookRow=i=>{const n=lookKeys().length,h=Math.max(19,Math.min(30,262/n)),y=394+i*h;return{y:y+h/2+5,h,l:{x:150,y:y+2,w:24,h:h-4},v:{x:177,y:y+2,w:194,h:h-4},r:{x:374,y:y+2,w:24,h:h-4}}};
-let presetI=-1;const rndBuildBtn={x:BX,y:638,w:190,h:32},presetBtn={x:BX+198,y:638,w:200,h:32};
-const nameBtn={x:40,y:150,w:300,h:30},rndBtn={x:348,y:150,w:52,h:30},animeBtn={x:44,y:662,w:352,h:32},fightBtn={x:1030,y:576,w:210,h:54};
+let presetI=-1,EB=null,EBCH=null; // EB : build en cours de création ou de modification (MY reste le perso joué)
+const rndBuildBtn={x:BX,y:638,w:190,h:32},presetBtn={x:BX+198,y:638,w:200,h:32};
+const nameBtn={x:40,y:150,w:300,h:30},rndBtn={x:348,y:150,w:52,h:30},cancelBtn={x:44,y:662,w:352,h:32},saveBtn={x:1030,y:576,w:210,h:54};
 const itN=it=>Array.isArray(it)?String(it[0]):String(it),swCol=it=>Array.isArray(it)&&typeof it[1]==='string'&&it[1][0]==='#'?it[1]:null;
 const fmtCd=cd=>(Math.round((+cd||0)*100)/100)+' s',pts=n=>n+' point'+(n>1?'s':'');
 // recharge affichée : pour un style, le rythme réel de ses 5 coups (de … à …, ou la moyenne avec avg)
@@ -12838,8 +12839,11 @@ function wrapL(s,w,font){g.font=font;const out=[];let cur='';for(const wd of Str
 const rr=(R,r,fill,stroke,lw=1)=>{g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,r);if(fill){g.fillStyle=fill;g.fill()}if(stroke){g.strokeStyle=stroke;g.lineWidth=lw;g.stroke()}};
 // ninja d'aperçu du créateur : gardé d'une image à l'autre (son modèle 3D n'est refait que si l'apparence change)
 let MF=null;const menuFake=ch=>{if(!MF||MF.ch!==ch){const o=CH.p0;CH.p0=ch;MF=mkUnit('p0',0,0,ch.side);CH.p0=o}return MF};
-function rebuildMine(){MY=sanitizeBuild(MY);try{localStorage.setItem('nrBuild4',JSON.stringify(Object.assign({},MY,{jn:MY.j.slice(1).map(id=>JL[id].n)})))}catch(e){}MYCH=mkNinja(MY);if(!isGuest())CH.p0=MYCH;
+// perso joué (MY) : gardé aussi dans 'nrBuild4' ; en ligne, envoyé à l'hôte (invité) ou diffusé dans le salon (hôte)
+function rebuildMine(){MY=sanitizeBuild(MY);if(!RSIM)try{localStorage.setItem('nrBuild4',JSON.stringify(bOut(MY)))}catch(e){}MYCH=mkNinja(MY);if(!isGuest())CH.p0=MYCH;
  if(net.role==='host'){net.ready=false;sendLobby()}else if(isGuest()&&coop()){net.ready=false;netSend({t:'build',b:MY});netSend({t:'ready',v:false})}}
+// perso en création : seul l'aperçu change (rien n'est envoyé ni gardé avant « Enregistrer »)
+function edRebuild(){EB=sanitizeBuild(EB);EBCH=mkNinja(EB)}
 // --- textes d'aide des options de build
 function optDesc(k,v){
  if(k==='clan'){const c=v-1,T=TRAITS[c];return(c<0?'Subjutsu polyvalents, +2 points de budget. ':c===TAIJ?'Taijutsu pur : pas de nature, que des techniques du corps. ':'Jutsu de clan sans mudra. ')+(T?`Trait « ${T.nom||T.name} » : ${T.desc||''}`:'')}
@@ -12877,17 +12881,17 @@ function drawTip(){if(!TIP){tipK=null;return}if(performance.now()-tipT0<300)retu
  fitT(T.t,x+12,y+22,15,T.col||'#ffd38a',w-24,'bold',11);let yy=y+40;for(const [s,c] of extra){fitT(s,x+12,yy,11.5,c||'#d8b888',w-24,'normal',9);yy+=16}
  g.font=F;g.fillStyle='#ecdcc0';g.textAlign='left';for(const s of L){g.fillText(s,x+12,yy+2);yy+=15}if(T.f)text(T.f,x+12,yy+12,11,'#ffb347','left','bold')}
 // --- panneau de choix (un emplacement, le passif, un modèle, une option de build ou d'apparence)
-let pickTab=0,pickScroll=0,menuLast=0,galSel=null;
-function pickData(p){const BUD=budgetOf(MY),c0=kitCost(MY);
- if(p===0){const L=stylesOf(MY),col=MY.clan>=0?CLANS[MY.clan][1]:'#e8cfa8';return{kind:'j',title:`${lbl[SLOTS[0]]} · Style de combat`,sub:'Ton attaque de base, propre à ton clan : gratuite (ni points, ni chakra)',
-  items:L.map(i=>{const ab=styleAb(i);return{v:i,n:ab.n,col,ic:null,style:1,l2:`${abCd(ab)} · corps à corps`,d:ab.d,sel:MY.j[0]===i}})}}
- if(typeof p==='number'){const own=MY.clan>=0?'c'+MY.clan:'u',cur=JL[MY.j[p]];
-  const A=avail(MY,p).slice().sort((a,b)=>(a.cat!==own)-(b.cat!==own)||a.cost-b.cost||a.n.localeCompare(b.n)),cats=[...new Set(A.map(j=>j.cat))];
+let pickTab=0,pickScroll=0,menuLast=0;
+function pickData(p){const BUD=budgetOf(EB),c0=kitCost(EB);
+ if(p===0){const L=stylesOf(EB),col=EB.clan>=0?CLANS[EB.clan][1]:'#e8cfa8';return{kind:'j',title:`${lbl[SLOTS[0]]} · Style de combat`,sub:'Ton attaque de base, propre à ton clan : gratuite (ni points, ni chakra)',
+  items:L.map(i=>{const ab=styleAb(i);return{v:i,n:ab.n,col,ic:null,style:1,l2:`${abCd(ab)} · corps à corps`,d:ab.d,sel:EB.j[0]===i}})}}
+ if(typeof p==='number'){const own=EB.clan>=0?'c'+EB.clan:'u',cur=JL[EB.j[p]];
+  const A=avail(EB,p).slice().sort((a,b)=>(a.cat!==own)-(b.cat!==own)||a.cost-b.cost||a.n.localeCompare(b.n)),cats=[...new Set(A.map(j=>j.cat))];
   return{kind:'j',title:`${lbl[SLOTS[p]]} · ${SLOTN[p]}`,sub:`Le rang fixe le coût en points du kit et en chakra · kit actuel : ${c0} / ${BUD} points`,tabs:cats.length>1?['Tous'].concat(cats.map(catName)):null,tabC:['#ffb347'].concat(cats.map(catCol)),
-   items:A.map(J=>{const ab=jutsu(J.id),sel=J.id===cur.id,o=sel?0:Math.max(0,MY.j.findIndex((id,k)=>k>0&&id===J.id)),nc=o?c0:c0-cur.cost+J.cost;
+   items:A.map(J=>{const ab=jutsu(J.id),sel=J.id===cur.id,o=sel?0:Math.max(0,EB.j.findIndex((id,k)=>k>0&&id===J.id)),nc=o?c0:c0-cur.cost+J.cost;
     return{v:J.id,n:J.n,col:catCol(J.cat),ic:J.cat,ult:ab.ult,rank:J.r,tab:catName(J.cat),l2:`${jcostT(ab)} · ${fmtCd(ab.cd)} · ${ab.mud?ab.mud+' mudras':'sans mudra'}`,d:J.d,sel,used:o,nc,BUD}})}}
- if(p==='pass')return{kind:'o',title:'Passif',sub:'Un bonus permanent et gratuit',items:PASSK.map((k,i)=>({v:i,n:PASS[k][0],col:'#7fd87f',ic:'p',d:PASS[k][1],sel:MY.pass===i}))};
- if(p==='preset')return{kind:'o',title:'Persos de l\'anime · modèles de kit',sub:'Remplace ton build et ton apparence par ceux d\'un ninja célèbre (ton nom et ton camp sont gardés)',
+ if(p==='pass')return{kind:'o',title:'Passif',sub:'Un bonus permanent et gratuit',items:PASSK.map((k,i)=>({v:i,n:PASS[k][0],col:'#7fd87f',ic:'p',d:PASS[k][1],sel:EB.pass===i}))};
+ if(p==='preset')return{kind:'o',title:'Modèles de kit',sub:'Reprend le kit et l\'apparence d\'un perso de l\'anime, à retoucher ensuite (le nom et le camp de ton perso sont gardés)',
   items:PRESETS.map((P,i)=>({v:i,n:P.full,col:P.clan>=0?CLANS[P.clan][1]:NATURES[P.nat][2],ic:P.clan>=0?'c'+P.clan:'n'+P.nat,d:`${presetLine(P)} · ${P.j.join(', ')}`,sel:presetI===i}))};
  const a=APP.find(x=>x[2]===p);if(!a)return null;const L=a[1](),look=p.startsWith('l.');
  return{kind:look?'a':'o',title:a[0],sub:look?'Clique une option : l\'aperçu à gauche change tout de suite':'',items:L.map((it,v)=>({v,n:itN(it),col:swCol(it)||'#e8cfa8',sw:swCol(it),ic:p==='nat'?'n'+v:p==='clan'?(v?'c'+(v-1):'u'):undefined,d:optDesc(p,v),sel:getB(p)===v}))}}
@@ -12900,67 +12904,15 @@ const cardRect=(G,i)=>({x:G.gx+(i%G.cols)*(G.cw+10),y:G.gy+Math.floor(i/G.cols)*
 const closeRect=B=>({x:B.x+B.w-44,y:B.y+12,w:32,h:32});
 function tabRects(D,B){if(!D.tabs)return[];let x=B.x+20;g.font=FNT(13,'bold');return D.tabs.map((t,i)=>{const n=i?D.items.filter(it=>it.tab===t).length:D.items.length,s=`${t} (${n})`,w=g.measureText(s).width+28,R={x,y:B.y+66,w,h:28,s};x+=w+8;return R})}
 function openPicker(p){picker=p;pickTab=0;pickScroll=0;const D=pickData(p);if(!D){picker=null;return}const G=pickGrid(D),i=D.items.findIndex(x=>x.sel);if(i>=0)pickScroll=Math.max(0,Math.min(pickMax(D,G),Math.floor(i/G.cols)*G.step-G.gh/2+G.ch/2))}
-// le bouton « Persos de l'anime » ouvre la galerie (openPresetGallery), « Modèles de kit » la liste des mêmes persos
-function openAnime(){openPresetGallery()}
-// ---------- Galerie « Persos de l'anime » : une carte par perso (aperçu 3D ou 2D, nom, clan et nature, jeu en une ligne), rangées par équipe ----------
-// clic sur une carte = ce perso devient ton ninja (kit et apparence) ; en ligne, l'invité l'envoie à l'hôte comme tout changement (rebuildMine)
+// modèles de kit : une ligne « clan · nature » par perso de l'anime
 const presetLine=P=>`${P.clan>=0?'Clan '+CLANS[P.clan][0]:'Sans clan'}${P.clan===TAIJ?'':' · '+NATURES[P.nat][0]}`;
-const GB={x:36,y:46,w:1208,h:628};let GALF=null,GALL=null;
-// ninjas d'aperçu : faits une fois (leur modèle 3D est gardé tant que la galerie s'affiche)
-const galFakes=()=>GALF||(GALF=PRESETS.map((P,i)=>{const ch=mkNinja(presetBuild(i,P.n,P.side)),o=CH.p0;CH.p0=ch;const u=mkUnit('p0',0,0,ch.side);CH.p0=o;return u}));
-function galLayout(){if(GALL)return GALL;const cols=7,gx=GB.x+20,gw=GB.w-40-14,cw=(gw-(cols-1)*12)/cols,ch=216,L=[],Hd=[];let y=0;
- GALG.forEach((gn,g)=>{const ids=PRESETS.map((_,i)=>i).filter(i=>PRESETS[i].g===g);if(!ids.length)return;Hd.push({g,y,n:ids.length});y+=28;
-  ids.forEach((id,k)=>L.push({id,x:gx+(k%cols)*(cw+12),y:y+Math.floor(k/cols)*(ch+12),w:cw,h:ch}));y+=Math.ceil(ids.length/cols)*(ch+12)+8});
- const gy=GB.y+104;return GALL={L,Hd,gx,gw,gy,gh:GB.y+GB.h-30-gy,total:y-8}}
-const galMax=()=>{const G=galLayout();return Math.max(0,G.total-G.gh)};
-function galTabs(){const G=galLayout();let x=GB.x+20;g.font=FNT(13,'bold');return G.Hd.map(h=>{const s=`${GALG[h.g]} (${h.n})`,w=g.measureText(s).width+28,R={x,y:GB.y+66,w,h:28,s,g:h.g,top:h.y};x+=w+8;return R})}
-function openPresetGallery(){picker='gallery';pickScroll=0;galSel=null;const G=galLayout(),c=G.L.find(c=>c.id===presetI);if(c)pickScroll=Math.min(galMax(),Math.max(0,c.y-40))}
-function galleryClick(){if(!inRect(mouse,GB)||inRect(mouse,closeRect(GB))){picker=null;return true}
- for(const [i,R] of galTabs().entries())if(inRect(mouse,R)){pickScroll=Math.min(galMax(),R.top);galSel={i,s:pickScroll};return true}
- const G=galLayout(),mx=galMax();if(mx>0&&inRect(mouse,{x:G.gx+G.gw,y:G.gy,w:20,h:G.gh})){pickScroll=clamp((mouse.y-G.gy)/G.gh,0,1)*mx;return true}
- if(inRect(mouse,{x:G.gx,y:G.gy,w:G.gw,h:G.gh}))for(const c of G.L)if(inRect(mouse,{x:c.x,y:G.gy+c.y-pickScroll,w:c.w,h:c.h})){picker=null;applyPreset(c.id);return true}
- return true}
-function galCard(c,R,hov,t){const P=PRESETS[c.id],u=galFakes()[c.id],ch=u.ch,col=GALC[P.g],sel=presetI===c.id,kc=ch.look.weapon.col;
- rr(R,10,sel?'rgba(96,62,28,.98)':hov?'rgba(66,44,24,.98)':'rgba(30,20,12,.97)',sel?'#ffb347':hov?col:'#5a3a1e',sel?2.5:hov?2:1);
- // aperçu : halo à la couleur du chakra, ombre au sol, le ninja de face (il pivote quand on le survole)
- const px=R.x+R.w/2,fy=R.y+124;g.save();g.beginPath();g.roundRect(R.x+4,R.y+4,R.w-8,124,8);g.clip();
- {const gr=g.createLinearGradient(0,R.y,0,R.y+128);gr.addColorStop(0,rgba(col,.22));gr.addColorStop(1,rgba(col,.04));g.fillStyle=gr;g.fillRect(R.x,R.y,R.w,128)}
- {g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(px,fy-50,0,px,fy-50,70);gr.addColorStop(0,rgba(kc,hov?.28:.16));gr.addColorStop(1,rgba(kc,0));g.fillStyle=gr;g.fillRect(R.x,R.y,R.w,128);g.globalCompositeOperation='source-over'}
- g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(px,fy-4,30,8,0,0,7);g.fill();
- u.aim=hov?Math.PI/2+Math.sin(t*1.6)*1.3:Math.PI/2-.35;u.moving=false;u.swing=0;{const sc=1.42*(ch.look.scale>1?.9:1);drawPrevN(u,px,fy,sc,0);drawChar3(u,px,fy,sc);drawPrevN(u,px,fy,sc,1)}g.restore();
- g.fillStyle=col;g.fillRect(R.x+10,R.y+130,R.w-20,2);
- fitT(P.n,R.x+R.w/2,R.y+150,16,sel?'#ffe0a0':'#ffd38a',R.w-14,'bold',11,'center');
- fitT(P.full!==P.n?P.full:CAMPS[P.side],R.x+R.w/2,R.y+164,10.5,'#a88a68',R.w-14,'normal',9,'center');
- // clan et nature : icônes + texte
- {const ic=[];if(P.clan>=0)ic.push(['c'+P.clan,CLANS[P.clan][1]]);else ic.push(['u','#c8b89a']);if(P.clan!==TAIJ)ic.push(['n'+P.nat,NATURES[P.nat][2]]);
-  const s=(P.clan>=0?CLANS[P.clan][0]:'Sans clan')+(P.clan!==TAIJ?' · '+NATURES[P.nat][0]:''),z=10.5;g.font=FNT(z,'bold');const tw=Math.min(R.w-20-ic.length*19,g.measureText(s).width),x0=R.x+R.w/2-(ic.length*19+tw)/2;
-  ic.forEach(([k,c2],i)=>jIcon(x0+8+i*19,R.y+176,8,c2,k));fitT(s,x0+ic.length*19+2,R.y+180,z,'#e8cfa8',tw+1,'bold',8.5)}
- const Lw=wrapL(P.d,R.w-16,FNT(10));fitT(Lw[0]||'',R.x+R.w/2,R.y+196,10,'#cdb898',R.w-14,'normal',8.5,'center');if(Lw[1])fitT(Lw.slice(1).join(' '),R.x+R.w/2,R.y+209,10,'#cdb898',R.w-14,'normal',8.5,'center');
- if(sel){rr({x:R.x+R.w-58,y:R.y+8,w:50,h:17},5,'#ffb347');text('CHOISI',R.x+R.w-33,R.y+20.5,10,'#1a1008')}}
-function drawGallery(){const G=galLayout(),mx=galMax(),t=performance.now()/1000;pickScroll=clamp(pickScroll,0,mx);
- g.fillStyle='rgba(0,0,0,.66)';g.fillRect(0,0,W,H);g.save();g.shadowColor='rgba(0,0,0,.7)';g.shadowBlur=24;rr(GB,14,'rgba(26,17,10,.98)','#8a5a2a',2);g.restore();
- g.fillStyle='#ff9a3a';g.fillRect(GB.x+14,GB.y+56,GB.w-28,1.5);
- fitT('⭐ Persos de l\'anime',GB.x+20,GB.y+32,21,'#ffb347',420,'bold',13);fitT('Clique un ninja : son apparence et son kit (style, 5 jutsu, voie, passif) deviennent les tiens, à retoucher ensuite. Ton camp est gardé.',GB.x+20,GB.y+50,12,'#d8b888',GB.w-120,'normal',10);
- {const R=closeRect(GB),h=inRect(mouse,R);rr(R,8,h?'#ff9a3a':'rgba(50,34,20,.95)','#8a5a2a');text('✕',R.x+16,R.y+22,16,h?'#1a1008':'#f3d9b0')}
- // onglets : un par équipe (clic = aller à l'équipe) ; celui de l'équipe en haut de la vue est allumé
- // (onglet cliqué : il reste allumé tant qu'on ne fait pas défiler ; tout en bas, les dernières équipes ne peuvent pas monter en haut : on allume la dernière)
- const T=galTabs();let cur=0;if(galSel&&Math.abs(galSel.s-pickScroll)<1)cur=galSel.i;else{galSel=null;T.forEach((R,i)=>{if(pickScroll>=R.top-30)cur=i});if(mx>0&&pickScroll>=mx-1)cur=T.length-1}
- T.forEach((R,i)=>{const on=i===cur,h=inRect(mouse,R),c=GALC[R.g];rr(R,14,on?c:h?'rgba(90,60,30,.95)':'rgba(40,28,18,.92)',c,1.5);text(R.s,R.x+R.w/2,R.y+19,13,on?(lum(c)>.45?'#1a1008':'#fff'):'#f3d9b0')});
- const inG=inRect(mouse,{x:G.gx,y:G.gy,w:G.gw,h:G.gh});g.save();g.beginPath();g.rect(G.gx-6,G.gy-4,G.gw+12,G.gh+8);g.clip();
- for(const h of G.Hd){const y=G.gy+h.y-pickScroll;if(y<G.gy-30||y>G.gy+G.gh)continue;const c=GALC[h.g];text(GALG[h.g].toUpperCase(),G.gx+2,y+17,13,c,'left','bold');g.font=FNT(13,'bold');const w=g.measureText(GALG[h.g].toUpperCase()).width;g.fillStyle=rgba(c,.5);g.fillRect(G.gx+w+12,y+11,G.gw-w-14,1.5)}
- for(const c of G.L){const R={x:c.x,y:G.gy+c.y-pickScroll,w:c.w,h:c.h};if(R.y+R.h<G.gy-4||R.y>G.gy+G.gh+4)continue;const hov=inG&&inRect(mouse,R);galCard(c,R,hov,t);
-  if(hov){const P=PRESETS[c.id],ch=galFakes()[c.id].ch,b=ch.build,col=GALC[P.g];hoverTip('gal'+c.id,()=>({t:P.full,col,l:[[`${presetLine(P)} · voie ${VOIES[P.voie][0].toLowerCase()} · ${STYLES[b.j[0]][0]}`,P.clan>=0?CLANS[P.clan][1]:NATURES[P.nat][2]],[`${ch.hp} PV · vitesse ${ch.spd} · passif ${PASS[PASSK[b.pass]][0]} · ${kitCost(b)} / ${budgetOf(b)} points`,'#d8b888']].concat(b.j.slice(1).map((id,k)=>[`${lbl[SLOTS[k+1]]} · ${JL[id].n} (${JL[id].r})`,catCol(JL[id].cat)])),d:P.d,f:'Clic : jouer ce ninja'}))}}
- g.restore();
- if(mx>0){const tr={x:G.gx+G.gw+6,y:G.gy,w:6,h:G.gh},k=G.gh/(G.gh+mx);rr(tr,3,'rgba(255,255,255,.08)');rr({x:tr.x,y:tr.y+(G.gh-G.gh*k)*pickScroll/mx,w:6,h:G.gh*k},3,'#c08040');
-  if(pickScroll<mx)text('▼ molette pour voir la suite',GB.x+GB.w/2,GB.y+GB.h-10,11,'#ffb347','center','bold')}
- text('Échap, ✕ ou clic hors du cadre pour fermer · ↑ ↓ défiler',GB.x+20,GB.y+GB.h-10,11,'#9a8060','left','normal')}
 function applyPick(it){const p=picker;
- if(typeof p==='number'){if(p&&it.used)MY.j[it.used]=MY.j[p];MY.j[p]=it.v;picker=null}
- else if(p==='pass'){MY.pass=it.v;picker=null}else if(p==='preset'){picker=null;applyPreset(it.v);return}
+ if(typeof p==='number'){if(p&&it.used)EB.j[it.used]=EB.j[p];EB.j[p]=it.v;picker=null}
+ else if(p==='pass'){EB.pass=it.v;picker=null}else if(p==='preset'){picker=null;applyPreset(it.v);return}
  else{setB(p,it.v);if(!p.startsWith('l.'))picker=null}
- rebuildMine()}
+ edRebuild()}
 try{cv.addEventListener('wheel',e=>{if(state==='menu'&&picker!==null){pickScroll+=e.deltaY*(e.deltaMode?40:1);e.preventDefault()}},{passive:false})}catch(e){}
-function pickerClick(){if(picker==='gallery')return galleryClick();const D=pickData(picker);if(!D){picker=null;return true}const G=pickGrid(D),B=G.B;
+function pickerClick(){const D=pickData(picker);if(!D){picker=null;return true}const G=pickGrid(D),B=G.B;
  if(!inRect(mouse,B)||inRect(mouse,closeRect(B))){picker=null;return true}
  const T=tabRects(D,B);for(let i=0;i<T.length;i++)if(inRect(mouse,T[i])){pickTab=i;pickScroll=0;return true}
  const mx=pickMax(D,G);if(mx>0&&inRect(mouse,{x:G.gx+G.gw,y:G.gy,w:20,h:G.gh})){pickScroll=clamp((mouse.y-G.gy)/G.gh,0,1)*mx;return true}
@@ -12968,18 +12920,18 @@ function pickerClick(){if(picker==='gallery')return galleryClick();const D=pickD
  return true}
 function creatorClick(){
  if(picker!==null)return pickerClick();
- if(inRect(mouse,nameBtn)){const n=prompt('Nom de ton ninja (16 caractères max)',MY.name);if(n!==null){MY.name=n.trim()||MY.name;rebuildMine()}return true}
- if(inRect(mouse,rndBtn)){const r=srnd((Date.now()%2147483647)||7),b=randomBuild(r,MY.side,MY.name);MY.l=b.l;rebuildMine();return true}
- if(inRect(mouse,animeBtn)){openAnime();return true}
+ if(inRect(mouse,nameBtn)){const n=prompt('Nom de ton ninja (16 caractères max)',EB.name);if(n!==null){EB.name=n.trim()||EB.name;edRebuild()}return true}
+ if(inRect(mouse,rndBtn)){const r=srnd((Date.now()%2147483647)||7),b=randomBuild(r,EB.side,EB.name);EB.l=b.l;edRebuild();return true}
+ if(inRect(mouse,cancelBtn)){edCancel();return true}
  if(inRect(mouse,presetBtn)){openPicker('preset');return true}
- if(inRect(mouse,rndBuildBtn)){MY=randomKit(srnd((Date.now()%2147483647)||7),MY);rebuildMine();return true}
- const cyc=(k,n,d)=>{setB(k,(getB(k)+n+d)%n);rebuildMine()};
+ if(inRect(mouse,rndBuildBtn)){EB=randomKit(srnd((Date.now()%2147483647)||7),EB);edRebuild();return true}
+ const cyc=(k,n,d)=>{setB(k,(getB(k)+n+d)%n);edRebuild()};
  for(const [i,[,list,k]] of buildKeys().entries()){const R=selRect(i);if(!inRect(mouse,R))continue;if(appOff(k))return true;const n=list().length;
   if(mouse.x<R.x+24)cyc(k,n,-1);else if(mouse.x>R.x+R.w-24)cyc(k,n,1);else openPicker(k);return true}
  for(const [i,[,list,k]] of lookKeys().entries()){const R=lookRow(i),n=list().length;if(inRect(mouse,R.l)){cyc(k,n,-1);return true}if(inRect(mouse,R.r)){cyc(k,n,1);return true}if(inRect(mouse,R.v)){openPicker(k);return true}}
  for(let s=0;s<6;s++)if(inRect(mouse,slotRow(s))){openPicker(s);return true}
  if(inRect(mouse,passRow)){openPicker('pass');return true}
- if(!coop()&&inRect(mouse,fightBtn)){if(!overBudget())startMatch('p0');return true}
+ if(inRect(mouse,saveBtn)){if(!edOver())edSave();return true}
  return false}
 // --- dessin d'une carte du panneau de choix
 function drawCard(D,it,R,hov){const j=D.kind==='j',a=D.kind==='a';
@@ -12992,11 +12944,11 @@ function drawCard(D,it,R,hov){const j=D.kind==='j',a=D.kind==='a';
   if(it.nc!=null&&!it.sel)text(`→ ${it.nc}/${it.BUD}`,R.x+R.w-10,R.y+40,11,it.nc>it.BUD?'#ff6a5a':'#8fd88f','right','bold');fitT(it.d,x,R.y+55,11,'#bfa888',w,'normal',10)}
  else{const L=wrapL(it.d,w,FNT(11));g.fillStyle='#bfa888';fitT(L[0]||'',x,R.y+38,11,'#cdb898',w,'normal',10);if(L[1])fitT(L.slice(1).join(' '),x,R.y+53,11,'#cdb898',w,'normal',10)}
  if(it.used){g.fillStyle='rgba(12,8,5,.6)';g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,8);g.fill();rr({x:R.x+R.w-216,y:R.y+R.h-23,w:208,h:19},9.5,'rgba(40,26,14,.97)','#8a5a2a');text(`Déjà en ${lbl[SLOTS[it.used]]} · clic : échanger`,R.x+R.w-112,R.y+R.h-9.5,11,'#ffb347')}}
-function drawPicker(){if(picker==='gallery')return drawGallery();const D=pickData(picker);if(!D){picker=null;return}const G=pickGrid(D),B=G.B,L=pickList(D),mx=pickMax(D,G);pickScroll=clamp(pickScroll,0,mx);
+function drawPicker(){const D=pickData(picker);if(!D){picker=null;return}const G=pickGrid(D),B=G.B,L=pickList(D),mx=pickMax(D,G);pickScroll=clamp(pickScroll,0,mx);
  g.fillStyle='rgba(0,0,0,.62)';g.fillRect(0,0,W,H);g.save();g.shadowColor='rgba(0,0,0,.7)';g.shadowBlur=24;rr(B,14,'rgba(26,17,10,.98)','#8a5a2a',2);g.restore();
  g.fillStyle='#ff9a3a';g.fillRect(B.x+14,B.y+56,B.w-28,1.5);
  fitT(D.title,B.x+20,B.y+32,20,'#ffb347',B.w-300,'bold',13);if(D.sub)fitT(D.sub,B.x+20,B.y+50,12,'#d8b888',B.w-120,'normal',10);
- if(D.kind==='j'&&picker){const BUD=budgetOf(MY),c=kitCost(MY);text(`${c} / ${BUD} points`,B.x+B.w-58,B.y+33,15,c>BUD?'#ff6a5a':'#ffd38a','right')}
+ if(D.kind==='j'&&picker){const BUD=budgetOf(EB),c=kitCost(EB);text(`${c} / ${BUD} points`,B.x+B.w-58,B.y+33,15,c>BUD?'#ff6a5a':'#ffd38a','right')}
  {const R=closeRect(B),h=inRect(mouse,R);rr(R,8,h?'#ff9a3a':'rgba(50,34,20,.95)','#8a5a2a');text('✕',R.x+16,R.y+22,16,h?'#1a1008':'#f3d9b0')}
  tabRects(D,B).forEach((R,i)=>{const on=i===pickTab,h=inRect(mouse,R),c=(D.tabC||[])[i]||'#ffb347';rr(R,14,on?c:h?'rgba(90,60,30,.95)':'rgba(40,28,18,.92)',c,1.5);text(R.s,R.x+R.w/2,R.y+19,13,on?(lum(c)>.45?'#1a1008':'#fff'):'#f3d9b0')});
  const inG=inRect(mouse,{x:G.gx,y:G.gy,w:G.gw,h:G.gh});g.save();g.beginPath();g.rect(G.gx-4,G.gy-4,G.gw+8,G.gh+8);g.clip();
@@ -13007,20 +12959,28 @@ function drawPicker(){if(picker==='gallery')return drawGallery();const D=pickDat
  if(mx>0){const tr={x:G.gx+G.gw+6,y:G.gy,w:6,h:G.gh},k=G.gh/(G.gh+mx);rr(tr,3,'rgba(255,255,255,.08)');rr({x:tr.x,y:tr.y+(G.gh-G.gh*k)*pickScroll/mx,w:6,h:G.gh*k},3,'#c08040');
   if(pickScroll<mx)text('▼ molette pour voir la suite',B.x+B.w/2,B.y+B.h-12,11,'#ffb347','center','bold')}
  text('Échap, ✕ ou clic hors du cadre pour fermer'+(D.tabs?' · ← → onglets':''),B.x+20,B.y+B.h-12,11,'#9a8060','left','normal')}
-function drawMenu(){TIP=null;{const now=performance.now();if(now-menuLast>1500)picker=null;menuLast=now} // retour au menu après un match : panneau fermé
- // clavier du panneau de choix : Échap ferme, flèches haut/bas défilent, gauche/droite changent d'onglet
- if(picker!==null){if(pressed.Escape)picker=null;else if(picker==='gallery'){const st=218;if(pressed.ArrowDown||pressed.PageDown)pickScroll+=pressed.PageDown?galLayout().gh:st;if(pressed.ArrowUp||pressed.PageUp)pickScroll-=pressed.PageUp?galLayout().gh:st}else{const D=pickData(picker);if(D){const G=pickGrid(D);if(pressed.ArrowDown||pressed.PageDown)pickScroll+=pressed.PageDown?G.gh:G.step;if(pressed.ArrowUp||pressed.PageUp)pickScroll-=pressed.PageUp?G.gh:G.step;
-  if(D.tabs&&(pressed.ArrowLeft||pressed.ArrowRight)){pickTab=(pickTab+(pressed.ArrowRight?1:-1)+D.tabs.length)%D.tabs.length;pickScroll=0}}}}
- const free=picker===null,hv=R=>free&&inRect(mouse,R);
+// en-tête commun du menu : titre, état du salon ; modes et EN LIGNE sauf en création (bandeau « création » à la place)
+function drawHead(edit,noSt){
  g.save();g.shadowColor='#ff9a3a';g.shadowBlur=18;text('NARUTO · ARÈNE NINJA',W/2,52,42,'#ffb347');g.restore();
+ if(net.role&&!noSt){const m=!coop()?net.status:lobbyList().map(x=>`${who(x)} : ${x.c&&CH[x.c]?CH[x.c].name:'…'}${mode==='arena'?'':x.team?' [B]':' [A]'}${x.ready?' ✓':''}`).join('  ·  ');g.font='normal 12px "Trebuchet MS",system-ui,sans-serif';tfit(m,1222-Math.min(1060,g.measureText(m).width),131,12,'#9f9',1060)}
+ if(edit)return;
  {const b=coopBtn,h=inRect(mouse,b),on=coop()||net.role==='host';g.fillStyle=on?'#7f7':h?'rgba(90,60,30,.95)':'rgba(40,28,18,.9)';g.strokeStyle=on?'#7f7':'#8a5a2a';g.lineWidth=1.5;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,15);g.fill();g.stroke();text(!on?'EN LIGNE':net.role==='host'?`SALON ${net.code||''} · ${lobbyList().length}/${MAXP}`:`EN LIGNE · ${lobbyList().length} joueurs`,b.x+b.w/2,b.y+20,13,on?'#10131c':'#f3d9b0')}
- if(net.role){const m=!coop()?net.status:lobbyList().map(x=>`${who(x)} : ${x.c&&CH[x.c]?CH[x.c].name:'…'}${mode==='arena'?'':x.team?' [B]':' [A]'}${x.ready?' ✓':''}`).join('  ·  ');g.font='normal 12px "Trebuchet MS",system-ui,sans-serif';tfit(m,1222-Math.min(1060,g.measureText(m).width),131,12,'#9f9',1060)}
- for(const b of modeBtns){const on=mode===b.m,h=inRect(mouse,b);g.fillStyle=on?'#ff9a3a':h?'rgba(90,60,30,.95)':'rgba(40,28,18,.9)';g.strokeStyle=on?'#ff9a3a':'#8a5a2a';g.lineWidth=1.5;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,15);g.fill();g.stroke();text(modeLabel(b),b.x+b.w/2,b.y+20,13,on?'#1a1008':'#f3d9b0')}
- text(menuDesc(),W/2,net.role?116:130,13,'#e8cfa8','center','normal');
- const t=performance.now()/1000,ch=MYCH; // en ligne, côté invité, le créateur montre MYCH (son ninja), jamais CH.p0 (celui de l'hôte)
+ for(const b of modeBtns){const on=mode===b.m,h=inRect(mouse,b)&&!isGuest();g.fillStyle=on?'#ff9a3a':h?'rgba(90,60,30,.95)':'rgba(40,28,18,.9)';g.strokeStyle=on?'#ff9a3a':'#8a5a2a';g.lineWidth=1.5;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,15);g.fill();g.stroke();text(modeLabel(b),b.x+b.w/2,b.y+20,13,on?'#1a1008':'#f3d9b0')}}
+// ---------- écran de création / modification d'un perso (EB) ----------
+function drawCreator(){
+ // clavier du panneau de choix : Échap ferme, flèches haut/bas défilent, gauche/droite changent d'onglet
+ if(picker!==null){if(pressed.Escape)picker=null;else{const D=pickData(picker);if(D){const G=pickGrid(D);if(pressed.ArrowDown||pressed.PageDown)pickScroll+=pressed.PageDown?G.gh:G.step;if(pressed.ArrowUp||pressed.PageUp)pickScroll-=pressed.PageUp?G.gh:G.step;
+  if(D.tabs&&(pressed.ArrowLeft||pressed.ArrowRight)){pickTab=(pickTab+(pressed.ArrowRight?1:-1)+D.tabs.length)%D.tabs.length;pickScroll=0}}}}
+ else if(pressed.Escape&&!CONF){edCancel();if(scr!=='edit')return drawRoster()}
+ const free=picker===null&&!CONF,hv=R=>free&&inRect(mouse,R);
+ drawHead(true);
+ {const E=ED.k?rosGet(ED.k):null,s=ED.k?(E&&E.P?`MODIFIER · ${E.P.full} (perso de l'anime)`:`MODIFIER · ${E?E.b.name:EB.name}`):'CRÉATION D\'UN PERSO',R={x:290,y:76,w:700,h:30};
+  rr(R,15,'rgba(40,28,18,.9)','#ff9a3a',1.5);fitT('✎  '+s,R.x+R.w/2,R.y+20,14,'#ffd38a',R.w-30,'bold',10,'center');
+  fitT(ED.k&&E&&E.P?'Tes retouches sont gardées pour ce perso · « Rétablir l\'original » dans la liste le remet comme dans l\'anime':'À gauche son apparence, à droite son kit de combat · ✔ Enregistrer le range dans « Mes ninjas »',W/2,130,13,'#e8cfa8',1000,'normal',10,'center')}
+ const t=performance.now()/1000,ch=EBCH; // le perso en cours (jamais CH.p0 : en ligne, côté invité, c'est le ninja de l'hôte)
  // ===== colonne de gauche : ton ninja + son apparence
  rr({x:30,y:142,w:380,h:560},12,'rgba(20,14,10,.85)','#5a3a1e');
- {const h=hv(nameBtn);rr(nameBtn,8,h?'rgba(90,60,30,.6)':'rgba(0,0,0,.25)');tfit(MY.name+'  ✎',nameBtn.x+10,nameBtn.y+22,20,ch.side?'#ff9a9a':'#ffd38a',280,'bold')}
+ {const h=hv(nameBtn);rr(nameBtn,8,h?'rgba(90,60,30,.6)':'rgba(0,0,0,.25)');tfit(EB.name+'  ✎',nameBtn.x+10,nameBtn.y+22,20,ch.side?'#ff9a9a':'#ffd38a',280,'bold')}
  btn(rndBtn,'🎲',false);if(hv(rndBtn))hoverTip('rndL',()=>({t:'Apparence aléatoire',d:'Tire au hasard village, tenue, coiffure, couleurs et accessoire. Ton build de combat ne change pas.'}));
  const fake=menuFake(ch);fake.aim=Math.PI/2+Math.sin(t*.8)*1.1;fake.moving=Math.sin(t*.5)>.3;fake.walk=t*13;fake.swing=0;
  g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(220,316,50,13,0,0,7);g.fill();
@@ -13035,12 +12995,12 @@ function drawMenu(){TIP=null;{const now=performance.now();if(now-menuLast>1500)p
   const h=hv(R.v),sw=swCol(it);rr(R.v,6,h?'rgba(90,60,30,.85)':'rgba(0,0,0,.28)',h?'#c08040':null);if(sw)rr({x:R.v.x+7,y:R.y-z+1,w:z,h:z},3,sw,'#14100a',1.5);
   fitT(itN(it),R.v.x+(sw?12+z:8),R.y,z,'#fff',R.v.w-(sw?52:44),'bold',9);text(`${v+1}/${L.length}`,R.v.x+R.v.w-6,R.y,Math.min(10,z-1),'#8a7458','right','normal');
   if(h)hoverTip('lk'+k,()=>({t:lab+' : '+itN(it),d:`${L.length} choix. Clic : ouvrir la grille · ◀ ▶ : précédent / suivant.`}))});
- {const R=animeBtn,h=hv(R);g.save();if(h){g.shadowColor='#ffb347';g.shadowBlur=12}rr(R,R.h/2,h?'#ffb347':'rgba(70,44,18,.95)','#ffb347',2);g.restore();text('⭐ Persos de l\'anime',R.x+R.w/2,R.y+21,14,h?'#1a1008':'#ffd38a');
-  if(h)hoverTip('anime',()=>({t:'Persos de l\'anime',d:`${PRESETS.length} ninjas célèbres (${GALG.join(', ')}) : son apparence et son kit remplacent les tiens (ton camp est gardé). Tu peux ensuite tout retoucher.`}))}
+ {const R=cancelBtn,h=hv(R),dt=edDirty();rr(R,R.h/2,h?'rgba(90,60,30,.95)':'rgba(40,28,18,.92)','#c08040',1.5);text(dt?'◀ Annuler (sans enregistrer)':'◀ Retour à la liste',R.x+R.w/2,R.y+21,14,'#f3d9b0');
+  if(h)hoverTip('cancel',()=>({t:dt?'Annuler':'Retour',d:dt?'Revient à la liste sans garder tes changements (une confirmation est demandée).':'Revient à la liste des persos.',f:'Échap'}))}
  // ===== colonne de droite : build de combat
  // camp, voie, clan, nature : ◀ ▶ pour défiler, clic au centre pour la grille
  buildKeys().forEach(([lab,list,k],i)=>{const R=selRect(i),L=list(),v=getB(k),it=L[v],off=appOff(k),h=hv(R)&&!off,sw=swCol(it);
-  rr(R,10,h?'rgba(70,46,24,.95)':'rgba(20,14,10,.85)',off?'#3a2a1a':k==='clan'&&MY.clan>=0?CLANS[MY.clan][1]:'#5a3a1e',k==='clan'&&MY.clan>=0?1.5:1);
+  rr(R,10,h?'rgba(70,46,24,.95)':'rgba(20,14,10,.85)',off?'#3a2a1a':k==='clan'&&EB.clan>=0?CLANS[EB.clan][1]:'#5a3a1e',k==='clan'&&EB.clan>=0?1.5:1);
   text(lab.toUpperCase(),R.x+R.w/2,R.y+15,10,'#b89a70','center');
   if(off){text('aucune (taijutsu pur)',R.x+R.w/2,R.y+34,12,'#7a6a58','center','normal');if(inRect(mouse,R)&&free)hoverTip('off'+k,()=>({t:'Pas de nature',d:'Les Taijutsuka n\'utilisent que leur corps : pas de nature, pas de mudras.'}));return}
   const ax=h&&mouse.x<R.x+24,bx=h&&mouse.x>R.x+R.w-24;text('◀',R.x+13,R.y+30,13,ax?'#fff':'#ffb347');text('▶',R.x+R.w-13,R.y+30,13,bx?'#fff':'#ffb347');
@@ -13048,11 +13008,11 @@ function drawMenu(){TIP=null;{const now=performance.now();if(now-menuLast>1500)p
   fitT(nm,x0+(sw?18:0),R.y+33,14,k==='clan'||k==='nat'?'#ffd38a':'#fff',R.w-60-(sw?18:0),'bold',10);
   if(h)hoverTip('bk'+k,()=>({t:`${lab} : ${nm}`,col:sw||'#ffd38a',d:optDesc(k,v)||' ',f:'Clic : voir tous les choix · ◀ ▶ : défiler'}))});
  // trait du clan et affinités de la nature
- {const T=TRAITS[MY.clan],tl=T?`${MY.clan<0?'Sans clan (+2 points)':'Trait'} · ${T.nom||T.name||''} : ${T.desc||''}`:'',col=MY.clan>=0?CLANS[MY.clan][1]:'#e8cfa8',aff=MY.clan!==TAIJ?`${NATURES[MY.nat][0]} : fort contre ${NATURES[BEATS[MY.nat]][0]}, faible contre ${NATURES[BEATS.indexOf(MY.nat)][0]}`:'Taijutsu pur : aucune nature';
-  g.font=FNT(11.5);const aw=Math.min(300,g.measureText(aff).width);fitT(aff,BX+BW-4,207,11.5,MY.clan!==TAIJ?NATURES[MY.nat][2]:'#b89a70',300,'normal',9,'right');
+ {const T=TRAITS[EB.clan],tl=T?`${EB.clan<0?'Sans clan (+2 points)':'Trait'} · ${T.nom||T.name||''} : ${T.desc||''}`:'',col=EB.clan>=0?CLANS[EB.clan][1]:'#e8cfa8',aff=EB.clan!==TAIJ?`${NATURES[EB.nat][0]} : fort contre ${NATURES[BEATS[EB.nat]][0]}, faible contre ${NATURES[BEATS.indexOf(EB.nat)][0]}`:'Taijutsu pur : aucune nature';
+  g.font=FNT(11.5);const aw=Math.min(300,g.measureText(aff).width);fitT(aff,BX+BW-4,207,11.5,EB.clan!==TAIJ?NATURES[EB.nat][2]:'#b89a70',300,'normal',9,'right');
   if(tl){fitT(tl,BX+4,207,11.5,liftC(col,.5),BW-aw-30,'normal',10.5);if(free&&inRect(mouse,{x:BX,y:194,w:BW-aw-20,h:18}))hoverTip('trait',()=>({t:T.nom||T.name||'Trait',col,d:T.desc||''}))}}
  // les 6 emplacements : touche, icône, nom, rang, chakra, recharge, mudras
- for(let s=0;s<6;s++){const R=slotRow(s),ab=ch.abil[s],h=hv(R),J=s?JL[MY.j[s]]:null,col=J?catCol(J.cat):MY.clan>=0?CLANS[MY.clan][1]:'#e8cfa8',gold=ab.ult;
+ for(let s=0;s<6;s++){const R=slotRow(s),ab=ch.abil[s],h=hv(R),J=s?JL[EB.j[s]]:null,col=J?catCol(J.cat):EB.clan>=0?CLANS[EB.clan][1]:'#e8cfa8',gold=ab.ult;
   rr(R,10,h?'rgba(74,48,24,.95)':'rgba(20,14,10,.85)',gold?'#ffb347':h?'#c08040':'#5a3a1e',gold?2:1);
   rr({x:R.x+7,y:R.y+5,w:66,h:36},8,'rgba(50,32,16,.95)',gold?'#ffe81f':'#8a5a2a',1.5);text(lbl[SLOTS[s]],R.x+40,R.y+22,14,gold?'#ffe81f':'#fff');text(SLOTN[s],R.x+40,R.y+35,9,'#c8a878','center','normal');
   jIcon(R.x+98,R.y+23,16,col,J?J.cat:null,gold);
@@ -13063,33 +13023,305 @@ function drawMenu(){TIP=null;{const now=performance.now();if(now-menuLast>1500)p
   const st=[[s?ab.hpc?Math.round(ab.hpc*100)+' %':String(jcost(ab)):'—',s&&ab.hpc?'PV max':'chakra',s&&ab.hpc?'#ff6a7a':'#7fc8ff'],[s?fmtCd(ab.cd):abCd(ab,1),s?'recharge':'moy./coup','#ffd38a'],[s?ab.mud?String(ab.mud):'aucun':'—','mudras','#d8b888']];
   st.forEach(([v,l,c],k)=>{const x=R.x+612+k*62;text(v,x,R.y+21,14,c,'center');text(l,x,R.y+36,9.5,'#9a8060','center','normal')});
   text('›',R.x+R.w-14,R.y+29,22,h?'#fff':'#8a5a2a','center');
-  if(h)hoverTip('sl'+s,()=>({t:ab.n,col,l:[[J?`${lbl[SLOTS[s]]} · ${SLOTN[s]} · ${catName(J.cat)} · rang ${J.r} (${pts(J.cost)})${ab.ult?' · ultime':''}`:`${lbl[SLOTS[s]]} · style de combat (gratuit)`,col],[s?`${jcostT(ab)} · ${fmtCd(ab.cd)} · ${ab.mud?ab.mud+' mudras':'sans mudra'}`:`attaque de base · ${abCd(ab)} par coup`,'#d8b888']],d:ab.d||'',f:`Clic : choisir (${s?avail(MY,s).length:stylesOf(MY).length} possibles)`}))}
- {const R=passRow,ps=PASS[ch.pass]||PASS[PASSK[MY.pass]],h=hv(R);rr(R,10,h?'rgba(50,62,36,.95)':'rgba(20,14,10,.85)',h?'#7fd87f':'#3a6a3a');
+  if(h)hoverTip('sl'+s,()=>({t:ab.n,col,l:[[J?`${lbl[SLOTS[s]]} · ${SLOTN[s]} · ${catName(J.cat)} · rang ${J.r} (${pts(J.cost)})${ab.ult?' · ultime':''}`:`${lbl[SLOTS[s]]} · style de combat (gratuit)`,col],[s?`${jcostT(ab)} · ${fmtCd(ab.cd)} · ${ab.mud?ab.mud+' mudras':'sans mudra'}`:`attaque de base · ${abCd(ab)} par coup`,'#d8b888']],d:ab.d||'',f:`Clic : choisir (${s?avail(EB,s).length:stylesOf(EB).length} possibles)`}))}
+ {const R=passRow,ps=PASS[ch.pass]||PASS[PASSK[EB.pass]],h=hv(R);rr(R,10,h?'rgba(50,62,36,.95)':'rgba(20,14,10,.85)',h?'#7fd87f':'#3a6a3a');
   rr({x:R.x+7,y:R.y+5,w:66,h:30},8,'rgba(30,50,26,.95)','#5aa85a',1.5);text('PASSIF',R.x+40,R.y+25,12,'#9f9');jIcon(R.x+98,R.y+20,13,'#7fd87f','p');
   const nw=fitT(ps[0],R.x+124,R.y+25,14,'#cfe8c0',220,'bold',11);fitT(ps[1],R.x+136+nw,R.y+25,12,'#a8c898',R.w-160-nw,'normal',10);text('›',R.x+R.w-14,R.y+27,22,h?'#fff':'#3a6a3a','center');
   if(h)hoverTip('pass',()=>({t:'Passif : '+ps[0],col:'#7fd87f',d:ps[1],f:`Clic : choisir parmi ${PASSK.length} passifs`}))}
  // budget : une case par point, à la couleur du rang de chaque jutsu ; au-delà du budget, en rouge
- {const R=budBox,BUD=budgetOf(MY),c=kitCost(MY),over=c>BUD;rr(R,10,'rgba(20,14,10,.9)',over?'#ff5a4a':'#5a3a1e',over?2:1);
+ {const R=budBox,BUD=budgetOf(EB),c=kitCost(EB),over=c>BUD;rr(R,10,'rgba(20,14,10,.9)',over?'#ff5a4a':'#5a3a1e',over?2:1);
   text('POINTS DU KIT',R.x+12,R.y+18,11,'#b89a70','left');text(`${c} / ${BUD}`,R.x+R.w-12,R.y+21,18,over?'#ff6a5a':'#ffd38a','right');
   const n=Math.max(BUD,c),cw=Math.min(20,(R.w-112-78-4*5)/n);let x=R.x+112,k=0;
-  for(let s=1;s<6;s++){const J=JL[MY.j[s]],hs=hv(slotRow(s));for(let q=0;q<J.cost;q++){const out=k>=BUD;g.fillStyle=RANKC[J.r];g.fillRect(x,R.y+8,cw-2,13);if(out){g.strokeStyle='#ff3a2a';g.lineWidth=2;g.strokeRect(x+1,R.y+9,cw-4,11)}if(hs){g.fillStyle='rgba(255,255,255,.45)';g.fillRect(x,R.y+8,cw-2,13)}x+=cw;k++}x+=5}
+  for(let s=1;s<6;s++){const J=JL[EB.j[s]],hs=hv(slotRow(s));for(let q=0;q<J.cost;q++){const out=k>=BUD;g.fillStyle=RANKC[J.r];g.fillRect(x,R.y+8,cw-2,13);if(out){g.strokeStyle='#ff3a2a';g.lineWidth=2;g.strokeRect(x+1,R.y+9,cw-4,11)}if(hs){g.fillStyle='rgba(255,255,255,.45)';g.fillRect(x,R.y+8,cw-2,13)}x+=cw;k++}x+=5}
   for(;k<BUD;k++){g.fillStyle='rgba(255,255,255,.1)';g.fillRect(x,R.y+8,cw-2,13);x+=cw}
-  const mxJ=JL[MY.j.slice(1).reduce((a,id)=>JL[id].cost>JL[a].cost?id:a,MY.j[1])];
-  fitT(over?`${pts(c-BUD)} de trop : remplace un jutsu par un de rang plus bas (le plus cher : ${mxJ.n}, rang ${mxJ.r})`:c<BUD?`${pts(BUD-c)} libre${BUD-c>1?'s':''} · rang D = 1 point, C = 2, B = 3, A = 4, S = 5${MY.clan<0?' · sans clan : +2 points':''}`:`Budget pile atteint · rang D = 1 point, C = 2, B = 3, A = 4, S = 5${MY.clan<0?' · sans clan : +2':''}`,R.x+12,R.y+44,11.5,over?'#ff8a7a':'#c8a878',R.w-24,over?'bold':'normal',9)}
+  const mxJ=JL[EB.j.slice(1).reduce((a,id)=>JL[id].cost>JL[a].cost?id:a,EB.j[1])];
+  fitT(over?`${pts(c-BUD)} de trop : remplace un jutsu par un de rang plus bas (le plus cher : ${mxJ.n}, rang ${mxJ.r})`:c<BUD?`${pts(BUD-c)} libre${BUD-c>1?'s':''} · rang D = 1 point, C = 2, B = 3, A = 4, S = 5${EB.clan<0?' · sans clan : +2 points':''}`:`Budget pile atteint · rang D = 1 point, C = 2, B = 3, A = 4, S = 5${EB.clan<0?' · sans clan : +2':''}`,R.x+12,R.y+44,11.5,over?'#ff8a7a':'#c8a878',R.w-24,over?'bold':'normal',9)}
  btn(rndBuildBtn,'🎲 Kit aléatoire',false);btn(presetBtn,'📜 Modèles de kit',false);
  if(hv(rndBuildBtn))hoverTip('rndK',()=>({t:'Kit aléatoire',d:'Tire au hasard clan, nature, voie, passif et jutsu. Ton apparence ne change pas.'}));
  if(hv(presetBtn))hoverTip('pre',()=>({t:'Modèles de kit',d:'Les mêmes persos de l\'anime en liste, avec leurs 5 jutsu : un bon point de départ à retoucher.'}));
  ['D','C','B','A','S'].forEach((r,i)=>{const x=BX+408+i*35;rr({x,y:643,w:31,h:22},6,RANKC[r]);text(`${r}·${RANKS[r]}`,x+15.5,659,11,'#14100a')});if(free&&inRect(mouse,{x:BX+408,y:640,w:175,h:28}))hoverTip('rk',()=>({t:'Rangs des jutsu',d:`Chaque rang coûte des points du kit (D = 1 … S = 5) et du chakra à chaque lancer (D = ${CKCOST.D}, C = ${CKCOST.C}, B = ${CKCOST.B}, A = ${CKCOST.A}, S = ${CKCOST.S} ; +${CKCOST.U} pour un ultime). Les jutsu de nature demandent aussi des mudras (D = 2 … S = 6).`}));
- if(!coop()){const R=fightBtn,ob=overBudget(),h=hv(R)&&!ob;g.save();if(!ob){g.shadowColor='#ff9a3a';g.shadowBlur=h?22:10}rr(R,R.h/2,ob?'rgba(120,50,40,.9)':h?'#ffb347':'#ff9a3a',ob?'#a55':'#ffd38a',2);g.restore();
-  text(ob?'TROP DE POINTS':'COMBATTRE ▶',R.x+R.w/2,R.y+R.h/2+(ob?0:6),ob?15:18,ob?'#ffd0c8':'#1a1008');if(ob)text('baisse un rang pour jouer',R.x+R.w/2,R.y+R.h/2+16,10.5,'#ffb0a0','center','normal')}
- if(isGuest()&&mode!=='arena'){const b=teamBtn,h=hv(b);rr(b,b.h/2,h?'#5a3a1e':'#2a1c10',net.myTeam?'#ff6060':'#4db8ff',2);text(`ÉQUIPE ${net.myTeam?'B':'A'} (changer)`,b.x+b.w/2,b.y+b.h/2+5,13,'#f3d9b0','center')}
- if(coop()){const b=readyBtn,ob=overBudget(),on=net.ready&&!ob;rr(b,b.h/2,ob?'rgba(120,50,40,.9)':on?'#7f7':hv(b)?'#ffb347':'rgba(255,154,58,.88)',ob?'#a55':null,2);text(ob?'TROP DE POINTS':on?'PRÊT ✓':'PRÊT ?',b.x+b.w/2,b.y+b.h/2+6,ob?15:17,ob?'#ffd0c8':'#10131c','center')}
+ {const R=saveBtn,ob=edOver(),h=hv(R)&&!ob;g.save();if(!ob){g.shadowColor='#ff9a3a';g.shadowBlur=h?22:10}rr(R,R.h/2,ob?'rgba(120,50,40,.9)':h?'#ffb347':'#ff9a3a',ob?'#a55':'#ffd38a',2);g.restore();
+  text(ob?'TROP DE POINTS':'✔ ENREGISTRER',R.x+R.w/2,R.y+R.h/2+(ob?0:6),ob?15:18,ob?'#ffd0c8':'#1a1008');if(ob)text('baisse un rang pour enregistrer',R.x+R.w/2,R.y+R.h/2+16,10.5,'#ffb0a0','center','normal');
+  if(h)hoverTip('save',()=>({t:'Enregistrer',d:ED.k?'Garde ces changements et revient à la liste, ce perso sélectionné.':'Ajoute ce ninja à « Mes ninjas » et revient à la liste, prêt à jouer.'}))}
  // sort commun à tous les ninjas : soin (H)
  fitT(`${lbl.KeyH} · Soin (tous les ninjas) : l'allié visé (ou toi) récupère ${Math.round(HLS.pct*100)} % de ses PV + 8 % en 2 s · incantation 0,3 s · ${HLS.cd} s de recharge · sans chakra`,BX+4,690,11.5,'#9fdfaa',640,'normal',9);
  if(picker!==null)drawPicker();
- else text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · ${lbl.KeyR} maintenu = chakra · ${lbl.KeyH} soin · Maj = sprint · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
- drawTip();drawCursor();
-}
+ else if(!CONF)text(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · ${lbl.KeyR} maintenu = chakra · ${lbl.KeyH} soin · Maj = sprint · Tab scores · ${lbl.KeyM} son · O options`,W/2,714,12,'#e8cfa8','center','normal');
+ drawConf();drawTip();drawCursor()}
+
+// ---------- Menu : liste des persos (grille par village), fiche, choix de l'adversaire, création ----------
+// scr : écran du menu = 'list' (liste des persos), 'opp' (arène ou duel hors ligne : choix de l'adversaire), 'edit' (création / modification : drawCreator, nr_menu.js)
+// persos : les tiens (« Mes ninjas », clé 'm'+id) et ceux de l'anime (clé 'a:'+nom ; leur kit et leur apparence se retouchent, la retouche est gardée par perso)
+// MEK : clé du perso joué (MY = sa build, CH.p0 = son ninja) ; FK : perso montré par la fiche (le survolé, sinon le dernier survolé) ; OPPK : adversaire choisi ('o0' le temps d'un startMatch)
+let scr='list',ED=null,CONF=null,OPPK=null,MEK=null,FK=null,RQ='',rosScroll=0,rosTarget=0,RL=null,RLAY=null,RFL=null;
+const RKEY='nrRoster1',RSIM=/[?&]sim=1(&|$)/.test(location.search);
+// sections de la liste : [nom, couleur, emblème] ; « Mes ninjas » toujours en tête, une section sans perso n'est pas affichée
+const SECS=[['Mes ninjas','#ffb347','star'],['Konoha','#6ac46a','leaf'],['Suna','#d8a860','sand'],['Kiri','#5ab8d8','mist'],['Kumo','#e8d860','cloud'],['Iwa','#b88a60','rock'],['Oto','#a87ae0','note'],['Ame','#8a9ac0','rain'],['Akatsuki','#e0383a','aka'],['Autres ninjas','#c86a8a','shur']];
+// section d'un perso de l'anime : P.sec, sinon d'après son groupe g (Équipe 7, Sannin & Hokage → Konoha…)
+const rosSec=P=>Math.max(1,SECS.findIndex(S=>S[0]===(P.sec||['Konoha','Akatsuki','Konoha','Konoha','Suna','Oto','Kiri','Autres ninjas'][P.g])));
+// ----- sauvegarde : { v, nid, mine:[{id,build}], anime:{nom du perso: build retouchée}, last:{me,opp} } ; une build garde le nom de ses jutsu et de son style (juste si le catalogue évolue)
+const bOut=b=>Object.assign({},b,{l:Object.assign({},b.l),j:b.j.slice(),jn:b.j.slice(1).map(id=>JL[id]?JL[id].n:''),sn:STYLES[b.j[0]]?STYLES[b.j[0]][0]:''});
+function bIn(b){try{if(!b||typeof b!=='object')return null;b=legacyLook(JSON.parse(JSON.stringify(b)));const j=Array.isArray(b.j)?b.j.slice(0,6):[];
+ if(typeof b.sn==='string'){const i=STYLES.findIndex(s=>s[0]===b.sn);if(i>=0)j[0]=i}if(Array.isArray(b.jn))for(let s=1;s<6;s++)j[s]=pickName(b,b.jn[s-1]);
+ b.j=j;delete b.jn;delete b.sn;return sanitizeBuild(b)}catch(e){return null}}
+const kitSig=b=>JSON.stringify([b.voie,b.nat,b.clan,b.pass,b.j,b.l]);
+const PB=[],presetOf=i=>PB[i]||(PB[i]=presetBuild(i,PRESETS[i].n,PRESETS[i].side)); // build d'origine d'un perso de l'anime (ne jamais la modifier)
+let ROS={mine:[],anime:{},last:{},nid:1};
+// première fois : le ninja de l'ancien créateur ('nrBuild4') devient le premier de « Mes ninjas » (sauf si c'est un perso de l'anime tel quel)
+function rosMigrate(){const R={mine:[],anime:{},last:{me:'a:'+PRESETS[0].n},nid:1};let has=false;try{has=!!(localStorage.getItem('nrBuild4')||localStorage.getItem('nrBuild3'))}catch(e){}
+ if(!has)return R;let b=null;try{b=loadMine()}catch(e){}if(!b)return R;
+ const i=PRESETS.findIndex((P,k)=>(b.name===P.n||b.name==='Ninja')&&kitSig(b)===kitSig(presetOf(k)));
+ if(i>=0)R.last.me='a:'+PRESETS[i].n;else{R.mine.push({id:1,build:bOut(b)});R.nid=2;R.last.me='m1'}return R}
+// chargement : tout passe par sanitizeBuild ; JSON illisible = liste vide (sans planter)
+function rosLoad(){let raw=null,R=null;try{raw=localStorage.getItem(RKEY)}catch(e){}
+ if(raw==null)R=rosMigrate();else try{R=JSON.parse(raw)}catch(e){R=null}
+ const o={mine:[],anime:{},last:{},nid:1};
+ if(R&&typeof R==='object'){
+  if(Array.isArray(R.mine))for(const m of R.mine){const id=m&&m.id|0,b=m&&bIn(m.build);if(b&&id>0&&!o.mine.some(x=>x.id===id))o.mine.push({id,build:b})}
+  if(R.anime&&typeof R.anime==='object')for(const P of PRESETS)if(R.anime[P.n]){const b=bIn(R.anime[P.n]);if(b)o.anime[P.n]=b}
+  const L=R.last&&typeof R.last==='object'?R.last:{};for(const k of['me','opp'])if(typeof L[k]==='string')o.last[k]=L[k];
+  o.nid=Math.max(1,R.nid|0,...o.mine.map(m=>m.id+1))}
+ ROS=o;RL=RLAY=null;if(raw==null)rosSave()}
+function rosSave(){if(RSIM)return;try{localStorage.setItem(RKEY,JSON.stringify({v:1,nid:ROS.nid,mine:ROS.mine.map(m=>({id:m.id,build:bOut(m.build)})),anime:Object.fromEntries(Object.entries(ROS.anime).map(([n,b])=>[n,bOut(b)])),last:ROS.last}))}catch(e){}}
+// ----- liste des persos : {k, b build, sec section, P perso de l'anime (+ i son indice, mod retouché) ou id (les tiens)}
+function rosEntries(){if(RL)return RL;RL=[];
+ for(const m of ROS.mine)RL.push({k:'m'+m.id,id:m.id,b:m.build,sec:0});
+ PRESETS.map((_,i)=>i).sort((a,b)=>PRESETS[a].g-PRESETS[b].g||a-b).forEach(i=>{const P=PRESETS[i],m=ROS.anime[P.n];RL.push({k:'a:'+P.n,i,P,b:m||presetOf(i),mod:!!m,sec:rosSec(P)})});
+ return RL}
+const rosGet=k=>k&&rosEntries().find(e=>e.k===k)||null;
+function rosChanged(){RL=RLAY=null;rosSave()}
+// recherche par nom (sans accents ni majuscules) : nom, nom complet, village, clan, nature
+const fold=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
+const rosMatch=E=>!RQ||fold([E.b.name,E.P?E.P.full:'',SECS[E.sec][0],E.b.clan>=0?CLANS[E.b.clan][0]:'sans clan',E.b.clan===TAIJ?'':NATURES[E.b.nat][0]].join(' ')).includes(RQ);
+// ninjas d'aperçu : un par perso, refait quand sa build change (modèle 3D gardé tant qu'il s'affiche) ; stats recalculées si le profil d'équilibrage change
+const RF=new Map(),blVer=()=>{try{return BLC.sig||''}catch(e){return''}};
+function rosFake(E){let F=RF.get(E.k);const v=blVer();
+ if(!F||F.b!==E.b){const ch=mkNinja(E.b),o=CH.p0;CH.p0=ch;const u=mkUnit('p0',0,0,ch.side);CH.p0=o;F={b:E.b,ch,u,v};RF.set(E.k,F)}
+ else if(F.v!==v){const n=mkNinja(E.b);for(const f of['hp','spd','pw','abil','desc'])F.ch[f]=n[f];F.v=v}return F}
+// ninja d'une carte en 3D : la case de l'atlas est copiée dans une image propre à la carte ; le ninja n'est rendu en 3D que survolé (il pivote et marche),
+// à son apparition et un instant après le survol (le temps que la pose se pose) : au repos, la carte redessine son image (une liste de 40 ninjas ≈ 1 à 3 rendus 3D par image)
+function cardChar(F,x,y,s,hov,t){const u=F.u;if(!(N3.ok&&N3.on&&OPT.p3d!==false))return drawChar3(u,x,y,s);
+ if(hov||F.liveT==null)F.liveT=t+(hov?.8:.7);const tl=N3.tile.get(u),sk=u.ch.look.scale||1,w=TWU*s*sk,h=THU*s*sk;
+ if(tl){if(!F.snap||F.snap.width!==TPW||F.snap.height!==TPH){F.snap=document.createElement('canvas');F.snap.width=TPW;F.snap.height=TPH}const c=F.snap.getContext('2d');c.clearRect(0,0,TPW,TPH);c.drawImage(N3.cv,tl.sx,tl.sy,TPW,TPH,0,0,TPW,TPH);F.ok=1}
+ if(t<F.liveT||!F.ok)N3.req.add(u);
+ if(F.ok)g.drawImage(F.snap,0,0,F.snap.width,F.snap.height,x-w/2,y-h+FOOT*s*sk,w,h);else drawChar(u,x,y,s)}
+const FFK={},fakeFor=(s,ch)=>{let f=FFK[s];if(!f||f.ch!==ch){const o=CH.p0;CH.p0=ch;f=FFK[s]={ch,u:mkUnit('p0',0,0,ch.side)};CH.p0=o}return f.u}; // ninjas de la fiche (animés à part des cartes)
+// ----- disposition : onglets, grille (bandes de sections : les petites sections partagent une rangée), fiche, barre du bas
+const RGX=30,RGY=174,RGW=1220,RGH=290,RCH=116,NCOL=10,RCW=(RGW-14-(NCOL-1)*8)/NCOL,RGAP=18;
+const FI={x:30,y:476,w:1220,h:194},newBtn={x:30,y:677,w:250,h:36},oppBack={x:30,y:110,w:150,h:28},oppRnd={x:1060,y:110,w:190,h:28},RQR={x:1030,y:143,w:220,h:26};
+function rosLayout(){if(RLAY)return RLAY;const L=[],Hd=[],gw=RGW-14,st=RCW+8;let y=0,cx=-1;
+ const close=()=>{if(cx>=0){y+=24+RCH+12;cx=-1}};
+ SECS.forEach((S,si)=>{const it=rosEntries().filter(e=>e.sec===si&&rosMatch(e)).map(e=>({e}));if(si===0&&!RQ)it.push({plus:1});if(!it.length)return;const n=it.length,cnt=it.filter(q=>q.e).length;
+  if(n>NCOL){close();Hd.push({si,x:0,y,w:gw,n:cnt});it.forEach((q,k)=>L.push(Object.assign(q,{x:RGX+(k%NCOL)*st,y:y+24+Math.floor(k/NCOL)*(RCH+8),w:RCW,h:RCH})));y+=24+Math.ceil(n/NCOL)*(RCH+8)+4;return}
+  const w=n*st-8;if(cx>=0&&cx+RGAP+w<=gw)cx+=RGAP;else{close();cx=0}
+  Hd.push({si,x:cx,y,w,n:cnt});it.forEach((q,k)=>L.push(Object.assign(q,{x:RGX+cx+k*st,y:y+24,w:RCW,h:RCH})));cx+=w});
+ close();return RLAY={L,Hd,total:Math.max(0,y-12)}}
+const rosMax=()=>Math.max(0,rosLayout().total-RGH);
+function rosTabs(){const Y=rosLayout();let x=RGX;g.font=FNT(12.5,'bold');return Y.Hd.map(h=>{const s=`${SECS[h.si][0]} (${h.n})`,w=g.measureText(s).width+38,R={x,y:144,w,h:24,s,si:h.si,top:h.y};x+=w+6;return R})}
+// fait voir un perso (défile jusqu'à lui, en-tête de sa section compris)
+function rosReveal(k){const it=rosLayout().L.find(q=>q.e&&q.e.k===k);if(!it)return;if(it.y-24<rosTarget)rosTarget=it.y-24;else if(it.y+RCH>rosTarget+RGH)rosTarget=it.y+RCH-RGH+4;rosTarget=clamp(rosTarget,0,rosMax())}
+// ----- actions
+// perso choisi : il devient ton ninja (en ligne : envoyé à l'hôte ou diffusé dans le salon, comme avant)
+function rosUse(E){if(E.k===MEK&&coop())return;MEK=E.k;ROS.last.me=E.k;rosSave();MY=sanitizeBuild(E.b);rebuildMine()}
+// clic sur un perso : en ligne il devient le tien (puis PRÊT) ; bataille = combat direct ; arène / duel hors ligne = étape « adversaire »
+function rosPick(E){FK=E.k;if(scr==='opp')return rosFight(E);rosUse(E);if(coop())return;
+ if(mode==='battle'){startMatch('p0');return}
+ scr='opp';const o=ROS.last.opp;FK=o&&rosGet(o)?o:null}
+function rosFight(E){if(!E||!rosGet(MEK)){scr='list';return}CH.o0=mkNinja(E.b,true);OPPK='o0';ROS.last.opp=E.k;rosSave();scr='list';FK=MEK;startMatch('p0')}
+function rosRandomOpp(){const L=rosEntries().filter(e=>e.k!==MEK);rosFight(L[Math.floor(Math.random()*L.length)])}
+function rosBack(){scr='list';FK=MEK}
+function dupName(n){const base=String(n).replace(/ \(\d+\)$/,''),used=new Set(rosEntries().map(e=>e.b.name));for(let i=2;;i++){const suf=` (${i})`,s=base.slice(0,16-suf.length).trimEnd()+suf;if(!used.has(s)||i>99)return s}}
+function rosDup(E){const id=ROS.nid++;ROS.mine.push({id,build:sanitizeBuild(Object.assign({},E.b,{name:dupName(E.b.name)}))});rosChanged();FK='m'+id;RFL={k:FK,t:performance.now()};rosReveal(FK)}
+function rosDel(E){ROS.mine=ROS.mine.filter(m=>m.id!==E.id);if(ROS.last.opp===E.k)delete ROS.last.opp;rosChanged();RF.delete(E.k);if(MEK===E.k)rosUse(rosGet('a:'+PRESETS[0].n));if(FK===E.k)FK=MEK}
+function rosReset(E){delete ROS.anime[E.P.n];rosChanged();if(MEK===E.k){MEK=null;rosUse(rosGet(E.k))}FK=E.k;RFL={k:E.k,t:performance.now()}}
+function rosAct(k,E){if(k==='play'||k==='fight')rosPick(E);else if(k==='edit')rosEdit(E.k);else if(k==='dup')rosDup(E);else if(k==='back')rosBack();
+ else if(k==='del')CONF={t:`Supprimer « ${E.b.name} » ?`,d:'Ce ninja sera retiré de « Mes ninjas », avec son apparence et son kit. C\'est définitif.',ok:'Supprimer',col:'#ff6a5a',fn:()=>rosDel(E)};
+ else if(k==='reset')CONF={t:`Rétablir ${E.P.full} ?`,d:'Ses retouches (apparence et kit) sont effacées : il redevient tel que dans l\'anime.',ok:'Rétablir l\'original',col:'#ffb347',fn:()=>rosReset(E)}}
+// ----- création / modification : EB est une copie de travail, rien n'est gardé ni envoyé avant « Enregistrer »
+function rosEdit(k){const E=k?rosGet(k):null;picker=null;presetI=E&&E.P?E.i:-1;if(RQI)RQI.blur();
+ EB=E?sanitizeBuild(E.b):randomBuild(srnd(Date.now()%2147483646+1),0,'Nouveau ninja');edRebuild();ED={k:E?k:null,o:JSON.stringify(EB)};scr='edit'}
+const edDirty=()=>!!ED&&!!EB&&JSON.stringify(EB)!==ED.o;
+function edSave(){EB=sanitizeBuild(EB);let k=ED.k;const E=k?rosGet(k):null;
+ if(!E){const id=ROS.nid++;ROS.mine.push({id,build:EB});k='m'+id}
+ else if(!E.P){const m=ROS.mine.find(m=>m.id===E.id);if(m)m.build=EB}
+ else if(EB.name===E.P.n&&EB.side===E.P.side&&kitSig(EB)===kitSig(presetOf(E.i)))delete ROS.anime[E.P.n];else ROS.anime[E.P.n]=EB; // retouche identique à l'original : rien à garder
+ rosChanged();ED=null;scr='list';picker=null;FK=k;RFL={k,t:performance.now()};
+ if(k===MEK){MEK=null;rosUse(rosGet(k))} // le perso joué a changé : MY suit (et en ligne, le salon aussi)
+ rosReveal(k)}
+function edClose(){scr='list';ED=null;picker=null}
+function edCancel(){if(edDirty())CONF={t:'Quitter sans enregistrer ?',d:'Les changements faits sur ce perso seront perdus.',ok:'Quitter',no:'Continuer',col:'#ff8a5a',fn:edClose};else edClose()}
+// ----- fenêtre de confirmation (dessinée dans le canevas) : Entrée = oui, Échap = non
+const confBox=()=>({x:W/2-250,y:H/2-95,w:500,h:190}),confBtns=()=>{const B=confBox();return[{x:B.x+B.w/2-205,y:B.y+B.h-58,w:195,h:40},{x:B.x+B.w/2+10,y:B.y+B.h-58,w:195,h:40}]};
+function drawConf(){if(!CONF)return;const B=confBox(),c=CONF.col||'#ff9a3a',[a,b]=confBtns();g.fillStyle='rgba(0,0,0,.62)';g.fillRect(0,0,W,H);
+ g.save();g.shadowColor='rgba(0,0,0,.7)';g.shadowBlur=24;rr(B,14,'rgba(26,17,10,.98)',c,2);g.restore();
+ fitT(CONF.t,B.x+B.w/2,B.y+42,20,'#ffd38a',B.w-40,'bold',13,'center');wrapL(CONF.d,B.w-60,FNT(13)).slice(0,3).forEach((l,i)=>text(l,B.x+B.w/2,B.y+74+i*18,13,'#e8cfa8','center','normal'));
+ {const h=inRect(mouse,a);rr(a,a.h/2,h?'#fff0d0':c,null);fitT(CONF.ok,a.x+a.w/2,a.y+26,15,'#1a1008',a.w-20,'bold',11,'center')}
+ {const h=inRect(mouse,b);rr(b,b.h/2,h?'rgba(90,60,30,.95)':'rgba(40,28,18,.92)','#8a5a2a',1.5);fitT(CONF.no||'Annuler',b.x+b.w/2,b.y+26,15,'#f3d9b0',b.w-20,'bold',11,'center')}
+ text('Entrée : '+CONF.ok.toLowerCase()+' · Échap : '+(CONF.no||'annuler').toLowerCase(),B.x+B.w/2,B.y+B.h-8,10.5,'#9a8060','center','normal')}
+// ----- petits dessins : icônes des boutons, emblème de section (village ou groupe)
+function uiIcon(k,x,y,s,c){g.save();g.translate(x,y);g.scale(s/10,s/10);g.strokeStyle=c;g.fillStyle=c;g.lineWidth=1.9;g.lineCap='round';g.lineJoin='round';g.beginPath();
+ switch(k){case'edit':g.moveTo(-6.5,6.5);g.lineTo(-5.5,2.5);g.lineTo(3.5,-6.5);g.lineTo(6.5,-3.5);g.lineTo(-2.5,5.5);g.closePath();g.stroke();g.beginPath();g.moveTo(1.5,-4.5);g.lineTo(4.5,-1.5);g.stroke();break
+  case'dup':g.roundRect(-7,-3,10,10,2);g.stroke();g.beginPath();g.moveTo(-3,-4);g.lineTo(-3,-7);g.lineTo(7,-7);g.lineTo(7,3);g.lineTo(4,3);g.stroke();break
+  case'del':g.moveTo(-7,-4.5);g.lineTo(7,-4.5);g.moveTo(-2.5,-4.5);g.lineTo(-2,-7);g.lineTo(2,-7);g.lineTo(2.5,-4.5);g.moveTo(-5,-4.5);g.lineTo(-4,7);g.lineTo(4,7);g.lineTo(5,-4.5);g.moveTo(-1.5,-1.5);g.lineTo(-1.5,4);g.moveTo(1.5,-1.5);g.lineTo(1.5,4);g.stroke();break
+  case'reset':g.arc(0,.5,6,-2.3,2.5);g.stroke();g.beginPath();g.moveTo(-7.4,-6.6);g.lineTo(-4,-4.2);g.lineTo(-8.2,-2.4);g.closePath();g.fill();break
+  case'plus':g.lineWidth=2.6;g.moveTo(-6,0);g.lineTo(6,0);g.moveTo(0,-6);g.lineTo(0,6);g.stroke();break
+  case'play':g.moveTo(-4,-6.5);g.lineTo(7,0);g.lineTo(-4,6.5);g.closePath();g.fill();break
+  case'back':g.moveTo(6,0);g.lineTo(-6,0);g.moveTo(-1.5,-5);g.lineTo(-6.5,0);g.lineTo(-1.5,5);g.stroke();break
+  case'check':g.lineWidth=2.4;g.moveTo(-6,0);g.lineTo(-2,4.5);g.lineTo(6.5,-5);g.stroke();break
+  case'dice':g.roundRect(-7,-7,14,14,3);g.stroke();for(const [a,b] of[[-3.5,-3.5],[3.5,3.5],[0,0],[3.5,-3.5],[-3.5,3.5]]){g.beginPath();g.arc(a,b,1.3,0,7);g.fill()}break
+  case'search':g.arc(-1.5,-1.5,5,0,7);g.stroke();g.beginPath();g.moveTo(2.2,2.2);g.lineTo(6.5,6.5);g.stroke();break}
+ g.restore()}
+function secMark(x,y,r,si){const S=SECS[si],c=S[1];g.save();g.fillStyle='rgba(20,13,8,.9)';g.strokeStyle=c;g.lineWidth=1.5;g.beginPath();g.arc(x,y,r,0,7);g.fill();g.stroke();
+ g.translate(x,y);g.scale(r/8,r/8);g.strokeStyle=c;g.fillStyle=c;g.lineWidth=1.4;g.lineCap='round';g.beginPath();
+ switch(S[2]){case'star':for(let i=0;i<10;i++){const a=-Math.PI/2+i*Math.PI/5,q=i%2?2.2:5.2;g.lineTo(Math.cos(a)*q,Math.sin(a)*q)}g.closePath();g.fill();break
+  case'leaf':g.arc(0,.5,3.4,-.2,5);g.moveTo(3.3,-.2);g.lineTo(5.4,-3.6);g.stroke();break
+  case'sand':g.moveTo(-3.5,-4.5);g.lineTo(3.5,-4.5);g.lineTo(-3.5,4.5);g.lineTo(3.5,4.5);g.closePath();g.stroke();break
+  case'mist':for(let k=0;k<4;k++){g.moveTo(-3.6+k*2.4,-4);g.lineTo(-3.6+k*2.4,4)}g.stroke();break
+  case'cloud':g.arc(-2.2,1,2.4,0,7);g.arc(2.2,1,2.4,0,7);g.arc(0,-1.6,2.6,0,7);g.fill();break
+  case'rock':g.moveTo(-5,4);g.lineTo(-1.5,-3.5);g.lineTo(.8,.5);g.lineTo(2.6,-1.8);g.lineTo(5,4);g.closePath();g.fill();break
+  case'note':g.ellipse(-1.6,3,2.4,1.8,-.4,0,7);g.fill();g.beginPath();g.moveTo(.6,2.6);g.lineTo(.6,-5);g.lineTo(3.8,-3);g.stroke();break
+  case'rain':for(let k=0;k<3;k++){g.moveTo(-3.5+k*3.5,-4+(k%2)*2);g.lineTo(-4.5+k*3.5,1+(k%2)*2)}g.stroke();break
+  case'aka':g.fillStyle='#fff';g.beginPath();g.ellipse(0,0,5.4,3.6,0,0,7);g.fill();g.fillStyle='#c0202a';g.beginPath();g.ellipse(0,0,4.2,2.5,0,0,7);g.fill();break
+  default:for(let i=0;i<8;i++){const a=i*Math.PI/4,q=i%2?1.6:5.2;g.lineTo(Math.cos(a)*q,Math.sin(a)*q)}g.closePath();g.fill()}
+ g.restore()}
+function tag(xr,y,s,bg,fg='#1a1008'){g.font=FNT(10,'bold');const w=g.measureText(s).width+10;rr({x:xr-w,y,w,h:16},5,bg);text(s,xr-w/2,y+12,10,fg)}
+// boutons d'une carte survolée (liste) : modifier, dupliquer, supprimer (les tiens) ou rétablir (perso de l'anime retouché)
+const cardBtns=(E,R)=>{const L=[['edit','Modifier'],['dup','Dupliquer']];if(!E.P)L.push(['del','Supprimer']);else if(E.mod)L.push(['reset','Rétablir l\'original']);return L.map((q,i)=>({k:q[0],t:q[1],R:{x:R.x+R.w-26-(L.length-1-i)*24,y:R.y+6,w:21,h:21}}))};
+const BTIP={edit:'Ouvre la création sur ce perso : apparence, clan, nature, voie, passif et jutsu.',dup:'Fait une copie dans « Mes ninjas », à retoucher sans toucher à l\'original.',del:'Retire ce ninja de « Mes ninjas » (une confirmation est demandée).',reset:'Efface tes retouches : le perso redevient tel que dans l\'anime.'};
+// ----- carte d'un perso : aperçu animé (halo du chakra, couleur de la section), emblème, nom, clan et nature
+function rosCard(E,R,hov,t){const F=rosFake(E),u=F.u,ch=F.ch,S=SECS[E.sec],col=S[1],me=E.k===MEK,mark=scr==='opp'?me:coop()&&me,fl=RFL&&RFL.k===E.k&&performance.now()-RFL.t<1600,b=E.b;
+ rr(R,10,hov?'rgba(72,48,24,.98)':mark?'rgba(84,54,24,.97)':'rgba(30,20,12,.95)',hov?'#ffb347':mark||fl?'#ffd38a':rgba(col,.5),hov||mark||fl?2:1.2);
+ const ph=76,px=R.x+R.w/2,fy=R.y+ph-1;g.save();g.beginPath();g.roundRect(R.x+3,R.y+3,R.w-6,ph,8);g.clip();
+ {const gr=g.createLinearGradient(0,R.y,0,R.y+ph);gr.addColorStop(0,rgba(col,hov?.32:.2));gr.addColorStop(1,rgba(col,.02));g.fillStyle=gr;g.fillRect(R.x,R.y,R.w,ph+4)}
+ {const kc=ch.look.weapon.col;g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(px,fy-32,0,px,fy-32,52);gr.addColorStop(0,rgba(kc,hov?.3:.13));gr.addColorStop(1,rgba(kc,0));g.fillStyle=gr;g.fillRect(R.x,R.y,R.w,ph+4);g.globalCompositeOperation='source-over'}
+ g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(px,fy-3,24,6,0,0,7);g.fill();
+ u.aim=hov?Math.PI/2+Math.sin(t*1.6)*1.3:Math.PI/2-.3;u.moving=hov&&Math.sin(t*.9)>.1;u.walk=t*13;u.swing=0;
+ {const sc=ch.look.scale>1?.88:.98;drawPrevN(u,px,fy,sc,0);cardChar(F,px,fy,sc,hov,t);drawPrevN(u,px,fy,sc,1)}g.restore();
+ g.fillStyle=rgba(col,.8);g.fillRect(R.x+8,R.y+ph+4,R.w-16,1.5);secMark(R.x+14,R.y+14,8,E.sec);
+ fitT(b.name,R.x+R.w/2,R.y+ph+20,14,b.side?'#ffb0a0':'#ffd38a',R.w-12,'bold',10,'center');
+ {const ic=[];ic.push(b.clan>=0?['c'+b.clan,CLANS[b.clan][1]]:['u','#c8b89a']);if(b.clan!==TAIJ)ic.push(['n'+b.nat,NATURES[b.nat][2]]);
+  const s=(b.clan>=0?CLANS[b.clan][0]:'Sans clan')+(b.clan!==TAIJ?' · '+NATURES[b.nat][0]:''),z=10;g.font=FNT(z,'bold');const tw=Math.min(R.w-14-ic.length*15,g.measureText(s).width),x0=R.x+R.w/2-(ic.length*15+tw)/2;
+  ic.forEach(([k,c2],i)=>jIcon(x0+6+i*15,R.y+ph+31,6,c2,k));fitT(s,x0+ic.length*15+1,R.y+ph+35,z,'#d8c0a0',tw+1,'bold',8)}
+ if(hov&&scr==='list'){for(const q of cardBtns(E,R)){const h=inRect(mouse,q.R);rr(q.R,6,h?'#ffb347':'rgba(20,13,8,.88)',h?'#ffe0a0':'#8a5a2a',1.2);uiIcon(q.k,q.R.x+q.R.w/2,q.R.y+q.R.h/2,8.5,h?'#1a1008':'#f3d9b0');if(h)hoverTip('cb'+q.k+E.k,()=>({t:q.t,d:BTIP[q.k]}))}}
+ else if(mark)tag(R.x+R.w-6,R.y+7,scr==='opp'?'TOI':'CHOISI','#ffd38a');else if(E.mod)tag(R.x+R.w-6,R.y+7,'RETOUCHÉ','rgba(255,179,71,.85)');
+ if(scr==='opp'&&!me&&hov)tag(R.x+R.w-6,R.y+7,'AFFRONTER','#ff6a3a','#fff')}
+function plusCard(R,hov,t){g.save();g.setLineDash([6,5]);rr(R,10,hov?'rgba(72,48,24,.95)':'rgba(30,20,12,.6)',hov?'#ffb347':'#a8703a',hov?2:1.4);g.restore();
+ const cx=R.x+R.w/2,cy=R.y+44;g.save();if(hov){g.shadowColor='#ffb347';g.shadowBlur=14}rr({x:cx-22,y:cy-22,w:44,h:44},22,hov?'#ffb347':'rgba(255,154,58,.18)','#ffb347',2);g.restore();uiIcon('plus',cx,cy,14,hov?'#1a1008':'#ffb347');
+ text('Créer un perso',cx,R.y+R.h-28,13,hov?'#ffe0a0':'#ffd38a');text('apparence + kit',cx,R.y+R.h-13,10.5,'#a88a68','center','normal')}
+// ----- grille : en-têtes de section, cartes, barre de défilement ; renvoie la carte survolée
+function drawRosGrid(t){const Y=rosLayout(),mx=rosMax();rosTarget=clamp(rosTarget,0,mx);rosScroll+=(rosTarget-rosScroll)*.28;if(Math.abs(rosTarget-rosScroll)<.5)rosScroll=rosTarget;
+ const inG=!CONF&&inRect(mouse,{x:RGX-4,y:RGY,w:RGW-10,h:RGH});let hit=null;
+ rr({x:RGX-10,y:RGY-4,w:RGW+20,h:RGH+8},12,'rgba(14,9,6,.74)','#3a2616');
+ g.save();g.beginPath();g.rect(RGX-8,RGY-2,RGW,RGH+4);g.clip();
+ for(const h of Y.Hd){const y=RGY+h.y-rosScroll;if(y<RGY-30||y>RGY+RGH)continue;const S=SECS[h.si],x=RGX+h.x,s=S[0].toUpperCase();secMark(x+8,y+10,8,h.si);g.font=FNT(13,'bold');const w=g.measureText(s).width;text(s,x+22,y+15,13,S[1],'left','bold');
+  g.fillStyle=rgba(S[1],.45);g.fillRect(x+30+w,y+9,Math.max(0,h.w-30-w),1.5);
+  if(h.si===0&&!RQ&&Y.Hd.filter(q=>q.y===h.y).length===1){const x0=x+h.w+30,w0=RGW-14-h.w-40,L=wrapL(ROS.mine.length?'Tes ninjas, gardés dans ce navigateur : clique pour jouer, survole pour modifier, dupliquer ou supprimer. Le bouton « + Créer un perso » en ajoute un nouveau.':'Crée ton propre ninja : apparence, camp, clan, nature, voie, passif et un kit de 5 jutsu. Il apparaîtra ici, prêt à jouer. Tu peux aussi dupliquer un perso de l\'anime pour en faire ta version.',Math.min(560,w0),FNT(12.5));
+   L.slice(0,4).forEach((l,i)=>text(l,x0,y+24+RCH/2-(Math.min(4,L.length)-1)*9+i*18+4,12.5,'#cdb898','left','normal'))}}
+ for(const it of Y.L){const R={x:it.x,y:RGY+it.y-rosScroll,w:it.w,h:it.h};if(R.y+R.h<RGY-4||R.y>RGY+RGH+4)continue;const hov=inG&&inRect(mouse,R);if(hov)hit=Object.assign({R},it);if(it.plus)plusCard(R,hov,t);else rosCard(it.e,R,hov,t)}
+ if(!Y.L.length)text('Aucun ninja ne correspond à ta recherche (Échap dans le champ pour l\'effacer)',RGX+RGW/2,RGY+60,15,'#cdb898','center','normal');
+ g.restore();
+ if(mx>0){const tr={x:RGX+RGW-8,y:RGY,w:6,h:RGH},k=RGH/(RGH+mx);rr(tr,3,'rgba(255,255,255,.08)');rr({x:tr.x,y:tr.y+(RGH-RGH*k)*rosScroll/mx,w:6,h:RGH*k},3,'#c08040');
+  if(rosScroll<mx-1){const gr=g.createLinearGradient(0,RGY+RGH-26,0,RGY+RGH);gr.addColorStop(0,'rgba(10,6,3,0)');gr.addColorStop(1,'rgba(10,6,3,.55)');g.fillStyle=gr;g.fillRect(RGX-4,RGY+RGH-26,RGW-12,26);text('▼',RGX+RGW-5,RGY+RGH+1+Math.sin(performance.now()/250)*2,12,'#ffb347','center','bold')}}
+ return hit}
+// ----- onglets de section : clic = aller à la section ; ceux de la rangée en haut de la vue sont allumés
+function drawRosTabs(){const T=rosTabs(),mx=rosMax();let top=-1;for(const R of T)if(R.top<=rosScroll+30)top=Math.max(top,R.top);if(mx>0&&rosScroll>=mx-1&&T.length)top=T[T.length-1].top;
+ for(const R of T){const on=R.top===top,h=!CONF&&inRect(mouse,R),c=SECS[R.si][1];rr(R,12,on?c:h?'rgba(90,60,30,.95)':'rgba(40,28,18,.92)',c,1.5);
+  if(on){g.fillStyle='rgba(20,13,8,.85)';g.beginPath();g.arc(R.x+14,R.y+12,8.5,0,7);g.fill()}secMark(R.x+14,R.y+12,7,R.si);text(R.s,R.x+26+(R.w-26)/2-4,R.y+17,12.5,on?(lum(c)>.45?'#1a1008':'#fff'):'#f3d9b0')}
+ uiIcon('search',RQR.x-13,RQR.y+13,8,RQ?'#ffb347':'#a88a68')}
+// ----- fiche du perso (en bas) : aperçu, identité, stats, passif, les 6 emplacements + passif + trait, boutons
+function ficheCell(R,s,ch,b){const free=!CONF;let key,col,ic,nm,d,badge=null,gold=false,cat=null;
+ if(s<6){const ab=ch.abil[s],J=s?JL[b.j[s]]:null;key=lbl[SLOTS[s]];col=J?catCol(J.cat):b.clan>=0?CLANS[b.clan][1]:'#e8cfa8';ic=J?J.cat:null;nm=ab.n;d=ab.d||'';gold=!!ab.ult;badge=J?J.r:'st';cat=J?catName(J.cat):'style de combat'}
+ else if(s===6){const ps=PASS[ch.pass]||['—',''];key='PASSIF';col='#7fd87f';ic='p';nm=ps[0];d=ps[1]}
+ else{const T=TRAITS[b.clan];key='TRAIT';col=b.clan>=0?CLANS[b.clan][1]:'#c8b89a';ic=b.clan>=0?'c'+b.clan:'u';nm=T?T.nom||T.name||'Trait':b.clan>=0?CLANS[b.clan][0]:'Sans clan';d=T?T.desc||'':''}
+ const h=free&&inRect(mouse,R);rr(R,8,h?'rgba(70,46,24,.95)':'rgba(36,24,14,.82)',gold?'#ffb347':h?'#c08040':'#4a3220',gold?1.5:1);
+ const kb={x:R.x+5,y:R.y+6,w:50,h:R.h-12};rr(kb,6,s===6?'rgba(30,50,26,.95)':'rgba(50,32,16,.95)',gold?'#ffe81f':s===6?'#5aa85a':'#8a5a2a',1.2);fitT(key,kb.x+kb.w/2,kb.y+kb.h/2+4.5,key.length>6?10:12,gold?'#ffe81f':s===6?'#9f9':'#fff',kb.w-6,'bold',8,'center');
+ jIcon(R.x+73,R.y+R.h/2,12.5,col,ic,gold);const x=R.x+92;
+ if(badge==='st')styleBadge(R.x+R.w-50,R.y+6,44);else if(badge)rankBadge(R.x+R.w-50,R.y+6,badge,44);
+ fitT(nm,x,R.y+18,13,gold?'#ffe81f':s===6?'#cfe8c0':'#ffd38a',R.w-92-(badge?58:8),'bold',10);fitT(d,x,R.y+34,10.5,'#cdb898',R.w-98,'normal',9);
+ if(h)hoverTip('fc'+s+':'+nm,()=>({t:nm,col:liftC(col,.55),l:[[s<6?`${key} · ${cat}${badge&&badge!=='st'?` · rang ${badge}`:''}${gold?' · ultime':''}`:s===6?'Passif : bonus permanent':'Trait du clan',liftC(col,.5)]],d:d||' '}))}
+function ficheBtns(E){if(!E)return[];const L=[];
+ if(scr==='opp')L.push({k:'fight',t:E.k===MEK?'Affronter ton double':'Affronter',ic:'play',p:1},{k:'back',t:'Changer mon perso',ic:'back'});
+ else{L.push(coop()?{k:'play',t:E.k===MEK?'Choisi':'Choisir ce perso',ic:'check',p:1,off:E.k===MEK}:{k:'play',t:mode==='battle'?'Jouer (bataille)':'Jouer',ic:'play',p:1});
+  L.push({k:'edit',t:'Modifier',ic:'edit'},{k:'dup',t:'Dupliquer',ic:'dup'});if(!E.P)L.push({k:'del',t:'Supprimer',ic:'del',danger:1});else if(E.mod)L.push({k:'reset',t:'Rétablir l\'original',ic:'reset'})}
+ return L.map((q,i)=>Object.assign(q,{R:{x:FI.x+FI.w-172,y:FI.y+9+i*45,w:160,h:39}}))}
+const FTIP={play:()=>coop()?'Ce perso devient le tien dans le salon ; clique ensuite PRÊT.':mode==='battle'?'Lance la bataille avec ce perso.':'Ce perso devient le tien ; tu choisis ensuite ton adversaire.',fight:()=>'Lance le combat contre ce ninja.',back:()=>'Revient à la liste pour choisir un autre perso (Échap).',edit:()=>BTIP.edit,dup:()=>BTIP.dup,del:()=>BTIP.del,reset:()=>BTIP.reset};
+function drawFiche(E,t){const opp=scr==='opp',me=rosGet(MEK);if(!E)return;const F=rosFake(E),ch=F.ch,b=E.b,S=SECS[E.sec],col=S[1],free=!CONF;
+ g.save();g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=14;rr(FI,12,'rgba(20,14,10,.94)',rgba(col,.75),1.5);g.restore();
+ // aperçu : le ninja (en arène, ton perso contre l'adversaire)
+ {const P0={x:FI.x+8,y:FI.y+8,w:196,h:FI.h-16};g.save();g.beginPath();g.roundRect(P0.x,P0.y,P0.w,P0.h,9);g.clip();const gr=g.createLinearGradient(0,P0.y,0,P0.y+P0.h);gr.addColorStop(0,rgba(col,.22));gr.addColorStop(1,'rgba(0,0,0,.1)');g.fillStyle=gr;g.fillRect(P0.x,P0.y,P0.w,P0.h);
+  const one=(u,x,sc,a,c2)=>{const fy=P0.y+P0.h-24;g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(x,fy-2,34*sc/1.4,9,0,0,7);g.fill();g.save();g.globalCompositeOperation='lighter';const r=g.createRadialGradient(x,fy-50,0,x,fy-50,80);r.addColorStop(0,rgba(c2,.18));r.addColorStop(1,rgba(c2,0));g.fillStyle=r;g.fillRect(x-90,P0.y,180,P0.h);g.restore();
+   u.aim=a;u.swing=0;const s2=sc*(u.ch.look.scale>1?.9:1);drawPrevN(u,x,fy,s2,0);drawChar3(u,x,fy,s2);drawPrevN(u,x,fy,s2,1)};
+  if(opp&&me){const mc=rosFake(me).ch,um=fakeFor('me',mc);um.moving=false;one(um,P0.x+50,1.32,Math.PI*.12+Math.sin(t*.7)*.15,mc.look.weapon.col);
+   const uo=fakeFor('fi',ch);uo.moving=false;one(uo,P0.x+P0.w-50,1.32,Math.PI*.88+Math.sin(t*.8)*.15,ch.look.weapon.col);g.save();g.shadowColor='#ff6a3a';g.shadowBlur=12;text('VS',P0.x+P0.w/2,P0.y+40,24,'#ffb347');g.restore();
+   fitT(mc.name,P0.x+50,P0.y+P0.h-6,11,'#ffd38a',90,'bold',8,'center');fitT(ch.name,P0.x+P0.w-50,P0.y+P0.h-6,11,'#ffb0a0',90,'bold',8,'center')}
+  else{const u=fakeFor('fi',ch);u.moving=Math.sin(t*.5)>.35;u.walk=t*13;one(u,P0.x+P0.w/2,1.5,Math.PI/2+Math.sin(t*.8)*1.1,ch.look.weapon.col)}
+  g.restore();secMark(P0.x+16,P0.y+16,10,E.sec)}
+ // identité, stats, passif, jeu en une ligne
+ {const x=FI.x+216,w=320;let y=FI.y+32;const nw=fitT(b.name,x,y,22,b.side?'#ff9a9a':'#ffd38a',w,'bold',13);
+  if(E.mod)tag(Math.min(x+nw+76,x+w),y-14,'RETOUCHÉ','rgba(255,179,71,.85)');y+=20;
+  fitT(E.P?[E.P.full!==b.name?E.P.full:'',S[0],GALG[E.P.g]!==S[0]?GALG[E.P.g]:''].filter(Boolean).join(' · '):`Mes ninjas · créé par toi`,x,y,12.5,liftC(col,.55),w,'bold',9);y+=22;
+  {const ic=[b.clan>=0?['c'+b.clan,CLANS[b.clan][1]]:['u','#c8b89a']];if(b.clan!==TAIJ)ic.push(['n'+b.nat,NATURES[b.nat][2]]);ic.forEach(([k,c2],i)=>jIcon(x+8+i*19,y-4,8,c2,k));fitT(ch.desc,x+ic.length*19+2,y,12,'#e8cfa8',w-ic.length*19-2,'normal',9)}y+=21;
+  fitT(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2)}`,x,y,13.5,'#ffd38a',w,'bold',10);y+=18;
+  fitT(`Camp : ${CAMPS[b.side]} · kit ${kitCost(b)} / ${budgetOf(b)} points`,x,y,11.5,'#b89a70',w,'normal',9);y+=20;
+  const d=E.P?(E.mod?'Version retouchée. ':'')+E.P.d:'Un de tes ninjas : « Modifier » pour retoucher son apparence et son kit, « Dupliquer » pour en tester une variante.';
+  wrapL(d,w,FNT(12)).slice(0,3).forEach((l,i)=>text(l,x,y+i*16,12,'#cdb898','left','normal'))}
+ // les 6 emplacements, le passif et le trait : 2 colonnes de 4
+ {const x0=FI.x+548,cw=244,chh=41;for(let s=0;s<8;s++){const R={x:x0+(s>>2)*(cw+8),y:FI.y+8+(s&3)*(chh+4),w:cw,h:chh};ficheCell(R,s,ch,b)}}
+ // boutons
+ for(const q of ficheBtns(E)){const h=free&&!q.off&&inRect(mouse,q.R),c=q.danger?'#ff6a5a':'#ff9a3a';g.save();if(q.p&&!q.off){g.shadowColor='#ff9a3a';g.shadowBlur=h?18:8}
+  rr(q.R,q.R.h/2,q.off?'rgba(60,90,50,.9)':q.p?(h?'#ffb347':'#ff9a3a'):h?(q.danger?'rgba(120,40,30,.95)':'rgba(90,60,30,.95)'):'rgba(40,28,18,.92)',q.off?'#7f7':c,1.5);g.restore();
+  const fg=q.off?'#d8ffd0':q.p?'#1a1008':q.danger?'#ffb0a0':'#f3d9b0';g.font=FNT(14,'bold');const tw=Math.min(q.R.w-44,g.measureText(q.t).width),x0=q.R.x+q.R.w/2-(tw+22)/2;uiIcon(q.ic,x0+7,q.R.y+q.R.h/2,8,fg);fitT(q.t,x0+22,q.R.y+q.R.h/2+5,14,fg,q.R.w-44,'bold',10);
+  if(h)hoverTip('fb'+q.k,()=>({t:q.t,d:FTIP[q.k]()}))}}
+// ----- écran principal (liste et étape adversaire) ; drawMenu choisit l'écran
+function drawOppBar(t){const me=rosGet(MEK),B={x:196,y:108,w:848,h:32};g.save();g.shadowColor='#ff6a3a';g.shadowBlur=10+Math.sin(t*3)*5;rr(B,16,'rgba(90,40,18,.92)','#ff6a3a',1.5);g.restore();
+ fitT('ÉTAPE 2 / 2 · CHOISIS TON ADVERSAIRE',B.x+20,B.y+21,15,'#ffd38a',440,'bold',11);if(me)fitT('Toi : '+me.b.name,B.x+B.w-20,B.y+21,14,me.b.side?'#ffb0a0':'#ffe0a0',360,'bold',10,'right');
+ for(const [R,k,s,c] of[[oppBack,'back','Retour (Échap)','#ff9a3a'],[oppRnd,'dice','Adversaire au hasard','#ffb347']]){const h=!CONF&&inRect(mouse,R);rr(R,R.h/2,h?'rgba(90,60,30,.95)':'rgba(40,28,18,.92)',c,1.5);uiIcon(k,R.x+18,R.y+R.h/2,7.5,'#f3d9b0');fitT(s,R.x+32,R.y+19,12.5,'#f3d9b0',R.w-40,'bold',9)}}
+function drawRoster(){const t=performance.now()/1000;if(scr==='opp'&&(coop()||mode==='battle'||!rosGet(MEK)))scr='list';
+ if(!CONF){if(pressed.Escape&&scr==='opp')rosBack();const st=RCH+8;if(pressed.ArrowDown)rosTarget+=st;if(pressed.ArrowUp)rosTarget-=st;if(pressed.PageDown)rosTarget+=RGH;if(pressed.PageUp)rosTarget-=RGH;if(pressed.Home)rosTarget=0;if(pressed.End)rosTarget=rosMax()}
+ drawHead(false,scr==='opp');
+ if(scr==='opp')drawOppBar(t);else text(menuDesc(),W/2,net.role?116:130,13,'#e8cfa8','center','normal');
+ drawRosTabs();const hit=drawRosGrid(t);if(hit&&hit.e)FK=hit.e.k;
+ drawFiche(scr==='opp'?rosGet(FK)||rosGet(MEK):rosGet(FK)||rosGet(MEK)||rosEntries()[0],t);
+ // barre du bas : créer un perso ; en ligne : équipe et PRÊT ; sinon les commandes
+ {const R=newBtn,h=!CONF&&inRect(mouse,R);g.save();g.shadowColor='#ffb347';g.shadowBlur=h?20:9;rr(R,R.h/2,h?'#ffb347':'rgba(70,44,18,.96)','#ffb347',2);g.restore();
+  rr({x:R.x+10,y:R.y+6,w:24,h:24},12,h?'#1a1008':'#ffb347');uiIcon('plus',R.x+22,R.y+18,7,h?'#ffb347':'#1a1008');text('Créer un perso',R.x+R.w/2+14,R.y+24,16,h?'#1a1008':'#ffd38a');
+  if(h)hoverTip('new',()=>({t:'Créer un perso',d:'Ouvre la création sur un nouveau ninja (tiré au hasard) : apparence, camp, clan, nature, voie, passif et kit de 5 jutsu. « Enregistrer » le range dans « Mes ninjas ».'}))}
+ if(coop()){if(isGuest()&&mode!=='arena'){const b=teamBtn,h=!CONF&&inRect(mouse,b);rr(b,b.h/2,h?'#5a3a1e':'#2a1c10',net.myTeam?'#ff6060':'#4db8ff',2);text(`ÉQUIPE ${net.myTeam?'B':'A'} (changer)`,b.x+b.w/2,b.y+b.h/2+5,13,'#f3d9b0','center')}
+  const b=readyBtn,ob=overBudget(),on=net.ready&&!ob;rr(b,b.h/2,ob?'rgba(120,50,40,.9)':on?'#7f7':!CONF&&inRect(mouse,b)?'#ffb347':'rgba(255,154,58,.88)',ob?'#a55':null,2);text(ob?'TROP DE POINTS':on?'PRÊT ✓':'PRÊT ?',b.x+b.w/2,b.y+b.h/2+6,ob?14:16,ob?'#ffd0c8':'#10131c','center');
+  fitT(`Ton perso : ${MY.name}`,290,700,12.5,'#e8cfa8',(isGuest()&&mode!=='arena'?teamBtn.x:b.x)-305,'bold',9)}
+ else fitT(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · ${lbl.KeyR} maintenu = chakra · ${lbl.KeyH} soin · Maj = sprint · Tab scores · ${lbl.KeyM} son · O options`,690,700,12,'#c8b090',780,'normal',9,'center');
+ drawConf();drawTip();drawCursor()}
+function drawMenu(){TIP=null;{const now=performance.now();if(now-menuLast>1500){picker=null;CONF=null;if(scr==='opp')scr='list'}menuLast=now} // retour au menu après un match : panneau et étape adversaire fermés
+ if(CONF&&(pressed.Escape||pressed.Enter)){const f=CONF.fn,ok=pressed.Enter;CONF=null;pressed.Escape=pressed.Enter=0;if(ok)f()}
+ if(scr==='edit'&&ED&&EB)return drawCreator();if(scr==='edit')scr='list';drawRoster()}
+// ----- clics : la fenêtre de confirmation, puis l'écran ouvert (menuGrab : il prend aussi les clics des boutons de mode et EN LIGNE)
+const menuGrab=()=>picker!==null||!!CONF||scr!=='list';
+function menuClick(){if(CONF){const [a,b]=confBtns();if(inRect(mouse,a)){const f=CONF.fn;CONF=null;f()}else if(inRect(mouse,b)||!inRect(mouse,confBox()))CONF=null;return true}
+ if(scr==='edit')return ED&&EB?creatorClick():(scr='list',true);
+ if(scr==='opp'){for(const b of modeBtns)if(inRect(mouse,b)){scr='list';if(!isGuest()){mode=b.m;netSend({t:'hello',mode,cfg:CFG})}return true}
+  if(inRect(mouse,oppBack)){rosBack();return true}if(inRect(mouse,oppRnd)){rosRandomOpp();return true}}
+ for(const R of rosTabs())if(inRect(mouse,R)){rosTarget=Math.min(rosMax(),R.top);return true}
+ const mx=rosMax();if(mx>0&&inRect(mouse,{x:RGX+RGW-14,y:RGY,w:18,h:RGH})){rosTarget=clamp((mouse.y-RGY)/RGH,0,1)*mx;return true}
+ if(inRect(mouse,{x:RGX-4,y:RGY,w:RGW-10,h:RGH})){for(const it of rosLayout().L){const R={x:it.x,y:RGY+it.y-rosScroll,w:it.w,h:it.h};if(!inRect(mouse,R))continue;
+   if(it.plus){rosEdit(null);return true}if(scr==='list')for(const q of cardBtns(it.e,R))if(inRect(mouse,q.R)){rosAct(q.k,it.e);return true}
+   rosPick(it.e);return true}return true}
+ {const E=scr==='opp'?rosGet(FK)||rosGet(MEK):rosGet(FK)||rosGet(MEK);for(const q of ficheBtns(E))if(inRect(mouse,q.R)){if(!q.off)rosAct(q.k,E);return true}}
+ if(inRect(mouse,newBtn)){rosEdit(null);return true}
+ return inRect(mouse,FI)}
+try{cv.addEventListener('wheel',e=>{if(state==='menu'&&picker===null&&!CONF&&scr!=='edit'){rosTarget+=e.deltaY*(e.deltaMode?40:1);e.preventDefault()}},{passive:false})}catch(e){}
+// ----- champ de recherche : vrai <input> posé sur le canevas (les touches tapées ne vont pas au jeu) ; Échap l'efface puis le quitte
+const RQI=(()=>{try{const st=document.createElement('style');st.textContent='#rosQ{position:fixed;z-index:3;box-sizing:border-box;border:1px solid #8a5a2a;background:#1c120a;color:#f3d9b0;padding:0 .8em;font-family:"Trebuchet MS",system-ui,sans-serif;font-weight:bold;outline:none}#rosQ:focus{border-color:#ffb347;box-shadow:0 0 8px #ff9a3a88}#rosQ::placeholder{color:#a88a68;font-weight:normal}';document.head.appendChild(st);
+ const e=document.createElement('input');e.id='rosQ';e.type='text';e.placeholder='Chercher un ninja…';e.setAttribute('aria-label','Chercher un ninja par son nom, son village, son clan ou sa nature');e.autocomplete='off';e.spellcheck=false;e.hidden=true;
+ e.addEventListener('input',()=>{RQ=fold(e.value.trim());RLAY=null;rosTarget=rosScroll=0});
+ e.addEventListener('keydown',ev=>{if(ev.key==='Escape'){if(e.value){e.value='';RQ='';RLAY=null}else e.blur();ev.preventDefault()}else if(ev.key==='Enter'){const it=rosLayout().L.find(q=>q.e);if(it)FK=it.e.k;e.blur()}});
+ document.body.appendChild(e);return e}catch(err){return null}})();
+let RQB='';
+function rosQSync(){if(!RQI)return;let bl=false;try{bl=BLC.open}catch(e){}const on=state==='menu'&&scr!=='edit'&&picker===null&&!CONF&&!bl&&!quitOn;RQI.hidden=!on;if(!on){if(document.activeElement===RQI)RQI.blur();return}
+ const r=cv.getBoundingClientRect(),k=r.width/W,s=[r.left+RQR.x*k,r.top+RQR.y*k,RQR.w*k,RQR.h*k].map(v=>Math.round(v*10)/10).join();if(s===RQB)return;RQB=s;
+ Object.assign(RQI.style,{left:r.left+RQR.x*k+'px',top:r.top+RQR.y*k+'px',width:RQR.w*k+'px',height:RQR.h*k+'px',fontSize:13*k+'px',borderRadius:13*k+'px'})}
+// ----- au chargement : la liste, puis le perso joué la dernière fois (MY)
+try{rosLoad()}catch(e){ROS={mine:[],anime:{},last:{},nid:1};RL=RLAY=null}
+{const E=rosGet(ROS.last.me)||rosGet('a:'+PRESETS[0].n);MEK=FK=E.k;MY=sanitizeBuild(E.b);MYCH=mkNinja(MY);CH.p0=MYCH}
 function bar(x,y,w,h,v,col,right){g.fillStyle='rgba(0,0,0,.6)';g.fillRect(x,y,w,h);g.fillStyle=col;const vw=w*clamp(v,0,1);g.fillRect(right?x+w-vw:x,y,vw,h);g.strokeStyle='#2a3a5a';g.lineWidth=1;g.strokeRect(x,y,w,h)}
 function eBar(x,y,w,v,right){bar(x,y,w,5,v,'#4ab0ff',right);g.fillStyle='#04050b';for(let i=1;i<4;i++)g.fillRect(x+w*i/4-1,y,2,5)}
 // tableau des scores : un tableau par camp, trié par dégâts ; ★ = meilleur score de la partie
@@ -13219,7 +13451,7 @@ function hostGame(){if(noPeer())return;netReset();net.myPick='p0';const code=Mat
 function joinGame(code){if(noPeer())return;code=(code||'').trim().toUpperCase();if(code.length!==4){setStat('Entre le code à 4 caractères de l\'hôte.');return}
  netReset();net.role='guest';setStat('Connexion…');const p=new Peer();net.peer=p;
  p.on('open',()=>{const c=p.connect('nrarena-'+code,{reliable:true,serialization:'binary'});net.conn=c;
-  c.on('open',()=>{netSend({t:'build',b:MY});setStat(`Connecté au salon ${code}. Crée ton ninja puis clique PRÊT.`);netUI(false)});
+  c.on('open',()=>{netSend({t:'build',b:MY});setStat(`Connecté au salon ${code}. Choisis ton perso dans la liste puis clique PRÊT.`);netUI(false)});
   c.on('data',d=>{if(!d)return;if(d.t==='snap'){const s=d.j?netDec(d):(net.gU=null,d);if(s)applySnap(s)}else if(d.t==='hello'){mode=d.mode;if(d.cfg)Object.assign(CFG,d.cfg);if(d.id){net.myId=d.id;netSend({t:'build',b:MY})}}
    else if(d.t==='lobby'){if(d.cfg)Object.assign(CFG,d.cfg);mode=d.mode;net.lobby=d.P||[];for(const x of net.lobby)if(x.b&&x.c)CH[x.c]=mkNinja(x.b,true);const me=net.lobby.find(x=>x.id===net.myId);if(me){net.mate=me.c;net.ready=me.ready;net.myTeam=me.team}}
    else if(d.t==='bal')blRecv(d);
@@ -13302,7 +13534,7 @@ function netTick(dt){if(!coop())return;net.sendT-=dt;if(net.sendT>0)return;
  else if(net.live){net.sendT=0;const I=localInput();netSend({t:'in',seq:net.seq,mx:I.mx,my:I.my,ax:rd(I.ax),ay:rd(I.ay),l:!!mouse.l,p:Object.keys(net.gp),sh:!!I.sh,f:!!I.f,r:!!I.r,cx:rd(cam.x),cy:rd(cam.y)});net.gp={}}}
 function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;
  if(isGuest()&&net.live)guestFrame(dt*GSPEED);else if(quitOn&&!coop()&&state!=='menu'){}else{const udt=hs>0?0:dt;hs=Math.max(0,hs-dt);update(udt*GSPEED)}
- netTick(dt);draw();backB.hidden=state!=='menu';quitB.hidden=state==='menu';if(quitOn&&state==='menu')quitUI(false);pressed={};requestAnimationFrame(loop)}
+ netTick(dt);draw();backB.hidden=state!=='menu';rosQSync();quitB.hidden=state==='menu';if(quitOn&&state==='menu')quitUI(false);pressed={};requestAnimationFrame(loop)}
 // quitter une partie en cours : bouton en haut à gauche ou Échap ; en solo la partie est en pause pendant la question
 const quitB=document.getElementById('quitB');let quitOn=false;
 function quitUI(v){quitOn=v;$('quitD').hidden=!v;if(v){$('quitN').textContent=isGuest()?'Tu quittes le salon : un bot prend ta place.':coop()?'Tu es l\'hôte : la partie s\'arrête pour tout le monde et vous revenez au salon. Elle continue tant que tu n\'as pas choisi.':'La partie est en pause.';$('qNo').focus()}else document.activeElement&&document.activeElement.blur()}
