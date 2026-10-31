@@ -11946,8 +11946,17 @@ function cells(x0,y0,x1,y1,S,f){const own=!BT;if(own)BT=new Map();for(let x=Math
  let K0=null;
  function sync(){let m=CFG.map|0;if(!(m>=0&&m<MAPS.length))m=CFG.map=0;if(m===K0)return;K0=m;const D=DEF[m];ARENA_OBST.length=0;
   if(D)for(const [dx,dy,r,k] of D.arena)ARENA_OBST.push({x:CX+dx,y:CY+dy,r,k});else for(const o of ARENA0)ARENA_OBST.push(Object.assign({},o))}
- function roll(){if(!CFG.mapRand||isGuest())return;let m;do m=Math.floor(Math.random()*MAPS.length);while(m===(CFG.map|0)&&MAPS.length>1);CFG.map=m;sync()}
- function hook(k,a,b,c,d,e){const M=DEF[CFG.map|0];if(!M)return false;
+ // compatibilité en ligne : une version sans nr_maps.js ne connaît que les cartes 0..N0-1 (son THEME() est nul au-delà et son dessin plante,
+ // menu compris). Un invité à jour annonce son nombre de cartes ({t:'nm'} à la connexion) ; tant qu'un invité ne l'a pas annoncé,
+ // l'hôte ne lui envoie qu'une carte d'origine, et au lancement il ne tire / ne joue que parmi les cartes d'origine (FB = carte choisie, rendue au retour au menu).
+ let FB=null;
+ const lim=()=>net.role==='host'?Math.min(MAPS.length,...livePeers().map(p=>p.conn&&p.conn.nrNm||N0)):MAPS.length;
+ function roll(){if(isGuest())return;if(FB!=null){if(!CFG.mapRand)CFG.map=FB;FB=null}const L=lim();
+  if(CFG.mapRand){let m;do m=Math.floor(Math.random()*L);while(m===(CFG.map|0)&&L>1);CFG.map=m}
+  else if((CFG.map|0)>=L){FB=CFG.map|0;CFG.map=0}
+  if(L<MAPS.length&&(CFG.mapRand||FB!=null))setStat('Un joueur a une ancienne version du jeu : '+(FB!=null?'carte remplacée par « '+MAPS[0][0]+' »':'tirage limité aux cartes d\'origine')+'. Il doit recharger la page pour avoir les nouvelles cartes.');
+  sync()}
+ function hook(k,a,b,c,d,e){if(FB!=null&&state==='menu'&&!isGuest()){CFG.map=FB;FB=null}const M=DEF[CFG.map|0];if(!M)return false;
   switch(k){case'sky':sync();drawBg(M);M.sky();return true;
    case'wall':M.wall(a,b,c);return true;
    case'floor':return floorAll(M,a,b,c,d,e);
@@ -11962,9 +11971,17 @@ function cells(x0,y0,x1,y1,S,f){const own=!BT;if(own)BT=new Map();for(let x=Math
   const rw=resetWorld;resetWorld=function(){sync();return rw.apply(this,arguments)};
   const as=applySnap;applySnap=function(s){if(s&&s.cfg){Object.assign(CFG,s.cfg);sync()}return as.apply(this,arguments)};
   const sc=syncCfg;syncCfg=function(){sc.apply(this,arguments);if(CFG.mapRand)$('cMap').value='-1'};
-  $('cMap').onchange=e=>{const v=+e.target.value;CFG.mapRand=v<0;if(v>=0)CFG.map=v;sync();saveCfg();netSend({t:'hello',mode,cfg:CFG});syncCfg()};
+  $('cMap').onchange=e=>{const v=+e.target.value;FB=null;CFG.mapRand=v<0;if(v>=0)CFG.map=v;sync();saveCfg();netSend({t:'hello',mode,cfg:CFG});syncCfg()};
+  // hôte : chaque connexion entrante retient le nombre de cartes annoncé par l'invité et n'envoie pas de carte inconnue à un invité qui ne l'a pas annoncé
+  const hg=hostGame;hostGame=function(){const r=hg.apply(this,arguments);const pr=net.peer;if(pr&&pr.on)pr.on('connection',c=>{const sd=c.send.bind(c);
+   c.send=d=>{if(d&&d.cfg&&!c.nrNm&&(d.cfg.map|0)>=N0)d=Object.assign({},d,{cfg:Object.assign({},d.cfg,{map:0,mapRand:false})});return sd(d)};
+   c.on('data',d=>{if(d&&d.t==='nm'&&d.v>0&&!c.nrNm){c.nrNm=d.v|0;if(state==='menu')sendLobby()}})});return r};
+  // invité : annonce son nombre de cartes dès que la connexion à l'hôte est ouverte (une ancienne version d'hôte ignore ce message)
+  const jg=joinGame;joinGame=function(){const r=jg.apply(this,arguments);const pr=net.peer;if(pr&&pr.on&&net.role==='guest')pr.on('open',()=>{const c=net.conn;if(c&&c.on)c.on('open',()=>{try{c.send({t:'nm',v:MAPS.length})}catch(e){}})});return r};
+  // simulateur d'équilibrage (?sim=1) : toujours sur la carte 0 (ou job.map), jamais sur la dernière carte enregistrée dans les réglages
+  if(typeof blSimJob==='function'){const bj=blSimJob;blSimJob=function(job){CFG.mapRand=false;CFG.map=job&&job.map>=0&&job.map<MAPS.length?job.map|0:0;sync();return bj.apply(this,arguments)}}
   syncCfg()});
- return{hook,sync,roll,DEF,OB,N0};
+ return{hook,sync,roll,lim,DEF,OB,N0};
 })();
 
 function drawSkyOld(){
