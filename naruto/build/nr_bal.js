@@ -5,6 +5,8 @@
 // En ligne, l'hôte décide : son profil part chez les invités (message 'bal') pour que tout le monde voie les mêmes chiffres.
 // Simulateur : une iframe cachée charge le même jeu avec ?sim=1 (ni rendu ni boucle de jeu) et joue les duels par tranches, pilotée par messages :
 // l'état de la partie et du menu du joueur n'est jamais touché, et rien ne tourne quand le panneau est fermé.
+// L'iframe est en bac à sable (sandbox) : Chrome la fait tourner dans un autre processus, donc l'interface reste fluide, et elle n'a pas accès
+// aux sauvegardes du joueur. En file:// le bac à sable bloquerait les scripts locaux (three.js, PeerJS) : iframe ordinaire.
 const BLSIM=/[?&]sim=1(&|$)/.test(location.search);
 const BLC={gm:1,jm:1,m1:1,jcd:1,ult:22,hp:1,spd:1,cur:null,saved:{},host:null,open:false,drawn:0,dirty:false,D:null,sig:'',tab:'g',jf:{q:'',cat:'',rk:'',mod:false},lm:null,ro:false};
 let BLJ=1,BLU=null; // contexte : multiplicateur de dégâts du jutsu en cours et son lanceur (BLU)
@@ -49,6 +51,9 @@ const blCopy=p=>JSON.parse(JSON.stringify(p));
 const blData=p=>({g:p.g,c:p.c,n:p.n,s:p.s,j:p.j});
 
 // ---------- moteur : application du profil ----------
+// jutsu qui calculent une partie de leurs dégâts hors de leur lancer (recalcul à chaque image, trait, explosion suivie à part) :
+// le multiplicateur de dégâts ne s'y applique qu'en partie (mesuré : ×2 demandé → ×1 à ×1,55) ; le panneau le signale
+const BLPART=new Set(['x.su_ball','x.hm_arc','x.km_angel','x.ka_goka','x.ka_dragon','x.ak_arm']);
 let BLJ0=null; // jutsu(id) d'origine (avant le profil) : recharge et rang de chaque jutsu
 const blJBase=(p,id)=>{const o=BLJ0[id];return{cd:o.ult?blG(p,'ult'):Math.round(o.cd*blG(p,'jcd')*10)/10,ck:o.hpc?null:blG(p,'ck'+o.rank)+(o.ult?blG(p,'ckU'):0)}};
 // chiffres des descriptions : les « N dégâts » suivent le multiplicateur ; un réglage propre au jutsu est signalé
@@ -62,7 +67,7 @@ function blApply(p,force){p=p||blNorm({});const sig=JSON.stringify(blData(p));if
  HLS.on=!!G('heal');HLS.cd=G('hlCd');HLS.pct=G('hlPct')/100;
  Object.assign(BLC,{gm:G('dmg'),jm:G('jdmg'),m1:G('m1'),jcd:G('jcd'),ult:G('ult'),hp:G('hp'),spd:G('spd'),pj:p.j});
  JL.forEach((J,i)=>{const q=p.j[blJK(J)],m=BLC.gm*BLC.jm*(q&&q.d!=null?q.d:1);let d=blDescScale(BLC.D.jd[i],m);
-  if(q){const b=blJBase(p,i),t=[];if(q.d!=null)t.push('dégâts ×'+blF(q.d));if(q.cd!=null&&q.cd!==b.cd)t.push('recharge '+blFmt(q.cd,'s'));if(q.ck!=null&&q.ck!==b.ck)t.push('chakra '+q.ck);if(t.length)d+=' · ⚖ valeurs modifiées : '+t.join(', ')}J.d=d});
+  if(q){const b=blJBase(p,i),t=[];if(q.d!=null)t.push('dégâts ×'+blF(q.d)+(BLPART.has(J.src)?' (en partie seulement)':''));if(q.cd!=null&&q.cd!==b.cd)t.push('recharge '+blFmt(q.cd,'s'));if(q.ck!=null&&q.ck!==b.ck)t.push('chakra '+q.ck);if(t.length)d+=' · ⚖ valeurs modifiées : '+t.join(', ')}J.d=d});
  blRebuild()}
 // recalcule tous les ninjas sur place (les références CH[…] restent valables : menu, salon, unités)
 function blRebuild(){for(const k in CH){const c=CH[k];if(!c||!c.build)continue;let n;try{n=mkNinja(c.build,c!==MYCH)}catch(e){continue}for(const f of['hp','spd','pw','abil','desc'])c[f]=n[f]}}
@@ -116,7 +121,7 @@ function blSimStep(ms){const X=BLX;if(!X)return true;const t0=performance.now();
  while(performance.now()-t0<ms){if(!X.cur){if(X.i>=X.q.length)return true;const [c,i]=X.q[X.i++];blDuelSetup(c,i)}
   for(let n=0;n<400&&X.cur;n++){update(1/30);X.cur.k++;if(state!=='fight'||X.cur.k>=30*150)blDuelEnd();else if((n&3)===3&&performance.now()-t0>=ms)break}}
  return X.i>=X.q.length&&!X.cur}
-function blSimMain(){draw=()=>{};loop=()=>{};try{N3.on=false}catch(e){}muted=true;
+function blSimMain(){draw=()=>{};loop=()=>{};OPT.p3d=false;try{N3.on=false}catch(e){}muted=true;
  addEventListener('message',e=>{const d=e.data;if(!d||!d.bl)return;try{
   if(d.bl==='job'){blSimJob(d.job);parent.postMessage({blsim:'prog',res:BLX.res},'*')}
   else if(d.bl==='step'){const fin=blSimStep(d.ms||30);parent.postMessage({blsim:fin?'done':'prog',res:BLX.res},'*');if(fin)BLX=null}
@@ -147,9 +152,11 @@ const BLCSS=`
 #balB{position:fixed;right:12px;top:12px;z-index:4;font:inherit;font-size:13px;font-weight:bold;border:1px solid #6a4426;border-radius:8px;padding:6px 11px;background:#1c120acc;color:#f3d9b0;cursor:pointer;display:flex;align-items:center;gap:7px}
 #balB:hover{border-color:#ffb347;background:#2a1a0ecc}#balB:focus-visible{outline:2px solid #7df;outline-offset:2px}#balB .dot{width:8px;height:8px;border-radius:50%;background:#ffb347;box-shadow:0 0 8px #ffb347}
 #balB[hidden],#blBadge[hidden]{display:none}
-#blBadge{position:fixed;--cw:min(100vw,177.78vh);--ch:min(56.25vw,100vh);left:calc((100vw - var(--cw))/2 + var(--cw)*.024);top:calc((100vh - var(--ch))/2 + var(--ch)*.152);z-index:4;pointer-events:none;font-size:11.5px;font-weight:bold;color:#ffd9a0;background:#1c120ad9;border:1px solid #8a5a2a;border-radius:20px;padding:3px 11px;letter-spacing:.02em;white-space:nowrap}
+#blBadge{position:fixed;--cw:min(100vw,177.78vh);--ch:min(56.25vw,100vh);left:calc((100vw - var(--cw))/2 + var(--cw)*.016);bottom:calc((100vh - var(--ch))/2 + var(--ch)*.05);z-index:4;pointer-events:none;font-size:11.5px;font-weight:bold;color:#ffd9a0;background:#1c120ad9;border:1px solid #8a5a2a;border-radius:20px;padding:3px 11px;letter-spacing:.02em;white-space:nowrap}
 #blToast{position:fixed;left:50%;top:86px;transform:translate(-50%,-8px);z-index:30;opacity:0;transition:opacity .25s,transform .25s;pointer-events:none;background:#24170c;border:1px solid #ffb347;color:#ffe2b8;border-radius:10px;padding:9px 16px;font-weight:bold;font-size:14px;box-shadow:0 8px 30px #000a}
 #blToast.on{opacity:1;transform:translate(-50%,0)}
+.bl-part{margin-left:6px;color:#ffc56a;font-size:12px;cursor:help}
+#blToast.pan{top:calc(50% - min(420px,50vh - 12px) + 24px);max-width:min(640px,calc(100vw - 60px))}
 #bl{--bg:#1a110a;--bg2:#22160d;--bg3:#2c1d10;--ln:#4e3219;--ln2:#8a5a2a;--ac:#ffb347;--ac2:#ff9a3a;--fg:#f3d9b0;--dim:#bc9d7c;--mut:#857059;--ok:#7bd88f;--bad:#ff7a6a;
  position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(1320px,calc(100vw - 24px));height:min(840px,calc(100vh - 24px));z-index:20;display:flex;flex-direction:column;box-sizing:border-box;
  background:linear-gradient(180deg,#24170d,#170f08 70%);border:2px solid var(--ln2);border-radius:16px;box-shadow:0 24px 80px #000c,inset 0 1px 0 #ffffff12;color:var(--fg);cursor:auto;font-family:"Trebuchet MS",system-ui,sans-serif;font-size:13.5px;overflow:hidden}
@@ -251,7 +258,7 @@ function blBuild(){if(BLE)return BLE;document.head.append(blH('style',{id:'blCss
   const w=E.tip.offsetWidth,h=E.tip.offsetHeight;let x=r.left+r.width/2-w/2,y=r.top-h-8;if(y<6)y=r.bottom+8;E.tip.style.left=blCl(x,6,innerWidth-w-6)+'px';E.tip.style.top=y+'px'});
  E.root.addEventListener('mouseleave',()=>E.tip.classList.remove('on'));
  return BLE=E}
-function blToast(s){const E=blBuild();E.toast.textContent=s;E.toast.classList.add('on');clearTimeout(E.toastT);E.toastT=setTimeout(()=>E.toast.classList.remove('on'),3200)}
+function blToast(s){const E=blBuild();E.toast.textContent=s;E.toast.classList.toggle('pan',BLC.open);E.toast.classList.add('on');clearTimeout(E.toastT);E.toastT=setTimeout(()=>E.toast.classList.remove('on'),3200)}
 // bouton du menu (avec pastille si profil non standard) et badge en jeu
 function blBadge(){const E=blBuild(),menu=state==='menu',hp=net.role==='guest'&&BLC.host,p=hp?BLC.host.p:BLC.cur,std=blStd(p),nm=hp?p.name:BLC.cur.name;
  E.btn.hidden=!menu||BLC.open;E.btn.replaceChildren(...(std?['⚖ Équilibrage (F8)']:[blH('span',{class:'dot'}),hp?'⚖ Profil de l\'hôte : '+nm:'⚖ Équilibrage · '+nm]));
@@ -329,9 +336,9 @@ function blJRow(J,cols){const i=J.id,k=blJK(J),b0=BLJ0[i],base=blJBase(blView(),
  const ch=f=>v=>{set(f,v);row.sync();blTouch()};
  const cd=blNumIn(()=>get('cd'),ch('cd'),base.cd,.5,60,.5,'s',{noSl:1,lab:J.n+' : recharge',tip:'Défaut : '+blFmt(base.cd,'s')+(b0.ult?' (ultime)':'')});
  const ck=b0.hpc?Object.assign(blH('div',{class:'bl-ctl','data-tip':'Ce jutsu coûte des PV (prix du sang), pas de chakra'},blH('span',{class:'bl-unit',style:{width:'auto',color:'#ff8a96'}},'PV max')),{upd(){}}):blNumIn(()=>get('ck'),ch('ck'),base.ck,0,100,1,'',{noSl:1,lab:J.n+' : chakra',tip:'Défaut : '+base.ck});
- const dm=blNumIn(()=>get('d'),ch('d'),1,.25,3,.01,'x',{lab:J.n+' : dégâts'});
+ const dm=blNumIn(()=>get('d'),ch('d'),1,.25,3,.01,'x',{lab:J.n+' : dégâts',tip:BLPART.has(J.src)?'⚠ Une partie des dégâts de ce jutsu est calculée à part : le multiplicateur ne s\'applique qu\'en partie.':null});
  const lab=blH('div',{class:'bl-lab','data-tip':BLC.D.jd[i]},J.cat==='u'?blChip('SJ','#c8b89a'):J.cat[0]==='n'?blChip(NATURES[+J.cat.slice(1)][0].slice(0,2),catCol(J.cat)):blChip(clanTag(+J.cat.slice(1)),catCol(J.cat)),
-  blH('div',null,blH('b',null,J.n,blH('span',{class:'bl-rk',style:{background:RANKC[J.r]}},J.r)),blH('small',null,catName(J.cat)+' · '+(b0.ult?'ultime':J.slot===2?'déplacement':'jutsu'))));
+  blH('div',null,blH('b',null,J.n,blH('span',{class:'bl-rk',style:{background:RANKC[J.r]}},J.r),BLPART.has(J.src)?blH('span',{class:'bl-part','data-tip':'Dégâts × partiel : une partie des dégâts de ce jutsu est calculée à part, le multiplicateur ne s\'y applique qu\'en partie.'},'⚠'):null),blH('small',null,catName(J.cat)+' · '+(b0.ult?'ultime':J.slot===2?'déplacement':'jutsu'))));
  row=blRowEl(cols,lab,[dm,cd,ck],()=>!!blView().j[k],()=>{delete BLC.cur.j[k]});return row}
 function blResetTab(){const t=BLC.tab,c=BLC.cur;if(t==='sim')return;const n=Object.keys(c[t]).length;if(!n){blToast('Rien à réinitialiser dans cet onglet.');return}
  blConfirm('Réinitialiser l\'onglet ?',n+' réglage'+(n>1?'s':'')+' de cet onglet reviennent aux valeurs du jeu.',()=>{c[t]={};blTouch();blRender()})}
@@ -359,14 +366,14 @@ function blImport(){const ta=blH('textarea',{placeholder:'Colle ici un profil ex
  const m=blModal('Importer un profil',blH('div',null,blH('p',null,'Colle le texte d\'un profil exporté, ou ouvre un fichier .json. Il remplace les réglages actuels (enregistre-le ensuite pour le garder).'),ta,fi,err),[['Annuler'],['Ouvrir un fichier…',()=>{fi.click();return false}],['Importer',()=>take(ta.value),'pri']])}
 
 // ---------- simulateur : côté panneau ----------
-const BLS={run:false,fr:null,opt:{grp:{c:1,n:1,s:0,f:0},N:200,mode:'noheal',kits:'random'},res:null,t0:0,rate:.05,last:0,sug:null,cancelled:false,prof:''};
+const BLS={run:false,fr:null,opt:{grp:{c:1,n:1,s:0,f:0},N:800,mode:'noheal',kits:'random'},res:null,t0:0,rate:.05,last:0,sug:null,cancelled:false,prof:''};
 function blSimCats(){const o=BLS.opt.grp,c=[];if(o.c){for(let i=0;i<CLANS.length;i++)c.push('c'+i);c.push('u')}if(o.n)for(let i=0;i<NATURES.length;i++)c.push('n'+i);if(o.s)STYLES.forEach((_,i)=>c.push('s'+i));if(o.f)c.push('free');return c}
 const blCatInfo=c=>c==='u'?{nm:'Sans clan',col:'#9aa3ad',tag:'—',g:'Clans'}:c==='free'?{nm:'Duels libres',col:'#c8b89a',tag:'∗',g:'Libres'}:c[0]==='c'?{nm:CLANS[+c.slice(1)][0],col:CLANS[+c.slice(1)][1],tag:clanTag(+c.slice(1)),g:'Clans'}:
  c[0]==='n'?{nm:NATURES[+c.slice(1)][0],col:NATURES[+c.slice(1)][2],tag:NATURES[+c.slice(1)][0].slice(0,2),g:'Natures'}:{nm:(STYLES[+c.slice(1)]||['?'])[0],col:MELEEK.has((STYLES[+c.slice(1)]||[])[4])?'#e8cfa8':'#8fc8ff',tag:MELEEK.has((STYLES[+c.slice(1)]||[])[4])?'⚔':'➶',g:'Styles (M1)'};
 function blSimStart(){if(BLS.run||state!=='menu')return;const cats=blSimCats();if(!cats.length){blToast('Choisis au moins une catégorie à tester.');return}
  const per=Math.max(1,Math.round(BLS.opt.N/cats.length)),job={prof:blData(BLC.cur),cats,per,mode:BLS.opt.mode,kits:BLS.opt.kits,seed:77+Math.floor(Math.random()*9000)};
- Object.assign(BLS,{run:true,res:null,sug:null,cancelled:false,t0:performance.now(),job,prof:BLC.cur.name,stage:'Préparation du simulateur…'});
- const fr=blH('iframe',{title:'simulateur','aria-hidden':'true',tabindex:'-1',style:{position:'fixed',left:'-40px',top:'-40px',width:'8px',height:'8px',opacity:0,pointerEvents:'none',border:0}});
+ Object.assign(BLS,{run:true,res:null,sug:null,cancelled:false,t0:performance.now(),job,prof:BLC.cur.name,psig:JSON.stringify(blData(BLC.cur)),stage:'Préparation du simulateur…'});
+ const fr=blH('iframe',{title:'simulateur',sandbox:location.protocol==='file:'?null:'allow-scripts','aria-hidden':'true',tabindex:'-1',style:{position:'fixed',left:'-40px',top:'-40px',width:'8px',height:'8px',opacity:0,pointerEvents:'none',border:0}});
  fr.src=location.href.split(/[?#]/)[0]+'?sim=1';BLS.fr=fr;document.body.append(fr);BLS.onm=e=>{if(!BLS.fr||e.source!==BLS.fr.contentWindow)return;const d=e.data;if(!d||!d.blsim)return;
   if(d.blsim==='ready'){BLS.stage='';fr.contentWindow.postMessage({bl:'job',job},'*')}
   else if(d.blsim==='prog'||d.blsim==='done'){BLS.res=d.res;if(d.res.done>0)BLS.rate=(performance.now()-BLS.t0)/1000/d.res.done;if(d.blsim==='done')return blSimEnd();
@@ -381,7 +388,7 @@ const blMin=s=>s>=60?Math.floor(s/60)+' min '+String(Math.round(s%60)).padStart(
 function blTabSim(){const o=BLS.opt,cats=blSimCats(),menu=state==='menu',per=cats.length?Math.max(1,Math.round(o.N/cats.length)):0,est=per*cats.length*BLS.rate;
  const seg=(k,opts)=>blH('div',{class:'bl-seg'},opts.map(([v,t,tip])=>{const b=blH('button',{class:o[k]===v?'on':null,'data-tip':tip||null},t);b.onclick=()=>{if(BLS.run)return;o[k]=v;blRender()};return b}));
  const tg=(k,t,n,tip)=>{const b=blH('button',{class:o.grp[k]?'on':null,'data-tip':tip||null},t+' ',blH('span',{style:{opacity:.6}},'('+n+')'));b.onclick=()=>{if(BLS.run)return;o.grp[k]=o.grp[k]?0:1;blRender()};return b};
- const Nin=blNumIn(()=>o.N,v=>{o.N=v==null?200:v;blSimHint()},200,50,2000,50,'',{lab:'Nombre de duels',after:()=>{}});
+ const Nin=blNumIn(()=>o.N,v=>{o.N=v==null?800:v;blSimHint()},800,50,2000,50,'',{lab:'Nombre de duels',after:()=>{}});
  const hint=blH('p',{class:'bl-note',style:{margin:'8px 0 0'}});BLS.hintEl=hint;
  const left=blH('div',{style:{display:'flex',flexDirection:'column',gap:'12px'}},
   blH('div',{class:'bl-card'},blH('h4',null,'Catégories à tester'),blH('div',{class:'bl-tgl'},tg('c','Clans',CLANS.length+1,'Chaque clan et « sans clan » : kit aléatoire du clan contre un ninja aléatoire'),tg('n','Natures',NATURES.length),tg('s','Styles',STYLES.length,'Chaque attaque de base (M1)'),tg('f','Duels libres',1,'Kits entièrement aléatoires : nourrit surtout les statistiques des jutsu')),
@@ -395,7 +402,7 @@ function blTabSim(){const o=BLS.opt,cats=blSimCats(),menu=state==='menu',per=cat
   BLS.run?blH('div',{class:'bl-prog'},BLS.progI=blH('i',{style:{width:'0%'}})):null,BLS.run?BLS.progT=blH('div',{class:'bl-note',style:{margin:0}}):null),
   BLS.run?blH('button',{class:'bl-b warn',style:{padding:'10px 16px'},onclick:()=>blSimCancel()},'■ Annuler'):blH('button',{class:'bl-b pri',style:{padding:'10px 18px',fontSize:'14.5px'},disabled:!menu||BLC.ro||!cats.length,onclick:blSimStart},'▶ Lancer la simulation'));
  const res=blH('div');BLS.resEl=res;const right=blH('div',{style:{minWidth:0,display:'flex',flexDirection:'column',gap:'12px'}},top,res);const g=blH('div',{class:'bl-sim'},left,right);blSimHint();blSimPaint(res);if(BLS.run)blSimProg();return g}
-function blSimHint(){const h=BLS.hintEl;if(!h)return;const cats=blSimCats(),per=cats.length?Math.max(1,Math.round(BLS.opt.N/cats.length)):0;h.textContent=cats.length?'≈ '+per+' duel'+(per>1?'s':'')+' par catégorie ('+cats.length+') · durée estimée ≈ '+blMin(per*cats.length*BLS.rate)+(per<40?' · peu de duels : résultats indicatifs':''):'Aucune catégorie choisie.'}
+function blSimHint(){const h=BLS.hintEl;if(!h)return;const cats=blSimCats(),per=cats.length?Math.max(1,Math.round(BLS.opt.N/cats.length)):0;h.textContent=cats.length?'≈ '+per+' duel'+(per>1?'s':'')+' par catégorie ('+cats.length+') · durée estimée ≈ '+blMin(per*cats.length*BLS.rate)+(per<30?' · moins de 30 par catégorie : résultats indicatifs, pas de suggestions':''):'Aucune catégorie choisie.'}
 function blSimProg(){if(!BLS.run||!BLS.progI)return;const r=BLS.res,d=r?r.done:0,t=r?r.total:1,el=(performance.now()-BLS.t0)/1000;BLS.progI.style.width=(100*d/t).toFixed(1)+'%';
  BLS.progT.textContent=BLS.stage||(d+' / '+t+' duels · '+blMin(el)+(d>3?' · reste ≈ '+blMin((t-d)*el/d):''))}
 // résultats : chiffres clés, taux de victoire par catégorie (barres, intervalle de confiance, zone cible), histogramme des durées, jutsu, suggestions
@@ -430,7 +437,7 @@ function blSimPaint(el){el=el||BLS.resEl;if(!el||!BLC.open||BLC.tab!=='sim')retu
   else box.append(blH('div',{class:'bl-two'},blH('div',{class:'bl-card'},blH('h4',null,'Les plus gagnants'),J.slice(0,8).map(row)),blH('div',{class:'bl-card'},blH('h4',null,'Les moins gagnants'),J.slice(-8).reverse().map(row))));out.push(box)}
  // suggestions
  {const box=blH('div',{class:'bl-grp'},blH('h3',null,'Suggestions'));if(BLS.run)box.append(blH('p',{class:'bl-note'},'Disponibles à la fin de la simulation.'));
-  else if(!BLS.sug)box.append(blH('p',{class:'bl-note'},'Propose des PV et une puissance qui ramènent les catégories hors cible vers 50 % (et la durée des duels vers '+T+' s), sans rien appliquer d\'office.'),blH('button',{class:'bl-b pri',disabled:BLC.ro,onclick:()=>{BLS.sug=blSuggest(R);blSimPaint()}},'✦ Suggérer des réglages'));
+  else if(!BLS.sug)box.append(blH('p',{class:'bl-note'},'Propose des PV et une puissance qui ramènent les catégories hors cible vers 50 % (et la durée des duels vers '+T+' s), sans rien appliquer d\'office.'),blH('button',{class:'bl-b pri',disabled:BLC.ro,onclick:()=>{if(BLS.psig!==JSON.stringify(blData(BLC.cur))){blToast('Le profil a changé depuis cette simulation : relance-la avant de demander des suggestions.');return}BLS.sug=blSuggest(R);blSimPaint()}},'✦ Suggérer des réglages'));
   else if(!BLS.sug.length)box.append(blH('p',{class:'bl-note'},'Rien à suggérer : les catégories testées sont dans la cible, ou leur écart reste dans la marge d\'erreur (au moins 30 duels par catégorie sont nécessaires).'));
   else{const L=BLS.sug;box.append(blH('p',{class:'bl-note'},L.length+' ajustement'+(L.length>1?'s':'')+' proposé'+(L.length>1?'s':'')+'. Décoche ceux que tu ne veux pas, puis applique-les au profil « '+BLC.cur.name+' ». Relance ensuite une simulation pour vérifier.'));
    for(const s of L){const cb=blH('input',{type:'checkbox',checked:s.on?true:null,'aria-label':s.nm});cb.onchange=()=>s.on=cb.checked;
@@ -450,7 +457,7 @@ function blSuggest(R){const p0=BLC.cur,T=blG(p0,'dur'),out=[];
  out.sort((a,b)=>Math.abs(b.p-.5)-Math.abs(a.p-.5));
  const M=blMed(R.ts);if(R.ts.length>=40&&Math.abs(M-T)>T*.1){const cur=blG(p0,'hp'),to=blCl(blR(cur*blCl(Math.pow(T/M,.85),.85,1.18),.01),.5,2);out.push({on:true,kind:'g',key:'hp',nm:'PV des ninjas (tous)',tag:'∑',col:'#ffb347',p:null,md:M,to:[to],lab:[['PV ×',cur,to]]})}
  return out}
-function blSugApply(){const L=(BLS.sug||[]).filter(s=>s.on);if(!L.length){blToast('Aucune suggestion cochée.');return}const c=BLC.cur;
+function blSugApply(){const L=(BLS.sug||[]).filter(s=>s.on);if(!L.length){blToast('Aucune suggestion cochée.');return}if(BLS.psig!==JSON.stringify(blData(BLC.cur))){blToast('Le profil a changé depuis cette simulation : relance-la avant d\'appliquer des suggestions.');return}const c=BLC.cur;
  for(const s of L){if(s.kind==='g'){if(Math.abs(s.to[0]-1)<1e-9)delete c.g.hp;else c.g.hp=s.to[0]}else if(s.kind==='s'){if(s.to.every(x=>x===1))delete c.s[s.key];else c.s[s.key]=s.to}
   else{const D=BLC.D[s.kind][s.key]||[1,1];if(Math.abs(s.to[0]-D[0])<1e-9&&Math.abs(s.to[1]-D[1])<1e-9)delete c[s.kind][s.key];else c[s.kind][s.key]=s.to}}
  BLS.sug=null;blTouch();blRender();blToast(L.length+' réglage'+(L.length>1?'s':'')+' appliqué'+(L.length>1?'s':'')+' au profil « '+c.name+' »')}
