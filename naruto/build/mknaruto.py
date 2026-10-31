@@ -85,6 +85,7 @@ rep("function hostGame(){if(noPeer())return;netReset();","function hostGame(){if
 rep("Tu:turrets.map(t=>pickK(t,['x','y','t','team','col','aim','big']))","Tu:turrets.map(t=>Object.assign(pickK(t,['x','y','t','team','col','aim','big','follow']),{oc:t.owner&&t.owner.c,follow:!!t.follow}))")
 # ---------- rendu : décor, tête de ninja, kunai, manteau Akatsuki
 rep("function drawSky(){",open(SP+'nr_draw.js').read()+"\nfunction drawSkyOld(){")
+rep("\nfunction drawSkyOld(){","\n"+open(SP+'nr_maps.js').read()+"\nfunction drawSkyOld(){") # cartes supplémentaires (nr_maps.js)
 rep("function drawFloor(x0,y0,x1,y1,step){\n const tl=P(x0,y0),tr=P(x1,y0),br=P(x1,y1),bl=P(x0,y1);\n const fg=g.createLinearGradient(0,tl.y,0,bl.y);fg.addColorStop(0,'#141a26');","function drawFloorOld(x0,y0,x1,y1,step){\n const tl=P(x0,y0),tr=P(x1,y0),br=P(x1,y1),bl=P(x0,y1);\n const fg=g.createLinearGradient(0,tl.y,0,bl.y);fg.addColorStop(0,'#141a26');")
 rep("function backWall(x0,x1,y){const B2=70,a=P(x0,y),b=P(x1,y),up=(p,h)=>({x:p.x,y:p.y-h*p.s});\n const wg=g.createLinearGradient(0,a.y-B2,0,a.y);wg.addColorStop(0,'#1b2233');","function backWallOld(x0,x1,y){const B2=70,a=P(x0,y),b=P(x1,y),up=(p,h)=>({x:p.x,y:p.y-h*p.s});\n const wg=g.createLinearGradient(0,a.y-B2,0,a.y);wg.addColorStop(0,'#1b2233');")
 rep("function drawObst(pl){\n const p=P(pl.x,pl.y),rx=pl.r*p.s,ry=rx*K,h=(pl.rock?60:105)*p.s;","function drawObstOld(pl){\n const p=P(pl.x,pl.y),rx=pl.r*p.s,ry=rx*K,h=(pl.rock?60:105)*p.s;")
