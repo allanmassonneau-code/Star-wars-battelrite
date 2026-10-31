@@ -2,7 +2,13 @@
 let picker=null; // emplacement dont on choisit le jutsu (liste ouverte)
 // lignes de gauche : [libellé, liste, clé] ; le clan a une entrée « Sans clan » (valeur -1), la 2e nature n'existe que sans clan
 const CLANL=[['Sans clan','#888']].concat(CLANS),NATL=NATURES.map(n=>[n[0]+' ('+n[1]+')',n[2]]);
-const APP=[['Camp',()=>CAMPS,'side'],['Voie',()=>VOIES,'voie'],['Clan',()=>CLANL,'clan'],['Nature',()=>NATL,'nat'],['Village',()=>VILLAGES,'l.v'],['Tenue',()=>TENUES,'l.t'],['Coiffure',()=>COIFS,'l.c'],['Cheveux',()=>HAIRC,'l.h'],['Peau',()=>PEAUX,'l.p'],['Chakra',()=>CHAKRAS,'l.k'],['Accessoire',()=>ACCS,'l.a'],['Visage',()=>FACES,'l.f'],['Bandeau',()=>BANDS,'l.b'],['Dos',()=>BACKS,'l.d']];
+// apparence rangée en 4 onglets (4e champ) : tête, corps, tenue, équipement
+const APP=[['Camp',()=>CAMPS,'side'],['Voie',()=>VOIES,'voie'],['Clan',()=>CLANL,'clan'],['Nature',()=>NATL,'nat'],
+ ['Coiffure',()=>COIFS,'l.c',0],['Cheveux',()=>HAIRC,'l.h',0],['Yeux',()=>EYES,'l.e',0],['Visage',()=>FACES,'l.f',0],['Accessoire',()=>ACCS,'l.a',0],['Bandeau',()=>BANDS,'l.b',0],
+ ['Peau',()=>PEAUX,'l.p',1],['Taille',()=>TAILLES,'l.z',1],['Carrure',()=>CARRURES,'l.w',1],['Chakra',()=>CHAKRAS,'l.k',1],['Village',()=>VILLAGES,'l.v',1],
+ ['Tenue',()=>TENUES,'l.t',2],['Couleur 1',()=>TENCOL,'l.o',2],['Couleur 2',()=>TENCOL,'l.s',2],
+ ['Bras',()=>ARMS,'l.r',3],['Cou',()=>NECKS,'l.n',3],['Dos',()=>BACKS,'l.d',3]];
+const LTABS=['Tête','Corps','Tenue','Équipement'];let LTAB=0;const ltabR=i=>({x:44+i*89,y:390,w:85,h:24});
 const getB=k=>k==='clan'?EB.clan+1:k.startsWith('l.')?EB.l[k[2]]:EB[k],setB=(k,v)=>{if(k==='clan'){EB.clan=v-1;const cs=clanStyle(EB.clan);if(cs>=0&&!(STYLES[EB.j[0]]&&STYLES[EB.j[0]][5].includes(EB.clan)&&!STYLES[EB.j[0]][5].includes(-1)))EB.j[0]=cs} // nouveau clan : son style signature est équipé
  else if(k.startsWith('l.'))EB.l[k[2]]=v;else EB[k]=v};
 const appOff=k=>k==='nat'&&EB.clan===TAIJ;
@@ -11,12 +17,12 @@ const edOver=()=>kitCost(EB)>budgetOf(EB),overBudget=()=>kitCost(MY)>budgetOf(MY
 const cycleJ=(s,d)=>{if(!s){const L=stylesOf(EB),i=L.indexOf(EB.j[0]);EB.j[0]=L[(i+d+L.length)%L.length];return}const A=avail(EB,s).filter(j=>j.id===EB.j[s]||!EB.j.slice(1).includes(j.id)),i=A.findIndex(j=>j.id===EB.j[s]);EB.j[s]=A[(i+d+A.length)%A.length].id};
 // --- disposition : à gauche ton ninja et son APPARENCE (lignes l.*), à droite son BUILD DE COMBAT (camp, voie, clan, nature, 6 emplacements, passif, budget)
 // picker : panneau de choix ouvert = n° d'emplacement (0 style, 1-5 jutsu), 'pass', 'preset' ou une clé de APP ('clan', 'nat', 'l.c'…)
-const BX=428,BW=812,buildKeys=()=>APP.filter(a=>!a[2].startsWith('l.')),lookKeys=()=>APP.filter(a=>a[2].startsWith('l.'));
+const BX=428,BW=812,buildKeys=()=>APP.filter(a=>!a[2].startsWith('l.')),lookKeys=()=>APP.filter(a=>a[2].startsWith('l.')&&a[3]===LTAB);
 const selRect=i=>{const n=buildKeys().length,w=(BW-(n-1)*8)/n;return{x:BX+i*(w+8),y:146,w,h:44}};
 const slotRow=s=>({x:BX,y:218+s*51,w:BW,h:46});
 const passRow={x:BX,y:525,w:BW,h:40},budBox={x:BX,y:576,w:582,h:54};
 // les listes d'apparence peuvent s'allonger : la hauteur des lignes s'adapte (et chaque valeur ouvre une grille de choix)
-const lookRow=i=>{const n=lookKeys().length,h=Math.max(19,Math.min(30,262/n)),y=394+i*h;return{y:y+h/2+5,h,l:{x:150,y:y+2,w:24,h:h-4},v:{x:177,y:y+2,w:194,h:h-4},r:{x:374,y:y+2,w:24,h:h-4}}};
+const lookRow=i=>{const n=lookKeys().length,h=Math.max(19,Math.min(34,236/n)),y=422+i*h;return{y:y+h/2+5,h,l:{x:150,y:y+2,w:24,h:h-4},v:{x:177,y:y+2,w:194,h:h-4},r:{x:374,y:y+2,w:24,h:h-4}}};
 let presetI=-1,EB=null,EBCH=null; // EB : build en cours de création ou de modification (MY reste le perso joué)
 const rndBuildBtn={x:BX,y:638,w:190,h:32},presetBtn={x:BX+198,y:638,w:200,h:32};
 const nameBtn={x:40,y:150,w:300,h:30},rndBtn={x:348,y:150,w:52,h:30},cancelBtn={x:44,y:662,w:352,h:32},saveBtn={x:1030,y:576,w:210,h:54};
@@ -36,11 +42,16 @@ function rebuildMine(){MY=sanitizeBuild(MY);if(!RSIM)try{localStorage.setItem('n
  if(net.role==='host'){net.ready=false;sendLobby()}else if(isGuest()&&coop()){net.ready=false;netSend({t:'build',b:MY});netSend({t:'ready',v:false})}}
 // perso en création : seul l'aperçu change (rien n'est envoyé ni gardé avant « Enregistrer »)
 function edRebuild(){EB=sanitizeBuild(EB);EBCH=mkNinja(EB)}
+const lookTabD=['Coiffure, couleur des cheveux, yeux (dont dôjutsu purement décoratifs), marques du visage, accessoire de tête et bandeau.','Peau, taille et carrure (purement visuelles : la zone de coups ne change pas), couleur du chakra et village.','Tenue et ses deux couleurs (principale et secondaire, « D\'origine » garde celles de la tenue).','Accessoires des bras et du cou, objet porté dans le dos (le ninja tourne pour le montrer).'];
 // --- textes d'aide des options de build
 function optDesc(k,v){
  if(k==='clan'){const c=v-1,T=TRAITS[c];return(c<0?'Subjutsu polyvalents, +2 points de budget. ':c===TAIJ?'Taijutsu pur : pas de nature, que des techniques du corps. ':'Jutsu de clan sans mudra. ')+(T?`Trait « ${T.nom||T.name} » : ${T.desc||''}`:'')}
  if(k==='nat'){const w=BEATS[v],l=BEATS.indexOf(v);return`${NATURES[v][0]} (${NATURES[v][1]}) : fort contre ${NATURES[w][0]}, faible contre ${NATURES[l][0]}. Ajoute ses jutsu (avec mudras) à ton choix.`}
  if(k==='voie'){const V=VOIES[v];return`PV ×${V[1]} · vitesse ${V[2]>=0?'+':''}${V[2]} · puissance ×${V[3]}`}
+ if(k==='l.z'||k==='l.w')return'Purement visuel : même zone de coups, même vitesse.';
+ if(k==='l.o')return v?'Remplace la couleur principale de la tenue.':'Garde la couleur principale de la tenue.';
+ if(k==='l.s')return v?'Remplace la couleur secondaire (gilet, haori, jupe ou pantalon).':'Garde la couleur secondaire de la tenue.';
+ if(k==='l.e')return v>=10?'Dôjutsu décoratif : aucun effet en combat.':v?'':'Les yeux du clan (Sharingan, Byakugan…) ou ceux d\'une marque du visage.';
  if(k==='side')return v?'Tu combats avec l\'Akatsuki : tes alliés de bataille et la couleur de ton nom.':'Tu combats avec l\'Alliance Shinobi : tes alliés de bataille et la couleur de ton nom.';
  return''}
 // --- icône d'un jutsu : disque à la couleur de l'élément, gros contour sombre, symbole (flamme, goutte, vent, éclair, roche, shuriken, initiale du clan, kunai)
@@ -113,7 +124,8 @@ function pickerClick(){const D=pickData(picker);if(!D){picker=null;return true}c
 function creatorClick(){
  if(picker!==null)return pickerClick();
  if(inRect(mouse,nameBtn)){const n=prompt('Nom de ton ninja (16 caractères max)',EB.name);if(n!==null){EB.name=n.trim()||EB.name;edRebuild()}return true}
- if(inRect(mouse,rndBtn)){const r=srnd((Date.now()%2147483647)||7),b=randomBuild(r,EB.side,EB.name);EB.l=b.l;edRebuild();return true}
+ if(inRect(mouse,rndBtn)){const r=srnd((Date.now()%2147483647)||7),b=randomBuild(r,EB.side,EB.name);EB.l=randomCosm(b.l,EB.name+Date.now(),EB.side);edRebuild();return true}
+ for(let i=0;i<LTABS.length;i++)if(inRect(mouse,ltabR(i))){LTAB=i;return true}
  if(inRect(mouse,cancelBtn)){edCancel();return true}
  if(inRect(mouse,presetBtn)){openPicker('preset');return true}
  if(inRect(mouse,rndBuildBtn)){EB=randomKit(srnd((Date.now()%2147483647)||7),EB);edRebuild();return true}
@@ -173,8 +185,8 @@ function drawCreator(){
  // ===== colonne de gauche : ton ninja + son apparence
  rr({x:30,y:142,w:380,h:560},12,'rgba(20,14,10,.85)','#5a3a1e');
  {const h=hv(nameBtn);rr(nameBtn,8,h?'rgba(90,60,30,.6)':'rgba(0,0,0,.25)');tfit(EB.name+'  ✎',nameBtn.x+10,nameBtn.y+22,20,ch.side?'#ff9a9a':'#ffd38a',280,'bold')}
- btn(rndBtn,'🎲',false);if(hv(rndBtn))hoverTip('rndL',()=>({t:'Apparence aléatoire',d:'Tire au hasard village, tenue, coiffure, couleurs et accessoire. Ton build de combat ne change pas.'}));
- const fake=menuFake(ch);fake.aim=Math.PI/2+Math.sin(t*.8)*1.1;fake.moving=Math.sin(t*.5)>.3;fake.walk=t*13;fake.swing=0;
+ btn(rndBtn,'🎲',false);if(hv(rndBtn))hoverTip('rndL',()=>({t:'Apparence aléatoire',d:'Tire au hasard toute l\'apparence (coiffure, yeux, tenue et ses couleurs, accessoires, taille…). Ton build de combat ne change pas.'}));
+ const fake=menuFake(ch);fake.aim=LTAB===3?Math.PI/2+t*.9:Math.PI/2+Math.sin(t*.8)*1.1; // onglet Équipement : le ninja tourne sur lui-même (objets dans le dos)fake.moving=Math.sin(t*.5)>.3;fake.walk=t*13;fake.swing=0;
  g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(220,316,50,13,0,0,7);g.fill();
  {g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(220,290,0,220,290,140);gr.addColorStop(0,rgba(ch.look.weapon.col,.16));gr.addColorStop(1,rgba(ch.look.weapon.col,0));g.fillStyle=gr;g.fillRect(80,186,280,150);g.restore()}
  drawPrevN(fake,220,314,1.6,0);drawChar3(fake,220,314,1.6);drawPrevN(fake,220,314,1.6,1);
@@ -183,6 +195,8 @@ function drawCreator(){
  // en-tête de section
  const sect=(s,x,y,w)=>{text(s,x+w/2,y+4,11,'#ffb347','center');g.font=FNT(11,'bold');const tw=g.measureText(s).width/2+10;g.fillStyle='rgba(255,154,58,.45)';g.fillRect(x,y,w/2-tw,1.5);g.fillRect(x+w/2+tw,y,w/2-tw,1.5)};
  sect('APPARENCE',44,380,352);
+ LTABS.forEach((s,i)=>{const R=ltabR(i),on=LTAB===i,h=hv(R);rr(R,8,on?'#ff9a3a':h?'rgba(90,60,30,.95)':'rgba(40,28,18,.9)','#8a5a2a',1);text(s,R.x+R.w/2,R.y+16.5,12,on?'#1a1008':'#f3d9b0','center',on?'bold':'normal');
+  if(h&&!on)hoverTip('lt'+i,()=>({t:'Apparence : '+s,d:lookTabD[i]}))});
  lookKeys().forEach(([lab,list,k],i)=>{const R=lookRow(i),L=list(),v=getB(k),it=L[v],z=Math.min(13,R.h*.5);fitT(lab,48,R.y,z,'#d8b888',96,'bold',9);arrowBtn(R.l,1);arrowBtn(R.r,0);
   const h=hv(R.v),sw=swCol(it);rr(R.v,6,h?'rgba(90,60,30,.85)':'rgba(0,0,0,.28)',h?'#c08040':null);if(sw)rr({x:R.v.x+7,y:R.y-z+1,w:z,h:z},3,sw,'#14100a',1.5);
   fitT(itN(it),R.v.x+(sw?12+z:8),R.y,z,'#fff',R.v.w-(sw?52:44),'bold',9);text(`${v+1}/${L.length}`,R.v.x+R.v.w-6,R.y,Math.min(10,z-1),'#8a7458','right','normal');

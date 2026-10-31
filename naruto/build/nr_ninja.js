@@ -368,28 +368,60 @@ const TENUES=[['Tenue orange',{legs:'#2a3550',torso:'#f08a24',arm:'#f08a24',belt
  ['Long manteau',{legs:'#3a3a42',torso:'#6a7466',robe:'#6a7466',arm:'#6a7466',collar:'#5e685a',hood:'up',boot:'#2a2a33'}],['Veste à fourrure',{legs:'#2a2a38',torso:'#5a5a64',arm:'#5a5a64',fur:'#ece6da',belt:'#2a2a38',boot:'#2a2a33'}],
  ['Manteau rouge de Suna',{legs:'#3a2a2a',torso:'#8a2a2a',robe:'#8a2a2a',arm:'#8a2a2a',sash:'#d8d0c0',boot:'#3a2a1a'}],['Combinaison à capuche',{legs:'#1c1c24',torso:'#1c1c24',arm:'#1c1c24',hood:'chat',belt:'#5a4a8a',boot:'#222'}],
  ['Armure Akimichi',{legs:'#3a3a40',torso:'#3a3a40',armor:'#b02a2a',arm:'#3a3a40',belt:'#d8c060',boot:'#222'}],['Tenue violette',{legs:'#e8e2d6',torso:'#7a4a9a',robe:'#7a4a9a',rshort:1,arm:'skin',boot:'#3a2a4a'}],
- ['Tenue chinoise rose',{legs:'#4a5a3a',torso:'#e88aa8',arm:'#e88aa8',belt:'#c03a5a',boot:'#2a2a33'}]];
+ ['Tenue chinoise rose',{legs:'#4a5a3a',torso:'#e88aa8',arm:'#e88aa8',belt:'#c03a5a',boot:'#2a2a33'}],
+ // tenues ajoutées (toujours à la fin : l'indice des anciennes ne change pas) ; nouveaux drapeaux : jupe jupe courte, samurai plaques d'armure, obi large ceinture nouée,
+ // kcol col croisé de kimono, hlong haori long, vband bandes du gilet, spiral tourbillon rouge dans le dos, stripes anneaux sur bras et jambes, torso 'skin' torse nu, hatC / hatK chapeau de Kage
+ ['Chûnin de Suna',{legs:'#5a4a38',torso:'#6a5a44',vest:'#c8b896',arm:'#6a5a44',belt:'#3a2a1a',boot:'#3a2a1a'}],['Chûnin de Kiri',{legs:'#3a4a5a',torso:'#4a5a6a',vest:'#6a7a6a',vband:1,arm:'#4a5a6a',belt:'#2a3038',boot:'#2a3038'}],
+ ['Chûnin de Kumo',{legs:'#2a2a30',torso:'#2a2a30',vest:'#ece6d4',arm:'#2a2a30',belt:'#4a4a52',boot:'#222'}],['Chûnin d\'Iwa',{legs:'#5a4a3a',torso:'#8a2a24',vest:'#6a6a58',arm:'#8a2a24',belt:'#3a2a1a',boot:'#3a2a1a'}],
+ ['Jônin de Konoha',{legs:'#1f2c48',torso:'#26365a',vest:'#5a6e3a',spiral:1,arm:'#26365a',belt:'#1a2238',boot:'#1a2238'}],['Anbu à cape',{legs:'#2a2a30',torso:'#3a3a42',armor:'#c8ccd4',cape:'#d8d8de',arm:'#2a2a30',belt:'#555',boot:'#222'}],
+ ['Anbu de la Racine',{legs:'#1a1a20',torso:'#24242a',armor:'#4a4a54',arm:'#24242a',sash:'#4a4a54',belt:'#333',boot:'#1a1a1a'}],['Akatsuki ouvert',{legs:'#2a2a33',torso:'skin',haori:'#16161c',hlong:1,hsl:1,clouds:1,arm:'#16161c',boot:'#2a2a33'}],
+ ['Robe du Kazekage',{legs:'#e8e6de',torso:'#efeee8',robe:'#efeee8',trim:'#2a5aa8',yoke:'#2a5aa8',arm:'#efeee8',belt:'#2a5aa8',boot:'#5a4a3a',hatC:'#2a5aa8',hatK:'風'}],
+ ['Robe du Mizukage',{legs:'#e8e6de',torso:'#efeee8',robe:'#efeee8',trim:'#2a8aa8',arm:'#efeee8',belt:'#2a8aa8',boot:'#5a4a3a',hatC:'#2a8aa8',hatK:'水'}],
+ ['Robe du Raikage',{legs:'#e8e6de',torso:'#efeee8',robe:'#efeee8',trim:'#e0b020',arm:'#efeee8',belt:'#e0b020',boot:'#5a4a3a',hatC:'#e0b020',hatK:'雷'}],
+ ['Robe du Tsuchikage',{legs:'#e8e6de',torso:'#efeee8',robe:'#efeee8',trim:'#4a8a3a',arm:'#efeee8',belt:'#4a8a3a',boot:'#5a4a3a',hatC:'#4a8a3a',hatK:'土'}],
+ ['Tenue de Sakura (Shippûden)',{legs:'#3a3a40',torso:'#c8283a',arm:'skin',jupe:'#f0a0b8',belt:'#3a3a40',boot:'#3a3a40'}],['Tenue de Zabuza',{legs:'#8a9098',torso:'skin',arm:'#8a9098',stripes:'#3a4048',sash:'#4a3a2a',belt:'#4a3a2a',warm:'#8a9098',boot:'#2a2a33'}],
+ ['Armure de samouraï',{legs:'#2a2a38',torso:'#3a3a48',arm:'#3a3a48',samurai:'#8a2a2a',belt:'#d8c060',boot:'#2a2a33'}],['Kimono',{legs:'#e8e2d6',torso:'#3a5a9a',robe:'#3a5a9a',arm:'#3a5a9a',obi:'#e8c040',kcol:'#f0ece0',boot:'#5a4a3a'}],
+ ['Kimono fleuri',{legs:'#e8e2d6',torso:'#e88aa8',robe:'#e88aa8',arm:'#e88aa8',obi:'#c0283a',kcol:'#f6f2ea',dots:'#ffffff',boot:'#5a4a3a'}],['Haori de combat',{legs:'#2a2a33',torso:'#5a5a64',arm:'#5a5a64',haori:'#1c1c24',hsl:1,trim:'#c03a2a',belt:'#2a2a33',boot:'#2a2a33'}],
+ ['Tenue de Kabuto',{legs:'#4a3a6a',torso:'#5a4a7a',arm:'#5a4a7a',jupe:'#e8e2d6',belt:'#e8e2d6',boot:'#2a2a33'}],['Tenue de Danzô',{legs:'#3a3a40',torso:'#4a4a50',robe:'#4a4a50',arm:'#4a4a50',sash:'#ece8de',collar:'#4a4a50',boot:'#2a2a33'}],
+ ['Kimono noir de Temari',{legs:'#2a2a38',torso:'#2a2a38',robe:'#2a2a38',rshort:1,arm:'#2a2a38',obi:'#c0283a',kcol:'#f0ece0',boot:'#2a2a38'}],['Tenue d\'Oto',{legs:'#5a5048',torso:'#d8d2c0',arm:'#d8d2c0',rope:'#6a3a9a',kcol:'#5a5048',boot:'#2a2a33'}],
+ ['Gilet et combinaison verte',{legs:'#3f8f3a',torso:'#3f8f3a',vest:'#5a6e3a',arm:'#3f8f3a',belt:'#c03a2a',warm:'#f08a24',boot:'#c8b080'}]];
 const COIFS=[['Pics','pics'],['Lisses','lisse'],['Queue haute','queue'],['Courts','courts'],['Chignons','chignons'],['Crâne rasé','chauve'],
  ['Mèches de canard','sasuke'],['Carré court','carre'],['Pics obliques','kakashi'],['Queue basse','itachi'],['Demi-queue et mèche','deidara'],['Pics de requin','requin'],['Ébouriffés','sasori'],['Plaqués en arrière','plaque'],
  ['Pics hérissés','pain'],['Chignon et fleur','konan'],['Crinière d\'ermite','jiraiya'],['Deux queues basses','tsunade'],['Longs raides','orochimaru'],['Pics et longues mèches','minato'],['Longs attachés','neji'],
- ['Coupe au bol','bol'],['Ananas','ananas'],['Pics sous bandeau','choji'],['Longue queue et mèche','ino'],['Sauvages','kiba'],['Coupe hime','hinata'],['Courts en pics','gaara'],['Quatre couettes','temari']];
-const HAIRC=[['Blond','#f2c84a'],['Noir','#1a1a22'],['Rose','#f08ab0'],['Roux','#c0482a'],['Blanc','#e8e8f0'],['Brun','#6b4a2a'],['Bleu nuit','#2a3a6a'],['Rouge','#b8202a'],['Argenté','#c8ccd6'],['Gris','#8a8a92'],['Orange','#e8702a'],['Lavande','#7a6ab8'],['Blond pâle','#f2e09a'],['Bleu acier','#3a5a8a'],['Châtain foncé','#3a2618'],['Noir bleuté','#1c2238']];
-const PEAUX=[['Claire','#f6d6b4'],['Mate','#e0b08a'],['Hâlée','#b8805a'],['Foncée','#7a5038'],['Pâle','#e8e0e8'],['Bleu requin','#7c9cb4'],['Blafarde','#f0eee6'],['Rosée','#fae2d0']];
+ ['Coupe au bol','bol'],['Ananas','ananas'],['Pics sous bandeau','choji'],['Longue queue et mèche','ino'],['Sauvages','kiba'],['Coupe hime','hinata'],['Courts en pics','gaara'],['Quatre couettes','temari'],
+ ['Iroquoise','iroquoise'],['Rasé sur les côtés','rase'],['Longs détachés','longs'],['Tresse','tresse'],['Chignon haut','chignon1'],['Coupe lisse','sai'],['Hérissés courts','obito'],['Crinière de guerrier','madara'],['Afro','afro'],['Couettes hautes','couettes'],['Pics dressés','konohamaru'],['Mi-longs en mèches','milongs']];
+const HAIRC=[['Blond','#f2c84a'],['Noir','#1a1a22'],['Rose','#f08ab0'],['Roux','#c0482a'],['Blanc','#e8e8f0'],['Brun','#6b4a2a'],['Bleu nuit','#2a3a6a'],['Rouge','#b8202a'],['Argenté','#c8ccd6'],['Gris','#8a8a92'],['Orange','#e8702a'],['Lavande','#7a6ab8'],['Blond pâle','#f2e09a'],['Bleu acier','#3a5a8a'],['Châtain foncé','#3a2618'],['Noir bleuté','#1c2238'],['Bleu ciel','#6ab0e8'],['Vert','#3a8a4a'],['Violet','#6a3a9a'],['Turquoise','#2ab0b0'],['Rose vif','#e04a8a'],['Bordeaux','#6a1a2a'],['Blond cendré','#d8c89a'],['Roux cuivré','#a0502a'],['Gris bleuté','#7a8aa0'],['Blanc neige','#fafaf6']];
+const PEAUX=[['Claire','#f6d6b4'],['Mate','#e0b08a'],['Hâlée','#b8805a'],['Foncée','#7a5038'],['Pâle','#e8e0e8'],['Bleu requin','#7c9cb4'],['Blafarde','#f0eee6'],['Rosée','#fae2d0'],['Ébène','#5a3a28'],['Olive','#c8a070'],['Dorée','#e8c090'],['Cuivrée','#a06a48'],['Ivoire','#f8ece0'],['Grise','#b0aca4']];
 const CHAKRAS=[['Bleu','#3af'],['Rouge','#f33'],['Vert','#3f6'],['Violet','#a5f'],['Orange','#f93'],['Blanc','#eef'],['Jaune','#fd3']];
-const ACCS=[['Aucun',''],['Masque','masque'],['Lunettes noires','lunettes'],['Lunette de visée','visee'],['Chapeau de Kage','kage'],['Masque Anbu','anbu'],['Fleur de papier','fleur']];
+const ACCS=[['Aucun',''],['Masque','masque'],['Lunettes noires','lunettes'],['Lunette de visée','visee'],['Chapeau de Kage','kage'],['Masque Anbu','anbu'],['Fleur de papier','fleur'],
+ ['Lunettes de protection','goggles'],['Boucles d\'oreilles','boucles'],['Cache-œil','cacheoeil'],['Bandages du visage','bandvis'],['Chapeau de paille','paille'],['Masque à spirale','tobi'],['Masque de renard','renard'],['Casque de samouraï','kabuto'],['Bandana','bandana'],['Lunettes rondes','lunrondes']];
 // marques du visage (certaines changent les yeux : Rinnegan, yeux de serpent, yeux de requin, yeux ronds)
 const FACES=[['Aucune',''],['Moustaches','moust'],['Crocs rouges','marques'],['Cernes','cernes'],['Tatouage « amour »','gaara'],['Losange','losange'],['Spirales','spirales'],['Traits d\'ermite','ermite'],
- ['Branchies','branchies'],['Rinnegan et piercings','pain'],['Fard du serpent','fard'],['Rides et barbiche','rides'],['Gros sourcils','sourcils'],['Peinture de guerre','kankuro'],['Cicatrice','cicatrice'],['Barbe','barbe']];
+ ['Branchies','branchies'],['Rinnegan et piercings','pain'],['Fard du serpent','fard'],['Rides et barbiche','rides'],['Gros sourcils','sourcils'],['Peinture de guerre','kankuro'],['Cicatrice','cicatrice'],['Barbe','barbe'],
+ ['Marque maudite','maudite'],['Cicatrice de l\'œil','cicoeil'],['Taches de rousseur','rousseur'],['Joues roses','rougeur'],['Coutures','coutures'],['Points Kaguya','kaguya'],['Moustaches du Kyûbi','kyubi'],['Sceau de l\'oiseau en cage','cage'],['Lèvres rouges','levres']];
 // façon de porter le bandeau
 const BANDS=[['Au front','front'],['Œil caché','oblique'],['Barré (renégat)','barre'],['Serre-tête','tete'],['Au cou','cou'],['À la taille','taille'],['Au bras','bras'],['Cornes d\'ermite','cornes'],['Sans bandeau','']];
 // porté dans le dos
-const BACKS=[['Rien',''],['Gourde de sable','gourde'],['Grand parchemin','parchemin'],['Épée bandée','samehada'],['Faux tripale','faux'],['Éventail géant','eventail'],['Fûma shuriken','fuma'],['Katana','katana']];
+const BACKS=[['Rien',''],['Gourde de sable','gourde'],['Grand parchemin','parchemin'],['Épée bandée','samehada'],['Faux tripale','faux'],['Éventail géant','eventail'],['Fûma shuriken','fuma'],['Katana','katana'],
+ ['Kubikiribôchô','kubi'],['Marionnette (Karasu)','karasu'],['Épée de Sasuke','kusanagi'],['Rouleaux de Tenten','rouleaux'],['Bâton','baton'],['Sac de voyage','sac'],['Sabre bandé double','hirame']];
+// réglages d'apparence ajoutés (champs l.e, l.o, l.s, l.z, l.w, l.r, l.n : absents d'une ancienne sauvegarde = 0 = valeur d'origine)
+// yeux : couleur (#…) ou dôjutsu purement cosmétique (Sharingan et Byakugan reprennent le dessin des clans, le reste passe par eyeSpecial)
+const EYES=[['Selon le clan',''],['Noirs','#2a2a38'],['Bleus','#3a7ad8'],['Bleu ciel','#5ab8f0'],['Verts','#3aa85a'],['Ambre','#d89a3a'],['Gris','#8a8a9a'],['Violets','#8a5ad0'],['Turquoise','#2ab8b8'],['Bruns','#7a4a2a'],
+ ['Sharingan','=#e01a1a'],['Mangekyô Sharingan','*mgk'],['Byakugan','=#e8e8f8'],['Rinnegan','*rin'],['Yeux de serpent','*ser'],['Yeux de crapaud','*toad'],['Yeux de requin','*req'],['Yeux ronds','*rond'],['Ketsuryûgan','*ci_k'],['Yeux fermés','*closed']];
+// couleurs de tenue : principale (remplace la couleur du haut) et secondaire (gilet, haori, pantalon…)
+const TENCOL=[['D\'origine',''],['Noir','#1c1c24'],['Blanc','#eeece6'],['Rouge','#c0282a'],['Bordeaux','#6a1a24'],['Orange','#f08a24'],['Jaune','#e8c030'],['Vert','#3f8f3a'],['Kaki','#5a6e3a'],['Vert sapin','#2a4a32'],
+ ['Bleu','#2a5aa8'],['Bleu marine','#1f2c48'],['Bleu ciel','#6ab0e0'],['Violet','#6a3a9a'],['Lavande','#b8a8e0'],['Rose','#e88aa8'],['Brun','#6a4a2a'],['Beige','#c8b48a'],['Gris','#7a7a84'],['Anthracite','#3a3a42']];
+// taille et carrure : purement visuelles (même zone de coups, même cercle d'équipe)
+const TAILLES=[['Normale',1],['Petite',.93],['Grande',1.07]],CARRURES=[['Normale',1],['Mince',.88],['Costaude',1.15]];
+const ARMS=[['Rien',''],['Bandages aux bras','bandages'],['Bandages bras et jambes','bandall'],['Gants noirs','gants'],['Protège-bras','protege'],['Bracelets d\'or','bracelets'],['Bague et vernis','bague'],['Tatouage Anbu','tatouage'],['Gantelets de métal','gantelets']];
+const NECKS=[['Rien',''],['Écharpe rouge','echarpe'],['Longue écharpe bleue','echlong'],['Collier de Tsunade','tsunade'],['Pendentif de Jashin','jashin'],['Chapelet','chapelet'],['Collier à anneaux','anneaux'],['Foulard','foulard'],['Collier de crocs','crocs']];
 const EYEF={pain:'rin',fard:'ser',branchies:'req',sourcils:'rond'}; // yeux propres à certaines marques (si le clan n'en impose pas)
 // build : {name, side, voie, nat, clan (-1 = sans clan), j:[style, 5 id de jutsu], pass, l:{v,t,c,h,p,k,a,f,b,d}} (f visage, b bandeau, d dos)
 // strict : ramène le kit sous le budget (pour les builds reçus en ligne et les bots)
 function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Math.max(0,Math.min(m-1,(a|0)));const l=b.l||{};
  const o={name:String(b.name||'Ninja').replace(/[<>]/g,'').slice(0,16)||'Ninja',side:b.side?1:0,voie:n(b.voie??1,VOIES.length),nat:n(b.nat,NATURES.length),clan:b.clan==null?-1:Math.max(-1,Math.min(CLANS.length-1,b.clan|0)),pass:n(b.pass,PASSK.length),
-  l:{v:n(l.v,VILLAGES.length),t:n(l.t,TENUES.length),c:n(l.c,COIFS.length),h:n(l.h,HAIRC.length),p:n(l.p,PEAUX.length),k:n(l.k,CHAKRAS.length),a:n(l.a,ACCS.length),f:n(l.f,FACES.length),b:n(l.b,BANDS.length),d:n(l.d,BACKS.length)}};
+  l:{v:n(l.v,VILLAGES.length),t:n(l.t,TENUES.length),c:n(l.c,COIFS.length),h:n(l.h,HAIRC.length),p:n(l.p,PEAUX.length),k:n(l.k,CHAKRAS.length),a:n(l.a,ACCS.length),f:n(l.f,FACES.length),b:n(l.b,BANDS.length),d:n(l.d,BACKS.length),
+   e:n(l.e,EYES.length),o:n(l.o,TENCOL.length),s:n(l.s,TENCOL.length),z:n(l.z,TAILLES.length),w:n(l.w,CARRURES.length),r:n(l.r,ARMS.length),n:n(l.n,NECKS.length)}};
  const st=(b.j||[])[0];o.j=[STYLES[st]&&styleOk(st,o.clan)?st:clanStyle(o.clan)>=0?clanStyle(o.clan):STYLES.findIndex((_,i)=>styleOk(i,o.clan))];
  for(let s=1;s<6;s++){const A=avail(o,s).filter(j=>!o.j.slice(1).includes(j.id)),id=(b.j||[])[s];o.j.push(A.some(j=>j.id===id)?id:A.reduce((a,c)=>c.cost<a.cost?c:a).id)}
  if(strict)while(kitCost(o)>budgetOf(o)){let best=null;o.j.forEach((id,s)=>{if(!s)return;for(const c of avail(o,s))if(c.cost<JL[id].cost&&!o.j.slice(1).includes(c.id)){const gain=JL[id].cost-c.cost;if(!best||gain>best.g)best={s,id:c.id,g:gain}}});if(!best)break;o.j[best.s]=best.id}
@@ -397,7 +429,19 @@ function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Ma
 // le clan se voit : Sharingan, Byakugan, carrure Akimichi, marques Kaguya, chien Inuzuka, gourde Sabaku (pas pour les marionnettistes) ; l'arme suit le style de combat
 function ninjaLook(l,clan,style){const v=VILLAGES[l.v],S=STYLES[style]||STYLES[0],T=TENUES[l.t][1],sk=PEAUX[l.p][1],f=FACES[l.f|0][1],bk=BACKS[l.d|0][1];
  const o=Object.assign({},T,T.arm==='skin'?{arm:sk}:{},clan===3?{scale:1.14}:{},clan===5?{dog:1}:{},(clan===8&&S[0]!=='Marionnette')||bk==='gourde'?{gourd:1}:{},bk&&bk!=='gourde'?{back:bk}:{},
- {head:{t:'ninja',skin:sk,hair:HAIRC[l.h][1],style:COIFS[l.c][1],band:v[1],vil:l.v,bs:BANDS[l.b|0][1],acc:ACCS[l.a][1],face:f,eyeT:EYEF[f]||null,eye:clan===0?'#e01a1a':clan===1?'#e8e8f8':null,kaguya:clan===9,brows:clan===TAIJ||f==='sourcils'},weapon:{t:'kunai',k:S[4],col:CHAKRAS[l.k][1]}});if(CLOOK[clan])CLOOK[clan](o,l,S);return o}
+ {head:{t:'ninja',skin:sk,hair:HAIRC[l.h][1],style:COIFS[l.c][1],band:v[1],vil:l.v,bs:BANDS[l.b|0][1],acc:ACCS[l.a][1],face:f,eyeT:EYEF[f]||null,eye:clan===0?'#e01a1a':clan===1?'#e8e8f8':null,kaguya:clan===9||f==='kaguya',brows:clan===TAIJ||f==='sourcils'},weapon:{t:'kunai',k:S[4],col:CHAKRAS[l.k][1]}});
+ if(T.torso==='skin')o.torso=sk;tenueCols(o,T,l);
+ const ar=(ARMS[l.r|0]||ARMS[0])[1],nk=(NECKS[l.n|0]||NECKS[0])[1];if(ar)o.armAcc=ar;if(nk)o.neck=nk;
+ {const bh=(TAILLES[l.z|0]||TAILLES[0])[1],bw=(CARRURES[l.w|0]||CARRURES[0])[1];if(bh!==1)o.bh=bh;if(bw!==1)o.bw=bw}
+ if(CLOOK[clan])CLOOK[clan](o,l,S);
+ // yeux choisis : passent avant ceux du clan (choix purement cosmétique)
+ {const E=(EYES[l.e|0]||EYES[0])[1],h=o.head;if(E[0]==='#'){h.eye=E;h.eyeT=null}else if(E[0]==='='){h.eye=E.slice(1);h.eyeT=null}else if(E[0]==='*'){h.eye=null;h.eyeT=E.slice(1)}}
+ return o}
+// couleurs de tenue choisies : la principale remplace la couleur du haut partout où elle apparaît, la secondaire celle de la pièce suivante (gilet, haori, jupe, pantalon…)
+const TCF=['torso','arm','legs','robe','haori','vest','hoodC','cape','collar','yoke','tunic','armor','fur','jupe','samurai','sash','warm','belt'];
+function tenueCols(o,T,l){const c1=(TENCOL[l.o|0]||TENCOL[0])[1],c2=(TENCOL[l.s|0]||TENCOL[0])[1];if(!c1&&!c2)return;const p0=T.torso==='skin'?(T.robe||T.haori):T.torso;
+ const s0=['vest','haori','jupe','yoke','tunic','armor','samurai','cape','legs','belt'].map(k=>T[k]).find(c=>c&&c!==p0&&c!=='skin');
+ for(const k of TCF){const v=T[k];if(!v||v==='skin')continue;if(c1&&v===p0&&k!=='belt')o[k]=c1;else if(c2&&v===s0)o[k]=c2}}
 const srcAb=src=>{const [h,k]=src.split('.');return h==='x'?NAT[k]:SRC[h].abil[+k]};
 // personnage de référence pour les stats : option hero de la mécanique, sinon celui du préfixe (ka_, su_, sub_…)
 const srcHero=src=>{const [h,k]=src.split('.');return h==='x'?(NAT[k]&&NAT[k].hero)||NATHERO[k.split('_')[0]]||NATHERO[k.slice(0,2)]:h};
@@ -416,9 +460,13 @@ function randomKit(r,b){const k=a=>Math.floor(r()*a.length);b.nat=k(NATURES);b.c
  b=sanitizeBuild(b);const ST=STYLES.map((_,i)=>i).filter(i=>styleOk(i,b.clan));b.j=[ST[k(ST)]];for(let s=1;s<6;s++){const A=avail(b,s).filter(j=>!b.j.slice(1).includes(j.id));b.j.push(A[k(A)].id)}return sanitizeBuild(b,true)}
 // apparence au hasard : les pièces très typées (chapeau de Kage, robe de Kage, peau de requin, objets dans le dos) restent rares
 const RND_T=[0,1,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24],RND_A=[0,0,0,0,0,0,1,2,3,5,6],RND_P=[0,0,1,1,2,3,4,7],RND_B=[0,0,0,0,0,0,0,1,3,4,5,6,8];
+// cosmétiques ajoutés : tirés avec leur propre générateur (même nom et même camp = même tirage), pour ne pas changer le kit des bots
+function randomCosm(l,name,side){let h=7+side;for(const c of String(name))h=(h*31+c.charCodeAt(0))%2147483646;const r=srnd(h+1),k=a=>Math.floor(r()*a.length);r();
+ l.e=r()<.72?0:1+k(EYES.slice(1,10));if(r()<.08)l.e=10+k(EYES.slice(10));l.o=r()<.7?0:k(TENCOL);l.s=r()<.75?0:k(TENCOL);l.z=r()<.7?0:k(TAILLES);l.w=r()<.7?0:k(CARRURES);
+ l.r=r()<.65?0:1+k(ARMS.slice(1));l.n=r()<.75?0:1+k(NECKS.slice(1));return l}
 function randomBuild(r,side,name){const k=a=>Math.floor(r()*a.length),o=a=>a[k(a)],l={v:side&&r()<.6?6:k(VILLAGES.slice(0,6)),t:side?(r()<.55?2:k(TENUES)):o(RND_T),c:k(COIFS),h:k(HAIRC),p:o(RND_P),k:k(CHAKRAS),a:r()<.6?0:o(RND_A)};
  l.f=r()<.65?0:1+k(FACES.slice(1));if(l.f===11&&r()<.7)l.f=0;l.b=side&&r()<.5?2:o(RND_B);l.d=r()<.8?0:1+k(BACKS.slice(1));if(l.t===12)l.t=1;
- return randomKit(r,{name,side,l})}
+ return randomKit(r,{name,side,l:randomCosm(l,name,side)})}
 const BOTN=[['Hayate','Kaito','Ren','Sora','Yuki','Haruto','Aiko','Daichi','Emi','Hikaru','Kenji','Mitsuki','Natsu','Riku','Saki','Takumi','Yori','Asuka','Jiro','Kaede'],
  ['Kurogane','Akuma','Raijin','Mizore','Shiden','Gekkô','Hebi','Kagerô','Oboro','Tetsu','Jaku','Kirisame','Yami','Rasetsu','Kuroi','Hyôga','Doku','Zangetsu','Mukuro','Shura']];
 /*NR_PASS*/
