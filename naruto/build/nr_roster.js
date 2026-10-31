@@ -8,7 +8,9 @@ const RKEY='nrRoster1',RSIM=/[?&]sim=1(&|$)/.test(location.search);
 // sections de la liste : [nom, couleur, emblème] ; « Mes ninjas » toujours en tête, une section sans perso n'est pas affichée
 const SECS=[['Mes ninjas','#ffb347','star'],['Konoha','#6ac46a','leaf'],['Suna','#d8a860','sand'],['Kiri','#5ab8d8','mist'],['Kumo','#e8d860','cloud'],['Iwa','#b88a60','rock'],['Oto','#a87ae0','note'],['Ame','#8a9ac0','rain'],['Akatsuki','#e0383a','aka'],['Autres ninjas','#c86a8a','shur']];
 // section d'un perso de l'anime : P.sec, sinon d'après son groupe g (Équipe 7, Sannin & Hokage → Konoha…)
-const rosSec=P=>Math.max(1,SECS.findIndex(S=>S[0]===(P.sec||['Konoha','Akatsuki','Konoha','Konoha','Suna','Oto','Kiri','Autres ninjas'][P.g])));
+// village de chaque clan (index de CLANS) : un perso de l'anime avec clan est rangé dans le village de son clan (l'Akatsuki garde sa section)
+const CLANVIL=['Konoha','Konoha','Konoha','Konoha','Konoha','Konoha','Konoha','Konoha','Suna','Kiri','Konoha','Suna','Suna','Suna','Suna','Ame','Ame','Ame','Kiri','Kiri','Kiri'];
+const rosSec=P=>Math.max(1,SECS.findIndex(S=>S[0]===(P.sec||(P.g!==1&&P.clan>=0&&CLANVIL[P.clan])||['Konoha','Akatsuki','Konoha','Konoha','Suna','Oto','Kiri','Autres ninjas'][P.g])));
 // ----- sauvegarde : { v, nid, mine:[{id,build}], anime:{nom du perso: build retouchée}, last:{me,opp} } ; une build garde le nom de ses jutsu et de son style (juste si le catalogue évolue)
 const bOut=b=>Object.assign({},b,{l:Object.assign({},b.l),j:b.j.slice(),jn:b.j.slice(1).map(id=>JL[id]?JL[id].n:''),sn:STYLES[b.j[0]]?STYLES[b.j[0]][0]:''});
 function bIn(b){try{if(!b||typeof b!=='object')return null;b=legacyLook(JSON.parse(JSON.stringify(b)));const j=Array.isArray(b.j)?b.j.slice(0,6):[];
