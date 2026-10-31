@@ -34,8 +34,6 @@ const HZC={w:'#5ad8f0',l:'#c8f4ff',d:'#1a7aa8',b:'#c8283a',s:'#dfe6ee'}; // eau,
 const HZ={cost:35,red:.6,reg:3,wet:3,zap:3,min:6}; // trait : coût d'une hydrification, part des dégâts gardée, eau/s, ×trempé, durée du court-circuit, coup minimal
 const hzI=u=>units.indexOf(u);
 const hzS=(n,u)=>{const V=VFX;VFX=null;S(n,u);VFX=V}; // son brut (hors teinte de l'élément)
-const hzMix=(a,b,k)=>{const p=h=>{h=String(h||'#888');if(h.length===4)h='#'+h[1]+h[1]+h[2]+h[2]+h[3]+h[3];const n=parseInt(h.slice(1,7),16);return[n>>16,n>>8&255,n&255]},A=p(a),B=p(b);
- return'#'+A.map((v,i)=>Math.round(v+(B[i]-v)*k).toString(16).padStart(2,'0')).join('')};
 // dégâts réellement infligés (PV + bouclier) pendant f()
 function hzDrain(L,f){const H=L.map(e=>e.hp+(e.shield||0));f();let tot=0;L.forEach((e,i)=>{const d=H[i]-(e.hp+(e.shield||0));if(d>.01)tot+=d});return tot}
 // le sang reforge la lame : soin = part des dégâts infligés (gain() applique déjà la réduction commune des soins : on la compense pour que le chiffre annoncé soit exact)
@@ -154,7 +152,7 @@ TRAITS[19]={nom:'Hydrification',desc:'Réserve d\'eau : un coup de 6+ dégâts l
 AFTER.push(()=>{UK.push('hz_w','hz_zap','hz_ctr','hz_arm','hz_armB','hz_pud','hz_gT')});
 
 // ---- apparence : yeux violets, dents pointues, cheveux décolorés blanc-bleu ; le Kubikiribôchô à la main
-CLOOK[19]=(look,l,S)=>{const h=look.head;h.eye='#8a5ad0';h.hz_teeth=1;h.hair=hzMix(h.hair,'#e4f2fa',.72);if(S&&S[0]==='Kubikiribôchô')look.weapon=Object.assign({},look.weapon,{hz:1})};
+CLOOK[19]=(look,l,S)=>{const h=look.head;h.eye='#8a5ad0';h.hz_teeth=1;if(S&&S[0]==='Kubikiribôchô')look.weapon=Object.assign({},look.weapon,{hz:1})};
 // Kubikiribôchô sans clan (Zabuza) : même lame géante, sans les traits Hôzuki
 CLOOK[-1]=(look,l,S)=>{if(S&&S[0]==='Kubikiribôchô')look.weapon=Object.assign({},look.weapon,{hz:1})};
 AFTER.push(()=>{

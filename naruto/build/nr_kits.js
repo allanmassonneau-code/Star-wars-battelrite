@@ -13,7 +13,13 @@ function KIT(cat,rows){for(const r of rows)KITROWS.push([cat,...r])}
 const AFTER=[],ANIM={},TRAITS={},STATD=[],CLOOK={};
 const anim=(u,k,d=.5)=>{u.anim={k,t:d,m:d}};
 const trait=u=>u&&u.ch&&TRAITS[u.ch.clan]||null;
-function traitDmg(t,src,dmg,o){const a=src&&src!==t?trait(src):null,d=trait(t);if(a&&a.deal)dmg=a.deal(src,t,dmg,o);if(dmg>=0&&d&&d.take)dmg=d.take(t,src,dmg,o);return dmg}
+function traitDmg(t,src,dmg,o){const a=src&&src!==t?trait(src):null,d=trait(t);if(a&&a.deal)dmg=a.deal(src,t,dmg,o);if(dmg>=0&&d&&d.take)dmg=d.take(t,src,dmg,o);if(dmg>=0&&a&&a.landed)a.landed(src,t,dmg,o);return dmg} // landed : effets de l'attaquant une fois le coup confirmé par la défense
+// nom d'un jutsu sous sa case du HUD : rétréci jusqu'à 8 ; encore trop long, on garde ce qui suit « : » (« Lune de sang »), puis « … »
+function hudAbN(s,x,y,col,w){s=String(s);g.font=FNT(8,'normal');if(g.measureText(s).width>w&&s.includes(' : '))s=s.slice(s.lastIndexOf(' : ')+3);fitT(s,x,y,10,col,w,'normal',8,'center')}
+function txtLay(){const W0=t=>String(t.s).length*4.6+6;for(let i=0;i<txt.length;i++){const t=txt[i];if(t.ly)continue;t.ly=1;
+ for(let n=0;n<6;n++){let hit=false;for(let j=0;j<txt.length;j++){const o=txt[j];if(j===i||!o.ly)continue;if(Math.abs(o.y-t.y)<26&&Math.abs(o.z-t.z)<15&&Math.abs(o.x-t.x)<W0(o)+W0(t)){hit=true;break}}if(!hit)break;t.z+=16}}}
+function drawBackN(u,p,S,sk){if(u.dead)return;const T=trait(u);if(T&&T.drawB)T.drawB(u,p,S,sk)} // dessins de trait DERRIÈRE le ninja (avant drawChar3)
+function drawPrevN(u,x,y,S,front){const T=trait(u);if(T&&T.prev)try{T.prev(u,{x,y},S,front)}catch(e){}} // signe du trait dans les aperçus (galerie, créateur) : front=0 derrière, 1 devant
 function drawExtraN(u,p,S,sk){if(u.dead)return;const T=trait(u);if(T&&T.draw)T.draw(u,p,S,sk);for(const f of STATD)f(u,p,S,sk)}
 
 // ---------- Éléments : affinités, eau + foudre, feu + eau, vent + feu, chocs de jutsu ----------

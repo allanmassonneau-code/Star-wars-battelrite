@@ -12,7 +12,7 @@ const YU_D={
  dragon:'Dragon de glace en ligne : 30 dégâts et 2 givres au premier touché, puis il éclate (12 dégâts, 1 givre et ralentit autour)',
  slide:'Tu glisses vers le curseur à travers les ennemis (8 dégâts, ralentit) ; ta piste de glace (3 s) ralentit les ennemis (1 givre au premier passage) et t\'accélère',
  step:'Tu traverses un miroir jusqu\'au curseur (260 max), ou jusqu\'à ton Miroir de glace (560 max) s\'il est près du curseur ; intangible 0,2 s ; un petit miroir (1,5 s) reste derrière toi',
- bliz:'Un blizzard t\'entoure 4 s et te porte (plus rapide) : ennemis ralentis, 6 dégâts et 1 givre toutes les 0,8 s ; à la fin, tout gèle (16 dégâts, 1 givre)',
+ bliz:'Un blizzard t\'entoure 4 s et te porte (plus rapide) : ennemis ralentis, 8 dégâts et 1 givre toutes les 0,8 s ; à la fin, tout gèle (18 dégâts, 1 givre)',
  makyo:'Dôme de 8 miroirs (3,6 s) qui enferme les ennemis (un déplacement en sort) : tu sautes de miroir en miroir et cribles de senbon (2 × 3 dégâts par saut, 1 givre), −40 % de dégâts subis ; à la fin, les miroirs éclatent (10)'};
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
 KIT('c20',[
@@ -144,12 +144,12 @@ AUXF.yu_trail=(x,dt)=>{const o=x.owner;if(x.t<=0||!o)return;const ca=Math.cos(x.
  {const dx=o.x-x.x,dy=o.y-x.y,f=dx*ca+dy*sa;if(!o.dead&&f>-o.r&&f<x.len+o.r&&Math.abs(-dx*sa+dy*ca)<x.w/2+o.r)o.haste=Math.max(o.haste||0,.2)} // le lanceur file sur sa glace
  for(const e of enemies(o)){if(e.dash&&e.dash.jump)continue;const dx=e.x-x.x,dy=e.y-x.y,f=dx*ca+dy*sa,s=Math.abs(-dx*sa+dy*ca);if(f<-e.r*.5||f>x.len+e.r*.5||s>x.w/2+e.r*.5)continue;
   if(e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.3);if(!x.hs.has(e)){x.hs.add(e);if(yu_frost(o,e,1)&&near(e.x,e.y))sparks(e.x,e.y,YUC.lt,6,'yu_ice')}}};
-// blizzard : suit le lanceur ; ralentit ; toutes les 0,8 s : 6 dégâts et 1 givre ; à la fin, tout gèle (16 dégâts, 1 givre)
+// blizzard : suit le lanceur ; ralentit ; toutes les 0,8 s : 8 dégâts et 1 givre ; à la fin, tout gèle (18 dégâts, 1 givre)
 AUXF.yu_bliz=(x,dt)=>{const o=x.owner;if(x.done)return;if(!o||o.dead){x.done=1;x.t=0;return}x.x=o.x;x.y=o.y;const ins=e=>Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r;
- if(x.t<=0){x.done=1;let n=0;for(const e of enemies(o))if(ins(e)&&yu_hit(e,o,16,{slow:1,unblockable:1})){n++;yu_frost(o,e,1)}
+ if(x.t<=0){x.done=1;let n=0;for(const e of enemies(o))if(ins(e)&&yu_hit(e,o,18,{slow:1,unblockable:1})){n++;yu_frost(o,e,1)}
   jx({jfx:'yu_shatter',x:x.x,y:x.y,r:x.r,big:1,t:.8,m:.8});if(near(x.x,x.y)){yu_S('rock',o);yu_S('boom',o);shake=Math.max(shake,n?.3:.15)}return}
  for(const e of enemies(o))if(ins(e)&&e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.3);
- if((x.k-=dt)<=0){x.k+=.8;for(const e of enemies(o))if(ins(e)&&yu_hit(e,o,6,{}))yu_frost(o,e,1);if(near(x.x,x.y))yu_S('wind',o)}};
+ if(x.k<=0){x.k+=.8;for(const e of enemies(o))if(ins(e)&&yu_hit(e,o,8,{}))yu_frost(o,e,1);if(near(x.x,x.y))yu_S('wind',o)}};
 // Makyô : enferme les ennemis pris dedans (un déplacement en sort), tient le lanceur dans ses miroirs ; un saut toutes les 0,38 s
 const yu_mpos=(x,i)=>{const b=x.a+i*Math.PI*2/x.n;return{x:x.x+Math.cos(b)*x.r,y:x.y+Math.sin(b)*x.r}};
 AUXF.yu_dome=(x,dt)=>{const o=x.owner;if(x.done)return;

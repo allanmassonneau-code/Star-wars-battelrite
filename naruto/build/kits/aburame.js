@@ -78,7 +78,7 @@ Object.assign(NAT,{
   S('bugs',u);S('dash',u);anim(u,'ab_dissolve',.4);
   aux.push({type:'ab_clone',x:u.x,y:u.y,r:24,t:2.5,m:2.5,team:u.team,owner:u,ui:units.indexOf(u),a:u.aim,k:0,vfx:'bugs',n:0});
   const d=clamp(td||230,140,240),e=fwd(u,a,d);jx({jfx:'ab_stream',x:u.x,y:u.y,x2:e.x,y2:e.y,t:.35,m:.35});dash(u,a,d,.2,{});u.phase=Math.max(u.phase||0,.22);
-  u.jst={key:'ab_clone',i,n:0,t:2.5,cd:Math.max(.5,ab.cd-2.5),v:'bugs'};u.cds[i]=.35}),
+  if(u.jst&&u.jst.key!=='ab_clone')u.cds[u.jst.i]=u.jst.cd;u.jst={key:'ab_clone',i,n:0,t:2.5,cd:Math.max(.5,ab.cd-2.5),v:'bugs'};u.cds[i]=.35}),
  // Mur d'insectes (Kikai Heki) : rideau d'insectes devant soi ; il dévore les projectiles ennemis et infeste ceux qui le traversent
  ab_wall:S_('Mur d\'insectes','Rideau d\'insectes 3,5 s : dévore les projectiles (+chakra), ralentit et infeste qui le traverse',10,{ai:DEF},(u,a)=>{S('bugs',u);anim(u,'ab_wall',.6);const c=fwd(u,a,80);
   aux.push({type:'ab_wall',x:c.x,y:c.y,a,len:210,w:30,r:110,t:3.5,m:3.5,team:u.team,owner:u,k:0,vfx:'bugs',n:0,hs:{}});sparks(c.x,c.y,'#26302a',14,'bugs')}),

@@ -133,7 +133,8 @@ TRAITS[18]={nom:'Samehada',desc:'Le chakra que tu voles te soigne (1 PV pour 2 p
   if(u.hs_fus>0){u.hs_fus=Math.max(0,u.hs_fus-dt);if(!u.hs_fus&&near(u.x,u.y)){jx({jfx:'hs_splash',x:u.x,y:u.y,r:50,t:.5,m:.5});S('water',u)}}
   if(u.hs_scl>0){u.hs_scl=Math.max(0,u.hs_scl-dt);if(!u.hs_scl&&near(u.x,u.y))sparks(u.x,u.y,HSC.lt,8)}},
  deal(src,t,dmg,o){if(!t||t===src||t.team===src.team)return dmg;if((t.energy||0)<HS_PREY)dmg*=1.12;
-  if(src.hs_fus>0){dmg*=1.15;if(o.basic&&o.melee&&!o.hs_x)later(src,0,()=>hs_drain(src,t,3))}return dmg},
+  if(src.hs_fus>0)dmg*=1.15;return dmg},
+ landed(src,t,dmg,o){if(t&&t!==src&&t.team!==src.team&&src.hs_fus>0&&o.basic&&o.melee&&!o.hs_x)later(src,0,()=>hs_drain(src,t,3))}, // vol de chakra : seulement si le coup passe
  take(t,src,dmg,o){if(!src||src===t||dmg<=0)return dmg;if(t.hs_fus>0)dmg*=.8;
   if(t.hs_scl>0){dmg*=.75;if(o.melee&&!o.thorn&&!src.dead&&!(SIMT<(src.hs_thT||0))){src.hs_thT=SIMT+.5;
    later(t,0,()=>{if(src.dead||t.dead)return;const V=VFX;VFX='steel';hit(src,t,6,{thorn:1,silent:1});VFX=V;hs_drain(t,src,4);if(near(src.x,src.y)){sparks(src.x,src.y,HSC.lt,8);say(src,'ÉCAILLES','#bcd4e4')}})}}
@@ -211,11 +212,22 @@ function hs_sameD(s,rot,glow){g.save();g.rotate(rot);g.scale(s,s);if(glow){g.fil
 PROJD.hs_same=(p,R,ra,t)=>{g.fillStyle=rgba(HSC.ck,.18);g.beginPath();g.arc(0,0,R*1.9,0,7);g.fill();g.strokeStyle=rgba('#cfe6f2',.5);g.lineWidth=2;for(let i=0;i<2;i++){g.beginPath();g.arc(0,0,R*1.7,t/60+i*Math.PI,t/60+i*Math.PI+1.4);g.stroke()}
  hs_sameD(R/15,t/45,1)};
 // vague du reflux : crête d'écume qui roule (vue de face, perpendiculaire à sa course)
-PROJD.hs_wave=(p,R,ra,t)=>{g.translate(0,10);const sp=Math.hypot(p.vx,p.vy)||1,cx=p.vx/sp,cy=p.vy/sp,nx=-cy,ny=cx,W=R*1.4,gr=Math.min(1,(p.life0-p.life)/.12+.3),H=40*gr;
- const pt=(a,b,h)=>[a*cx+b*nx,(a*cy+b*ny)*K-h];g.lineCap='round';
- for(let j=0;j<3;j++){g.fillStyle=j?rgba(j===1?'#4aa8d8':'#bfe8ff',.85):rgba('#2a6a9a',.7);g.beginPath();for(let i=0;i<=10;i++){const s=i/10*2-1,[x,y]=pt(-j*14,s*W,H*(1-s*s*.6)*(1-j*.25)+Math.sin(t/90+i)*3);i?g.lineTo(x,y):g.moveTo(x,y)}
-  for(let i=10;i>=0;i--){const s=i/10*2-1,[x,y]=pt(-j*14-30,s*W,0);g.lineTo(x,y)}g.closePath();g.fill()}
- g.fillStyle='#fff';for(let i=0;i<10;i++){const s=(i/9)*2-1,[x,y]=pt(4,s*W,H*(1-s*s*.6)+4+Math.sin(t/60+i*2)*4);g.fillRect(x-1.5,y-1.5,3,3)}};
+// vague : tranches de profil (rampe à l'arrière, crête qui s'enroule vers l'avant), peintes du fond vers l'avant :
+// de côté on voit le rouleau, de face un mur d'eau ; écume en boules le long de la crête
+// vague : une nappe d'eau (rampe à l'arrière, crête qui s'enroule vers l'avant) tendue entre 7 profils ;
+// de côté on voit le rouleau, de face un mur d'eau ; crête claire et écume en boules
+PROJD.hs_wave=(p,R,ra,t)=>{g.translate(0,10);const sp=Math.hypot(p.vx,p.vy)||1,cx=p.vx/sp,cy=p.vy/sp,nx=-cy,ny=cx,W=R*1.25,Q=R/36,gr=Math.min(1,(p.life0-p.life)/.12+.3),H0=40*gr*Q;
+ const pt=(a,b,h)=>[a*cx+b*nx,(a*cy+b*ny)*K-h],PR=[[-50,0],[-36,.24],[-22,.58],[-10,.88],[0,1],[9,.9],[12,.68],[7,.56],[4,.34],[7,0]],N=9,M=PR.length,SL=[];
+ for(let i=0;i<N;i++){const s=i/(N-1)*2-1,b=s*W,H=H0*(1-s*s*.92)+Math.sin(t/90+s*3)*2*Q*(1-s*s),sh=(1-s*s)*12*Q+Math.sin(t/120+s*4)*2*Q;SL.push({s,P:PR.map(([a,h])=>pt((a<0?a*(1-s*s*.65):a)*Q+sh*h,b,h*H))})} // milieu plus haut et en avance : front arrondi
+ const CO=['#1e5a8a','#2a6a9a','#3a86b8','#4aa0d0','#7cc8ec','#a8dcf4','#5ab0dc','#2a6a9a','#245e8e'];g.lineJoin='round';g.lineCap='round';
+ // nappe : du fond (rampe) vers la crête puis la lèvre, entre profils voisins
+ for(let k=0;k<M-1;k++){g.fillStyle=rgba(CO[k],.9);g.strokeStyle=rgba(CO[k],.9);g.lineWidth=1;for(let i=0;i<N-1;i++){const A=SL[i].P,B=SL[i+1].P;g.beginPath();g.moveTo(...A[k]);g.lineTo(...A[k+1]);g.lineTo(...B[k+1]);g.lineTo(...B[k]);g.closePath();g.fill();g.stroke()}}
+ // flancs (profils des deux bouts) et ligne de crête
+ for(const S of[SL[0],SL[N-1]]){g.fillStyle=rgba('#2a6a9a',.6);g.beginPath();S.P.forEach((q,k)=>k?g.lineTo(...q):g.moveTo(...q));g.closePath();g.fill();g.strokeStyle=rgba('#bfe8ff',.7);g.lineWidth=1.6*Q;g.stroke()}
+ g.strokeStyle=rgba('#e8f8ff',.9);g.lineWidth=2.6*Q;g.beginPath();SL.forEach((S,i)=>i?g.lineTo(...S.P[5]):g.moveTo(...S.P[5]));g.stroke();
+ // écume : boules sur la lèvre et embruns devant
+ for(const S of SL)for(let k=0;k<2;k++){const [x,y]=S.P[5+k],r=(3.4-k)*Q*(1-Math.abs(S.s)*.35);g.fillStyle=rgba(k?'#e8f8ff':'#ffffff',.92);g.beginPath();g.arc(x,y-1.5*Q+Math.sin(t/60+S.s*7+k)*1.5*Q,r,0,7);g.fill()}
+ for(let i=0;i<7;i++){const s=((i*.37+t/700)%1)*2-1,f=(t/180+i*.6)%1,[x,y]=pt((14+f*18)*Q,s*W,H0*(.7-f*.6));g.fillStyle=rgba('#dff4ff',.8*(1-f));g.beginPath();g.arc(x,y,2*Q,0,7);g.fill()}};
 // chakra arraché : filets bleus qui volent de la cible vers le lanceur
 JFXD.hs_suck=(f,k,e,t,u,tg)=>{const a=tg&&!tg.dead?tg:f;if(!u||u.dead)return;const A=P(a.x,a.y,40),B=P(u.x,u.y,46),cx=(A.x+B.x)/2,cy=Math.min(A.y,B.y)-40*A.s,n=f.n||4;g.globalCompositeOperation='lighter';
  for(let i=0;i<n;i++){const s=clamp(e*1.6-i*.09,0,1);if(s<=0||s>=1)continue;const x=(1-s)*(1-s)*A.x+2*(1-s)*s*(cx+(i%3-1)*14*A.s)+s*s*B.x,y=(1-s)*(1-s)*A.y+2*(1-s)*s*cy+s*s*B.y,r=(3.2-s*1.2)*A.s;

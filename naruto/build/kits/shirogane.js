@@ -128,6 +128,13 @@ AUXF.sg_army=x=>{const o=x.owner;if(!o||o.dead){x.t=0;return}
 function sgReset(u){const s=sgSide(u);u.sg_px=s.x;u.sg_py=s.y;u.sg_hp=SG.HP;u.sg_dn=0;u.sg_hT=0;u.sg_pa=u.aim||0}
 TRAITS[14]={nom:'Marionnette',desc:`Ta marionnette suit ton curseur (fils de ${SG.L}) : tes coups et tes jutsu partent d'elle. Elle a ${SG.HP} PV et encaisse les attaques qui la touchent ; brisée, elle se reconstruit en ${SG.REB} s (tu frappes alors toi-même : −${Math.round(100-SG.WEAK*100)} % de dégâts).`,
  init(u){sgReset(u);u.ch.pref=250},
+ // aperçus (galerie, créateur) : la marionnette flotte à côté du ninja, reliée à sa main par les fils
+ prev(u,p,S,front){if(!front)return;const t=performance.now()/1000,k=S/1.42,x=p.x+42*k,y=p.y-10*k-Math.sin(t*2.2)*3*k,s=1.3*k,h={x:p.x+13*k,y:p.y-40*k};
+  g.fillStyle='rgba(0,0,0,.28)';g.beginPath();g.ellipse(x,p.y-2*k,12*k,4*k,0,0,7);g.fill();
+  g.save();g.translate(x,y);g.scale(-s,s);sgBody(0,0,0,t,-1);g.restore();
+  g.save();g.lineCap='round';for(const [ox,oy] of[[1,-46],[-17,-14],[17,-14]]){const x1=x-ox*s,y1=y+oy*s,mx=(h.x+x1)/2,my=(h.y+y1)/2+6+Math.sin(t*3+ox)*2;
+   g.strokeStyle=rgba(SG.STR,.18);g.lineWidth=3;g.beginPath();g.moveTo(h.x,h.y);g.quadraticCurveTo(mx,my,x1,y1);g.stroke();g.strokeStyle=rgba('#e8faff',.7);g.lineWidth=1;g.stroke()}
+  g.fillStyle=rgba(SG.STR,.8);g.beginPath();g.arc(h.x,h.y,2.2,0,7);g.fill();g.restore()},
  update(u,dt){if(u.sg_px==null)sgReset(u);if(u.sg_hT>0)u.sg_hT-=dt;if(!u.anim&&!u.dash)anim(u,'sg_hold',1.5);
   if(u.sg_dn>0){u.sg_dn-=dt;if(u.sg_dn<=0){sgReset(u);jx({jfx:'sg_poof',x:u.sg_px,y:u.sg_py,r:36,t:.45,m:.45});say(u,'MARIONNETTE PRÊTE','#e8d0a0');if(near(u.x,u.y))S('poof',u)}return}
   // but : curseur (joueur) ou cible (bot : juste devant l'ennemi, côté marionnettiste)
@@ -151,11 +158,12 @@ TRAITS[14]={nom:'Marionnette',desc:`Ta marionnette suit ton curseur (fils de ${S
   text(dn?`Marionnette brisée : ${u.sg_dn.toFixed(1).replace('.',',')} s`:`Marionnette ${Math.ceil(u.sg_hp)}/${SG.HP}`,x+w+28,yy+7,11,dn?'#c8a888':'#f0e0c0','left','normal')}};
 
 // ---------- crochets moteur (AFTER : tout le jeu est chargé) ----------
-AFTER.push(()=>{UK.push('sg_px','sg_py','sg_hp','sg_dn','sg_pa');
+AFTER.push(()=>{UK.push('sg_px','sg_py','sg_hp','sg_dn','sg_pa','sg_ax','sg_ay');
  Object.assign(VP,{sg_pup:[SG.WOOD,SG.STR,'#7a5a3a'],sg_poison:['#a050d0','#c080ff','#5a2a80']});Object.assign(VSND,{sg_poison:{'*':'bugs',blaster:'blaster'},sg_pup:{dash:'dash'}});
  // origine de lancement : marionnette (sauf déplacements et engagements, qui déplacent le ninja)
+ const sgFrom=(u,ab)=>sgOk(u)&&!!ab&&ab!==u.ch.abil[2]&&!(ab.ai&&(ab.ai.mode==='esc'||ab.ai.mode==='gap'||ab.ai.mode==='heal'||ab.ai.mode==='ally'));
  const F0=fire;fire=function(u,ab,a,td,ex){
-  if(!sgOk(u)||ab===u.ch.abil[2]||(ab.ai&&(ab.ai.mode==='esc'||ab.ai.mode==='gap'||ab.ai.mode==='heal'||ab.ai.mode==='ally')))return F0(u,ab,a,td,ex);
+  if(!sgFrom(u,ab))return F0(u,ab,a,td,ex);
   const ox=u.x,oy=u.y,px=u.sg_px,py=u.sg_py,d0=u.dash,an0=u.anim,ax=u.sg_ax??(ox+Math.cos(a)*(td||200)),ay=u.sg_ay??(oy+Math.sin(a)*(td||200)),dc=Math.hypot(ax-px,ay-py),a2=dc>40?Math.atan2(ay-py,ax-px):a;
   // marionnette posée SUR un ennemi (curseur sur lui) : le coup part d'un peu en retrait, pour que lames et tirs le touchent bien
   const bk=nearE(u,px,py,30)?22:0,lx=px-Math.cos(a2)*bk,ly=py-Math.sin(a2)*bk,n0=projs.length;
@@ -165,9 +173,15 @@ AFTER.push(()=>{UK.push('sg_px','sg_py','sg_hp','sg_dn','sg_pa');
   else if(u.sg_pk){u.sg_pk=0}else if(Math.hypot(nx-lx,ny-ly)>1){u.x=nx;u.y=ny;collide(u)} // téléportation : on la garde
   if(u.anim===an0&&!u.dash)anim(u,'sg_pull',.32)};
  // les télégraphes de mudras (et l'IA qui les esquive) partent aussi de la marionnette
- const swapDo=(u,f)=>{if(!sgOk(u)||!u.cast)return f();const ox=u.x,oy=u.y;u.x=u.sg_px;u.y=u.sg_py;try{return f()}finally{u.x=ox;u.y=oy}};
+ // (comme fire : origine = marionnette, visée = marionnette → point visé ; angle et distance recalculés depuis elle)
+ const sgIn=u=>{const c=u.cast,a=c.aimOv??u.aim,ax=u.sg_ax??(u.x+Math.cos(a)*c.td),ay=u.sg_ay??(u.y+Math.sin(a)*c.td),px=u.sg_px,py=u.sg_py,dc=Math.hypot(ax-px,ay-py),S=[u,u.x,u.y,c,c.aimOv,c.td];
+  const a2=dc>40?Math.atan2(ay-py,ax-px):a,ab=castAb(u,c),tl=ab&&ab.tele&&!ab.tele.self;c.aimOv=a2;
+  if(tl){const D=Math.max(40,dc);c.td=D;u.x=ax-Math.cos(a2)*D;u.y=ay-Math.sin(a2)*D} // zone au point visé (le moteur prend 40 au moins : l'origine recule d'autant)
+  else{c.td=Math.max(1,dc);u.x=px;u.y=py}return S};
+ const sgOut=([u,x,y,c,a0,t0])=>{u.x=x;u.y=y;c.aimOv=a0;c.td=t0};
+ const swapDo=(u,f)=>{if(!u.cast||!sgFrom(u,castAb(u,u.cast)))return f();const S=sgIn(u);try{return f()}finally{sgOut(S)}};
  const TT0=teleTarget;teleTarget=u=>swapDo(u,()=>TT0(u));
- const DT0=drawTelegraphs;drawTelegraphs=function(){const L=[];for(const u of units)if(sgOk(u)&&u.cast){L.push([u,u.x,u.y]);u.x=u.sg_px;u.y=u.sg_py}try{DT0()}finally{for(const [u,x,y] of L){u.x=x;u.y=y}}};
+ const DT0=drawTelegraphs;drawTelegraphs=function(){const L=[];for(const u of units)if(u.cast&&sgFrom(u,castAb(u,u.cast)))L.push(sgIn(u));try{DT0()}finally{for(const S of L)sgOut(S)}};
  // bots : un jutsu qui part de la marionnette attend qu'elle soit à portée de la cible (ai.pr) ; condition propre (ai.sgOk)
  const AS0=aiSave;aiSave=function(u,i,h){if(sgOn(u)&&h){if(h.sgOk&&!h.sgOk(u))return true;if(h.pr){const e=u.tgt;if(!e||e.dead)return true;const p=sgPos(u);if(Math.hypot(e.x-p.x,e.y-p.y)>h.pr+e.r)return true}}return AS0(u,i,h)};
  // la marionnette est touchée par les coups et les explosions ennemis

@@ -257,7 +257,10 @@ AUXD.hk_tree=(x,k,t)=>{const q=P(x.x,x.y,0),R=x.r*q.s,gr=Math.min(1,(x.m-x.t)/.6
  g.strokeStyle=rgba('#9ad860',.45*k);g.lineWidth=1.6;g.setLineDash([10,8]);g.lineDashOffset=t*10;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();g.setLineDash([]);
  for(let i=0;i<7;i++){const a=i*.897+.2,L=(50+20*((i*.618)%1))*gr,p0=P(x.x+Math.cos(a)*16,x.y+Math.sin(a)*12,0),p1=P(x.x+Math.cos(a)*L*.6,x.y+Math.sin(a)*L*.45+6,0),p2=P(x.x+Math.cos(a+.3)*L,x.y+Math.sin(a+.3)*L*.75,0);hk_stem([[p0.x,p0.y],[p1.x,p1.y],[p2.x,p2.y]],(5-i%3)*q.s,q.s,HKB)}};
 // arbre millénaire (décor) : tronc noueux, feuillage en boules, fleurs, feuilles et pollen qui tombent
-PROJD.hk_treed=(p,R,ra,t)=>{hk_scr();const T=t/1000,q=P(p.x,p.y,0),s=q.s,gr=ezo(Math.min(1,(p.life0-p.life)/.6)),fd=Math.min(1,p.life/.45);g.globalAlpha=fd;const H=150*gr*s,W=16*s;
+// un ninja derrière ou dans l'arbre : l'arbre devient translucide pour qu'on le voie toujours
+function hk_treeA(q,H,s){let m=0;for(const u of units){if(u.dead)continue;const v=P(u.x,u.y,0),dx=Math.abs(v.x-q.x)/(92*s),by=v.y-40*s,top=q.y-H-52*s,bot=q.y+16*s,out=by<top?top-by:by>bot?by-bot:0;
+ m=Math.max(m,clamp((1.15-dx)*4,0,1)*clamp(1-out/(24*s),0,1))}return 1-.68*m}
+PROJD.hk_treed=(p,R,ra,t)=>{hk_scr();const T=t/1000,q=P(p.x,p.y,0),s=q.s,gr=ezo(Math.min(1,(p.life0-p.life)/.6)),H=150*gr*s,W=16*s,fd=Math.min(1,p.life/.45)*hk_treeA(q,H,s);g.globalAlpha=fd;
  g.beginPath();g.moveTo(q.x-W*1.5,q.y);g.quadraticCurveTo(q.x-W*.6,q.y-H*.3,q.x-W*.7,q.y-H*.8);g.lineTo(q.x+W*.6,q.y-H*.8);g.quadraticCurveTo(q.x+W*.6,q.y-H*.3,q.x+W*1.5,q.y);g.closePath();g.fillStyle=HKB;g.fill();g.strokeStyle=HKO;g.lineWidth=2.4*s;g.stroke();
  g.strokeStyle=HKBL;g.lineWidth=2*s;g.beginPath();g.moveTo(q.x-W*.3,q.y-4*s);g.quadraticCurveTo(q.x-W*.5,q.y-H*.4,q.x-W*.2,q.y-H*.75);g.stroke();g.strokeStyle='rgba(20,12,4,.5)';g.lineWidth=1.4*s;g.beginPath();g.moveTo(q.x+W*.4,q.y-H*.2);g.quadraticCurveTo(q.x+W*.1,q.y-H*.35,q.x+W*.35,q.y-H*.5);g.stroke();
  for(const sd of[-1,1])hk_stem([[q.x+sd*W*.3,q.y-H*.62],[q.x+sd*W*2.4,q.y-H*.8],[q.x+sd*W*3.6,q.y-H*.78]],5*s,s,HKB);

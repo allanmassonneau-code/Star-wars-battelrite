@@ -116,6 +116,10 @@ un projectile de feu qui traverse un **vent** allié (mur, tornade, couloir, zon
 TRAITS[0]={nom:'Sharingan',desc:'…',init(u){}, update(u,dt){}, deal(src,t,dmg,o){return dmg}, take(t,src,dmg,o){return dmg /* <0 annule */}, draw(u,p,S,sk){}, hud(u,x,y){}};
 ```
 Un trait = **la mécanique qui fait l'identité du clan** (passif, jauge, état…), modéré et lisible. `update` tourne sur l'hôte à chaque image.
+Crochets facultatifs :
+- `landed(src,t,dmg,o)` : effets de l'attaquant **une fois le coup confirmé** (après `take` de la cible ; pas appelé si la défense l'annule). Mettre ici les vols de chakra, griffes, etc., pas dans `deal`.
+- `drawB(u,p,S,sk)` : dessin **derrière** le ninja (appelé avant lui) ; `draw` dessine devant.
+- `prev(u,p,S,front)` : signe du trait dans les aperçus (galerie, créateur), appelé derrière (`front` faux) puis devant (`front` vrai) le ninja.
 
 ## Réseau
 Champs synchronisés : projectiles (`kind` et les clés de base), objets `aux` (`type x y a len w r t m team vfx k ti ui kind col n`), ninjas (champs listés dans `UK`).

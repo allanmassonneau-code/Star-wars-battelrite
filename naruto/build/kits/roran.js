@@ -151,7 +151,7 @@ const RR_MT=6,RR_MT2=2; // délai avant que la 1re lune se referme, puis entre d
 TRAITS[12]={nom:'Trois lunes',desc:RRD.trait,
  init(u){u.rr_mn=u.rr_mn|0;u.rr_mT=u.rr_mT||0},
  update(u,dt){if(u.rr_cds!==u.cds){u.rr_cds=u.cds;u.rr_mn=0;u.rr_mT=0} // nouveau ninja ou réapparition
-  if(u.rr_mF>0)u.rr_mF-=dt;if(u.rr_mn>0){u.rr_mT-=dt;if(u.rr_mT<=0){u.rr_mn--;u.rr_mT=RR_MT2}}
+  if(u.rr_mF>0)u.rr_mF=Math.max(0,u.rr_mF-dt);if(u.rr_mn>0){u.rr_mT-=dt;if(u.rr_mT<=0){u.rr_mn--;u.rr_mT=RR_MT2}}
   },
  // dégâts des jutsu Roran : +4 % par lune ; +30 % pour une Kamaitachi sur une cible en l'air ; le 1er coup au but d'un jutsu ouvre une lune
  deal(src,t,dmg,o){if(!o.rr)return dmg;dmg*=1+.04*(src.rr_mn|0);if(o.rrAir&&t.airT>0){dmg*=1.3;say(t,'EN L\'AIR ×1,3','#e8fff8')}
@@ -165,12 +165,12 @@ TRAITS[12]={nom:'Trois lunes',desc:RRD.trait,
  hud(u,x,y){const n=u.rr_mn|0,t=performance.now()/1000,X=x+10,Y=y-18;g.save();
   rrFanDraw(X,Y+7,13,-Math.PI/2,.45+n*.35,1,n,0);
   text(n>=3?'Trois lunes : éventail grand ouvert prêt':'Trois lunes '+n+'/3',X+18,Y+4,12,n>=3?rgba('#e8d0ff',.8+.2*Math.sin(t*6)):'#d8c8e8','left');g.restore()}};
-AFTER.push(()=>UK.push('rr_mn','rr_gl','rr_gh'));
+AFTER.push(()=>UK.push('rr_mn','rr_gl','rr_gh','rr_mF'));
 // IA de la Rafale : de près, frapper ; de loin, balayer les tirs qui arrivent (réglée juste avant l'IA de chaque ninja : les bots d'un même perso partagent leur fiche)
 AFTER.push(()=>{const A0=ai;ai=function(u,dt){if(u.ch.clan===12){const L=u.ch.abil;let i=L.rr_gi;if(i==null)i=L.rr_gi=L.findIndex(a=>a&&a.key==='rr_gale');if(i>0){const e=u.tgt&&!u.tgt.dead?u.tgt:null;L[i].ai=e&&dist(u,e)<250?RR_GA:RR_GD}}return A0(u,dt)}});
 
 // ---- apparence : l'éventail géant dans le dos
-CLOOK[12]=(look)=>{look.back='eventail';delete look.gourd};
+CLOOK[12]=(look,l)=>{if(!(l.d|0)&&!look.gourd)look.back='eventail'}; // éventail dans le dos, sauf si le créateur choisit un autre « Dos »
 // l'éventail fermé dépasse au-dessus de l'épaule (3D et 2D) ; de dos, on le voit en entier ; il disparaît quand il est dans les mains (gestes rr_) ou sous les pieds
 function rrBackFan(x0,y0,x1,y1,w,lit){const a=Math.atan2(y1-y0,x1-x0),L=Math.hypot(x1-x0,y1-y0);g.save();g.translate(x0,y0);g.rotate(a);g.lineJoin='round';
  g.fillStyle=RRC.rib;g.strokeStyle='#1a120c';g.lineWidth=1.2;g.beginPath();g.moveTo(0,-w*.35);g.lineTo(L,-w*.55);g.quadraticCurveTo(L+w*.45,0,L,w*.55);g.lineTo(0,w*.35);g.closePath();g.fill();g.stroke();

@@ -12,7 +12,7 @@ KIT('c6',[
  [4,'C','x.uz_wall','Rempart de chaînes','Un rempart de chaînes jaillit devant toi 3 s : il arrête les tirs et le passage des ennemis ; en surgissant, 14 dégâts et repousse','chain'],
  [2,'B','x.uz_swap','Sceau d\'échange','Kunai-sceau : échange ta place avec l\'ennemi touché (ralenti), sinon te téléporte là où il se plante','chain'],
  [2,'C','x.uz_leap','Bond des chaînes','Des chaînes te catapultent au curseur ; à l\'atterrissage, elles fouettent autour de toi : 12 dégâts, entrave 0,5 s et un sceau','chain'],
- [5,'S','x.uz_shiki','Shiki Fûjin','Coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34, puis âme scellée 3 s (12/s, ralenti, ni jutsu ni recharge) ; +8 par sceau','chakra'],
+ [5,'S','x.uz_shiki','Shiki Fûjin','En plus du chakra, coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34, puis âme scellée 3 s (12/s, ralenti, ni jutsu ni recharge) ; +8 par sceau','chakra'],
  [5,'A','x.uz_bind','Entrave du démon','Après 0,4 s, des chaînes saisissent 3 ennemis à moins de 380 : entravés 0,6 s puis enchaînés à toi 3 s (170 au plus, ralentis), 8 dégâts par 0,5 s et un sceau par seconde ; tu restes immobile, un étourdissement les brise','chain'],
 ]);
 // ---- sceaux marqueurs (cœur du clan) : jusqu'à 3 sur un ennemi, 8 s après le dernier posé ; le 3e scelle son chakra (une fois toutes les 8 s)
@@ -52,7 +52,7 @@ Object.assign(NAT,{
   if(u.jst&&u.jst.key==='uz_store'){u.jst=null;u.cds[i]=cd;uzRelease(u,a);return}
   S('poof',u);S('jyuken',u);anim(u,'uz_absorb',1.5);const ui=units.indexOf(u);u.uz_st=null;u.uz_scE=SIMT+1.5;
   aux.push({type:'uz_scrl',x:u.x,y:u.y,r:54,t:1.5,m:1.5,team:u.team,owner:u,ui,a,n:0,k:0});jx({jfx:'uz_scrollS',ui,x:u.x,y:u.y,t:1.5,m:1.5});
-  u.jst={key:'uz_store',i,n:1,t:5,cd,v:'chain'};u.cds[i]=.4}),
+  if(u.jst&&u.jst.key!=='uz_store')u.cds[u.jst.i]=u.jst.cd;u.jst={key:'uz_store',i,n:1,t:5,cd,v:'chain'};u.cds[i]=.4}),
  uz_gogyo:SP('Sceau des cinq éléments','Cinq flammes : la cible (14) perd 20 de chakra, ne peut ni lancer de jutsu ni se recharger (R) 2 s, et reçoit un sceau',11,{hero:'dooku',line:{len:340,w:20},ai:RG(330,.55)},(u,a)=>{S('genjutsu',u);anim(u,'seal',.45);
   proj(u,a,{spd:900,r:10,dmg:14,life:.38,col:'#a070ff',kind:'uz_gogyo',o:{silence:2},onHit:(p,t)=>{const o=p.owner,d=Math.min(t.energy,20);t.energy-=d;t.chk=false;t.ckLock=Math.max(t.ckLock||0,2);if(near(t.x,t.y))S('jyuken',o);say(t,'CHAKRA SCELLÉ','#c8a8ff');
    jx({jfx:'uz_g5',ti:units.indexOf(t),x:t.x,y:t.y,t:2,m:2});uzMark(o,t,1)}})}),
@@ -68,7 +68,7 @@ Object.assign(NAT,{
   jx({jfx:'uz_leapc',x:u.x,y:u.y,a,t:.5,m:.5});
   dash(u,a,L,.38,{jump:46,end:()=>{if(u.dead)return;VFX='chain';for(const e of enemies(u))if(dist(u,e)<92+e.r){hit(e,u,12,{root:.5,unblockable:1});uzMark(u,e,1)}VFX=null;
    jx({jfx:'uz_lash',x:u.x,y:u.y,t:.5,m:.5});if(near(u.x,u.y)){S('heavy',u);shake=Math.max(shake,.12)}}})}),
- uz_shiki:ULT('Shiki Fûjin','Coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34, puis âme scellée 3 s (12/s, ralenti, ni jutsu ni recharge) ; +8 par sceau',{hero:'thrawn',line:{len:520,w:36},ai:{max:480,p:.8}},(u,a)=>{S('genjutsu',u);S('roar',u);anim(u,'uz_shiki',1.1);u.root=Math.max(u.root,.75);u.uz_rtE=SIMT+.7;u.uz_rtB=0;
+ uz_shiki:ULT('Shiki Fûjin','En plus du chakra, coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34, puis âme scellée 3 s (12/s, ralenti, ni jutsu ni recharge) ; +8 par sceau',{hero:'thrawn',line:{len:520,w:36},ai:{max:480,p:.8}},(u,a)=>{S('genjutsu',u);S('roar',u);anim(u,'uz_shiki',1.1);u.root=Math.max(u.root,.75);u.uz_rtE=SIMT+.7;u.uz_rtB=0;
   jx({jfx:'uz_shini',ui:units.indexOf(u),x:u.x,y:u.y,a,t:1.35,m:1.35});
   later(u,.7,()=>{if(u.dead||u.uz_rtB||u.stun>0||u.sleepT<0){say(u,'RITUEL BRISÉ','#c8a8ff');return}const h0=u.hp;u.hp=Math.max(1,u.hp-Math.round(u.max*.12));say(u,'-'+Math.round(h0-u.hp)+' PV : LE PRIX DU SCEAU','#c8a8ff');S('shadow',u);
    proj(u,u.aim,{spd:950,r:16,dmg:34,life:.55,col:'#d8c8ff',kind:'uz_shand',vfx:'chakra',noClash:1,o:{unblockable:1},onHit:(p,t)=>uzSoul(p.owner,t)});if(near(u.x,u.y))shake=Math.max(shake,.25)})}),
@@ -183,14 +183,23 @@ function uzTag(x,y,s,al,rot,glow){g.save();g.globalAlpha*=al;g.translate(x,y);g.
  g.fillStyle='#f2e4b8';g.fillRect(-4*s,-8*s,8*s,16*s);g.strokeStyle='#7a5a2a';g.lineWidth=.8;g.strokeRect(-4*s,-8*s,8*s,16*s);g.fillStyle='#c0302a';g.fillRect(-4*s,-8*s,8*s,2.2*s);g.fillRect(-4*s,5.8*s,8*s,2.2*s);
  uzSpiral(0,0,3.1*s,0,1,'#22222a',1.1);g.restore()}
 // rempart de chaînes : poteaux à pointe de kunai, deux rangées de chaînes et une croix, voile doré
-AUXD.uz_wall=(x,k,t)=>{const el=x.m-x.t,h=60*ezo(Math.min(1,el/.16))*Math.min(1,x.t/.35),H=x.len/2,px=-Math.sin(x.a),py=Math.cos(x.a),N=7;if(h<=1)return;g.lineCap='round';
- const Q=[];for(let i=0;i<N;i++){const s_=-H+i*x.len/(N-1);Q.push(P(x.x+px*s_,x.y+py*s_,0))}
- if(el<.3){g.fillStyle=rgba('#e8c860',.3*(1-el/.3));g.beginPath();g.moveTo(Q[0].x,Q[0].y);g.lineTo(Q[N-1].x,Q[N-1].y);g.lineWidth=14*Q[3].s;g.strokeStyle=rgba('#ffe9a0',.35*(1-el/.3));g.stroke()}
- g.fillStyle=rgba('#e8c860',.1*k);g.beginPath();g.moveTo(Q[0].x,Q[0].y);for(const q of Q)g.lineTo(q.x,q.y-h*.78*q.s);g.lineTo(Q[N-1].x,Q[N-1].y);g.closePath();g.fill();
- g.strokeStyle=rgba('#2a2a33',.55*k);g.lineWidth=2;g.setLineDash([3,5]);g.beginPath();g.moveTo(Q[0].x,Q[0].y);g.lineTo(Q[N-1].x,Q[N-1].y);g.stroke();g.setLineDash([]);
- g.globalAlpha*=k;for(let i=0;i<N-1;i++){const A=Q[i],C=Q[i+1];for(const hh of[.32,.72])uzChain(A.x,A.y-h*hh*A.s,C.x,C.y-h*hh*C.s,A.s,5*A.s,'#e8c860');if(i%2===0)uzChain(A.x,A.y-h*.1*A.s,C.x,C.y-h*.9*C.s,A.s,0,'#c8a848')}
- for(const q of Q){const s=q.s,top=q.y-h*s;g.strokeStyle='rgba(40,28,8,.6)';g.lineWidth=5*s;g.beginPath();g.moveTo(q.x,q.y);g.lineTo(q.x,top);g.stroke();g.strokeStyle='#e8c860';g.lineWidth=3*s;g.setLineDash([4.5*s,2.5*s]);g.stroke();g.setLineDash([]);
-  g.fillStyle='#f4dc8a';g.beginPath();g.moveTo(q.x-4*s,top+2*s);g.lineTo(q.x,top-11*s);g.lineTo(q.x+4*s,top+2*s);g.closePath();g.fill();g.strokeStyle='#8a6a2a';g.lineWidth=1;g.stroke()}};
+// rempart : un mur ÉPAIS (deux faces de poteaux et de chaînes, une crête entre elles, son empreinte au sol), lisible même vu par la tranche
+AUXD.uz_wall=(x,k,t)=>{const el=x.m-x.t,h=60*ezo(Math.min(1,el/.16))*Math.min(1,x.t/.35),H=x.len/2,px=-Math.sin(x.a),py=Math.cos(x.a),ca=Math.cos(x.a),sa=Math.sin(x.a),N=7,T=13;if(h<=1)return;g.lineCap='round';
+ const face=o=>{const Q=[];for(let i=0;i<N;i++){const s_=-H+i*x.len/(N-1);Q.push(P(x.x+px*s_+ca*o,x.y+py*s_+sa*o,0))}return Q};
+ const bk=sa>=0?-T:T,F=face(-bk),Bq=face(bk);
+ // empreinte au sol et onde de surgissement
+ const fp=[P(x.x-px*H-ca*T,x.y-py*H-sa*T),P(x.x+px*H-ca*T,x.y+py*H-sa*T),P(x.x+px*H+ca*T,x.y+py*H+sa*T),P(x.x-px*H+ca*T,x.y-py*H+sa*T)];
+ g.fillStyle=rgba('#2a1e08',.38*k);g.beginPath();fp.forEach((q,i)=>i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y));g.closePath();g.fill();g.strokeStyle=rgba('#e8c860',.55*k);g.lineWidth=1.5;g.stroke();
+ if(el<.3){g.strokeStyle=rgba('#ffe9a0',.4*(1-el/.3));g.lineWidth=14*F[3].s;g.beginPath();g.moveTo(F[0].x,F[0].y);g.lineTo(F[N-1].x,F[N-1].y);g.stroke()}
+ const posts=(Q,dim)=>{for(const q of Q){const s=q.s,top=q.y-h*s;g.strokeStyle='rgba(40,28,8,.7)';g.lineWidth=7*s;g.beginPath();g.moveTo(q.x,q.y);g.lineTo(q.x,top);g.stroke();g.strokeStyle=dim?'#a8883a':'#e8c860';g.lineWidth=4.2*s;g.setLineDash([4.5*s,2.5*s]);g.stroke();g.setLineDash([]);
+   g.fillStyle=dim?'#c8b070':'#f4dc8a';g.beginPath();g.moveTo(q.x-5*s,top+2*s);g.lineTo(q.x,top-12*s);g.lineTo(q.x+5*s,top+2*s);g.closePath();g.fill();g.strokeStyle='#8a6a2a';g.lineWidth=1;g.stroke()}};
+ const mesh=(Q,dim,al)=>{g.fillStyle=rgba('#e8c860',al*k);g.beginPath();g.moveTo(Q[0].x,Q[0].y);for(const q of Q)g.lineTo(q.x,q.y-h*.82*q.s);g.lineTo(Q[N-1].x,Q[N-1].y);g.closePath();g.fill();
+  const A0=g.globalAlpha;g.globalAlpha=A0*k;for(let i=0;i<N-1;i++){const A=Q[i],C=Q[i+1];for(const hh of[.32,.72])uzChain(A.x,A.y-h*hh*A.s,C.x,C.y-h*hh*C.s,A.s,5*A.s,dim?'#b89848':'#e8c860');if(i%2===0)uzChain(A.x,A.y-h*.1*A.s,C.x,C.y-h*.9*C.s,A.s,0,'#c8a848')}g.globalAlpha=A0};
+ // face du fond, crête (chaînes tendues d'une face à l'autre, dessus doré), face avant
+ {const A0=g.globalAlpha;g.globalAlpha=A0*k;posts(Bq,1);g.globalAlpha=A0}mesh(Bq,1,.16);
+ g.fillStyle=rgba('#d8b850',.5*k);for(let i=0;i<N-1;i++){const a=F[i],b=F[i+1],c=Bq[i+1],d=Bq[i];g.beginPath();g.moveTo(a.x,a.y-h*a.s);g.lineTo(b.x,b.y-h*b.s);g.lineTo(c.x,c.y-h*c.s);g.lineTo(d.x,d.y-h*d.s);g.closePath();g.fill()}
+ {const A0=g.globalAlpha;g.globalAlpha=A0*k;for(let i=0;i<N;i++){const a=F[i],d=Bq[i];for(const hh of[.45,.95])uzChain(a.x,a.y-h*hh*a.s,d.x,d.y-h*hh*d.s,a.s,0,'#c8a848')}g.globalAlpha=A0}
+ mesh(F,0,.24);{const A0=g.globalAlpha;g.globalAlpha=A0*k;posts(F,0);g.globalAlpha=A0}};
 // chaînes de l'Entrave du démon : elles sortent du dos du lanceur et s'enroulent autour de chaque ennemi
 AUXD.uz_bind=(x,k,t)=>{const o=units[x.ui],e=units[x.ti];if(!o||!e||o.dead||e.dead)return;const j=(x.ti*1.7)%3,a=P(o.x-Math.cos(o.aim||0)*8,o.y-Math.sin(o.aim||0)*8,40+j*6),b=P(e.x,e.y,30),s=b.s;g.globalAlpha*=Math.min(1,x.t*4);
  uzChain(a.x,a.y,b.x,b.y,s,(12+Math.sin(t*7+x.ti)*5)*s,'#e8c860');const q=P(e.x,e.y,0);g.lineCap='round';g.strokeStyle='rgba(40,28,8,.6)';g.lineWidth=4*s;g.beginPath();for(const hh of[16,30,44]){g.moveTo(q.x+16*s,q.y-hh*s);g.ellipse(q.x,q.y-hh*s,16*s,6*s,(hh-30)*.015,0,7)}g.stroke();

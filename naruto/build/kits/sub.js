@@ -121,7 +121,7 @@ Object.assign(NAT,{
   if(u.jst&&u.jst.key==='sub_hira'){u.jst=null;u.cds[i]=cd;subHiraTp(u);return}
   u.thrT=.2;S('blaster',u);u.sub_hk=null;proj(u,a,{spd:950,r:7,dmg:5,life:.45,col:'#ffe14a',kind:'sub_hkunai',onHit:(p,t)=>{if(!t.dead){p.owner.sub_hk={tg:t,x:t.x,y:t.y};say(t,'MARQUÉ','#ffe14a')}}});
   aux.push({type:'sub_hk',x:u.x,y:u.y,r:0,t:4.2,m:4.2,team:u.team,owner:u,ui:units.indexOf(u),p:projs[projs.length-1],n:0});
-  u.jst={key:'sub_hira',i,n:1,t:4,cd,v:'hiraishin'};u.cds[i]=.3}),
+  if(u.jst&&u.jst.key!=='sub_hira')u.cds[u.jst.i]=u.jst.cd;u.jst={key:'sub_hira',i,n:1,t:4,cd,v:'hiraishin'};u.cds[i]=.3}),
  sub_grap:S_('Kunai à fil','Se tire jusqu\'au kunai',7,{hero:'padme',ai:{mode:'gap',min:150,max:420,p:.45}},(u,a)=>{u.thrT=.2;S('blaster',u);
   proj(u,a,{spd:980,r:8,dmg:5,life:.44,col:'#d8dde6',hook:3,kind:'sub_wirek',onHit:(p,t)=>{const o=p.owner;if(o.dead||t.dead||o.stun>0||o.root>0)return;const b=Math.atan2(o.y-t.y,o.x-t.x),g2=subFree({x:t.x+Math.cos(b)*(o.r+t.r+4),y:t.y+Math.sin(b)*(o.r+t.r+4)},o.r);
    aux.push({type:'sub_wireln',x:t.x,y:t.y,r:0,t:.3,m:.3,team:o.team,ui:units.indexOf(o)});

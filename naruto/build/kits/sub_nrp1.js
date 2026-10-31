@@ -52,7 +52,7 @@ Object.assign(NAT,{
   anim(u,'sub_clay',.55);subS('poof',u);jx({jfx:'sub_claymouth',ui:units.indexOf(u),x:u.x,y:u.y,t:.5,m:.5});
   const c=atP(u,a,td,460),E=enemies(u).filter(e=>!(e.stealth>0&&dist(u,e)>140)).sort((p,q)=>Math.hypot(p.x-c.x,p.y-c.y)-Math.hypot(q.x-c.x,q.y-c.y)),L=[];
   for(let k=0;k<3;k++){proj(u,a+(k-1)*.6,{spd:310,r:10,dmg:0,o:{silent:1},life:3.2,col:'#f4efe4',vfx:'sub_clay',kind:'sub_cbird',noClash:1});const p=projs[projs.length-1];p.tg=E.length?E[k%Math.min(E.length,3)]:null;p.cb=.22;L.push(p)}
-  aux.push({type:'sub_clay',x:u.x,y:u.y,r:0,t:3.4,m:3.4,team:u.team,owner:u,L,i,cd});u.jst={key:'sub_clay',i,n:1,t:3.3,cd,v:'tag'};u.cds[i]=.35}),
+  aux.push({type:'sub_clay',x:u.x,y:u.y,r:0,t:3.4,m:3.4,team:u.team,owner:u,L,i,cd});if(u.jst&&u.jst.key!=='sub_clay')u.cds[u.jst.i]=u.jst.cd;u.jst={key:'sub_clay',i,n:1,t:3.3,cd,v:'tag'};u.cds[i]=.35}),
 });
 // ---------- logique des objets (hôte) ----------
 // Rashômon : les tirs alliés (et tous les boomerangs) qui franchissent le portail s'y brisent ; les alliés ne passent pas non plus

@@ -90,7 +90,7 @@ Object.assign(NAT,{
  hm_arc:ULT('Arc d\'or : Kumo Senkyû',HMD.arc,{hero:'boba',line:{len:900,w:24},ai:RG(680,.8,160)},(u,a)=>{const i=u.ch.abil.findIndex(x=>x.key==='hm_arc');if(i<0)return;
   if(u.hm_bw){if(!u.human&&u.hm_bw.t<1.1){u.cds[i]=.3;return} // les bots tirent à pleine charge (relance normalement interceptée par fire, voir AFTER)
    hm_loose(u);return}
-  u.hm_bw={t:0,i,cd:u.ch.abil[i].cd};u.jst={key:'hm_arc',i,n:0,t:2.5,cd:u.ch.abil[i].cd,v:'silk'};u.cds[i]=u.human?.3:1.3;u.hm_bow=.01;anim(u,'hm_draw',1.6);S('deflect',u);
+  u.hm_bw={t:0,i,cd:u.ch.abil[i].cd};if(u.jst&&u.jst.key!=='hm_arc')u.cds[u.jst.i]=u.jst.cd;u.jst={key:'hm_arc',i,n:0,t:2.5,cd:u.ch.abil[i].cd,v:'silk'};u.cds[i]=u.human?.3:1.3;u.hm_bow=.01;anim(u,'hm_draw',1.6);S('deflect',u);
   jx({jfx:'hm_forge',ui:hm_I(u),x:u.x,y:u.y,t:.45,m:.45})}),
  // ---------- styles ----------
  // Soie dorée : kunai d'or ; le 5e lancer tire un fil (ralentit, 1 fil)
@@ -157,6 +157,13 @@ AUXF.hm_giant=(x,dt)=>{const o=x.owner;if(!o||o.dead||state!=='fight'){x.t=Math.
  VFX=V;jx({jfx:'hm_gspit',x:x.x,y:x.y,a,t:.3,m:.3});S('bugs',o)};
 
 // ---------- trait de clan : Soie d'araignée ----------
+// pattes d'araignée qui sortent du dos (4 pattes articulées, partant des omoplates)
+const hm_back=u=>Math.sin(u.aim||0)<-.2;
+function hm_legs(u,p,S,sk){const t=performance.now()/1000,s=S*sk,back=hm_back(u);g.save();g.lineCap='round';g.lineJoin='round';
+ for(const sd of[-1,1])for(let j=0;j<2;j++){const w=Math.sin(t*3+j*1.7+sd)*.12,bx=p.x+sd*6*s,by=p.y-(42-j*6)*s,a0=-1.05+j*.55+w,kx=bx+sd*Math.cos(a0)*19*s,ky=by+Math.sin(a0)*19*s,a1=.5+j*.45-w,fx=kx+sd*Math.cos(a1)*16*s,fy=ky+Math.sin(a1)*16*s;
+  g.strokeStyle='#120a18';g.lineWidth=4.2*s;g.beginPath();g.moveTo(bx,by);g.lineTo(kx,ky);g.lineTo(fx,fy);g.stroke();g.strokeStyle=back?HMC.pur:'#5a3c74';g.lineWidth=2.2*s;g.stroke();
+  g.fillStyle=HMC.vio;g.beginPath();g.arc(kx,ky,1.4*s,0,7);g.fill()}
+ g.restore()}
 TRAITS[13]={nom:'Soie d\'araignée',desc:'Tes jutsu posent des fils sur l\'ennemi (5 s). Au 4e fil, il est englué : entravé 0,7 s et il subit +20 % de dégâts des Hakumei pendant 3 s ; aucun fil ne prend sur lui pendant 4 s. Des pattes d\'araignée sortent de ton dos',
  init(u){u.hm_cd0=u.cds},
  update(u,dt){if(u.hm_cd0!==u.cds){u.hm_cd0=u.cds;u.hm_bw=null;u.hm_bow=0;u.hm_armE=0;u.hm_arm=0} // nouveau ninja ou réapparition
@@ -169,12 +176,10 @@ TRAITS[13]={nom:'Soie d\'araignée',desc:'Tes jutsu posent des fils sur l\'ennem
  // armure d'or : l'attaquant au corps à corps reste collé (1 fil, ralenti), au plus une fois par 0,5 s
  take(t,src,dmg,o){if(src&&src!==t&&o.melee&&(t.hm_armE||0)>SIMT&&!((t.hm_armHit||0)>SIMT)&&src.team!==t.team){t.hm_armHit=SIMT+.5;hm_fil(t,src,1);if(hm_free(src))src.slow=Math.max(src.slow,1);jx({jfx:'hm_wrap',ti:hm_I(src),x:src.x,y:src.y,t:.4,m:.4,low:1,gold:1})}return dmg},
  // pattes d'araignée dans le dos ; arc d'or en main pendant qu'on bande
- draw(u,p,S,sk){if(u.stealth>0)return;const t=performance.now()/1000,s=S*sk,face=Math.cos(u.aim||0)>=0?1:-1,back=Math.sin(u.aim||0)<-.2;
-  g.save();g.lineCap='round';g.lineJoin='round';
-  for(const sd of[-1,1])for(let j=0;j<2;j++){const w=Math.sin(t*3+j*1.7+sd)*.12,bx=p.x+sd*7*s,by=p.y-(38-j*5)*s,a0=-1.05+j*.55+w,kx=bx+sd*Math.cos(a0)*17*s,ky=by+Math.sin(a0)*17*s,a1=.5+j*.45-w,fx=kx+sd*Math.cos(a1)*15*s,fy=ky+Math.sin(a1)*15*s;
-   g.strokeStyle='#120a18';g.lineWidth=4.2*s;g.beginPath();g.moveTo(bx,by);g.lineTo(kx,ky);g.lineTo(fx,fy);g.stroke();g.strokeStyle=back?'#4a3460':HMC.pur;g.lineWidth=2.2*s;g.stroke();
-   g.fillStyle=HMC.vio;g.beginPath();g.arc(kx,ky,1.4*s,0,7);g.fill()}
-  g.restore();
+ // de face : les pattes sont dessinées AVANT le ninja (drawB), donc derrière lui ; de dos, le dos est visible : elles passent devant (draw)
+ drawB(u,p,S,sk){if(u.stealth>0||hm_back(u))return;hm_legs(u,p,S,sk)},
+ prev(u,p,S,front){if(!!front===hm_back(u))hm_legs(u,p,S,1)},
+ draw(u,p,S,sk){if(u.stealth>0)return;const t=performance.now()/1000;if(hm_back(u))hm_legs(u,p,S,sk);
   if(u.hm_bow>0){const c=Math.min(1,u.hm_bow),a=u.aim||0,h=P(u.x+Math.cos(a)*16,u.y+Math.sin(a)*16,38),ra=Math.atan2(Math.sin(a)*K,Math.cos(a)),L=26*h.s,pull=(5+c*15)*h.s;
    g.save();g.translate(h.x,h.y);g.rotate(ra);g.lineCap='round';
    g.strokeStyle='#4a2a08';g.lineWidth=5*h.s;g.beginPath();g.moveTo(-6*h.s,-L);g.quadraticCurveTo(10*h.s,0,-6*h.s,L);g.stroke();g.strokeStyle=HMC.gold;g.lineWidth=3*h.s;g.stroke();

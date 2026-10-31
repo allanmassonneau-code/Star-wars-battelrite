@@ -10,7 +10,7 @@ const fireP=(u,a,o)=>proj(u,a,Object.assign({spd:700,r:8,dmg:12,life:.7,col:'#ff
 // charges : le 1er lancement prépare n projectiles, chaque relance en tire un pendant 5 s
 function stackAb(key,n,fireOne){return function(u,a,t){const i=u.ch.abil.findIndex(x=>x.key===key);if(i<0)return;
  if(u.jst&&u.jst.key===key){fireOne(u,a,t);u.jst.n--;if(u.jst.n<=0){u.cds[i]=u.jst.cd;u.jst=null}else u.cds[i]=.25}
- else{u.jst={key,i,n,t:5,cd:u.ch.abil[i].cd,v:u.ch.abil[i].vfx};u.cds[i]=.25;say(u,'×'+n,'#ffd38a')}}}
+ else{if(u.jst)u.cds[u.jst.i]=u.jst.cd;u.jst={key,i,n,t:5,cd:u.ch.abil[i].cd,v:u.ch.abil[i].vfx};u.cds[i]=.25;say(u,'×'+n,'#ffd38a')}}}
 // mur : segments perpendiculaires à la visée ; bloque les tirs et le passage des ennemis ; peut brûler
 function wallLine(u,a,n,o){const c=fwd(u,a,95),px=-Math.sin(a),py=Math.cos(a);for(let i=-n;i<=n;i++)walls.push(Object.assign({x:c.x+px*i*24,y:c.y+py*i*24,r:14,t:4,team:u.team,owner:u},o))}
 // canalisation de zone (Nuée ardente) : relancer pour relâcher, plus on attend plus ça fait mal

@@ -2,18 +2,18 @@
 // Le Rasengan, le Multiclonage et le Rasenshuriken sont déjà des subjutsu (sub.js, sub_nrp2.js) ; ce lot ajoute le chakra de Kyûbi,
 // sorti du clan Uzumaki (les Uzumaki sont des maîtres du fûinjutsu, pas des réceptacles de démon).
 KIT('u',[
- [4,'B','x.sub_nr_kyubi','Chakra de Kyûbi','Rugissement qui repousse (8), puis 5 s : régénère, tes coups de base lancent des griffes de chakra (7, une par seconde) ; insensible au contrôle 2 s','fox'],
+ [4,'B','x.sub_nr_kyubi','Chakra de Kyûbi','Rugissement qui repousse (8). 5 s : tes coups de base lancent des griffes de chakra (7, une par seconde). Régénère 4 s ; insensible au contrôle 2 s','fox'],
 ]);
 Object.assign(NAT,{
- sub_nr_kyubi:S_('Chakra de Kyûbi','Rugissement qui repousse (8), puis 5 s : régénère, tes coups de base lancent des griffes de chakra (7, une par seconde) ; insensible au contrôle 2 s',20,{hero:'chewie',tele:{self:1,r:150},ai:SELF(200,.7)},(u)=>{S('heavy',u);S('roar',u);anim(u,'roar',.8);
+ sub_nr_kyubi:S_('Chakra de Kyûbi','Rugissement qui repousse (8). 5 s : tes coups de base lancent des griffes de chakra (7, une par seconde). Régénère 4 s ; insensible au contrôle 2 s',20,{hero:'chewie',tele:{self:1,r:150},ai:SELF(200,.7)},(u)=>{S('heavy',u);S('roar',u);anim(u,'roar',.8);
   u.unstop=Math.max(u.unstop,2);u.regenB=Math.max(u.regenB,4);u.sub_nr_kyu=5;VFX='fox';aoe(u,u.x,u.y,150,8,{kb:290,unblockable:1},'#ff6a2a');VFX=null;
   jx({jfx:'sub_nr_roar',ui:units.indexOf(u),x:u.x,y:u.y,t:.7,m:.7});if(near(u.x,u.y))shake=Math.max(shake,.35)}),
 });
 // ---- logique (hôte) : la durée du manteau, et les griffes lancées par les coups de base (au plus une par seconde)
-AFTER.push(()=>{const T=TRAITS[-1];if(!T)return;const U0=T.update,D0=T.deal;
+AFTER.push(()=>{const T=TRAITS[-1];if(!T)return;const U0=T.update,L0=T.landed;
  T.update=function(u,dt){if(U0)U0.call(this,u,dt);if(u.sub_nr_kyu>0)u.sub_nr_kyu=Math.max(0,u.sub_nr_kyu-dt);
   if(u.sub_nr_clQ){const q=u.sub_nr_clQ,V=VFX;u.sub_nr_clQ=null;VFX='fox';aoe(u,q.x,q.y,70,7,{quiet:1},'#ff6a2a');VFX=V;jx({jfx:'sub_nr_claw',x:q.x,y:q.y,t:.45,m:.45})}};
- T.deal=function(src,t,dmg,o){if(D0)dmg=D0.call(this,src,t,dmg,o);if(src.sub_nr_kyu>0&&o.basic&&!(SIMT<(src.sub_nr_clT||0))){src.sub_nr_clT=SIMT+1;src.sub_nr_clQ={x:t.x,y:t.y}}return dmg};
+ T.landed=function(src,t,dmg,o){if(L0)L0.call(this,src,t,dmg,o);if(src.sub_nr_kyu>0&&o.basic&&t.team!==src.team&&!(SIMT<(src.sub_nr_clT||0))){src.sub_nr_clT=SIMT+1;src.sub_nr_clQ={x:t.x,y:t.y}}}; // griffe : seulement si le coup passe
  UK.push('sub_nr_kyu')});
 // ---- visuels
 // rugissement : ondes rouges et tête de renard de chakra

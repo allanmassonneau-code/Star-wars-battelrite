@@ -37,6 +37,8 @@ function optDesc(k,v){
  if(k==='side')return v?'Tu combats avec l\'Akatsuki : tes alliés de bataille et la couleur de ton nom.':'Tu combats avec l\'Alliance Shinobi : tes alliés de bataille et la couleur de ton nom.';
  return''}
 // --- icône d'un jutsu : disque à la couleur de l'élément, gros contour sombre, symbole (flamme, goutte, vent, éclair, roche, shuriken, initiale du clan, kunai)
+// couleur éclaircie (vers un crème) jusqu'à la luminosité L : texte lisible sur le fond brun sombre, teinte du clan gardée
+const liftC=(c,L)=>{if(c.length===4)c='#'+c[1]+c[1]+c[2]+c[2]+c[3]+c[3];const l=lum(c);if(l>=L)return c;const W0=[244,226,200],lw=(W0[0]*.3+W0[1]*.59+W0[2]*.11)/255,k=Math.min(1,(L-l)/(lw-l)),n=parseInt(c.slice(1,7),16),C=[n>>16,n>>8&255,n&255].map((v,i)=>Math.round(v+(W0[i]-v)*k));return'#'+C.map(v=>v.toString(16).padStart(2,'0')).join('')};
 const lum=c=>{if(c.length===4)c='#'+c[1]+c[1]+c[2]+c[2]+c[3]+c[3];const n=parseInt(c.slice(1,7),16);return((n>>16)*.3+(n>>8&255)*.59+(n&255)*.11)/255};
 function jIcon(x,y,r,col,cat,ult){g.save();g.fillStyle=col;g.strokeStyle='#14100a';g.lineWidth=2.5;g.beginPath();g.arc(x,y,r,0,7);g.fill();g.stroke();
  if(ult){g.strokeStyle='#ffe81f';g.lineWidth=2;g.beginPath();g.arc(x,y,r+3.5,0,7);g.stroke()}
@@ -64,7 +66,7 @@ function drawTip(){if(!TIP){tipK=null;return}if(performance.now()-tipT0<300)retu
  fitT(T.t,x+12,y+22,15,T.col||'#ffd38a',w-24,'bold',11);let yy=y+40;for(const [s,c] of extra){fitT(s,x+12,yy,11.5,c||'#d8b888',w-24,'normal',9);yy+=16}
  g.font=F;g.fillStyle='#ecdcc0';g.textAlign='left';for(const s of L){g.fillText(s,x+12,yy+2);yy+=15}if(T.f)text(T.f,x+12,yy+12,11,'#ffb347','left','bold')}
 // --- panneau de choix (un emplacement, le passif, un modèle, une option de build ou d'apparence)
-let pickTab=0,pickScroll=0,menuLast=0;
+let pickTab=0,pickScroll=0,menuLast=0,galSel=null;
 function pickData(p){const BUD=budgetOf(MY),c0=kitCost(MY);
  if(p===0){const L=stylesOf(MY),col=MY.clan>=0?CLANS[MY.clan][1]:'#e8cfa8';return{kind:'j',title:`${lbl[SLOTS[0]]} · Style de combat`,sub:'Ton attaque de base, propre à ton clan : gratuite (ni points, ni chakra)',
   items:L.map(i=>{const ab=styleAb(i),w=STYLES[i][4];return{v:i,n:ab.n,col,ic:null,style:1,l2:`${fmtCd(ab.cd)} · ${['kunai','senbon','bugs','sand'].includes(w)?'distance':['shadow','chain'].includes(w)?'moyenne portée':'corps à corps'}`,d:ab.d,sel:MY.j[0]===i}})}}
@@ -101,9 +103,9 @@ function galLayout(){if(GALL)return GALL;const cols=7,gx=GB.x+20,gw=GB.w-40-14,c
  const gy=GB.y+104;return GALL={L,Hd,gx,gw,gy,gh:GB.y+GB.h-30-gy,total:y-8}}
 const galMax=()=>{const G=galLayout();return Math.max(0,G.total-G.gh)};
 function galTabs(){const G=galLayout();let x=GB.x+20;g.font=FNT(13,'bold');return G.Hd.map(h=>{const s=`${GALG[h.g]} (${h.n})`,w=g.measureText(s).width+28,R={x,y:GB.y+66,w,h:28,s,g:h.g,top:h.y};x+=w+8;return R})}
-function openPresetGallery(){picker='gallery';pickScroll=0;const G=galLayout(),c=G.L.find(c=>c.id===presetI);if(c)pickScroll=Math.min(galMax(),Math.max(0,c.y-40))}
+function openPresetGallery(){picker='gallery';pickScroll=0;galSel=null;const G=galLayout(),c=G.L.find(c=>c.id===presetI);if(c)pickScroll=Math.min(galMax(),Math.max(0,c.y-40))}
 function galleryClick(){if(!inRect(mouse,GB)||inRect(mouse,closeRect(GB))){picker=null;return true}
- for(const R of galTabs())if(inRect(mouse,R)){pickScroll=Math.min(galMax(),R.top);return true}
+ for(const [i,R] of galTabs().entries())if(inRect(mouse,R)){pickScroll=Math.min(galMax(),R.top);galSel={i,s:pickScroll};return true}
  const G=galLayout(),mx=galMax();if(mx>0&&inRect(mouse,{x:G.gx+G.gw,y:G.gy,w:20,h:G.gh})){pickScroll=clamp((mouse.y-G.gy)/G.gh,0,1)*mx;return true}
  if(inRect(mouse,{x:G.gx,y:G.gy,w:G.gw,h:G.gh}))for(const c of G.L)if(inRect(mouse,{x:c.x,y:G.gy+c.y-pickScroll,w:c.w,h:c.h})){picker=null;applyPreset(c.id);return true}
  return true}
@@ -114,7 +116,7 @@ function galCard(c,R,hov,t){const P=PRESETS[c.id],u=galFakes()[c.id],ch=u.ch,col
  {const gr=g.createLinearGradient(0,R.y,0,R.y+128);gr.addColorStop(0,rgba(col,.22));gr.addColorStop(1,rgba(col,.04));g.fillStyle=gr;g.fillRect(R.x,R.y,R.w,128)}
  {g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(px,fy-50,0,px,fy-50,70);gr.addColorStop(0,rgba(kc,hov?.28:.16));gr.addColorStop(1,rgba(kc,0));g.fillStyle=gr;g.fillRect(R.x,R.y,R.w,128);g.globalCompositeOperation='source-over'}
  g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(px,fy-4,30,8,0,0,7);g.fill();
- u.aim=hov?Math.PI/2+Math.sin(t*1.6)*1.3:Math.PI/2-.35;u.moving=false;u.swing=0;drawChar3(u,px,fy,1.42*(ch.look.scale>1?.9:1));g.restore();
+ u.aim=hov?Math.PI/2+Math.sin(t*1.6)*1.3:Math.PI/2-.35;u.moving=false;u.swing=0;{const sc=1.42*(ch.look.scale>1?.9:1);drawPrevN(u,px,fy,sc,0);drawChar3(u,px,fy,sc);drawPrevN(u,px,fy,sc,1)}g.restore();
  g.fillStyle=col;g.fillRect(R.x+10,R.y+130,R.w-20,2);
  fitT(P.n,R.x+R.w/2,R.y+150,16,sel?'#ffe0a0':'#ffd38a',R.w-14,'bold',11,'center');
  fitT(P.full!==P.n?P.full:CAMPS[P.side],R.x+R.w/2,R.y+164,10.5,'#a88a68',R.w-14,'normal',9,'center');
@@ -130,7 +132,8 @@ function drawGallery(){const G=galLayout(),mx=galMax(),t=performance.now()/1000;
  fitT('⭐ Persos de l\'anime',GB.x+20,GB.y+32,21,'#ffb347',420,'bold',13);fitT('Clique un ninja : son apparence et son kit (style, 5 jutsu, voie, passif) deviennent les tiens, à retoucher ensuite. Ton camp est gardé.',GB.x+20,GB.y+50,12,'#d8b888',GB.w-120,'normal',10);
  {const R=closeRect(GB),h=inRect(mouse,R);rr(R,8,h?'#ff9a3a':'rgba(50,34,20,.95)','#8a5a2a');text('✕',R.x+16,R.y+22,16,h?'#1a1008':'#f3d9b0')}
  // onglets : un par équipe (clic = aller à l'équipe) ; celui de l'équipe en haut de la vue est allumé
- const T=galTabs();let cur=0;T.forEach((R,i)=>{if(pickScroll>=R.top-30)cur=i});
+ // (onglet cliqué : il reste allumé tant qu'on ne fait pas défiler ; tout en bas, les dernières équipes ne peuvent pas monter en haut : on allume la dernière)
+ const T=galTabs();let cur=0;if(galSel&&Math.abs(galSel.s-pickScroll)<1)cur=galSel.i;else{galSel=null;T.forEach((R,i)=>{if(pickScroll>=R.top-30)cur=i});if(mx>0&&pickScroll>=mx-1)cur=T.length-1}
  T.forEach((R,i)=>{const on=i===cur,h=inRect(mouse,R),c=GALC[R.g];rr(R,14,on?c:h?'rgba(90,60,30,.95)':'rgba(40,28,18,.92)',c,1.5);text(R.s,R.x+R.w/2,R.y+19,13,on?(lum(c)>.45?'#1a1008':'#fff'):'#f3d9b0')});
  const inG=inRect(mouse,{x:G.gx,y:G.gy,w:G.gw,h:G.gh});g.save();g.beginPath();g.rect(G.gx-6,G.gy-4,G.gw+12,G.gh+8);g.clip();
  for(const h of G.Hd){const y=G.gy+h.y-pickScroll;if(y<G.gy-30||y>G.gy+G.gh)continue;const c=GALC[h.g];text(GALG[h.g].toUpperCase(),G.gx+2,y+17,13,c,'left','bold');g.font=FNT(13,'bold');const w=g.measureText(GALG[h.g].toUpperCase()).width;g.fillStyle=rgba(c,.5);g.fillRect(G.gx+w+12,y+11,G.gw-w-14,1.5)}
@@ -211,7 +214,7 @@ function drawMenu(){TIP=null;{const now=performance.now();if(now-menuLast>1500)p
  const fake=menuFake(ch);fake.aim=Math.PI/2+Math.sin(t*.8)*1.1;fake.moving=Math.sin(t*.5)>.3;fake.walk=t*13;fake.swing=0;
  g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(220,316,50,13,0,0,7);g.fill();
  {g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(220,290,0,220,290,140);gr.addColorStop(0,rgba(ch.look.weapon.col,.16));gr.addColorStop(1,rgba(ch.look.weapon.col,0));g.fillStyle=gr;g.fillRect(80,186,280,150);g.restore()}
- drawChar3(fake,220,314,1.6);
+ drawPrevN(fake,220,314,1.6,0);drawChar3(fake,220,314,1.6);drawPrevN(fake,220,314,1.6,1);
  text(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2)}`,220,342,12.5,'#ffd38a','center','bold');
  fitT(ch.desc,220,358,11,'#b89a70',350,'normal',9,'center');
  // en-tête de section
@@ -236,7 +239,7 @@ function drawMenu(){TIP=null;{const now=performance.now();if(now-menuLast>1500)p
  // trait du clan et affinités de la nature
  {const T=TRAITS[MY.clan],tl=T?`${MY.clan<0?'Sans clan (+2 points)':'Trait'} · ${T.nom||T.name||''} : ${T.desc||''}`:'',col=MY.clan>=0?CLANS[MY.clan][1]:'#e8cfa8',aff=MY.clan!==TAIJ?`${NATURES[MY.nat][0]} : fort contre ${NATURES[BEATS[MY.nat]][0]}, faible contre ${NATURES[BEATS.indexOf(MY.nat)][0]}`:'Taijutsu pur : aucune nature';
   g.font=FNT(11.5);const aw=Math.min(300,g.measureText(aff).width);fitT(aff,BX+BW-4,207,11.5,MY.clan!==TAIJ?NATURES[MY.nat][2]:'#b89a70',300,'normal',9,'right');
-  if(tl){fitT(tl,BX+4,207,11.5,lum(col)<.25?'#e8cfa8':col,BW-aw-30,'normal',10.5);if(free&&inRect(mouse,{x:BX,y:194,w:BW-aw-20,h:18}))hoverTip('trait',()=>({t:T.nom||T.name||'Trait',col,d:T.desc||''}))}}
+  if(tl){fitT(tl,BX+4,207,11.5,liftC(col,.5),BW-aw-30,'normal',10.5);if(free&&inRect(mouse,{x:BX,y:194,w:BW-aw-20,h:18}))hoverTip('trait',()=>({t:T.nom||T.name||'Trait',col,d:T.desc||''}))}}
  // les 6 emplacements : touche, icône, nom, rang, chakra, recharge, mudras
  for(let s=0;s<6;s++){const R=slotRow(s),ab=ch.abil[s],h=hv(R),J=s?JL[MY.j[s]]:null,col=J?catCol(J.cat):MY.clan>=0?CLANS[MY.clan][1]:'#e8cfa8',gold=ab.ult;
   rr(R,10,h?'rgba(74,48,24,.95)':'rgba(20,14,10,.85)',gold?'#ffb347':h?'#c08040':'#5a3a1e',gold?2:1);

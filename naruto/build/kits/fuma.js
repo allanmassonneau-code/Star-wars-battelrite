@@ -17,7 +17,7 @@ const FM_D={
  dance:'Disparaît (intouchable) et frappe 3 fois dans le dos des ennemis proches (400), les marqués d\'abord : 9 par coup, toujours critique'};
 KIT('c17',[
  [1,'D','x.fm_trace','Shuriken traceur',FM_D.trace,'shuriken'],
- [1,'C','x.fm_fuma','Fûma shuriken',FM_D.fuma,'shuriken'],
+ [1,'C','x.fm_fuma','Shuriken du croissant',FM_D.fuma,'shuriken'],
  [3,'C','x.fm_wire','Shuriken à fil',FM_D.wire,'shuriken'],
  [3,'B','x.fm_kage','Kage shuriken',FM_D.kage,'shuriken'],
  [4,'B','x.fm_orbit','Shuriken tournoyants',FM_D.orbit,'shuriken'],
@@ -33,7 +33,7 @@ KIT('c17',[
 const FM_BAL=.95,FM_CRIT=1.4,FM_CRIT2=1.6,FM_BCD=2.5,FM_MK=4,FM_BACK=2.0; // critique ×1,4 (×1,6 marque + dos) ; coup dans le dos au plus toutes les 2,5 s ; marque 4 s ; dos = arc de 130° derrière la cible
 const FM_STEEL='#cfd3dd',FM_DARK='#24222c',FM_RED='#ff3048',FM_SHD='#3a2a4a';
 // style de combat propre (ajouté à la fin de STYLES) ; le Taijutsu reste possible pour un Fûma au corps à corps
-STYLES.push(['Shuriken Fûma','Shuriken tournoyants à longue portée ; tous les 4 lancers, un 2e shuriken caché dans l\'ombre du 1er, qui marque la cible','x.fm_style','shuriken','kunai',[17],.68,.68]);
+STYLES.push(['Lancer Fûma','Shuriken tournoyants à longue portée ; tous les 4 lancers, un 2e shuriken caché dans l\'ombre du 1er, qui marque la cible','x.fm_style','shuriken','kunai',[17],.68,.68]);
 {const T=STYLES.find(s=>s[0]==='Taijutsu');if(T&&!T[5].includes(17))T[5].push(17)}
 // ---------- aides ----------
 const fmI=u=>units.indexOf(u);
@@ -60,14 +60,14 @@ const fmShu=(u,a,o)=>proj(u,a,Object.assign({spd:900,r:6,dmg:7,life:.66,col:FM_S
 // ---------- mécaniques ----------
 Object.assign(NAT,{
  // style : shuriken alternés ; tous les 4 lancers, un 2e caché dans l'ombre du 1er (le 1er marque)
- fm_style:SP('Shuriken Fûma','',.34,{hero:'lando',ai:{max:600,p:.85}},(u,a)=>{if(SIMT-(u.fm_kt||-9)>1.6)u.fm_kn=0;u.fm_kt=SIMT;u.fm_kn=(u.fm_kn||0)%4+1;const k4=u.fm_kn===4;S('blaster',u);
+ fm_style:SP('Lancer Fûma','',.34,{hero:'lando',ai:{max:600,p:.85}},(u,a)=>{if(SIMT-(u.fm_kt||-9)>1.6)u.fm_kn=0;u.fm_kt=SIMT;u.fm_kn=(u.fm_kn||0)%4+1;const k4=u.fm_kn===4;S('blaster',u);
   fmShu(u,a,{dmg:7,life:.68,o:k4?{fm_sh:1}:{}});
   if(k4){const p1=projs[projs.length-1];proj(u,a,{x:p1.x-Math.cos(a)*20,y:p1.y-Math.sin(a)*20,spd:900,r:6,dmg:5,life:.7,col:FM_DARK,kind:'fm_kage',noClash:1})}
   anim(u,u.fm_kn%2?'fm_flickr':'fm_flickl',.24)}),
  fm_trace:SP('Shuriken traceur',FM_D.trace,5,{line:{len:600,w:14},ai:RG(560,.7)},(u,a)=>{S('blaster',u);anim(u,'fm_flickr',.26);
   fmShu(u,a,{spd:1150,r:6,dmg:10,life:.54,kind:'fm_trace',noClash:1,o:{fm_sh:1,fm_md:6,reveal:1}});jx({jfx:'fm_glint',x:u.x,y:u.y,a,t:.25,m:.25})}),
  // Fûma : arc de cercle (le côté alterne) dont la corde tombe sur la visée, puis retour droit vers le lanceur (moteur : ret)
- fm_fuma:SP('Fûma shuriken',FM_D.fuma,8,{line:{len:380,w:30},ai:RG(400,.6,60)},(u,a)=>{u.fm_side=u.fm_side>0?-1:1;const cv=1.0*u.fm_side,T=380/640;anim(u,'fm_heave',.45);fmS('saber',u);S('dash',u);
+ fm_fuma:SP('Shuriken du croissant',FM_D.fuma,8,{line:{len:380,w:30},ai:RG(400,.6,60)},(u,a)=>{u.fm_side=u.fm_side>0?-1:1;const cv=1.0*u.fm_side,T=380/640;anim(u,'fm_heave',.45);fmS('saber',u);S('dash',u);
   proj(u,a-cv*T/2,{spd:640,r:15,dmg:12,life:2.6,col:FM_STEEL,ret:380,pierce:1,slow:.6,kind:'fm_big',o:{fm_sh:1}});
   aux.push({type:'fm_boom',p:projs[projs.length-1],x:u.x,y:u.y,t:1,m:1,team:u.team,owner:u,cv,k:0})}),
  fm_wire:SP('Shuriken à fil',FM_D.wire,10,{line:{len:450,w:16},ai:RG(430,.55)},(u,a)=>{S('blaster',u);anim(u,'fm_flickl',.3);
