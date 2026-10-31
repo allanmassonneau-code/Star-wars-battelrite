@@ -24,8 +24,13 @@ Les indices sont figés (sauvegardes, `PRESETS`, réseau) : ne jamais réordonne
 ## Points d'extension d'un clan (tout depuis son propre fichier)
 - `KIT('c<n>',[…])` + `Object.assign(NAT,{…})` + `Object.assign(NATHERO,{<préfixe>:'perso'})` (obligatoire : stats de référence de tes mécaniques).
 - `TRAITS[<n>]={…}` : trait du clan (voir plus bas).
-- **Style de combat propre** : `STYLES.push(['Nom','desc','x.<préfixe>_style','vfx','arme',[<n>],modPV,modPuissance])` (arme : `fist bigfist palm claws bone sword` corps à corps, `kunai senbon sand bugs shadow chain` distance).
-  Tant qu'aucun style ne liste ton clan, il prend les styles « sans clan » (Taijutsu, Kunai). Toujours **ajouter à la fin** (`push`), jamais insérer : les sauvegardes gardent l'indice du style.
+- **Style de combat propre** (attaque de base, clic gauche) : `STYLES.push(['Nom','desc','x.<préfixe>_style','vfx','arme',[<n>],modPV,modPuissance])`.
+  **Règle : une attaque de base est TOUJOURS au corps à corps** (allonge max ≈ 130, celle d'un sabre) : pas de projectile, pas de frappe à distance ni à moyenne portée ; le jeu à distance passe par les jutsu.
+  Arme (objet tenu en 3D et en 2D, toutes dans `MELEEK`) : `fist bigfist palm claws bone sword kunai shadow bugs chain senbon sand puppet vine fan gold paper shuriken ice` (une nouvelle arme : l'ajouter à `MELEEK` dans `nr_flow.js`, à `buildNinja3D` dans `nr_3d.js` et à `drawNinjaWeapon` dans `nr_char.js`).
+  La mécanique passe par `stMelee(u,a,portée,arc,dégâts,o,traînée,cb)` (styles.js, sur `melee()`) ou `stSlam` : combo de 5 coups, endurance, parade (F+clic), étourdissement du 5e coup ; `cb(e)` est appelé pour chaque ennemi vraiment touché.
+  Chaque style a sa direction artistique liée au clan : chorégraphie `ANIM` par coup (générateurs `stAJ stAS stASpin stALunge stATwo stAOver stAUp stAKick stACrouch stAPull stALeap stACross`), traînée `st_arc` aux couleurs du clan (`fl` : `sand bugs shadow vine ice paper petal chain gold silk`), effet signature (5e coup) et une petite mécanique liée au trait du clan.
+  Même base pour tous (`hero:'rey'`, modif. 1,12 / 1,07, ≈ 55-60 dégâts par combo de 5 coups en ≈ 2,3 s) ; les différences sont de style : vitesse, allonge, arc, effet. `ai:{max:<allonge>,p:1}`.
+  Tant qu'aucun style ne liste ton clan, il prend les styles « sans clan » (Taijutsu, Kunai au poing, Kenjutsu, Kubikiribôchô). Toujours **ajouter à la fin** (`push`), jamais insérer : les sauvegardes gardent l'indice du style (un style qu'on refait est remplacé en place, même indice ; les `PRESETS` le désignent par son nom).
   Un style existant peut aussi être ouvert à ton clan : `STYLES.find(s=>s[0]==='Marionnette')[5].push(14)`.
 - **Apparence imposée** : `CLOOK[<n>]=(look,l,style)=>{look.head.eye='#c8e8ff';look.scale=1.05;…}` (appelé par `ninjaLook`, en 3D et en 2D ; `look.head` : `skin hair style eye eyeT face acc`, `look.back` : objet dans le dos, `look.dog`, `look.gourd`…).
 - Équilibrage par clan : `CLANBAL["<n>"]` dans `nr_ninja.js` (laisser [1, 1] tant que la simulation n'a pas tourné).
@@ -54,7 +59,7 @@ KIT('n0',[ // catégorie : 'u' subjutsu, 'n0'…'n4' natures, 'c0'…'c20' clans
 - **Élément visuel** (`vfx`) : couleur/style des effets génériques et du son (`fire water wind lightning earth sand shadow bugs bone tag smoke genjutsu jyuken black fox heal leaf gate chain kunai shuriken senbon steel tai flower mind seal chidori kirin rasengan rasenshuriken hiraishin sandcoffin tsukuyomi susano gatsuga peacock sage byakugan kaiten hakke64 claws chakra`).
 - Statistiques : chaque mécanique a un personnage de référence (PV/vitesse/puissance du ninja). Par défaut celui du préfixe (`NATHERO.ka='boba'`, déjà réglé).
   **Quand tu remplaces une ancienne source `perso.n` par une mécanique sur mesure, garde ses stats** avec l'option `hero:'perso'` (ex. `SP(…,{hero:'rey',ai:…},f)`).
-  Styles : `STYLES` = `[nom, description, mécanique, vfx, arme, clans autorisés, modif. PV, modif. puissance]` ; une attaque de base sur mesure doit appeler `melee(…)`/`slash(…)` (corps à corps) ou `proj(…)` (distance) pour garder combo, endurance et étourdissement du 5e coup.
+  Styles : `STYLES` = `[nom, description, mécanique, vfx, arme, clans autorisés, modif. PV, modif. puissance]` ; une attaque de base sur mesure doit appeler `stMelee(…)`/`melee(…)`/`slash(…)` (toujours au corps à corps) pour garder combo, endurance, parade et étourdissement du 5e coup.
 
 ## Mécanique d'un jutsu
 ```js

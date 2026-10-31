@@ -3,7 +3,8 @@ let picker=null; // emplacement dont on choisit le jutsu (liste ouverte)
 // lignes de gauche : [libellé, liste, clé] ; le clan a une entrée « Sans clan » (valeur -1), la 2e nature n'existe que sans clan
 const CLANL=[['Sans clan','#888']].concat(CLANS),NATL=NATURES.map(n=>[n[0]+' ('+n[1]+')',n[2]]);
 const APP=[['Camp',()=>CAMPS,'side'],['Voie',()=>VOIES,'voie'],['Clan',()=>CLANL,'clan'],['Nature',()=>NATL,'nat'],['Village',()=>VILLAGES,'l.v'],['Tenue',()=>TENUES,'l.t'],['Coiffure',()=>COIFS,'l.c'],['Cheveux',()=>HAIRC,'l.h'],['Peau',()=>PEAUX,'l.p'],['Chakra',()=>CHAKRAS,'l.k'],['Accessoire',()=>ACCS,'l.a'],['Visage',()=>FACES,'l.f'],['Bandeau',()=>BANDS,'l.b'],['Dos',()=>BACKS,'l.d']];
-const getB=k=>k==='clan'?MY.clan+1:k.startsWith('l.')?MY.l[k[2]]:MY[k],setB=(k,v)=>{if(k==='clan')MY.clan=v-1;else if(k.startsWith('l.'))MY.l[k[2]]=v;else MY[k]=v};
+const getB=k=>k==='clan'?MY.clan+1:k.startsWith('l.')?MY.l[k[2]]:MY[k],setB=(k,v)=>{if(k==='clan'){MY.clan=v-1;const cs=clanStyle(MY.clan);if(cs>=0&&!(STYLES[MY.j[0]]&&STYLES[MY.j[0]][5].includes(MY.clan)&&!STYLES[MY.j[0]][5].includes(-1)))MY.j[0]=cs} // nouveau clan : son style signature est équipé
+ else if(k.startsWith('l.'))MY.l[k[2]]=v;else MY[k]=v};
 const appOff=k=>k==='nat'&&MY.clan===TAIJ;
 const stylesOf=b=>STYLES.map((_,i)=>i).filter(i=>styleOk(i,b.clan));
 const overBudget=()=>kitCost(MY)>budgetOf(MY);
@@ -69,7 +70,7 @@ function drawTip(){if(!TIP){tipK=null;return}if(performance.now()-tipT0<300)retu
 let pickTab=0,pickScroll=0,menuLast=0,galSel=null;
 function pickData(p){const BUD=budgetOf(MY),c0=kitCost(MY);
  if(p===0){const L=stylesOf(MY),col=MY.clan>=0?CLANS[MY.clan][1]:'#e8cfa8';return{kind:'j',title:`${lbl[SLOTS[0]]} · Style de combat`,sub:'Ton attaque de base, propre à ton clan : gratuite (ni points, ni chakra)',
-  items:L.map(i=>{const ab=styleAb(i),w=STYLES[i][4];return{v:i,n:ab.n,col,ic:null,style:1,l2:`${fmtCd(ab.cd)} · ${['kunai','senbon','bugs','sand'].includes(w)?'distance':['shadow','chain'].includes(w)?'moyenne portée':'corps à corps'}`,d:ab.d,sel:MY.j[0]===i}})}}
+  items:L.map(i=>{const ab=styleAb(i);return{v:i,n:ab.n,col,ic:null,style:1,l2:`${fmtCd(ab.cd)} · corps à corps`,d:ab.d,sel:MY.j[0]===i}})}}
  if(typeof p==='number'){const own=MY.clan>=0?'c'+MY.clan:'u',cur=JL[MY.j[p]];
   const A=avail(MY,p).slice().sort((a,b)=>(a.cat!==own)-(b.cat!==own)||a.cost-b.cost||a.n.localeCompare(b.n)),cats=[...new Set(A.map(j=>j.cat))];
   return{kind:'j',title:`${lbl[SLOTS[p]]} · ${SLOTN[p]}`,sub:`Le rang fixe le coût en points du kit et en chakra · kit actuel : ${c0} / ${BUD} points`,tabs:cats.length>1?['Tous'].concat(cats.map(catName)):null,tabC:['#ffb347'].concat(cats.map(catCol)),

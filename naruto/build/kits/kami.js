@@ -29,7 +29,7 @@ KIT('c16',[
  [5,'A','x.km_angel','Ange de papier',KMD.angel,'km_paper'],
 ]);
 // style de combat propre (ajouté à la fin de STYLES)
-STYLES.push(['Feuilles tranchantes','Feuilles de papier tranchantes à moyenne portée ; tous les 3 tirs qui touchent, une feuille rejoint ta réserve','x.km_style','km_paper','sand',[16],.66,.70]);
+STYLES.push(['Mains-lames de papier','Feuilles repliées en lames sur tes avant-bras, coups vifs ; tous les 3 coups qui touchent, une feuille rejoint ta réserve ; 5e coup : tourbillon de papier tout autour','x.km_style','km_paper','paper',[16],1.12,1.07]);
 // apparence du clan : yeux ambrés et fleur de papier dans les cheveux (si aucun accessoire choisi)
 CLOOK[16]=(look)=>{look.head.eye='#d89a3a';if(!look.head.acc)look.head.acc='fleur'};
 
@@ -44,10 +44,11 @@ function km_gain(u,n){const k=Math.min(n,KM_MAX-(u.km_pp|0));if(k>0)u.km_pp=(u.k
 
 // ---------- mécaniques ----------
 Object.assign(NAT,{
- // attaque de base : feuilles tranchantes ; 3 touches = une feuille en réserve
- km_style:SP('Feuilles tranchantes','',.36,{hero:'lando',ai:{max:560,p:.85}},(u,a)=>{u.km_sh=u.km_sh?0:1;km_S('saber',u);
-  proj(u,a,{vfx:'km_paper',spd:900,r:6,dmg:7.5,life:.62,col:KMC.w,kind:'km_card',onHit:(p,t)=>{const o=p.owner;o.km_hc=(o.km_hc|0)+1;if(o.km_hc>=3){o.km_hc=0;if(km_gain(o,1))jx({jfx:'km_back',ui:km_I(o),x:t.x,y:t.y,n:1,t:.5,m:.5})}}});
-  anim(u,u.km_sh?'st_kthr':'st_kthl',.26)}),
+ // attaque de base (corps à corps) : mains-lames de papier ; 3 coups qui touchent = une feuille en réserve ; 5e : tourbillon tout autour
+ km_style:SP('Mains-lames de papier','',.34,{hero:'rey',melee:1,ai:{max:92,p:1}},(u,a)=>{const c=stC(u),T=[0,[88,1.7,9,.34],[88,1.7,9,.34],[92,2.2,10,.38],[94,2.4,10,.42],[86,6.3,12,.58]][c],W=KMC.w,B=KMC.b;
+  stMelee(u,a,T[0],T[1],T[2],{},[0,{d:-1,tl:.6,z:36,th:7,c:W,c2:B,blade:1,fl:'paper'},{d:1,tl:-.6,z:36,th:7,c:W,c2:B,blade:1,fl:'paper'},{d:-1,tl:.8,z:32,th:8,c:W,c2:B,blade:1,x2:1,fl:'paper'},{d:1,tl:1.4,z:30,th:9,c:W,c2:B,rr:.7,fl:'paper'},{d:-1,z:26,th:10,c:W,c2:B,rr:.8,fl:'paper'}][c],e=>{
+   u.km_hc=(u.km_hc|0)+1;if(u.km_hc>=3){u.km_hc=0;if(km_gain(u,1))jx({jfx:'km_back',ui:km_I(u),x:e.x,y:e.y,n:1,t:.5,m:.5})}});
+  if(c===5){jx({jfx:'km_swirl',ui:km_I(u),x:u.x,y:u.y,t:.5,m:.5});S('wind',u)}stCd(u,T[3]);anim(u,'st_pap'+c,c===5?.4:.27)}),
  // Shuriken de papier : éventail, +1 shuriken par feuille dépensée (2 max)
  km_shuri:SP('Shuriken de papier',KMD.shuri,5,{line:{len:520,w:60},ai:RG(480,.7)},(u,a)=>{const n=3+km_spend(u,2);S('wind',u);km_S('saber',u);anim(u,'km_flick',.42);
   jx({jfx:'km_fold',ui:km_I(u),x:u.x,y:u.y,a,t:.35,m:.35});
@@ -154,8 +155,6 @@ function km_star(R,rot){g.save();g.rotate(rot);g.strokeStyle=KMC.o;g.lineWidth=1
  for(let i=0;i<4;i++){const b=i*Math.PI/2;g.fillStyle=i%2?KMC.b:KMC.w;g.beginPath();g.moveTo(0,0);g.lineTo(Math.cos(b)*R*.35-Math.sin(b)*R*.35,Math.sin(b)*R*.35+Math.cos(b)*R*.35);g.lineTo(Math.cos(b)*R,Math.sin(b)*R);g.closePath();g.fill();g.stroke();
   g.fillStyle=i%2?KMC.l:KMC.s;g.beginPath();g.moveTo(0,0);g.lineTo(Math.cos(b)*R,Math.sin(b)*R);g.lineTo(Math.cos(b)*R*.35+Math.sin(b)*R*.35,Math.sin(b)*R*.35-Math.cos(b)*R*.35);g.closePath();g.fill();g.stroke()}
  g.fillStyle=KMC.o;g.beginPath();g.arc(0,0,R*.12,0,7);g.fill();g.restore()}
-// feuilles de base : petite feuille qui tourne, traînée blanche
-PROJD.km_card=(p,R,ra,t)=>{g.save();g.rotate(ra);g.strokeStyle='rgba(255,255,255,.4)';g.lineWidth=2;g.beginPath();g.moveTo(-30,0);g.lineTo(-9,0);g.stroke();g.restore();km_leaf(0,0,.95,ra+t/70,Math.cos(t/45),1)};
 PROJD.km_shuri=(p,R,ra,t)=>{g.save();g.rotate(ra);g.strokeStyle='rgba(200,214,244,.45)';g.lineWidth=3;g.beginPath();g.moveTo(-28,0);g.lineTo(-8,0);g.stroke();g.restore();g.scale(1,.8);km_star(R*1.5,t/28)};
 // lance de papier : losange long et plié, pointe bleue
 PROJD.km_spear=(p,R,ra,t)=>{g.rotate(ra);g.strokeStyle='rgba(255,255,255,.45)';g.lineWidth=1.5;g.beginPath();for(const y of[-4,0,4]){g.moveTo(-60,y);g.lineTo(-36-Math.abs(y)*2,y)}g.stroke();

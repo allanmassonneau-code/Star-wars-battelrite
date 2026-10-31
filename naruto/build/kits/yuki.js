@@ -27,8 +27,8 @@ KIT('c20',[
  [2,'B','x.yu_step','Pas du miroir',YU_D.step,'yu_ice'],
  [5,'A','x.yu_blizzard','Hyôton : Blizzard',YU_D.bliz,'yu_ice'],
 ]);
-// style de combat propre : les senbon de Haku (seul style du clan : un Yuki se bat à distance)
-STYLES.push(['Senbon de glace','Aiguilles rapides à longue portée ; une aiguille sur trois est de glace : 7 dégâts, elle traverse les ennemis','x.yu_style','senbon','senbon',[20],.76,.76]);
+// style de combat propre : frappes de glace de Haku (seul style du clan, corps à corps)
+STYLES.push(['Frappes de glace','Paumes et lames de glace ; 3e coup : taille gelée qui ralentit ; 5e : la glace éclate devant toi et pose 1 givre (en plus du givre du trait, 1 tous les 3 coups)','x.yu_style','senbon','ice',[20],1.12,1.07]);
 
 // ---- aides
 const YUC={ice:'#bfe6ff',lt:'#e8f8ff',md:'#7fc8f0',dk:'#3a78a8',deep:'#1a3a5a',ol:'#16324a',wh:'#ffffff'};
@@ -63,10 +63,12 @@ function yu_burst(o,x,y,skip,R,d){if(!o)return;for(const e of enemies(o))if(e!==
 const yu_mirs=u=>aux.filter(x=>x.type==='yu_mir'&&x.owner===u&&x.t>.15);
 
 Object.assign(NAT,{
- // ---------- style : Senbon de glace (une aiguille sur trois est de glace et pose 1 givre) ----------
- yu_style:SP('Senbon de glace','',.27,{hero:'ig88',ai:{max:560,p:.9}},(u,a)=>{if(SIMT-(u.yu_st||-9)>1.5)u.yu_sn=0;u.yu_st=SIMT;u.yu_sn=(u.yu_sn||0)%3+1;const ice=u.yu_sn===3;yu_S('blaster',u);u.yu_sh=u.yu_sh?0:1;
-  const o={spd:1150,r:ice?5:4,dmg:ice?7:5.5,life:.56,col:ice?YUC.md:'#e8eef6',kind:ice?'yu_icen':'yu_sen'};if(ice){o.pierce=1;o.onHit=(p,t)=>{if(near(t.x,t.y))sparks(t.x,t.y,YUC.ice,5,'yu_ice')}}
-  proj(u,a,o);if(ice)projs[projs.length-1].vfx='yu_ice';anim(u,u.yu_sh?'st_flickr':'st_flickl',.22)}),
+ // ---------- style (corps à corps) : Frappes de glace (3e coup : ralentit ; 5e : éclats de glace, 1 givre) ----------
+ yu_style:SP('Frappes de glace','',.38,{hero:'rey',melee:1,ai:{max:100,p:1}},(u,a)=>{const c=stC(u),T=[0,[84,1.7,10,.38],[84,1.7,10,.38],[92,2.2,11,.44],[86,1.6,11,.44],[104,1.8,13,.62]][c],M=YUC.md;
+  stMelee(u,a,T[0],T[1],T[2],c===3?{slow:.5}:{},[0,{jfx:'st_line',off:-6,z:36,c:M},{jfx:'st_line',off:6,z:36,c:M},{d:-1,z:26,th:11,c:YUC.lt,c2:M,fl:'ice'},{d:1,tl:1.45,z:30,th:11,c:YUC.lt,c2:M,fl:'ice',rr:.6},{d:-1,tl:.4,z:30,th:13,c:YUC.lt,c2:YUC.dk,fl:'ice',rr:.75}][c],e=>{
+   if(near(e.x,e.y))sparks(e.x,e.y,YUC.ice,5,'yu_ice');if(c===5)yu_frost(u,e,1)});
+  if(c===5){const p=fwd(u,a,T[0]*.7);jx({jfx:'yu_shatter',x:p.x,y:p.y,r:46,t:.6,m:.6});yu_S('rock',u)}
+  stCd(u,T[3]);anim(u,'st_ice'+c,c===5?.34:.28)}),
  // ---------- Tsubame Fubuki (D) : 5 hirondelles de neige qui convergent vers le point visé ----------
  yu_swallow:SP('Hyôton : Tsubame Fubuki',YU_D.swallow,6,{ai:RG(460,.7),line:{len:460,w:90}},(u,a,td)=>{const c=atP(u,a,td,460),D=new Map(),ps=[];yu_S('wind',u);yu_S('blaster',u);anim(u,'yu_sweep',.45);
   jx({jfx:'yu_gust',ui:yu_i(u),x:u.x,y:u.y,a,t:.45,m:.45});
@@ -225,8 +227,7 @@ Object.assign(ANIM,{
 });
 
 // ---- visuels
-// senbon (une pointe de givre) et aiguille de glace (cristal lumineux)
-PROJD.yu_sen=(p,R,ra,t)=>{g.rotate(ra);g.strokeStyle='rgba(191,230,255,.35)';g.lineWidth=1;g.beginPath();g.moveTo(-30,0);g.lineTo(-14,0);g.stroke();g.strokeStyle='#eef6ff';g.lineWidth=1.6;g.beginPath();g.moveTo(-14,0);g.lineTo(12,0);g.stroke();g.fillStyle=YUC.ice;g.fillRect(9,-1,4,2)};
+// aiguille de glace (cristal lumineux)
 PROJD.yu_icen=(p,R,ra,t)=>{g.rotate(ra);g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba(YUC.md,.45);g.lineWidth=6;g.beginPath();g.moveTo(-14,0);g.lineTo(10,0);g.stroke();g.restore();
  g.strokeStyle=rgba(YUC.lt,.4);g.lineWidth=1.2;g.beginPath();g.moveTo(-36,0);g.lineTo(-16,0);g.stroke();
  g.fillStyle=YUC.ice;g.strokeStyle=YUC.dk;g.lineWidth=.8;g.beginPath();g.moveTo(15,0);g.lineTo(4,-2.6);g.lineTo(-16,-1.2);g.lineTo(-16,1.2);g.lineTo(4,2.6);g.closePath();g.fill();g.stroke();g.fillStyle='#fff';g.fillRect(-10,-.6,18,1.2)};

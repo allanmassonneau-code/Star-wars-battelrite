@@ -4,8 +4,9 @@ const CKCOST={D:10,C:16,B:21,A:28,S:36},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13
 // coût en chakra d'un jutsu (les ultimes coûtent 14 de plus) : une jauge pleine = 5 jutsu environ
 const jcost=ab=>ab&&ab.rank?CKCOST[ab.rank]+(ab.ult?14:0):0;
 let COMBO3=false; // vrai pendant le 5e coup du combo corps à corps (petit étourdissement)
-// corps à corps : combo de 5 coups (20 d'endurance chacun = un combo complet) ; distance : 10 d'endurance par tir, sans combo
-const MELEEK=new Set(['fist','bigfist','palm','claws','bone','sword']);
+// attaque de base = toujours au corps à corps : combo de 5 coups (20 d'endurance chacun = un combo complet) ; toutes les armes des styles sont de mêlée
+// (le moteur garde le cas « distance » : 10 d'endurance par tir, sans combo, pour une arme hors de cette liste)
+const MELEEK=new Set(['fist','bigfist','palm','claws','bone','sword','kunai','shadow','bugs','chain','senbon','sand','puppet','vine','fan','gold','paper','shuriken','ice']);
 const meleeU=u=>MELEEK.has(u.ch.look.weapon.k);
 function drawFlowN(u,p,S,sk){const t=performance.now()/1000,col=u.ch.look.weapon.col||'#3af';
  // recharge de chakra (R) : aura toujours bleue — lueur au sol, onde qui s'élargit, flammes de chakra autour du corps, étincelles aspirées, éclat quand la jauge est pleine

@@ -32,8 +32,8 @@ KIT('c17',[
 // FM_BAL : facteur sur tous les dégâts d'un Fûma (équilibrage du clan, à côté de CLANBAL[17] dans nr_ninja.js)
 const FM_BAL=.95,FM_CRIT=1.4,FM_CRIT2=1.6,FM_BCD=2.5,FM_MK=4,FM_BACK=2.0; // critique ×1,4 (×1,6 marque + dos) ; coup dans le dos au plus toutes les 2,5 s ; marque 4 s ; dos = arc de 130° derrière la cible
 const FM_STEEL='#cfd3dd',FM_DARK='#24222c',FM_RED='#ff3048',FM_SHD='#3a2a4a';
-// style de combat propre (ajouté à la fin de STYLES) ; le Taijutsu reste possible pour un Fûma au corps à corps
-STYLES.push(['Lancer Fûma','Shuriken tournoyants à longue portée ; tous les 4 lancers, un 2e shuriken caché dans l\'ombre du 1er, qui marque la cible','x.fm_style','shuriken','kunai',[17],.68,.68]);
+// style de combat propre (ajouté à la fin de STYLES, corps à corps) ; le Taijutsu reste possible
+STYLES.push(['Shuriken en main','Shuriken tenu comme une lame, coups vifs ; 4e coup : tour tranchant qui marque la cible (trait) ; 5e : bond qui plonge sur elle','x.fm_style','shuriken','shuriken',[17],1.12,1.07]);
 {const T=STYLES.find(s=>s[0]==='Taijutsu');if(T&&!T[5].includes(17))T[5].push(17)}
 // ---------- aides ----------
 const fmI=u=>units.indexOf(u);
@@ -59,11 +59,11 @@ function fmStrike(u,e,dmg,o){const p0={x:u.x,y:u.y},p=fmBackPos(e,u);jx({jfx:'fm
 const fmShu=(u,a,o)=>proj(u,a,Object.assign({spd:900,r:6,dmg:7,life:.66,col:FM_STEEL,kind:'fm_shu'},o));
 // ---------- mécaniques ----------
 Object.assign(NAT,{
- // style : shuriken alternés ; tous les 4 lancers, un 2e caché dans l'ombre du 1er (le 1er marque)
- fm_style:SP('Lancer Fûma','',.34,{hero:'lando',ai:{max:600,p:.85}},(u,a)=>{if(SIMT-(u.fm_kt||-9)>1.6)u.fm_kn=0;u.fm_kt=SIMT;u.fm_kn=(u.fm_kn||0)%4+1;const k4=u.fm_kn===4;S('blaster',u);
-  fmShu(u,a,{dmg:7,life:.68,o:k4?{fm_sh:1}:{}});
-  if(k4){const p1=projs[projs.length-1];proj(u,a,{x:p1.x-Math.cos(a)*20,y:p1.y-Math.sin(a)*20,spd:900,r:6,dmg:5,life:.7,col:FM_DARK,kind:'fm_kage',noClash:1})}
-  anim(u,u.fm_kn%2?'fm_flickr':'fm_flickl',.24)}),
+ // style (corps à corps) : shuriken tenu en main ; 4e coup : tour tranchant qui marque la cible ; 5e : bond qui plonge
+ fm_style:SP('Shuriken en main','',.36,{hero:'rey',melee:1,ai:{max:100,p:1}},(u,a)=>{const c=stC(u),T=[0,[86,1.7,10,.36],[86,1.7,10,.36],[88,2.4,10,.4],[92,6.3,10,.46],[110,1,13,.6]][c],W='#e8ecf2';
+  if(c===5){stLunge(u,a,48);S('dash',u)}
+  stMelee(u,a,T[0],T[1],T[2],c===4?{fm_sh:1}:{},[0,{d:-1,tl:.6,z:36,th:6,c:W,c2:FM_RED,blade:1},{d:1,tl:-.6,z:34,th:6,c:W,c2:FM_RED,blade:1},{d:-1,z:12,th:7,c:W,c2:FM_RED,blade:1,rr:.8},{d:-1,z:24,th:8,c:W,c2:FM_SHD,blade:1,rr:.85},{jfx:'st_thrust',z:30,c:W,w2:5}][c],e=>jx({jfx:'fm_slash',x:e.x,y:e.y,a,t:.35,m:.35}));
+  if(c===4)fmS('saber',u);stCd(u,T[3]);anim(u,'st_fum'+c,c>=4?.36:.26)}),
  fm_trace:SP('Shuriken traceur',FM_D.trace,5,{line:{len:600,w:14},ai:RG(560,.7)},(u,a)=>{S('blaster',u);anim(u,'fm_flickr',.26);
   fmShu(u,a,{spd:1150,r:6,dmg:10,life:.54,kind:'fm_trace',noClash:1,o:{fm_sh:1,fm_md:6,reveal:1}});jx({jfx:'fm_glint',x:u.x,y:u.y,a,t:.25,m:.25})}),
  // Fûma : arc de cercle (le côté alterne) dont la corde tombe sur la visée, puis retour droit vers le lanceur (moteur : ret)

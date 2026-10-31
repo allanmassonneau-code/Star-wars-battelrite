@@ -168,7 +168,7 @@ function subLotusKick(u,e,b){if(u.dead||e.dead||dist(u,e)>u.r+e.r+34){S('dash',u
   VFX='gate';hit(e,u,18,{stun:.45,unblockable:1});for(const o of enemies(u))if(o!==e&&Math.hypot(o.x-e.x,o.y-e.y)<85+o.r)hit(o,u,8,{kb:180,fx:e.x,fy:e.y});VFX=null;
   aux.push({type:'sub_crack',x:e.x,y:e.y,a:b,r:110,t:1.1,m:1.1,team:u.team,n:(e.x*3+e.y*7)|0,kind:'ring'});jx({jfx:'sub_quake',x:e.x,y:e.y,r:90,t:.5,m:.5});if(near(e.x,e.y)){S('rock',u);shake=Math.max(shake,.32)}}})}
 AUXF.sub_lotus=x=>{const u=x.owner,e=x.tg;if(!u||u.dead||!e||e.dead||u.stun>0){x.t=0;return}e.x=u.x+Math.cos(x.a)*26;e.y=u.y+Math.sin(x.a)*26;e.kx=e.ky=0;collide(e);x.x=e.x;x.y=e.y};
-// clones : ciblent l'ennemi le plus proche ; style corps à corps = coups de poing, style à distance = kunai ; un tir ou un coup ennemi les dissipe
+// clones : ciblent l'ennemi le plus proche ; ils frappent au corps à corps (comme tout style) ; un tir ou un coup ennemi les dissipe
 AUXF.sub_clones=(x,dt)=>{const u=x.owner;x.x=u.x;x.y=u.y;const ml=meleeU(u),sp=u.ch.spd*1.08*(u.haste>0?1.3:1);
  for(const p of x.L){if(p.life<=0)continue;const c=p.cl;c.t-=dt;
   if(u.dead||c.t<=0){p.life=0;subPoof(p.x,p.y,34,u);continue}

@@ -17,8 +17,8 @@ KIT('c11',[
  [5,'S','x.hk_bloom','Floraison mortelle','Après 0,8 s, des épines géantes jaillissent (rayon 160) : 38 dégâts, entrave 1 s. Toutes tes pousses éclosent : 16 dégâts et +2 doses autour (2 max par cible)','leaf'],
  [5,'A','x.hk_tree','Arbre millénaire','Un arbre géant pousse 6 s au point visé : ses branches fouettent l\'ennemi le plus proche (11 dégâts/s, portée 210), son ombre soigne tes alliés (4 PV/s) et il pleut du pollen','leaf'],
 ]);
-// style de combat propre : fouet de ronces (distance moyenne, attaque de base)
-STYLES.push(['Fouet de ronces','Liane épineuse à moyenne portée ; tous les 3 coups qui touchent, elle secoue du pollen sur la cible (+1 dose)','x.hk_style','leaf','shadow',[11],.94,.94]);
+// style de combat propre : griffes de ronces (corps à corps, attaque de base)
+STYLES.push(['Griffes de ronces','Griffes de lianes épineuses ; 3e coup : la liane fouette droit devant (allonge 118) ; tous les 3 coups qui touchent, du pollen sur la cible (+1 dose) ; 5e : les épines éclatent (+1 dose)','x.hk_style','leaf','vine',[11],1.12,1.07]);
 // apparence du clan : yeux vert sève, fleur dans les cheveux (si aucun accessoire choisi)
 CLOOK[11]=(look)=>{look.head.eye=look.head.eye||'#7ad04a';if(!look.head.acc)look.head.acc='fleur'};
 
@@ -72,11 +72,13 @@ TRAITS[11]={nom:'Jardin vivant',desc:'Là où tu combats, des pousses germent : 
 
 // ---- mécaniques
 Object.assign(NAT,{
- // Fouet de ronces (style) : la liane claque à ~285 de portée ; tous les 3 coups qui touchent, +1 dose de pollen
- hk_style:SP('Fouet de ronces','',.4,{hero:'lando',ai:{max:265,p:.9}},(u,a)=>{S('shadow',u);u.hk_sh=u.hk_sh?0:1;
-  proj(u,a,{spd:1050,r:8,dmg:9,life:.25,col:'#5aa83a',kind:'hk_whip',ox:u.x,oy:u.y,onHit:(p,t)=>{const o=p.owner;if(!o||t.dead)return;o.hk_wc=(o.hk_wc||0)+1;
-   if(o.hk_wc>=3){o.hk_wc=0;hk_pol(t,o,1);hk_puff(t.x,t.y,5)}jx({jfx:'hk_lash',x:t.x,y:t.y,a:ang(o,t),t:.3,m:.3})}});
-  anim(u,u.hk_sh?'hk_lashr':'hk_lashl',.28)}),
+ // Griffes de ronces (style, corps à corps) : griffes de lianes ; 3e coup : la liane fouette droit devant ; tous les 3 coups qui touchent +1 dose de pollen, le 5e +1 en plus
+ hk_style:SP('Griffes de ronces','',.38,{hero:'rey',melee:1,ai:{max:110,p:1}},(u,a)=>{const c=stC(u),T=[0,[82,1.9,10,.38],[82,1.9,10,.38],[118,.7,11,.46],[86,2.6,11,.44],[100,2,13,.6]][c],V='#9ad860',V2='#2a5a1a';
+  stMelee(u,a,T[0],T[1],T[2],{},[0,{d:-1,tl:.7,z:36,th:5,n:3,sp:7,c:V,c2:V2,fl:'vine'},{d:1,tl:-.7,z:36,th:5,n:3,sp:7,c:V,c2:V2,fl:'vine'},null,{d:-1,z:22,th:11,c:V,c2:V2,fl:'vine',x2:1,rr:.75},{d:1,tl:1.2,z:30,th:14,c:V,c2:V2,fl:'vine',rr:.7}][c],e=>{
+   u.hk_wc=(u.hk_wc||0)+1;let n=c===5?1:0;if(u.hk_wc>=3){u.hk_wc=0;n++}if(n){hk_pol(e,u,n);hk_puff(e.x,e.y,5)}jx({jfx:'hk_lash',x:e.x,y:e.y,a:ang(u,e),t:.3,m:.3});
+   if(c===5)jx({jfx:'hk_thorns',x:e.x,y:e.y,r:34,n:7,t:.6,m:.6})});
+  if(c===3){jx({jfx:'st_lash',ui:stI(u),x:u.x,y:u.y,a,R:T[0],kind:'vine',t:.3,m:.3});S('shadow',u)}
+  stCd(u,T[3]);anim(u,'st_hok'+c,c===3?.32:.28)}),
  // Graine épineuse : graine rapide ; touche (pollen) ou tombe, et une pousse germe à cet endroit
  hk_seed:SP('Graine épineuse','',5,{hero:'lando',line:{len:510,w:18},ai:RG(500,.7)},(u,a)=>{anim(u,'hk_flick',.4);S('blaster',u);
   proj(u,a,{spd:820,r:8,dmg:14,life:.6,col:'#8ad05a',kind:'hk_seed',onHit:(p,t)=>{const o=p.owner;hk_pol(t,o,1);if(!o)return;const b=Math.atan2(o.y-t.y,o.x-t.x)+(rnd()-.5)*.8,d=t.r+22;hk_plant(o,t.x+Math.cos(b)*d,t.y+Math.sin(b)*d)}});
@@ -212,9 +214,6 @@ PROJD.hk_seed=(p,R,ra,t)=>{const T=t/1000;g.rotate(ra);g.globalCompositeOperatio
  g.rotate(T*14);for(let i=0;i<6;i++){const a=i*1.047;hk_thorn(Math.cos(a)*R*.7,Math.sin(a)*R*.7,a,R*.75,.9)}g.beginPath();g.ellipse(0,0,R*.95,R*.75,0,0,7);g.fillStyle='#7a5a2a';g.fill();g.strokeStyle=HKO;g.lineWidth=1.4;g.stroke();
  g.fillStyle='#b08a4a';g.beginPath();g.ellipse(-R*.2,-R*.2,R*.4,R*.25,.3,0,7);g.fill();hk_leafS(R*.5,0,R*.9,.3,1,HKL)};
 // fouet de ronces : liane de la main du lanceur jusqu'à la pointe épineuse
-PROJD.hk_whip=(p,R,ra,t)=>{const q=P(p.x,p.y,28),h=P(p.ox!=null?p.ox:p.x,p.oy!=null?p.oy:p.y,30),lx=(h.x-q.x)/q.s,ly=(h.y-q.y)/q.s,L=Math.hypot(lx,ly)||1,nx=-ly/L,ny=lx/L,T=t/1000;
- const pts=[];for(let i=0;i<=10;i++){const k=i/10,w=Math.sin(k*Math.PI)*Math.sin(k*7-T*30)*6;pts.push([lx*(1-k)+nx*w,ly*(1-k)+ny*w])}hk_stem(pts,3.2,1,HKG);
- for(let i=2;i<10;i+=2){const [x,y]=pts[i],pa=Math.atan2(pts[i+1][1]-y,pts[i+1][0]-x);hk_thorn(x,y,pa+(i%4?1.5:-1.5),4.5,.8)}g.rotate(ra);hk_thorn(0,0,0,R*1.4,1);hk_leafS(-R*.6,0,R*1.2,2.4,1,HKL);hk_leafS(-R*.6,0,R*1.2,-2.4,1,HKG)};
 // pousse : butte de terre, tige, deux feuilles ; mûre : fleur rose et pollen qui monte
 AUXD.hk_sprout=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,age=x.m-x.t,gr=Math.min(1,age/1.5),fd=Math.min(1,x.t/.5),sd=x.a||0;g.globalAlpha=fd;
  g.fillStyle='rgba(60,40,20,.55)';g.beginPath();g.ellipse(q.x,q.y,11*s,4.4*s,0,0,7);g.fill();
@@ -331,9 +330,6 @@ STATD.push((u,p,S,sk)=>{const pol=u.hk_pol||0,sap=u.hk_sap>0,mg=u.hk_mg>0;if(!po
  if(mg){const e=1-u.hk_mg/.5;g.save();g.fillStyle='rgba(30,20,10,.6)';g.beginPath();g.ellipse(p.x,p.y,26*S,9*S,0,0,7);g.fill();for(let i=0;i<10;i++){const a=i*.628+t*3,h=(14+i%3*8)*S*(.3+.7*e),x=p.x+Math.cos(a)*15*S*(1-e*.5),y=p.y-h+Math.sin(a)*4*S;hk_leafS(x,y,12*S,a,S,i%2?HKL:HKG)}g.restore()}});
 // ---- animations 3D
 Object.assign(ANIM,{
- // fouet de ronces : le bras part de l'épaule opposée et claque en avant
- hk_lashr:(P,e)=>{const k=e<.35?ezo(e/.35):1,r=e>.35?ezo(Math.min(1,(e-.35)/.3)):0;pz(P,'armR',-2.3*k+1.0*r,0,.9*k-1.2*r);pz(P,'foreR',-.6*k+.5*r);pz(P,'chest',.05,-.35*k+.6*r);pz(P,'armL',.2,0,.3);pz(P,'thighR',-.3*r);pz(P,'shinR',.4*r)},
- hk_lashl:(P,e)=>{const k=e<.35?ezo(e/.35):1,r=e>.35?ezo(Math.min(1,(e-.35)/.3)):0;pz(P,'armL',-2.3*k+1.0*r,0,-.9*k+1.2*r);pz(P,'foreL',-.6*k+.5*r);pz(P,'chest',.05,.35*k-.6*r);pz(P,'armR',.2,0,-.3);pz(P,'thighL',-.3*r);pz(P,'shinL',.4*r)},
  // pichenette : la graine part du pouce
  hk_flick:(P,e)=>{if(e<.4){const k=ezo(e/.4);pz(P,'armR',-1.2*k,0,.3*k);pz(P,'foreR',-1.8*k);pz(P,'chest',0,.3*k)}else{const k=ezo(Math.min(1,(e-.4)/.25));pz(P,'armR',-1.2-.4*k,0,.3-.4*k);pz(P,'foreR',-1.8+1.75*k);pz(P,'chest',.1*k,.3-.5*k);pz(P,'thighR',-.3*k);pz(P,'shinR',.3*k)}pz(P,'armL',.2,0,.3)},
  // paume plaquée au sol : la liane part en avant

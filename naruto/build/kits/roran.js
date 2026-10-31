@@ -3,9 +3,9 @@
 // protège (Barrière : renvoie les tirs), porte (Vol sur l'éventail) et invoque Kamatari, la belette à la faux.
 // Trait « Trois lunes » : chaque jutsu qui touche ouvre une lune de l'éventail ; à 3 lunes, le jutsu suivant part éventail grand ouvert.
 // Combo signature : Vent ascendant (ou l'aller de Kamatari) projette en l'air → Kamaitachi frappe +30 % la cible en l'air.
-// Style propre : Éventail de combat (lames de vent à moyenne portée). Apparence : l'éventail géant dans le dos.
+// Style propre : Éventail fermé (coups d'éventail au contact). Apparence : l'éventail géant dans le dos.
 const RRD={
- st:'Coups d\'éventail : lames de vent à moyenne portée ; tous les 3 coups, une bourrasque large qui perce et repousse',
+ st:'Coups d\'éventail fermé au contact ; 3e coup : estoc qui souffle et repousse ; 5e : l\'éventail s\'abat, la bourrasque repousse fort et balaie les tirs ennemis devant toi',
  kama:'Une faux de vent perçante file en ligne : 14 dégâts, ralentit ; +30 % sur une cible projetée en l\'air',
  gale:'Grand coup d\'éventail devant toi : 18 dégâts, repousse loin, interrompt les mudras et balaie les tirs ennemis',
  up:'Une colonne de vent jaillit au point visé après 0,6 s : 12 dégâts, projette en l\'air (étourdit 0,5 s)',
@@ -32,7 +32,7 @@ KIT('c12',[
  [5,'A','x.rr_typh','Tempête de l\'éventail',RRD.typh,'wind'],
 ]);
 // style de combat propre (toujours ajouté à la fin de STYLES)
-STYLES.push(['Éventail de combat',RRD.st,'x.rr_st','wind','sand',[12],.84,.84]);
+STYLES.push(['Éventail fermé',RRD.st,'x.rr_st','wind','fan',[12],1.12,1.07]);
 
 // ---- outils
 // couleurs : papier de l'éventail, pli, baleines, lune, lune allumée, vent, vent moyen, or du clan
@@ -52,11 +52,11 @@ function rrSweep(u,x,y,a,R,A){for(const p of projs){if(p.dead||p.life<=0||p.gren
 function rrSeg(x,y,ax,ay,bx,by){const dx=bx-ax,dy=by-ay,L=dx*dx+dy*dy,k=L?clamp(((x-ax)*dx+(y-ay)*dy)/L,0,1):0;return Math.hypot(x-ax-dx*k,y-ay-dy*k)}
 
 Object.assign(NAT,{
- // ---- style : lames de vent ; la 3e est une bourrasque large qui perce et repousse
- rr_st:SP('Éventail de combat','',.5,{hero:'bossk',ai:{max:420,p:.85}},(u,a)=>{if(SIMT-(u.rr_sT||-9)>1.6)u.rr_sN=0;u.rr_sT=SIMT;u.rr_sN=(u.rr_sN||0)%3+1;const big=u.rr_sN===3;
-  rrS(big?'heavy':'saber',u);if(big)S('wind',u);
-  proj(u,a,{vfx:'wind',spd:big?760:880,r:big?16:9,dmg:big?7:6,life:big?.54:.47,col:RRC.wind,kind:'rr_gust',pierce:big?1:0,o:big?{kb:300}:{}});
-  rrFan(u,a,big?.34:.26,big?2:1);anim(u,big?'rr_st3':u.rr_sN===1?'rr_st1':'rr_st2',big?.34:.26)}),
+ // ---- style (corps à corps) : éventail fermé ; 3e coup : estoc qui souffle (repousse) ; 5e : l'éventail s'abat, la bourrasque repousse et balaie les tirs ennemis
+ rr_st:SP('Éventail fermé','',.42,{hero:'rey',melee:1,ai:{max:106,p:1}},(u,a)=>{const c=stC(u),T=[0,[92,1.8,10,.42],[92,1.8,10,.42],[110,1.2,11,.48],[96,2.8,11,.46],[104,2.2,14,.66]][c];
+  stMelee(u,a,T[0],T[1],T[2],c===3?{kb:120}:c===5?{kb:200}:{},[0,{d:-1,tl:.6,z:36,th:9,c:RRC.paper,c2:RRC.rib,blade:1},{d:1,tl:-.6,z:32,th:9,c:RRC.paper,c2:RRC.rib,blade:1},{jfx:'st_thrust',z:34,c:RRC.paper,w2:6},{d:-1,z:26,th:12,c:RRC.wind,c2:RRC.wind2,rr:.8},{d:1,tl:1.45,z:30,th:16,c:RRC.wind,c2:RRC.wind2,rr:.65}][c]);
+  if(c===3||c===5){const R=T[0]+(c===5?16:4),W=c===5?1.6:.9;jx({jfx:'rr_gust',x:u.x,y:u.y,a,r:R,w:W,t:.42,m:.42});S('wind',u);if(c===5){rrSweep(u,u.x,u.y,a,R,W);rrFan(u,a,.34,2);rrS('heavy',u)}}
+  stCd(u,T[3]);anim(u,'st_ror'+c,c===5?.42:.3)}),
  // ---- Kamaitachi : faux de vent perçante ; +30 % sur une cible en l'air (trait)
  rr_kama:SP('Kamaitachi',RRD.kama,7,{line:{len:480,w:30},ai:RG(460,.7)},(u,a)=>{const c=rrOpen(u);anim(u,'rr_swing',.42);rrS('saber',u);S('wind',u);rrFan(u,a,.38,1,c.full);
   proj(u,a,{vfx:'wind',spd:900,r:14*c.G,dmg:14*c.F,life:.55,col:RRC.wind,pierce:1,slow:.8,kind:'rr_sickle',o:{rr:c.id,rrAir:1},onHit:(p,t)=>{if(near(t.x,t.y))jx({jfx:'rr_cut',ti:rrI(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.35,m:.35})}})}),
@@ -221,11 +221,6 @@ Object.assign(ANIM,{
  rr_beat:(P,e)=>{const ph=Math.min(.999,e*1.04)*3%1,k=ph<.4?ezo(ph/.4):1-ezo(Math.min(1,(ph-.4)/.6));
   pz(P,'armR',-2.6+1.4*k,0,-.9+1.6*k);pz(P,'armL',-2.2+1.2*k,0,-.2+1.1*k);pz(P,'foreR',-.3);pz(P,'foreL',-.5);pz(P,'chest',-.15+.5*k,-.5+.9*k);
   pz(P,'thighL',-.6);pz(P,'shinL',.7);pz(P,'thighR',.4);pz(P,'shinR',.2);P.root.y=-3-1.5*k},
- // style : coup droit, revers, puis grand coup à deux mains
- rr_st1:(P,e)=>{const k=ezo(Math.min(1,e/.5));pz(P,'armR',-1.5,0,-.9+1.6*k);pz(P,'foreR',-.3);pz(P,'chest',.1,-.4+.8*k);pz(P,'armL',-.6,0,.4);pz(P,'foreL',-1)},
- rr_st2:(P,e)=>{const k=ezo(Math.min(1,e/.5));pz(P,'armR',-1.4,0,.8-1.7*k);pz(P,'foreR',-.6+.4*k);pz(P,'chest',.1,.4-.8*k);pz(P,'armL',-.6,0,.4);pz(P,'foreL',-1)},
- rr_st3:(P,e)=>{const w=e<.35,k=w?ezo(e/.35):ezo(Math.min(1,(e-.35)/.3));
-  if(w){pz(P,'armR',-1.2-1.4*k,0,-.6*k);pz(P,'armL',-1.1-1.3*k,0,-.3*k);pz(P,'chest',-.15*k,-.4*k)}else{pz(P,'armR',-2.6+1.3*k,0,-.6+1.5*k);pz(P,'armL',-2.4+1.2*k,0,-.3+1.3*k);pz(P,'chest',-.15+.4*k,-.4+.9*k);pz(P,'thighL',-.4*k);pz(P,'shinL',.5*k);P.root.y=-2*k}},
 });
 
 // ---- visuels
@@ -253,11 +248,6 @@ PROJD.rr_sickle=(p,R,ra,t)=>{g.rotate(ra);const L=R*2.1;g.globalCompositeOperati
  g.globalCompositeOperation='source-over';g.fillStyle=rgba('#f6fffc',.93);g.beginPath();g.arc(-R*.5,0,L,-1.05,1.05);g.arc(-R*1.3,0,L*.97,1,-1,true);g.closePath();g.fill();
  g.strokeStyle=rgba(RRC.gold,.95);g.lineWidth=1.8;g.beginPath();g.arc(-R*.5,0,L,-1.05,1.05);g.stroke();g.strokeStyle=rgba('#2a7a68',.45);g.lineWidth=1;g.beginPath();g.arc(-R*1.3,0,L*.97,-1,1);g.stroke();
  g.strokeStyle=rgba('#ffffff',.7);g.lineWidth=1.2;g.beginPath();for(let i=-2;i<=2;i++){const y=i*L*.3,x0=-R*1.5+Math.sin(t/50+i)*2;g.moveTo(x0,y);g.lineTo(x0-R*(1.4+(i&1)*.8),y*1.05)}g.stroke()};
-// lame du style (petite) ; la bourrasque du 3e coup est double
-PROJD.rr_gust=(p,R,ra,t)=>{g.rotate(ra);const big=R>12,L=R*(big?1.7:1.9);g.globalCompositeOperation='lighter';g.strokeStyle=rgba(RRC.wind2,.45);g.lineWidth=2;g.beginPath();g.arc(-R*1.6,0,L,-.9,.9);g.stroke();
- g.fillStyle=rgba('#f2fffa',.85);g.beginPath();g.arc(-R*.4,0,L,-1,1);g.arc(-R*1.1,0,L*.96,.95,-.95,true);g.closePath();g.fill();
- if(big){g.fillStyle=rgba(RRC.wind2,.55);g.beginPath();g.arc(-R*1.2,0,L*.9,-1,1);g.arc(-R*1.8,0,L*.86,.95,-.95,true);g.closePath();g.fill();g.strokeStyle=rgba(RRC.gold,.8);g.lineWidth=1.4;g.beginPath();g.arc(-R*.4,0,L,-1,1);g.stroke()}
- g.globalCompositeOperation='source-over'};
 // vague de la Grande Kamaitachi : trois croissants géants empilés, poussière soulevée
 PROJD.rr_wave=(p,R,ra,t)=>{g.rotate(ra);const L=R*1.75,gr=Math.min(1,(p.life0-p.life)/.12+.4);g.scale(gr,gr);
  g.fillStyle=rgba('#c8fff0',.16);g.beginPath();g.arc(-R*1.2,0,L*1.08,-1.1,1.1);g.arc(-R*3,0,L,1.05,-1.05,true);g.closePath();g.fill();
