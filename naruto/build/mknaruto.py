@@ -370,7 +370,7 @@ rep("function updUnit(u,dt,active){\n","function updUnit(u,dt,active){hlTick(u,d
 rep("if(p.KeyT)tryUse(u,5,td,false);bufTick(u,dt,td,I)}","if(p.KeyT)tryUse(u,5,td,false);bufTick(u,dt,td,I);hlInput(u,dt,I)}")
 # IA : soin des alliés en difficulté, distance pour se recharger quand le chakra manque, chakra gardé pour l'ultime
 rep("const th=threat(u);","const th=threat(u);if(hlAI(u))return[mx,my];")
-rep("const pref=u.ch.pref,rad=","const pref=aiPref(u,e),rad=")
+rep("const pref=u.ch.pref,rad=d>pref+40?1:","const pref=aiPref(u,e),rad=d>aiIn(u,pref)?1:")
 rep("if(!h||u.cds[i]>0||u.energy<jcost(ab))continue;","if(!h||u.cds[i]>0||u.energy<jcost(ab)||aiSave(u,i,h))continue;")
 # HUD : coût en chakra des cases, jauge chiffrée, case du soin
 rep("if(ab.cast)text(`${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');","if(ab.cast)text(`${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');hudCost(p,ab,i,x,y,s,sh);")

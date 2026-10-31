@@ -5,8 +5,8 @@
 // En ligne, l'hôte décide : son profil part chez les invités (message 'bal') pour que tout le monde voie les mêmes chiffres.
 // Simulateur : une iframe cachée charge le même jeu avec ?sim=1 (ni rendu ni boucle de jeu) et joue les duels par tranches, pilotée par messages :
 // l'état de la partie et du menu du joueur n'est jamais touché, et rien ne tourne quand le panneau est fermé.
-// L'iframe est en bac à sable (sandbox) : Chrome la fait tourner dans un autre processus, donc l'interface reste fluide, et elle n'a pas accès
-// aux sauvegardes du joueur. En file:// le bac à sable bloquerait les scripts locaux (three.js, PeerJS) : iframe ordinaire.
+// L'iframe est en bac à sable (sandbox) : elle n'a pas accès aux sauvegardes du joueur. Elle tourne souvent dans le MÊME processus que la page
+// (pas d'isolation des iframes en bac à sable partout) : les tranches sont donc courtes (10 ms, temps vérifié après chaque image simulée) pour garder l'interface fluide. En file:// le bac à sable bloquerait les scripts locaux (three.js, PeerJS) : iframe ordinaire.
 const BLSIM=/[?&]sim=1(&|$)/.test(location.search);
 const BLC={gm:1,jm:1,m1:1,jcd:1,ult:22,hp:1,spd:1,cur:null,saved:{},host:null,open:false,drawn:0,dirty:false,D:null,sig:'',tab:'g',jf:{q:'',cat:'',rk:'',mod:false},lm:null,ro:false};
 let BLJ=1,BLU=null; // contexte : multiplicateur de dégâts du jutsu en cours et son lanceur (BLU)
@@ -17,7 +17,7 @@ const BLG=[['hp','PV des ninjas','Multiplie les PV de tous les ninjas (après cl
  ['spd','Vitesse de course','Multiplie la vitesse de déplacement de tous les ninjas.',.7,1.3,.01,'x','Ninjas'],
  ['dmg','Dégâts (tout)','Multiplie tous les dégâts infligés : jutsu, attaques de base, traits de clan.',.5,2,.01,'x','Dégâts'],
  ['jdmg','Dégâts des jutsu','Multiplie les dégâts de tous les jutsu (coups, projectiles, zones, effets différés).',.5,2,.01,'x','Dégâts'],
- ['m1','Dégâts de l\'attaque de base','Multiplie les dégâts du clic gauche (style de combat).',.5,2,.01,'x','Dégâts'],
+ ['m1','Dégâts de l\'attaque de base','Multiplie les dégâts du clic gauche (style de combat) ; ×0,40 dans le jeu de base.',.2,2,.01,'x','Dégâts'],
  ['jcd','Recharge des jutsu','Multiplie le temps de recharge de tous les jutsu, sauf les ultimes.',.5,2,.01,'x','Recharges'],
  ['ult','Recharge des ultimes','Temps de recharge des ultimes (T).',10,40,1,'s','Recharges'],
  ['ckSp','Chakra en début de manche','Chakra (sur 100) au début de chaque manche et à la réapparition.',20,100,1,'','Chakra'],
@@ -29,11 +29,11 @@ const BLG=[['hp','PV des ninjas','Multiplie les PV de tous les ninjas (après cl
  ['ckS','Coût d\'un jutsu S','Chakra dépensé par un jutsu de rang S.',0,60,1,'','Coût en chakra par rang'],['ckU','Surcoût d\'un ultime','Ajouté au coût de son rang pour un ultime (T).',0,40,1,'','Coût en chakra par rang'],
  ['heal','Soin (H) disponible','Le soin commun à tous les ninjas (touche H).',0,1,1,'b','Soin (H)'],
  ['hlCd','Recharge du soin','Temps de recharge du soin (H).',15,120,1,'s','Soin (H)'],
- ['hlPct','Soin immédiat','Part des PV max rendue tout de suite (puis 8 % en 2 s).',5,50,1,'%','Soin (H)'],
- ['dur','Durée visée d\'un duel','Repère du simulateur : ses suggestions visent cette durée médiane (45 à 60 s conseillé).',30,90,1,'s','Simulateur']];
+ ['hlPct','Soin immédiat','Part des PV max rendue tout de suite (puis 8 % en 2 s).',5,50,1,'%','Soin (H)']];
+// (la durée visée d'un duel n'est pas un réglage du jeu : c'est un repère du simulateur, gardé à part dans ce navigateur, BLS.opt.dur)
 const BLGK={};for(const r of BLG)BLGK[r[0]]=r;
-function blGDef(k){const D=BLC.D;if(!D)return 1;if(k==='ult')return 22;if(k==='ckSp')return D.CK.spawn;if(k==='ckU')return D.ck.U;if(/^ck[DCBAS]$/.test(k))return D.ck[k[2]];
- if(k==='heal')return D.hl.on?1:0;if(k==='hlCd')return D.hl.cd;if(k==='hlPct')return Math.round(D.hl.pct*100);if(k==='dur')return 52;return 1}
+function blGDef(k){const D=BLC.D;if(k==='m1')return M1K;if(!D)return 1;if(k==='ult')return 22;if(k==='ckSp')return D.CK.spawn;if(k==='ckU')return D.ck.U;if(/^ck[DCBAS]$/.test(k))return D.ck[k[2]];
+ if(k==='heal')return D.hl.on?1:0;if(k==='hlCd')return D.hl.cd;if(k==='hlPct')return Math.round(D.hl.pct*100);return 1}
 const blG=(p,k)=>p&&p.g&&p.g[k]!=null?p.g[k]:blGDef(k);
 const blJK=J=>J.cat+'|'+J.n; // clé d'un jutsu dans un profil (un même nom peut exister dans plusieurs catégories)
 const blCount=p=>p?Object.keys(p.g).length+Object.keys(p.c).length+Object.keys(p.n).length+Object.keys(p.s).length+Object.keys(p.j).length:0;
@@ -45,7 +45,7 @@ function blNorm(p){p=p&&typeof p==='object'?p:{};const o={v:1,name:String(p.name
  pair(p.c,o.c,k=>BLC.D&&BLC.D.c[k]?BLC.D.c[k]:(+k>=-1&&+k<CLANS.length&&String(+k)===k?[1,1]:null),2);
  pair(p.n,o.n,k=>BLC.D&&BLC.D.n[k]?BLC.D.n[k]:(+k>=0&&+k<NATURES.length&&String(+k)===k?[1,1]:null),2);
  pair(p.s,o.s,k=>typeof k==='string'&&k.length<60?[1,1,1]:null,3);
- for(const k in p.j||{}){const q=p.j[k];if(!q||typeof q!=='object'||k.length>90)continue;const x={},d=num(q.d,.25,3),cd=num(q.cd,.3,60),ck=num(q.ck,0,100);if(d!=null&&d!==1)x.d=d;if(cd!=null)x.cd=cd;if(ck!=null)x.ck=Math.round(ck);if(Object.keys(x).length)o.j[k]=x}
+ for(const k in p.j||{}){const q=p.j[k];if(!q||typeof q!=='object'||k.length>90)continue;const x={},d=num(q.d,.25,3),cd=num(q.cd,.3,60),ck=num(q.ck,0,100),d0=(JBAL[k]&&JBAL[k].d)??1;if(d!=null&&Math.abs(d-d0)>1e-9)x.d=d;if(cd!=null)x.cd=cd;if(ck!=null)x.ck=Math.round(ck);if(Object.keys(x).length)o.j[k]=x}
  return o}
 const blCopy=p=>JSON.parse(JSON.stringify(p));
 const blData=p=>({g:p.g,c:p.c,n:p.n,s:p.s,j:p.j});
@@ -122,7 +122,7 @@ function blDuelEnd(){const X=BLX,c=X.cur,to=state==='fight',w=to?(units[0].hp/un
  X.cur=null}
 function blSimStep(ms){const X=BLX;if(!X)return true;const t0=performance.now();
  while(performance.now()-t0<ms){if(!X.cur){if(X.i>=X.q.length)return true;const [c,i]=X.q[X.i++];blDuelSetup(c,i)}
-  for(let n=0;n<400&&X.cur;n++){update(1/30);X.cur.k++;if(state!=='fight'||X.cur.k>=30*150)blDuelEnd();else if((n&3)===3&&performance.now()-t0>=ms)break}}
+  for(let n=0;n<400&&X.cur;n++){update(1/30);X.cur.k++;if(state!=='fight'||X.cur.k>=30*150)blDuelEnd();else if(performance.now()-t0>=ms)break}}
  return X.i>=X.q.length&&!X.cur}
 function blSimMain(){draw=()=>{};loop=()=>{};OPT.p3d=false;try{N3.on=false}catch(e){}muted=true;
  addEventListener('message',e=>{const d=e.data;if(!d||!d.bl)return;try{
@@ -272,7 +272,8 @@ function blToggle(v){const E=blBuild();v=v===undefined?!BLC.open:!!v;if(v===BLC.
  else{if(BLS.run)blSimCancel(true);if(BLC.dirty&&state==='menu')blSync();try{cv.focus()}catch(e){}}blBadge()}
 function blProfOpts(){const E=BLE,c=BLC.cur;if(BLC.ro){const n=BLC.host?BLC.host.p.name:'Standard';E.sel.replaceChildren(blH('option',null,n+' (profil de l\'hôte)'));for(const b of[E.sel,E.bSave,E.bSaveAs,E.bDel,E.bImp,E.bAll,E.tabRs])b.disabled=true;return}E.sel.replaceChildren(blH('option',{value:'\u0001std'},'Standard (jeu de base)'),...Object.keys(BLC.saved).sort().map(n=>blH('option',{value:n},n)));
  if(c.name==='Standard'&&!c.mod)E.sel.value='\u0001std';else if(BLC.saved[c.name]&&!c.mod)E.sel.value=c.name;else{E.sel.prepend(blH('option',{value:'\u0002cur'},c.name+(BLC.saved[c.name]?' (modifié)':' (non enregistré)')));E.sel.value='\u0002cur'}
- E.bDel.disabled=!BLC.saved[c.name];E.bSave.disabled=!c.mod;for(const b of[E.sel,E.bSave,E.bSaveAs,E.bDel,E.bImp,E.bAll,E.tabRs])b.disabled=b.disabled||BLC.ro}
+ for(const b of[E.sel,E.bSaveAs,E.bImp,E.bAll,E.tabRs])b.disabled=false; // réactivés après une session en invité (lecture seule)
+ E.bDel.disabled=!BLC.saved[c.name];E.bSave.disabled=!c.mod}
 function blCounts(){const E=BLE;if(!E)return;const p=blView();E.tabs.g.n.textContent=Object.keys(p.g).length||'';E.tabs.c.n.textContent=Object.keys(p.c).length||'';E.tabs.n.textContent=Object.keys(p.n).length||'';
  E.tabs.s.n.textContent=Object.keys(p.s).length||'';E.tabs.j.n.textContent=Object.keys(p.j).length||'';E.tabs.sim.n.textContent=BLS.run?'…':'';
  const n=blCount(p);E.st.className='bl-st '+(BLC.ro?'host':n?'mod':'std');E.st.textContent=BLC.ro?'Profil de l\'hôte : '+(BLC.host?BLC.host.p.name:'standard'):n?'Non standard · '+n+' réglage'+(n>1?'s':''):'Standard';blProfOpts()}
@@ -369,7 +370,7 @@ function blImport(){const ta=blH('textarea',{placeholder:'Colle ici un profil ex
  const m=blModal('Importer un profil',blH('div',null,blH('p',null,'Colle le texte d\'un profil exporté, ou ouvre un fichier .json. Il remplace les réglages actuels (enregistre-le ensuite pour le garder).'),ta,fi,err),[['Annuler'],['Ouvrir un fichier…',()=>{fi.click();return false}],['Importer',()=>take(ta.value),'pri']])}
 
 // ---------- simulateur : côté panneau ----------
-const BLS={run:false,fr:null,opt:{grp:{c:1,n:1,s:0,f:0},N:800,mode:'heal',kits:'random'},res:null,t0:0,rate:.05,last:0,sug:null,cancelled:false,prof:''};
+const BLS={run:false,fr:null,opt:{grp:{c:1,n:1,s:0,f:0},N:800,mode:'heal',kits:'random',dur:blCl(+blLS('nrBalDur')||52,30,90)},res:null,t0:0,rate:.05,last:0,sug:null,cancelled:false,prof:''};
 function blSimCats(){const o=BLS.opt.grp,c=[];if(o.c){for(let i=0;i<CLANS.length;i++)c.push('c'+i);c.push('u')}if(o.n)for(let i=0;i<NATURES.length;i++)c.push('n'+i);if(o.s)STYLES.forEach((_,i)=>c.push('s'+i));if(o.f)c.push('free');return c}
 const blCatInfo=c=>c==='u'?{nm:'Sans clan',col:'#9aa3ad',tag:'—',g:'Clans'}:c==='free'?{nm:'Duels libres',col:'#c8b89a',tag:'∗',g:'Libres'}:c[0]==='c'?{nm:CLANS[+c.slice(1)][0],col:CLANS[+c.slice(1)][1],tag:clanTag(+c.slice(1)),g:'Clans'}:
  c[0]==='n'?{nm:NATURES[+c.slice(1)][0],col:NATURES[+c.slice(1)][2],tag:NATURES[+c.slice(1)][0].slice(0,2),g:'Natures'}:{nm:(STYLES[+c.slice(1)]||['?'])[0],col:MELEEK.has((STYLES[+c.slice(1)]||[])[4])?'#e8cfa8':'#8fc8ff',tag:MELEEK.has((STYLES[+c.slice(1)]||[])[4])?'⚔':'➶',g:'Styles (M1)'};
@@ -380,7 +381,7 @@ function blSimStart(){if(BLS.run||state!=='menu')return;const cats=blSimCats();i
  fr.src=location.href.split(/[?#]/)[0]+'?sim=1';BLS.fr=fr;document.body.append(fr);BLS.onm=e=>{if(!BLS.fr||e.source!==BLS.fr.contentWindow)return;const d=e.data;if(!d||!d.blsim)return;
   if(d.blsim==='ready'){BLS.stage='';fr.contentWindow.postMessage({bl:'job',job},'*')}
   else if(d.blsim==='prog'||d.blsim==='done'){BLS.res=d.res;if(d.res.done>0)BLS.rate=(performance.now()-BLS.t0)/1000/d.res.done;if(d.blsim==='done')return blSimEnd();
-   setTimeout(()=>BLS.fr&&BLS.fr.contentWindow.postMessage({bl:'step',ms:22},'*'),0);const t=performance.now();if(t-BLS.last>900){BLS.last=t;blSimPaint()}else blSimProg()}
+   setTimeout(()=>BLS.fr&&BLS.fr.contentWindow.postMessage({bl:'step',ms:10},'*'),0);const t=performance.now();if(t-BLS.last>900){BLS.last=t;blSimPaint()}else blSimProg()}
   else if(d.blsim==='err'){blToast('Erreur du simulateur : '+d.msg);blSimCancel()}};
  addEventListener('message',BLS.onm);blRender()}
 function blSimKill(){if(BLS.fr){BLS.fr.remove();BLS.fr=null}if(BLS.onm)removeEventListener('message',BLS.onm);BLS.onm=null;BLS.run=false}
@@ -397,6 +398,8 @@ function blTabSim(){const o=BLS.opt,cats=blSimCats(),menu=state==='menu',per=cat
   blH('div',{class:'bl-card'},blH('h4',null,'Catégories à tester'),blH('div',{class:'bl-tgl'},tg('c','Clans',CLANS.length+1,'Chaque clan et « sans clan » : kit aléatoire du clan contre un ninja aléatoire'),tg('n','Natures',NATURES.length),tg('s','Styles',STYLES.length,'Chaque attaque de base (M1)'),tg('f','Duels libres',1,'Kits entièrement aléatoires : nourrit surtout les statistiques des jutsu')),
    blH('p',{class:'bl-note',style:{margin:'9px 0 0'}},'Les jutsu sont toujours comptés, dans tous les duels.')),
   blH('div',{class:'bl-card'},blH('h4',null,'Nombre de duels'),Nin,hint),
+  blH('div',{class:'bl-card'},blH('h4',null,'Durée visée d\'un duel'),blNumIn(()=>o.dur,v=>{o.dur=v==null?52:v;blLS('nrBalDur',o.dur);BLS.sug=null;blSimPaint()},52,30,90,1,'s',{lab:'Durée visée d\'un duel',noSl:1}),
+   blH('p',{class:'bl-note',style:{margin:'8px 0 0'}},'Repère des suggestions (durée médiane, 45 à 60 s conseillé). Ne change rien au jeu ni au profil.')),
   blH('div',{class:'bl-card'},blH('h4',null,'Combat'),seg('mode',[['heal','1v1 avec soin (H)','Comme en partie : les bots utilisent le soin commun (référence de l\'équilibrage du jeu)'],['noheal','1v1 sans soin','Comme bal21/sim.mjs : mesure l\'équilibre pur']]),blH('div',{style:{height:'9px'}}),
    seg('kits',[['random','Kits aléatoires','Ninja aléatoire de la catégorie contre un ninja aléatoire'],['preset','Persos préfaits','Persos de l\'anime de la catégorie contre d\'autres persos (kits aléatoires si aucun)']])),
   blH('p',{class:'bl-note',style:{margin:'0 2px',fontSize:'11.5px'}},'Les duels tournent dans une copie isolée du jeu, sans rendu : ta partie et ton menu ne sont pas touchés. Fermer le panneau arrête la simulation.'));
@@ -413,7 +416,7 @@ function blSimPaint(el){el=el||BLS.resEl;if(!el||!BLC.open||BLC.tab!=='sim')retu
  if(!R||!R.done){el.replaceChildren(blH('div',{class:'bl-card',style:{display:'flex',flexDirection:'column',alignItems:'center',justifyContent:'center',textAlign:'center',minHeight:'340px'}},
   blH('div',{style:{fontSize:'44px',opacity:.5,marginBottom:'6px'}},'⚖'),blH('b',{style:{fontSize:'17px',color:'#ffe2b8'}},BLS.run?'Les premiers duels arrivent…':'Teste ton profil en duels de bots'),
   blH('p',{class:'bl-note',style:{maxWidth:'460px',marginTop:'8px'}},'Le simulateur fait s\'affronter des bots en accéléré et mesure le taux de victoire de chaque catégorie. Cible : ',blH('b',null,'45 à 55 %'),', duels de ',blH('b',null,'45 à 60 s'),'. Il peut ensuite proposer des réglages de PV et de puissance.')));return}
- const T=blG(BLC.cur,'dur'),C=Object.entries(R.cats).filter(([,r])=>r.n>0).map(([c,r])=>{const p=r.w/r.n,ci=1.96*Math.sqrt(Math.max(p*(1-p),.0025)/r.n);return Object.assign({c,p,ci,md:blMed(r.ts)},r,blCatInfo(c))});
+ const T=BLS.opt.dur,C=Object.entries(R.cats).filter(([,r])=>r.n>0).map(([c,r])=>{const p=r.w/r.n,ci=1.96*Math.sqrt(Math.max(p*(1-p),.0025)/r.n);return Object.assign({c,p,ci,md:blMed(r.ts)},r,blCatInfo(c))});
  const med=blMed(R.ts),inT=C.filter(x=>x.p>=.45&&x.p<=.55).length,worst=C.slice().sort((a,b)=>Math.abs(b.p-.5)-Math.abs(a.p-.5))[0],to=C.reduce((a,x)=>a+x.to,0);
  const kpi=(v,l,s,col)=>blH('div',{class:'bl-kpi'},blH('span',null,l),blH('b',{style:col?{color:col}:null},v),s?blH('small',null,s):null);
  const out=[blH('div',{class:'bl-kpis'},kpi(String(R.done),'Duels',(BLS.run?'en cours · ':BLS.cancelled?'annulé · ':'')+(to?to+' à la limite de 150 s':'aucun à la limite de temps')+(R.mix?' · '+R.mix+' sans perso préfait':'')),
@@ -451,7 +454,7 @@ function blSimPaint(el){el=el||BLS.resEl;if(!el||!BLC.open||BLC.tab!=='sim')retu
   out.push(box)}
  el.replaceChildren(...out)}
 // suggestion : force (PV × puissance) corrigée de l'écart à 50 %, répartie selon la durée des duels de la catégorie (trop courts : plus de PV, moins de puissance)
-function blSuggest(R){const p0=BLC.cur,T=blG(p0,'dur'),out=[];
+function blSuggest(R){const p0=BLC.cur,T=BLS.opt.dur,out=[];
  for(const c in R.cats){const r=R.cats[c];if(r.n<30||c==='free')continue;const p=r.w/r.n,ci=1.96*Math.sqrt(Math.max(p*(1-p),.0025)/r.n),dev=p-.5;if(Math.abs(dev)<Math.max(.03,ci*.6))continue;
   const f=blCl(1-dev*.9,.8,1.2),md=blMed(r.ts),dk=md?blCl(Math.pow(T/md,.5),.94,1.06):1,fh=Math.sqrt(f)*dk,fp=Math.sqrt(f)/dk,I=blCatInfo(c);
   if(c[0]==='s'){const k=STYLES[+c.slice(1)][0],cur=p0.s[k]||[1,1,1];out.push({on:true,kind:'s',key:k,nm:I.nm,tag:I.tag,col:I.col,p,md,to:[blCl(blR(cur[0]*fh,.01),.5,2),blCl(blR(cur[1]*fp,.01),.5,2),cur[2]],lab:[['PV ×',cur[0],0],['Puissance ×',cur[1],0]]})}
@@ -473,6 +476,7 @@ AFTER.push(()=>{blCapture();blHook();if(BLSIM)return blSimMain();
  const SL=sendLobby;sendLobby=function(){SL();blSend()};
  const NR=netReset;netReset=function(){NR();if(BLC.host){BLC.host=null;blApply(BLC.cur);blBadge()}BLC.ro=false};
  // panneau ouvert : le menu n'est plus redessiné (le canevas garde sa dernière image) ; en solo, la partie est en pause
- const DR=draw;draw=function(){const m=state==='menu';if(m!==BLC.lm){BLC.lm=m;blBadge();if(m&&BLC.dirty)blSync()}if(BLC.open&&m&&BLC.drawn>1)return;if(BLC.open)BLC.drawn++;return DR()};
+ const DR=draw;draw=function(){const m=state==='menu';if(m!==BLC.lm){BLC.lm=m;blBadge();if(m&&BLC.dirty)blSync();
+  if(!m&&BLS.run){blSimCancel(true);blToast('Simulation arrêtée : la partie commence')}else if(!m&&BLC.open)blRender()} /* partie lancée (en ligne, depuis le salon) : le simulateur s'arrête, le pied du panneau se met à jour */if(BLC.open&&m&&BLC.drawn>1)return;if(BLC.open)BLC.drawn++;return DR()};
  const UP=update;update=function(dt){if(BLC.open&&state!=='menu'&&!coop())return;return UP(dt)};
  blBadge()});

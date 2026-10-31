@@ -29,7 +29,8 @@ Les indices sont figés (sauvegardes, `PRESETS`, réseau) : ne jamais réordonne
   Arme (objet tenu en 3D et en 2D, toutes dans `MELEEK`) : `fist bigfist palm claws bone sword kunai shadow bugs chain senbon sand puppet vine fan gold paper shuriken ice` (une nouvelle arme : l'ajouter à `MELEEK` dans `nr_flow.js`, à `buildNinja3D` dans `nr_3d.js` et à `drawNinjaWeapon` dans `nr_char.js`).
   La mécanique passe par `stMelee(u,a,portée,arc,dégâts,o,traînée,cb)` (styles.js, sur `melee()`) ou `stSlam` : combo de 5 coups, endurance, parade (F+clic), étourdissement du 5e coup ; `cb(e)` est appelé pour chaque ennemi vraiment touché.
   Chaque style a sa direction artistique liée au clan : chorégraphie `ANIM` par coup (générateurs `stAJ stAS stASpin stALunge stATwo stAOver stAUp stAKick stACrouch stAPull stALeap stACross`), traînée `st_arc` aux couleurs du clan (`fl` : `sand bugs shadow vine ice paper petal chain gold silk`), effet signature (5e coup) et une petite mécanique liée au trait du clan.
-  Même base pour tous (`hero:'rey'`, modif. 1,12 / 1,07, ≈ 55-60 dégâts par combo de 5 coups en ≈ 2,3 s) ; les différences sont de style : vitesse, allonge, arc, effet. `ai:{max:<allonge>,p:1}`.
+  Même base pour tous (`hero:'rey'`, modif. 1,12 / 1,07, ≈ 55-60 dégâts par combo de 5 coups en ≈ 2,3 s, avant le multiplicateur commun `M1K` = ×0,4 de nr_pace.js) ; les différences sont de style : vitesse, allonge, arc, effet. `ai:{max:<allonge>,p:1}` : un bot au corps à corps s'approche jusqu'à `max`−8 (`aiIn`, nr_pace.js), garde donc `max` ≥ l'allonge réelle du 1er coup + rayon de la cible.
+  La recharge affichée dans le menu est lue dans la table `T=[0,[portée,arc,dégâts,recharge],…]` du style (`stCad`) : garde ce format pour que le rythme affiché reste juste.
   Tant qu'aucun style ne liste ton clan, il prend les styles « sans clan » (Taijutsu, Kunai au poing, Kenjutsu, Kubikiribôchô). Toujours **ajouter à la fin** (`push`), jamais insérer : les sauvegardes gardent l'indice du style (un style qu'on refait est remplacé en place, même indice ; les `PRESETS` le désignent par son nom).
   Un style existant peut aussi être ouvert à ton clan : `STYLES.find(s=>s[0]==='Marionnette')[5].push(14)`.
 - **Apparence imposée** : `CLOOK[<n>]=(look,l,style)=>{look.head.eye='#c8e8ff';look.scale=1.05;…}` (appelé par `ninjaLook`, en 3D et en 2D ; `look.head` : `skin hair style eye eyeT face acc`, `look.back` : objet dans le dos, `look.dog`, `look.gourd`…).
@@ -132,14 +133,14 @@ Champs synchronisés : projectiles (`kind` et les clés de base), objets `aux` (
 Pour synchroniser un nouveau champ de ninja : `AFTER.push(()=>UK.push('ka_monChamp'))`. Les effets créés avec `jx`/`fx`/`sparks` côté hôte sont envoyés aux invités.
 
 ## Équilibre (repères)
-PV des ninjas ≈ 250-350 avant le multiplicateur commun `HPK` (nr_pace.js, réglé pour un duel 1v1 médian de ≈ 50-55 s avec le soin H) ; coup de base ≈ 10-15.
+PV des ninjas ≈ 250-350 avant le multiplicateur commun `HPK` (×1,3, nr_pace.js ; avec `M1K` ×0,4 sur les attaques de base, réglé pour un duel 1v1 médian de ≈ 50 s sans soin) ; coup de base ≈ 10-15.
 Le chakra ne revient plus en frappant : un jutsu qui **vole ou brûle du chakra** pèse donc lourd (il peut pousser la cible à l'épuisement). Par rang (recharge entre parenthèses) :
 D (4-8 s) ≈ 10-18 dégâts ou petite utilité · C (6-10 s) ≈ 16-26 ou contrôle modéré (étourdir ≤ 0,6 s, entraver ≤ 1,2 s) ·
 B (8-12 s) ≈ 22-34 ou contrôle fort (≤ 1 s) / bonne défense · A (10-14 s) ≈ 30-45 + effet · S (ultime, 22 s) ≈ 45-70 ou effet décisif.
 Tout contrôle doit être **lisible** (télégraphe, projectile visible, délai) et **contrable** (esquivable, bloquable, interrompable).
 
 ## Équilibrage en jeu (`nr_bal.js` : panneau F8 + simulateur)
-- Le profil « Standard » (vide) = les valeurs du jeu : `CLANBAL`, `NATBAL`, `STYLEBAL`, `JBAL` (nr_ninja.js), `CK`, `HLS`, `HPK` (nr_pace.js). Un profil ne garde que ses écarts : PV/puissance d'un clan ou d'une nature et réglages d'un jutsu remplacent la valeur du jeu, ceux d'un style la multiplient.
+- Le profil « Standard » (vide) = les valeurs du jeu : `CLANBAL`, `NATBAL`, `STYLEBAL`, `JBAL` (nr_ninja.js), `CK`, `HLS`, `HPK`, `M1K` (nr_pace.js). Un profil ne garde que ses écarts : PV/puissance d'un clan ou d'une nature et réglages d'un jutsu remplacent la valeur du jeu, ceux d'un style la multiplient.
 - Le profil actif (onglets Global, Clans, Natures, Styles, Jutsu) réécrit `CLANBAL`, `NATBAL`, `STYLEBAL`, `CKCOST` (dont `CKCOST.U`, surcoût d'un ultime), `CK` et `HLS`, puis recalcule tous les `CH[…]` sur place ; il est réappliqué à chaque `startMatch`.
 - Dégâts × d'un jutsu : tout ce que le jutsu crée pendant `fire` (projectiles, zones, champs, pièges, clones, `aux`, `seqs`, liens, `later`, fin de `dash`, `stick`, `markB`, brûlures `dot`) garde son multiplicateur. Un jutsu qui recalcule ses dégâts à chaque image, ou les range dans un état du ninja, peut y échapper.
 - Coût propre à un jutsu : `ab.ckO` (lu par `jcost`). Dans un profil, les jutsu sont repérés par `catégorie|nom` et les styles par leur **nom** : renommer un jutsu ou un style fait perdre son réglage.

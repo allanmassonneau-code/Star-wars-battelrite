@@ -1,10 +1,11 @@
 // ===== Clan Shirogane (c14, préfixe sg_) : marionnettistes =====
-// Identité : le ninja se déplace (ZQSD) et sa marionnette suit le curseur ; attaques de base et jutsu partent d'ELLE (trait « Marionnette »).
+// Identité : le ninja se déplace (ZQSD) et sa marionnette suit le curseur ; les jutsu partent d'ELLE (trait « Marionnette »).
+// Attaque de base au corps à corps comme tous les styles : la marionnette revient à côté du ninja et frappe depuis lui (jamais à distance).
 // La marionnette a ses PV : elle encaisse les coups qui la touchent ; brisée, elle se reconstruit (le ninja frappe alors lui-même, plus faiblement).
 // Kit : lames cachées, poison (senbon, brume), bouclier (Sanshôuo), capture (Kuroari), fils de chakra, Kawarimi, ultimes Mère et Père / Armée de marionnettes.
 // Moteur : origine de lancement déplacée sur la marionnette (fire enveloppé dans AFTER), dessin trié en profondeur (sgList, une ligne « # clan Shirogane » dans mknaruto.py).
 const SGD={
- style:'Ta marionnette frappe de ses lames là où elle se trouve ; 4e coup : tourbillon autour d\'elle ; 5e : estoc empoisonné',
+ style:'Corps à corps : ta marionnette revient à ton côté et frappe de ses lames ; 4e coup : tourbillon tout autour ; 5e : elle s\'élance, estoc empoisonné (2 dégâts/s pendant 3 s)',
  blades:'Lames cachées : la marionnette tournoie 0,6 s (rayon 75) ; 3 coups de 6, le dernier ralentit',
  needle:'La gueule de la marionnette crache 5 senbon en éventail (portée 380) : 4 dégâts chacun et poison 3 dégâts/s pendant 3 s',
  strings:'Fils de chakra 3 s sur l\'ennemi le plus proche de la marionnette (220) : ralenti, attiré vers elle (2 dégâts/s), +15 % de tes dégâts sur lui ; rompus au-delà de 340',
@@ -27,11 +28,12 @@ KIT('c14',[
  [5,'A','x.sg_parents','Mère et Père',SGD.parents,'sg_pup'],
  [5,'S','x.sg_army','Armée de marionnettes',SGD.army,'sg_pup'],
 ]);
-// style propre : les lames de la marionnette (seul style du clan : toute attaque de base part d'elle)
+// style propre : les lames de la marionnette (seul style du clan), au corps à corps : elle est rappelée à côté du ninja pour frapper
 STYLES.push(['Lames de marionnette',SGD.style,'x.sg_style','steel','fist',[14],.82,.74]);
 
 // ---------- réglages ----------
-const SG={BAL:.72,TAKE:1.38,L:360,HP:75,REB:7,WEAK:.75,R:16,STR:'#9fe0ff',WOOD:'#c9a273',CLOAK:'#3a2c48',POI:'#a050d0'};
+// BAL : dégâts infligés × ; TAKE : dégâts subis × (le clan perdait 90 % de ses duels sans M1 à distance : 0,72/1,38 → 1,15/1)
+const SG={BAL:1.15,TAKE:1,L:360,HP:75,REB:7,WEAK:.75,R:16,STR:'#9fe0ff',WOOD:'#c9a273',CLOAK:'#3a2c48',POI:'#a050d0'};
 const sgI=u=>units.indexOf(u);
 const sgOn=u=>!!u&&u.ch&&u.ch.clan===14;
 const sgOk=u=>sgOn(u)&&!u.dead&&u.sg_px!=null&&!(u.sg_dn>0); // marionnette en état
@@ -49,11 +51,12 @@ function sgHurt(o,dmg,src){if(!sgOk(o)||!(dmg>0))return;dmg*=(src&&src.ch&&src.c
   for(const x of aux)if((x.type==='sg_spin'||x.type==='sg_mist')&&x.owner===o){x.fx=o.sg_px;x.fy=o.sg_py}}}
 // ---------- mécaniques ----------
 Object.assign(NAT,{
- // style : coups de lame de la marionnette (combo du moteur : melee() part de la marionnette grâce à l'origine déplacée)
- sg_style:SP('Lames de marionnette','',.45,{hero:'palpatine',melee:1,ai:{max:SG.L+70,p:1}},(u,a)=>{
-  if(sgOk(u)&&!sgHum(u)&&!nearE(u,u.x,u.y,112)){u.stam=Math.min(100,u.stam+20);u.cds[0]=.15;u.cmb=u.cmbH=Math.max(0,(u.cmb||1)-1);return} // bot : la marionnette n'est pas encore au contact
+ // style : coups de lame de la marionnette AU CORPS À CORPS (combo du moteur : melee() part du ninja ; la marionnette est rappelée à son côté, sg_rc)
+ sg_style:SP('Lames de marionnette','',.45,{hero:'palpatine',melee:1,ai:{max:100,p:1}},(u,a)=>{
+  if(!sgHum(u)&&!nearE(u,u.x,u.y,112)){u.stam=Math.min(100,u.stam+20);u.cds[0]=.15;u.cmb=u.cmbH=Math.max(0,(u.cmb||1)-1);return} // bot : personne au contact
   const c=u.cmbH||1,T=[0,[78,1.8,10,.4],[78,1.8,10,.42],[80,2.1,11,.46],[84,6.3,11,.5],[100,1.1,13,.6]][c];
-  if(c===5&&sgOk(u)&&u.sg_ox!=null){const bk=Math.hypot(u.x-u.sg_px,u.y-u.sg_py),d=bk>1?0:40;u.sg_px=clamp(u.sg_px+Math.cos(a)*d,B.x+10,B.x+B.w-10);u.sg_py=clamp(u.sg_py+Math.sin(a)*d,B.y+10,B.y+B.h-10);u.x=u.sg_px-Math.cos(a)*bk;u.y=u.sg_py-Math.sin(a)*bk;u.sg_pk=1} // 5e coup : elle s'élance (sauf si elle est déjà sur l'ennemi)
+  if(sgOk(u))u.sg_rc=.7; // la marionnette revient frapper à côté de toi
+  if(c===5){stLunge(u,a,40);S('dash',u)} // 5e coup : élan vers l'avant
   const i=fx.length,n=melee(u,a,T[0],T[1],T[2],c===5?{dot:{dps:2,dur:3}}:{});if(fx[i]&&fx[i].swing)fx.splice(i,1);
   jx({jfx:'sg_slash',x:u.x,y:u.y,a,c,R:T[0],t:.24,m:.24});u.cds[0]=T[3]*(u.rapid>0?.45:1)*(u.ch.pass==='speed'?PASSV.speedA:1);
   if(n&&c===5)for(const e of enemies(u))if(dist(u,e)<T[0]+e.r&&angDiff(ang(u,e),a)<T[1]/2)jx({jfx:'st_poison',ti:sgI(e),x:e.x,y:e.y,t:2,m:2})}),
@@ -126,7 +129,7 @@ AUXF.sg_army=x=>{const o=x.owner;if(!o||o.dead){x.t=0;return}
 
 // ---------- trait : la marionnette ----------
 function sgReset(u){const s=sgSide(u);u.sg_px=s.x;u.sg_py=s.y;u.sg_hp=SG.HP;u.sg_dn=0;u.sg_hT=0;u.sg_pa=u.aim||0}
-TRAITS[14]={nom:'Marionnette',desc:`Ta marionnette suit ton curseur (fils de ${SG.L}) : tes coups et tes jutsu partent d'elle. Elle a ${SG.HP} PV et encaisse les attaques qui la touchent ; brisée, elle se reconstruit en ${SG.REB} s (tu frappes alors toi-même : −${Math.round(100-SG.WEAK*100)} % de dégâts).`,
+TRAITS[14]={nom:'Marionnette',desc:`Ta marionnette suit ton curseur (fils de ${SG.L}) : tes jutsu partent d'elle ; pour tes attaques de base, elle revient frapper à ton côté. Elle a ${SG.HP} PV et encaisse les attaques qui la touchent ; brisée, elle se reconstruit en ${SG.REB} s (tu frappes alors toi-même : −${Math.round(100-SG.WEAK*100)} % de dégâts).`,
  init(u){sgReset(u);u.ch.pref=250},
  // aperçus (galerie, créateur) : la marionnette flotte à côté du ninja, reliée à sa main par les fils
  prev(u,p,S,front){if(!front)return;const t=performance.now()/1000,k=S/1.42,x=p.x+42*k,y=p.y-10*k-Math.sin(t*2.2)*3*k,s=1.3*k,h={x:p.x+13*k,y:p.y-40*k};
@@ -139,11 +142,12 @@ TRAITS[14]={nom:'Marionnette',desc:`Ta marionnette suit ton curseur (fils de ${S
   if(u.sg_dn>0){u.sg_dn-=dt;if(u.sg_dn<=0){sgReset(u);jx({jfx:'sg_poof',x:u.sg_px,y:u.sg_py,r:36,t:.45,m:.45});say(u,'MARIONNETTE PRÊTE','#e8d0a0');if(near(u.x,u.y))S('poof',u)}return}
   // but : curseur (joueur) ou cible (bot : juste devant l'ennemi, côté marionnettiste)
   let gx,gy,ax,ay;const c=sgCur(u);
-  if(c){gx=ax=c.x;gy=ay=c.y}
+  if(u.sg_rc>0){u.sg_rc-=dt;const f=fwd(u,u.aim,34);gx=f.x;gy=f.y;ax=u.x+Math.cos(u.aim)*150;ay=u.y+Math.sin(u.aim)*150} // rappelée pour l'attaque de base
+  else if(c){gx=ax=c.x;gy=ay=c.y}
   else{const e=u.tgt&&!u.tgt.dead&&dist(u,u.tgt)<900?u.tgt:null;if(e){const b=ang(e,u);ax=e.x;ay=e.y;gx=e.x+Math.cos(b)*50;gy=e.y+Math.sin(b)*50}else{ax=u.x+Math.cos(u.aim)*150;ay=u.y+Math.sin(u.aim)*150;const s=sgSide(u);gx=s.x;gy=s.y}}
   u.sg_ax=ax;u.sg_ay=ay;
   {const d=Math.hypot(gx-u.x,gy-u.y);if(d>SG.L){gx=u.x+(gx-u.x)/d*SG.L;gy=u.y+(gy-u.y)/d*SG.L}}gx=clamp(gx,B.x+10,B.x+B.w-10);gy=clamp(gy,B.y+10,B.y+B.h-10);
-  if(u.stun<=0&&!(u.sleepT<0)){const k=1-Math.exp(-11*dt),mx=(gx-u.sg_px)*k,my=(gy-u.sg_py)*k,l=Math.hypot(mx,my),cap=1050*dt;const f=l>cap?cap/l:1;u.sg_px+=mx*f;u.sg_py+=my*f}
+  if(u.stun<=0&&!(u.sleepT<0)){const rc=u.sg_rc>0,k=1-Math.exp(-(rc?30:11)*dt),mx=(gx-u.sg_px)*k,my=(gy-u.sg_py)*k,l=Math.hypot(mx,my),cap=(rc?2800:1050)*dt;const f=l>cap?cap/l:1;u.sg_px+=mx*f;u.sg_py+=my*f}
   {const d=Math.hypot(u.sg_px-u.x,u.sg_py-u.y),M=SG.L+30;if(d>M){u.sg_px=u.x+(u.sg_px-u.x)/d*M;u.sg_py=u.y+(u.sg_py-u.y)/d*M}}
   for(const o of OBST){const m=o.r+10;if(Math.abs(u.sg_px-o.x)>=m||Math.abs(u.sg_py-o.y)>=m)continue;const d=Math.hypot(u.sg_px-o.x,u.sg_py-o.y);if(d<m&&d>0){u.sg_px=o.x+(u.sg_px-o.x)/d*m;u.sg_py=o.y+(u.sg_py-o.y)/d*m}} // pas dans un pilier (ses tirs y mourraient)
   u.sg_pa=Math.hypot(ax-u.sg_px,ay-u.sg_py)>30?Math.atan2(ay-u.sg_py,ax-u.sg_px):u.aim;
@@ -160,8 +164,8 @@ TRAITS[14]={nom:'Marionnette',desc:`Ta marionnette suit ton curseur (fils de ${S
 // ---------- crochets moteur (AFTER : tout le jeu est chargé) ----------
 AFTER.push(()=>{UK.push('sg_px','sg_py','sg_hp','sg_dn','sg_pa','sg_ax','sg_ay');
  Object.assign(VP,{sg_pup:[SG.WOOD,SG.STR,'#7a5a3a'],sg_poison:['#a050d0','#c080ff','#5a2a80']});Object.assign(VSND,{sg_poison:{'*':'bugs',blaster:'blaster'},sg_pup:{dash:'dash'}});
- // origine de lancement : marionnette (sauf déplacements et engagements, qui déplacent le ninja)
- const sgFrom=(u,ab)=>sgOk(u)&&!!ab&&ab!==u.ch.abil[2]&&!(ab.ai&&(ab.ai.mode==='esc'||ab.ai.mode==='gap'||ab.ai.mode==='heal'||ab.ai.mode==='ally'));
+ // origine de lancement : marionnette (sauf attaque de base, toujours au corps à corps, et déplacements et engagements, qui déplacent le ninja)
+ const sgFrom=(u,ab)=>sgOk(u)&&!!ab&&ab.style==null&&ab!==u.ch.abil[2]&&!(ab.ai&&(ab.ai.mode==='esc'||ab.ai.mode==='gap'||ab.ai.mode==='heal'||ab.ai.mode==='ally'));
  const F0=fire;fire=function(u,ab,a,td,ex){
   if(!sgFrom(u,ab))return F0(u,ab,a,td,ex);
   const ox=u.x,oy=u.y,px=u.sg_px,py=u.sg_py,d0=u.dash,an0=u.anim,ax=u.sg_ax??(ox+Math.cos(a)*(td||200)),ay=u.sg_ay??(oy+Math.sin(a)*(td||200)),dc=Math.hypot(ax-px,ay-py),a2=dc>40?Math.atan2(ay-py,ax-px):a;
@@ -170,7 +174,7 @@ AFTER.push(()=>{UK.push('sg_px','sg_py','sg_hp','sg_dn','sg_pa','sg_ax','sg_ay')
   u.x=lx;u.y=ly;u.sg_ox=ox;u.sg_oy=oy;let nx=lx,ny=ly;try{F0(u,ab,a2,Math.max(1,Math.hypot(ax-lx,ay-ly)),ex)}finally{nx=u.x;ny=u.y;u.x=ox;u.y=oy;u.sg_ox=u.sg_oy=null}
   for(let i=n0;i<projs.length;i++){const p=projs[i];if(p.owner===u&&Math.hypot(p.x-lx,p.y-ly)<=26){const b=Math.atan2(p.vy,p.vx);p.x=lx;p.y=ly;if(!bk){p.x-=Math.cos(b)*6;p.y-=Math.sin(b)*6}}} // les tirs naissent dans la marionnette
   if(u.dash&&u.dash!==d0){const d=u.dash;d.tx=clamp(d.tx+ox-d.sx,B.x+u.r,B.x+B.w-u.r);d.ty=clamp(d.ty+oy-d.sy,B.y+u.r,B.y+B.h-u.r);d.sx=ox;d.sy=oy}
-  else if(u.sg_pk){u.sg_pk=0}else if(Math.hypot(nx-lx,ny-ly)>1){u.x=nx;u.y=ny;collide(u)} // téléportation : on la garde
+  else if(Math.hypot(nx-lx,ny-ly)>1){u.x=nx;u.y=ny;collide(u)} // téléportation : on la garde
   if(u.anim===an0&&!u.dash)anim(u,'sg_pull',.32)};
  // les télégraphes de mudras (et l'IA qui les esquive) partent aussi de la marionnette
  // (comme fire : origine = marionnette, visée = marionnette → point visé ; angle et distance recalculés depuis elle)

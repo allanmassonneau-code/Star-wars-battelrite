@@ -21,6 +21,8 @@ let presetI=-1;const rndBuildBtn={x:BX,y:638,w:190,h:32},presetBtn={x:BX+198,y:6
 const nameBtn={x:40,y:150,w:300,h:30},rndBtn={x:348,y:150,w:52,h:30},animeBtn={x:44,y:662,w:352,h:32},fightBtn={x:1030,y:576,w:210,h:54};
 const itN=it=>Array.isArray(it)?String(it[0]):String(it),swCol=it=>Array.isArray(it)&&typeof it[1]==='string'&&it[1][0]==='#'?it[1]:null;
 const fmtCd=cd=>(Math.round((+cd||0)*100)/100)+' s',pts=n=>n+' point'+(n>1?'s':'');
+// recharge affichée : pour un style, le rythme réel de ses 5 coups (de … à …, ou la moyenne avec avg)
+const abCd=(ab,avg)=>{const c=ab&&ab.style!=null&&typeof stCad==='function'?stCad(ab):null;if(!c)return fmtCd(ab.cd);const a=Math.min(...c),b=Math.max(...c);return avg?fmtCd(c.reduce((x,y)=>x+y,0)/5):a===b?fmtCd(a):fmtCd(a).slice(0,-2)+' à '+fmtCd(b)};
 const FNT=(z,w='normal')=>`${w} ${z}px "Trebuchet MS",system-ui,sans-serif`;
 // texte sur une ligne : rétrécit jusqu'à min puis coupe avec « … »
 function fitT(s,x,y,size,col,w,weight='normal',min=11,align='left'){s=String(s);let z=size;g.font=FNT(z,weight);while(z>min&&g.measureText(s).width>w){z-=.5;g.font=FNT(z,weight)}if(g.measureText(s).width>w){while(s.length>2&&g.measureText(s+'…').width>w)s=s.slice(0,-1);s=s.trimEnd()+'…'}g.textAlign=align;g.fillStyle=col;g.fillText(s,x,y);return g.measureText(s).width}
@@ -70,7 +72,7 @@ function drawTip(){if(!TIP){tipK=null;return}if(performance.now()-tipT0<300)retu
 let pickTab=0,pickScroll=0,menuLast=0,galSel=null;
 function pickData(p){const BUD=budgetOf(MY),c0=kitCost(MY);
  if(p===0){const L=stylesOf(MY),col=MY.clan>=0?CLANS[MY.clan][1]:'#e8cfa8';return{kind:'j',title:`${lbl[SLOTS[0]]} · Style de combat`,sub:'Ton attaque de base, propre à ton clan : gratuite (ni points, ni chakra)',
-  items:L.map(i=>{const ab=styleAb(i);return{v:i,n:ab.n,col,ic:null,style:1,l2:`${fmtCd(ab.cd)} · corps à corps`,d:ab.d,sel:MY.j[0]===i}})}}
+  items:L.map(i=>{const ab=styleAb(i);return{v:i,n:ab.n,col,ic:null,style:1,l2:`${abCd(ab)} · corps à corps`,d:ab.d,sel:MY.j[0]===i}})}}
  if(typeof p==='number'){const own=MY.clan>=0?'c'+MY.clan:'u',cur=JL[MY.j[p]];
   const A=avail(MY,p).slice().sort((a,b)=>(a.cat!==own)-(b.cat!==own)||a.cost-b.cost||a.n.localeCompare(b.n)),cats=[...new Set(A.map(j=>j.cat))];
   return{kind:'j',title:`${lbl[SLOTS[p]]} · ${SLOTN[p]}`,sub:`Le rang fixe le coût en points du kit et en chakra · kit actuel : ${c0} / ${BUD} points`,tabs:cats.length>1?['Tous'].concat(cats.map(catName)):null,tabC:['#ffb347'].concat(cats.map(catCol)),
@@ -250,10 +252,10 @@ function drawMenu(){TIP=null;{const now=performance.now();if(now-menuLast>1500)p
   if(J)fitT(catName(J.cat),R.x+186+nw,R.y+20,10.5,catCol(J.cat),Math.max(10,560-186-nw),'normal',9);
   fitT(ab.d||'',R.x+124,R.y+38,11.5,'#d8c0a0',448,'normal',10);
   // colonnes de chiffres
-  const st=[[s?String(jcost(ab)):'—','chakra','#7fc8ff'],[fmtCd(ab.cd),'recharge','#ffd38a'],[s?ab.mud?String(ab.mud):'aucun':'—','mudras','#d8b888']];
+  const st=[[s?String(jcost(ab)):'—','chakra','#7fc8ff'],[s?fmtCd(ab.cd):abCd(ab,1),s?'recharge':'moy./coup','#ffd38a'],[s?ab.mud?String(ab.mud):'aucun':'—','mudras','#d8b888']];
   st.forEach(([v,l,c],k)=>{const x=R.x+612+k*62;text(v,x,R.y+21,14,c,'center');text(l,x,R.y+36,9.5,'#9a8060','center','normal')});
   text('›',R.x+R.w-14,R.y+29,22,h?'#fff':'#8a5a2a','center');
-  if(h)hoverTip('sl'+s,()=>({t:ab.n,col,l:[[J?`${lbl[SLOTS[s]]} · ${SLOTN[s]} · ${catName(J.cat)} · rang ${J.r} (${pts(J.cost)})${ab.ult?' · ultime':''}`:`${lbl[SLOTS[s]]} · style de combat (gratuit)`,col],[s?`${jcost(ab)} chakra · ${fmtCd(ab.cd)} · ${ab.mud?ab.mud+' mudras':'sans mudra'}`:`attaque de base · ${fmtCd(ab.cd)}`,'#d8b888']],d:ab.d||'',f:`Clic : choisir (${s?avail(MY,s).length:stylesOf(MY).length} possibles)`}))}
+  if(h)hoverTip('sl'+s,()=>({t:ab.n,col,l:[[J?`${lbl[SLOTS[s]]} · ${SLOTN[s]} · ${catName(J.cat)} · rang ${J.r} (${pts(J.cost)})${ab.ult?' · ultime':''}`:`${lbl[SLOTS[s]]} · style de combat (gratuit)`,col],[s?`${jcost(ab)} chakra · ${fmtCd(ab.cd)} · ${ab.mud?ab.mud+' mudras':'sans mudra'}`:`attaque de base · ${abCd(ab)} par coup`,'#d8b888']],d:ab.d||'',f:`Clic : choisir (${s?avail(MY,s).length:stylesOf(MY).length} possibles)`}))}
  {const R=passRow,ps=PASS[ch.pass]||PASS[PASSK[MY.pass]],h=hv(R);rr(R,10,h?'rgba(50,62,36,.95)':'rgba(20,14,10,.85)',h?'#7fd87f':'#3a6a3a');
   rr({x:R.x+7,y:R.y+5,w:66,h:30},8,'rgba(30,50,26,.95)','#5aa85a',1.5);text('PASSIF',R.x+40,R.y+25,12,'#9f9');jIcon(R.x+98,R.y+20,13,'#7fd87f','p');
   const nw=fitT(ps[0],R.x+124,R.y+25,14,'#cfe8c0',220,'bold',11);fitT(ps[1],R.x+136+nw,R.y+25,12,'#a8c898',R.w-160-nw,'normal',10);text('›',R.x+R.w-14,R.y+27,22,h?'#fff':'#3a6a3a','center');

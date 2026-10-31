@@ -1,8 +1,9 @@
 
 // ---------- Ambiance NRP : combats plus longs et posés, chakra qui compte, soin commun à tous (H) ----------
-// PV ×0,81 pour tous (dans mkNinja, sans toucher l'équilibre entre les kits) : avec le chakra rare, la course plus lente, la mort subite
-// repoussée et le soin (H), un duel 1v1 IA contre IA dure ~52 s (médiane, kits aléatoires ; ×1,1 donnait ~71 s depuis les M1 au corps à corps)
-const HPK=.81;
+// PV ×1,3 pour tous (dans mkNinja, sans toucher l'équilibre entre les kits) et attaques de base ×0,4 (M1K, appliqué par nr_bal.js) :
+// depuis que les bots frappent vraiment au corps à corps (aiIn), le M1 faisait les deux tiers des dégâts et un duel durait ~17 s ;
+// avec ces deux réglages, le chakra rare, la course plus lente et la mort subite repoussée, un duel 1v1 IA contre IA dure ~52 s (médiane, kits aléatoires)
+const HPK=1.3,M1K=.4;
 // chakra : une jauge pleine = 5 jutsu environ ; presque pas de régénération en combat ; R (maintenu) est LA façon de se recharger,
 // mais on est immobile, on prend +20 % de dégâts et un coup franc brise la concentration ; à sec, le ninja est épuisé
 const CK={spawn:100, // chakra au début d'une manche / à la réapparition
@@ -33,6 +34,8 @@ function aiChk(u,dt){if(u.sub_sage>0)return false;const lo=u.aiCkLo||(u.aiCkLo=C
 // IA à court de chakra : prend ses distances pour pouvoir se recharger (sauf pour achever un adversaire)
 const aiLow=u=>u.energy<(u.aiCkLo||CK.aiLo)&&!(u.sub_sage>0);
 const aiPref=(u,e)=>aiLow(u)&&e.hp>e.max*.3?Math.max(u.ch.pref,CK.aiSafe+70):u.ch.pref;
+// IA au corps à corps : s'approche jusqu'à l'allonge de son attaque de base (sinon elle tourne autour d'une cible immobile, entre l'allonge et pref+40, sans jamais frapper)
+const aiIn=(u,p)=>{const l=u.ch.abil[0];return p<200&&l&&l.melee&&l.ai?Math.min(p+40,l.ai.max-8):p+40};
 // IA : ne se met pas à sec sans raison (sauf pour fuir, se défendre ou achever) et garde de quoi lancer l'ultime quand il est presque prêt
 function aiSave(u,i,h){if(h.mode==='esc'||h.mode==='def'||h.mode==='heal')return false;const c=jcost(u.ch.abil[i]),e=u.tgt;
  if(u.energy-c<CK.exhIn&&!(e&&!e.dead&&e.hp<e.max*.3))return true;const U=u.ch.abil[5];if(i===5||!U||u.cds[5]>3)return false;

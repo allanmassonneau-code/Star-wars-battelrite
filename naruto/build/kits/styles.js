@@ -14,8 +14,8 @@ const STYLES=[
  ['Poing décuplé','Poings géants, lents et larges ; aux 3e et 5e coups, le poing s\'écrase sur toute la zone devant soi','x.st_aki','tai','bigfist',[3],1.5,1.45],
  ['Paumes de l\'essaim','Paumes enrobées d\'insectes ; 3e coup : l\'essaim jaillit en gerbe (+1 insecte) ; 5e : il engloutit la cible (+2 insectes, révélée)','x.st_bug','bugs','bugs',[4],1.17,1.12],
  ['Poings d\'insectes','Chaque coup pose un insecte qui ronge la cible (4 max) ; le 5e les fait dévorer : dégâts et soin par insecte','x.st_abu','bugs','fist',[4],1.2,1.17],
- ['Crocs et griffes','Griffures très rapides ; ton chien mord aux 2e, 4e et 5e coups et ralentit ; le 5e est un bond','x.st_inu','claws','claws',[5],1.24,1.2],
- ['Chaînes au poing','Chaînes de chakra enroulées aux poings ; 3e et 4e coups : la chaîne fouette (allonge 120) ; 5e : elle harponne, ramène la cible et pose un sceau','x.st_chain','chain','chain',[6],1.08,1.03],
+ ['Crocs et griffes','Griffures très rapides ; aux 2e, 4e et 5e coups qui touchent, ton chien mord aussi et ralentit ; le 5e est un bond','x.st_inu','claws','claws',[5],1.24,1.2],
+ ['Chaînes au poing','Chaînes de chakra enroulées aux poings ; 3e coup : la chaîne fouette droit devant (allonge 120) ; 4e : elle balaie large ; 5e : elle harponne, ramène la cible et pose un sceau','x.st_chain','chain','chain',[6],1.08,1.03],
  ['Frappes fleuries','Senbon et paumes fleuries, très vifs ; 3 coups de suite sur une cible touchent un point vital : 5 dégâts en plus, ralentit','x.st_sen','senbon','senbon',[7],1.12,1.07],
  ['Poings de sable','Gantelets de sable lourds ; chaque coup qui touche épaissit ton armure de sable (+2, 6 max) ; 5e : un poing de sable s\'abat devant toi','x.st_sand','sand','sand',[8],1.26,1.2],
  ['Danse des os','Lames d\'os aux balayages très larges ; 3e coup : tourbillon tout autour ; 5e : estoc qui transperce','x.st_bone','bone','bone',[9],1.48,1.46],
@@ -26,6 +26,8 @@ const STYLES=[
 // ---- aides communes des styles
 const stC=u=>u.cmbH||1,stI=u=>units.indexOf(u); // n° du coup dans l'enchaînement (1 à 5), index d'un ninja (effets suivis)
 const stCd=(u,cd)=>{u.cds[0]=cd*(u.rapid>0?.45:1)*(u.ch.pass==='speed'?PASSV.speedA:1)}; // rythme propre à chaque coup (passif Pieds légers : plus rapide)
+// rythme réel d'un style (menu) : recharges des 5 coups lues dans sa table T=[0,[portée,arc,dégâts,recharge],…] ; null si le style n'en a pas
+const stCad=ab=>{const m=/T=\[0,((?:\[[^\[\]]*\],?){5})\]/.exec(String(ab&&ab.f)),L=m&&m[1].match(/\[[^\[\]]*\]/g);if(!L||L.length!==5)return null;const v=L.map(x=>+x.slice(1,-1).split(',')[3]);return v.every(x=>x>0)?v:null};
 // coup au corps à corps : melee() du moteur (combo, endurance, 5e coup, renvoi des tirs) ; l'arc générique au sol est remplacé par la traînée du style (tr),
 // cb(e) est appelé pour chaque ennemi vraiment touché (ni esquivé, ni paré)
 function stMelee(u,a,R,arc,dmg,o,tr,cb){const L=cb?stIn(u,a,R,arc):[],H=L.map(e=>e.hp+(e.shield||0)),i=fx.length,n=melee(u,a,R,arc,dmg,o||{});
@@ -89,8 +91,9 @@ Object.assign(NAT,{
  // Crocs et griffes : griffures très rapides ; le chien mord aux 2e, 4e et 5e coups (ralentit) ; 5e : bond
  st_inu:SP('Crocs et griffes','',.3,{hero:'ventress',melee:1,ai:{max:86,p:1}},(u,a)=>{const c=stC(u),T=[0,[80,1.9,6,.28],[80,1.9,6,.28],[84,2.1,7,.3],[88,1.9,7,.32],[98,2.2,9,.5]][c];
   if(c===4)stLunge(u,a,32);if(c===5){stLunge(u,a,52);S('dash',u)}
-  stMelee(u,a,T[0],T[1],T[2],{},[0,{d:-1,tl:.6,z:34,th:5,n:3,claw:1},{d:1,tl:-.6,z:34,th:5,n:3,claw:1},{d:1,tl:1.4,z:30,th:5,n:3,claw:1,rr:.65},{d:-1,z:26,th:5,n:3,claw:1},{d:-1,tl:.9,z:32,th:6,n:3,claw:1,x2:1}][c]);
-  if(c===2||c===4||c===5){const e=nearE(u,u.x+Math.cos(a)*55,u.y+Math.sin(a)*55,70);if(e&&dist(u,e)<T[0]+e.r+24){hit(e,u,c===5?4:3,{slow:.5});S('bone',u);jx({jfx:'st_bite',ui:stI(u),ti:stI(e),x:e.x,y:e.y,a,t:.42,m:.42})}}
+  let bit=c!==2&&c!==4&&c!==5; // le chien ne mord qu'une cible, et seulement si la griffure l'a vraiment touchée (ni gardée, ni parée)
+  stMelee(u,a,T[0],T[1],T[2],{},[0,{d:-1,tl:.6,z:34,th:5,n:3,claw:1},{d:1,tl:-.6,z:34,th:5,n:3,claw:1},{d:1,tl:1.4,z:30,th:5,n:3,claw:1,rr:.65},{d:-1,z:26,th:5,n:3,claw:1},{d:-1,tl:.9,z:32,th:6,n:3,claw:1,x2:1}][c],e=>{
+   if(bit||e.dead)return;bit=true;hit(e,u,c===5?4:3,{slow:.5,unblockable:1});S('bone',u);jx({jfx:'st_bite',ui:stI(u),ti:stI(e),x:e.x,y:e.y,a,t:.42,m:.42})});
   stCd(u,T[3]);anim(u,'st_inu'+c,c===5?.36:.24)}),
  // Taijutsu du fauve : le combo s'accélère ; 2e : Konoha Reppû (fauchage) ; 4e : Konoha Shôfû (projette en l'air) ; 5e : Konoha Senpû tout autour
  st_lee:SP('Taijutsu du fauve','',.5,{hero:'kylo',melee:1,ai:{max:92,p:1}},(u,a)=>{const c=stC(u),T=[0,[84,1.8,13,.52],[90,2.4,13,.46],[86,2.1,14,.4],[86,1.8,14,.36],[96,6.3,16,.66]][c];
