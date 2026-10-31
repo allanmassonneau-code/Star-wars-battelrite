@@ -8,12 +8,12 @@ const KMD={
  lance:'Lance de papier comprimé qui transperce (17 dégâts) ; le premier ennemi touché est cloué au sol 0,6 s',
  corps:'Ton corps se disperse en feuilles 0,8 s : intouchable et plus rapide, sans attaquer ; en se reformant, elles tranchent autour de toi (12 dégâts, ralentit)',
  bfly:'4 papillons de papier traquent l\'ennemi le plus proche (5 dégâts chacun, ralentit, révèle) ; +1 papillon par feuille dépensée (3 max)',
- chakram:'Chakram de papier qui revient : 13 dégâts à l\'aller, 13 au retour, et le retour ralentit 1,2 s',
- wall:'Mur de papier plié devant toi 3 s : il arrête les tirs ennemis ; en retombant, ses feuilles rejoignent ta réserve (+3)',
+ chakram:'Chakram de papier qui revient : 13 dégâts à l\'aller, 13 dégâts au retour, et le retour ralentit 1,2 s',
+ wall:'Mur de papier plié devant toi 4 s : il repousse les ennemis devant toi (8 dégâts) et arrête les tirs ennemis ; en retombant, ses feuilles rejoignent ta réserve (+4)',
  cocoon:'Les feuilles s\'enroulent sur la zone visée (0,5 s) : 10 dégâts, entravé 1,1 s ; puis le cocon explose (20 dégâts, repousse)',
  wings:'Ailes de papier : tu voles jusqu\'au point visé (300 max) ; à l\'atterrissage, un coup d\'ailes repousse les ennemis proches (6 dégâts)',
  clone:'Tu files de 200 max en laissant un double de papier : il arrête un tir ennemi et explose alors, ou au contact d\'un ennemi, ou au bout de 1,5 s (12 dégâts, ralentit)',
- sea:'Mer de papiers explosifs sur la zone (ralentit) ; au bout de 1,5 s, tout explose : 40 dégâts, repousse, étourdit 0,4 s ; +12 au centre ; dépense toutes tes feuilles : +2 dégâts par feuille',
+ sea:'Mer de papiers explosifs sur la zone (ralentit) ; au bout de 1,5 s, tout explose : 40 dégâts, repousse, étourdit 0,4 s ; +12 dégâts au centre ; dépense toutes tes feuilles : +2 dégâts par feuille',
  angel:'Grandes ailes d\'ange 6 s : plus rapide, insensible aux ralentissements et entraves, feuilles 2× plus vite ; chaque seconde, 2 lames de papier filent vers l\'ennemi le plus proche (4 dégâts chacune)'};
 KIT('c16',[
  [1,'D','x.km_shuri','Shuriken de papier',KMD.shuri,'km_paper'],
@@ -69,9 +69,10 @@ Object.assign(NAT,{
  // Chakram de papier : aller-retour, le retour ralentit
  km_chakram:SP('Chakram de papier',KMD.chakram,9,{line:{len:400,w:40},ai:RG(380,.6)},(u,a)=>{S('wind',u);km_S('saber',u);anim(u,'km_spear',.45);
   proj(u,a,{vfx:'km_paper',spd:700,r:14,dmg:13,life:1.7,col:KMC.w,ret:380,pierce:1,noClash:1,kind:'km_chakram',onHit:(p,t)=>{if(p.back&&!t.dead){hit(t,p.owner,0,{slow:1.2,silent:1});sparks(t.x,t.y,KMC.w,6,'bone')}}})}),
- // Rempart d'origami : mur qui arrête les tirs (logique : AUXF.km_wall), puis rend 3 feuilles
+ // Rempart d'origami : mur qui arrête les tirs (logique : AUXF.km_wall), puis rend 4 feuilles
  km_wall:SP('Rempart d\'origami',KMD.wall,12,{hero:'thrawn',ai:{mode:'def',p:.45}},(u,a)=>{const c=fwd(u,a,58);S('wind',u);km_S('poof',u);anim(u,'km_open',.5);
-  aux.push({type:'km_wall',x:c.x,y:c.y,a,len:170,w:14,r:85,t:3,m:3,team:u.team,owner:u,ui:km_I(u),n:0,k:0});sparks(c.x,c.y,KMC.w,10,'bone')}),
+  aux.push({type:'km_wall',x:c.x,y:c.y,a,len:170,w:14,r:85,t:4,m:4,team:u.team,owner:u,ui:km_I(u),n:0,k:0});sparks(c.x,c.y,KMC.w,10,'bone');
+  for(const e of stIn(u,a,130,1.8))hit(e,u,8,{kb:260})}),
  // Cocon de papier : zone retardée qui entrave, puis le cocon explose
  km_cocoon:SP('Cocon de papier',KMD.cocoon,13,{tele:{r:85,max:440},ai:RG(430,.6)},(u,a,td)=>{const p=atP(u,a,td,440),R=85,vic=[];S('wind',u);anim(u,'km_point',.6);
   jx({jfx:'km_gather',x:p.x,y:p.y,r:R,t:.5,m:.5});zone(u,p.x,p.y,R,10,.5,{root:1.1},KMC.b);lastZ().deto='km_wrap';
@@ -79,7 +80,7 @@ Object.assign(NAT,{
   later(u,1.6,()=>{for(const v of vic){VFX='km_paper';for(const e of enemies(u))if(Math.hypot(e.x-v.x,e.y-v.y)<50+e.r)hit(e,u,20,{kb:120,fx:v.x,fy:v.y,unblockable:1});VFX=null;
    jx({jfx:'km_boom',x:v.x,y:v.y,r:50,t:.6,m:.6});km_S('boom',u)}if(vic.length&&near(p.x,p.y))shake=Math.max(shake,.2)})}),
  // Ailes de papier : vol jusqu'au point visé, coup d'ailes à l'atterrissage
- km_wings:SP('Ailes de papier',KMD.wings,12,{hero:'cadbane',ai:ESC},(u,a,td)=>{const d=clamp(td||260,100,300),D=.48;S('wind',u);km_S('dash',u);anim(u,'km_open',D+.1);
+ km_wings:SP('Ailes de papier',KMD.wings,12,{hero:'cadbane',ai:{mode:'gap',min:130,max:300,p:.5}},(u,a,td)=>{const d=clamp(td||260,100,300),D=.48;S('wind',u);km_S('dash',u);anim(u,'km_open',D+.1);
   aux.push({type:'km_wings',x:u.x,y:u.y,r:1.2,t:D+.15,m:D+.15,team:u.team,owner:u,ui:km_I(u),k:0});
   dash(u,a,d,D,{jump:70,end:()=>{if(u.dead)return;VFX='km_paper';for(const e of enemies(u))if(dist(u,e)<105+e.r)hit(e,u,6,{kb:150,fx:u.x,fy:u.y});VFX=null;
    jx({jfx:'km_gust',x:u.x,y:u.y,r:105,t:.45,m:.45});km_S('wind',u)}})}),
@@ -87,7 +88,7 @@ Object.assign(NAT,{
  km_clone:SP('Clone de papier',KMD.clone,9,{hero:'cadbane',ai:ESC},(u,a,td)=>{const d=clamp(td||200,110,200);km_S('poof',u);S('dash',u);
   aux.push({type:'km_clone',x:u.x,y:u.y,a:u.aim,r:18,t:1.5,m:1.5,team:u.team,owner:u,ui:km_I(u),k:0});jx({jfx:'km_puff',ui:km_I(u),x:u.x,y:u.y,n:5,t:.45,m:.45});
   anim(u,'km_scatter',.25);dash(u,a,d,.2,{jump:18})}),
- // Mer de papiers explosifs : la zone se couvre de papiers (ralentit), puis tout explose (zone) ; +12 au centre (later)
+ // Mer de papiers explosifs : la zone se couvre de papiers (ralentit), puis tout explose (zone) ; +12 dégâts au centre (later)
  km_sea:ULT('Mer de papiers explosifs',KMD.sea,{tele:{r:170,max:420},ai:{max:420,p:.8}},(u,a,td)=>{const p=atP(u,a,td,420),R=170,D=1.5,n=u.km_pp|0;u.km_pp=0;
   S('wind',u);km_S('heavy',u);anim(u,'km_pray',.9);jx({jfx:'km_puff',ui:km_I(u),x:u.x,y:u.y,n:Math.max(4,n),t:.5,m:.5});
   aux.push({type:'km_sea',x:p.x,y:p.y,r:R,t:D,m:D,team:u.team,owner:u,danger:1,n,k:0});
@@ -103,7 +104,7 @@ Object.assign(NATHERO,{km:'kylo'});
 // ---------- logique des objets (hôte) ----------
 // mur de papier : détruit les tirs ennemis qui le traversent ; en retombant, rend 3 feuilles
 AUXF.km_wall=(x,dt)=>{const o=x.owner,ca=Math.cos(x.a),sa=Math.sin(x.a),H=x.len/2;
- if(x.t<=0){if(!x.done){x.done=1;if(o&&!o.dead&&o.team===x.team){const k=km_gain(o,3);if(k){jx({jfx:'km_back',ui:km_I(o),x:x.x,y:x.y,n:k,t:.6,m:.6});say(o,'+'+k+' FEUILLES',KMC.l)}}}return}
+ if(x.t<=0){if(!x.done){x.done=1;if(o&&!o.dead&&o.team===x.team){const k=km_gain(o,4);if(k){jx({jfx:'km_back',ui:km_I(o),x:x.x,y:x.y,n:k,t:.6,m:.6});say(o,'+'+k+' FEUILLES',KMC.l)}}}return}
  for(const p of projs){if(p.dead||p.grenade||!p.owner||p.owner.team===x.team||p.life<=0)continue;
   const dx=p.x-x.x,dy=p.y-x.y,f=dx*ca+dy*sa,s=-dx*sa+dy*ca;if(Math.abs(s)>H+p.r)continue;
   const f0=f-(p.vx*ca+p.vy*sa)*dt;if(Math.abs(f)<x.w+p.r||(f0<0)!==(f<0)){p.life=0;if(p.rocket)p.boom=1;x.n=(x.n|0)+1;if(near(p.x,p.y)){sparks(p.x,p.y,KMC.w,6,'bone');km_S('deflect',o)}}}};

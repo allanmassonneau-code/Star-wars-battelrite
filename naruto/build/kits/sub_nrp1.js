@@ -6,7 +6,7 @@ KIT('u',[
  [4,'B','x.sub_rasho','Rashômon','Invoque un portail géant devant toi 2 s : il arrête tous les tirs et bloque le passage, des deux côtés ; en surgissant du sol, il blesse et repousse','smoke'],
  [3,'A','x.sub_soryu','Sôshôryû','Deux parchemins s\'élèvent en dragons jumeaux : une pluie d\'armes s\'abat 1 s sur la zone visée (jusqu\'à 40 dégâts) et ralentit','kunai'],
  [1,'C','x.sub_kshu','Multiclonage de shuriken','Lance un shuriken qui se multiplie en éventail de 12 : plus l\'ennemi est proche, plus il en prend (4 au plus) ; à partir du 3e, il est ralenti','shuriken'],
- [3,'B','x.sub_dogs','Chiens ninja','La meute creuse sous l\'ennemi visé et jaillit du sol 0,6 s plus tard : morsures (16) et entravé 1,2 s ; s\'éloigner à temps permet d\'y échapper','claws'],
+ [3,'B','x.sub_dogs','Chiens ninja','La meute creuse sous l\'ennemi visé et jaillit du sol 0,6 s plus tard : morsures (16 dégâts) et entravé 1,2 s ; s\'éloigner à temps permet d\'y échapper','claws'],
  [1,'S','x.sub_raiki','Raikiri','Charge la foudre au poing 0,4 s puis fonce en ligne droite : transperce le 1er ennemi (34 dégâts, étourdi 0,4 s) et blesse les suivants ; ×1,35 sur une cible trempée','lightning'],
  [3,'B','x.sub_clay','Argile explosive','Lâche 3 oiseaux d\'argile qui poursuivent les ennemis et explosent au contact ; relance : « Katsu ! », ils explosent tous aussitôt','tag'],
 ]);

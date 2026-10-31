@@ -6,7 +6,7 @@
 const SGD={
  style:'Ta marionnette frappe de ses lames là où elle se trouve ; 4e coup : tourbillon autour d\'elle ; 5e : estoc empoisonné',
  blades:'Lames cachées : la marionnette tournoie 0,6 s (rayon 75) ; 3 coups de 6, le dernier ralentit',
- needle:'La gueule de la marionnette crache 5 senbon en éventail (portée 380) : 4 dégâts chacun et poison 3/s pendant 3 s',
+ needle:'La gueule de la marionnette crache 5 senbon en éventail (portée 380) : 4 dégâts chacun et poison 3 dégâts/s pendant 3 s',
  strings:'Fils de chakra 3 s sur l\'ennemi le plus proche de la marionnette (220) : ralenti, attiré vers elle (2 dégâts/s), +15 % de tes dégâts sur lui ; rompus au-delà de 340',
  mist:'La marionnette souffle une brume toxique qui la suit 4 s (rayon 95) : 5 dégâts/s et ralentit ; 2 s dedans : poison 3/s pendant 4 s',
  shell:'Sanshôuo : la salamandre-bouclier surgit à la place de ta marionnette 3 s (rayon 90) : arrête les tirs ennemis venus du dehors ; bouclier de 20 à toi et tes alliés dedans',
@@ -14,7 +14,7 @@ const SGD={
  leap:'Bond en arrière (230) ; ta marionnette lâche une bombe fumigène (rayon 100) : ennemis ralentis 1,2 s',
  swap:'Kawarimi : tu échanges ta place avec ta marionnette (intangible 0,3 s) ; marionnette brisée : petit bond vers le curseur',
  parents:'Mère et Père surgissent de part et d\'autre de ta marionnette et se referment après 0,6 s : 38 dégâts et étourdit 1 s au centre (rayon 85), 12 et repousse autour (150)',
- army:'Armée de marionnettes 5 s autour de la tienne (rayon 220) : toutes les 0,5 s, chaque ennemi dedans reçoit un coup de lame (4) ; à la fin, toutes transpercent le centre : 22 et étourdit 0,5 s (rayon 130)'};
+ army:'Armée de marionnettes 5 s autour de la tienne (rayon 220) : toutes les 0,5 s, chaque ennemi dedans reçoit un coup de lame (4 dégâts) ; à la fin, toutes transpercent le centre : 22 dégâts et étourdit 0,5 s (rayon 130)'};
 KIT('c14',[
  [1,'D','x.sg_blades','Lames cachées',SGD.blades,'sg_pup'],
  [1,'C','x.sg_needle','Senbon empoisonnés',SGD.needle,'sg_poison'],
@@ -55,7 +55,7 @@ Object.assign(NAT,{
   const c=u.cmbH||1,T=[0,[78,1.8,10,.4],[78,1.8,10,.42],[80,2.1,11,.46],[84,6.3,11,.5],[100,1.1,13,.6]][c];
   if(c===5&&sgOk(u)&&u.sg_ox!=null){const bk=Math.hypot(u.x-u.sg_px,u.y-u.sg_py),d=bk>1?0:40;u.sg_px=clamp(u.sg_px+Math.cos(a)*d,B.x+10,B.x+B.w-10);u.sg_py=clamp(u.sg_py+Math.sin(a)*d,B.y+10,B.y+B.h-10);u.x=u.sg_px-Math.cos(a)*bk;u.y=u.sg_py-Math.sin(a)*bk;u.sg_pk=1} // 5e coup : elle s'élance (sauf si elle est déjà sur l'ennemi)
   const i=fx.length,n=melee(u,a,T[0],T[1],T[2],c===5?{dot:{dps:2,dur:3}}:{});if(fx[i]&&fx[i].swing)fx.splice(i,1);
-  jx({jfx:'sg_slash',x:u.x,y:u.y,a,c,R:T[0],t:.24,m:.24});u.cds[0]=T[3]*(u.rapid>0?.45:1);
+  jx({jfx:'sg_slash',x:u.x,y:u.y,a,c,R:T[0],t:.24,m:.24});u.cds[0]=T[3]*(u.rapid>0?.45:1)*(u.ch.pass==='speed'?PASSV.speedA:1);
   if(n&&c===5)for(const e of enemies(u))if(dist(u,e)<T[0]+e.r&&angDiff(ang(u,e),a)<T[1]/2)jx({jfx:'st_poison',ti:sgI(e),x:e.x,y:e.y,t:2,m:2})}),
  // Lames cachées : tourbillon de lames autour de la marionnette, qui la suit
  sg_blades:SP('Lames cachées',SGD.blades,6,{tele:{self:1,r:75},ai:{max:SG.L+60,p:.6,pr:85}},(u)=>{S('saber',u);S('blaster',u);

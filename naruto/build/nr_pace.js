@@ -1,13 +1,13 @@
 
 // ---------- Ambiance NRP : combats plus longs et posés, chakra qui compte, soin commun à tous (H) ----------
-// PV ×1,1 pour tous (dans mkNinja, sans toucher l'équilibre entre les kits) : avec le chakra rare, la course plus lente, la mort subite
-// repoussée et le soin (H), une manche IA contre IA dure ~55 s (médiane, kits aléatoires et persos de l'anime ; ×1,2 donnait ~61 s)
-const HPK=1.1;
+// PV ×0,81 pour tous (dans mkNinja, sans toucher l'équilibre entre les kits) : avec le chakra rare, la course plus lente, la mort subite
+// repoussée et le soin (H), un duel 1v1 IA contre IA dure ~52 s (médiane, kits aléatoires ; ×1,1 donnait ~71 s depuis les M1 au corps à corps)
+const HPK=.81;
 // chakra : une jauge pleine = 5 jutsu environ ; presque pas de régénération en combat ; R (maintenu) est LA façon de se recharger,
 // mais on est immobile, on prend +20 % de dégâts et un coup franc brise la concentration ; à sec, le ninja est épuisé
 const CK={spawn:100, // chakra au début d'une manche / à la réapparition
  regen:.8,regenOut:4,outT:5, // régénération passive par seconde : en combat / hors combat (aucun coup donné ni reçu depuis outT s)
- rate0:16,rate1:38,ramp:1.4, // recharge (R) : 16/s au début, monte à 38/s en 1,4 s de concentration
+ rate0:19,rate1:45,ramp:1.4, // recharge (R) : 19/s au début, monte à 45/s en 1,4 s de concentration
  vuln:1.2,brk:6,lock:.7, // en recharge : dégâts ×1,2 ; un coup de 6+ brise la concentration (pas de recharge pendant 0,7 s)
  exhIn:6,exhOut:25,exhSpd:.82,exhStam:.55,exhBlock:1.6, // épuisement : sous 6 de chakra (jusqu'à 25) : vitesse ×0,82, endurance ×0,55, garde ×1,6, pas de sprint
  aiLo:26,aiLoR:18,aiSafe:390,aiStop:250}; // IA : recharge sous 26-44 si aucun ennemi à moins de 390 (s'arrête s'il approche à 250)
@@ -35,7 +35,9 @@ const aiLow=u=>u.energy<(u.aiCkLo||CK.aiLo)&&!(u.sub_sage>0);
 const aiPref=(u,e)=>aiLow(u)&&e.hp>e.max*.3?Math.max(u.ch.pref,CK.aiSafe+70):u.ch.pref;
 // IA : ne se met pas à sec sans raison (sauf pour fuir, se défendre ou achever) et garde de quoi lancer l'ultime quand il est presque prêt
 function aiSave(u,i,h){if(h.mode==='esc'||h.mode==='def'||h.mode==='heal')return false;const c=jcost(u.ch.abil[i]),e=u.tgt;
- if(u.energy-c<CK.exhIn&&!(e&&!e.dead&&e.hp<e.max*.3))return true;const U=u.ch.abil[5];if(i===5||!U||u.cds[5]>3)return false;return u.energy-c<jcost(U)}
+ if(u.energy-c<CK.exhIn&&!(e&&!e.dead&&e.hp<e.max*.3))return true;const U=u.ch.abil[5];if(i===5||!U||u.cds[5]>3)return false;
+ if(U.ai&&U.ai.mode==='exec'&&!(e&&!e.dead&&e.hp<e.max*.55))return false; // ultime d'exécution : on ne garde pas le chakra tant que la cible n'est pas entamée
+ return u.energy-c<jcost(U)}
 // HUD : chiffre de chakra, avertissement d'épuisement
 function ckHud(p,x,y,w){const lo=p.energy<30,t=performance.now()/1000,cy=H-84;text(String(Math.floor(p.energy)),x+w+6,y+4,10,p.exh?'#ff8a8a':'#7fc4ff','left');if(p.dead)return;
  if(p.exh){g.fillStyle=rgba('#ff4a4a',.25+.2*Math.sin(t*8));g.fillRect(x,y,w,5);text(`ÉPUISÉ : plus lent, endurance lente · ${lbl.KeyR} maintenu = chakra`,W/2,cy,13,'#ff9a9a','center')}

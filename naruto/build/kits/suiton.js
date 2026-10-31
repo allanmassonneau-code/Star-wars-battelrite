@@ -11,7 +11,7 @@ const su_rows=[
  [1,'B','x.su_mist','Suiton : Kirigakure','Brume 6 s : ennemis ralentis, trempés, aveuglés ; ton équipe y est invisible sans attaquer 0,8 s ; le vent la chasse','water'],
  [1,'A','x.su_dragon','Suiton : Dragon aqueux','Dragon d\'eau en ligne qui emporte les ennemis touchés puis les ralentit ; s\'il percute un obstacle : étourdis','water'],
  [1,'A','x.su_fall','Suiton : Daibakufu','Cascade après 0,65 s (plus forte au centre) qui étourdit, puis un tourbillon 3,5 s ralentit et aspire vers le centre','water'],
- [2,'C','x.su_liquid','Suiton : Corps liquide','Se liquéfie et file au sol : intouchable, libéré des entraves et ralentissements ; éclabousse à l\'arrivée','water'],
+ [2,'C','x.su_liquid','Suiton : Corps liquide','Se liquéfie et file au sol : intouchable, libéré des entraves et ralentissements ; à l\'arrivée, éclabousse autour de toi (8 dégâts, ralentit)','water'],
  [5,'S','x.su_big','Suiton : Daikôdan','Requin géant qui avale les tirs ennemis (il grossit à chaque bouchée) puis explose : étourdit, repousse et inonde','water'],
  [5,'S','x.su_dome','Suiton : Dôme des requins','Dôme d\'eau 4,5 s : les ennemis piégés ne peuvent sortir, perdent du chakra et se font mordre ; tu y nages vite','water'],
  [5,'S','x.su_tsunami','Suiton : Bakusui Shôha','Raz-de-marée qui emporte les ennemis (étourdis contre un obstacle) ; la mer reste 5 s : eux ralentis, vous rapides','water'],
@@ -59,9 +59,9 @@ Object.assign(NAT,{
   jx({jfx:'su_fall',x:p.x,y:p.y,r:150,d:.65,t:1.1,m:1.1});zone(u,p.x,p.y,150,24,.65,{stun:.4},'#3aa8ff');lastZ().deto='su_fallD';zone(u,p.x,p.y,58,12,.65,{},'#bfe6ff');lastZ().deto='su_none';
   later(u,.65,()=>aux.push({type:'su_whirl',x:p.x,y:p.y,r:155,t:3.5,m:3.5,team:u.team,owner:u,vfx:'water',k:.25}))}),
  // Corps liquide (Suika) : glisse intangible, se libère des entraves, éclabousse à l'arrivée
- su_liquid:SP('Suiton : Corps liquide',su_d('su_liquid'),7,{ai:ESC},(u,a)=>{S('water',u);u.root=0;u.slow=0;u.rootV=null;anim(u,'su_melt',.42);jx({jfx:'su_splash',x:u.x,y:u.y,r:40,t:.45,m:.45});
-  aux.push({type:'su_liq',x:u.x,y:u.y,a,r:22,t:.4,m:.4,team:u.team,owner:u,vfx:'water',k:0});jx({jfx:'su_body',ui:su_i(u),x:u.x,y:u.y,t:.42,m:.42});u.phase=Math.max(u.phase||0,.4);
-  dash(u,a,250,.32,{end:()=>{jx({jfx:'su_splash',x:u.x,y:u.y,r:70,t:.5,m:.5});for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<70+e.r)su_hit(e,u,3,{slow:.8,silent:1})}})}),
+ su_liquid:SP('Suiton : Corps liquide',su_d('su_liquid'),7,{ai:{mode:'gap',min:120,max:280,p:.5}},(u,a)=>{S('water',u);u.root=0;u.slow=0;u.rootV=null;anim(u,'su_melt',.42);jx({jfx:'su_splash',x:u.x,y:u.y,r:40,t:.45,m:.45});
+  aux.push({type:'su_liq',x:u.x,y:u.y,a,r:22,t:.4,m:.4,team:u.team,owner:u,vfx:'water',k:0});jx({jfx:'su_body',ui:su_i(u),x:u.x,y:u.y,t:.42,m:.42});u.phase=Math.max(u.phase||0,.5);
+  dash(u,a,280,.34,{end:()=>{jx({jfx:'su_splash',x:u.x,y:u.y,r:80,t:.5,m:.5});for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<80+e.r)su_hit(e,u,8,{slow:1,silent:1})}})}),
  // Daikôdan : requin géant qui mange les tirs ennemis (grossit, frappe plus fort) puis explose et inonde
  su_big:ULT('Suiton : Daikôdan',su_d('su_big'),{line:{len:740,w:70},ai:{max:620,p:.8}},(u,a)=>{S('water',u);su_snd('roar',u);anim(u,'throw2',.6);
   proj(u,a,{spd:470,r:24,dmg:44,life:1.6,col:'#3aa8ff',rocket:1,ar:150,kb:340,stun:.6,big:1,kind:'su_bigshark',noClash:1});

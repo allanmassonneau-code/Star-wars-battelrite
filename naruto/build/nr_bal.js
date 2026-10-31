@@ -23,7 +23,7 @@ const BLG=[['hp','PV des ninjas','Multiplie les PV de tous les ninjas (après cl
  ['ckSp','Chakra en début de manche','Chakra (sur 100) au début de chaque manche et à la réapparition.',20,100,1,'','Chakra'],
  ['ckReg','Régénération en combat','Régénération passive du chakra en combat (0,8 par seconde par défaut).',0,3,.05,'x','Chakra'],
  ['ckOut','Régénération hors combat','Régénération passive hors combat (4 par seconde par défaut).',0,3,.05,'x','Chakra'],
- ['ckR','Concentration (R maintenu)','Vitesse de recharge avec R maintenu (16 puis 38 par seconde par défaut).',.5,2,.05,'x','Chakra'],
+ ['ckR','Concentration (R maintenu)','Vitesse de recharge avec R maintenu (19 puis 45 par seconde par défaut).',.5,2,.05,'x','Chakra'],
  ['ckD','Coût d\'un jutsu D','Chakra dépensé par un jutsu de rang D.',0,50,1,'','Coût en chakra par rang'],['ckC','Coût d\'un jutsu C','Chakra dépensé par un jutsu de rang C.',0,50,1,'','Coût en chakra par rang'],
  ['ckB','Coût d\'un jutsu B','Chakra dépensé par un jutsu de rang B.',0,50,1,'','Coût en chakra par rang'],['ckA','Coût d\'un jutsu A','Chakra dépensé par un jutsu de rang A.',0,60,1,'','Coût en chakra par rang'],
  ['ckS','Coût d\'un jutsu S','Chakra dépensé par un jutsu de rang S.',0,60,1,'','Coût en chakra par rang'],['ckU','Surcoût d\'un ultime','Ajouté au coût de son rang pour un ultime (T).',0,40,1,'','Coût en chakra par rang'],
@@ -55,19 +55,22 @@ const blData=p=>({g:p.g,c:p.c,n:p.n,s:p.s,j:p.j});
 // le multiplicateur de dégâts ne s'y applique qu'en partie (mesuré : ×2 demandé → ×1 à ×1,55) ; le panneau le signale
 const BLPART=new Set(['x.su_ball','x.hm_arc','x.km_angel','x.ka_goka','x.ka_dragon','x.ak_arm']);
 let BLJ0=null; // jutsu(id) d'origine (avant le profil) : recharge et rang de chaque jutsu
-const blJBase=(p,id)=>{const o=BLJ0[id];return{cd:o.ult?blG(p,'ult'):Math.round(o.cd*blG(p,'jcd')*10)/10,ck:o.hpc?null:blG(p,'ck'+o.rank)+(o.ult?blG(p,'ckU'):0)}};
-// chiffres des descriptions : les « N dégâts » suivent le multiplicateur ; un réglage propre au jutsu est signalé
-const blDescScale=(d,m)=>m===1?d:d.replace(/(\d+(?:,\d+)?)(?=\s*(?:de\s+|d'\s*)?dégâts)/g,s=>{const v=parseFloat(s.replace(',','.'))*m;return v<10&&!Number.isInteger(v)?blF(v,1):String(Math.round(v))});
+const blJD=id=>JBAL[blJK(JL[id])]||{}; // réglage par défaut du jutsu (JBAL, nr_ninja.js) : d dégâts ×, cd recharge, ck coût
+const blJBase=(p,id)=>{const o=BLJ0[id],J=blJD(id);return{cd:o.ult?blG(p,'ult'):Math.round((J.cd??o.cd)*blG(p,'jcd')*10)/10,ck:o.hpc?null:J.ck??blG(p,'ck'+o.rank)+(o.ult?blG(p,'ckU'):0),d:J.d??1}};
+// chiffres des descriptions : les « N dégâts » (et les listes « 12, 12 puis 16 dégâts ») suivent le multiplicateur ; un réglage propre au jutsu est signalé
+const blDescScale=(d,m)=>m===1?d:d.replace(/(\d+(?:,\d+)?)(?=(?:\s*(?:,|puis|et)\s*\d+(?:,\d+)?)*\s*(?:de\s+|d'\s*)?dégâts)/g,s=>{const v=parseFloat(s.replace(',','.'))*m;return v<10&&!Number.isInteger(v)?blF(v,1):String(Math.round(v))});
 function blApply(p,force){p=p||blNorm({});const sig=JSON.stringify(blData(p));if(!force&&sig===BLC.sig)return;BLC.sig=sig;const D=BLC.D,G=k=>blG(p,k);
  for(const k in CLANBAL)delete CLANBAL[k];for(const k in D.c)CLANBAL[k]=D.c[k].slice();for(const k in p.c)CLANBAL[k]=p.c[k].slice();
  for(const k in NATBAL)delete NATBAL[k];for(const k in D.n)NATBAL[k]=D.n[k].slice();for(const k in p.n)NATBAL[k]=p.n[k].slice();
- for(const k in STYLEBAL)delete STYLEBAL[k];BLC.sd={};for(const k in p.s){const i=STYLES.findIndex(s=>s[0]===k);if(i<0)continue;STYLEBAL[i]=[p.s[k][0],p.s[k][1]];if(p.s[k][2]!=null&&p.s[k][2]!==1)BLC.sd[i]=p.s[k][2]}
+ for(const k in STYLEBAL)delete STYLEBAL[k];for(const k in D.s)STYLEBAL[k]=D.s[k].slice();BLC.sd={};
+ for(const k in p.s){const i=STYLES.findIndex(s=>s[0]===k);if(i<0)continue;const f=p.s[k]; // le profil multiplie les valeurs du jeu (style seul et style:clan)
+  if(!STYLEBAL[i])STYLEBAL[i]=[1,1];for(const q in STYLEBAL)if(q===String(i)||q.startsWith(i+':'))STYLEBAL[q]=[STYLEBAL[q][0]*f[0],STYLEBAL[q][1]*f[1]];if(f[2]!=null&&f[2]!==1)BLC.sd[i]=f[2]}
  for(const r of'DCBAS')CKCOST[r]=G('ck'+r);CKCOST.U=G('ckU');
  CK.spawn=G('ckSp');CK.regen=D.CK.regen*G('ckReg');CK.regenOut=D.CK.regenOut*G('ckOut');CK.rate0=D.CK.rate0*G('ckR');CK.rate1=D.CK.rate1*G('ckR');
  HLS.on=!!G('heal');HLS.cd=G('hlCd');HLS.pct=G('hlPct')/100;
  Object.assign(BLC,{gm:G('dmg'),jm:G('jdmg'),m1:G('m1'),jcd:G('jcd'),ult:G('ult'),hp:G('hp'),spd:G('spd'),pj:p.j});
- JL.forEach((J,i)=>{const q=p.j[blJK(J)],m=BLC.gm*BLC.jm*(q&&q.d!=null?q.d:1);let d=blDescScale(BLC.D.jd[i],m);
-  if(q){const b=blJBase(p,i),t=[];if(q.d!=null)t.push('dégâts ×'+blF(q.d)+(BLPART.has(J.src)?' (en partie seulement)':''));if(q.cd!=null&&q.cd!==b.cd)t.push('recharge '+blFmt(q.cd,'s'));if(q.ck!=null&&q.ck!==b.ck)t.push('chakra '+q.ck);if(t.length)d+=' · ⚖ valeurs modifiées : '+t.join(', ')}J.d=d});
+ JL.forEach((J,i)=>{const q=p.j[blJK(J)],b=blJBase(p,i),m=BLC.gm*BLC.jm*(q&&q.d!=null?q.d:b.d);let d=blDescScale(BLC.D.jd[i],m);
+  if(q){const t=[];if(q.d!=null&&q.d!==b.d)t.push('dégâts ×'+blF(q.d)+(BLPART.has(J.src)?' (en partie seulement)':''));if(q.cd!=null&&q.cd!==b.cd)t.push('recharge '+blFmt(q.cd,'s'));if(q.ck!=null&&q.ck!==b.ck)t.push('chakra '+q.ck);if(t.length)d+=' · ⚖ valeurs modifiées : '+t.join(', ')}J.d=d});
  blRebuild()}
 // recalcule tous les ninjas sur place (les références CH[…] restent valables : menu, salon, unités)
 function blRebuild(){for(const k in CH){const c=CH[k];if(!c||!c.build)continue;let n;try{n=mkNinja(c.build,c!==MYCH)}catch(e){continue}for(const f of['hp','spd','pw','abil','desc'])c[f]=n[f]}}
@@ -86,14 +89,14 @@ function blRun(m,u,f){const pB=BLJ,pU=BLU;BLJ=m;BLU=u;if(m===1){try{return f()}f
 function blHook(){
  const MK=mkNinja;mkNinja=function(b,s){const o=MK(b,s);if(BLC.hp!==1)o.hp=Math.round(o.hp*BLC.hp);if(BLC.spd!==1)o.spd=Math.round(o.spd*BLC.spd);return o};
  const JU=jutsu;BLJ0=JL.map((_,i)=>{const o=JU(i);return{cd:o.cd,ult:!!o.ult,hpc:!!o.hpc,rank:o.rank}});
- jutsu=function(id){const o=JU(id),q=BLC.pj&&BLC.pj[blJK(JL[id])],m=BLC.jm*(q&&q.d!=null?q.d:1);if(m!==1)o.bdm=m;
-  if(q&&q.cd!=null)o.cd=q.cd;else if(o.ult)o.cd=BLC.ult;else if(BLC.jcd!==1)o.cd=Math.round(o.cd*BLC.jcd*10)/10;if(q&&q.ck!=null&&!o.hpc)o.ckO=q.ck;return o};
+ jutsu=function(id){const o=JU(id),q=BLC.pj&&BLC.pj[blJK(JL[id])],J=blJD(id),m=BLC.jm*(q&&q.d!=null?q.d:J.d??1);if(m!==1)o.bdm=m;
+  if(q&&q.cd!=null)o.cd=q.cd;else if(o.ult)o.cd=BLC.ult;else{const c=J.cd??o.cd;if(BLC.jcd!==1||c!==o.cd)o.cd=Math.round(c*BLC.jcd*10)/10}const ck=q&&q.ck!=null?q.ck:J.ck;if(ck!=null&&!o.hpc)o.ckO=ck;return o};
  const SA=styleAb;styleAb=function(i){const o=SA(i),m=BLC.m1*(BLC.sd&&BLC.sd[i]||1);if(m!==1){o.bdm=m;o.d=blDescScale(o.d,m*BLC.gm)+(BLC.sd&&BLC.sd[i]?' · ⚖ dégâts ×'+blF(BLC.sd[i]):'')}else if(BLC.gm!==1)o.d=blDescScale(o.d,BLC.gm);return o};
  const FI=fire;fire=function(u,ab,a,td,ex){const m=ab&&ab.bdm||1;return m===1&&BLJ===1?FI(u,ab,a,td,ex):blRun(m,u,()=>FI(u,ab,a,td,ex))};
  const HI=hit;hit=function(t,src,dmg,o){if(src&&src!==t&&typeof dmg==='number'){let m=BLC.gm;if(BLJ!==1&&src===BLU)m*=BLJ;if(m!==1){dmg*=m;if(o&&o.dot&&o.dot.dps)o=Object.assign({},o,{dot:Object.assign({},o.dot,{dps:o.dot.dps*m})})}}return HI(t,src,dmg,o)};
  const LA=later;later=function(u,t,f,o){if(BLJ!==1&&typeof f==='function'){const m=BLJ,w=BLU,f0=f;f=(...a)=>blRun(m,w,()=>f0(...a))}return LA(u,t,f,o)};
  for(const k in AUXF){const f0=AUXF[k];AUXF[k]=function(x,dt){return x.blm&&x.blm!==1?blRun(x.blm,x.blu||x.owner,()=>f0(x,dt)):f0(x,dt)}}}
-function blCapture(){BLC.D={c:blCopy(CLANBAL),n:blCopy(NATBAL),ck:Object.assign({U:14},CKCOST),CK:{spawn:CK.spawn,regen:CK.regen,regenOut:CK.regenOut,rate0:CK.rate0,rate1:CK.rate1},hl:{on:HLS.on,cd:HLS.cd,pct:HLS.pct},jd:JL.map(J=>J.d)};if(CKCOST.U==null)CKCOST.U=14}
+function blCapture(){BLC.D={c:blCopy(CLANBAL),n:blCopy(NATBAL),s:blCopy(STYLEBAL),ck:Object.assign({U:14},CKCOST),CK:{spawn:CK.spawn,regen:CK.regen,regenOut:CK.regenOut,rate0:CK.rate0,rate1:CK.rate1},hl:{on:HLS.on,cd:HLS.cd,pct:HLS.pct},jd:JL.map(J=>J.d)};if(CKCOST.U==null)CKCOST.U=14}
 
 // ---------- simulateur : côté iframe (?sim=1) ----------
 let BLX=null; // tâche en cours dans l'iframe
@@ -319,7 +322,7 @@ function blTabS(){const out=[blH('p',{class:'bl-note'},'Attaque de base (clic ga
  STYLES.forEach((S,si)=>{const k=S[0],ml=MELEEK.has(S[4]),cl=S[5].map(c=>c<0?'sans clan':CLANS[c]?CLANS[c][0]:'?').join(', '),get=i=>(blView().s[k]||[1,1,1])[i]??1;let row;
   const set=(i,v)=>{const P=BLC.cur.s,a=(P[k]||[1,1,1]).slice();a[i]=v==null?1:v;if(a.every(x=>x===1))delete P[k];else P[k]=a};
   const C=[0,1,2].map(i=>blNumIn(()=>get(i),v=>{set(i,v);row.sync();blTouch()},1,.5,2,.01,'x',{lab:k+' : '+['PV','puissance','dégâts'][i]}));
-  row=blRowEl(cols,blLab(blChip(ml?'⚔':'➶',ml?'#e8cfa8':'#8fc8ff',1),k,(ml?'Corps à corps':'Distance')+' · '+cl,S[1]+' (style : PV ×'+blF(S[6])+', puissance ×'+blF(S[7])+')'),C,()=>!!blView().s[k],()=>{delete BLC.cur.s[k]});out.push(row)});
+  row=blRowEl(cols,blLab(blChip(ml?'⚔':'➶',ml?'#e8cfa8':'#8fc8ff',1),k,(ml?'Corps à corps':'Distance')+' · '+cl,S[1]+' (style : PV ×'+blF(S[6])+', puissance ×'+blF(S[7])+')'+Object.keys(BLC.D.s).filter(q=>q===String(si)||q.startsWith(si+':')).map(q=>{const v=BLC.D.s[q],c=q.split(':')[1];return' · équilibrage du jeu'+(c!=null?' ('+(c==='-1'?'sans clan':CLANS[+c][0])+')':'')+' : PV ×'+blF(v[0])+', puissance ×'+blF(v[1])}).join('')),C,()=>!!blView().s[k],()=>{delete BLC.cur.s[k]});out.push(row)});
  return out}
 // --- Jutsu : recherche, filtres, dégâts ×, recharge, coût
 function blTabJ(){const p=blView(),f=BLC.jf,wrap=blH('div'),cols='minmax(220px,1.4fr) minmax(190px,1.25fr) 132px 118px 44px';
@@ -331,12 +334,12 @@ function blTabJ(){const p=blView(),f=BLC.jf,wrap=blH('div'),cols='minmax(220px,1
   cnt.textContent=L.length+' jutsu';list.replaceChildren(...(L.length?L.map(J=>blJRow(J,cols)):[blH('div',{class:'bl-empty'},'Aucun jutsu ne correspond.')]))};
  let tm;q.oninput=()=>{f.q=q.value;clearTimeout(tm);tm=setTimeout(draw,120)};cat.onchange=()=>{f.cat=cat.value;draw()};rk.onchange=()=>{f.rk=rk.value;draw()};md.firstChild.onchange=()=>{f.mod=md.firstChild.checked;draw()};
  wrap.append(blH('div',{class:'bl-tools'},q,cat,rk,md,cnt),blH('div',{class:'bl-hdr',style:{gridTemplateColumns:cols}},blH('span',null,'Jutsu'),blH('span',{'data-tip':'Multiplie tous les dégâts du jutsu (coups, projectiles, zones, effets différés)'},'Dégâts ×'),blH('span',null,'Recharge (s)'),blH('span',null,'Chakra'),blH('span')),list);draw();return wrap}
-function blJRow(J,cols){const i=J.id,k=blJK(J),b0=BLJ0[i],base=blJBase(blView(),i),get=f=>{const q=blView().j[k];return q&&q[f]!=null?q[f]:f==='d'?1:base[f]};let row;
+function blJRow(J,cols){const i=J.id,k=blJK(J),b0=BLJ0[i],base=blJBase(blView(),i),get=f=>{const q=blView().j[k];return q&&q[f]!=null?q[f]:base[f]};let row;
  const set=(f,v)=>{const P=BLC.cur.j,q=Object.assign({},P[k]);if(v==null)delete q[f];else q[f]=v;if(Object.keys(q).length)P[k]=q;else delete P[k]};
  const ch=f=>v=>{set(f,v);row.sync();blTouch()};
  const cd=blNumIn(()=>get('cd'),ch('cd'),base.cd,.5,60,.5,'s',{noSl:1,lab:J.n+' : recharge',tip:'Défaut : '+blFmt(base.cd,'s')+(b0.ult?' (ultime)':'')});
  const ck=b0.hpc?Object.assign(blH('div',{class:'bl-ctl','data-tip':'Ce jutsu coûte des PV (prix du sang), pas de chakra'},blH('span',{class:'bl-unit',style:{width:'auto',color:'#ff8a96'}},'PV max')),{upd(){}}):blNumIn(()=>get('ck'),ch('ck'),base.ck,0,100,1,'',{noSl:1,lab:J.n+' : chakra',tip:'Défaut : '+base.ck});
- const dm=blNumIn(()=>get('d'),ch('d'),1,.25,3,.01,'x',{lab:J.n+' : dégâts',tip:BLPART.has(J.src)?'⚠ Une partie des dégâts de ce jutsu est calculée à part : le multiplicateur ne s\'applique qu\'en partie.':null});
+ const dm=blNumIn(()=>get('d'),ch('d'),base.d,.25,3,.01,'x',{lab:J.n+' : dégâts',tip:BLPART.has(J.src)?'⚠ Une partie des dégâts de ce jutsu est calculée à part : le multiplicateur ne s\'applique qu\'en partie.':null});
  const lab=blH('div',{class:'bl-lab','data-tip':BLC.D.jd[i]},J.cat==='u'?blChip('SJ','#c8b89a'):J.cat[0]==='n'?blChip(NATURES[+J.cat.slice(1)][0].slice(0,2),catCol(J.cat)):blChip(clanTag(+J.cat.slice(1)),catCol(J.cat)),
   blH('div',null,blH('b',null,J.n,blH('span',{class:'bl-rk',style:{background:RANKC[J.r]}},J.r),BLPART.has(J.src)?blH('span',{class:'bl-part','data-tip':'Dégâts × partiel : une partie des dégâts de ce jutsu est calculée à part, le multiplicateur ne s\'y applique qu\'en partie.'},'⚠'):null),blH('small',null,catName(J.cat)+' · '+(b0.ult?'ultime':J.slot===2?'déplacement':'jutsu'))));
  row=blRowEl(cols,lab,[dm,cd,ck],()=>!!blView().j[k],()=>{delete BLC.cur.j[k]});return row}
@@ -366,7 +369,7 @@ function blImport(){const ta=blH('textarea',{placeholder:'Colle ici un profil ex
  const m=blModal('Importer un profil',blH('div',null,blH('p',null,'Colle le texte d\'un profil exporté, ou ouvre un fichier .json. Il remplace les réglages actuels (enregistre-le ensuite pour le garder).'),ta,fi,err),[['Annuler'],['Ouvrir un fichier…',()=>{fi.click();return false}],['Importer',()=>take(ta.value),'pri']])}
 
 // ---------- simulateur : côté panneau ----------
-const BLS={run:false,fr:null,opt:{grp:{c:1,n:1,s:0,f:0},N:800,mode:'noheal',kits:'random'},res:null,t0:0,rate:.05,last:0,sug:null,cancelled:false,prof:''};
+const BLS={run:false,fr:null,opt:{grp:{c:1,n:1,s:0,f:0},N:800,mode:'heal',kits:'random'},res:null,t0:0,rate:.05,last:0,sug:null,cancelled:false,prof:''};
 function blSimCats(){const o=BLS.opt.grp,c=[];if(o.c){for(let i=0;i<CLANS.length;i++)c.push('c'+i);c.push('u')}if(o.n)for(let i=0;i<NATURES.length;i++)c.push('n'+i);if(o.s)STYLES.forEach((_,i)=>c.push('s'+i));if(o.f)c.push('free');return c}
 const blCatInfo=c=>c==='u'?{nm:'Sans clan',col:'#9aa3ad',tag:'—',g:'Clans'}:c==='free'?{nm:'Duels libres',col:'#c8b89a',tag:'∗',g:'Libres'}:c[0]==='c'?{nm:CLANS[+c.slice(1)][0],col:CLANS[+c.slice(1)][1],tag:clanTag(+c.slice(1)),g:'Clans'}:
  c[0]==='n'?{nm:NATURES[+c.slice(1)][0],col:NATURES[+c.slice(1)][2],tag:NATURES[+c.slice(1)][0].slice(0,2),g:'Natures'}:{nm:(STYLES[+c.slice(1)]||['?'])[0],col:MELEEK.has((STYLES[+c.slice(1)]||[])[4])?'#e8cfa8':'#8fc8ff',tag:MELEEK.has((STYLES[+c.slice(1)]||[])[4])?'⚔':'➶',g:'Styles (M1)'};
@@ -394,7 +397,7 @@ function blTabSim(){const o=BLS.opt,cats=blSimCats(),menu=state==='menu',per=cat
   blH('div',{class:'bl-card'},blH('h4',null,'Catégories à tester'),blH('div',{class:'bl-tgl'},tg('c','Clans',CLANS.length+1,'Chaque clan et « sans clan » : kit aléatoire du clan contre un ninja aléatoire'),tg('n','Natures',NATURES.length),tg('s','Styles',STYLES.length,'Chaque attaque de base (M1)'),tg('f','Duels libres',1,'Kits entièrement aléatoires : nourrit surtout les statistiques des jutsu')),
    blH('p',{class:'bl-note',style:{margin:'9px 0 0'}},'Les jutsu sont toujours comptés, dans tous les duels.')),
   blH('div',{class:'bl-card'},blH('h4',null,'Nombre de duels'),Nin,hint),
-  blH('div',{class:'bl-card'},blH('h4',null,'Combat'),seg('mode',[['noheal','1v1 sans soin','Comme bal21/sim.mjs : mesure l\'équilibre pur'],['heal','1v1 avec soin (H)','Les bots utilisent le soin commun']]),blH('div',{style:{height:'9px'}}),
+  blH('div',{class:'bl-card'},blH('h4',null,'Combat'),seg('mode',[['heal','1v1 avec soin (H)','Comme en partie : les bots utilisent le soin commun (référence de l\'équilibrage du jeu)'],['noheal','1v1 sans soin','Comme bal21/sim.mjs : mesure l\'équilibre pur']]),blH('div',{style:{height:'9px'}}),
    seg('kits',[['random','Kits aléatoires','Ninja aléatoire de la catégorie contre un ninja aléatoire'],['preset','Persos préfaits','Persos de l\'anime de la catégorie contre d\'autres persos (kits aléatoires si aucun)']])),
   blH('p',{class:'bl-note',style:{margin:'0 2px',fontSize:'11.5px'}},'Les duels tournent dans une copie isolée du jeu, sans rendu : ta partie et ton menu ne sont pas touchés. Fermer le panneau arrête la simulation.'));
  const top=blH('div',{class:'bl-card bl-runbar'},blH('div',{style:{minWidth:0,flex:1}},blH('h4',{style:{margin:'0 0 3px'}},'Profil testé'),blH('div',{class:'bl-note',style:{margin:0}},blH('b',null,BLS.run?BLS.prof:BLC.cur.name),' · ',blStd(BLC.cur)?'valeurs du jeu':blCount(BLC.cur)+' réglage'+(blCount(BLC.cur)>1?'s':'')+' modifié'+(blCount(BLC.cur)>1?'s':''),

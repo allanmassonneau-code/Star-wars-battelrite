@@ -25,7 +25,7 @@ const STYLES=[
 
 // ---- aides communes des styles
 const stC=u=>u.cmbH||1,stI=u=>units.indexOf(u); // n° du coup dans l'enchaînement (1 à 5), index d'un ninja (effets suivis)
-const stCd=(u,cd)=>{u.cds[0]=cd*(u.rapid>0?.45:1)}; // rythme propre à chaque coup
+const stCd=(u,cd)=>{u.cds[0]=cd*(u.rapid>0?.45:1)*(u.ch.pass==='speed'?PASSV.speedA:1)}; // rythme propre à chaque coup (passif Pieds légers : plus rapide)
 // coup au corps à corps : melee() du moteur (combo, endurance, 5e coup, renvoi des tirs) ; l'arc générique au sol est remplacé par la traînée du style (tr),
 // cb(e) est appelé pour chaque ennemi vraiment touché (ni esquivé, ni paré)
 function stMelee(u,a,R,arc,dmg,o,tr,cb){const L=cb?stIn(u,a,R,arc):[],H=L.map(e=>e.hp+(e.shield||0)),i=fx.length,n=melee(u,a,R,arc,dmg,o||{});

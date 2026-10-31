@@ -18,7 +18,7 @@ KIT('u',[
  [4,'B','x.sub_counter','Contre du clone','0,7 s : le prochain coup ne frappe qu\'un clone ; tu surgis derrière l\'attaquant proche, le frappes et l\'étourdis','smoke'],
  [4,'C','x.sub_pill','Pilule du soldat','Croque une pilule : +40 chakra, soin, endurance pleine ; se libère des entraves et ralentissements','heal'],
  [4,'D','x.sub_focus','Concentration du chakra','Réduit de 3 s la recharge de tes autres jutsu (hors ultime), rend 15 chakra et te rend plus rapide 1 s','chakra'],
- [2,'C','x.sub_shunshin','Shunshin','Disparaît dans un tourbillon de feuilles, réapparaît au curseur et court plus vite 0,7 s','leaf'],
+ [2,'C','x.sub_shunshin','Shunshin','Disparaît dans un tourbillon de feuilles et réapparaît au curseur : les feuilles tranchent autour de toi (8 dégâts) et tu cours plus vite 1,5 s','leaf'],
  [2,'C','x.sub_kawa','Kawarimi','Se substitue au curseur et laisse à sa place une bûche piégée qui explose et étourdit','smoke'],
  [2,'C','x.sub_jump','Saut ninja','Bondit au curseur ; l\'atterrissage repousse les ennemis proches','leaf'],
  [2,'D','x.sub_roll','Roulade','Roulade rapide : intouchable au début de la roulade','smoke'],
@@ -26,7 +26,7 @@ KIT('u',[
  [2,'C','x.sub_grap','Kunai à fil','Kunai à fil : te tire jusqu\'au point d\'impact ; sur un ennemi, finit par un coup de pied étourdissant','kunai'],
  [5,'A','x.sub_toad','Invocation : Crapaud','Gamabunta s\'écrase sur la zone : gros dégâts, étourdit, puis reste comme rempart sur un sol boueux','smoke'],
  [5,'C','x.sub_rain','Pluie de parchemins','Une nuée de parchemins s\'abat sur la zone et explose en vague, du centre vers le bord','tag'],
- [5,'S','x.sub_sage','Mode Ermite','Se concentre 0,6 s (interruptible) puis 6 s : +35 % de dégâts, plus rapide, chakra illimité ; soigne un peu','sage'],
+ [5,'S','x.sub_sage','Mode Ermite','Se concentre 0,6 s (interruptible) puis 5 s : +35 % de dégâts, plus rapide, chakra illimité ; soigne un peu','sage'],
  [5,'B','x.sub_katsu','Invocation : Katsuyu','Des limaces se posent sur toi et tes alliés proches : soin, régénération 2,5 s et chakra','heal'],
 ]);
 // ---------- aides ----------
@@ -107,14 +107,14 @@ Object.assign(NAT,{
  sub_focus:S_('Concentration du chakra','Réduit les recharges des autres jutsu',11,{hero:'luke',ai:SELF(400,.35)},(u)=>{const me=subIdx(u,'sub_focus');for(let i=0;i<5;i++)if(i!==me)u.cds[i]=Math.max(0,u.cds[i]-3);u.energy=Math.min(100,u.energy+15);
   later(u,.01,()=>{u.haste=Math.max(u.haste,1.2)});anim(u,'pray',.55);S('ignite',u);jx({jfx:'sub_focus',ui:units.indexOf(u),x:u.x,y:u.y,col:u.ch.look.weapon.col||'#3af',t:.8,m:.8})}),
  // --- Déplacements
- sub_shunshin:S_('Shunshin','Téléportation dans un tourbillon de feuilles',8,{hero:'palpatine',ai:ESC},(u,a,td)=>{const p=subFree(atP(u,a,clamp(td||260,80,270),270),20);jx({jfx:'sub_leaves',x:u.x,y:u.y,t:.65,m:.65});
-  blinkTo(u,p.x,p.y);u.haste=Math.max(u.haste,.7);anim(u,'seal',.35);S('poof',u);jx({jfx:'sub_leaves',x:u.x,y:u.y,t:.65,m:.65,in:1})}),
+ sub_shunshin:S_('Shunshin','Téléportation dans un tourbillon de feuilles',8,{hero:'palpatine',ai:{mode:'gap',min:120,max:270,p:.5}},(u,a,td)=>{const p=subFree(atP(u,a,clamp(td||260,80,270),270),20);jx({jfx:'sub_leaves',x:u.x,y:u.y,t:.65,m:.65});
+  blinkTo(u,p.x,p.y);u.haste=Math.max(u.haste,1.5);for(const e of enemies(u))if(dist(u,e)<80+e.r)hit(e,u,8,{});anim(u,'seal',.35);S('poof',u);jx({jfx:'sub_leaves',x:u.x,y:u.y,t:.65,m:.65,in:1})}),
  sub_kawa:S_('Kawarimi','Substitution : laisse une bûche piégée',8,{hero:'lando',ai:ESC},(u,a,td)=>{const o={x:u.x,y:u.y},p=subFree(atP(u,a,clamp(td||200,60,230),230),20);
-  aux.push({type:'sub_log',x:o.x,y:o.y,a:u.aim,r:0,t:.72,m:.72,team:u.team});const z=subWarn(u,o.x,o.y,80,.7);later(u,.7,()=>{z.done=1;subBoom(u,o.x,o.y,80,18,{kb:200,stun:.25})},{x:o.x,y:o.y,vfx:'tag'});
+  aux.push({type:'sub_log',x:o.x,y:o.y,a:u.aim,r:0,t:.72,m:.72,team:u.team});const z=subWarn(u,o.x,o.y,80,.7);later(u,.7,()=>{z.done=1;subBoom(u,o.x,o.y,80,18,{kb:200,stun:.5})},{x:o.x,y:o.y,vfx:'tag'});
   subPoof(o.x,o.y,44,u);blinkTo(u,p.x,p.y);anim(u,'crouch',.3);subPoof(u.x,u.y,30,u)}),
  sub_jump:S_('Saut ninja','Bondit au curseur, choc à l\'arrivée',6,{hero:'luke',ai:{mode:'gap',min:120,max:300,p:.45}},(u,a,td)=>{S('dash',u);anim(u,'sub_jump',.38);
   dash(u,a,clamp(td||200,60,280),.36,{jump:85,end:()=>{VFX='leaf';aoe(u,u.x,u.y,75,9,{kb:300,quiet:1},'#5aa83a');VFX=null;jx({jfx:'sub_land',x:u.x,y:u.y,r:75,t:.55,m:.55});if(near(u.x,u.y)){S('rock',u);shake=Math.max(shake,.12)}}})}),
- sub_roll:S_('Roulade','Roulade rapide, intouchable au début',5,{hero:'rey',ai:ESC},(u,a)=>{S('dash',u);anim(u,'sub_roll',.26);dash(u,a,175,.22,{});u.phase=Math.max(u.phase||0,.14);
+ sub_roll:S_('Roulade','Roulade rapide, intouchable au début',5,{hero:'rey',ai:ESC},(u,a)=>{S('dash',u);anim(u,'sub_roll',.26);dash(u,a,175,.22,{});u.phase=Math.max(u.phase||0,.3);
   for(let i=0;i<3;i++)fx.push({x:u.x+Math.cos(a)*i*40,y:u.y+Math.sin(a)*i*40,z:4,vx:(rnd()-.5)*40,vy:(rnd()-.5)*30,t:.5,m:.5,col:'#b8b0a0',r:3+rnd()*2,vfx:'smoke'})}),
  // --- Hiraishin : 1er appui = kunai marqué ; relance (gratuite, 4 s) = téléportation au kunai, ou derrière l'ennemi marqué
  sub_hira:S_('Hiraishin','Kunai marqué ; relance pour s\'y téléporter',10,{hero:'ventress',ai:{mode:'gap',min:100,max:430,p:.5}},(u,a)=>{const i=subIdx(u,'sub_hira'),cd=u.ch.abil[i].cd;
@@ -138,7 +138,7 @@ Object.assign(NAT,{
   [[.9,0,70,22],[1.15,60,125,18],[1.4,115,175,15]].forEach(([dl,r0,r1,dm],w)=>{const z=subWarn(u,p.x,p.y,r1,dl);later(u,dl,()=>{z.done=1;VFX='tag';ringHit(u,p.x,p.y,r0,r1,dm,{kb:140});VFX=null;const n=w?w*6+2:1;
    for(let i=0;i<n;i++){const b=i/n*Math.PI*2+w*.5,d=(r0+r1)/2;detoFx(p.x+Math.cos(b)*d,p.y+Math.sin(b)*d*.9,w?44:62,'sub_boom')}if(near(p.x,p.y)){S('boom',u);shake=Math.max(shake,.22)}},{x:p.x,y:p.y,vfx:'tag'})})}),
  // --- Mode Ermite : rassembler l'énergie naturelle demande de rester concentré (0,6 s, interrompu par un étourdissement ou un recul)
- sub_sage:ULT('Mode Ermite','Énergie naturelle : dégâts, vitesse, chakra illimité',{hero:'yoda',cast:.6,ai:{mode:'self',max:340,p:.8}},(u)=>{const d=6;u.rage=Math.max(u.rage,d);u.haste=Math.max(u.haste,d);u.sub_sage=d;u.energy=100;gain(u,12,u);anim(u,'sub_sage',.5);S('ignite',u);
+ sub_sage:ULT('Mode Ermite','Énergie naturelle : dégâts, vitesse, chakra illimité',{hero:'yoda',cast:.6,ai:{mode:'self',max:340,p:.8}},(u)=>{const d=5;u.rage=Math.max(u.rage,d);u.haste=Math.max(u.haste,d);u.sub_sage=d;u.energy=100;gain(u,12,u);anim(u,'sub_sage',.5);S('ignite',u);
   aux.push({type:'sub_sage',x:u.x,y:u.y,r:0,t:d,m:d,team:u.team,owner:u});jx({jfx:'sub_sagein',ui:units.indexOf(u),x:u.x,y:u.y,t:1,m:1})}),
  sub_katsu:ULT('Invocation : Katsuyu','Limaces de soin sur les alliés proches',{hero:'r2',ai:{mode:'ally',p:.8}},(u)=>{anim(u,'summon',.8);S('water',u);jx({jfx:'sub_katsu',ui:units.indexOf(u),x:u.x,y:u.y,a:u.aim,t:1.8,m:1.8});
   const L=allies(u,450);for(const x of L){const r=gain(x,14,u);x.regenB=Math.max(x.regenB||0,2.5);x.energy=Math.min(100,x.energy+15);x.sub_slug=2.5;if(r>=1)say(x,'+'+Math.round(r),'#6f9');jx({jfx:'sub_slugjump',ui:units.indexOf(u),ti:units.indexOf(x),x:x.x,y:x.y,t:.6,m:.6})}
@@ -234,7 +234,7 @@ function subHiraTp(u){let m=u.sub_hk;u.sub_hk=null;const L=aux.filter(o=>o.type=
  if(!m){const p=L.length&&L[0].p;if(p&&!p.dead&&p.life>0){m={x:p.x,y:p.y};p.life=0}}for(const o of L)o.t=0;if(!m)return;
  const o={x:u.x,y:u.y};S('zap',u);
  if(m.tg&&!m.tg.dead){const e=m.tg,b=ang(u,e),q=subFree({x:e.x+Math.cos(b)*(u.r+e.r+8),y:e.y+Math.sin(b)*(u.r+e.r+8)},u.r);u.x=q.x;u.y=q.y;collide(u);u.aim=ang(u,e);u.swing=.18;u.swingA=u.aim;
-  hit(e,u,10,{stun:.3,unblockable:1});S('saber',u);jx({jfx:'sub_slash',ui:units.indexOf(u),x:u.x,y:u.y,a:u.aim,col:'#ffe14a',t:.3,m:.3})}
+  hit(e,u,7,{stun:.2,unblockable:1});S('saber',u);jx({jfx:'sub_slash',ui:units.indexOf(u),x:u.x,y:u.y,a:u.aim,col:'#ffe14a',t:.3,m:.3})}
  else{const q=subFree({x:m.x,y:m.y},u.r);u.x=q.x;u.y=q.y;collide(u)}
  u.dash=null;u.kx=u.ky=0;jx({jfx:'sub_hira',x:o.x,y:o.y,x2:u.x,y2:u.y,t:.5,m:.5})}
 // Gamabunta : rempart (repousse les ennemis, arrête leurs tirs) puis disparaît dans un nuage

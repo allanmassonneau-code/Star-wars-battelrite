@@ -4,15 +4,15 @@
 // Combo signature : Prison aqueuse ou Requins voraces vident la jauge → la proie ne peut plus rien lancer → Samehada la dévore.
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
 const HS_D={
- bite:'Samehada s\'abat devant toi (petit élan) : 14 dégâts et arrache 7 de chakra',
+ bite:'Samehada s\'abat devant toi (petit élan) : 12 dégâts et arrache 3 de chakra',
  sharks:'3 requins d\'eau en éventail traquent l\'ennemi devant eux (une proie, partout) : 7 dégâts et 2 de chakra volés chacun',
- prison:'Bulle d\'eau : le 1er ennemi touché (8) est emprisonné 0,9 s, Samehada lui arrache 9 de chakra, puis la bulle éclate (6)',
+ prison:'Bulle d\'eau : le 1er ennemi touché (8 dégâts) est emprisonné 0,9 s, Samehada lui arrache 9 de chakra, puis la bulle éclate (6 dégâts)',
  scales:'Les écailles de Samehada te couvrent 3 s : −25 % de dégâts subis ; qui te frappe au corps à corps se blesse (6) et perd 4 de chakra',
  fuse:'Fusion avec Samehada 6 s : −20 % de dégâts subis, +15 % de dégâts, insensible aux ralentissements ; tes coups de base volent 3 de chakra',
  throw:'Samehada tournoie en ligne et revient : elle traverse les ennemis (16 dégâts et 5 de chakra volés à chaque passage)',
  swim:'Tu plonges et nages jusqu\'au curseur (intouchable 0,3 s) ; tu jaillis : 10 dégâts, ralentit et vole 4 de chakra autour',
  wave:'Tu files sur une vague vers le curseur ; le reflux part derrière toi : 8 dégâts, repousse et trempe',
- dai:'Requin géant en ligne : il avale le 1er ennemi (10 ; étourdi 0,8 s, 12 de chakra volés) puis le recrache (34, repousse ; 12 autour)',
+ dai:'Requin géant en ligne : il avale le 1er ennemi (10 dégâts ; étourdi 0,8 s, 12 de chakra volés) puis le recrache (34 dégâts, repousse ; 12 dégâts autour)',
  sea:'Une mer t\'entoure 5 s et te suit : ennemis trempés et attirés ; toutes les 0,5 s, un requin mord (proie d\'abord) : 7 dégâts et 3 de chakra'};
 KIT('c18',[
  [1,'D','x.hs_bite','Samehada : Morsure',HS_D.bite,'steel'],
@@ -64,7 +64,7 @@ Object.assign(NAT,{
  // ---------- Samehada : Morsure (D) : élan court, le sabre s'abat et arrache le chakra ----------
  hs_bite:SP('Samehada : Morsure',HS_D.bite,6,{hero:'dooku',ai:RG(125,.75),line:{len:130,w:80}},(u,a)=>{hs_S('saber',u);hs_S('bone',u);anim(u,'hs_chop',.42);stLunge(u,a,46);
   jx({jfx:'st_arc',ui:hs_i(u),x:u.x,y:u.y,a,R:128,w:1.8,t:.3,m:.3,d:-1,tl:1.2,z:40,th:22,c:HSC.lt,c2:HSC.dk,blade:1});
-  for(const e of stIn(u,a,128,1.8))if(hs_hit(e,u,14,{melee:1},'steel')){hs_drain(u,e,7);jx({jfx:'hs_chomp',ti:hs_i(e),x:e.x,y:e.y,a,t:.42,m:.42})}}),
+  for(const e of stIn(u,a,128,1.8))if(hs_hit(e,u,12,{melee:1},'steel')){hs_drain(u,e,3);jx({jfx:'hs_chomp',ti:hs_i(e),x:e.x,y:e.y,a,t:.42,m:.42})}}),
  // ---------- Requins voraces (C) : 3 requins chercheurs en éventail ----------
  hs_sharks:SP('Suiton : Requins voraces',HS_D.sharks,8,{ai:RG(470,.65)},(u,a)=>{S('water',u);anim(u,'hs_summon',.45);jx({jfx:'hs_pool',x:u.x+Math.cos(a)*34,y:u.y+Math.sin(a)*34,r:40,t:.5,m:.5});
   for(const k of[-1,0,1]){proj(u,a+k*.34,{spd:560,r:9,dmg:7,life:.95,col:HSC.md,kind:'hs_shark',onHit:(p,t)=>{hs_drain(p.owner,t,2);jx({jfx:'hs_chomp',ti:hs_i(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),s:.6,t:.32,m:.32})}});

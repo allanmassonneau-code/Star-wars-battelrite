@@ -12,7 +12,7 @@ KIT('c11',[
  [3,'B','x.hk_trap','Fleur carnivore','Une fleur géante éclôt au point visé puis mord 5 s l\'ennemi le plus proche (portée 130) : 10 dégâts, ralentit et attire','leaf'],
  [3,'B','x.hk_spore','Nuage de spores','Pollen toxique 4 s (rayon 105) : ralentit, ronge 3 PV/s et ajoute une dose toutes les 0,75 s. Le vent le disperse','flower'],
  [4,'A','x.hk_sap','Cocon de sève','Toi ou l\'allié le plus proche du curseur : la sève rend 30 PV en 3 s, réduit les dégâts subis de 25 % et libère des entraves ; à la fin, la sève éclabousse et ralentit les ennemis proches','leaf'],
- [2,'C','x.hk_swing','Liane-grappin','Une liane s\'accroche au point visé (380 max) et t\'y hisse ; une pousse germe à l\'arrivée','leaf'],
+ [2,'C','x.hk_swing','Liane-grappin','Une liane s\'accroche au point visé (380 max) et t\'y hisse ; à l\'arrivée, elle fouette autour de toi (10 dégâts, ralentit) et une pousse germe','leaf'],
  [2,'B','x.hk_merge','Fusion végétale','Tu fonds dans le sol (intangible 0,55 s) et ressurgis au point visé (300 max) ou dans ta pousse la plus proche du curseur (650 max) : elle te rend 10 PV','leaf'],
  [5,'S','x.hk_bloom','Floraison mortelle','Après 0,8 s, des épines géantes jaillissent (rayon 160) : 38 dégâts, entrave 1 s. Toutes tes pousses éclosent : 16 dégâts et +2 doses autour (2 max par cible)','leaf'],
  [5,'A','x.hk_tree','Arbre millénaire','Un arbre géant pousse 6 s au point visé : ses branches fouettent l\'ennemi le plus proche (11 dégâts/s, portée 210), son ombre soigne tes alliés (4 PV/s) et il pleut du pollen','leaf'],
@@ -104,8 +104,8 @@ Object.assign(NAT,{
   t.root=0;t.slow=0;t.rootV=null;t.drT=Math.max(t.drT||0,3);t.dr=Math.max(t.drT>3.01?t.dr||0:0,.25);t.hk_sap=3;anim(u,'hk_sap',.7);S('water',u);
   aux.push({type:'hk_sapx',x:t.x,y:t.y,r:0,t:3,m:3,team:u.team,owner:u,tg:t,ti:hk_i(t),k:.25,n:0});if(t!==u)jx({jfx:'hk_sapline',x:u.x,y:u.y,ui:hk_i(u),ti:hk_i(t),t:.5,m:.5});say(t,'COCON DE SÈVE','#ffc060')}),
  // Liane-grappin : la liane s'accroche et hisse le Hoki (0,3 s) ; une pousse germe à l'arrivée
- hk_swing:SP('Liane-grappin','',7,{hero:'lando',ai:ESC},(u,a,td)=>{const d=clamp(td||300,120,380),e=fwd(u,a,d);anim(u,'hk_swing',.4);S('dash',u);
-  jx({jfx:'hk_rope',ui:hk_i(u),x:u.x,y:u.y,x2:e.x,y2:e.y,t:.42,m:.42});dash(u,a,Math.hypot(e.x-u.x,e.y-u.y),.3,{jump:42,end:()=>{hk_plant(u,u.x,u.y);if(near(u.x,u.y))sparks(u.x,u.y,'#5aa83a',10,'leaf')}})}),
+ hk_swing:SP('Liane-grappin','',7,{hero:'lando',ai:{mode:'gap',min:140,max:380,p:.5}},(u,a,td)=>{const d=clamp(td||300,120,380),e=fwd(u,a,d);anim(u,'hk_swing',.4);S('dash',u);
+  jx({jfx:'hk_rope',ui:hk_i(u),x:u.x,y:u.y,x2:e.x,y2:e.y,t:.42,m:.42});dash(u,a,Math.hypot(e.x-u.x,e.y-u.y),.3,{jump:42,end:()=>{hk_plant(u,u.x,u.y);for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<75+e.r)hit(e,u,10,{slow:.8});if(near(u.x,u.y))sparks(u.x,u.y,'#5aa83a',10,'leaf')}})}),
  // Fusion végétale (façon Zetsu) : s'enfonce dans le sol, ressurgit au point visé ou dans une de ses pousses (consommée : +10 PV)
  hk_merge:SP('Fusion végétale','',11,{hero:'lando',ai:ESC},(u,a,td)=>{const cx=u.x+Math.cos(a)*(td||300),cy=u.y+Math.sin(a)*(td||300);let sp=null,bd=150;
   for(const s of aux)if(s.type==='hk_sprout'&&s.owner===u&&s.t>.6&&Math.hypot(s.x-u.x,s.y-u.y)<650){const d=Math.hypot(s.x-cx,s.y-cy);if(d<bd){bd=d;sp=s}}

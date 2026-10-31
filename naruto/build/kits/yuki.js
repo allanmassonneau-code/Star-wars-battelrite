@@ -13,7 +13,7 @@ const YU_D={
  slide:'Tu glisses vers le curseur à travers les ennemis (8 dégâts, ralentit) ; ta piste de glace (3 s) ralentit les ennemis (1 givre au premier passage) et t\'accélère',
  step:'Tu traverses un miroir jusqu\'au curseur (260 max), ou jusqu\'à ton Miroir de glace (560 max) s\'il est près du curseur ; intangible 0,2 s ; un petit miroir (1,5 s) reste derrière toi',
  bliz:'Un blizzard t\'entoure 4 s et te porte (plus rapide) : ennemis ralentis, 8 dégâts et 1 givre toutes les 0,8 s ; à la fin, tout gèle (18 dégâts, 1 givre)',
- makyo:'Dôme de 8 miroirs (3,6 s) qui enferme les ennemis (un déplacement en sort) : tu sautes de miroir en miroir et cribles de senbon (2 × 3 dégâts par saut, 1 givre), −40 % de dégâts subis ; à la fin, les miroirs éclatent (10)'};
+ makyo:'Dôme de 8 miroirs (3,6 s) qui enferme les ennemis (un déplacement en sort) : tu sautes de miroir en miroir et cribles de senbon (2 × 3 dégâts par saut, 1 givre), −40 % de dégâts subis ; à la fin, les miroirs éclatent (10 dégâts)'};
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
 KIT('c20',[
  [1,'D','x.yu_swallow','Hyôton : Tsubame Fubuki',YU_D.swallow,'yu_ice'],

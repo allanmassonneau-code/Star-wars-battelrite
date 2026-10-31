@@ -4,15 +4,15 @@
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
 KIT('c6',[
  [1,'D','x.uz_tagk','Kunai à sceau','Kunai rapide : 14 dégâts et colle un sceau sur l\'ennemi touché','kunai'],
- [1,'C','x.uz_harpoon','Chaîne-harpon','Une chaîne adamantine harponne le 1er ennemi : ramené à toi (16), étourdi 0,4 s et marqué d\'un sceau','chain'],
+ [1,'C','x.uz_harpoon','Chaîne-harpon','Une chaîne adamantine harponne le 1er ennemi : ramené à toi (16 dégâts), étourdi 0,4 s et marqué d\'un sceau','chain'],
  [1,'B','x.uz_kai','Sceaux : Détonation','Fait exploser les sceaux des ennemis à moins de 480 : 12 + 12 par sceau ; à 3 sceaux, étourdi 0,7 s','tag'],
  [3,'A','x.uz_cage','Cage adamantine','Des chaînes jaillissent sous la zone : 20 dégâts, entrave 0,7 s et un sceau, puis enferment 2,5 s (ni ennemi ni tir ne passe)','chain'],
- [3,'B','x.uz_store','Parchemin de stockage','1,5 s : le parchemin scelle les tirs ennemis. Relance (5 s) : renvoie le plus fort (+25 %, 15 au moins), sinon 4 armes stockées (8 chacune)','kunai'],
- [4,'B','x.uz_gogyo','Sceau des cinq éléments','Cinq flammes : la cible (14) perd 20 de chakra, ne peut ni lancer de jutsu ni se recharger (R) 2 s, et reçoit un sceau','chakra'],
+ [3,'B','x.uz_store','Parchemin de stockage','1,5 s : le parchemin scelle les tirs ennemis. Relance (5 s) : renvoie le plus fort (+25 %, 15 dégâts au moins), sinon 4 armes stockées (8 dégâts chacune)','kunai'],
+ [4,'B','x.uz_gogyo','Sceau des cinq éléments','Cinq flammes : la cible (14 dégâts) perd 20 de chakra, ne peut ni lancer de jutsu ni se recharger (R) 2 s, et reçoit un sceau','chakra'],
  [4,'C','x.uz_wall','Rempart de chaînes','Un rempart de chaînes jaillit devant toi 3 s : il arrête les tirs et le passage des ennemis ; en surgissant, 14 dégâts et repousse','chain'],
  [2,'B','x.uz_swap','Sceau d\'échange','Kunai-sceau : échange ta place avec l\'ennemi touché (ralenti), sinon te téléporte là où il se plante','chain'],
  [2,'C','x.uz_leap','Bond des chaînes','Des chaînes te catapultent au curseur ; à l\'atterrissage, elles fouettent autour de toi : 12 dégâts, entrave 0,5 s et un sceau','chain'],
- [5,'S','x.uz_shiki','Shiki Fûjin','En plus du chakra, coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34, puis âme scellée 3 s (12/s, ralenti, ni jutsu ni recharge) ; +8 par sceau','chakra'],
+ [5,'S','x.uz_shiki','Shiki Fûjin','En plus du chakra, coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34 dégâts, puis âme scellée 3 s (12 dégâts/s, ralenti, ni jutsu ni recharge) ; +8 dégâts par sceau','chakra'],
  [5,'A','x.uz_bind','Entrave du démon','Après 0,4 s, des chaînes saisissent 3 ennemis à moins de 380 : entravés 0,6 s puis enchaînés à toi 3 s (170 au plus, ralentis), 8 dégâts par 0,5 s et un sceau par seconde ; tu restes immobile, un étourdissement les brise','chain'],
 ]);
 // ---- sceaux marqueurs (cœur du clan) : jusqu'à 3 sur un ennemi, 8 s après le dernier posé ; le 3e scelle son chakra (une fois toutes les 8 s)
@@ -37,7 +37,7 @@ function uzSoul(o,t){if(!o||!t||t.dead)return;const n=uzMk(t);t.uz_mk=0;t.uz_mkE
 Object.assign(NAT,{
  uz_tagk:SP('Kunai à sceau','Kunai rapide : 14 dégâts et colle un sceau sur l\'ennemi touché',4,{line:{len:470,w:16},ai:RG(460,.7)},(u,a)=>{S('blaster',u);anim(u,'throw2',.3);
   proj(u,a,{spd:980,r:7,dmg:14,life:.48,col:'#d8dde6',kind:'uz_kunai',onHit:(p,t)=>uzMark(p.owner,t,1)})}),
- uz_harpoon:SP('Chaîne-harpon','Une chaîne adamantine harponne le 1er ennemi : ramené à toi (16), étourdi 0,4 s et marqué d\'un sceau',8,{hero:'cadbane',line:{len:450,w:20},ai:RG(440,.55,110)},(u,a)=>{S('dash',u);S('deflect',u);anim(u,'uz_chain',.55);
+ uz_harpoon:SP('Chaîne-harpon','Une chaîne adamantine harponne le 1er ennemi : ramené à toi (16 dégâts), étourdi 0,4 s et marqué d\'un sceau',8,{hero:'cadbane',line:{len:450,w:20},ai:RG(440,.55,110)},(u,a)=>{S('dash',u);S('deflect',u);anim(u,'uz_chain',.55);
   proj(u,a,{spd:1000,r:10,dmg:16,life:.45,col:'#e8c860',hook:1,stun:.4,kind:'uz_chainp',onHit:(p,t)=>{const o=p.owner;uzMark(o,t,1);if(near(t.x,t.y))S('heavy',o);
    jx({jfx:'uz_wrap',ti:units.indexOf(t),ui:units.indexOf(o),x:t.x,y:t.y,t:.8,m:.8})}})}),
  uz_kai:SP('Sceaux : Détonation','Fait exploser les sceaux des ennemis à moins de 480 : 12 + 12 par sceau ; à 3 sceaux, étourdi 0,7 s',9,{tele:{self:1,r:UZ_KAIR},ai:null},(u)=>{const L=[];for(const e of enemies(u))if(uzMk(e)&&dist(u,e)<UZ_KAIR+e.r)L.push(e);
@@ -48,12 +48,12 @@ Object.assign(NAT,{
     if(near(e.x,e.y)){S('boom',u);shake=Math.max(shake,.1+.06*n);sparks(e.x,e.y,'#ff9a3a',6+4*n,'tag')}})}}),
  uz_cage:SP('Cage adamantine','Des chaînes jaillissent sous la zone : 20 dégâts, entrave 0,7 s et un sceau, puis enferment 2,5 s (ni ennemi ni tir ne passe)',13,{tele:{r:130,max:420},ai:RG(420,.55)},(u,a,td)=>{const p=atP(u,a,td,420);S('deflect',u);anim(u,'uz_slam',.45);u.root=Math.max(u.root,.3);
   aux.push({type:'uz_cage',x:p.x,y:p.y,r:130,t:2.95,m:2.95,team:u.team,owner:u,vfx:'chain',k:0,sd:{}})}),
- uz_store:SP('Parchemin de stockage','1,5 s : le parchemin scelle les tirs ennemis. Relance (5 s) : renvoie le plus fort (+25 %, 15 au moins), sinon 4 armes stockées (8 chacune)',11,{hero:'dooku',ai:UZ_ST_DEF},(u,a)=>{const i=u.ch.abil.findIndex(x=>x.key==='uz_store');if(i<0)return;const cd=u.ch.abil[i].cd;
+ uz_store:SP('Parchemin de stockage','1,5 s : le parchemin scelle les tirs ennemis. Relance (5 s) : renvoie le plus fort (+25 %, 15 dégâts au moins), sinon 4 armes stockées (8 dégâts chacune)',11,{hero:'dooku',ai:UZ_ST_DEF},(u,a)=>{const i=u.ch.abil.findIndex(x=>x.key==='uz_store');if(i<0)return;const cd=u.ch.abil[i].cd;
   if(u.jst&&u.jst.key==='uz_store'){u.jst=null;u.cds[i]=cd;uzRelease(u,a);return}
   S('poof',u);S('jyuken',u);anim(u,'uz_absorb',1.5);const ui=units.indexOf(u);u.uz_st=null;u.uz_scE=SIMT+1.5;
   aux.push({type:'uz_scrl',x:u.x,y:u.y,r:54,t:1.5,m:1.5,team:u.team,owner:u,ui,a,n:0,k:0});jx({jfx:'uz_scrollS',ui,x:u.x,y:u.y,t:1.5,m:1.5});
   if(u.jst&&u.jst.key!=='uz_store')u.cds[u.jst.i]=u.jst.cd;u.jst={key:'uz_store',i,n:1,t:5,cd,v:'chain'};u.cds[i]=.4}),
- uz_gogyo:SP('Sceau des cinq éléments','Cinq flammes : la cible (14) perd 20 de chakra, ne peut ni lancer de jutsu ni se recharger (R) 2 s, et reçoit un sceau',11,{hero:'dooku',line:{len:340,w:20},ai:RG(330,.55)},(u,a)=>{S('genjutsu',u);anim(u,'seal',.45);
+ uz_gogyo:SP('Sceau des cinq éléments','Cinq flammes : la cible (14 dégâts) perd 20 de chakra, ne peut ni lancer de jutsu ni se recharger (R) 2 s, et reçoit un sceau',11,{hero:'dooku',line:{len:340,w:20},ai:RG(330,.55)},(u,a)=>{S('genjutsu',u);anim(u,'seal',.45);
   proj(u,a,{spd:900,r:10,dmg:14,life:.38,col:'#a070ff',kind:'uz_gogyo',o:{silence:2},onHit:(p,t)=>{const o=p.owner,d=Math.min(t.energy,20);t.energy-=d;t.chk=false;t.ckLock=Math.max(t.ckLock||0,2);if(near(t.x,t.y))S('jyuken',o);say(t,'CHAKRA SCELLÉ','#c8a8ff');
    jx({jfx:'uz_g5',ti:units.indexOf(t),x:t.x,y:t.y,t:2,m:2});uzMark(o,t,1)}})}),
  uz_wall:SP('Rempart de chaînes','Un rempart de chaînes jaillit devant toi 3 s : il arrête les tirs et le passage des ennemis ; en surgissant, 14 dégâts et repousse',12,{line:{len:90,w:UZ_WL},ai:{mode:'def',p:.5}},(u,a)=>{S('heavy',u);S('deflect',u);anim(u,'uz_slam',.45);
@@ -68,7 +68,7 @@ Object.assign(NAT,{
   jx({jfx:'uz_leapc',x:u.x,y:u.y,a,t:.5,m:.5});
   dash(u,a,L,.38,{jump:46,end:()=>{if(u.dead)return;VFX='chain';for(const e of enemies(u))if(dist(u,e)<92+e.r){hit(e,u,12,{root:.5,unblockable:1});uzMark(u,e,1)}VFX=null;
    jx({jfx:'uz_lash',x:u.x,y:u.y,t:.5,m:.5});if(near(u.x,u.y)){S('heavy',u);shake=Math.max(shake,.12)}}})}),
- uz_shiki:ULT('Shiki Fûjin','En plus du chakra, coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34, puis âme scellée 3 s (12/s, ralenti, ni jutsu ni recharge) ; +8 par sceau',{hero:'thrawn',line:{len:520,w:36},ai:{max:480,p:.8}},(u,a)=>{S('genjutsu',u);S('roar',u);anim(u,'uz_shiki',1.1);u.root=Math.max(u.root,.75);u.uz_rtE=SIMT+.7;u.uz_rtB=0;
+ uz_shiki:ULT('Shiki Fûjin','En plus du chakra, coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34 dégâts, puis âme scellée 3 s (12 dégâts/s, ralenti, ni jutsu ni recharge) ; +8 dégâts par sceau',{hero:'thrawn',line:{len:520,w:36},ai:{max:480,p:.8}},(u,a)=>{S('genjutsu',u);S('roar',u);anim(u,'uz_shiki',1.1);u.root=Math.max(u.root,.75);u.uz_rtE=SIMT+.7;u.uz_rtB=0;
   jx({jfx:'uz_shini',ui:units.indexOf(u),x:u.x,y:u.y,a,t:1.35,m:1.35});
   later(u,.7,()=>{if(u.dead||u.uz_rtB||u.stun>0||u.sleepT<0){say(u,'RITUEL BRISÉ','#c8a8ff');return}const h0=u.hp;u.hp=Math.max(1,u.hp-Math.round(u.max*.12));say(u,'-'+Math.round(h0-u.hp)+' PV : LE PRIX DU SCEAU','#c8a8ff');S('shadow',u);
    proj(u,u.aim,{spd:950,r:16,dmg:34,life:.55,col:'#d8c8ff',kind:'uz_shand',vfx:'chakra',noClash:1,o:{unblockable:1},onHit:(p,t)=>uzSoul(p.owner,t)});if(near(u.x,u.y))shake=Math.max(shake,.25)})}),

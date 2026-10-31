@@ -426,5 +426,13 @@ rep("n.rid=u.rid;n.energy=CK.spawn;Object.assign(u,n);","n.rid=u.rid;n.energy=CK
 # en ligne : quitter un salon rend au joueur son propre ninja (côté ami, CH.p0 était celui de l'hôte)
 rep("function netReset(){","function netReset(){CH.p0=MYCH;")
 s=s.replace("cam={x:CX,y:CY};Yc=377.5;","cam={x:CX,y:CY};Yc=390;")
+# passifs : valeurs propres au jeu Naruto (PASSV, nr_ninja.js), réglées par duels simulés
+rep("if(u.ch.pass==='regen')gain(u,3*dt,u);","if(u.ch.pass==='regen')gain(u,PASSV.regen*dt,u);")
+rep("if(ps==='crit'&&rnd()<.25){dmg*=2;","if(ps==='crit'&&rnd()<PASSV.crit){dmg*=2;")
+rep("if(ps==='slow')o=Object.assign({},o,{slow:Math.max(o.slow||0,.8)})","if(ps==='slow')o=Object.assign({},o,{slow:Math.max(o.slow||0,PASSV.slow)})")
+rep("if(ps==='rage'&&src.hp<src.max*.5)dmg*=1.25;","if(ps==='rage'&&src.hp<src.max*.5)dmg*=PASSV.rage;if(ps==='slow'&&t.slow>0)dmg*=PASSV.slowD;")
+rep("(u.ch.pass==='speed'?1.1:1)","(u.ch.pass==='speed'?PASSV.speed:1)",2)
+rep("if(t.ch.pass==='armor')dmg*=.85;","if(t.ch.pass==='armor')dmg*=PASSV.armor;")
+rep("if(ps==='lifesteal'&&d>0)gain(src,d*.3,src);","if(ps==='lifesteal'&&d>0)gain(src,d*PASSV.ls,src);")
 open(ROOT+'naruto/index.html','w').write(s)
 print('ok',len(s))

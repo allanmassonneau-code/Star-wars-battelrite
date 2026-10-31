@@ -34,6 +34,7 @@ Les indices sont figés (sauvegardes, `PRESETS`, réseau) : ne jamais réordonne
   Un style existant peut aussi être ouvert à ton clan : `STYLES.find(s=>s[0]==='Marionnette')[5].push(14)`.
 - **Apparence imposée** : `CLOOK[<n>]=(look,l,style)=>{look.head.eye='#c8e8ff';look.scale=1.05;…}` (appelé par `ninjaLook`, en 3D et en 2D ; `look.head` : `skin hair style eye eyeT face acc`, `look.back` : objet dans le dos, `look.dog`, `look.gourd`…).
 - Équilibrage par clan : `CLANBAL["<n>"]` dans `nr_ninja.js` (laisser [1, 1] tant que la simulation n'a pas tourné).
+- Équilibrage d'un style : `STYLEBAL["<indice>"]` ou `STYLEBAL["<indice>:<clan>"]` = [PV, puissance] ; d'un jutsu : `JBAL["<catégorie>|<nom>"] = {d, cd, ck}` (dégâts ×, recharge en s, coût en chakra), tous deux dans `nr_ninja.js`. Les « N dégâts » des descriptions suivent `d` automatiquement : écris toujours un chiffre de dégâts sous la forme « N dégâts ».
 - Sigle de l'icône de jutsu : 3e champ de `CLANS` (`clanTag(c)`).
 
 ## Règles d'or
@@ -131,13 +132,14 @@ Champs synchronisés : projectiles (`kind` et les clés de base), objets `aux` (
 Pour synchroniser un nouveau champ de ninja : `AFTER.push(()=>UK.push('ka_monChamp'))`. Les effets créés avec `jx`/`fx`/`sparks` côté hôte sont envoyés aux invités.
 
 ## Équilibre (repères)
-PV des ninjas ≈ 250-350 avant le multiplicateur commun `HPK` (×1,4, ambiance NRP : combats plus longs) ; coup de base ≈ 10-15.
+PV des ninjas ≈ 250-350 avant le multiplicateur commun `HPK` (nr_pace.js, réglé pour un duel 1v1 médian de ≈ 50-55 s avec le soin H) ; coup de base ≈ 10-15.
 Le chakra ne revient plus en frappant : un jutsu qui **vole ou brûle du chakra** pèse donc lourd (il peut pousser la cible à l'épuisement). Par rang (recharge entre parenthèses) :
 D (4-8 s) ≈ 10-18 dégâts ou petite utilité · C (6-10 s) ≈ 16-26 ou contrôle modéré (étourdir ≤ 0,6 s, entraver ≤ 1,2 s) ·
 B (8-12 s) ≈ 22-34 ou contrôle fort (≤ 1 s) / bonne défense · A (10-14 s) ≈ 30-45 + effet · S (ultime, 22 s) ≈ 45-70 ou effet décisif.
 Tout contrôle doit être **lisible** (télégraphe, projectile visible, délai) et **contrable** (esquivable, bloquable, interrompable).
 
 ## Équilibrage en jeu (`nr_bal.js` : panneau F8 + simulateur)
+- Le profil « Standard » (vide) = les valeurs du jeu : `CLANBAL`, `NATBAL`, `STYLEBAL`, `JBAL` (nr_ninja.js), `CK`, `HLS`, `HPK` (nr_pace.js). Un profil ne garde que ses écarts : PV/puissance d'un clan ou d'une nature et réglages d'un jutsu remplacent la valeur du jeu, ceux d'un style la multiplient.
 - Le profil actif (onglets Global, Clans, Natures, Styles, Jutsu) réécrit `CLANBAL`, `NATBAL`, `STYLEBAL`, `CKCOST` (dont `CKCOST.U`, surcoût d'un ultime), `CK` et `HLS`, puis recalcule tous les `CH[…]` sur place ; il est réappliqué à chaque `startMatch`.
 - Dégâts × d'un jutsu : tout ce que le jutsu crée pendant `fire` (projectiles, zones, champs, pièges, clones, `aux`, `seqs`, liens, `later`, fin de `dash`, `stick`, `markB`, brûlures `dot`) garde son multiplicateur. Un jutsu qui recalcule ses dégâts à chaque image, ou les range dans un état du ninja, peut y échapper.
 - Coût propre à un jutsu : `ab.ckO` (lu par `jcost`). Dans un profil, les jutsu sont repérés par `catégorie|nom` et les styles par leur **nom** : renommer un jutsu ou un style fait perdre son réglage.

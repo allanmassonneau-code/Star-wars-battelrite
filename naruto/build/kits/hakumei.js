@@ -9,9 +9,9 @@ const HMD={
  filet:'Grand filet qui arrête les tirs ennemis ; la 1re cible est emmaillotée : 16 dégâts, entravée 1 s, 2 fils',
  nuee:'Un cocon (5 dégâts) éclate en 5 bébés araignées qui traquent les ennemis : chaque morsure fait 4 dégâts, ralentit et pose ½ fil',
  armure:'Armure d\'or (Kumo Nenkin) : bouclier de 26 pendant 3,5 s ; qui te frappe au corps à corps prend 1 fil et est ralenti',
- etreinte:'Des fils s\'ancrent autour de la cible ; 0,6 s après, ceux restés dans le cercle sont étranglés : 22 dégâts +8 par fil (consommés), silence 0,9 s',
- filin:'Un fil t\'arrache jusqu\'au point visé ; une petite toile reste à ton point de départ (3 s)',
- mue:'Tu laisses ta mue et fuis invisible 1,5 s (prochain coup +50 %) ; la mue explose en fils si un ennemi l\'approche : 10 dégâts, entravé 0,7 s, 1 fil',
+ etreinte:'Des fils s\'ancrent autour de la cible ; 0,6 s après, ceux restés dans le cercle sont étranglés : 22 dégâts +8 dégâts par fil (consommés), silence 0,9 s',
+ filin:'Un fil t\'arrache jusqu\'au point visé ; à l\'arrivée, ta chute frappe autour de toi (8 dégâts, ralentit) ; une petite toile reste à ton point de départ (3 s)',
+ mue:'Tu laisses ta mue et fuis invisible 0,7 s (prochain coup +50 %) ; la mue explose en fils si un ennemi l\'approche : 10 dégâts, entravé 0,5 s, 1 fil',
  geante:'Une araignée géante s\'abat sur la zone (30 dégâts, étourdit 0,7 s), tisse une toile et crache 3 fois de la soie sur les ennemis (7 dégâts, 1 fil)',
  arc:'Bande l\'arc d\'or jusqu\'à 1,2 s (relancer pour tirer plus tôt) : flèche guidée par ta visée, 34 à 64 dégâts, perce chargée à 60 %, 1 à 2 fils'};
 KIT('c13',[
@@ -75,12 +75,12 @@ Object.assign(NAT,{
  hm_etreinte:SP('Étreinte de soie',HMD.etreinte,12,{hero:'kylo',tele:{r:80,max:420},ai:RG(400,.55)},(u,a,td)=>{const e=pick(u,a,td||300,420),p=e&&dist(u,e)<460?{x:e.x,y:e.y}:atP(u,a,td,420);
   S('shadow',u);anim(u,'hm_pull',.85);aux.push({type:'hm_strg',x:p.x,y:p.y,r:80,t:.6,m:.6,team:u.team,owner:u,ui:hm_I(u),k:0,danger:1});jx({jfx:'hm_cast',ui:hm_I(u),x:u.x,y:u.y,a:Math.atan2(p.y-u.y,p.x-u.x),len:Math.hypot(p.x-u.x,p.y-u.y),t:.6,m:.6})}),
  // Filin : le fil s'accroche au point visé et arrache le ninja ; une petite toile reste au départ
- hm_filin:SP('Filin d\'araignée',HMD.filin,8,{hero:'boba',ai:{mode:'esc',max:190,p:.5}},(u,a,td)=>{const d=clamp(td||280,100,300),p=fwd(u,a,d),sx=u.x,sy=u.y;S('dash',u);S('blaster',u);anim(u,'hm_swing',.42);
-  jx({jfx:'hm_zip',ui:hm_I(u),x:p.x,y:p.y,sx,sy,t:.45,m:.45});hm_web(u,sx,sy,70,3);dash(u,Math.atan2(p.y-u.y,p.x-u.x),Math.hypot(p.x-u.x,p.y-u.y),.3,{jump:46,end:()=>{sparks(u.x,u.y,HMC.silk,6)}})}),
+ hm_filin:SP('Filin d\'araignée',HMD.filin,8,{hero:'boba',ai:{mode:'gap',min:130,max:300,p:.5}},(u,a,td)=>{const d=clamp(td||280,100,300),p=fwd(u,a,d),sx=u.x,sy=u.y;S('dash',u);S('blaster',u);anim(u,'hm_swing',.42);
+  jx({jfx:'hm_zip',ui:hm_I(u),x:p.x,y:p.y,sx,sy,t:.45,m:.45});hm_web(u,sx,sy,70,3);dash(u,Math.atan2(p.y-u.y,p.x-u.x),Math.hypot(p.x-u.x,p.y-u.y),.3,{jump:46,end:()=>{for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<70+e.r)hit(e,u,8,{slow:.8});sparks(u.x,u.y,HMC.silk,6)}})}),
  // Mue : la mue reste (piège), le ninja fuit invisible
  hm_mue:SP('Mue de l\'araignée',HMD.mue,15,{hero:'ahsoka',ai:ESC},(u,a,td)=>{const d=clamp(td||220,120,240);S('poof',u);S('dash',u);
   aux.push({type:'hm_husk',x:u.x,y:u.y,a:u.aim,r:55,t:3,m:3,team:u.team,owner:u,ui:hm_I(u),k:.35,danger:1});jx({jfx:'hm_shed',x:u.x,y:u.y,t:.5,m:.5});
-  anim(u,'hm_crouch',.3);dash(u,a,d,.28,{jump:22,end:()=>{u.stealth=Math.max(u.stealth||0,1.5)}});u.stealth=Math.max(u.stealth||0,1.8)}),
+  anim(u,'hm_crouch',.3);dash(u,a,d,.28,{jump:22,end:()=>{u.stealth=Math.max(u.stealth||0,.7)}});u.stealth=Math.max(u.stealth||0,1)}),
  // Kuchiyose : araignée géante (chute, toile, crachats)
  hm_geante:ULT('Invocation : Araignée géante',HMD.geante,{hero:'iden',tele:{r:120,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);S('poof',u);S('roar',u);anim(u,'hm_summon',.7);
   zone(u,p.x,p.y,120,30,.75,{stun:.7},HMC.pur);lastZ().deto='hm_quake';
@@ -146,7 +146,7 @@ AUXF.hm_strg=x=>{if(x.t>0||x.done)return;x.done=1;const o=x.owner;if(!o||state!=
 // mue : explose en fils au contact d'un ennemi (après 0,35 s)
 AUXF.hm_husk=x=>{const o=x.owner;if(!o||x.done)return;if(x.t<=0){jx({jfx:'hm_shed',x:x.x,y:x.y,t:.4,m:.4,fade:1});return}if(x.k>0)return;
  let tr=false;for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r){tr=true;break}if(!tr)return;x.done=1;x.t=Math.min(x.t,.05);
- VFX='silk';for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<90+e.r&&hit(e,o,10,{root:.7,unblockable:1})){hm_fil(o,e,1);jx({jfx:'hm_wrap',ti:hm_I(e),x:e.x,y:e.y,t:.7,m:.7})}VFX=null;
+ VFX='silk';for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<90+e.r&&hit(e,o,10,{root:.5,unblockable:1})){hm_fil(o,e,1);jx({jfx:'hm_wrap',ti:hm_I(e),x:e.x,y:e.y,t:.7,m:.7})}VFX=null;
  jx({jfx:'hm_burst',x:x.x,y:x.y,r:90,t:.55,m:.55});if(near(x.x,x.y)){S('bugs',o);S('bone',o)}};
 // araignée géante : après la chute, crache 3 fois de la soie sur l'ennemi le plus proche
 AUXF.hm_giant=(x,dt)=>{const o=x.owner;if(!o||o.dead||state!=='fight'){x.t=Math.min(x.t,.3);return}const e=nearE(o,x.x,x.y,460);x.ti=e?hm_I(e):-1;

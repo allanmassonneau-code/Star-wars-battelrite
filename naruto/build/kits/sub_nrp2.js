@@ -2,8 +2,8 @@
 // Serpents de l'ombre, Kage Bunshin : leurre, Barrière Shishienjin, Byakugô, Invocation : Manda, Fûton : Rasenshuriken
 // (le chakra compte : Byakugô brûle ton chakra pour régénérer, le Rasenshuriken tranche celui des ennemis)
 KIT('u',[
- [1,'B','x.sub_jashu','Serpents de l\'ombre','Des serpents jaillissent de ta manche, mordent le 1er ennemi touché (14 + venin 12 en 3 s) et le ramènent à toi, enlacé : entravé 0,9 s','chakra'],
- [2,'C','x.sub_leurre','Kage Bunshin : leurre','Tu deviens invisible 1,5 s ; un clone continue ta course : les ennemis le prennent pour toi, il s\'efface au 1er coup','smoke'],
+ [1,'B','x.sub_jashu','Serpents de l\'ombre','Des serpents jaillissent de ta manche, mordent le 1er ennemi touché (14 dégâts + venin 12 dégâts en 3 s) et le ramènent à toi, enlacé : entravé 0,9 s','chakra'],
+ [2,'C','x.sub_leurre','Kage Bunshin : leurre','Tu deviens invisible 0,8 s ; un clone continue ta course : les ennemis le prennent pour toi, il s\'efface au 1er coup','smoke'],
  [4,'A','x.sub_shishi','Barrière Shishienjin','Quatre flammes violettes dressent un dôme au curseur : 3 s, les ennemis pris dedans ne peuvent plus en sortir (8 dégâts, le mur brûle et repousse)','genjutsu'],
  [4,'S','x.sub_byakugo','Byakugô','Losange sur le front : 4 s, chaque dégât subi est régénéré 1 s plus tard, en brûlant ton chakra (1 chakra pour 4 PV ; sans chakra, plus rien)','heal'],
  [5,'S','x.sub_manda','Invocation : Manda','Un serpent géant charge tout droit à travers l\'arène et avale le 1er ennemi touché : caché et neutralisé 1,5 s, puis recraché (42 dégâts au total)','smoke'],
@@ -41,10 +41,10 @@ Object.assign(NAT,{
   const p=projs[projs.length-1];aux.push({type:'sub_snk',x:p.x,y:p.y,r:0,t:.8,m:.8,team:u.team,owner:u,ui:subBI(u),p,n:0,a})}),
  // --- Kage Bunshin : leurre — invisible, le clone continue la course ; les bots le visent (voir pickTarget plus bas)
  sub_leurre:S_('Kage Bunshin : leurre','Invisible, un clone court à ta place',14,{ai:{mode:'esc',max:230,p:.55}},(u,a)=>{anim(u,'sub_seal',.3);S('poof',u);subPoof(u.x,u.y,40,u);
-  const q=subFree({x:u.x,y:u.y},16),p=subCarrier(u,q.x,q.y,'sub_decoy',{life:2.3,r:1,ox:a,zapP:1});
+  const q=subFree({x:u.x,y:u.y},16),p=subCarrier(u,q.x,q.y,'sub_decoy',{life:1.3,r:1,ox:a,zapP:1});
   const D=Object.create(u);Object.assign(D,{x:q.x,y:q.y,vx:0,vy:0,dead:false,stealth:0,swing:0,cast:null,spin:null,flame:null,dash:null,z:0,phase:0,sub_eat:0,sub_dk:1});
-  aux.push({type:'sub_leurre',x:q.x,y:q.y,r:0,t:2.3,m:2.3,team:u.team,owner:u,p,D,a,a0:a,ck:0});
-  u.stealth=Math.max(u.stealth,1.5);
+  aux.push({type:'sub_leurre',x:q.x,y:q.y,r:0,t:1.3,m:1.3,team:u.team,owner:u,p,D,a,a0:a,ck:0});
+  u.stealth=Math.max(u.stealth,.8);
   for(const e of units)if(e.team!==u.team&&e.tgt===u)e.tgt=D}),
  // --- Barrière Shishienjin : quatre flammes violettes puis le dôme ; enfermés dedans, ou tenus dehors
  sub_shishi:S_('Barrière Shishienjin','Dôme violet : les ennemis enfermés ne sortent plus',17,{cast:.25,tele:{r:150,max:420},ai:RG(400,.55)},(u,a,td)=>{const p=subFree(atP(u,a,td,420),60);anim(u,'sub_shishi',.75);S('genjutsu',u);

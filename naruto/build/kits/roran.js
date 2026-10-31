@@ -11,10 +11,10 @@ const RRD={
  up:'Une colonne de vent jaillit au point visé après 0,6 s : 12 dégâts, projette en l\'air (étourdit 0,5 s)',
  wall:'Plante l\'éventail ouvert devant toi 2 s : il renvoie les tirs ennemis et repousse les ennemis qui approchent (4 dégâts)',
  storm:'Tempête de lames au point visé (2,5 s) : aspire, ralentit et coupe 6 fois (3 dégâts), puis explose : 6 dégâts, repousse',
- dai:'Éventail grand ouvert (0,3 s) : une vague de faux traverse tout sur 560 : 28 dégâts, repousse, saigne (8 en 3 s), avale les tirs',
+ dai:'Éventail grand ouvert (0,3 s) : une vague de faux traverse tout sur 560 : 28 dégâts, repousse, saigne (8 dégâts en 3 s), avale les tirs',
  glide:'Plane 0,8 s sur l\'éventail (dirigé à la souris) : insensible aux ralentissements, les coups au corps à corps te ratent ; l\'atterrissage repousse (6 dégâts)',
  back:'L\'éventail frappe le sol : 14 dégâts autour de toi, repousse et ralentit ; le contrecoup te projette de 260 vers le point visé',
- kamatari:'Kamatari, la belette à la faux, traverse la ligne (640) à l\'aller puis au retour : 28 dégâts et projette en l\'air, puis 14 ; avale les tirs',
+ kamatari:'Kamatari, la belette à la faux, traverse la ligne (640) à l\'aller puis au retour : 28 dégâts et projette en l\'air, puis 14 dégâts ; avale les tirs',
  typh:'Immobile 1 s, l\'éventail bat 3 fois devant toi : 12, 12 puis 16 dégâts, repousse ; le 3e ralentit 2 s ; chaque battement balaie les tirs',
  trait:'Chaque jutsu Roran (hors déplacements) qui touche ouvre une lune de l\'éventail (3 max ; sans toucher, elles se referment une à une après 6 s). Chaque lune : +4 % de dégâts Roran. À 3 lunes, ton prochain jutsu Roran part éventail grand ouvert : +20 % de dégâts et +20 % de taille',
 };
@@ -85,7 +85,7 @@ Object.assign(NAT,{
     onHit:(p,t)=>{if(t.dead)return;if(t.unstop<=0){const b=Math.atan2(p.vy,p.vx);t.kx+=Math.cos(b)*650;t.ky+=Math.sin(b)*650}if(near(t.x,t.y))jx({jfx:'rr_cut',ti:rrI(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),big:1,t:.5,m:.5})}});
    aux.push({type:'rr_wavec',x:u.x,y:u.y,r:0,t:1,m:1,team:u.team,owner:u,p:projs[projs.length-1]})})}),
  // ---- Vol sur l'éventail : planer, dirigé à la souris (logique : AUXF.rr_glide ; esquive au corps à corps : trait)
- rr_glide:SP('Vol sur l\'éventail',RRD.glide,12,{ai:ESC},(u,a)=>{const D=.8;u.dash=null;u.rr_gl=D;u.rr_gh=a;u.slowImm=Math.max(u.slowImm,D);anim(u,'rr_ride',D);rrS('dash',u);S('wind',u);
+ rr_glide:SP('Vol sur l\'éventail',RRD.glide,12,{ai:{mode:'gap',min:140,max:330,p:.5}},(u,a)=>{const D=.8;u.dash=null;u.rr_gl=D;u.rr_gh=a;u.slowImm=Math.max(u.slowImm,D);anim(u,'rr_ride',D);rrS('dash',u);S('wind',u);
   for(const x of aux)if(x.type==='rr_glide'&&x.owner===u)x.t=0;
   aux.push({type:'rr_glide',x:u.x,y:u.y,r:0,t:D,m:D,team:u.team,owner:u,a,k:0});jx({jfx:'rr_ride',ui:rrI(u),x:u.x,y:u.y,a,t:D+.05,m:D+.05});sparks(u.x,u.y,RRC.wind,8,'wind')}),
  // ---- Contre-vent : l'éventail frappe le sol, rafale autour, puis le contrecoup projette le lanceur

@@ -5,16 +5,16 @@
 // [emplacement, rang, mécanique, nom, description, élément visuel]
 const FM_D={
  trace:'Shuriken rapide et précis : 10 dégâts, marque la cible 6 s et la révèle',
- fuma:'Fûma géant lancé en courbe, qui revient : 12 dégâts à l\'aller (ralentit, marque), 12 au retour (critique si marquée)',
+ fuma:'Fûma géant lancé en courbe, qui revient : 12 dégâts à l\'aller (ralentit, marque), 12 dégâts au retour (critique si marquée)',
  wire:'Shuriken relié à un fil de chakra : le 1er ennemi touché est ligoté (entravé 1 s), subit 8 dégâts et est marqué',
- kage:'Un shuriken (12, marque) en cache un 2e dans son ombre (13, critique sur la cible marquée) ; si le 1er est arrêté, l\'ombre surgit et file vers l\'ennemi proche',
- orbit:'3 s : 4 shuriken tournent autour de toi, chacun détruit un tir ennemi ; au contact, 5 dégâts toutes les 0,5 s (marque) ; à la fin, les restants filent vers l\'ennemi (6)',
- ansatsu:'Tu te fonds dans l\'ombre (intouchable 0,4 s) et surgis dans le dos de l\'ennemi visé (380) : coup de lame de 22, toujours critique, ralentit',
- maki:'Sème des chausse-trapes au curseur (zone de 75, 4 s) : les ennemis dessus sont ralentis et perdent 3 PV/s',
+ kage:'Un shuriken (12 dégâts, marque) en cache un 2e dans son ombre (13 dégâts, critique sur la cible marquée) ; si le 1er est arrêté, l\'ombre surgit et file vers l\'ennemi proche',
+ orbit:'3 s : 4 shuriken tournent autour de toi, chacun détruit un tir ennemi ; au contact, 5 dégâts toutes les 0,5 s (marque) ; à la fin, les restants filent vers l\'ennemi (6 dégâts)',
+ ansatsu:'Tu te fonds dans l\'ombre (intouchable 0,4 s) et surgis dans le dos de l\'ennemi visé (380) : coup de lame de 22 dégâts, toujours critique, ralentit',
+ maki:'Sème des chausse-trapes au curseur (zone de 75, 4 s) : les ennemis dessus sont ralentis et subissent 3 dégâts/s',
  shun:'Disparaît dans une fumée noire et réapparaît au curseur (260 max), invisible 1,2 s : ta prochaine attaque est critique',
  repli:'Salto arrière (190) en lançant 3 shuriken en éventail vers l\'avant (5 dégâts, marquent)',
- rain:'Une pluie de shuriken s\'abat sur la zone (140) : 5 vagues de 7 (marquent, ralentissent), puis la dernière (10, critique si marqué) étourdit 0,5 s',
- dance:'Disparaît (intouchable) et frappe 3 fois dans le dos des ennemis proches (400), les marqués d\'abord : 9 par coup, toujours critique'};
+ rain:'Une pluie de shuriken s\'abat sur la zone (140) : 5 vagues de 7 dégâts (marquent, ralentissent), puis la dernière (10 dégâts, critique si marqué) étourdit 0,5 s',
+ dance:'Disparaît (intouchable) et frappe 3 fois dans le dos des ennemis proches (400), les marqués d\'abord : 9 dégâts par coup, toujours critique'};
 KIT('c17',[
  [1,'D','x.fm_trace','Shuriken traceur',FM_D.trace,'shuriken'],
  [1,'C','x.fm_fuma','Shuriken du croissant',FM_D.fuma,'shuriken'],
