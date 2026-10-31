@@ -69,7 +69,7 @@ function drawTip(){if(!TIP){tipK=null;return}if(performance.now()-tipT0<300)retu
 let pickTab=0,pickScroll=0,menuLast=0,galSel=null;
 function pickData(p){const BUD=budgetOf(MY),c0=kitCost(MY);
  if(p===0){const L=stylesOf(MY),col=MY.clan>=0?CLANS[MY.clan][1]:'#e8cfa8';return{kind:'j',title:`${lbl[SLOTS[0]]} · Style de combat`,sub:'Ton attaque de base, propre à ton clan : gratuite (ni points, ni chakra)',
-  items:L.map(i=>{const ab=styleAb(i),w=STYLES[i][4];return{v:i,n:ab.n,col,ic:null,style:1,l2:`${fmtCd(ab.cd)} · ${['kunai','senbon','bugs','sand'].includes(w)?'distance':['shadow','chain'].includes(w)?'moyenne portée':'corps à corps'}`,d:ab.d,sel:MY.j[0]===i}})}}
+  items:L.map(i=>{const ab=styleAb(i);return{v:i,n:ab.n,col,ic:null,style:1,l2:`${fmtCd(ab.cd)} · corps à corps`,d:ab.d,sel:MY.j[0]===i}})}}
  if(typeof p==='number'){const own=MY.clan>=0?'c'+MY.clan:'u',cur=JL[MY.j[p]];
   const A=avail(MY,p).slice().sort((a,b)=>(a.cat!==own)-(b.cat!==own)||a.cost-b.cost||a.n.localeCompare(b.n)),cats=[...new Set(A.map(j=>j.cat))];
   return{kind:'j',title:`${lbl[SLOTS[p]]} · ${SLOTN[p]}`,sub:`Le rang fixe le coût en points du kit et en chakra · kit actuel : ${c0} / ${BUD} points`,tabs:cats.length>1?['Tous'].concat(cats.map(catName)):null,tabC:['#ffb347'].concat(cats.map(catCol)),

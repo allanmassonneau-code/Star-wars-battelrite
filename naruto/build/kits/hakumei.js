@@ -27,7 +27,7 @@ KIT('c13',[
  [5,'A','x.hm_arc','Arc d\'or : Kumo Senkyû',HMD.arc,'silk'],
 ]);
 // styles de combat propres au clan (ajoutés à la fin de STYLES)
-STYLES.push(['Soie dorée','Kunai d\'or à longue portée ; tous les 5 lancers, un kunai tire un fil : il ralentit et pose 1 fil','x.hm_st_or','silk','kunai',[13],.76,.76],
+STYLES.push(['Lames d\'or','Kunai d\'or dans les mains et pattes d\'araignée ; 3e coup : taille en croix ; 4e : tourbillon des six bras ; 3e et 5e coups posent ½ fil (le 5e ralentit)','x.hm_st_or','silk','gold',[13],1.16,1.11],
  ['Crocs d\'araignée','Griffures rapides ; le 5e coup est une morsure venimeuse : poison, ralentit et pose 1 fil','x.hm_st_croc','silk','claws',[13],1.24,1.2]);
 
 // ---------- couleurs et outils ----------
@@ -93,10 +93,11 @@ Object.assign(NAT,{
   u.hm_bw={t:0,i,cd:u.ch.abil[i].cd};if(u.jst&&u.jst.key!=='hm_arc')u.cds[u.jst.i]=u.jst.cd;u.jst={key:'hm_arc',i,n:0,t:2.5,cd:u.ch.abil[i].cd,v:'silk'};u.cds[i]=u.human?.3:1.3;u.hm_bow=.01;anim(u,'hm_draw',1.6);S('deflect',u);
   jx({jfx:'hm_forge',ui:hm_I(u),x:u.x,y:u.y,t:.45,m:.45})}),
  // ---------- styles ----------
- // Soie dorée : kunai d'or ; le 5e lancer tire un fil (ralentit, 1 fil)
- hm_st_or:SP('Soie dorée','',.34,{hero:'lando',ai:{max:640,p:.85}},(u,a)=>{if(SIMT-(u.hm_kt||-9)>1.6)u.hm_kn=0;u.hm_kt=SIMT;u.hm_kn=(u.hm_kn||0)%5+1;const th=u.hm_kn===5;S('blaster',u);
-  proj(u,a,{spd:960,r:5,dmg:th?6:8,life:.66,col:HMC.gold,kind:th?'hm_gkt':'hm_gk',o:th?{slow:.6}:null,onHit:th?(p,t)=>{hm_fil(p.owner,t,1);sparks(t.x,t.y,HMC.silk,4)}:null});
-  anim(u,th?'hm_spit':u.hm_kn%2?'st_kthr':'st_kthl',.26)}),
+ // Lames d'or (corps à corps) : kunai d'or et pattes d'araignée ; 3e et 5e coups posent ½ fil, le 5e ralentit
+ hm_st_or:SP('Lames d\'or','',.4,{hero:'rey',melee:1,ai:{max:100,p:1}},(u,a)=>{const c=stC(u),T=[0,[88,2,10,.4],[88,2,10,.4],[94,2.4,11,.44],[90,6.3,10,.48],[106,1.2,13,.6]][c],G=HMC.gold,GL='#ffe8a0';
+  stMelee(u,a,T[0],T[1],T[2],c===5?{slow:.8}:{},[0,{d:-1,tl:.6,z:36,th:6,c:GL,c2:G,blade:1,fl:'gold'},{d:1,tl:-.6,z:36,th:6,c:GL,c2:G,blade:1,fl:'gold'},{d:-1,tl:.8,z:34,th:7,c:GL,c2:G,blade:1,x2:1,fl:'gold'},{d:1,z:26,th:6,n:3,sp:6,c:GL,c2:HMC.gold2,blade:1,rr:.85,fl:'silk'},{jfx:'st_thrust',z:32,c:GL,w2:5}][c],e=>{
+   if(c===3||c===5){hm_fil(u,e,.5);sparks(e.x,e.y,HMC.silk,4)}if(c>=4)jx({jfx:'st_glint',ti:hm_I(e),x:e.x,y:e.y,a,t:.32,m:.32})});
+  if(c>=3)S('saber',u);stCd(u,T[3]);anim(u,'st_gld'+c,c===4?.36:.28)}),
  // Crocs d'araignée : griffures rapides ; 5e coup : morsure venimeuse
  hm_st_croc:SP('Crocs d\'araignée','',.3,{hero:'ventress',melee:1,ai:{max:86,p:1}},(u,a)=>{const c=stC(u),T=[0,[80,1.9,6,.28],[80,1.9,6,.28],[84,2.1,7,.3],[88,1.9,7,.32],[96,1.6,8,.5]][c];
   if(c===5)stLunge(u,a,40);
@@ -197,7 +198,6 @@ CLOOK[13]=(look)=>{look.head.eye=look.head.eye||'#9a5ad0'};
 // ---------- animations 3D ----------
 Object.assign(ANIM,{
  // la tête se projette, la soie jaillit de la bouche (Kumo Nenkin)
- hm_spit:(P,e)=>{const k=e<.35?ezo(e/.35):1-ezo((e-.35)/.65);pz(P,'chest',.3*k);pz(P,'neck',.25*k);pz(P,'head',.2*k);pz(P,'armL',-.5*k,0,.5*k);pz(P,'armR',-.5*k,0,-.5*k);pz(P,'foreL',-.8*k);pz(P,'foreR',-.8*k);P.root.z=3*k},
  // lancer à deux mains du filet, bras ouverts
  hm_net:(P,e)=>{const up=e<.35,k=up?ezo(e/.35):ezo(Math.min(1,(e-.35)/.3));pz(P,'armL',up?-2.6*k:-2.6+1.1*k,0,up?.4:.4+.4*k);pz(P,'armR',up?-2.6*k:-2.6+1.1*k,0,up?-.4:-.4-.4*k);pz(P,'foreL',-.4);pz(P,'foreR',-.4);pz(P,'chest',up?-.15*k:.3*k);pz(P,'thighL',up?0:-.5*k);pz(P,'shinL',up?0:.5*k)},
  // mains jointes puis ouvertes vers le sol (invocation)
@@ -242,11 +242,6 @@ PROJD.hm_net=(p,R,ra,t)=>{const e=Math.min(1,((p.life0||1)-p.life)/.18),W=R*(.6+
  for(let j=0;j<3;j++){const f=.3+j*.33;g.beginPath();for(let i=0;i<=12;i++){const s=-1+2*i/12,yy=s*W*(.55+.45*f),xx=-D-14+(1-s*s)*D*1.9*f+14*f;i?g.lineTo(xx,yy):g.moveTo(xx,yy)}g.stroke()}
  g.strokeStyle=rgba(HMC.vio,.7);g.lineWidth=3;g.beginPath();g.moveTo(-D,-W);g.quadraticCurveTo(D*.9,0,-D,W);g.stroke();
  g.fillStyle=HMC.gold;for(const s of[-1,1]){g.beginPath();g.arc(-D,s*W,2.6,0,7);g.fill()}};
-// kunai d'or (style), avec fil pour le 5e
-PROJD.hm_gk=(p,R,ra)=>{g.rotate(ra);g.strokeStyle='rgba(255,230,150,.35)';g.lineWidth=2;g.beginPath();g.moveTo(-34,0);g.lineTo(-12,0);g.stroke();
- g.fillStyle=HMC.gold;g.strokeStyle='#5a3a08';g.lineWidth=1;g.beginPath();g.moveTo(12,0);g.lineTo(2,-3.4);g.lineTo(-4,-1.4);g.lineTo(-4,1.4);g.lineTo(2,3.4);g.closePath();g.fill();g.stroke();
- g.fillStyle=HMC.gold2;g.fillRect(-11,-1.2,7,2.4);g.strokeStyle=HMC.gold;g.beginPath();g.arc(-13,0,2.2,0,7);g.stroke()};
-PROJD.hm_gkt=(p,R,ra,t)=>{const sp=Math.hypot(p.vx,p.vy)||1,L=Math.min(160,((p.life0||1)-p.life)*sp);g.save();g.rotate(ra);g.strokeStyle=rgba(HMC.silk,.85);g.lineWidth=1.2;g.beginPath();g.moveTo(-13,0);for(let i=1;i<=5;i++)g.lineTo(-13-L*i/5,Math.sin(t/35+i*2)*2*(i/5));g.stroke();g.restore();PROJD.hm_gk(p,R,ra,t)};
 // flèche d'or : longue hampe, pointe en tête d'araignée, sillage doré et fil de guidage
 PROJD.hm_arrow=(p,R,ra,t)=>{const c=clamp((R-8)/5,0,1),sp=Math.hypot(p.vx,p.vy)||1,L=Math.min(220,((p.life0||1)-p.life)*sp);g.rotate(ra);g.lineCap='round';
  g.strokeStyle=rgba(HMC.silk,.55);g.lineWidth=1;g.beginPath();g.moveTo(-30,0);for(let i=1;i<=8;i++)g.lineTo(-30-L*i/8,Math.sin(t/30+i*1.3)*3*(i/8));g.stroke();

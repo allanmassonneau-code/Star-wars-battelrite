@@ -29,9 +29,8 @@ KIT('c15',[
  [5,'S','x.ci_moon','Ketsuryûgan : Lune de sang',ciD.moon,'genjutsu'],
  [5,'A','x.ci_stk','Forêt de pieux de sang',ciD.stk,'ci_blood'],
 ]);
-// style de combat propre (lame de sang cristallisé) ; le clan garde aussi les kunai pour jouer à distance
+// style de combat propre (lame de sang cristallisé, corps à corps) : seul style du clan
 STYLES.push(['Lame de sang','Sabre de sang cristallisé à longue allonge ; 5e coup : grande entaille en arc qui ouvre 2 entailles','x.ci_style','ci_blood','sword',[15],1.24,1.18]);
-STYLES.find(s=>s[0]==='Kunai')[5].push(15);
 
 // ---- réglages (dégâts de base avant la puissance du ninja)
 const ciK={

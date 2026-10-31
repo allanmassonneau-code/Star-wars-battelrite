@@ -126,7 +126,17 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  if(k==='bone'){add(cone(1.9,24,6),'foreR','#f2efe6',[0,-14,-1.5],[Math.PI-.15,0,0]);add(cone(1.4,10,6),'foreL','#f2efe6',[0,-8,-1.5],[Math.PI-.4,0,0])}
  if(k==='claws')for(const s of['L','R'])for(const x of[-1.2,0,1.2])add(cone(.6,4.6,4),'hand'+s,'#f4f0e8',[x,-4.4,1.4],[Math.PI+.3,0,0]);
  if(k==='senbon')for(const x of[-1,0,1])add(cyl(.18,.18,9,4),'handR','#e8eef6',[x,-3,2.6],[1.2,0,0]);
- if(k==='chain')for(let i=0;i<4;i++)add(tor(1.2,.4,8),'foreR','#e8c860',[0,-1.5-i*2,0],[0,i*1.2,0]);
+ if(k==='chain')for(const s of['L','R'])for(let i=0;i<4;i++)add(tor(1.2,.4,8),'fore'+s,'#e8c860',[0,-1.5-i*2,0],[0,i*1.2,0]);
+ // armes des styles de clan (toutes au corps à corps) : mains d'ombre, insectes, gantelets de sable, lianes épineuses, éventail fermé, kunai d'or, lames de papier, shuriken en main, glace
+ if(k==='shadow')for(const s of['L','R']){add(sph(2.5,8,6),'hand'+s,'#0c0c12',[0,-2.4,.6],[0,0,0],[1.1,1.25,1.1]);for(const x of[-1.3,1.3])add(cone(.7,5.5,4),'fore'+s,'#14141c',[x,-5,0],[Math.PI+.25*x,0,0])}
+ if(k==='bugs')for(const s of['L','R'])for(let i=0;i<7;i++){const a=i*.9;add(box(.9,.9,.9),'fore'+s,i%2?'#1a2218':'#3a4a30',[Math.cos(a)*2.9,-1-i*1.1,Math.sin(a)*2.9])}
+ if(k==='sand')for(const s of['L','R']){add(sph(3,10,8),'hand'+s,'#d8b878',[0,-2.2,.6],[0,0,0],[1.15,1.05,1.15]);add(cyl(2.9,2.6,5,10),'fore'+s,'#c8a868',[0,-5.6,0])}
+ if(k==='vine')for(const s of['L','R']){for(let i=0;i<3;i++)add(tor(2.4,.6,10),'fore'+s,'#3a6a2a',[0,-2-i*2.4,0],[Math.PI/2+.35,i*.8,0]);for(const x of[-1.2,0,1.2])add(cone(.55,4.2,4),'hand'+s,'#e8e0b0',[x,-4.2,1.2],[Math.PI+.3,0,0])}
+ if(k==='fan'){add(box(1.6,15,2.2),'handR','#3a2a1e',[0,-6.5,1.4]);add(box(1.9,13,1.2),'handR','#f4ecd8',[0,-7,2.6]);add(cyl(.9,.9,2.6,8),'handR','#e0b84a',[0,-.5,1.4],[0,0,Math.PI/2])}
+ if(k==='gold')for(const s of['L','R']){add(cyl(.7,.7,3.6,6),'hand'+s,'#8a6a20',[0,-2.8,1.2]);add(cone(1.7,8,4),'hand'+s,'#f0c040',[0,-8.6,1.2],[Math.PI,0,0])}
+ if(k==='paper')for(const s of['L','R']){const x=s==='L'?2.8:-2.8;add(box(.5,15,4.2),'fore'+s,'#f6f3ea',[x,-8,0]);add(box(.6,2,4.4),'fore'+s,'#7a9ae0',[x,-2,0])}
+ if(k==='shuriken'){add(cyl(1.6,1.6,.8,10),'handR','#3a3a44',[0,-3.6,1.6],[Math.PI/2,0,0]);for(let i=0;i<4;i++){const a=i*Math.PI/2;add(cone(1.4,6,4),'handR','#cfd3dd',[Math.cos(a)*3.6,-3.6+Math.sin(a)*3.6,1.6],[0,0,a-Math.PI/2])}}
+ if(k==='ice')for(const s of['L','R']){for(const [x,z,h] of[[-1.4,0,6],[1.2,.6,5],[0,-1,4.5]])add(cone(1,h,5),'fore'+s,'#bfe6ff',[x,-3-h*.2,z],[Math.PI-.5,0,x*.3]);add(sph(2.3,8,6),'hand'+s,'#e8f8ff',[0,-2,.6])}
  // géométrie fusionnée + squelette
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(P,3));geo.setAttribute('normal',new T.Float32BufferAttribute(N,3));geo.setAttribute('color',new T.Float32BufferAttribute(C,3));
  geo.setAttribute('skinIndex',new T.Uint16BufferAttribute(SI,4));geo.setAttribute('skinWeight',new T.Float32BufferAttribute(SW,4));

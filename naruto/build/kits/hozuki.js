@@ -27,7 +27,7 @@ KIT('c19',[
 ]);
 // ---- styles de combat propres au clan (ajoutés à la fin de STYLES)
 STYLES.push(['Kubikiribôchô','Sabre géant aux coups très larges ; 3e coup : ralentit ; 5e : abattu d\'en haut, repousse. Le sang reforge la lame : chaque coup rend 10 % de ses dégâts en PV','x.hz_st_kubi','steel','sword',[19,-1],.97,.94],
- ['Taijutsu liquide','Les bras s\'allongent en eau : longue allonge ; 3e coup : trempe ; 5e : fouet d\'eau qui ramène la cible et ralentit','x.hz_st_liq','tai','fist',[19],1.,.96]);
+ ['Taijutsu liquide','Les bras s\'allongent en eau : longue allonge ; 3e coup : trempe ; 5e : fouet d\'eau qui ramène la cible et ralentit','x.hz_st_liq','tai','fist',[19],1.06,1.02]);
 
 // ---- petites aides du clan
 const HZC={w:'#5ad8f0',l:'#c8f4ff',d:'#1a7aa8',b:'#c8283a',s:'#dfe6ee'}; // eau, écume, eau profonde, sang, acier
@@ -81,7 +81,7 @@ Object.assign(NAT,{
   if(c===5){const p=fwd(u,a,T[0]*.7);jx({jfx:'shock',x:p.x,y:p.y,r:70,t:.35,m:.35,col:HZC.s});if(near(p.x,p.y))shake=Math.max(shake,.14)}
   stCd(u,T[3]);anim(u,'hz_k'+c,c===5?.42:.32)}),
  // Taijutsu liquide : poings qui s'allongent en eau ; 3e : coup d'eau (trempe) ; 5e : fouet d'eau qui ramène la cible
- hz_st_liq:SP('Taijutsu liquide','',.42,{hero:'rey',melee:1,ai:{max:104,p:1}},(u,a)=>{const c=stC(u),T=[0,[102,1.4,10,.42],[102,1.4,10,.42],[106,1.6,11,.46],[104,1.5,11,.44],[160,.55,12,.62]][c];
+ hz_st_liq:SP('Taijutsu liquide','',.42,{hero:'rey',melee:1,ai:{max:104,p:1}},(u,a)=>{const c=stC(u),T=[0,[102,1.4,10,.42],[102,1.4,10,.42],[106,1.6,11,.46],[104,1.5,11,.44],[126,.6,12,.62]][c];
   const o=c===3?{el:1}:c===5?{el:1,pull:380,fx:u.x,fy:u.y,slow:.5}:{};stMelee(u,a,T[0],T[1],T[2],o,null);
   jx({jfx:'hz_wfist',ui:hzI(u),x:u.x,y:u.y,a,R:T[0]*(c===5?1:.92),s:c%2?1:-1,whip:c===5?1:0,big:c===3?1:0,t:c===5?.4:.28,m:c===5?.4:.28});
   if(c>=3){S('water',u);const p=fwd(u,a,T[0]*.8);sparks(p.x,p.y,HZC.l,c===5?8:5,'water')}

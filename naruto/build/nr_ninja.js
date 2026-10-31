@@ -25,7 +25,7 @@ const JCD={'Lotus primaire':10,'Lotus caché':9}; // temps de recharge propres �
 // réglés à nouveau pour l'ambiance NRP (PV ×1,2 puis ×1,1, chakra rare) : duels simulés de chaque clan / nature contre des kits aléatoires, 45-55 % visés
 // puis pour les 21 clans (Hoki … Yuki, refonte Uzumaki) : duels 1v1 sans soin, 46-56 % pour chaque clan / nature ; les clans aux combats trop courts
 // (Nara, Uzumaki, Hoki, Shirogane, Chinoike, Hôzuki, Katon) ont plus de PV et moins de puissance : duel médian ≈ 50 s
-const CLANBAL={"0":[0.78,0.72],"1":[0.82,0.75],"2":[1.64,1.2],"3":[1.04,1.03],"4":[0.99,0.99],"5":[1.4,1.32],"6":[1.16,0.84],"7":[0.95,0.93],"8":[0.87,0.83],"9":[0.95,0.93],"10":[0.95,0.95],"11":[1.17,0.81],"12":[0.9,0.87],"13":[1.03,1.02],"14":[1.27,0.87],"15":[1.15,0.88],"17":[1.03,1.03],"18":[1.04,1.04],"19":[1.12,0.98],"20":[0.95,0.9],"-1":[0.93,0.95]},NATBAL={"0":[1.15,0.9],"1":[1.05,1.03],"2":[0.95,0.91],"3":[1.02,1.01],"4":[0.98,0.98]},STYLEBAL={}; // STYLEBAL[style] = [PV, puissance]
+const CLANBAL={"0":[0.72,0.67],"1":[0.79,0.72],"2":[1.35,0.99],"3":[0.99,0.98],"4":[1.04,1.04],"5":[1.4,1.32],"6":[1.13,0.82],"7":[1.29,1.25],"8":[0.99,0.95],"9":[0.9,0.88],"10":[0.89,0.89],"11":[1.13,0.78],"12":[0.98,0.95],"13":[1.09,1.08],"14":[1.22,0.84],"15":[1.12,0.86],"16":[1.06,1.06],"17":[1.03,1.03],"18":[0.98,0.98],"19":[1.03,0.9],"20":[1.04,0.97],"-1":[0.92,0.95]},NATBAL={"0":[1.15,0.9],"1":[1.05,1.03],"2":[0.95,0.91],"3":[1.02,1.01],"4":[0.98,0.98]},STYLEBAL={'2:-1':[.9,.84]}; // STYLEBAL[style] ou STYLEBAL['style:clan'] = [PV, puissance] (Kenjutsu sans clan : réglé pour les PV/puissance des sans-clan)
 const JL=JD.map(([cat,slot,r,src,n,d,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,vfx,P:JPAR[n]}));
 const SLOTN=['Style de combat','Jutsu','Déplacement','Jutsu','Jutsu','Ultime'];
 const stype=s=>s===2?2:s===5?5:1; // 1 = jutsu (Clic D, Q, E), 2 = déplacement, 5 = ultime
@@ -92,12 +92,12 @@ const srcHero=src=>{const [h,k]=src.split('.');return h==='x'?(NAT[k]&&NAT[k].he
 // subjutsu, jutsu de clan et déplacements : pas de mudras (instantanés)
 function jutsu(id){const J=JL[id],b=srcAb(J.src),mud=J.cat==='u'||J.cat[0]==='c'||J.slot===2?0:MUDRAS[J.r];return Object.assign({},b,J.P?{P:Object.assign({},b.P,J.P)}:{},JCD[J.n]?{cd:JCD[J.n]}:{},b.ult?{cd:22}:{},{cast:mud?mud*MUDRA_T:b.cast,mud,noTele:!b.line&&!b.tele,n:J.n,d:J.d,ex:null,src:srcHero(J.src),vfx:J.vfx,rank:J.r,jid:id})}
 function styleAb(i){const S=STYLES[i],b=srcAb(S[2]);return Object.assign({},b,{n:S[0],d:S[1],ex:null,src:srcHero(S[2]),vfx:S[3],style:i})}
-// stats : moyenne des persos d'origine (le style de combat compte pour 5 : un ninja à distance est fragile, un ninja au corps à corps solide), puis la voie
+// stats : moyenne des persos d'origine (le style de combat compte pour 5), puis la voie, puis les réglages CLANBAL / NATBAL / STYLEBAL
 function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=[styleAb(b.j[0])].concat(b.j.slice(1).map(id=>jutsu(id))),w=[5,1,1,1,1,1];let hp=0,pw=0,sp=0,W=0;
  abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie],S=STYLES[b.j[0]];hp*=S[6];pw*=S[7];if(b.clan===TAIJ){hp*=1.05;sp+=4*W}
- {const cb=CLANBAL[b.clan]||[1,1],nb=b.clan===TAIJ?[1,1]:NATBAL[b.nat]||[1,1],sb=STYLEBAL[b.j[0]]||[1,1];hp*=cb[0]*nb[0]*sb[0];pw*=cb[1]*nb[1]*sb[1]} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
+ {const cb=CLANBAL[b.clan]||[1,1],nb=b.clan===TAIJ?[1,1]:NATBAL[b.nat]||[1,1],sb=STYLEBAL[b.j[0]+':'+b.clan]||STYLEBAL[b.j[0]]||[1,1];hp*=cb[0]*nb[0]*sb[0];pw*=cb[1]*nb[1]*sb[1]} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
  const lign=b.clan>=0?'Clan '+CLANS[b.clan][0]:'Sans clan';
- return{name:b.name,side:b.side,desc:`${lign}${b.clan===TAIJ?'':' · '+NATURES[b.nat][0]} · voie ${v[0].toLowerCase()}`,hp:Math.round(hp/W*v[1]*HPK),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,clan:b.clan,nat:b.clan===TAIJ?-1:b.nat,pref:{fist:75,bigfist:85,palm:75,claws:75,bone:90,sword:90,shadow:170,chain:170}[S[4]]||320,taij:b.clan===TAIJ,pass:PASSK[b.pass],look:ninjaLook(b.l,b.clan,b.j[0]),abil,build:b}}
+ return{name:b.name,side:b.side,desc:`${lign}${b.clan===TAIJ?'':' · '+NATURES[b.nat][0]} · voie ${v[0].toLowerCase()}`,hp:Math.round(hp/W*v[1]*HPK),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,clan:b.clan,nat:b.clan===TAIJ?-1:b.nat,pref:{bigfist:85,bone:90,sword:90,chain:90,fan:85,vine:85,puppet:95}[S[4]]||75,taij:b.clan===TAIJ,pass:PASSK[b.pass],look:ninjaLook(b.l,b.clan,b.j[0]),abil,build:b}}
 // générateur pseudo-aléatoire déterministe (mêmes ninjas adverses chez tous les joueurs en ligne)
 const srnd=seed=>()=>(seed=seed*16807%2147483647)/2147483647;
 function randomKit(r,b){const k=a=>Math.floor(r()*a.length);b.nat=k(NATURES);b.clan=r()<.8?k(CLANS):-1;b.voie=k(VOIES);b.pass=k(PASSK);
