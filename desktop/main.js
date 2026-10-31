@@ -14,16 +14,25 @@ function openLauncher() {
   launcher.webContents.on('did-finish-load', () => { send('version', app.getVersion()); checkUpdates(); });
 }
 
+// écouteurs posés une seule fois ; une recherche à la fois (au démarrage, puis à la demande avec le bouton du launcher)
+let busy = false, ready = null, hooked = false;
 function checkUpdates() {
-  if (!app.isPackaged) { send('status', { state: 'ready', text: 'Version de développement' }); return; }
+  if (!app.isPackaged) { send('status', { state: 'ready', text: 'Version de développement : pas de mise à jour à chercher' }); return; }
+  if (ready) { send('status', { state: 'install', text: `Version ${ready} prête : redémarre pour l'installer` }); return; }
+  if (busy) return;
+  busy = true;
+  if (!hooked) { hooked = true; hookUpdater(); }
+  send('status', { state: 'busy', text: 'Recherche de mise à jour…' });
+  autoUpdater.checkForUpdates().catch(() => { busy = false; send('status', { state: 'ready', text: 'Mise à jour impossible (hors ligne ?) — tu peux jouer quand même' }); });
+}
+function hookUpdater() {
   autoUpdater.autoDownload = true;
   autoUpdater.on('checking-for-update', () => send('status', { state: 'busy', text: 'Recherche de mise à jour…' }));
   autoUpdater.on('update-available', i => send('status', { state: 'busy', text: `Nouvelle version ${i.version} : téléchargement…` }));
   autoUpdater.on('download-progress', p => send('status', { state: 'busy', text: `Téléchargement… ${Math.round(p.percent)} %`, pct: p.percent }));
-  autoUpdater.on('update-downloaded', i => send('status', { state: 'install', text: `Version ${i.version} prête : redémarre pour l'installer` }));
-  autoUpdater.on('update-not-available', () => send('status', { state: 'ready', text: 'Le jeu est à jour' }));
-  autoUpdater.on('error', e => send('status', { state: 'ready', text: 'Mise à jour impossible (hors ligne ?) — tu peux jouer quand même' }));
-  autoUpdater.checkForUpdates().catch(() => {});
+  autoUpdater.on('update-downloaded', i => { busy = false; ready = i.version; send('status', { state: 'install', text: `Version ${i.version} prête : redémarre pour l'installer` }); });
+  autoUpdater.on('update-not-available', () => { busy = false; send('status', { state: 'ready', text: `Le jeu est à jour (version ${app.getVersion()})` }); });
+  autoUpdater.on('error', () => { busy = false; send('status', { state: 'ready', text: 'Mise à jour impossible (hors ligne ?) — tu peux jouer quand même' }); });
 }
 
 function openGame(which) {
@@ -41,5 +50,6 @@ function openGame(which) {
 
 ipcMain.on('play', (e, which) => openGame(which));
 ipcMain.on('install', () => autoUpdater.quitAndInstall());
+ipcMain.on('check', () => checkUpdates());
 app.whenReady().then(openLauncher);
 app.on('window-all-closed', () => app.quit());

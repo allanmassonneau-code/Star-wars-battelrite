@@ -16,15 +16,17 @@ button:disabled{opacity:.45;cursor:default}
 .bar div{height:100%;width:0;background:#ffb347;transition:width .2s}
 #ver{position:fixed;bottom:10px;right:14px;color:#7a6a58;font-size:12px}
 #inst{display:none}
+button.small{min-width:0;padding:8px 16px;font-size:14px;border-radius:10px;border-width:1px}
 </style></head><body>
 <h1>NARUARENA</h1><div class="sub">Naruto · Arène ninja — et l'arène Star Wars</div>
 <div class="cards"><button class="main" id="pN">🍥 Jouer — Naruto</button><button id="pS">⚔ Jouer — Star Wars</button></div>
 <div id="status">Démarrage…</div><div class="bar"><div id="pct"></div></div>
 <button id="inst">Redémarrer et mettre à jour</button>
+<button class="small" id="chk" disabled>🔄 Rechercher une mise à jour</button>
 <div id="ver"></div>
 <script>
 const $=id=>document.getElementById(id);
-$('pN').onclick=()=>launcher.play('naruto');$('pS').onclick=()=>launcher.play('starwars');$('inst').onclick=()=>launcher.install();
+$('pN').onclick=()=>launcher.play('naruto');$('pS').onclick=()=>launcher.play('starwars');$('inst').onclick=()=>launcher.install();$('chk').onclick=()=>{$('chk').disabled=true;launcher.check()};
 launcher.on('version',v=>$('ver').textContent='version '+v);
-launcher.on('status',s=>{$('status').textContent=s.text;$('pct').style.width=(s.pct!=null?s.pct:(s.state==='busy'?0:100))+'%';$('inst').style.display=s.state==='install'?'block':'none'});
+launcher.on('status',s=>{$('status').textContent=s.text;$('pct').style.width=(s.pct!=null?s.pct:(s.state==='busy'?0:100))+'%';$('inst').style.display=s.state==='install'?'block':'none';$('chk').disabled=s.state==='busy';$('chk').style.display=s.state==='install'?'none':''});
 </script></body></html>
