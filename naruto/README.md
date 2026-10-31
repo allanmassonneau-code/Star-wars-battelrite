@@ -4,9 +4,10 @@ Même moteur que l'arène Star Wars (vue 3/4 façon Battlerite, arène, bataille
 
 ## Choisir ou créer son perso
 - L'écran d'accueil est la **liste des persos**, rangée par village et par groupe (Mes ninjas, Konoha, Suna, Kiri, Oto, Akatsuki, autres ninjas…) : onglets pour sauter à une section, molette ou flèches pour défiler, champ de recherche (nom, village, clan, nature).
-- Survoler un perso affiche sa **fiche** en bas : village, clan, nature, voie, PV, vitesse, puissance, passif, trait de clan et ses 6 emplacements (Clic G, Clic D, Espace, Q, E, T) avec leur rang.
-- **Arène** et **duel** hors ligne : clic sur ton perso, puis sur ton **adversaire** (ou « Adversaire au hasard », Échap pour revenir). **Bataille** : clic = combat direct. **En ligne** : chacun choisit son perso dans la liste puis clique PRÊT.
+- Survoler un perso affiche sa **fiche** en bas : village, clan, nature, voie, PV, vitesse, puissance, passif, trait de clan et ses 6 emplacements (Clic G, Clic D, Espace, Q, E, T) avec leur rang. La fiche ne change pas quand la souris ne fait que traverser des cartes pour aller vers ses boutons.
+- **Arène** et **duel** hors ligne : clic sur ton perso, puis sur ton **adversaire** (ou « Adversaire au hasard », Échap pour revenir) ; un adversaire de ton camp passe dans le camp d'en face pour le combat. **Bataille** : clic = combat direct. **En ligne** : chacun choisit son perso dans la liste puis clique PRÊT.
 - **+ Créer un perso** ouvre la création (ci-dessous) sur un nouveau ninja ; « Enregistrer » le range dans **Mes ninjas** (autant qu'on veut, gardés dans le navigateur). Sur la fiche ou la carte survolée : **Modifier**, **Dupliquer**, **Supprimer** (tes ninjas).
+- Un kit qui dépasse le budget (par exemple après une mise à jour de l'équilibrage) est marqué « TROP CHER » et ne se joue pas : la création s'ouvre pour baisser un rang.
 - Les **37 persos de l'anime** se retouchent aussi (kit et apparence) : la retouche est gardée par perso, **Rétablir l'original** le remet comme dans l'anime.
 
 ## Créer son ninja

@@ -18,6 +18,8 @@ def cut(a,b,new,keep_b=True):
     s=s[:i]+new+(s[j:] if keep_b else s[j+len(b):])
 
 # ---------- habillage
+# contexte de dessin réassignable (let) : la liste des persos dessine ses cartes au repos dans une image (cache, nr_roster.js : rosCardC) avec les mêmes fonctions de dessin
+rep("const cv=document.getElementById('c'),g=cv.getContext('2d'),W=1280,H=720;","const cv=document.getElementById('c'),W=1280,H=720;let g=cv.getContext('2d');")
 rep('<title>Arène Holonet</title>','<title>Arène Ninja</title>')
 rep("color-scheme:dark}","color-scheme:dark}\n#net,#opt{background:#1c120a!important;border-color:#6a4426!important}#net h2,#opt h2{color:#ffb347!important}#net button,#optB{background:#ff9a3a}#backB{background:#1c120acc!important;border-color:#6a4426!important;color:#f3d9b0!important}#optB{color:#1a1008!important;background:#ffb347!important;border-color:#8a5a2a!important}")
 rep('<label>Holocron de soin (arène) <input type="checkbox" id="cOrb"></label>','<label>Pilule du soldat (arène) <input type="checkbox" id="cOrb"></label>')

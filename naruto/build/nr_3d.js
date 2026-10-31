@@ -272,10 +272,10 @@ function poseModel(u,rec,dt,t){const P={};basePose(u,t,rec,P);actionPose(u,t,rec
  const a=u.aim||0,want=Math.PI/2-Math.atan2(Math.sin(a)*.7+.42,Math.cos(a));let d=want-rec.yaw;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;rec.yaw+=d*(1-Math.exp(-30*dt));
  const f=u.flash>0&&!u.dead?Math.min(1,u.flash/.12):0;rec.mat.emissive.setRGB(f,f,f);rec.mat.emissiveIntensity=f?1:0;
  if(rec.face&&rec.face.material&&rec.face.material.map){const ph=(rec.ph??(rec.ph=Math.random()*4)),md=u.dead?'x':u.stun>0||u.sleepT<0?'s':f>.2||(t+ph)%4.1<.13?'c':'o';if(rec.fm!==md){rec.fm=md;rec.face.material.map=faceTexture(u.ch.look,md)}}}
-// taille de l'atlas : de 2 à 48 cases selon le nombre de ninjas visibles (agrandi aussitôt, réduit après un moment)
+// taille de l'atlas : de 2 à 48 cases selon le nombre de ninjas visibles (agrandi aussitôt, réduit après un moment : 20 images au menu, où la liste fait poser beaucoup de ninjas d'un coup)
 // en combat on ne réduit jamais (réallouer le tampon WebGL = saccade) : on efface seulement les cases utilisées
 function atlasSize(n){const caps=[2,8,16,24,32,48],cap=caps.find(c=>c>=n)||48,cols=Math.min(8,cap),rows=Math.ceil(cap/cols),fight=state==='fight'||state==='countdown';
- if(cols*rows<n||cols>N3.cols||rows>N3.rows||(!fight&&N3.small>180&&cols*rows<N3.cols*N3.rows)){N3.cols=cols;N3.rows=rows;N3.small=0;N3.r.setSize(cols*TPW,rows*TPH,false);
+ if(cols*rows<n||cols>N3.cols||rows>N3.rows||(!fight&&N3.small>(state==='menu'?20:180)&&cols*rows<N3.cols*N3.rows)){N3.cols=cols;N3.rows=rows;N3.small=0;N3.r.setSize(cols*TPW,rows*TPH,false);
   Object.assign(N3.cam,{left:0,right:cols*TWU,top:rows*THU,bottom:0});N3.cam.updateProjectionMatrix()}else if(cols*rows<N3.cols*N3.rows)N3.small++;else N3.small=0}
 function render3D(){N3.tile.clear();if(!N3.on||OPT.p3d===false)return;if(!N3.tried&&!init3D())return;if(!N3.ok)return;
  const now=performance.now(),rdt=(now-(N3.last||now))/1000,dt=Math.min(.05,rdt)||1/60,t=now/1000;N3.last=now;N3.frame++;

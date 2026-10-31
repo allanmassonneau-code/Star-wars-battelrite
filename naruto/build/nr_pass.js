@@ -31,9 +31,9 @@ function drawCutin(){if(!cutin)return;cutin.t-=1/60;if(cutin.t<=0){cutin=null;re
  g.save();g.globalAlpha=a;g.translate((1-in_)*-300,0);g.fillStyle='rgba(10,6,4,.78)';g.beginPath();g.moveTo(0,y-40);g.lineTo(W,y-62);g.lineTo(W,y+22);g.lineTo(0,y+44);g.fill();
  g.fillStyle=cutin.col;g.fillRect(0,y+38,W,3);g.save();g.translate(W*.5,y);g.rotate(-.018);g.shadowColor=cutin.col;g.shadowBlur=24;text(cutin.s,0,6,46,'#fff4d8');g.restore();text(cutin.who,W*.5,y+30,15,cutin.col,'center');g.restore()}
 // ---------- Persos de l'anime : kits préfaits (apparence + build fidèles au personnage) ----------
-// n nom court (aussi le nom du bot), full nom complet, g groupe (GALG : sous-titre de la carte dans la liste des persos ; la section de la liste vient de sec, sinon de g, voir rosSec), side camp du bot (0 Alliance, 1 Akatsuki), nat, clan (-1 sans), voie (0 taijutsu, 1 équilibré, 2 ninjutsu),
+// n nom court (aussi le nom du bot), full nom complet, g groupe (GALG : groupe affiché sur la ligne d'identité de la fiche ; la section de la liste vient de sec, sinon de g, voir rosSec), side camp du bot (0 Alliance, 1 Akatsuki), nat, clan (-1 sans), voie (0 taijutsu, 1 équilibré, 2 ninjutsu),
 // pass passif, sty style de combat, j 5 jutsu (Clic D, Espace, Q, E, T), l apparence {v village,t tenue,c coiffure,h cheveux,p peau,k chakra,a accessoire,f visage,b bandeau,d dos}, d jeu en une ligne
-const GALG=['Équipe 7','Akatsuki','Sannin & Hokage','Konoha','Suna','Oto','Kiri','Autres clans'],GALC=['#ff9a3a','#e0383a','#e8c040','#5ab45a','#d8a860','#9a6ad8','#5ab8d8','#c86a8a'];
+const GALG=['Équipe 7','Akatsuki','Sannin & Hokage','Konoha','Suna','Oto','Kiri','Autres clans'];
 const PRESETS=[
  {n:'Naruto',full:'Naruto Uzumaki',g:0,side:0,nat:2,clan:-1,voie:0,pass:'regen',sty:'Taijutsu',j:['Rasengan','Roulade','Multiclonage','Chakra de Kyûbi','Fûton : Rasenshuriken'],l:{v:0,t:8,c:0,h:0,p:0,k:4,a:0,f:1,b:0,d:0},d:'Fonceur increvable : clones, Rasengan au contact, chakra de Kyûbi et Rasenshuriken'},
  {n:'Sasuke',full:'Sasuke Uchiha',g:0,side:1,nat:3,clan:0,voie:2,pass:'crit',sty:'Kenjutsu',j:['Chidori','Shunshin Uchiha','Katon : Gôkakyû','Sharingan','Raiton : Kirin'],l:{v:0,t:9,c:6,h:15,p:0,k:3,a:0,f:0,b:8,d:0},d:'Sabre et foudre : Chidori qui perce, Sharingan qui lit, Kirin qui achève'},
@@ -78,8 +78,9 @@ const PASSI=k=>Math.max(0,PASSK.indexOf(k));
 function presetBuild(i,name,side){const P=PRESETS[i],clan=P.clan,nat=P.nat;
  const b={name:name||(typeof MY!=='undefined'&&MY?MY.name:P.n),side:side??P.side,voie:P.voie,nat,clan,pass:PASSI(P.pass),l:Object.assign({},P.l),j:[STYLES.findIndex(x=>x[0]===P.sty)].concat(P.j.map((n,k)=>{const J=JL.find(j=>j.n===n&&stype(j.slot)===stype(k+1)&&(j.cat==='c'+clan||(clan!==TAIJ&&j.cat==='n'+nat)||(clan<0&&j.cat==='u')));return J?J.id:-1}))};
  return sanitizeBuild(b,true)}
-// « Modèles de kit » (création) : le perso en cours prend le kit et l'apparence du perso de l'anime ; son nom est gardé, sauf « Ninja », « Nouveau ninja » ou le nom d'un autre perso (il prend alors celui du perso)
-function applyPreset(i){const P=PRESETS[i],nm=!EB.name||EB.name==='Ninja'||EB.name==='Nouveau ninja'||PRESETS.some(q=>q.n===EB.name)?P.n:EB.name;EB=presetBuild(i,nm,EB.side);presetI=i;edRebuild()}
+// « Modèles de kit » (création) : le perso en cours prend le kit et l'apparence du perso de l'anime ; son nom et son camp sont gardés.
+// Seul un NOUVEAU perso au nom par défaut (« Ninja », « Nouveau ninja ») ou au nom d'un perso de l'anime prend le nom du modèle, numéroté s'il est déjà pris (« Itachi (2) », et il suit les modèles suivants tant qu'on ne l'a pas renommé) ; un perso existant qu'on modifie garde toujours son nom
+function applyPreset(i){const P=PRESETS[i],keep=typeof ED!=='undefined'&&ED&&ED.k,au=typeof ED!=='undefined'&&ED,nm=!keep&&(!EB.name||EB.name==='Ninja'||EB.name==='Nouveau ninja'||PRESETS.some(q=>q.n===EB.name)||au&&EB.name===au.auto)?dupName(P.n):EB.name;if(au&&!keep&&nm!==EB.name)au.auto=nm;EB=presetBuild(i,nm,EB.side);presetI=i;edRebuild()}
 // ---------- Cartes de l'arène ----------
 const MAPS=[['Terrain d\'entraînement'],['Vallée de la Fin'],['Désert de Suna']];
 const THEMES=[{sky:['#2a2650','#a8506a','#f3a65a'],floor:['#3e5a2c','#4f6e34'],line:'rgba(30,50,20,.18)',wall:['#6a4426','#4a2e18'],post:['#4a2e18','#9a6a3a','#3a2210','#b88a52']},

@@ -83,7 +83,7 @@ function pickData(p){const BUD=budgetOf(EB),c0=kitCost(EB);
    items:A.map(J=>{const ab=jutsu(J.id),sel=J.id===cur.id,o=sel?0:Math.max(0,EB.j.findIndex((id,k)=>k>0&&id===J.id)),nc=o?c0:c0-cur.cost+J.cost;
     return{v:J.id,n:J.n,col:catCol(J.cat),ic:J.cat,ult:ab.ult,rank:J.r,tab:catName(J.cat),l2:`${jcost(ab)} chakra · ${fmtCd(ab.cd)} · ${ab.mud?ab.mud+' mudras':'sans mudra'}`,d:J.d,sel,used:o,nc,BUD}})}}
  if(p==='pass')return{kind:'o',title:'Passif',sub:'Un bonus permanent et gratuit',items:PASSK.map((k,i)=>({v:i,n:PASS[k][0],col:'#7fd87f',ic:'p',d:PASS[k][1],sel:EB.pass===i}))};
- if(p==='preset')return{kind:'o',title:'Modèles de kit',sub:'Reprend le kit et l\'apparence d\'un perso de l\'anime, à retoucher ensuite (le nom et le camp de ton perso sont gardés)',
+ if(p==='preset')return{kind:'o',title:'Modèles de kit',sub:'Reprend le kit et l\'apparence d\'un perso de l\'anime, à retoucher ensuite (ton camp est gardé, ainsi que ton nom si tu l\'as choisi)',
   items:PRESETS.map((P,i)=>({v:i,n:P.full,col:P.clan>=0?CLANS[P.clan][1]:NATURES[P.nat][2],ic:P.clan>=0?'c'+P.clan:'n'+P.nat,d:`${presetLine(P)} · ${P.j.join(', ')}`,sel:presetI===i}))};
  const a=APP.find(x=>x[2]===p);if(!a)return null;const L=a[1](),look=p.startsWith('l.');
  return{kind:look?'a':'o',title:a[0],sub:look?'Clique une option : l\'aperçu à gauche change tout de suite':'',items:L.map((it,v)=>({v,n:itN(it),col:swCol(it)||'#e8cfa8',sw:swCol(it),ic:p==='nat'?'n'+v:p==='clan'?(v?'c'+(v-1):'u'):undefined,d:optDesc(p,v),sel:getB(p)===v}))}}
