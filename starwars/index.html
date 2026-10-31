@@ -17,6 +17,8 @@ canvas{width:min(100vw,177.78vh);height:min(56.25vw,100vh);display:block;cursor:
 #net .row{display:flex;gap:8px;margin-top:10px}#net input{flex:1;min-width:0;font:inherit;font-size:18px;letter-spacing:.2em;text-transform:uppercase;padding:8px;border-radius:8px;border:1px solid #3a4a6a;background:#04050b;color:#fff}
 #nStat{color:#ffe81f!important;min-height:1.4em}
 #backB{position:fixed;left:12px;top:12px;z-index:4;font:inherit;font-size:13px;font-weight:bold;text-decoration:none;border:1px solid #3a4a6a;border-radius:8px;padding:6px 10px;background:#0d1424cc;color:#dfe8ff}#backB:hover{border-color:#ffe81f}#backB:focus-visible{outline:2px solid #7df;outline-offset:2px}
+#quitB{position:fixed;right:12px;bottom:52px;z-index:4;font:inherit;font-size:13px;font-weight:bold;border:1px solid #3a4a6a;border-radius:8px;padding:6px 10px;background:#0d1424cc;color:#dfe8ff;cursor:pointer}#quitB:hover{border-color:#ff7a7a}
+#quitD{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);width:min(340px,calc(100vw - 32px));box-sizing:border-box;background:#0d1424;border:1px solid #3a4a6a;border-radius:12px;padding:20px;z-index:6;color:#dfe8ff;text-align:center}#quitD h2{margin:0 0 8px;font-size:20px}#quitD p{margin:0 0 14px;font-size:14px;opacity:.85}#quitD .qRow{display:flex;gap:10px;justify-content:center}#quitD button{font:inherit;font-weight:bold;border:0;border-radius:8px;padding:8px 14px;background:#2a3a5a;color:#dfe8ff;cursor:pointer}#quitD #qYes{background:#a83232;color:#fff}#quitB:focus-visible,#quitD button:focus-visible{outline:2px solid #7df;outline-offset:2px}
 #optB{position:fixed;right:12px;bottom:12px;z-index:4;font:inherit;font-size:14px;font-weight:bold;border:1px solid #3a4a6a;border-radius:8px;padding:6px 10px;background:#0d1424cc;color:#dfe8ff;cursor:pointer}
 #opt{position:fixed;right:12px;bottom:52px;width:min(300px,calc(100vw - 32px));box-sizing:border-box;background:#0d1424;border:1px solid #3a4a6a;border-radius:12px;padding:16px;z-index:6;color:var(--fg);cursor:auto}
 #opt h2{margin:0 0 10px;color:#ffe81f;font-size:17px}#opt label{display:flex;align-items:center;justify-content:space-between;gap:10px;margin:9px 0;font-size:14px;color:#c9d6f2}
@@ -28,6 +30,8 @@ canvas{width:min(100vw,177.78vh);height:min(56.25vw,100vh);display:block;cursor:
 <body>
 <div id="wrap"><canvas id="c" width="1280" height="720"></canvas></div>
 <a id="backB" href="../index.html">⇦ Changer de jeu</a>
+<button id="quitB" hidden aria-controls="quitD">✕ Quitter (Échap)</button>
+<div id="quitD" hidden role="dialog" aria-modal="true" aria-labelledby="quitH"><h2 id="quitH">Quitter la partie ?</h2><p id="quitN"></p><div class="qRow"><button id="qNo">Reprendre</button><button id="qYes">Quitter la partie</button></div></div>
 <button id="optB" aria-expanded="false" aria-controls="opt">⚙ Partie & options (O)</button>
 <div id="opt" hidden>
  <h2>Partie</h2>
@@ -72,7 +76,7 @@ const SLOTS=['lmb','rmb','Space','KeyQ','KeyE','KeyR'];
 const lbl={lmb:'Clic G',rmb:'Clic D',Space:'Espace',KeyQ:'Q',KeyE:'E',KeyR:'R',KeyW:'W',KeyA:'A',KeyS:'S',KeyD:'D',KeyM:'M',KeyF:'F'};
 try{navigator.keyboard&&navigator.keyboard.getLayoutMap().then(m=>{for(const c of['KeyQ','KeyE','KeyR','KeyW','KeyA','KeyS','KeyD','KeyM','KeyF'])if(m.get(c))lbl[c]=m.get(c).toUpperCase()}).catch(()=>{})}catch(e){}
 const wake=()=>{const a=ac();if(a&&a.state==='suspended')a.resume()};
-addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;wake();if(!keys[e.code])pressed[e.code]=1;keys[e.code]=1;if(e.code==='Space'||e.code==='Tab'||e.code.startsWith('Arrow'))e.preventDefault();if(e.code==='KeyM'){muted=!muted;syncOpt()}if(e.code==='KeyO')toggleOpt()});
+addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;wake();if(!keys[e.code])pressed[e.code]=1;keys[e.code]=1;if(e.code==='Space'||e.code==='Tab'||e.code.startsWith('Arrow'))e.preventDefault();if(e.code==='KeyM'){muted=!muted;syncOpt()}if(e.code==='KeyO')toggleOpt();if(e.code==='Escape'&&state!=='menu'&&!e.repeat)quitUI(!quitOn)});
 addEventListener('keyup',e=>{keys[e.code]=0});
 addEventListener('blur',()=>{for(const k in keys)keys[k]=0;mouse.l=0});
 cv.addEventListener('mousemove',e=>{const b=cv.getBoundingClientRect();mouse.x=(e.clientX-b.left)*W/b.width;mouse.y=(e.clientY-b.top)*H/b.height});
@@ -1332,8 +1336,13 @@ function netTick(dt){if(!coop())return;net.sendT-=dt;if(net.sendT>0)return;
   net.ev={fx:[],txt:[],snd:[],sp:[]}}
  else if(net.live){net.sendT=0;const I=localInput();netSend({t:'in',seq:net.seq,mx:I.mx,my:I.my,ax:rd(I.ax),ay:rd(I.ay),l:!!mouse.l,p:Object.keys(net.gp),sh:!!I.sh,f:!!I.f,cx:rd(cam.x),cy:rd(cam.y)});net.gp={}}}
 function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;
- if(isGuest()&&net.live)guestFrame(dt);else{const udt=hs>0?0:dt;hs=Math.max(0,hs-dt);update(udt)}
- netTick(dt);draw();backB.hidden=state!=='menu';pressed={};requestAnimationFrame(loop)}
+ if(isGuest()&&net.live)guestFrame(dt);else if(quitOn&&!coop()&&state!=='menu'){}else{const udt=hs>0?0:dt;hs=Math.max(0,hs-dt);update(udt)}
+ netTick(dt);draw();backB.hidden=state!=='menu';quitB.hidden=state==='menu';if(quitOn&&state==='menu')quitUI(false);pressed={};requestAnimationFrame(loop)}
+// quitter une partie en cours : bouton en haut à gauche ou Échap ; en solo la partie est en pause pendant la question
+const quitB=document.getElementById('quitB');let quitOn=false;
+function quitUI(v){quitOn=v;$('quitD').hidden=!v;if(v){$('quitN').textContent=isGuest()?'Tu quittes le salon : un bot prend ta place.':coop()?'Tu es l\'hôte : la partie s\'arrête pour tout le monde et vous revenez au salon. Elle continue tant que tu n\'as pas choisi.':'La partie est en pause.';$('qNo').focus()}else document.activeElement&&document.activeElement.blur()}
+function quitMatch(){quitUI(false);if(state==='menu')return;if(isGuest()){netReset();setStat('Tu as quitté la partie.')}state='menu';banner=null}
+quitB.onclick=()=>{wake();quitUI(!quitOn)};$('qNo').onclick=()=>quitUI(false);$('qYes').onclick=quitMatch;
 const backB=document.getElementById('backB');
 requestAnimationFrame(loop);
 </script>
