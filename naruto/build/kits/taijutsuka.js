@@ -14,7 +14,7 @@ KIT('c10',[
  [3,'S','x.tj_lotus2','Lotus caché','3e porte (−10 % PV) : fonce ; si tu touches, 2 assauts éclair traversent la cible puis l\'écrasent au sol : étourdit','tai'],
  [4,'C','x.tj_esquive','Esquive du fauve','1,5 s : esquive le prochain coup, riposte d\'un coup de pied retourné et accélère','leaf'],
  [4,'C','x.tj_gate1','Première Porte','1re porte : se libère, inarrêtable 2,5 s avec un petit bouclier ; ton prochain coup frappe double','gate'],
- [4,'B','x.tj_gate3','Porte de la Vie','3e porte, peau rougie : 4 s de coups 1,7× plus rapides, +15 % de dégâts, régénération et vitesse','gate'],
+ [4,'B','x.tj_gate3','Porte de la Vie','3e porte, peau rougie : 3 s de coups 1,7× plus rapides, +15 % de dégâts, régénération et vitesse','gate'],
  [4,'A','x.tj_jade','Corps de jade','2,5 s : inarrêtable, 35 % de dégâts en moins, renvoie les tirs ; le 1er qui te frappe au corps à corps est étourdi','gate'],
  [5,'B','x.tj_elephant','Éléphant du soir','5 coups de poing d\'air s\'abattent sur la zone visée (qui suit le curseur) ; le dernier étourdit','tai'],
  [5,'A','x.tj_8gates','Huit Portes','Huit portes 6 s : +35 % de dégâts, très rapide, vol de vie, soin, inarrêtable 3 s ; puis épuisé','tai'],
@@ -103,7 +103,7 @@ Object.assign(NAT,{
  tj_gate1:S_('Première Porte','',11,{hero:'savage',ai:SELF(200,.5)},(u)=>{u.root=0;u.slow=0;u.unstop=Math.max(u.unstop,2.5);u.critBuf=Math.max(u.critBuf||0,1);shieldU(u,15,2.5);tjGate(u,Math.min(5,tjG(u)+1));anim(u,'tj_gate',.5);S('heavy',u);
   jx({jfx:'tj_gate',ui:units.indexOf(u),x:u.x,y:u.y,n:Math.max(1,tjG(u)),t:.8,m:.8})}),
  // Porte de la Vie (Seimon) : la peau rougit
- tj_gate3:S_('Porte de la Vie','',12,{hero:'maul',ai:SELF(150,.6)},(u)=>{u.regenB=Math.max(u.regenB,4);u.haste=Math.max(u.haste,3);u.tj_life=4;u.stam=100;u.tj_red=Math.max(u.tj_red||0,4);tjGate(u,3);anim(u,'tj_gate',.5);S('heavy',u);
+ tj_gate3:S_('Porte de la Vie','',12,{hero:'maul',ai:SELF(150,.6)},(u)=>{u.regenB=Math.max(u.regenB,4);u.haste=Math.max(u.haste,3);u.tj_life=3;u.stam=100;u.tj_red=Math.max(u.tj_red||0,3);tjGate(u,3);anim(u,'tj_gate',.5);S('heavy',u);
   jx({jfx:'tj_gate',ui:units.indexOf(u),x:u.x,y:u.y,n:3,t:.8,m:.8})}),
  // Corps de jade : renvoie les tirs, étourdit au contact
  tj_jade:S_('Corps de jade','',12,{hero:'gideon',ai:SELF(160,.5)},(u)=>{u.deflect=Math.max(u.deflect,2.5);u.unstop=Math.max(u.unstop,2.5);u.drT=Math.max(u.drT,2.5);u.dr=.35;u.thorns=Math.max(u.thorns,2.5);anim(u,'tj_guard',.6);S('deflect',u);

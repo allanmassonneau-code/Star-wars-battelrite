@@ -11,7 +11,7 @@ KIT('c4',[
  [3,'A','x.ab_swarm','Essaim d\'insectes','Grande nuée qui suit ton curseur 3,5 s : ronge, ralentit et infeste. Le feu la brûle','bugs'],
  [4,'C','x.ab_wall','Mur d\'insectes','Rideau d\'insectes 3,5 s : dévore les projectiles (+chakra), ralentit et infeste qui le traverse','bugs'],
  [4,'B','x.ab_drain','Insectes dévoreurs','Nuée accrochée à l\'ennemi touché 3 s : vole chakra et PV (plus s\'il est infesté), à portée','bugs'],
- [1,'C','x.ab_venom','Nano-insectes de Torune','8 s : tes attaques de base injectent un venin cumulable (×3) ; à 3 doses, la cible ralentit','bugs'],
+ [1,'C','x.ab_venom','Nano-insectes de Torune','6 s : tes attaques de base injectent un venin cumulable (×3) ; à 3 doses, la cible ralentit','bugs'],
  [5,'S','x.ab_nuee','Nuée destructrice','Nuée colossale sur la zone : immobilise et réduit au silence 0,8 s, puis ronge PV et chakra 3 s','bugs'],
  [5,'S','x.ab_sphere','Sphère d\'insectes','Enferme le 1er ennemi touché dans une sphère d\'insectes : dévore PV et chakra, dure plus s\'il est infesté','bugs'],
 ]);
@@ -42,7 +42,7 @@ TRAITS[4]={nom:'Colonie de kikaichû',desc:'Chaque coup qui touche dépose un in
     if((tick||mold&&rnd()<dt*8)&&near(e.x,e.y)){const a=Math.atan2(u.y-e.y,u.x-e.x),sp=Math.min(420,Math.hypot(u.x-e.x,u.y-e.y)*1.6);fx.push({x:e.x,y:e.y,z:42,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp,t:.6,m:.6,col:'#7fd0ff',r:2.4})}}}},
  deal(src,t,dmg,o){if(!o.silent&&t.team!==src.team&&SIMT-(t.ab_last||-9)>.35){t.ab_last=SIMT;ab_add(t,src,1)}
   // nano-insectes de Torune : les attaques de base injectent un venin cumulable
-  if(src.ab_ven>0&&o.basic&&!o.silent){const v=t.ab_vd=Math.min(3,(SIMT-(t.ab_vdT||-9)<4?t.ab_vd||0:0)+1);t.ab_vdT=SIMT;t.dot=4.2*v;t.dotT=3;t.dotSrc=src;t.dotEl=-1;
+  if(src.ab_ven>0&&o.basic&&!o.silent){const v=t.ab_vd=Math.min(3,(SIMT-(t.ab_vdT||-9)<4?t.ab_vd||0:0)+1);t.ab_vdT=SIMT;t.dot=3.6*v;t.dotT=3;t.dotSrc=src;t.dotEl=-1;
    if(v>=3&&t.unstop<=0)t.slow=Math.max(t.slow,1);if(near(t.x,t.y))jx({jfx:'ab_vhit',x:t.x,y:t.y,n:v,t:.4,m:.4})}
   return dmg},
  take(t,src,dmg,o){if(o.melee&&src&&src!==t&&src.team!==t.team&&!o.silent&&SIMT-(src.ab_last||-9)>.35){src.ab_last=SIMT;ab_add(src,t,1)}return dmg},
@@ -91,7 +91,7 @@ Object.assign(NAT,{
  ab_swarm:S_('Essaim d\'insectes','Grande nuée qui suit ton curseur 3,5 s : ronge, ralentit et infeste. Le feu la brûle',12,{hero:'boba',ai:RG(480,.6),tele:{r:80,max:500}},(u,a,td)=>{S('bugs',u);S('wind',u);anim(u,'ab_swarm',.7);const p=fwd(u,a,55);
   aux.push({type:'ab_swarm',x:p.x,y:p.y,a,r:88,t:3.5,m:3.5,team:u.team,owner:u,ui:units.indexOf(u),k:.15,vfx:'bugs',n:0,acc:0,hs:{}});jx({jfx:'ab_pour',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.5,m:.5,big:1})}),
  // Nano-insectes de Torune : venin cumulable sur les attaques de base
- ab_venom:S_('Nano-insectes de Torune','8 s : tes attaques de base injectent un venin cumulable (×3) ; à 3 doses, la cible ralentit',12,{ai:SELF(330,.55)},(u)=>{u.ab_ven=8;S('bugs',u);anim(u,'ab_venom',.6);
+ ab_venom:S_('Nano-insectes de Torune','6 s : tes attaques de base injectent un venin cumulable (×3) ; à 3 doses, la cible ralentit',12,{ai:SELF(330,.55)},(u)=>{u.ab_ven=6;S('bugs',u);anim(u,'ab_venom',.6);
   jx({jfx:'ab_venup',ui:units.indexOf(u),x:u.x,y:u.y,t:.8,m:.8});say(u,'NANO-INSECTES','#c8a0ff')}),
  // Nuée destructrice : une nuée colossale s'abat sur la zone, engloutit les ennemis, puis ravage en dérivant vers les plus infestés
  ab_nuee:ULT('Nuée destructrice','Nuée colossale sur la zone : immobilise et réduit au silence 0,8 s, puis ronge PV et chakra 3 s',{hero:'deathtrooper',tele:{r:150,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480);S('bugs',u);S('heavy',u);anim(u,'ab_nuee',.9);

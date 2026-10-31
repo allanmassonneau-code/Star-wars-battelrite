@@ -8,7 +8,7 @@ const IN_D={
  ninken:'Ton ninken grandit et se bat seul 8 s : il plaque l\'ennemi visé (immobilisé 0,8 s), puis le traque et le mord',
  flair:'1,5 s : tu esquives le prochain coup d\'un écart, et ton ninken mord l\'attaquant, qui est révélé',
  tsuga:'Vrille éclair : au premier ennemi touché, tu le repousses et rebondis en arrière (frappe et repli)',
- beast:'À quatre pattes 5 s : rapide, ni ralenti ni entravé (3 s) ; griffes qui saignent (12 dégâts en 2 s), ninken qui mord deux fois plus',
+ beast:'À quatre pattes 4 s : rapide, ni ralenti ni entravé (3 s) ; griffes qui saignent (12 dégâts en 2 s), ninken qui mord deux fois plus',
  mark:'Le ninken bondit sur l\'ennemi visé et le marque 5 s : révélé, il subit +12 % de tes dégâts, tes vrilles le traquent',
  wolf:'Fusion en loup géant à deux têtes 7 s : rapide, vol de vie, chaque coup de base mord deux fois ; hurlement qui ralentit',
  garoga:'Double vrille géante qui fonce loin : emporte les ennemis touchés et les écrase à l\'arrivée (étourdis)'};
@@ -73,7 +73,7 @@ Object.assign(NAT,{
  // Flair du chien : esquive le prochain coup (voir le trait : take)
  in_flair:S_('Flair du chien',IN_D.flair,8,{hero:'ahsoka',ai:DEF},(u)=>{u.in_flair=1.5;S('deflect',u);anim(u,'in_sniff',.5);jx({jfx:'in_nose',x:u.x,y:u.y,ui:in_I(u),t:.7,m:.7})}),
  // Shikyaku : posture à quatre pattes (vitesse, saignement, morsures plus fréquentes)
- in_beast:S_('Shikyaku',IN_D.beast,8,{ai:SELF(320,.5)},(u)=>{S('roar',u);u.haste=Math.max(u.haste,5);u.slowImm=Math.max(u.slowImm,3);u.slow=0;u.root=0;u.in_four=5;anim(u,'in_four',5);jx({jfx:'in_feral',ui:in_I(u),x:u.x,y:u.y,t:.6,m:.6})}),
+ in_beast:S_('Shikyaku',IN_D.beast,8,{ai:SELF(320,.5)},(u)=>{S('roar',u);u.haste=Math.max(u.haste,4);u.slowImm=Math.max(u.slowImm,3);u.slow=0;u.root=0;u.in_four=4;anim(u,'in_four',4);jx({jfx:'in_feral',ui:in_I(u),x:u.x,y:u.y,t:.6,m:.6})}),
  // Marquage : le ninken bondit (projectile) et marque l'ennemi touché
  in_mark:S_('Marquage',IN_D.mark,7,{line:{len:440,w:24},ai:RG(440,.6)},(u,a)=>{S('dash',u);anim(u,'point',.35);for(const x of aux)if(x.type==='in_dog'&&x.owner===u)x.t=0;
   const s=in_side(u),tx=u.x+Math.cos(a)*440,ty=u.y+Math.sin(a)*440,b=Math.atan2(ty-s.y,tx-s.x);

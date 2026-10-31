@@ -3,7 +3,7 @@
 // PV ×1,3 pour tous (dans mkNinja, sans toucher l'équilibre entre les kits) et attaques de base ×0,4 (M1K, appliqué par nr_bal.js) :
 // depuis que les bots frappent vraiment au corps à corps (aiIn), le M1 faisait les deux tiers des dégâts et un duel durait ~17 s ;
 // avec ces deux réglages, le chakra rare, la course plus lente et la mort subite repoussée, un duel 1v1 IA contre IA dure ~52 s (médiane, kits aléatoires)
-const HPK=1.3,M1K=.4;
+const HPK=1,M1K=.4;
 // chakra : une jauge pleine = 5 jutsu environ ; presque pas de régénération en combat ; R (maintenu) est LA façon de se recharger,
 // mais on est immobile, on prend +20 % de dégâts et un coup franc brise la concentration ; à sec, le ninja est épuisé
 const CK={spawn:100, // chakra au début d'une manche / à la réapparition

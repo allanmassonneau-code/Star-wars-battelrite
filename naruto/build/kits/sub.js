@@ -26,7 +26,7 @@ KIT('u',[
  [2,'C','x.sub_grap','Kunai à fil','Kunai à fil : te tire jusqu\'au point d\'impact ; sur un ennemi, finit par un coup de pied étourdissant','kunai'],
  [5,'A','x.sub_toad','Invocation : Crapaud','Gamabunta s\'écrase sur la zone : gros dégâts, étourdit, puis reste comme rempart sur un sol boueux','smoke'],
  [5,'C','x.sub_rain','Pluie de parchemins','Une nuée de parchemins s\'abat sur la zone et explose en vague, du centre vers le bord','tag'],
- [5,'S','x.sub_sage','Mode Ermite','Se concentre 0,6 s (interruptible) puis 5 s : +35 % de dégâts, plus rapide, chakra illimité ; soigne un peu','sage'],
+ [5,'S','x.sub_sage','Mode Ermite','Se concentre 0,6 s (interruptible) puis 4 s : +35 % de dégâts, plus rapide, chakra illimité ; soigne un peu','sage'],
  [5,'B','x.sub_katsu','Invocation : Katsuyu','Des limaces se posent sur toi et tes alliés proches : soin, régénération 2,5 s et chakra','heal'],
 ]);
 // ---------- aides ----------
@@ -114,7 +114,7 @@ Object.assign(NAT,{
   subPoof(o.x,o.y,44,u);blinkTo(u,p.x,p.y);anim(u,'crouch',.3);subPoof(u.x,u.y,30,u)}),
  sub_jump:S_('Saut ninja','Bondit au curseur, choc à l\'arrivée',6,{hero:'luke',ai:{mode:'gap',min:120,max:300,p:.45}},(u,a,td)=>{S('dash',u);anim(u,'sub_jump',.38);
   dash(u,a,clamp(td||200,60,280),.36,{jump:85,end:()=>{VFX='leaf';aoe(u,u.x,u.y,75,9,{kb:300,quiet:1},'#5aa83a');VFX=null;jx({jfx:'sub_land',x:u.x,y:u.y,r:75,t:.55,m:.55});if(near(u.x,u.y)){S('rock',u);shake=Math.max(shake,.12)}}})}),
- sub_roll:S_('Roulade','Roulade rapide, intouchable au début',5,{hero:'rey',ai:ESC},(u,a)=>{S('dash',u);anim(u,'sub_roll',.26);dash(u,a,175,.22,{});u.phase=Math.max(u.phase||0,.3);
+ sub_roll:S_('Roulade','Roulade rapide, intouchable au début',5,{hero:'rey',ai:ESC},(u,a)=>{S('dash',u);anim(u,'sub_roll',.26);dash(u,a,175,.22,{});u.phase=Math.max(u.phase||0,.4);
   for(let i=0;i<3;i++)fx.push({x:u.x+Math.cos(a)*i*40,y:u.y+Math.sin(a)*i*40,z:4,vx:(rnd()-.5)*40,vy:(rnd()-.5)*30,t:.5,m:.5,col:'#b8b0a0',r:3+rnd()*2,vfx:'smoke'})}),
  // --- Hiraishin : 1er appui = kunai marqué ; relance (gratuite, 4 s) = téléportation au kunai, ou derrière l'ennemi marqué
  sub_hira:S_('Hiraishin','Kunai marqué ; relance pour s\'y téléporter',10,{hero:'ventress',ai:{mode:'gap',min:100,max:430,p:.5}},(u,a)=>{const i=subIdx(u,'sub_hira'),cd=u.ch.abil[i].cd;
@@ -138,7 +138,7 @@ Object.assign(NAT,{
   [[.9,0,70,22],[1.15,60,125,18],[1.4,115,175,15]].forEach(([dl,r0,r1,dm],w)=>{const z=subWarn(u,p.x,p.y,r1,dl);later(u,dl,()=>{z.done=1;VFX='tag';ringHit(u,p.x,p.y,r0,r1,dm,{kb:140});VFX=null;const n=w?w*6+2:1;
    for(let i=0;i<n;i++){const b=i/n*Math.PI*2+w*.5,d=(r0+r1)/2;detoFx(p.x+Math.cos(b)*d,p.y+Math.sin(b)*d*.9,w?44:62,'sub_boom')}if(near(p.x,p.y)){S('boom',u);shake=Math.max(shake,.22)}},{x:p.x,y:p.y,vfx:'tag'})})}),
  // --- Mode Ermite : rassembler l'énergie naturelle demande de rester concentré (0,6 s, interrompu par un étourdissement ou un recul)
- sub_sage:ULT('Mode Ermite','Énergie naturelle : dégâts, vitesse, chakra illimité',{hero:'yoda',cast:.6,ai:{mode:'self',max:340,p:.8}},(u)=>{const d=5;u.rage=Math.max(u.rage,d);u.haste=Math.max(u.haste,d);u.sub_sage=d;u.energy=100;gain(u,12,u);anim(u,'sub_sage',.5);S('ignite',u);
+ sub_sage:ULT('Mode Ermite','Énergie naturelle : dégâts, vitesse, chakra illimité',{hero:'yoda',cast:.6,ai:{mode:'self',max:340,p:.8}},(u)=>{const d=4;u.rage=Math.max(u.rage,d);u.haste=Math.max(u.haste,d);u.sub_sage=d;u.energy=100;gain(u,12,u);anim(u,'sub_sage',.5);S('ignite',u);
   aux.push({type:'sub_sage',x:u.x,y:u.y,r:0,t:d,m:d,team:u.team,owner:u});jx({jfx:'sub_sagein',ui:units.indexOf(u),x:u.x,y:u.y,t:1,m:1})}),
  sub_katsu:ULT('Invocation : Katsuyu','Limaces de soin sur les alliés proches',{hero:'r2',ai:{mode:'ally',p:.8}},(u)=>{anim(u,'summon',.8);S('water',u);jx({jfx:'sub_katsu',ui:units.indexOf(u),x:u.x,y:u.y,a:u.aim,t:1.8,m:1.8});
   const L=allies(u,450);for(const x of L){const r=gain(x,14,u);x.regenB=Math.max(x.regenB||0,2.5);x.energy=Math.min(100,x.energy+15);x.sub_slug=2.5;if(r>=1)say(x,'+'+Math.round(r),'#6f9');jx({jfx:'sub_slugjump',ui:units.indexOf(u),ti:units.indexOf(x),x:x.x,y:x.y,t:.6,m:.6})}
