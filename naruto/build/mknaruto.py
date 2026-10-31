@@ -305,7 +305,10 @@ rep("g.globalAlpha=Math.min(1,t.t*2);g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)
 rep("function P(x,y,z=0){const v=PV(),s=scl(y);return{x:W/2+(x-v.x)*s-(cam.x-v.x)*scl(cam.y),y:Yc+(y-cam.y)*K-z*s,s}}\nfunction unP(mx,my){const v=PV(),y=cam.y+(my-Yc)/K;return{x:v.x+(mx-W/2+(cam.x-v.x)*scl(cam.y))/scl(y),y}}",
  "const ZM=()=>state==='menu'?1:mode==='battle'?1.12:1.28;\nfunction P(x,y,z=0){const v=PV(),Z=ZM(),s=scl(y)*Z;return{x:W/2+((x-v.x)*scl(y)-(cam.x-v.x)*scl(cam.y))*Z,y:Yc+(y-cam.y)*K*Z-z*s,s}}\nfunction unP(mx,my){const v=PV(),Z=ZM(),y=cam.y+(my-Yc)/(K*Z);return{x:v.x+((mx-W/2)/Z+(cam.x-v.x)*scl(cam.y))/scl(y),y}}")
 # crochets partagés par les kits : traits de clan, éléments, chocs de jutsu, états visibles, initialisation différée
-rep("const backB=document.getElementById('backB');\nrequestAnimationFrame(loop);","const backB=document.getElementById('backB');\nfor(const f of AFTER)try{f()}catch(e){console.error(e)}\nrequestAnimationFrame(loop);")
+# équilibrage en jeu (panneau F8 + simulateur) : branché en dernier, après tous les kits
+rep("const backB=document.getElementById('backB');\nrequestAnimationFrame(loop);","const backB=document.getElementById('backB');\n"+open(SP+'nr_bal.js').read()+"\nfor(const f of AFTER)try{f()}catch(e){console.error(e)}\nrequestAnimationFrame(loop);")
+# en ligne : l'invité reçoit le profil d'équilibrage de l'hôte
+rep("   else if(d.t==='full')setStat(","   else if(d.t==='bal')blRecv(d);\n   else if(d.t==='full')setStat(")
 rep("if(src&&src.ch.pw)dmg*=src.ch.pw;","dmg=traitDmg(t,src,dmg,o);if(dmg<0)return false;dmg=elemDmg(t,src,dmg,o);if(src&&src.ch.pw)dmg*=src.ch.pw;")
 rep("if(o.dot&&src){t.dot=o.dot.dps;t.dotT=o.dot.dur;t.dotSrc=src}","if(o.dot&&src){t.dot=o.dot.dps;t.dotT=o.dot.dur;t.dotSrc=src;t.dotEl=o.el??ELM[VFX]??-1}")
 rep("if(u.dotSrc)hit(u,u.dotSrc,u.dot*.5,{silent:1})","if(u.dotSrc)hit(u,u.dotSrc,u.dot*.5,{silent:1,el:-1})")
@@ -378,7 +381,7 @@ rep("eBar(30,59,360,p.energy/100);{const T=trait(p);","eBar(30,59,360,p.energy/1
 rep("let ay=0;for(const m of units)if(m!==player&&m.team===player.team","let ay=(T=>T&&T.hud?22:0)(trait(p));for(const m of units)if(m!==player&&m.team===player.team")
 # clan Chinoike : « prix du sang », jutsu payés en PV au lieu du chakra (option ab.hpc = part des PV max, ex. hpc:.06) ; générique, sans effet sur les jutsu sans hpc
 # (jamais mortel : refusé s'il ne reste pas assez de PV ; les bots ne paient plus sous 30 % de PV ; coût affiché en rouge dans la barre de jutsu et le créateur)
-rep("const jcost=ab=>ab&&ab.rank?CKCOST[ab.rank]+(ab.ult?14:0):0;","const jcost=ab=>ab&&ab.rank&&!ab.hpc?CKCOST[ab.rank]+(ab.ult?14:0):0;\nconst hpcost=(u,ab)=>ab&&ab.hpc?Math.max(1,Math.round(u.max*ab.hpc)):0,jcostT=ab=>ab&&ab.hpc?Math.round(ab.hpc*100)+' % des PV max':jcost(ab)+' chakra';") # clan Chinoike
+rep("const jcost=ab=>ab&&ab.rank?CKCOST[ab.rank]+(ab.ult?14:0):0;","const jcost=ab=>ab&&ab.rank&&!ab.hpc?(ab.ckO!=null?ab.ckO:CKCOST[ab.rank]+(ab.ult?CKCOST.U:0)):0; // ckO : coût propre au jutsu (profil d'équilibrage)\nconst hpcost=(u,ab)=>ab&&ab.hpc?Math.max(1,Math.round(u.max*ab.hpc)):0,jcostT=ab=>ab&&ab.hpc?Math.round(ab.hpc*100)+' % des PV max':jcost(ab)+' chakra';") # clan Chinoike
 rep("if(u.energy<ck){ckLack(u,i);return false}","if(u.energy<ck){ckLack(u,i);return false}const hpc=i>0&&!rec?hpcost(u,ab):0;if(hpc&&u.hp<=hpc+1){hpLack(u,i);return false}") # clan Chinoike
 rep("u.energy-=ck;if(ab.ult&&ck){","u.energy-=ck;if(hpc)hpPay(u,hpc,ab);if(ab.ult&&(ck||hpc)){") # clan Chinoike (un ultime payé en PV garde son cri et sa secousse)
 rep("if(!h||u.cds[i]>0||u.energy<jcost(ab)||aiSave(u,i,h))continue;","if(!h||u.cds[i]>0||u.energy<jcost(ab)||aiSave(u,i,h)||(ab.hpc&&u.hp<u.max*.3+hpcost(u,ab)))continue;") # clan Chinoike

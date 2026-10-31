@@ -136,3 +136,11 @@ Le chakra ne revient plus en frappant : un jutsu qui **vole ou brûle du chakra*
 D (4-8 s) ≈ 10-18 dégâts ou petite utilité · C (6-10 s) ≈ 16-26 ou contrôle modéré (étourdir ≤ 0,6 s, entraver ≤ 1,2 s) ·
 B (8-12 s) ≈ 22-34 ou contrôle fort (≤ 1 s) / bonne défense · A (10-14 s) ≈ 30-45 + effet · S (ultime, 22 s) ≈ 45-70 ou effet décisif.
 Tout contrôle doit être **lisible** (télégraphe, projectile visible, délai) et **contrable** (esquivable, bloquable, interrompable).
+
+## Équilibrage en jeu (`nr_bal.js` : panneau F8 + simulateur)
+- Le profil actif (onglets Global, Clans, Natures, Styles, Jutsu) réécrit `CLANBAL`, `NATBAL`, `STYLEBAL`, `CKCOST` (dont `CKCOST.U`, surcoût d'un ultime), `CK` et `HLS`, puis recalcule tous les `CH[…]` sur place ; il est réappliqué à chaque `startMatch`.
+- Dégâts × d'un jutsu : tout ce que le jutsu crée pendant `fire` (projectiles, zones, champs, pièges, clones, `aux`, `seqs`, liens, `later`, fin de `dash`, `stick`, `markB`, brûlures `dot`) garde son multiplicateur. Un jutsu qui recalcule ses dégâts à chaque image, ou les range dans un état du ninja, peut y échapper.
+- Coût propre à un jutsu : `ab.ckO` (lu par `jcost`). Dans un profil, les jutsu sont repérés par `catégorie|nom` et les styles par leur **nom** : renommer un jutsu ou un style fait perdre son réglage.
+- En ligne : l'hôte envoie `{t:'bal',p,n}` (avec le salon et au lancement) ; l'invité l'applique (`blRecv`) et retrouve son propre profil en quittant.
+- Simulateur : iframe `index.html?sim=1` en bac à sable (`sandbox`, autre processus chez Chrome : l'interface reste fluide ; iframe ordinaire en `file://`), ni rendu ni boucle de jeu, même tirage de kits et même duel que `bal21/sim.mjs` (`player.ctrl=null`, 1v1, 150 s au plus).
+- `BLPART` (nr_bal.js) : jutsu dont une partie des dégâts échappe au multiplicateur (signalés ⚠ dans l'onglet Jutsu). Un kit qui corrige ça (dégâts recalculés à partir de `p.dmg` d'origine) peut en être retiré.
