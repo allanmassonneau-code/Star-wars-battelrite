@@ -16,13 +16,15 @@ const bOut=b=>Object.assign({},b,{l:Object.assign({},b.l),j:b.j.slice(),jn:b.j.s
 function bIn(b){try{if(!b||typeof b!=='object')return null;b=legacyLook(JSON.parse(JSON.stringify(b)));const j=Array.isArray(b.j)?b.j.slice(0,6):[];
  if(typeof b.sn==='string'){const i=STYLES.findIndex(s=>s[0]===b.sn);if(i>=0)j[0]=i}if(Array.isArray(b.jn))for(let s=1;s<6;s++)j[s]=pickName(b,b.jn[s-1]);
  b.j=j;delete b.jn;delete b.sn;return sanitizeBuild(b)}catch(e){return null}}
-const kitSig=b=>JSON.stringify([b.voie,b.nat,b.clan,b.pass,b.j,b.l]);
+const kitSig=b=>JSON.stringify([b.voie,b.nat,b.clan,b.pass,b.j,b.l]),kitOnly=b=>JSON.stringify([b.voie,b.nat,b.clan,b.pass,b.j]);
+// champs d'apparence d'origine (une sauvegarde d'avant les ajouts n'a que ceux-là) : les autres sont repris du perso de l'anime d'origine
+const LOOK0=['v','t','c','h','p','k','a','f','b','d'];
 const PB=[],presetOf=i=>PB[i]||(PB[i]=presetBuild(i,PRESETS[i].n,PRESETS[i].side)); // build d'origine d'un perso de l'anime (ne jamais la modifier)
 let ROS={mine:[],anime:{},last:{},nid:1};
 // première fois : le ninja de l'ancien créateur ('nrBuild4') devient le premier de « Mes ninjas » (sauf si c'est un perso de l'anime tel quel)
 function rosMigrate(){const R={mine:[],anime:{},last:{me:'a:'+PRESETS[0].n},nid:1};let has=false;try{has=!!(localStorage.getItem('nrBuild4')||localStorage.getItem('nrBuild3'))}catch(e){}
  if(!has)return R;let b=null;try{b=loadMine()}catch(e){}if(!b)return R;
- const i=PRESETS.findIndex((P,k)=>(b.name===P.n||b.name==='Ninja')&&b.side===P.side&&kitSig(b)===kitSig(presetOf(k))); // perso de l'anime tel quel = même nom, même camp, même kit
+ const i=PRESETS.findIndex((P,k)=>(b.name===P.n||b.name==='Ninja')&&b.side===P.side&&kitOnly(b)===kitOnly(presetOf(k))&&(b.name===P.n||LOOK0.every(f=>b.l[f]===presetOf(k).l[f]))); // perso de l'anime tel quel = même nom (ou « Ninja » avec son apparence), même camp, même kit ; l'apparence a pu gagner des cosmétiques depuis // perso de l'anime tel quel = même nom, même camp, même kit
  if(i>=0)R.last.me='a:'+PRESETS[i].n;else{R.mine.push({id:1,build:bOut(b)});R.nid=2;R.last.me='m1'}return R}
 // chargement : tout passe par sanitizeBuild ; JSON illisible = liste vide (sans planter)
 function rosLoad(){let raw=null,R=null;try{raw=localStorage.getItem(RKEY)}catch(e){}
@@ -30,7 +32,9 @@ function rosLoad(){let raw=null,R=null;try{raw=localStorage.getItem(RKEY)}catch(
  const o={mine:[],anime:{},last:{},nid:1};
  if(R&&typeof R==='object'){
   if(Array.isArray(R.mine))for(const m of R.mine){const id=m&&m.id|0,b=m&&bIn(m.build);if(b&&id>0&&!o.mine.some(x=>x.id===id))o.mine.push({id,build:b})}
-  if(R.anime&&typeof R.anime==='object')for(const P of PRESETS)if(R.anime[P.n]){const b=bIn(R.anime[P.n]);if(b)o.anime[P.n]=b}
+  if(R.anime&&typeof R.anime==='object')PRESETS.forEach((P,pi)=>{const raw=R.anime[P.n];if(!raw)return;const b=bIn(raw);if(!b)return;
+   // retouche sauvegardée avant l'ajout de cosmétiques : les nouveaux champs viennent du perso d'origine (bague de l'Akatsuki, collier de Tsunade…)
+   const rl=raw.l&&typeof raw.l==='object'?raw.l:{},P0=presetOf(pi).l;for(const f in P0)if(!LOOK0.includes(f)&&rl[f]==null)b.l[f]=P0[f];o.anime[P.n]=b})
   const L=R.last&&typeof R.last==='object'?R.last:{};for(const k of['me','opp'])if(typeof L[k]==='string')o.last[k]=L[k];
   o.nid=Math.max(1,R.nid|0,...o.mine.map(m=>m.id+1))}
  ROS=o;RL=RLAY=null;if(raw==null)rosSave()}

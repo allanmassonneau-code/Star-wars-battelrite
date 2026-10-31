@@ -7,10 +7,12 @@ const APP=[['Camp',()=>CAMPS,'side'],['Voie',()=>VOIES,'voie'],['Clan',()=>CLANL
  ['Coiffure',()=>COIFS,'l.c',0],['Cheveux',()=>HAIRC,'l.h',0],['Yeux',()=>EYES,'l.e',0],['Visage',()=>FACES,'l.f',0],['Accessoire',()=>ACCS,'l.a',0],['Bandeau',()=>BANDS,'l.b',0],
  ['Peau',()=>PEAUX,'l.p',1],['Taille',()=>TAILLES,'l.z',1],['Carrure',()=>CARRURES,'l.w',1],['Chakra',()=>CHAKRAS,'l.k',1],['Village',()=>VILLAGES,'l.v',1],
  ['Tenue',()=>TENUES,'l.t',2],['Couleur 1',()=>TENCOL,'l.o',2],['Couleur 2',()=>TENCOL,'l.s',2],
- ['Bras',()=>ARMS,'l.r',3],['Cou',()=>NECKS,'l.n',3],['Dos',()=>BACKS,'l.d',3]];
+ ['Par-dessus',()=>OVERS,'l.m',2],['Couleur masque',()=>TENCOL,'l.x',2],
+ ['Bras',()=>ARMS,'l.r',3],['Cou',()=>NECKS,'l.n',3],['Dos',()=>BACKS,'l.d',3],['Symbole',()=>SYMS,'l.y',3],['Ceinture',()=>GEARS,'l.g',3],['Couleur bandeau',()=>BANDC,'l.q',3]];
 const LTABS=['Tête','Corps','Tenue','Équipement'];let LTAB=0;const ltabR=i=>({x:44+i*89,y:390,w:85,h:24});
 const getB=k=>k==='clan'?EB.clan+1:k.startsWith('l.')?EB.l[k[2]]:EB[k],setB=(k,v)=>{if(k==='clan'){EB.clan=v-1;const cs=clanStyle(EB.clan);if(cs>=0&&!(STYLES[EB.j[0]]&&STYLES[EB.j[0]][5].includes(EB.clan)&&!STYLES[EB.j[0]][5].includes(-1)))EB.j[0]=cs} // nouveau clan : son style signature est équipé
- else if(k.startsWith('l.'))EB.l[k[2]]=v;else EB[k]=v};
+ else if(k.startsWith('l.')){EB.l[k[2]]=v;if(k==='l.t'&&TENUES[v]&&TENUES[v][1].hatC&&!EB.l.a)EB.l.a=4} // robe de Kage : son chapeau est proposé d'office (on peut l'enlever)
+ else EB[k]=v};
 const appOff=k=>k==='nat'&&EB.clan===TAIJ;
 const stylesOf=b=>STYLES.map((_,i)=>i).filter(i=>styleOk(i,b.clan));
 const edOver=()=>kitCost(EB)>budgetOf(EB),overBudget=()=>kitCost(MY)>budgetOf(MY); // kit en cours de création / kit joué (bouton PRÊT)
@@ -42,7 +44,7 @@ function rebuildMine(){MY=sanitizeBuild(MY);if(!RSIM)try{localStorage.setItem('n
  if(net.role==='host'){net.ready=false;sendLobby()}else if(isGuest()&&coop()){net.ready=false;netSend({t:'build',b:MY});netSend({t:'ready',v:false})}}
 // perso en création : seul l'aperçu change (rien n'est envoyé ni gardé avant « Enregistrer »)
 function edRebuild(){EB=sanitizeBuild(EB);EBCH=mkNinja(EB)}
-const lookTabD=['Coiffure, couleur des cheveux, yeux (dont dôjutsu purement décoratifs), marques du visage, accessoire de tête et bandeau.','Peau, taille et carrure (purement visuelles : la zone de coups ne change pas), couleur du chakra et village.','Tenue et ses deux couleurs (principale et secondaire, « D\'origine » garde celles de la tenue).','Accessoires des bras et du cou, objet porté dans le dos (le ninja tourne pour le montrer).'];
+const lookTabD=['Coiffure, couleur des cheveux, yeux (dont dôjutsu purement décoratifs), marques du visage, accessoire de tête et bandeau.','Peau, taille et carrure (purement visuelles : la zone de coups ne change pas), couleur du chakra et village.','Tenue et ses deux couleurs (principale et secondaire, « D\'origine » garde celles de la tenue), haori ou cape par-dessus, couleur du masque et de l\'écharpe.','Accessoires des bras et du cou, objet et symbole dans le dos, porte-kunai et pochette, couleur du bandeau (le ninja tourne pour montrer son dos).'];
 // --- textes d'aide des options de build
 function optDesc(k,v){
  if(k==='clan'){const c=v-1,T=TRAITS[c];return(c<0?'Subjutsu polyvalents, +2 points de budget. ':c===TAIJ?'Taijutsu pur : pas de nature, que des techniques du corps. ':'Jutsu de clan sans mudra. ')+(T?`Trait « ${T.nom||T.name} » : ${T.desc||''}`:'')}
@@ -186,7 +188,7 @@ function drawCreator(){
  rr({x:30,y:142,w:380,h:560},12,'rgba(20,14,10,.85)','#5a3a1e');
  {const h=hv(nameBtn);rr(nameBtn,8,h?'rgba(90,60,30,.6)':'rgba(0,0,0,.25)');tfit(EB.name+'  ✎',nameBtn.x+10,nameBtn.y+22,20,ch.side?'#ff9a9a':'#ffd38a',280,'bold')}
  btn(rndBtn,'🎲',false);if(hv(rndBtn))hoverTip('rndL',()=>({t:'Apparence aléatoire',d:'Tire au hasard toute l\'apparence (coiffure, yeux, tenue et ses couleurs, accessoires, taille…). Ton build de combat ne change pas.'}));
- const fake=menuFake(ch);fake.aim=LTAB===3?Math.PI/2+t*.9:Math.PI/2+Math.sin(t*.8)*1.1; // onglet Équipement : le ninja tourne sur lui-même (objets dans le dos)fake.moving=Math.sin(t*.5)>.3;fake.walk=t*13;fake.swing=0;
+ const fake=menuFake(ch);fake.aim=LTAB===3?Math.PI/2+t*.9:Math.PI/2+Math.sin(t*.8)*1.1;fake.moving=Math.sin(t*.5)>.3;fake.walk=t*13;fake.swing=0; // onglet Équipement : le ninja tourne sur lui-même (objets dans le dos)
  g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(220,316,50,13,0,0,7);g.fill();
  {g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(220,290,0,220,290,140);gr.addColorStop(0,rgba(ch.look.weapon.col,.16));gr.addColorStop(1,rgba(ch.look.weapon.col,0));g.fillStyle=gr;g.fillRect(80,186,280,150);g.restore()}
  drawPrevN(fake,220,314,1.6,0);drawChar3(fake,220,314,1.6);drawPrevN(fake,220,314,1.6,1);
