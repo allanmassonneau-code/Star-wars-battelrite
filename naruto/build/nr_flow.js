@@ -1,6 +1,6 @@
 // ---------- Rythme Naruto : chakra, mudras, combo, endurance ----------
 const GSPEED=.8; // tout le jeu tourne à 80 % : combats plus lisibles
-const CKCOST={D:10,C:16,B:21,A:28,S:36},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
+const CKCOST={D:10,C:16,B:21,A:28,S:36,U:14},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
 // coût en chakra d'un jutsu (les ultimes coûtent 14 de plus) : une jauge pleine = 5 jutsu environ
 const jcost=ab=>ab&&ab.rank?CKCOST[ab.rank]+(ab.ult?14:0):0;
 let COMBO3=false; // vrai pendant le 5e coup du combo corps à corps (petit étourdissement)
