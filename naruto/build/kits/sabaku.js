@@ -84,7 +84,7 @@ AUXF.sa_wavec=x=>{const p=x.p,o=x.owner;if(x.done)return;
   if(e.flame||e.spin)say(e,'INTERROMPU','#fc6');e.flame=null;e.spin=null;say(e,'EMPORTÉ','#e8c890')}}; // une incantation en cours est seulement suspendue
 AUXD.sa_wavec=()=>{};
 
-// ---- trait de clan : Bouclier de sable (le sable de la gourde arrête seul le prochain projectile tiré de loin, même une attaque de base ; chaque blocage coûte du chakra ; de près, le sable est trop lent)
+// ---- trait de clan : Bouclier de sable (le sable de la gourde arrête seul le prochain projectile tiré de loin ; chaque blocage coûte du chakra ; de près, le sable est trop lent)
 const SA_SHCD=22,SA_SHCK=20,SA_SHFAR=260; // recharge, chakra par blocage, distance parcourue minimale du tir
 // projectile ennemi qui va toucher u à cette image (m = marge : nuage, sphère)
 const sa_inc=(u,p,dt,m)=>p.owner&&p.owner.team!==u.team&&!p.grenade&&!p.dead&&p.life>0&&(Math.hypot(p.x+p.vx*dt-u.x,p.y+p.vy*dt-u.y)<u.r+p.r+m||Math.hypot(p.x-u.x,p.y-u.y)<u.r+p.r+m);

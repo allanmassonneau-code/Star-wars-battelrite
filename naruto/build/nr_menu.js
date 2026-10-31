@@ -3,7 +3,8 @@ let picker=null; // emplacement dont on choisit le jutsu (liste ouverte)
 // lignes de gauche : [libellé, liste, clé] ; le clan a une entrée « Sans clan » (valeur -1), la 2e nature n'existe que sans clan
 const CLANL=[['Sans clan','#888']].concat(CLANS),NATL=NATURES.map(n=>[n[0]+' ('+n[1]+')',n[2]]);
 const APP=[['Camp',()=>CAMPS,'side'],['Voie',()=>VOIES,'voie'],['Clan',()=>CLANL,'clan'],['Nature',()=>NATL,'nat'],['Village',()=>VILLAGES,'l.v'],['Tenue',()=>TENUES,'l.t'],['Coiffure',()=>COIFS,'l.c'],['Cheveux',()=>HAIRC,'l.h'],['Peau',()=>PEAUX,'l.p'],['Chakra',()=>CHAKRAS,'l.k'],['Accessoire',()=>ACCS,'l.a'],['Visage',()=>FACES,'l.f'],['Bandeau',()=>BANDS,'l.b'],['Dos',()=>BACKS,'l.d']];
-const getB=k=>k==='clan'?MY.clan+1:k.startsWith('l.')?MY.l[k[2]]:MY[k],setB=(k,v)=>{if(k==='clan')MY.clan=v-1;else if(k.startsWith('l.'))MY.l[k[2]]=v;else MY[k]=v};
+const getB=k=>k==='clan'?MY.clan+1:k.startsWith('l.')?MY.l[k[2]]:MY[k],setB=(k,v)=>{if(k==='clan'){MY.clan=v-1;const cs=clanStyle(MY.clan);if(cs>=0&&!(STYLES[MY.j[0]]&&STYLES[MY.j[0]][5].includes(MY.clan)&&!STYLES[MY.j[0]][5].includes(-1)))MY.j[0]=cs} // nouveau clan : son style signature est équipé
+ else if(k.startsWith('l.'))MY.l[k[2]]=v;else MY[k]=v};
 const appOff=k=>k==='nat'&&MY.clan===TAIJ;
 const stylesOf=b=>STYLES.map((_,i)=>i).filter(i=>styleOk(i,b.clan));
 const overBudget=()=>kitCost(MY)>budgetOf(MY);

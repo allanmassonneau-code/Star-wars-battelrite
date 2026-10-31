@@ -27,7 +27,7 @@ KIT('c20',[
  [2,'B','x.yu_step','Pas du miroir',YU_D.step,'yu_ice'],
  [5,'A','x.yu_blizzard','Hyôton : Blizzard',YU_D.bliz,'yu_ice'],
 ]);
-// style de combat propre : les senbon de Haku (seul style du clan : un Yuki se bat à distance)
+// style de combat propre : frappes de glace de Haku (seul style du clan, corps à corps)
 STYLES.push(['Frappes de glace','Paumes et lames de glace ; 3e coup : taille gelée qui ralentit ; 5e : la glace éclate devant toi et pose 1 givre (en plus du givre du trait, 1 tous les 3 coups)','x.yu_style','senbon','ice',[20],1.12,1.07]);
 
 // ---- aides

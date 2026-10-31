@@ -3,7 +3,7 @@
 // protège (Barrière : renvoie les tirs), porte (Vol sur l'éventail) et invoque Kamatari, la belette à la faux.
 // Trait « Trois lunes » : chaque jutsu qui touche ouvre une lune de l'éventail ; à 3 lunes, le jutsu suivant part éventail grand ouvert.
 // Combo signature : Vent ascendant (ou l'aller de Kamatari) projette en l'air → Kamaitachi frappe +30 % la cible en l'air.
-// Style propre : Éventail de combat (lames de vent à moyenne portée). Apparence : l'éventail géant dans le dos.
+// Style propre : Éventail fermé (coups d'éventail au contact). Apparence : l'éventail géant dans le dos.
 const RRD={
  st:'Coups d\'éventail fermé au contact ; 3e coup : estoc qui souffle et repousse ; 5e : l\'éventail s\'abat, la bourrasque repousse fort et balaie les tirs ennemis devant toi',
  kama:'Une faux de vent perçante file en ligne : 14 dégâts, ralentit ; +30 % sur une cible projetée en l\'air',

@@ -549,8 +549,10 @@ const clanTag=c=>CLANS[c]?CLANS[c][2]||CLANS[c][0][0]:'?'; // sigle d'un clan (i
 const TAIJ=10; // le clan Taijutsuka n'a pas de nature : uniquement du taijutsu
 // styles de combat (attaque de base) : [nom, description, source, vfx, arme, clans autorisés (-1 = sans clan), modif. PV, modif. puissance]
 // styles de combat : voir kits/styles.js
-// un clan qui n'a (encore) aucun style propre peut prendre les styles « sans clan » (Taijutsu, Kunai)
+// un clan qui n'a (encore) aucun style propre peut prendre les styles « sans clan » (Taijutsu, Kunai au poing, Kenjutsu, Kubikiribôchô)
 const styleOk=(s,clan)=>STYLES[s][5].includes(clan)||(clan>=0&&STYLES[s][5].includes(-1)&&!STYLES.some(x=>x[5].includes(clan)));
+// style signature du clan (réservé au clan, pas aux sans-clan) : -1 s'il n'y en a pas ; c'est le style par défaut quand on choisit le clan
+const clanStyle=c=>c<0?-1:STYLES.findIndex(x=>x[5].includes(c)&&!x[5].includes(-1));
 // [catégorie, emplacement 1-5, rang, source perso.sort, nom, description, effet visuel]
 // catégorie : 'u' Subjutsu (sans clan), 'n0'..'n4' nature, 'c0'..'c20' clan (CLANS.length)
 // ---------- Rythme Naruto : chakra, mudras, combo, endurance ----------
@@ -1426,7 +1428,7 @@ function subLotusKick(u,e,b){if(u.dead||e.dead||dist(u,e)>u.r+e.r+34){S('dash',u
   VFX='gate';hit(e,u,18,{stun:.45,unblockable:1});for(const o of enemies(u))if(o!==e&&Math.hypot(o.x-e.x,o.y-e.y)<85+o.r)hit(o,u,8,{kb:180,fx:e.x,fy:e.y});VFX=null;
   aux.push({type:'sub_crack',x:e.x,y:e.y,a:b,r:110,t:1.1,m:1.1,team:u.team,n:(e.x*3+e.y*7)|0,kind:'ring'});jx({jfx:'sub_quake',x:e.x,y:e.y,r:90,t:.5,m:.5});if(near(e.x,e.y)){S('rock',u);shake=Math.max(shake,.32)}}})}
 AUXF.sub_lotus=x=>{const u=x.owner,e=x.tg;if(!u||u.dead||!e||e.dead||u.stun>0){x.t=0;return}e.x=u.x+Math.cos(x.a)*26;e.y=u.y+Math.sin(x.a)*26;e.kx=e.ky=0;collide(e);x.x=e.x;x.y=e.y};
-// clones : ciblent l'ennemi le plus proche ; style corps à corps = coups de poing, style à distance = kunai ; un tir ou un coup ennemi les dissipe
+// clones : ciblent l'ennemi le plus proche ; ils frappent au corps à corps (comme tout style) ; un tir ou un coup ennemi les dissipe
 AUXF.sub_clones=(x,dt)=>{const u=x.owner;x.x=u.x;x.y=u.y;const ml=meleeU(u),sp=u.ch.spd*1.08*(u.haste>0?1.3:1);
  for(const p of x.L){if(p.life<=0)continue;const c=p.cl;c.t-=dt;
   if(u.dead||c.t<=0){p.life=0;subPoof(p.x,p.y,34,u);continue}
@@ -6572,7 +6574,7 @@ AUXF.sa_wavec=x=>{const p=x.p,o=x.owner;if(x.done)return;
   if(e.flame||e.spin)say(e,'INTERROMPU','#fc6');e.flame=null;e.spin=null;say(e,'EMPORTÉ','#e8c890')}}; // une incantation en cours est seulement suspendue
 AUXD.sa_wavec=()=>{};
 
-// ---- trait de clan : Bouclier de sable (le sable de la gourde arrête seul le prochain projectile tiré de loin, même une attaque de base ; chaque blocage coûte du chakra ; de près, le sable est trop lent)
+// ---- trait de clan : Bouclier de sable (le sable de la gourde arrête seul le prochain projectile tiré de loin ; chaque blocage coûte du chakra ; de près, le sable est trop lent)
 const SA_SHCD=22,SA_SHCK=20,SA_SHFAR=260; // recharge, chakra par blocage, distance parcourue minimale du tir
 // projectile ennemi qui va toucher u à cette image (m = marge : nuage, sphère)
 const sa_inc=(u,p,dt,m)=>p.owner&&p.owner.team!==u.team&&!p.grenade&&!p.dead&&p.life>0&&(Math.hypot(p.x+p.vx*dt-u.x,p.y+p.vy*dt-u.y)<u.r+p.r+m||Math.hypot(p.x-u.x,p.y-u.y)<u.r+p.r+m);
@@ -7389,7 +7391,7 @@ KIT('c11',[
  [5,'S','x.hk_bloom','Floraison mortelle','Après 0,8 s, des épines géantes jaillissent (rayon 160) : 38 dégâts, entrave 1 s. Toutes tes pousses éclosent : 16 dégâts et +2 doses autour (2 max par cible)','leaf'],
  [5,'A','x.hk_tree','Arbre millénaire','Un arbre géant pousse 6 s au point visé : ses branches fouettent l\'ennemi le plus proche (11 dégâts/s, portée 210), son ombre soigne tes alliés (4 PV/s) et il pleut du pollen','leaf'],
 ]);
-// style de combat propre : fouet de ronces (distance moyenne, attaque de base)
+// style de combat propre : griffes de ronces (corps à corps, attaque de base)
 STYLES.push(['Griffes de ronces','Griffes de lianes épineuses ; 3e coup : la liane fouette droit devant (allonge 118) ; tous les 3 coups qui touchent, du pollen sur la cible (+1 dose) ; 5e : les épines éclatent (+1 dose)','x.hk_style','leaf','vine',[11],1.12,1.07]);
 // apparence du clan : yeux vert sève, fleur dans les cheveux (si aucun accessoire choisi)
 CLOOK[11]=(look)=>{look.head.eye=look.head.eye||'#7ad04a';if(!look.head.acc)look.head.acc='fleur'};
@@ -7731,7 +7733,7 @@ Object.assign(ANIM,{
 // protège (Barrière : renvoie les tirs), porte (Vol sur l'éventail) et invoque Kamatari, la belette à la faux.
 // Trait « Trois lunes » : chaque jutsu qui touche ouvre une lune de l'éventail ; à 3 lunes, le jutsu suivant part éventail grand ouvert.
 // Combo signature : Vent ascendant (ou l'aller de Kamatari) projette en l'air → Kamaitachi frappe +30 % la cible en l'air.
-// Style propre : Éventail de combat (lames de vent à moyenne portée). Apparence : l'éventail géant dans le dos.
+// Style propre : Éventail fermé (coups d'éventail au contact). Apparence : l'éventail géant dans le dos.
 const RRD={
  st:'Coups d\'éventail fermé au contact ; 3e coup : estoc qui souffle et repousse ; 5e : l\'éventail s\'abat, la bourrasque repousse fort et balaie les tirs ennemis devant toi',
  kama:'Une faux de vent perçante file en ligne : 14 dégâts, ralentit ; +30 % sur une cible projetée en l\'air',
@@ -10339,7 +10341,7 @@ KIT('c20',[
  [2,'B','x.yu_step','Pas du miroir',YU_D.step,'yu_ice'],
  [5,'A','x.yu_blizzard','Hyôton : Blizzard',YU_D.bliz,'yu_ice'],
 ]);
-// style de combat propre : les senbon de Haku (seul style du clan : un Yuki se bat à distance)
+// style de combat propre : frappes de glace de Haku (seul style du clan, corps à corps)
 STYLES.push(['Frappes de glace','Paumes et lames de glace ; 3e coup : taille gelée qui ralentit ; 5e : la glace éclate devant toi et pose 1 givre (en plus du givre du trait, 1 tous les 3 coups)','x.yu_style','senbon','ice',[20],1.12,1.07]);
 
 // ---- aides
@@ -10662,7 +10664,7 @@ const JCD={'Lotus primaire':10,'Lotus caché':9}; // temps de recharge propres �
 // réglés à nouveau pour l'ambiance NRP (PV ×1,2 puis ×1,1, chakra rare) : duels simulés de chaque clan / nature contre des kits aléatoires, 45-55 % visés
 // puis pour les 21 clans (Hoki … Yuki, refonte Uzumaki) : duels 1v1 sans soin, 46-56 % pour chaque clan / nature ; les clans aux combats trop courts
 // (Nara, Uzumaki, Hoki, Shirogane, Chinoike, Hôzuki, Katon) ont plus de PV et moins de puissance : duel médian ≈ 50 s
-const CLANBAL={"0":[0.72,0.67],"1":[0.79,0.72],"2":[1.35,0.99],"3":[0.99,0.98],"4":[1.04,1.04],"5":[1.4,1.32],"6":[1.13,0.82],"7":[1.29,1.25],"8":[0.99,0.95],"9":[0.9,0.88],"10":[0.89,0.89],"11":[1.13,0.78],"12":[0.98,0.95],"13":[1.09,1.08],"14":[1.22,0.84],"15":[1.12,0.86],"16":[1.06,1.06],"17":[1.03,1.03],"18":[0.98,0.98],"19":[1.03,0.9],"20":[1.04,0.97],"-1":[0.92,0.95]},NATBAL={"0":[1.15,0.9],"1":[1.05,1.03],"2":[0.95,0.91],"3":[1.02,1.01],"4":[0.98,0.98]},STYLEBAL={'2:-1':[.9,.84]}; // STYLEBAL[style] ou STYLEBAL['style:clan'] = [PV, puissance] (Kenjutsu sans clan : réglé pour les PV/puissance des sans-clan)
+const CLANBAL={"0":[0.75,0.69],"1":[0.79,0.72],"2":[1.35,0.99],"3":[0.99,0.98],"4":[1.04,1.04],"5":[1.4,1.32],"6":[1.13,0.82],"7":[1.29,1.25],"8":[0.99,0.95],"9":[0.9,0.88],"10":[0.89,0.89],"11":[1.13,0.78],"12":[0.98,0.95],"13":[1.09,1.08],"14":[1.22,0.84],"15":[1.12,0.86],"16":[1.06,1.06],"17":[1.03,1.03],"18":[0.98,0.98],"19":[1.03,0.9],"20":[1.08,1.01],"-1":[0.92,0.95]},NATBAL={"0":[1.15,0.9],"1":[1.05,1.03],"2":[0.95,0.91],"3":[1.02,1.01],"4":[0.98,0.98]},STYLEBAL={'2:-1':[.9,.84]}; // STYLEBAL[style] ou STYLEBAL['style:clan'] = [PV, puissance] (Kenjutsu sans clan : réglé pour les PV/puissance des sans-clan)
 const JL=JD.map(([cat,slot,r,src,n,d,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,vfx,P:JPAR[n]}));
 const SLOTN=['Style de combat','Jutsu','Déplacement','Jutsu','Jutsu','Ultime'];
 const stype=s=>s===2?2:s===5?5:1; // 1 = jutsu (Clic D, Q, E), 2 = déplacement, 5 = ultime
@@ -10715,7 +10717,7 @@ const EYEF={pain:'rin',fard:'ser',branchies:'req',sourcils:'rond'}; // yeux prop
 function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Math.max(0,Math.min(m-1,(a|0)));const l=b.l||{};
  const o={name:String(b.name||'Ninja').replace(/[<>]/g,'').slice(0,16)||'Ninja',side:b.side?1:0,voie:n(b.voie??1,VOIES.length),nat:n(b.nat,NATURES.length),clan:b.clan==null?-1:Math.max(-1,Math.min(CLANS.length-1,b.clan|0)),pass:n(b.pass,PASSK.length),
   l:{v:n(l.v,VILLAGES.length),t:n(l.t,TENUES.length),c:n(l.c,COIFS.length),h:n(l.h,HAIRC.length),p:n(l.p,PEAUX.length),k:n(l.k,CHAKRAS.length),a:n(l.a,ACCS.length),f:n(l.f,FACES.length),b:n(l.b,BANDS.length),d:n(l.d,BACKS.length)}};
- const st=(b.j||[])[0];o.j=[STYLES[st]&&styleOk(st,o.clan)?st:STYLES.findIndex((_,i)=>styleOk(i,o.clan))];
+ const st=(b.j||[])[0];o.j=[STYLES[st]&&styleOk(st,o.clan)?st:clanStyle(o.clan)>=0?clanStyle(o.clan):STYLES.findIndex((_,i)=>styleOk(i,o.clan))];
  for(let s=1;s<6;s++){const A=avail(o,s).filter(j=>!o.j.slice(1).includes(j.id)),id=(b.j||[])[s];o.j.push(A.some(j=>j.id===id)?id:A.reduce((a,c)=>c.cost<a.cost?c:a).id)}
  if(strict)while(kitCost(o)>budgetOf(o)){let best=null;o.j.forEach((id,s)=>{if(!s)return;for(const c of avail(o,s))if(c.cost<JL[id].cost&&!o.j.slice(1).includes(c.id)){const gain=JL[id].cost-c.cost;if(!best||gain>best.g)best={s,id:c.id,g:gain}}});if(!best)break;o.j[best.s]=best.id}
  return o}
@@ -11874,7 +11876,7 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  if(k==='gold')for(const s of['L','R']){add(cyl(.7,.7,3.6,6),'hand'+s,'#8a6a20',[0,-2.8,1.2]);add(cone(1.7,8,4),'hand'+s,'#f0c040',[0,-8.6,1.2],[Math.PI,0,0])}
  if(k==='paper')for(const s of['L','R']){const x=s==='L'?2.8:-2.8;add(box(.5,15,4.2),'fore'+s,'#f6f3ea',[x,-8,0]);add(box(.6,2,4.4),'fore'+s,'#7a9ae0',[x,-2,0])}
  if(k==='shuriken'){add(cyl(1.6,1.6,.8,10),'handR','#3a3a44',[0,-3.6,1.6],[Math.PI/2,0,0]);for(let i=0;i<4;i++){const a=i*Math.PI/2;add(cone(1.4,6,4),'handR','#cfd3dd',[Math.cos(a)*3.6,-3.6+Math.sin(a)*3.6,1.6],[0,0,a-Math.PI/2])}}
- if(k==='ice')for(const s of['L','R']){for(const [x,z,h] of[[-1.4,0,6],[1.2,.6,5],[0,-1,4.5]])add(cone(1,h,5),'fore'+s,'#bfe6ff',[x,-3-h*.2,z],[Math.PI-.5,0,x*.3]);add(sph(2.3,8,6),'hand'+s,'#e8f8ff',[0,-2,.6])}
+ if(k==='ice')for(const s of['L','R']){for(const [x,z,h] of[[-1.5,0,7],[1.3,.6,6],[0,-1.2,5.5]])add(cone(1.2,h,5),'fore'+s,'#7fc8f0',[x,-3-h*.2,z],[Math.PI-.5,0,x*.3]);add(sph(2.5,8,6),'hand'+s,'#bfe6ff',[0,-2,.6]);add(cone(1.5,11,5),'hand'+s,'#5ab4ec',[0,-8.5,1.2],[Math.PI,0,0])} // lame de glace bien bleue (lisible sur une tenue claire)
  // géométrie fusionnée + squelette
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(P,3));geo.setAttribute('normal',new T.Float32BufferAttribute(N,3));geo.setAttribute('color',new T.Float32BufferAttribute(C,3));
  geo.setAttribute('skinIndex',new T.Uint16BufferAttribute(SI,4));geo.setAttribute('skinWeight',new T.Float32BufferAttribute(SW,4));
@@ -12480,7 +12482,8 @@ let picker=null; // emplacement dont on choisit le jutsu (liste ouverte)
 // lignes de gauche : [libellé, liste, clé] ; le clan a une entrée « Sans clan » (valeur -1), la 2e nature n'existe que sans clan
 const CLANL=[['Sans clan','#888']].concat(CLANS),NATL=NATURES.map(n=>[n[0]+' ('+n[1]+')',n[2]]);
 const APP=[['Camp',()=>CAMPS,'side'],['Voie',()=>VOIES,'voie'],['Clan',()=>CLANL,'clan'],['Nature',()=>NATL,'nat'],['Village',()=>VILLAGES,'l.v'],['Tenue',()=>TENUES,'l.t'],['Coiffure',()=>COIFS,'l.c'],['Cheveux',()=>HAIRC,'l.h'],['Peau',()=>PEAUX,'l.p'],['Chakra',()=>CHAKRAS,'l.k'],['Accessoire',()=>ACCS,'l.a'],['Visage',()=>FACES,'l.f'],['Bandeau',()=>BANDS,'l.b'],['Dos',()=>BACKS,'l.d']];
-const getB=k=>k==='clan'?MY.clan+1:k.startsWith('l.')?MY.l[k[2]]:MY[k],setB=(k,v)=>{if(k==='clan')MY.clan=v-1;else if(k.startsWith('l.'))MY.l[k[2]]=v;else MY[k]=v};
+const getB=k=>k==='clan'?MY.clan+1:k.startsWith('l.')?MY.l[k[2]]:MY[k],setB=(k,v)=>{if(k==='clan'){MY.clan=v-1;const cs=clanStyle(MY.clan);if(cs>=0&&!(STYLES[MY.j[0]]&&STYLES[MY.j[0]][5].includes(MY.clan)&&!STYLES[MY.j[0]][5].includes(-1)))MY.j[0]=cs} // nouveau clan : son style signature est équipé
+ else if(k.startsWith('l.'))MY.l[k[2]]=v;else MY[k]=v};
 const appOff=k=>k==='nat'&&MY.clan===TAIJ;
 const stylesOf=b=>STYLES.map((_,i)=>i).filter(i=>styleOk(i,b.clan));
 const overBudget=()=>kitCost(MY)>budgetOf(MY);

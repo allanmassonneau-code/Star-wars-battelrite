@@ -12,8 +12,10 @@ const clanTag=c=>CLANS[c]?CLANS[c][2]||CLANS[c][0][0]:'?'; // sigle d'un clan (i
 const TAIJ=10; // le clan Taijutsuka n'a pas de nature : uniquement du taijutsu
 // styles de combat (attaque de base) : [nom, description, source, vfx, arme, clans autorisés (-1 = sans clan), modif. PV, modif. puissance]
 // styles de combat : voir kits/styles.js
-// un clan qui n'a (encore) aucun style propre peut prendre les styles « sans clan » (Taijutsu, Kunai)
+// un clan qui n'a (encore) aucun style propre peut prendre les styles « sans clan » (Taijutsu, Kunai au poing, Kenjutsu, Kubikiribôchô)
 const styleOk=(s,clan)=>STYLES[s][5].includes(clan)||(clan>=0&&STYLES[s][5].includes(-1)&&!STYLES.some(x=>x[5].includes(clan)));
+// style signature du clan (réservé au clan, pas aux sans-clan) : -1 s'il n'y en a pas ; c'est le style par défaut quand on choisit le clan
+const clanStyle=c=>c<0?-1:STYLES.findIndex(x=>x[5].includes(c)&&!x[5].includes(-1));
 // [catégorie, emplacement 1-5, rang, source perso.sort, nom, description, effet visuel]
 // catégorie : 'u' Subjutsu (sans clan), 'n0'..'n4' nature, 'c0'..'c20' clan (CLANS.length)
 /*NR_NATURE*/
@@ -25,7 +27,7 @@ const JCD={'Lotus primaire':10,'Lotus caché':9}; // temps de recharge propres �
 // réglés à nouveau pour l'ambiance NRP (PV ×1,2 puis ×1,1, chakra rare) : duels simulés de chaque clan / nature contre des kits aléatoires, 45-55 % visés
 // puis pour les 21 clans (Hoki … Yuki, refonte Uzumaki) : duels 1v1 sans soin, 46-56 % pour chaque clan / nature ; les clans aux combats trop courts
 // (Nara, Uzumaki, Hoki, Shirogane, Chinoike, Hôzuki, Katon) ont plus de PV et moins de puissance : duel médian ≈ 50 s
-const CLANBAL={"0":[0.72,0.67],"1":[0.79,0.72],"2":[1.35,0.99],"3":[0.99,0.98],"4":[1.04,1.04],"5":[1.4,1.32],"6":[1.13,0.82],"7":[1.29,1.25],"8":[0.99,0.95],"9":[0.9,0.88],"10":[0.89,0.89],"11":[1.13,0.78],"12":[0.98,0.95],"13":[1.09,1.08],"14":[1.22,0.84],"15":[1.12,0.86],"16":[1.06,1.06],"17":[1.03,1.03],"18":[0.98,0.98],"19":[1.03,0.9],"20":[1.04,0.97],"-1":[0.92,0.95]},NATBAL={"0":[1.15,0.9],"1":[1.05,1.03],"2":[0.95,0.91],"3":[1.02,1.01],"4":[0.98,0.98]},STYLEBAL={'2:-1':[.9,.84]}; // STYLEBAL[style] ou STYLEBAL['style:clan'] = [PV, puissance] (Kenjutsu sans clan : réglé pour les PV/puissance des sans-clan)
+const CLANBAL={"0":[0.75,0.69],"1":[0.79,0.72],"2":[1.35,0.99],"3":[0.99,0.98],"4":[1.04,1.04],"5":[1.4,1.32],"6":[1.13,0.82],"7":[1.29,1.25],"8":[0.99,0.95],"9":[0.9,0.88],"10":[0.89,0.89],"11":[1.13,0.78],"12":[0.98,0.95],"13":[1.09,1.08],"14":[1.22,0.84],"15":[1.12,0.86],"16":[1.06,1.06],"17":[1.03,1.03],"18":[0.98,0.98],"19":[1.03,0.9],"20":[1.08,1.01],"-1":[0.92,0.95]},NATBAL={"0":[1.15,0.9],"1":[1.05,1.03],"2":[0.95,0.91],"3":[1.02,1.01],"4":[0.98,0.98]},STYLEBAL={'2:-1':[.9,.84]}; // STYLEBAL[style] ou STYLEBAL['style:clan'] = [PV, puissance] (Kenjutsu sans clan : réglé pour les PV/puissance des sans-clan)
 const JL=JD.map(([cat,slot,r,src,n,d,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,vfx,P:JPAR[n]}));
 const SLOTN=['Style de combat','Jutsu','Déplacement','Jutsu','Jutsu','Ultime'];
 const stype=s=>s===2?2:s===5?5:1; // 1 = jutsu (Clic D, Q, E), 2 = déplacement, 5 = ultime
@@ -78,7 +80,7 @@ const EYEF={pain:'rin',fard:'ser',branchies:'req',sourcils:'rond'}; // yeux prop
 function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Math.max(0,Math.min(m-1,(a|0)));const l=b.l||{};
  const o={name:String(b.name||'Ninja').replace(/[<>]/g,'').slice(0,16)||'Ninja',side:b.side?1:0,voie:n(b.voie??1,VOIES.length),nat:n(b.nat,NATURES.length),clan:b.clan==null?-1:Math.max(-1,Math.min(CLANS.length-1,b.clan|0)),pass:n(b.pass,PASSK.length),
   l:{v:n(l.v,VILLAGES.length),t:n(l.t,TENUES.length),c:n(l.c,COIFS.length),h:n(l.h,HAIRC.length),p:n(l.p,PEAUX.length),k:n(l.k,CHAKRAS.length),a:n(l.a,ACCS.length),f:n(l.f,FACES.length),b:n(l.b,BANDS.length),d:n(l.d,BACKS.length)}};
- const st=(b.j||[])[0];o.j=[STYLES[st]&&styleOk(st,o.clan)?st:STYLES.findIndex((_,i)=>styleOk(i,o.clan))];
+ const st=(b.j||[])[0];o.j=[STYLES[st]&&styleOk(st,o.clan)?st:clanStyle(o.clan)>=0?clanStyle(o.clan):STYLES.findIndex((_,i)=>styleOk(i,o.clan))];
  for(let s=1;s<6;s++){const A=avail(o,s).filter(j=>!o.j.slice(1).includes(j.id)),id=(b.j||[])[s];o.j.push(A.some(j=>j.id===id)?id:A.reduce((a,c)=>c.cost<a.cost?c:a).id)}
  if(strict)while(kitCost(o)>budgetOf(o)){let best=null;o.j.forEach((id,s)=>{if(!s)return;for(const c of avail(o,s))if(c.cost<JL[id].cost&&!o.j.slice(1).includes(c.id)){const gain=JL[id].cost-c.cost;if(!best||gain>best.g)best={s,id:c.id,g:gain}}});if(!best)break;o.j[best.s]=best.id}
  return o}
