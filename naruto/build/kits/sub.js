@@ -41,6 +41,8 @@ function subPoof(x,y,r,u){if(!near(x,y))return;jx({jfx:'sub_poof',x,y,r:r||36,t:
 // alerte au sol : zone factice du moteur (même dessin que les autres alertes ; les bots l'évitent), retirée juste avant qu'elle n'explose
 function subWarn(u,x,y,r,t,vfx){const z={x,y,r,t:t+.12,m:t+.12,owner:u,dmg:0,o:{},col:'#ff9a3a',vfx:vfx||'tag',jn:'sub'};zones.push(z);return z}
 const subIdx=(u,k)=>u.ch.abil.findIndex(x=>x&&x.key===k);
+// clone vivant hors Multiclonage (Kage Bunshin : leurre, Tremplin du clone) : il aide à former l'Ôdama Rasengan (renvoie son porteur, qui disparaît)
+function subRasCl(u){const x=aux.find(o=>(o.type==='sub_leurre'||(o.type==='sub_fdk'&&!o.n))&&o.owner===u&&o.D&&!o.D.dead&&o.p&&o.p.life>0);if(!x)return null;x.D.dead=true;x.t=0;return x.p}
 // ennemi le plus proche que les clones peuvent voir (un ennemi invisible n'est repéré qu'à moins de 140 px, comme pour les bots)
 function subNearE(u,x,y,r){let b=null,bd=r;for(const e of units){if(e.dead||e.team===u.team)continue;const d=Math.hypot(e.x-x,e.y-y);if(d<bd&&!(e.stealth>0&&d>140)){bd=d;b=e}}return b}
 // garde un point dans l'arène, hors des piliers
@@ -49,7 +51,7 @@ Object.assign(NAT,{
  // --- Rasengan : la sphère se forme (incantation courte, interruptible), puis on fonce ; la 1re cible est broyée puis projetée
  sub_rasen:S_('Rasengan','Forme une sphère puis fonce : broie et projette la 1re cible',10,{hero:'savage',cast:.28,line:{len:300,w:40},ai:{mode:'gap',min:60,max:300,p:.6}},(u,a,td)=>{S('rasengan',u);anim(u,'sub_rasen',.55);
   // un clone vivant aide à façonner la sphère : Ôdama Rasengan (plus gros, plus fort)
-  const C=aux.find(o=>o.type==='sub_clones'&&o.owner===u&&o.L.some(p=>p.life>0)),cl=C&&C.L.find(p=>p.life>0);if(cl){cl.life=0;subPoof(cl.x,cl.y,30,u);say(u,'ÔDAMA RASENGAN !','#7fc8ff');jx({jfx:'sub_bigras',ui:units.indexOf(u),x:u.x,y:u.y,t:.75,m:.75})}
+  const C=aux.find(o=>o.type==='sub_clones'&&o.owner===u&&o.L.some(p=>p.life>0)),cl=C&&C.L.find(p=>p.life>0)||subRasCl(u);if(cl){cl.life=0;subPoof(cl.x,cl.y,30,u);say(u,'ÔDAMA RASENGAN !','#7fc8ff');jx({jfx:'sub_bigras',ui:units.indexOf(u),x:u.x,y:u.y,t:.75,m:.75})}
   const d=clamp((td||250)+30,140,300);dash(u,a,d,d/950,{});aux.push({type:'sub_rasen',x:u.x,y:u.y,a,r:0,t:1.2,m:1.2,team:u.team,owner:u,ui:units.indexOf(u),k:0,n:0,ph:1,big:cl?1:0})}),
  // --- Fûma Shuriken : boomerang perçant ; touché à l'aller ET au retour = entaille qui ralentit
  sub_fuma:S_('Fûma Shuriken','Shuriken géant perçant qui revient',8,{hero:'vader',ai:RG(420,.6,60)},(u,a)=>{S('saber',u);anim(u,'throw2',.4);
@@ -67,9 +69,9 @@ Object.assign(NAT,{
   jx({jfx:'sub_pellet',x:u.x,y:u.y,x2:p.x,y2:p.y,t:tt,m:tt});
   later(u,tt,()=>{field(u,p.x,p.y,{r:130,t:4.5,slow:1,cloak:1,col:'#a8a8b0',vfx:'smoke'});aux.push({type:'sub_smk',x:p.x,y:p.y,r:130,t:4.5,m:4.5,team:u.team,owner:u,L:[]});S('poof',u);sparks(p.x,p.y,'#c8c8d0',14,'smoke')},{x:p.x,y:p.y})}),
  // --- Multiclonage : 2 clones de l'ombre (même style de combat que le lanceur)
- sub_clones:S_('Multiclonage','Deux clones combattent à tes côtés',15,{hero:'gideon',ai:SELF(450,.6)},(u,a)=>{anim(u,'sub_seal',.45);S('poof',u);const L=[];
-  for(const s of[-1,1]){const q=subFree({x:u.x+Math.cos(a+s*1.45)*50,y:u.y+Math.sin(a+s*1.45)*50},16),p=subCarrier(u,q.x,q.y,'sub_clone',{life:6});p.cl={t:5,cd:.35+rnd()*.2,tg:null,rt:0,s};L.push(p);subPoof(q.x,q.y,40,u)}
-  aux.push({type:'sub_clones',x:u.x,y:u.y,r:0,t:6,m:6,team:u.team,owner:u,L})}),
+ sub_clones:S_('Multiclonage','Deux clones combattent à tes côtés',14,{hero:'gideon',ai:SELF(450,.6)},(u,a)=>{anim(u,'sub_seal',.45);S('poof',u);const L=[];
+  for(const s of[-1,1]){const q=subFree({x:u.x+Math.cos(a+s*1.45)*50,y:u.y+Math.sin(a+s*1.45)*50},16),p=subCarrier(u,q.x,q.y,'sub_clone',{life:5});p.cl={t:4,cd:.35+rnd()*.2,tg:null,rt:0,s};L.push(p);subPoof(q.x,q.y,40,u)}
+  aux.push({type:'sub_clones',x:u.x,y:u.y,r:0,t:5,m:5,team:u.team,owner:u,L})}),
  // --- Clone explosif (Bunshin Daibakuha) : un clone court sur la cible et explose ; si on le frappe, il saute tout de suite
  sub_bomb:S_('Clone explosif','Un clone fonce sur l\'ennemi et explose',13,{hero:'luke',ai:RG(480,.55,70)},(u,a,td)=>{anim(u,'sub_seal',.4);S('poof',u);const q=subFree({x:u.x+Math.cos(a)*42,y:u.y+Math.sin(a)*42},16),p=subCarrier(u,q.x,q.y,'sub_clone',{life:4.5,rock:1,ox:a});
   p.cl={t:3.2,tg:pick(u,a,td||300,600),rt:.3,fuse:-1};subPoof(q.x,q.y,36,u);aux.push({type:'sub_bomb',x:q.x,y:q.y,r:0,t:4.5,m:4.5,team:u.team,owner:u,p})}),
@@ -78,7 +80,7 @@ Object.assign(NAT,{
   proj(u,a,{spd:780,r:8,dmg:4,life:.55,col:'#f0e0b0',vfx:'kunai',kind:'sub_tagk',onHit:(q,t)=>{if(t.dead)return;t.stick={src:q.owner,ex:false,t:1.2,r:100,dmg:25,stun:.45,sub:1};say(t,'PARCHEMIN !','#ff9a3a');aux.push({type:'sub_tagw',x:t.x,y:t.y,r:100,t:1.6,m:1.6,team:q.owner.team,owner:q.owner,ti:units.indexOf(t),tg:t})}});
   aux.push({type:'sub_tagp',x:u.x,y:u.y,r:0,t:.8,m:.8,team:u.team,owner:u,p:projs[projs.length-1]})}),
  // --- Piège ninja : fil tendu perpendiculaire à la visée, presque invisible pour l'ennemi
- sub_wire:S_('Piège ninja','Fil piégé : volée de kunai et étourdit',10,{hero:'wicket',ai:RG(320,.4,40)},(u,a,td)=>{const p=atP(u,a,clamp(td||200,70,320),320);anim(u,'crouch',.35);S('deflect',u);
+ sub_wire:S_('Piège ninja','Fil piégé : volée de kunai et étourdit',7,{hero:'wicket',ai:RG(320,.4,40)},(u,a,td)=>{const p=atP(u,a,clamp(td||200,70,320),320);anim(u,'crouch',.35);S('deflect',u);
   aux.push({type:'sub_wire',x:p.x,y:p.y,a:a+Math.PI/2,len:150,r:75,t:12,m:12,team:u.team,owner:u,arm:.6,n:0})}),
  // --- Genjutsu : Plumes (Nehan Shôja) : somnolence progressive, sommeil rompu par un coup
  sub_feather:S_('Genjutsu : Plumes','Plumes qui endorment ceux qui restent dessous',11,{hero:'cadbane',ai:RG(360,.45)},(u,a,td)=>{const p=atP(u,a,td,360);S('genjutsu',u);anim(u,'sub_seal',.4);
@@ -90,8 +92,8 @@ Object.assign(NAT,{
   const z=subWarn(u,p.x,p.y,70,tt+.4);later(u,tt+.4,()=>{z.done=1;subBoom(u,p.x,p.y,70,14,{kb:220});for(let i=0;i<4;i++){const b=a+.785+i*Math.PI/2,q=subFree({x:p.x+Math.cos(b)*95,y:p.y+Math.sin(b)*95},20);
    jx({jfx:'sub_tagfly',x:p.x,y:p.y,x2:q.x,y2:q.y,t:.36,m:.36});const z2=subWarn(u,q.x,q.y,48,.38);later(u,.38,()=>{z2.done=1;subBoom(u,q.x,q.y,48,8,{})},{x:q.x,y:q.y,vfx:'tag'})}},{x:p.x,y:p.y,vfx:'tag'})}),
  // --- Shôsen : paume médicale sur l'allié le plus blessé
- sub_shosen:S_('Shôsen','Soigne l\'allié le plus blessé puis le régénère',12,{hero:'rey',ai:ALLY},(u)=>{const x=allies(u,420).sort((p,q)=>p.hp/p.max-q.hp/q.max)[0]||u;anim(u,'twohand',.5);S('orb',u);
-  const r=gain(x,16,u);x.regenB=Math.max(x.regenB||0,1.5);if(x.dotT>0){x.dotT=0;x.dot=0;say(x,'PURIFIÉ','#cfffcf')}if(r>=1)say(x,'+'+Math.round(r),'#6f9');
+ sub_shosen:S_('Shôsen','Soigne l\'allié le plus blessé puis le régénère',11,{hero:'rey',ai:ALLY},(u)=>{const x=allies(u,420).sort((p,q)=>p.hp/p.max-q.hp/q.max)[0]||u;anim(u,'twohand',.5);S('orb',u);
+  const r=gain(x,14,u);x.regenB=Math.max(x.regenB||0,1.5);if(x.dotT>0){x.dotT=0;x.dot=0;say(x,'PURIFIÉ','#cfffcf')}if(r>=1)say(x,'+'+Math.round(r),'#6f9');
   if(x!==u)jx({jfx:'sub_hbeam',ui:units.indexOf(u),ti:units.indexOf(x),x:u.x,y:u.y,t:.5,m:.5});jx({jfx:'sub_hands',ti:units.indexOf(x),x:x.x,y:x.y,t:1.3,m:1.3})}),
  // --- Scalpel de chakra (Chakra no Mesu) : courte ruée + entaille ; ralentit et désarme
  sub_mesu:S_('Scalpel de chakra','Entaille les muscles : ralentit et désarme',8,{hero:'yoda',ai:RG(120,.65)},(u,a)=>{anim(u,'sub_mesu',.4);S('saber',u);
@@ -101,8 +103,8 @@ Object.assign(NAT,{
  // (contre sur mesure, géré par le trait des ninjas sans clan : portée limitée, contrairement au contre du moteur qui téléporte à n'importe quelle distance)
  sub_counter:S_('Contre du clone','Le prochain coup ne frappe qu\'un clone',13,{hero:'luke',ai:DEF},(u)=>{u.sub_ctr=.7;S('deflect',u);anim(u,'guard',.5)}),
  // --- Pilule du soldat (Hyôrôgan)
- sub_pill:S_('Pilule du soldat','Chakra, soin, endurance et se libère',13,{hero:'bossk',ai:HEALM},(u)=>{anim(u,'sub_pill',.6);S('orb',u);const r=gain(u,22,u);u.energy=Math.min(100,u.energy+40);u.stam=100;cleanse(u);u.dotT=0;
-  say(u,'+40 CHAKRA','#4ab0ff');if(r>=1)say(u,'+'+Math.round(r),'#6f9');jx({jfx:'sub_pill',ui:units.indexOf(u),x:u.x,y:u.y,t:.9,m:.9})}),
+ sub_pill:S_('Pilule du soldat','Chakra, soin, endurance et se libère',7,{hero:'bossk',ai:HEALM},(u)=>{anim(u,'sub_pill',.6);S('orb',u);const r=gain(u,16,u);u.energy=Math.min(100,u.energy+20);u.stam=100;cleanse(u);u.dotT=0;
+  say(u,'+20 CHAKRA','#4ab0ff');if(r>=1)say(u,'+'+Math.round(r),'#6f9');jx({jfx:'sub_pill',ui:units.indexOf(u),x:u.x,y:u.y,t:.9,m:.9})}),
  // --- Concentration du chakra : réduit les recharges des autres jutsu (hors ultime)
  sub_focus:S_('Concentration du chakra','Réduit les recharges des autres jutsu',11,{hero:'luke',ai:SELF(400,.35)},(u)=>{const me=subIdx(u,'sub_focus');for(let i=BAR0;i<BAR0+BARN;i++)if(i!==me)u.cds[i]=Math.max(0,u.cds[i]-3);if(u.cst)for(const k in u.cst)u.cst[k]=Math.max(0,u.cst[k]-3);u.energy=Math.min(100,u.energy+15);
   later(u,.01,()=>{u.haste=Math.max(u.haste,1.2)});anim(u,'pray',.55);S('ignite',u);jx({jfx:'sub_focus',ui:units.indexOf(u),x:u.x,y:u.y,col:u.ch.look.weapon.col||'#3af',t:.8,m:.8})}),
@@ -113,7 +115,7 @@ Object.assign(NAT,{
   aux.push({type:'sub_log',x:o.x,y:o.y,a:u.aim,r:0,t:.72,m:.72,team:u.team});const z=subWarn(u,o.x,o.y,80,.7);later(u,.7,()=>{z.done=1;subBoom(u,o.x,o.y,80,18,{kb:200,stun:.5})},{x:o.x,y:o.y,vfx:'tag'});
   subPoof(o.x,o.y,44,u);blinkTo(u,p.x,p.y);anim(u,'crouch',.3);subPoof(u.x,u.y,30,u)}),
  sub_jump:S_('Saut ninja','Bondit au curseur, choc à l\'arrivée',6,{hero:'luke',ai:{mode:'gap',min:120,max:300,p:.45}},(u,a,td)=>{S('dash',u);anim(u,'sub_jump',.38);
-  dash(u,a,clamp(td||200,60,280),.36,{jump:85,end:()=>{VFX='leaf';aoe(u,u.x,u.y,75,9,{kb:300,quiet:1},'#5aa83a');VFX=null;jx({jfx:'sub_land',x:u.x,y:u.y,r:75,t:.55,m:.55});if(near(u.x,u.y)){S('rock',u);shake=Math.max(shake,.12)}}})}),
+  dash(u,a,clamp(td||200,60,280),.36,{jump:85,end:()=>{const sg=u.sub_sage>0?1.5:1;VFX='leaf';aoe(u,u.x,u.y,75*Math.sqrt(sg),9*sg,{kb:300*sg,quiet:1},'#5aa83a');VFX=null;jx({jfx:'sub_land',x:u.x,y:u.y,r:75*sg,t:.55,m:.55});if(near(u.x,u.y)){S('rock',u);shake=Math.max(shake,.12)}}})}),
  sub_roll:S_('Roulade','Roulade rapide, intouchable au début',5,{hero:'rey',ai:ESC},(u,a)=>{S('dash',u);anim(u,'sub_roll',.26);dash(u,a,175,.22,{});u.phase=Math.max(u.phase||0,.4);
   for(let i=0;i<3;i++)fx.push({x:u.x+Math.cos(a)*i*40,y:u.y+Math.sin(a)*i*40,z:4,vx:(rnd()-.5)*40,vy:(rnd()-.5)*30,t:.5,m:.5,col:'#b8b0a0',r:3+rnd()*2,vfx:'smoke'})}),
  // --- Hiraishin : 1er appui = kunai marqué ; relance (gratuite, 4 s) = téléportation au kunai, ou derrière l'ennemi marqué
@@ -138,7 +140,7 @@ Object.assign(NAT,{
   [[.9,0,70,22],[1.15,60,125,18],[1.4,115,175,15]].forEach(([dl,r0,r1,dm],w)=>{const z=subWarn(u,p.x,p.y,r1,dl);later(u,dl,()=>{z.done=1;VFX='tag';ringHit(u,p.x,p.y,r0,r1,dm,{kb:140});VFX=null;const n=w?w*6+2:1;
    for(let i=0;i<n;i++){const b=i/n*Math.PI*2+w*.5,d=(r0+r1)/2;detoFx(p.x+Math.cos(b)*d,p.y+Math.sin(b)*d*.9,w?44:62,'sub_boom')}if(near(p.x,p.y)){S('boom',u);shake=Math.max(shake,.22)}},{x:p.x,y:p.y,vfx:'tag'})})}),
  // --- Mode Ermite : rassembler l'énergie naturelle demande de rester concentré (0,6 s, interrompu par un étourdissement ou un recul)
- sub_sage:ULT('Mode Ermite','Énergie naturelle : dégâts, vitesse, chakra illimité',{hero:'yoda',cast:.6,ai:{mode:'self',max:340,p:.8}},(u)=>{const d=4;u.rage=Math.max(u.rage,d);u.haste=Math.max(u.haste,d);u.sub_sage=d;u.energy=100;gain(u,12,u);anim(u,'sub_sage',.5);S('ignite',u);
+ sub_sage:ULT('Mode Ermite','Énergie naturelle : +25 % de dégâts, vitesse',{hero:'yoda',cast:.6,ai:{mode:'self',max:340,p:.8}},(u)=>{const d=4;u.haste=Math.max(u.haste,d);u.sub_sage=d;gain(u,12,u);anim(u,'sub_sage',.5);S('ignite',u);
   aux.push({type:'sub_sage',x:u.x,y:u.y,r:0,t:d,m:d,team:u.team,owner:u});jx({jfx:'sub_sagein',ui:units.indexOf(u),x:u.x,y:u.y,t:1,m:1})}),
  sub_katsu:ULT('Invocation : Katsuyu','Limaces de soin sur les alliés proches',{hero:'r2',ai:{mode:'ally',p:.8}},(u)=>{anim(u,'summon',.8);S('water',u);jx({jfx:'sub_katsu',ui:units.indexOf(u),x:u.x,y:u.y,a:u.aim,t:1.8,m:1.8});
   const L=allies(u,450);for(const x of L){const r=gain(x,14,u);x.regenB=Math.max(x.regenB||0,2.5);x.energy=Math.min(100,x.energy+15);x.sub_slug=2.5;if(r>=1)say(x,'+'+Math.round(r),'#6f9');jx({jfx:'sub_slugjump',ui:units.indexOf(u),ti:units.indexOf(x),x:x.x,y:x.y,t:.6,m:.6})}
@@ -209,7 +211,7 @@ AUXF.sub_tagp=x=>{const p=x.p;if(!p){x.t=0;return}if(!p.dead&&p.life>0){x.x=p.x;
 // fil piégé : un ennemi qui croise le segment le déclenche
 AUXF.sub_wire=(x,dt)=>{if(x.n)return;x.arm-=dt;if(x.arm>0)return;const u=x.owner,ca=Math.cos(x.a),sa=Math.sin(x.a),h=x.len/2;
  for(const e of enemies(u)){const f=clamp((e.x-x.x)*ca+(e.y-x.y)*sa,-h,h),px=x.x+ca*f,py=x.y+sa*f;if(Math.hypot(e.x-px,e.y-py)<e.r+5){x.n=1;x.t=.7;x.m=.7;
-  VFX='steel';hit(e,u,14,{stun:.6,unblockable:1});VFX=null;jx({jfx:'sub_volley',ti:units.indexOf(e),x:e.x,y:e.y,x1:x.x-ca*h,y1:x.y-sa*h,x2:x.x+ca*h,y2:x.y+sa*h,t:.45,m:.45});S('saber',e);S('hit',e);break}}};
+  VFX='steel';hit(e,u,12,{stun:.4,unblockable:1});VFX=null;jx({jfx:'sub_volley',ti:units.indexOf(e),x:e.x,y:e.y,x1:x.x-ca*h,y1:x.y-sa*h,x2:x.x+ca*h,y2:x.y+sa*h,t:.45,m:.45});S('saber',e);S('hit',e);break}}};
 // plumes : somnolence qui monte en restant dessous, sommeil, réveil si on prend un coup
 // réveil : 12 dégâts subis (cumulés) le réveillent en sursaut (0,3 s d'hébétude) ; un étourdissement plus long appliqué entre-temps remplace le sommeil
 function subWake(L){for(const s of L)if(!s.done){const e=s.e;if(e.dead||e.stun<=0){s.done=1;continue}
@@ -242,7 +244,7 @@ AUXF.sub_toad=x=>{const c=x.p;if(!c||c.life<=0){x.t=0;return}if(c.life>x.t+.05)c
  for(const e of enemies(x.owner)){const d=Math.hypot(e.x-x.x,e.y-x.y),m=x.r+e.r;if(d<m&&e.unstop<=0){const b=d>1?Math.atan2(e.y-x.y,e.x-x.x):rnd()*7;e.x=x.x+Math.cos(b)*m;e.y=x.y+Math.sin(b)*m;collide(e)}}
  for(const q of projs)if(q!==c&&q.life>0&&!q.grenade&&q.owner&&q.owner.team!==x.team&&Math.hypot(q.x-x.x,q.y-x.y)<x.r){q.life=0;q.dead=1;if(near(q.x,q.y))sparks(q.x,q.y,'#c0582a',5)}};
 // Mode Ermite : chakra maintenu au maximum
-AUXF.sub_sage=(x,dt)=>{const u=x.owner;if(u.dead){x.t=0;u.sub_sage=0;return}x.x=u.x;x.y=u.y;u.energy=100;u.sub_sage=Math.max(0,x.t)};
+AUXF.sub_sage=(x,dt)=>{const u=x.owner;if(u.dead){x.t=0;u.sub_sage=0;return}x.x=u.x;x.y=u.y;u.sub_sage=Math.max(0,x.t)}; // +25 % de dégâts : fam_sen.js (trait des sans-clan)
 // kunai à fil manqué : il se plante, le fil se tend et tire le lanceur (sauf s'il est étourdi, entravé ou déjà en mouvement)
 AUXF.sub_grapk=x=>{const p=x.p,o=x.owner;if(!p){x.t=0;return}if(!p.dead&&p.life>0){x.x=p.x;x.y=p.y;return}x.t=0;if(p.hitAny||!o||o.dead||o!==p.owner||o.stun>0||o.root>0||o.dash)return;
  const q=subFree({x:p.x,y:p.y},o.r);aux.push({type:'sub_wireln',x:q.x,y:q.y,r:0,t:.26,m:.26,team:o.team,ui:units.indexOf(o)});o.dash={sx:o.x,sy:o.y,tx:q.x,ty:q.y,t:0,dur:.25,jump:20};o.cast=null};
