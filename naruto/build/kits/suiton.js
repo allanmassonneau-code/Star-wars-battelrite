@@ -1,23 +1,23 @@
 // ===== Suiton (eau) =====
 // Identité : contrôle du terrain (dômes, prison, brume, inondations), requins de Kisame, dragons et cascades.
 // Chaque coup d'eau trempe la cible (foudre ×1,35, feu ×0,75 et vapeur) ; le requin Suikôdan traque les cibles trempées.
-// [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Arbre (format v5) : 2 jutsu par rang, on en apprend 1 par rang. [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Retiré de l'arbre (code conservé) : Suiton : Daikôdan (su_big, doublon du Daikôdan du clan Hoshigaki). Dash de nature (Espace, sans-clan) : Suiton : Corps liquide (su_liquid).
 const su_rows=[
- [1,'D','x.su_ball','Suiton : Teppôdama','Balle d\'eau qui grossit en vol (plus de dégâts au loin) et éclate en éclaboussure qui ralentit','water'],
- [1,'D','x.su_wall','Suiton : Suijinheki','Dôme d\'eau 1,5 s qui arrête les tirs et repousse ; relance : le mur déferle en vague devant toi','water'],
- [1,'C','x.su_jet','Suiton : Mizurappa','Torrent d\'eau 1,3 s, immobile : repousse en continu et interrompt ; vise pour le diriger','water'],
- [1,'C','x.su_shark','Suiton : Suikôdan','Requin d\'eau qui vire vers l\'ennemi devant lui ; il traque sans relâche une cible trempée','water'],
- [1,'B','x.su_prison','Suiton : Suirô','Emprisonne et noie la cible tant que tu restes immobile (1,8 s ; cède si on te frappe) ; relance : la projette (obstacle : étourdie)','water'],
- [1,'B','x.su_mist','Suiton : Kirigakure','Brume 6 s : ennemis ralentis, trempés, aveuglés ; ton équipe y est invisible sans attaquer 0,8 s ; le vent la chasse','water'],
- [1,'A','x.su_dragon','Suiton : Dragon aqueux','Dragon d\'eau en ligne qui emporte les ennemis touchés puis les ralentit ; s\'il percute un obstacle : étourdis','water'],
- [1,'A','x.su_fall','Suiton : Daibakufu','Cascade après 0,65 s (plus forte au centre) qui étourdit, puis un tourbillon 3,5 s ralentit et aspire vers le centre','water'],
- [2,'C','x.su_liquid','Suiton : Corps liquide','Se liquéfie et file au sol : intouchable, libéré des entraves et ralentissements ; à l\'arrivée, éclabousse autour de toi (8 dégâts, ralentit)','water'],
- [5,'S','x.su_big','Suiton : Daikôdan','Requin géant qui avale les tirs ennemis (il grossit à chaque bouchée) puis explose : étourdit, repousse et inonde','water'],
- [5,'S','x.su_dome','Suiton : Dôme des requins','Dôme d\'eau 4,5 s : les ennemis piégés ne peuvent sortir, perdent du chakra et se font mordre ; tu y nages vite','water'],
- [5,'S','x.su_tsunami','Suiton : Bakusui Shôha','Raz-de-marée qui emporte les ennemis (étourdis contre un obstacle) ; la mer reste 5 s : eux ralentis, vous rapides','water'],
+ ['D','x.su_ball','Suiton : Teppôdama','Balle d\'eau qui grossit en vol (plus de dégâts au loin) et éclate en éclaboussure qui ralentit','water'],
+ ['D','x.su_wall','Suiton : Suijinheki','Dôme d\'eau 1,5 s qui arrête les tirs et repousse ; relance : le mur déferle en vague devant toi','water'],
+ ['C','x.su_jet','Suiton : Mizurappa','Torrent d\'eau 1,3 s, immobile : repousse en continu et interrompt ; vise pour le diriger','water'],
+ ['C','x.su_shark','Suiton : Suikôdan','Requin d\'eau qui vire vers l\'ennemi devant lui ; il traque sans relâche une cible trempée','water'],
+ ['B','x.su_prison','Suiton : Suirô','Emprisonne et noie la cible tant que tu restes immobile (1,8 s ; cède si on te frappe) ; relance : la projette (obstacle : étourdie)','water'],
+ ['B','x.su_mist','Suiton : Kirigakure','Brume 6 s : ennemis ralentis, trempés, aveuglés ; ton équipe y est invisible sans attaquer 0,8 s ; le vent la chasse','water'],
+ ['A','x.su_dragon','Suiton : Dragon aqueux','Dragon d\'eau en ligne qui emporte les ennemis touchés puis les ralentit ; s\'il percute un obstacle : étourdis','water'],
+ ['A','x.su_fall','Suiton : Daibakufu','Cascade après 0,65 s (plus forte au centre) qui étourdit, puis un tourbillon 3,5 s ralentit et aspire vers le centre','water'],
+ ['S','x.su_tsunami','Suiton : Bakusui Shôha','Raz-de-marée qui emporte les ennemis (étourdis contre un obstacle) ; la mer reste 5 s : eux ralentis, vous rapides','water'],
+ ['S','x.su_dome','Suiton : Dôme des requins','Dôme d\'eau 4,5 s : les ennemis piégés ne peuvent sortir, perdent du chakra et se font mordre ; tu y nages vite','water'],
 ];
 KIT('n1',su_rows);
-const su_d=k=>(su_rows.find(r=>r[2]==='x.'+k)||[])[4]||''; // description = celle du catalogue
+DASHN[1]={src:'x.su_liquid',n:'Suiton : Corps liquide',d:'Se liquéfie et file au sol : intouchable pendant la glissade, libéré des entraves et ralentissements ; à l\'arrivée, éclabousse autour de toi (5 dégâts, ralentit)',vfx:'water',cd:7};
+const su_d=k=>(su_rows.find(r=>r[1]==='x.'+k)||[])[3]||''; // description = celle du catalogue
 Object.assign(NAT,{
  // Teppôdama : la balle grossit en vol ; elle éclate à l'impact ou au bout de sa course
  su_ball:SP('Suiton : Teppôdama',su_d('su_ball'),4,{ai:RG(520,.7)},(u,a)=>{S('water',u);anim(u,'su_spit',.35);jx({jfx:'su_mouth',ui:su_i(u),x:u.x,y:u.y,a,t:.3,m:.3});
@@ -36,17 +36,17 @@ Object.assign(NAT,{
  su_jet:SP('Suiton : Mizurappa',su_d('su_jet'),8,{ai:RG(270,.6),line:{len:300,w:84}},(u,a)=>{for(const x of aux)if(x.type==='su_jet'&&x.owner===u)x.t=0;
   aux.push({type:'su_jet',x:u.x,y:u.y,a,len:30,w:0,r:0,t:1.3,m:1.3,team:u.team,owner:u,vfx:'water',k:.05,ui:su_i(u),si:su_slot(u,'su_jet'),sp:0});anim(u,'su_spit',1.3);S('water',u)}),
  // Suikôdan : requin qui corrige sa course vers l'ennemi devant lui, et chasse sans relâche une cible trempée
- su_shark:SP('Suiton : Suikôdan',su_d('su_shark'),8,{ai:RG(560,.6)},(u,a)=>{S('water',u);anim(u,'su_shark',.45);jx({jfx:'su_ring',x:u.x+Math.cos(a)*30,y:u.y+Math.sin(a)*30,r:34,t:.4,m:.4});
+ su_shark:SP('Suiton : Suikôdan',su_d('su_shark'),7,{ai:RG(560,.6)},(u,a)=>{S('water',u);anim(u,'su_shark',.45);jx({jfx:'su_ring',x:u.x+Math.cos(a)*30,y:u.y+Math.sin(a)*30,r:34,t:.4,m:.4});
   proj(u,a,{spd:520,r:12,dmg:16,life:1.3,col:'#3aa8ff',kind:'su_shark',o:{kb:150},onHit:(p,t)=>jx({jfx:'su_bite',x:t.x,y:t.y,t:.4,m:.4})});
   su_pilot(u,(x,p,dt,end)=>{if(!end)su_steer(p.owner,p,dt)})}), // p.owner : renvoyé, il chasse son ancien maître
  // Suirô : orbe ; la cible est enfermée tant que le lanceur la tient (immobile) ; relance = la projeter
- su_prison:SP('Suiton : Suirô',su_d('su_prison'),12,{ai:RG(380,.55),line:{len:385,w:26}},(u,a)=>{
+ su_prison:SP('Suiton : Suirô',su_d('su_prison'),11,{ai:RG(380,.55),line:{len:385,w:26}},(u,a)=>{
   if(u.jst&&u.jst.key==='su_prison'){const x=aux.find(x=>x.type==='su_prison'&&x.owner===u&&x.t>0);
    if(x&&!u.ctrl&&x.m-x.t<1.2){u.cds[u.jst.i]=.25;return} // bot : la tient un moment avant de la lancer
    u.jst=null;if(x)su_throw(x,u.ctrl?a:su_botAim(u,x.tg));return}
   S('water',u);anim(u,'point',.35);proj(u,a,{spd:700,r:11,dmg:6,life:.55,col:'#3aa8ff',kind:'su_orb',onHit:(p,t)=>su_trap(p.owner,t)})}),
  // Kirigakure : brume (invisibilité au repos pour l'équipe, ennemis trempés et aveuglés) ; le vent la dissipe
- su_mist:SP('Suiton : Kirigakure',su_d('su_mist'),13,{ai:SELF(260,.45),tele:{self:1,r:245}},(u)=>{S('water',u);anim(u,'su_mist',.6);
+ su_mist:SP('Suiton : Kirigakure',su_d('su_mist'),10,{ai:SELF(260,.45),tele:{self:1,r:245}},(u)=>{S('water',u);anim(u,'su_mist',.6);
   aux.push({type:'su_mist',x:u.x,y:u.y,r:245,t:6,m:6,team:u.team,owner:u,vfx:'water',k:0});jx({jfx:'su_mistF',x:u.x,y:u.y,r:245,t:6,m:6,team:u.team});
   u.stealth=Math.max(u.stealth,1.2);u.su_mA=0;sparks(u.x,u.y,'#e8eef6',14,'smoke')}),
  // Dragon aqueux (Suiryûdan) : jaillit du sol, transperce la ligne et emporte les ennemis touchés
@@ -55,22 +55,22 @@ Object.assign(NAT,{
   proj(u,a,{spd:800,r:20,dmg:28,life:.8,col:'#3aa8ff',pierce:1,big:1,kind:'su_dragon',slow:1.2,onHit:(p,t)=>{if(t.unstop<=0&&!t.dead)(p.su_car||(p.su_car=[])).push({e:t,t:.38})}});
   su_pilot(u,su_dragonStep)}),
  // Daibakufu : la cascade tombe (cible visible au sol, centre plus fort) puis le sol reste inondé
- su_fall:SP('Suiton : Daibakufu',su_d('su_fall'),12,{tele:{r:150,max:460},ai:RG(460,.6)},(u,a,td)=>{const p=atP(u,a,td,460);S('water',u);anim(u,'slam',.75);
+ su_fall:SP('Suiton : Daibakufu',su_d('su_fall'),13,{tele:{r:150,max:460},ai:RG(460,.6)},(u,a,td)=>{const p=atP(u,a,td,460);S('water',u);anim(u,'slam',.75);
   jx({jfx:'su_fall',x:p.x,y:p.y,r:150,d:.65,t:1.1,m:1.1});zone(u,p.x,p.y,150,24,.65,{stun:.4},'#3aa8ff');lastZ().deto='su_fallD';zone(u,p.x,p.y,58,12,.65,{},'#bfe6ff');lastZ().deto='su_none';
   later(u,.65,()=>aux.push({type:'su_whirl',x:p.x,y:p.y,r:155,t:3.5,m:3.5,team:u.team,owner:u,vfx:'water',k:.25}))}),
  // Corps liquide (Suika) : glisse intangible, se libère des entraves, éclabousse à l'arrivée
- su_liquid:SP('Suiton : Corps liquide',su_d('su_liquid'),7,{ai:{mode:'gap',min:120,max:280,p:.5}},(u,a)=>{S('water',u);u.root=0;u.slow=0;u.rootV=null;anim(u,'su_melt',.42);jx({jfx:'su_splash',x:u.x,y:u.y,r:40,t:.45,m:.45});
-  aux.push({type:'su_liq',x:u.x,y:u.y,a,r:22,t:.4,m:.4,team:u.team,owner:u,vfx:'water',k:0});jx({jfx:'su_body',ui:su_i(u),x:u.x,y:u.y,t:.42,m:.42});u.phase=Math.max(u.phase||0,.5);
-  dash(u,a,280,.34,{end:()=>{jx({jfx:'su_splash',x:u.x,y:u.y,r:80,t:.5,m:.5});for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<80+e.r)su_hit(e,u,8,{slow:1,silent:1})}})}),
+ su_liquid:SP('Suiton : Corps liquide','Se liquéfie et file au sol : intouchable pendant la glissade, libéré des entraves et ralentissements ; à l\'arrivée, éclabousse (5 dégâts, ralentit)',7,{ai:{mode:'gap',min:120,max:280,p:.5}},(u,a)=>{S('water',u);u.root=0;u.slow=0;u.rootV=null;anim(u,'su_melt',.42);jx({jfx:'su_splash',x:u.x,y:u.y,r:40,t:.45,m:.45});
+  aux.push({type:'su_liq',x:u.x,y:u.y,a,r:22,t:.4,m:.4,team:u.team,owner:u,vfx:'water',k:0});jx({jfx:'su_body',ui:su_i(u),x:u.x,y:u.y,t:.42,m:.42});u.phase=Math.max(u.phase||0,.34);
+  dash(u,a,250,.31,{end:()=>{jx({jfx:'su_splash',x:u.x,y:u.y,r:80,t:.5,m:.5});for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<80+e.r)su_hit(e,u,5,{slow:1,silent:1})}})}),
  // Daikôdan : requin géant qui mange les tirs ennemis (grossit, frappe plus fort) puis explose et inonde
  su_big:ULT('Suiton : Daikôdan',su_d('su_big'),{line:{len:740,w:70},ai:{max:620,p:.8}},(u,a)=>{S('water',u);su_snd('roar',u);anim(u,'throw2',.6);
   proj(u,a,{spd:470,r:24,dmg:44,life:1.6,col:'#3aa8ff',rocket:1,ar:150,kb:340,stun:.6,big:1,kind:'su_bigshark',noClash:1});
   su_pilot(u,(x,p,dt,end)=>{if(!end){su_eat(x,p);return}jx({jfx:'su_tidal',x:p.x,y:p.y,r:p.ar,t:.9,m:.9});aux.push({type:'su_flood',x:p.x,y:p.y,r:p.ar,t:3,m:3,team:x.team,owner:x.owner,vfx:'water',k:.25})})}),
  // Dôme des requins (Suirô Sameodori) : se referme en 0,15 s (le cercle des mudras prévient) ; les ennemis piégés ne sortent plus, les requins mordent
- su_dome:ULT('Suiton : Dôme des requins',su_d('su_dome'),{tele:{self:1,r:230},ai:SELF(190,.8)},(u)=>{S('water',u);su_snd('heavy',u);anim(u,'su_dome',.8);
+ su_dome:SP('Suiton : Dôme des requins',su_d('su_dome'),20,{tele:{self:1,r:230},ai:SELF(190,.8)},(u)=>{S('water',u);su_snd('heavy',u);anim(u,'su_dome',.8);
   aux.push({type:'su_dome',x:u.x,y:u.y,r:230,t:4.65,m:4.65,team:u.team,owner:u,vfx:'water',k:0,bite:1});jx({jfx:'su_domeF',x:u.x,y:u.y,r:230,t:4.65,m:4.65})}),
  // Bakusui Shôha : une vague géante avance et emporte, puis la mer recouvre le passage
- su_tsunami:ULT('Suiton : Bakusui Shôha',su_d('su_tsunami'),{line:{len:600,w:260},ai:{max:420,p:.8}},(u,a)=>{S('water',u);su_snd('heavy',u);anim(u,'su_gush',1.1);
+ su_tsunami:SP('Suiton : Bakusui Shôha',su_d('su_tsunami'),20,{line:{len:600,w:260},ai:{max:420,p:.8}},(u,a)=>{S('water',u);su_snd('heavy',u);anim(u,'su_gush',1.1);
   aux.push({type:'su_tsu',x:u.x,y:u.y,a,len:20,w:280,r:0,t:1.6,m:1.6,team:u.team,owner:u,vfx:'water',k:0,ox:u.x,oy:u.y,hs:[],car:[],sp:0})}),
 });
 Object.assign(NATHERO,{su:'jyn'});

@@ -1,20 +1,21 @@
 // ===== Katon (feu) =====
 // Identité : brûlures (dégâts sur la durée), murs et zones de feu, grosses boules, dragon. Le vent allié attise le feu (moteur), le feu sèche les cibles trempées.
 // Combos internes : Flamme embrase une cible qui brûle déjà · Mur de feu enflamme les tirs alliés · Tornade de feu s'attise quand tes tirs de feu la traversent.
-// [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Arbre (format v5) : 2 jutsu par rang, on en apprend 1 par rang. [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Retiré de l'arbre (code conservé plus bas) : Katon : Flammes chargées (ka_stack). Dash de nature (Espace, sans-clan) : Katon : Pas de braise (ka_dash).
 KIT('n0',[
- [1,'D','x.ka_ball','Katon : Flamme','Trait de feu rapide qui brûle ; sur une cible déjà en feu, il l\'embrase : +5 dégâts','fire'],
- [1,'D','x.ka_wall','Katon : Mur de feu','Mur de feu 4 s : bloque tirs et ennemis, brûle au contact ; tes tirs le traversent et s\'enflamment','fire'],
- [1,'C','x.ka_tri','Katon : Triple flamme','3 boules de feu de plus en plus grosses, tirées à la suite en suivant ta visée ; la 3e explose','fire'],
- [1,'C','x.ka_air','Katon : Shuriken de feu aériens','Bond en arrière : 5 shuriken de feu convergent sur le point visé, qui s\'embrase 2 s','fire'],
- [1,'B','x.ka_zone','Katon : Fournaise','Brasier de 4 s autour de soi, qui te suit : plus un ennemi y reste, plus il brûle (jusqu\'à ×3)','fire'],
- [1,'B','x.ka_goka','Katon : Boule de feu suprême','Énorme boule de feu qui grossit en avançant : traverse et repousse les ennemis, balaie les petits tirs','fire'],
- [1,'B','x.ka_stack','Katon : Flammes chargées','5 flammes follettes à tirer une à une en relançant (5 s) ; la dernière explose','fire'],
- [1,'A','x.ka_dragon','Katon : Dragon de feu','Dragon de feu qui suit ta visée, explose en repoussant et laisse le sol en feu','fire'],
- [1,'A','x.ka_tornado','Katon : Tornade de feu','Tornade de feu guidée par ta visée : aspire et brûle sans emporter ; tes tirs de feu et le vent l\'attisent','fire'],
- [5,'S','x.ka_nuee','Katon : Nuée ardente','Nuée de cendres brûlantes (ralentit) ; immobile, relance pour l\'abattre : jusqu\'à ×2,5 en 2 s','fire'],
- [5,'S','x.ka_breath','Katon : Grand souffle de feu','Immobile 2 s : un torrent de feu balaie un très large cône (ralentit, brûle), le sol reste en feu','fire'],
+ ['D','x.ka_ball','Katon : Flamme','Trait de feu rapide qui brûle ; sur une cible déjà en feu, il l\'embrase : +5 dégâts','fire'],
+ ['D','x.ka_wall','Katon : Mur de feu','Mur de feu 4 s : bloque tirs et ennemis, brûle au contact ; tes tirs le traversent et s\'enflamment','fire'],
+ ['C','x.ka_tri','Katon : Triple flamme','3 boules de feu de plus en plus grosses, tirées à la suite en suivant ta visée ; la 3e explose','fire'],
+ ['C','x.ka_air','Katon : Shuriken de feu aériens','Bond en arrière : 5 shuriken de feu convergent sur le point visé, qui s\'embrase 2 s','fire'],
+ ['B','x.ka_goka','Katon : Boule de feu suprême','Énorme boule de feu qui grossit en avançant (26 à 32 dégâts) : traverse et repousse les ennemis, balaie les petits tirs','fire'],
+ ['B','x.ka_zone','Katon : Fournaise','Brasier de 4 s autour de soi, qui te suit : plus un ennemi y reste, plus il brûle (jusqu\'à ×3)','fire'],
+ ['A','x.ka_dragon','Katon : Dragon de feu','Dragon de feu qui suit ta visée, explose en repoussant et laisse le sol en feu','fire'],
+ ['A','x.ka_tornado','Katon : Tornade de feu','Tornade de feu guidée par ta visée : aspire et brûle sans emporter ; tes tirs de feu et le vent l\'attisent','fire'],
+ ['S','x.ka_nuee','Katon : Nuée ardente','Nuée de cendres brûlantes (ralentit) ; immobile, relance pour l\'abattre : jusqu\'à ×2,5 en 2 s','fire'],
+ ['S','x.ka_breath','Katon : Grand souffle de feu','Immobile 2 s : un torrent de feu balaie un très large cône (ralentit, brûle), le sol reste en feu','fire'],
 ]);
+DASHN[0]={src:'x.ka_dash',n:'Katon : Pas de braise',d:'Glisse en avant dans un sillage de braises : le sol brûle 1,5 s derrière toi (6 dégâts par seconde)',vfx:'fire',cd:7};
 // ---- aides
 const kaS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son brut : sinon l'élément feu remplace tout par « fire »
 const kaBurning=t=>t.dotT>0&&t.dotEl===0; // la cible brûle déjà
@@ -49,10 +50,10 @@ function kaScorch(u){const a=u.aim;for(const [d,r] of[[105,58],[200,72],[295,86]
 Object.assign(NAT,{
  ka_ball:SP('Katon : Flamme','Trait de feu rapide qui brûle ; sur une cible déjà en feu, il l\'embrase : +5 dégâts',4,{ai:RG(520,.7),line:{len:520,w:16}},(u,a)=>{S('fire',u);anim(u,'ka_spit',.36);
   proj(u,a,{spd:720,r:8,dmg:11,life:.72,col:'#ff7a2a',kind:'ka_flame',onHit:kaRavive})}),
- ka_wall:SP('Katon : Mur de feu','Mur de feu 4 s : bloque tirs et ennemis, brûle au contact ; tes tirs le traversent et s\'enflamment',10,{ai:DEF},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_sweep',.45);kaNoMouth(u);
+ ka_wall:SP('Katon : Mur de feu','Mur de feu 4 s : bloque tirs et ennemis, brûle au contact ; tes tirs le traversent et s\'enflamment',8,{ai:DEF},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_sweep',.45);kaNoMouth(u);
   wallLine(u,a,2,{});const c=fwd(u,a,95);aux.push({type:'ka_wall',x:c.x,y:c.y,a,len:62,r:70,t:4,m:4,team:u.team,owner:u,vfx:'fire',k:.3,pf:new Map()});
   kaFx({jfx:'ka_wrise',x:c.x,y:c.y,a,len:62,ui:units.indexOf(u),t:.45,m:.45})}),
- ka_tri:SP('Katon : Triple flamme','3 boules de feu de plus en plus grosses, tirées à la suite en suivant ta visée ; la 3e explose',8,{ai:RG(500,.6),line:{len:500,w:24}},(u,a)=>{kaTri(u,a,0);kaNoMouth(u);let i=0;
+ ka_tri:SP('Katon : Triple flamme','3 boules de feu de plus en plus grosses, tirées à la suite en suivant ta visée ; la 3e explose',7,{ai:RG(500,.6),line:{len:500,w:24}},(u,a)=>{kaTri(u,a,0);kaNoMouth(u);let i=0;
   seqs.push({owner:u,n:2,t:.17,iv:.17,vfx:'fire',f:o=>kaTri(o,o.aim,++i)})}),
  // shuriken : élément visuel « tag » (pas de traînée du moteur au ras du sol, lueur orange) ; dégâts et brûlure restent du feu via el:0 ; ils tombent du ciel : pas de choc avec les tirs au sol (noClash)
  ka_air:SP('Katon : Shuriken de feu aériens','Bond en arrière : 5 shuriken de feu convergent sur le point visé, qui s\'embrase 2 s',8,{ai:RG(430,.55,110),tele:{r:58,max:450}},(u,a,td)=>{
@@ -64,10 +65,10 @@ Object.assign(NAT,{
     kaFx({jfx:'ka_burst',x:tp.x,y:tp.y,r:54,t:.35,m:.35});if(near(tp.x,tp.y))S('flame',u)},{x:tp.x,y:tp.y,r:58})},{})}),
  ka_zone:SP('Katon : Fournaise','Brasier de 4 s autour de soi, qui te suit : plus un ennemi y reste, plus il brûle (jusqu\'à ×3)',10,{ai:SELF(165,.55),tele:{self:1,r:160}},(u)=>{S('fire',u);S('flame',u);anim(u,'ka_stomp',.55);kaNoMouth(u);
   aux.push({type:'ka_four',x:u.x,y:u.y,r:160,t:4,m:4,team:u.team,owner:u,vfx:'fire',k:.05,n:0,H:new Map()});kaFx({jfx:'ka_wave',x:u.x,y:u.y,r:160,t:.5,m:.5,big:1})}),
- ka_goka:SP('Katon : Boule de feu suprême','Énorme boule de feu qui grossit en avançant : traverse et repousse les ennemis, balaie les petits tirs',9,{ai:RG(540,.55),line:{len:560,w:60}},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_goka',.6);
-  proj(u,a,{spd:430,r:16,dmg:22,life:1.3,col:'#ff7a2a',pierce:1,heavy:1,kind:'ka_goka',o:{dot:BURN(4,3),kb:110},onHit:(p,t)=>{kaFx({jfx:'ka_burst',x:t.x,y:t.y,r:p.r*2.4,t:.35,m:.35,big:1});if(near(t.x,t.y))shake=Math.max(shake,.12)}});
+ ka_goka:SP('Katon : Boule de feu suprême','Énorme boule de feu qui grossit en avançant : traverse et repousse les ennemis, balaie les petits tirs',8,{ai:RG(540,.55),line:{len:560,w:60}},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_goka',.6);
+  proj(u,a,{spd:430,r:16,dmg:26,life:1.3,col:'#ff7a2a',pierce:1,heavy:1,kind:'ka_goka',o:{dot:BURN(4,3),kb:110},onHit:(p,t)=>{kaFx({jfx:'ka_burst',x:t.x,y:t.y,r:p.r*2.4,t:.35,m:.35,big:1});if(near(t.x,t.y))shake=Math.max(shake,.12)}});
   // (croissance multiplicative : garde les bonus extérieurs ; un choc contre un petit tir ne lui retire que 15 % au plus, elle « balaie » vraiment)
-  kaTrack(u,(p,x)=>{const e=1-p.life/p.life0;if(x.ld!=null){x.dm*=Math.max(.85,p.dmg/x.ld);x.rm*=p.r/x.lr}else{x.dm=1;x.rm=1}p.r=(16+13*e)*x.rm;p.dmg=(22+6*e)*x.dm;x.ld=p.dmg;x.lr=p.r},
+  kaTrack(u,(p,x)=>{const e=1-p.life/p.life0;if(x.ld!=null){x.dm*=Math.max(.85,p.dmg/x.ld);x.rm*=p.r/x.lr}else{x.dm=1;x.rm=1}p.r=(16+13*e)*x.rm;p.dmg=(26+6*e)*x.dm;x.ld=p.dmg;x.lr=p.r},
    (x,p)=>kaFx({jfx:'ka_burst',x:p.x,y:p.y,r:p.r*2.6,t:.45,m:.45,big:1}))}),
  ka_stack:SP('Katon : Flammes chargées','5 flammes follettes à tirer une à une en relançant (5 s) ; la dernière explose',10,{ai:RG(500,.7)},(u,a)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='ka_stack');if(i<0)return;kaNoMouth(u);
   if(u.jst&&u.jst.key==='ka_stack'){const last=u.jst.n<=1;S('fire',u);anim(u,'ka_flick',.22);
@@ -76,18 +77,24 @@ Object.assign(NAT,{
    u.jst.n--;if(u.jst.n<=0){u.cds[i]=u.jst.cd;u.jst=null}else u.cds[i]=.22}
   else{if(u.jst)u.cds[u.jst.i]=u.jst.cd; // une autre réserve de tirs en cours : elle se termine (sa recharge part)
    u.jst={key:'ka_stack',i,n:5,t:5,cd:u.ch.abil[i].cd,v:'fire'};u.cds[i]=.25;aux.push({type:'ka_jw',x:u.x,y:u.y,r:0,t:5.5,m:5.5,team:u.team,owner:u,vfx:'fire',k:0});say(u,'×5','#ffd38a');S('flame',u);anim(u,'ka_wisps',.5);kaFx({jfx:'ka_wave',x:u.x,y:u.y,r:46,t:.35,m:.35})}}),
+ // ---- dash de nature (Espace) : glissade dans un sillage de braises ; 4 flaques de feu (1,5 s, 6 dégâts/s) se posent sur le passage, rien à l'arrivée
+ ka_dash:SP('Katon : Pas de braise','Glisse en avant dans un sillage de braises : le sol brûle 1,5 s derrière toi (6 dégâts par seconde)',7,{ai:{mode:'gap',min:120,max:280,p:.4}},(u,a)=>{
+  kaS('dash',u);S('flame',u);anim(u,'lunge',.3);kaNoMouth(u);kaFx({jfx:'ka_burst',x:u.x,y:u.y,r:26,t:.25,m:.25});
+  dash(u,a,230,.24,{});field(u,u.x,u.y,{r:30,t:1.5,dps:6,col:'#ff7a2a',vfx:'fire'});
+  for(let i=1;i<4;i++)later(u,i*.075,()=>{if(u.dead)return;const x=u.x,y=u.y;
+   field(u,x,y,{r:30,t:1.5,dps:6,col:'#ff7a2a',vfx:'fire'});if(near(x,y))sparks(x,y,'#ffb03a',5,'fire')},{})}),
  ka_dragon:SP('Katon : Dragon de feu','Dragon de feu qui suit ta visée, explose en repoussant et laisse le sol en feu',12,{ai:RG(620,.5),line:{len:700,w:40}},(u,a)=>{S('fire',u);kaS('roar',u);anim(u,'ka_dragon',.75);
   proj(u,a,{spd:470,r:13,dmg:28,life:1.7,col:'#ff7a2a',rocket:1,ar:90,kb:190,burn:1,steer:1,big:1,kind:'ka_dragon'});
   kaTrack(u,null,(x,p)=>kaFx({jfx:'ka_dboom',x:p.x,y:p.y,r:90,t:.7,m:.7}));kaFx({jfx:'ka_coil',ui:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6})}),
  ka_tornado:SP('Katon : Tornade de feu','Tornade de feu guidée par ta visée : aspire et brûle sans emporter ; tes tirs de feu et le vent l\'attisent',12,{ai:RG(470,.6),line:{len:520,w:150}},(u,a)=>{S('fire',u);kaS('wind',u);anim(u,'spin',.5);kaNoMouth(u);
   aux.push({type:'ka_torn',x:u.x+Math.cos(a)*55,y:u.y+Math.sin(a)*55,vx:Math.cos(a)*145,vy:Math.sin(a)*145,a,r:78,t:3.6,m:3.6,team:u.team,owner:u,vfx:'fire',k:0,dmg:7,n:0})}),
- ka_nuee:ULT('Katon : Nuée ardente','Nuée de cendres brûlantes (ralentit) ; immobile, relance pour l\'abattre : jusqu\'à ×2,5 en 2 s',{tele:{r:165,max:480},ai:{max:460,p:.8}},(u,a,td)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='ka_nuee');if(i<0)return;
+ ka_nuee:SP('Katon : Nuée ardente','Nuée de cendres brûlantes (ralentit) ; immobile, relance pour l\'abattre : jusqu\'à ×2,5 en 2 s',20,{tele:{r:165,max:480},ai:{max:460,p:.8}},(u,a,td)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='ka_nuee');if(i<0)return;
   if(u.chan&&u.chan.key==='ka_nuee'){kaNueeGo(u);aux.push({type:'ka_uncut',x:u.x,y:u.y,r:0,t:.1,m:.1,team:u.team,owner:u,vfx:'fire',k:0,nm:u.ch.abil[i].n});return}
   let p=atP(u,a,td,480);if(!u.ctrl){const e=pick(u,a,td||300,480);if(e)p={x:e.x+e.vx*.25,y:e.y+e.vy*.25}} // un bot centre la nuée sur sa cible
   u.chan={key:'ka_nuee',i,x:p.x,y:p.y,r:165,t:0,max:2.1,cd:u.ch.abil[i].cd};u.cds[i]=u.ctrl?.4:99; // un bot la laisse s'abattre au bon moment (AUXF)
   field(u,p.x,p.y,{r:165,t:2.3,slow:1,dps:6,col:'#2a2224',vfx:'ka_ash'});aux.push({type:'ka_nuee',x:p.x,y:p.y,r:165,t:2.4,m:2.4,team:u.team,owner:u,vfx:'fire',k:0,n:0,fl:fields[fields.length-1]});kaFx({jfx:'ka_ncloud',x:p.x,y:p.y,r:165,t:2.4,m:2.4});
   anim(u,'ka_call',2.2);kaS('roar',u)}),
- ka_breath:ULT('Katon : Grand souffle de feu','Immobile 2 s : un torrent de feu balaie un très large cône (ralentit, brûle), le sol reste en feu',{ai:{max:300,p:.8}},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_blast',.45);
+ ka_breath:SP('Katon : Grand souffle de feu','Immobile 2 s : un torrent de feu balaie un très large cône (ralentit, brûle), le sol reste en feu',20,{ai:{max:300,p:.8}},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_blast',.45);
   u.flame={t:2,k:0,R:140,arc:.88,d:4.5,burn:1,still:1,v:'fire',dot:BURN(4,3)};aux.push({type:'ka_sbr',x:u.x,y:u.y,r:0,t:2.3,m:2.3,team:u.team,owner:u,vfx:'fire',k:0,fl:u.flame,el:0});
   kaFx({jfx:'ka_cone',ui:units.indexOf(u),x:u.x,y:u.y,t:2,m:2})}),
 });

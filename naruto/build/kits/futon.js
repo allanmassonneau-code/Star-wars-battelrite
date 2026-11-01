@@ -1,20 +1,21 @@
 // ===== Fûton (vent) =====
 // Identité : repousser, trancher, bloquer. Les poussées sont des glissades franches (la cible ne peut pas marcher contre) ;
 // la Grande balle d'air écrase la cible contre un obstacle ou un mur. Le vent porte les tirs alliés (le feu grossit en le traversant) ; Fûton bat Raiton.
-// [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Arbre (format v5) : 2 jutsu par rang, on en apprend 1 par rang. [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Dash de nature (Espace, sans-clan) : Fûton : Envol (fu_leap).
 KIT('n2',[
- [1,'D','x.fu_wall','Fûton : Mur de vent','Mur de vent 4 s : bloque et repousse les ennemis, arrête leurs tirs, accélère les tirs alliés','wind'],
- [1,'D','x.fu_bullet','Fûton : Balle d\'air','Balle d\'air rapide qui repousse un peu et interrompt les mudras','wind'],
- [1,'C','x.fu_tri','Fûton : Triple balle d\'air','3 balles d\'air en rafale qui suivent ta visée ; la 3e, plus grosse, repousse fort et interrompt','wind'],
- [1,'C','x.fu_big','Fûton : Grande balle d\'air','Grosse balle lente qui repousse loin ; projetée contre un obstacle, la cible est étourdie','wind'],
- [1,'B','x.fu_shotgun','Fûton : Rafale à bout portant','Immobile, 10 balles d\'air en éventail : ravage au contact, le recul te rejette en arrière','wind'],
- [1,'B','x.fu_stack','Fûton : Balles chargées','3 balles d\'air tournent autour de toi et interceptent les tirs ; relance pour les tirer (5 s)','wind'],
- [1,'A','x.fu_line','Fûton : Lame d\'air','Lame de vent très rapide qui transperce toute la ligne et repousse chaque ennemi touché','wind'],
- [1,'A','x.fu_breath','Fûton : Souffle','Immobile, souffle continu : blesse, ralentit, repousse et disperse les tirs ennemis','wind'],
- [2,'C','x.fu_leap','Fûton : Envol','Bond porté par le vent ; la rafale du départ repousse les ennemis proches','wind'],
- [5,'S','x.fu_corridor','Fûton : Couloir de vent','Rafale puis couloir 4 s : ennemis repoussés, ralentis, réduits au silence, dégâts croissants ; alliés plus rapides','wind'],
- [5,'S','x.fu_tornado','Fûton : Tornade','Tornade guidée par ta visée : aspire et emporte les ennemis, avale leurs tirs, puis les éjecte','wind'],
+ ['D','x.fu_bullet','Fûton : Balle d\'air','Balle d\'air rapide qui repousse un peu et interrompt les mudras','wind'],
+ ['D','x.fu_wall','Fûton : Mur de vent','Mur de vent 4 s : bloque et repousse les ennemis, arrête leurs tirs, accélère les tirs alliés','wind'],
+ ['C','x.fu_tri','Fûton : Triple balle d\'air','3 balles d\'air en rafale qui suivent ta visée ; la 3e, plus grosse, repousse fort et interrompt','wind'],
+ ['C','x.fu_big','Fûton : Grande balle d\'air','Grosse balle lente qui repousse loin ; projetée contre un obstacle, la cible est étourdie','wind'],
+ ['B','x.fu_shotgun','Fûton : Rafale à bout portant','Immobile, 10 balles d\'air en éventail : ravage au contact, le recul te rejette en arrière','wind'],
+ ['B','x.fu_stack','Fûton : Balles chargées','3 balles d\'air tournent autour de toi et interceptent les tirs ; relance pour les tirer (5 s)','wind'],
+ ['A','x.fu_line','Fûton : Lame d\'air','Lame de vent très rapide qui transperce toute la ligne et repousse chaque ennemi touché','wind'],
+ ['A','x.fu_breath','Fûton : Souffle','Immobile, souffle continu : blesse, ralentit, repousse et disperse les tirs ennemis','wind'],
+ ['S','x.fu_corridor','Fûton : Couloir de vent','Rafale puis couloir 4 s : ennemis repoussés, ralentis, réduits au silence, dégâts croissants ; alliés plus rapides','wind'],
+ ['S','x.fu_tornado','Fûton : Tornade','Tornade guidée par ta visée : aspire et emporte les ennemis, avale leurs tirs, puis les éjecte','wind'],
 ]);
+DASHN[2]={src:'x.fu_leap',n:'Fûton : Envol',d:'Bond porté par le vent ; la rafale du départ repousse les ennemis proches (6 dégâts)',vfx:'wind',cd:7};
 // ---- outils du vent
 let FU_N=0;const fuId=()=>FU_N=(FU_N+1)%100000;
 // son « brut » (sans la teinte de l'élément, sinon tout devient « wind »)
@@ -47,7 +48,7 @@ function fuCarry(p,tag){if(p[tag]||p.grenade)return false;p[tag]=1;if(ELM[p.vfx]
 
 Object.assign(NAT,{
  // ---- mur de vent : rideau qui bloque (moteur : murs), repousse qui le touche, porte les tirs alliés
- fu_wall:SP('Fûton : Mur de vent','Mur de vent 4 s : bloque et repousse les ennemis, arrête leurs tirs, accélère les tirs alliés',9,{ai:DEF},(u,a)=>{
+ fu_wall:SP('Fûton : Mur de vent','Mur de vent 4 s : bloque et repousse les ennemis, arrête leurs tirs, accélère les tirs alliés',7,{ai:DEF},(u,a)=>{
   const c=fwd(u,a,95),px=-Math.sin(a),py=Math.cos(a),id=fuId();for(let i=-2;i<=2;i++)walls.push({x:c.x+px*i*24,y:c.y+py*i*24,r:14,t:4,team:u.team,owner:u,wind:1,vfx:'fu_wall'});
   aux.push({type:'fu_wall',x:c.x,y:c.y,a:a+Math.PI/2,len:120,r:0,t:4,m:4,team:u.team,owner:u,vfx:'wind',k:0,n:id,hitT:{}});
   jx({jfx:'fu_wallrise',x:c.x,y:c.y,a:a+Math.PI/2,len:120,t:.55,m:.55});anim(u,'fu_wall',.55);S('wind',u);fuS('deflect',u)}),
@@ -55,7 +56,7 @@ Object.assign(NAT,{
  fu_bullet:SP('Fûton : Balle d\'air','Balle d\'air rapide qui repousse un peu et interrompt les mudras',4,{ai:RG(480,.7)},(u,a)=>{S('wind',u);anim(u,'fu_puff',.4);fuMuzzle(u,a,14);
   proj(u,a,{spd:900,r:7,dmg:11,life:.55,col:'#c8fff0',vfx:'wind',kind:'fu_ball',onHit:(p,t)=>{fuPush(p.owner,t,Math.atan2(p.vy,p.vx),45,.18);fuPop(p.x,p.y,18)}})}),
  // ---- triple balle : 1-2-3, la dernière cogne
- fu_tri:SP('Fûton : Triple balle d\'air','3 balles d\'air en rafale qui suivent ta visée ; la 3e, plus grosse, repousse fort et interrompt',8,{ai:RG(480,.6)},(u,a)=>{let n=0;
+ fu_tri:SP('Fûton : Triple balle d\'air','3 balles d\'air en rafale qui suivent ta visée ; la 3e, plus grosse, repousse fort et interrompt',7,{ai:RG(480,.6)},(u,a)=>{let n=0;
   const sh=(o,b)=>{const big=n===2;S('wind',o);fuMuzzle(o,b,big?18:11);proj(o,b,{spd:big?960:880,r:big?9.5:6,dmg:big?11:5,life:.55,col:big?'#e8fff8':'#c8fff0',vfx:'wind',kind:'fu_ball',
    onHit:(p,t)=>{fuPush(p.owner,t,Math.atan2(p.vy,p.vx),big?60:18,big?.22:.12,{soft:!big});fuPop(p.x,p.y,big?28:14)}});n++};
   anim(u,'fu_tri',.56);sh(u,a);seqs.push({owner:u,n:2,t:.16,iv:.16,vfx:'wind',f:o=>sh(o,o.aim)})}),
@@ -74,28 +75,28 @@ Object.assign(NAT,{
  // ---- balles chargées : 3 sphères en orbite (boucliers) à tirer pendant 5 s
  fu_stack:SP('Fûton : Balles chargées','3 balles d\'air tournent autour de toi et interceptent les tirs ; relance pour les tirer (5 s)',9,{ai:RG(440,.7)},null),
  // ---- lame d'air : croissant tranchant, très rapide, perçant
- fu_line:SP('Fûton : Lame d\'air','Lame de vent très rapide qui transperce toute la ligne et repousse chaque ennemi touché',10,{line:{len:720,w:32},ai:RG(680,.5)},(u,a)=>{S('wind',u);fuS('saber',u);anim(u,'fu_slash',.5);
+ fu_line:SP('Fûton : Lame d\'air','Lame de vent très rapide qui transperce toute la ligne et repousse chaque ennemi touché',11,{line:{len:720,w:32},ai:RG(680,.5)},(u,a)=>{S('wind',u);fuS('saber',u);anim(u,'fu_slash',.5);
   jx({jfx:'fu_slashfx',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.3,m:.3});
   proj(u,a,{spd:1250,r:16,dmg:30,life:.58,col:'#e8fff8',vfx:'wind',pierce:1,kind:'fu_blade',onHit:(p,t)=>{fuPush(p.owner,t,Math.atan2(p.vy,p.vx),70,.22);jx({jfx:'fu_cutmark',ti:units.indexOf(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.42,m:.42})}});
   const pr=projs[projs.length-1];aux.push({type:'fu_scar',x:pr.x,y:pr.y,a,len:0,r:0,t:1.1,m:1.1,team:u.team,owner:u,p:pr,vfx:'wind',k:0})}),
  // ---- souffle : canalisation immobile ; pression continue (tient à distance), disperse les tirs ennemis (le feu passe)
  // (télégraphe en cône pendant les mudras : voir drawTelegraphs plus bas)
- fu_breath:SP('Fûton : Souffle','Immobile, souffle continu : blesse, ralentit, repousse et disperse les tirs ennemis',10,{ai:RG(230,.6)},(u,a)=>{
+ fu_breath:SP('Fûton : Souffle','Immobile, souffle continu : blesse, ralentit, repousse et disperse les tirs ennemis',11,{ai:RG(230,.6)},(u,a)=>{
   // u.flame (moteur) : lanceur immobile, souffle coupé par un étourdissement ou une poussée ; k:99 = le moteur ne frappe pas lui-même
   // (ses coups « kb » annuleraient les ruées des ennemis pris dedans) : dégâts, ralentissement et poussée sont gérés par l'objet fu_breath
   u.flame={t:1.4,k:99,R:270,arc:.5,still:1,v:'wind'};S('wind',u);fuS('roar',u);anim(u,'fu_gale',1.4);jx({jfx:'fu_inhale',ui:units.indexOf(u),x:u.x,y:u.y,t:.3,m:.3});
   aux.push({type:'fu_breath',x:u.x,y:u.y,a,len:270,w:.5,r:0,t:1.45,m:1.45,team:u.team,owner:u,ui:units.indexOf(u),vfx:'wind',k:0,fl:.6,so:.3,hitI:{}})}),
  // ---- envol : bond porté par une rafale qui repousse les ennemis proches au départ
  fu_leap:SP('Fûton : Envol','Bond porté par le vent ; la rafale du départ repousse les ennemis proches',7,{ai:ESC},(u,a,td)=>{S('wind',u);fuS('dash',u);anim(u,'fu_leap',.42);
-  jx({jfx:'fu_gust',x:u.x,y:u.y,r:130,t:.45,m:.45});for(const e of enemies(u))if(dist(u,e)<130+e.r&&hit(e,u,6,{}))fuPush(u,e,ang(u,e),85,.22);
+  jx({jfx:'fu_gust',x:u.x,y:u.y,r:110,t:.45,m:.45});for(const e of enemies(u))if(dist(u,e)<110+e.r&&hit(e,u,6,{}))fuPush(u,e,ang(u,e),85,.22);
   aux.push({type:'fu_trail',x:u.x,y:u.y,r:0,t:.34,m:.34,team:u.team,owner:u,tg:u,ti:units.indexOf(u),a,vfx:'wind',k:0});
   dash(u,a,clamp(td||240,110,260),.3,{jump:46,end:()=>{fuPop(u.x,u.y,34);sparks(u.x,u.y,'#c8fff0',8,'wind')}})}),
  // ---- couloir de vent : rafale d'ouverture (blesse, souffle dans l'axe), puis vent contraire (ralentit), silence et dégâts croissants
  //      pour les ennemis qui restent ; vent arrière pour les alliés
- fu_corridor:ULT('Fûton : Couloir de vent','Rafale puis couloir 4 s : ennemis repoussés, ralentis, réduits au silence, dégâts croissants ; alliés plus rapides',{line:{len:540,w:140},ai:{max:480,p:.8}},(u,a)=>{S('wind',u);fuS('heavy',u);anim(u,'fu_corr',.7);
+ fu_corridor:SP('Fûton : Couloir de vent','Rafale puis couloir 4 s : ennemis repoussés, ralentis, réduits au silence, dégâts croissants ; alliés plus rapides',20,{line:{len:540,w:140},ai:{max:480,p:.8}},(u,a)=>{S('wind',u);fuS('heavy',u);anim(u,'fu_corr',.7);
   aux.push({type:'fu_corr',x:u.x,y:u.y,a,len:540,w:140,r:0,t:4,m:4,team:u.team,owner:u,vfx:'wind',k:0,n:fuId(),inT:{},acc:{},ent:{},gh:{}})}),
  // ---- tornade : avance vers la visée, aspire et emporte (1,5 s au plus par ennemi), avale les tirs ennemis, puis éjecte
- fu_tornado:ULT('Fûton : Tornade','Tornade guidée par ta visée : aspire et emporte les ennemis, avale leurs tirs, puis les éjecte',{line:{len:700,w:156},ai:{max:520,p:.8}},(u,a)=>{S('wind',u);fuS('rasengan',u);anim(u,'fu_spin',.75);
+ fu_tornado:SP('Fûton : Tornade','Tornade guidée par ta visée : aspire et emporte les ennemis, avale leurs tirs, puis les éjecte',20,{line:{len:700,w:156},ai:{max:520,p:.8}},(u,a)=>{S('wind',u);fuS('rasengan',u);anim(u,'fu_spin',.75);
   const id=fuId(),p=fwd(u,a,50);aux.push({type:'fu_tornado',x:p.x,y:p.y,a,r:78,t:4,m:4,team:u.team,owner:u,vfx:'wind',k:0,n:id,spd:175,cap:{},ct:{},out:{}});
   fx.push({jfx:'fu_tornf',x:p.x,y:p.y,n:id,t:4.1,m:4.1});jx({jfx:'fu_gust',x:p.x,y:p.y,r:110,t:.5,m:.5})}),
 });

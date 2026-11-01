@@ -2453,20 +2453,21 @@ STATD.push((u,p,S,sk)=>{if(!(u.sub_nr_kyu>0)||u.dead)return;sk=sk||1;const t=per
 // ===== Katon (feu) =====
 // Identité : brûlures (dégâts sur la durée), murs et zones de feu, grosses boules, dragon. Le vent allié attise le feu (moteur), le feu sèche les cibles trempées.
 // Combos internes : Flamme embrase une cible qui brûle déjà · Mur de feu enflamme les tirs alliés · Tornade de feu s'attise quand tes tirs de feu la traversent.
-// [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Arbre (format v5) : 2 jutsu par rang, on en apprend 1 par rang. [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Retiré de l'arbre (code conservé plus bas) : Katon : Flammes chargées (ka_stack). Dash de nature (Espace, sans-clan) : Katon : Pas de braise (ka_dash).
 KIT('n0',[
- [1,'D','x.ka_ball','Katon : Flamme','Trait de feu rapide qui brûle ; sur une cible déjà en feu, il l\'embrase : +5 dégâts','fire'],
- [1,'D','x.ka_wall','Katon : Mur de feu','Mur de feu 4 s : bloque tirs et ennemis, brûle au contact ; tes tirs le traversent et s\'enflamment','fire'],
- [1,'C','x.ka_tri','Katon : Triple flamme','3 boules de feu de plus en plus grosses, tirées à la suite en suivant ta visée ; la 3e explose','fire'],
- [1,'C','x.ka_air','Katon : Shuriken de feu aériens','Bond en arrière : 5 shuriken de feu convergent sur le point visé, qui s\'embrase 2 s','fire'],
- [1,'B','x.ka_zone','Katon : Fournaise','Brasier de 4 s autour de soi, qui te suit : plus un ennemi y reste, plus il brûle (jusqu\'à ×3)','fire'],
- [1,'B','x.ka_goka','Katon : Boule de feu suprême','Énorme boule de feu qui grossit en avançant : traverse et repousse les ennemis, balaie les petits tirs','fire'],
- [1,'B','x.ka_stack','Katon : Flammes chargées','5 flammes follettes à tirer une à une en relançant (5 s) ; la dernière explose','fire'],
- [1,'A','x.ka_dragon','Katon : Dragon de feu','Dragon de feu qui suit ta visée, explose en repoussant et laisse le sol en feu','fire'],
- [1,'A','x.ka_tornado','Katon : Tornade de feu','Tornade de feu guidée par ta visée : aspire et brûle sans emporter ; tes tirs de feu et le vent l\'attisent','fire'],
- [5,'S','x.ka_nuee','Katon : Nuée ardente','Nuée de cendres brûlantes (ralentit) ; immobile, relance pour l\'abattre : jusqu\'à ×2,5 en 2 s','fire'],
- [5,'S','x.ka_breath','Katon : Grand souffle de feu','Immobile 2 s : un torrent de feu balaie un très large cône (ralentit, brûle), le sol reste en feu','fire'],
+ ['D','x.ka_ball','Katon : Flamme','Trait de feu rapide qui brûle ; sur une cible déjà en feu, il l\'embrase : +5 dégâts','fire'],
+ ['D','x.ka_wall','Katon : Mur de feu','Mur de feu 4 s : bloque tirs et ennemis, brûle au contact ; tes tirs le traversent et s\'enflamment','fire'],
+ ['C','x.ka_tri','Katon : Triple flamme','3 boules de feu de plus en plus grosses, tirées à la suite en suivant ta visée ; la 3e explose','fire'],
+ ['C','x.ka_air','Katon : Shuriken de feu aériens','Bond en arrière : 5 shuriken de feu convergent sur le point visé, qui s\'embrase 2 s','fire'],
+ ['B','x.ka_goka','Katon : Boule de feu suprême','Énorme boule de feu qui grossit en avançant (26 à 32 dégâts) : traverse et repousse les ennemis, balaie les petits tirs','fire'],
+ ['B','x.ka_zone','Katon : Fournaise','Brasier de 4 s autour de soi, qui te suit : plus un ennemi y reste, plus il brûle (jusqu\'à ×3)','fire'],
+ ['A','x.ka_dragon','Katon : Dragon de feu','Dragon de feu qui suit ta visée, explose en repoussant et laisse le sol en feu','fire'],
+ ['A','x.ka_tornado','Katon : Tornade de feu','Tornade de feu guidée par ta visée : aspire et brûle sans emporter ; tes tirs de feu et le vent l\'attisent','fire'],
+ ['S','x.ka_nuee','Katon : Nuée ardente','Nuée de cendres brûlantes (ralentit) ; immobile, relance pour l\'abattre : jusqu\'à ×2,5 en 2 s','fire'],
+ ['S','x.ka_breath','Katon : Grand souffle de feu','Immobile 2 s : un torrent de feu balaie un très large cône (ralentit, brûle), le sol reste en feu','fire'],
 ]);
+DASHN[0]={src:'x.ka_dash',n:'Katon : Pas de braise',d:'Glisse en avant dans un sillage de braises : le sol brûle 1,5 s derrière toi (6 dégâts par seconde)',vfx:'fire',cd:7};
 // ---- aides
 const kaS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son brut : sinon l'élément feu remplace tout par « fire »
 const kaBurning=t=>t.dotT>0&&t.dotEl===0; // la cible brûle déjà
@@ -2501,10 +2502,10 @@ function kaScorch(u){const a=u.aim;for(const [d,r] of[[105,58],[200,72],[295,86]
 Object.assign(NAT,{
  ka_ball:SP('Katon : Flamme','Trait de feu rapide qui brûle ; sur une cible déjà en feu, il l\'embrase : +5 dégâts',4,{ai:RG(520,.7),line:{len:520,w:16}},(u,a)=>{S('fire',u);anim(u,'ka_spit',.36);
   proj(u,a,{spd:720,r:8,dmg:11,life:.72,col:'#ff7a2a',kind:'ka_flame',onHit:kaRavive})}),
- ka_wall:SP('Katon : Mur de feu','Mur de feu 4 s : bloque tirs et ennemis, brûle au contact ; tes tirs le traversent et s\'enflamment',10,{ai:DEF},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_sweep',.45);kaNoMouth(u);
+ ka_wall:SP('Katon : Mur de feu','Mur de feu 4 s : bloque tirs et ennemis, brûle au contact ; tes tirs le traversent et s\'enflamment',8,{ai:DEF},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_sweep',.45);kaNoMouth(u);
   wallLine(u,a,2,{});const c=fwd(u,a,95);aux.push({type:'ka_wall',x:c.x,y:c.y,a,len:62,r:70,t:4,m:4,team:u.team,owner:u,vfx:'fire',k:.3,pf:new Map()});
   kaFx({jfx:'ka_wrise',x:c.x,y:c.y,a,len:62,ui:units.indexOf(u),t:.45,m:.45})}),
- ka_tri:SP('Katon : Triple flamme','3 boules de feu de plus en plus grosses, tirées à la suite en suivant ta visée ; la 3e explose',8,{ai:RG(500,.6),line:{len:500,w:24}},(u,a)=>{kaTri(u,a,0);kaNoMouth(u);let i=0;
+ ka_tri:SP('Katon : Triple flamme','3 boules de feu de plus en plus grosses, tirées à la suite en suivant ta visée ; la 3e explose',7,{ai:RG(500,.6),line:{len:500,w:24}},(u,a)=>{kaTri(u,a,0);kaNoMouth(u);let i=0;
   seqs.push({owner:u,n:2,t:.17,iv:.17,vfx:'fire',f:o=>kaTri(o,o.aim,++i)})}),
  // shuriken : élément visuel « tag » (pas de traînée du moteur au ras du sol, lueur orange) ; dégâts et brûlure restent du feu via el:0 ; ils tombent du ciel : pas de choc avec les tirs au sol (noClash)
  ka_air:SP('Katon : Shuriken de feu aériens','Bond en arrière : 5 shuriken de feu convergent sur le point visé, qui s\'embrase 2 s',8,{ai:RG(430,.55,110),tele:{r:58,max:450}},(u,a,td)=>{
@@ -2516,10 +2517,10 @@ Object.assign(NAT,{
     kaFx({jfx:'ka_burst',x:tp.x,y:tp.y,r:54,t:.35,m:.35});if(near(tp.x,tp.y))S('flame',u)},{x:tp.x,y:tp.y,r:58})},{})}),
  ka_zone:SP('Katon : Fournaise','Brasier de 4 s autour de soi, qui te suit : plus un ennemi y reste, plus il brûle (jusqu\'à ×3)',10,{ai:SELF(165,.55),tele:{self:1,r:160}},(u)=>{S('fire',u);S('flame',u);anim(u,'ka_stomp',.55);kaNoMouth(u);
   aux.push({type:'ka_four',x:u.x,y:u.y,r:160,t:4,m:4,team:u.team,owner:u,vfx:'fire',k:.05,n:0,H:new Map()});kaFx({jfx:'ka_wave',x:u.x,y:u.y,r:160,t:.5,m:.5,big:1})}),
- ka_goka:SP('Katon : Boule de feu suprême','Énorme boule de feu qui grossit en avançant : traverse et repousse les ennemis, balaie les petits tirs',9,{ai:RG(540,.55),line:{len:560,w:60}},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_goka',.6);
-  proj(u,a,{spd:430,r:16,dmg:22,life:1.3,col:'#ff7a2a',pierce:1,heavy:1,kind:'ka_goka',o:{dot:BURN(4,3),kb:110},onHit:(p,t)=>{kaFx({jfx:'ka_burst',x:t.x,y:t.y,r:p.r*2.4,t:.35,m:.35,big:1});if(near(t.x,t.y))shake=Math.max(shake,.12)}});
+ ka_goka:SP('Katon : Boule de feu suprême','Énorme boule de feu qui grossit en avançant : traverse et repousse les ennemis, balaie les petits tirs',8,{ai:RG(540,.55),line:{len:560,w:60}},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_goka',.6);
+  proj(u,a,{spd:430,r:16,dmg:26,life:1.3,col:'#ff7a2a',pierce:1,heavy:1,kind:'ka_goka',o:{dot:BURN(4,3),kb:110},onHit:(p,t)=>{kaFx({jfx:'ka_burst',x:t.x,y:t.y,r:p.r*2.4,t:.35,m:.35,big:1});if(near(t.x,t.y))shake=Math.max(shake,.12)}});
   // (croissance multiplicative : garde les bonus extérieurs ; un choc contre un petit tir ne lui retire que 15 % au plus, elle « balaie » vraiment)
-  kaTrack(u,(p,x)=>{const e=1-p.life/p.life0;if(x.ld!=null){x.dm*=Math.max(.85,p.dmg/x.ld);x.rm*=p.r/x.lr}else{x.dm=1;x.rm=1}p.r=(16+13*e)*x.rm;p.dmg=(22+6*e)*x.dm;x.ld=p.dmg;x.lr=p.r},
+  kaTrack(u,(p,x)=>{const e=1-p.life/p.life0;if(x.ld!=null){x.dm*=Math.max(.85,p.dmg/x.ld);x.rm*=p.r/x.lr}else{x.dm=1;x.rm=1}p.r=(16+13*e)*x.rm;p.dmg=(26+6*e)*x.dm;x.ld=p.dmg;x.lr=p.r},
    (x,p)=>kaFx({jfx:'ka_burst',x:p.x,y:p.y,r:p.r*2.6,t:.45,m:.45,big:1}))}),
  ka_stack:SP('Katon : Flammes chargées','5 flammes follettes à tirer une à une en relançant (5 s) ; la dernière explose',10,{ai:RG(500,.7)},(u,a)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='ka_stack');if(i<0)return;kaNoMouth(u);
   if(u.jst&&u.jst.key==='ka_stack'){const last=u.jst.n<=1;S('fire',u);anim(u,'ka_flick',.22);
@@ -2528,18 +2529,24 @@ Object.assign(NAT,{
    u.jst.n--;if(u.jst.n<=0){u.cds[i]=u.jst.cd;u.jst=null}else u.cds[i]=.22}
   else{if(u.jst)u.cds[u.jst.i]=u.jst.cd; // une autre réserve de tirs en cours : elle se termine (sa recharge part)
    u.jst={key:'ka_stack',i,n:5,t:5,cd:u.ch.abil[i].cd,v:'fire'};u.cds[i]=.25;aux.push({type:'ka_jw',x:u.x,y:u.y,r:0,t:5.5,m:5.5,team:u.team,owner:u,vfx:'fire',k:0});say(u,'×5','#ffd38a');S('flame',u);anim(u,'ka_wisps',.5);kaFx({jfx:'ka_wave',x:u.x,y:u.y,r:46,t:.35,m:.35})}}),
+ // ---- dash de nature (Espace) : glissade dans un sillage de braises ; 4 flaques de feu (1,5 s, 6 dégâts/s) se posent sur le passage, rien à l'arrivée
+ ka_dash:SP('Katon : Pas de braise','Glisse en avant dans un sillage de braises : le sol brûle 1,5 s derrière toi (6 dégâts par seconde)',7,{ai:{mode:'gap',min:120,max:280,p:.4}},(u,a)=>{
+  kaS('dash',u);S('flame',u);anim(u,'lunge',.3);kaNoMouth(u);kaFx({jfx:'ka_burst',x:u.x,y:u.y,r:26,t:.25,m:.25});
+  dash(u,a,230,.24,{});field(u,u.x,u.y,{r:30,t:1.5,dps:6,col:'#ff7a2a',vfx:'fire'});
+  for(let i=1;i<4;i++)later(u,i*.075,()=>{if(u.dead)return;const x=u.x,y=u.y;
+   field(u,x,y,{r:30,t:1.5,dps:6,col:'#ff7a2a',vfx:'fire'});if(near(x,y))sparks(x,y,'#ffb03a',5,'fire')},{})}),
  ka_dragon:SP('Katon : Dragon de feu','Dragon de feu qui suit ta visée, explose en repoussant et laisse le sol en feu',12,{ai:RG(620,.5),line:{len:700,w:40}},(u,a)=>{S('fire',u);kaS('roar',u);anim(u,'ka_dragon',.75);
   proj(u,a,{spd:470,r:13,dmg:28,life:1.7,col:'#ff7a2a',rocket:1,ar:90,kb:190,burn:1,steer:1,big:1,kind:'ka_dragon'});
   kaTrack(u,null,(x,p)=>kaFx({jfx:'ka_dboom',x:p.x,y:p.y,r:90,t:.7,m:.7}));kaFx({jfx:'ka_coil',ui:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6})}),
  ka_tornado:SP('Katon : Tornade de feu','Tornade de feu guidée par ta visée : aspire et brûle sans emporter ; tes tirs de feu et le vent l\'attisent',12,{ai:RG(470,.6),line:{len:520,w:150}},(u,a)=>{S('fire',u);kaS('wind',u);anim(u,'spin',.5);kaNoMouth(u);
   aux.push({type:'ka_torn',x:u.x+Math.cos(a)*55,y:u.y+Math.sin(a)*55,vx:Math.cos(a)*145,vy:Math.sin(a)*145,a,r:78,t:3.6,m:3.6,team:u.team,owner:u,vfx:'fire',k:0,dmg:7,n:0})}),
- ka_nuee:ULT('Katon : Nuée ardente','Nuée de cendres brûlantes (ralentit) ; immobile, relance pour l\'abattre : jusqu\'à ×2,5 en 2 s',{tele:{r:165,max:480},ai:{max:460,p:.8}},(u,a,td)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='ka_nuee');if(i<0)return;
+ ka_nuee:SP('Katon : Nuée ardente','Nuée de cendres brûlantes (ralentit) ; immobile, relance pour l\'abattre : jusqu\'à ×2,5 en 2 s',20,{tele:{r:165,max:480},ai:{max:460,p:.8}},(u,a,td)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='ka_nuee');if(i<0)return;
   if(u.chan&&u.chan.key==='ka_nuee'){kaNueeGo(u);aux.push({type:'ka_uncut',x:u.x,y:u.y,r:0,t:.1,m:.1,team:u.team,owner:u,vfx:'fire',k:0,nm:u.ch.abil[i].n});return}
   let p=atP(u,a,td,480);if(!u.ctrl){const e=pick(u,a,td||300,480);if(e)p={x:e.x+e.vx*.25,y:e.y+e.vy*.25}} // un bot centre la nuée sur sa cible
   u.chan={key:'ka_nuee',i,x:p.x,y:p.y,r:165,t:0,max:2.1,cd:u.ch.abil[i].cd};u.cds[i]=u.ctrl?.4:99; // un bot la laisse s'abattre au bon moment (AUXF)
   field(u,p.x,p.y,{r:165,t:2.3,slow:1,dps:6,col:'#2a2224',vfx:'ka_ash'});aux.push({type:'ka_nuee',x:p.x,y:p.y,r:165,t:2.4,m:2.4,team:u.team,owner:u,vfx:'fire',k:0,n:0,fl:fields[fields.length-1]});kaFx({jfx:'ka_ncloud',x:p.x,y:p.y,r:165,t:2.4,m:2.4});
   anim(u,'ka_call',2.2);kaS('roar',u)}),
- ka_breath:ULT('Katon : Grand souffle de feu','Immobile 2 s : un torrent de feu balaie un très large cône (ralentit, brûle), le sol reste en feu',{ai:{max:300,p:.8}},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_blast',.45);
+ ka_breath:SP('Katon : Grand souffle de feu','Immobile 2 s : un torrent de feu balaie un très large cône (ralentit, brûle), le sol reste en feu',20,{ai:{max:300,p:.8}},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_blast',.45);
   u.flame={t:2,k:0,R:140,arc:.88,d:4.5,burn:1,still:1,v:'fire',dot:BURN(4,3)};aux.push({type:'ka_sbr',x:u.x,y:u.y,r:0,t:2.3,m:2.3,team:u.team,owner:u,vfx:'fire',k:0,fl:u.flame,el:0});
   kaFx({jfx:'ka_cone',ui:units.indexOf(u),x:u.x,y:u.y,t:2,m:2})}),
 });
@@ -2745,23 +2752,23 @@ Object.assign(ANIM,{
 // ===== Suiton (eau) =====
 // Identité : contrôle du terrain (dômes, prison, brume, inondations), requins de Kisame, dragons et cascades.
 // Chaque coup d'eau trempe la cible (foudre ×1,35, feu ×0,75 et vapeur) ; le requin Suikôdan traque les cibles trempées.
-// [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Arbre (format v5) : 2 jutsu par rang, on en apprend 1 par rang. [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Retiré de l'arbre (code conservé) : Suiton : Daikôdan (su_big, doublon du Daikôdan du clan Hoshigaki). Dash de nature (Espace, sans-clan) : Suiton : Corps liquide (su_liquid).
 const su_rows=[
- [1,'D','x.su_ball','Suiton : Teppôdama','Balle d\'eau qui grossit en vol (plus de dégâts au loin) et éclate en éclaboussure qui ralentit','water'],
- [1,'D','x.su_wall','Suiton : Suijinheki','Dôme d\'eau 1,5 s qui arrête les tirs et repousse ; relance : le mur déferle en vague devant toi','water'],
- [1,'C','x.su_jet','Suiton : Mizurappa','Torrent d\'eau 1,3 s, immobile : repousse en continu et interrompt ; vise pour le diriger','water'],
- [1,'C','x.su_shark','Suiton : Suikôdan','Requin d\'eau qui vire vers l\'ennemi devant lui ; il traque sans relâche une cible trempée','water'],
- [1,'B','x.su_prison','Suiton : Suirô','Emprisonne et noie la cible tant que tu restes immobile (1,8 s ; cède si on te frappe) ; relance : la projette (obstacle : étourdie)','water'],
- [1,'B','x.su_mist','Suiton : Kirigakure','Brume 6 s : ennemis ralentis, trempés, aveuglés ; ton équipe y est invisible sans attaquer 0,8 s ; le vent la chasse','water'],
- [1,'A','x.su_dragon','Suiton : Dragon aqueux','Dragon d\'eau en ligne qui emporte les ennemis touchés puis les ralentit ; s\'il percute un obstacle : étourdis','water'],
- [1,'A','x.su_fall','Suiton : Daibakufu','Cascade après 0,65 s (plus forte au centre) qui étourdit, puis un tourbillon 3,5 s ralentit et aspire vers le centre','water'],
- [2,'C','x.su_liquid','Suiton : Corps liquide','Se liquéfie et file au sol : intouchable, libéré des entraves et ralentissements ; à l\'arrivée, éclabousse autour de toi (8 dégâts, ralentit)','water'],
- [5,'S','x.su_big','Suiton : Daikôdan','Requin géant qui avale les tirs ennemis (il grossit à chaque bouchée) puis explose : étourdit, repousse et inonde','water'],
- [5,'S','x.su_dome','Suiton : Dôme des requins','Dôme d\'eau 4,5 s : les ennemis piégés ne peuvent sortir, perdent du chakra et se font mordre ; tu y nages vite','water'],
- [5,'S','x.su_tsunami','Suiton : Bakusui Shôha','Raz-de-marée qui emporte les ennemis (étourdis contre un obstacle) ; la mer reste 5 s : eux ralentis, vous rapides','water'],
+ ['D','x.su_ball','Suiton : Teppôdama','Balle d\'eau qui grossit en vol (plus de dégâts au loin) et éclate en éclaboussure qui ralentit','water'],
+ ['D','x.su_wall','Suiton : Suijinheki','Dôme d\'eau 1,5 s qui arrête les tirs et repousse ; relance : le mur déferle en vague devant toi','water'],
+ ['C','x.su_jet','Suiton : Mizurappa','Torrent d\'eau 1,3 s, immobile : repousse en continu et interrompt ; vise pour le diriger','water'],
+ ['C','x.su_shark','Suiton : Suikôdan','Requin d\'eau qui vire vers l\'ennemi devant lui ; il traque sans relâche une cible trempée','water'],
+ ['B','x.su_prison','Suiton : Suirô','Emprisonne et noie la cible tant que tu restes immobile (1,8 s ; cède si on te frappe) ; relance : la projette (obstacle : étourdie)','water'],
+ ['B','x.su_mist','Suiton : Kirigakure','Brume 6 s : ennemis ralentis, trempés, aveuglés ; ton équipe y est invisible sans attaquer 0,8 s ; le vent la chasse','water'],
+ ['A','x.su_dragon','Suiton : Dragon aqueux','Dragon d\'eau en ligne qui emporte les ennemis touchés puis les ralentit ; s\'il percute un obstacle : étourdis','water'],
+ ['A','x.su_fall','Suiton : Daibakufu','Cascade après 0,65 s (plus forte au centre) qui étourdit, puis un tourbillon 3,5 s ralentit et aspire vers le centre','water'],
+ ['S','x.su_tsunami','Suiton : Bakusui Shôha','Raz-de-marée qui emporte les ennemis (étourdis contre un obstacle) ; la mer reste 5 s : eux ralentis, vous rapides','water'],
+ ['S','x.su_dome','Suiton : Dôme des requins','Dôme d\'eau 4,5 s : les ennemis piégés ne peuvent sortir, perdent du chakra et se font mordre ; tu y nages vite','water'],
 ];
 KIT('n1',su_rows);
-const su_d=k=>(su_rows.find(r=>r[2]==='x.'+k)||[])[4]||''; // description = celle du catalogue
+DASHN[1]={src:'x.su_liquid',n:'Suiton : Corps liquide',d:'Se liquéfie et file au sol : intouchable pendant la glissade, libéré des entraves et ralentissements ; à l\'arrivée, éclabousse autour de toi (5 dégâts, ralentit)',vfx:'water',cd:7};
+const su_d=k=>(su_rows.find(r=>r[1]==='x.'+k)||[])[3]||''; // description = celle du catalogue
 Object.assign(NAT,{
  // Teppôdama : la balle grossit en vol ; elle éclate à l'impact ou au bout de sa course
  su_ball:SP('Suiton : Teppôdama',su_d('su_ball'),4,{ai:RG(520,.7)},(u,a)=>{S('water',u);anim(u,'su_spit',.35);jx({jfx:'su_mouth',ui:su_i(u),x:u.x,y:u.y,a,t:.3,m:.3});
@@ -2780,17 +2787,17 @@ Object.assign(NAT,{
  su_jet:SP('Suiton : Mizurappa',su_d('su_jet'),8,{ai:RG(270,.6),line:{len:300,w:84}},(u,a)=>{for(const x of aux)if(x.type==='su_jet'&&x.owner===u)x.t=0;
   aux.push({type:'su_jet',x:u.x,y:u.y,a,len:30,w:0,r:0,t:1.3,m:1.3,team:u.team,owner:u,vfx:'water',k:.05,ui:su_i(u),si:su_slot(u,'su_jet'),sp:0});anim(u,'su_spit',1.3);S('water',u)}),
  // Suikôdan : requin qui corrige sa course vers l'ennemi devant lui, et chasse sans relâche une cible trempée
- su_shark:SP('Suiton : Suikôdan',su_d('su_shark'),8,{ai:RG(560,.6)},(u,a)=>{S('water',u);anim(u,'su_shark',.45);jx({jfx:'su_ring',x:u.x+Math.cos(a)*30,y:u.y+Math.sin(a)*30,r:34,t:.4,m:.4});
+ su_shark:SP('Suiton : Suikôdan',su_d('su_shark'),7,{ai:RG(560,.6)},(u,a)=>{S('water',u);anim(u,'su_shark',.45);jx({jfx:'su_ring',x:u.x+Math.cos(a)*30,y:u.y+Math.sin(a)*30,r:34,t:.4,m:.4});
   proj(u,a,{spd:520,r:12,dmg:16,life:1.3,col:'#3aa8ff',kind:'su_shark',o:{kb:150},onHit:(p,t)=>jx({jfx:'su_bite',x:t.x,y:t.y,t:.4,m:.4})});
   su_pilot(u,(x,p,dt,end)=>{if(!end)su_steer(p.owner,p,dt)})}), // p.owner : renvoyé, il chasse son ancien maître
  // Suirô : orbe ; la cible est enfermée tant que le lanceur la tient (immobile) ; relance = la projeter
- su_prison:SP('Suiton : Suirô',su_d('su_prison'),12,{ai:RG(380,.55),line:{len:385,w:26}},(u,a)=>{
+ su_prison:SP('Suiton : Suirô',su_d('su_prison'),11,{ai:RG(380,.55),line:{len:385,w:26}},(u,a)=>{
   if(u.jst&&u.jst.key==='su_prison'){const x=aux.find(x=>x.type==='su_prison'&&x.owner===u&&x.t>0);
    if(x&&!u.ctrl&&x.m-x.t<1.2){u.cds[u.jst.i]=.25;return} // bot : la tient un moment avant de la lancer
    u.jst=null;if(x)su_throw(x,u.ctrl?a:su_botAim(u,x.tg));return}
   S('water',u);anim(u,'point',.35);proj(u,a,{spd:700,r:11,dmg:6,life:.55,col:'#3aa8ff',kind:'su_orb',onHit:(p,t)=>su_trap(p.owner,t)})}),
  // Kirigakure : brume (invisibilité au repos pour l'équipe, ennemis trempés et aveuglés) ; le vent la dissipe
- su_mist:SP('Suiton : Kirigakure',su_d('su_mist'),13,{ai:SELF(260,.45),tele:{self:1,r:245}},(u)=>{S('water',u);anim(u,'su_mist',.6);
+ su_mist:SP('Suiton : Kirigakure',su_d('su_mist'),10,{ai:SELF(260,.45),tele:{self:1,r:245}},(u)=>{S('water',u);anim(u,'su_mist',.6);
   aux.push({type:'su_mist',x:u.x,y:u.y,r:245,t:6,m:6,team:u.team,owner:u,vfx:'water',k:0});jx({jfx:'su_mistF',x:u.x,y:u.y,r:245,t:6,m:6,team:u.team});
   u.stealth=Math.max(u.stealth,1.2);u.su_mA=0;sparks(u.x,u.y,'#e8eef6',14,'smoke')}),
  // Dragon aqueux (Suiryûdan) : jaillit du sol, transperce la ligne et emporte les ennemis touchés
@@ -2799,22 +2806,22 @@ Object.assign(NAT,{
   proj(u,a,{spd:800,r:20,dmg:28,life:.8,col:'#3aa8ff',pierce:1,big:1,kind:'su_dragon',slow:1.2,onHit:(p,t)=>{if(t.unstop<=0&&!t.dead)(p.su_car||(p.su_car=[])).push({e:t,t:.38})}});
   su_pilot(u,su_dragonStep)}),
  // Daibakufu : la cascade tombe (cible visible au sol, centre plus fort) puis le sol reste inondé
- su_fall:SP('Suiton : Daibakufu',su_d('su_fall'),12,{tele:{r:150,max:460},ai:RG(460,.6)},(u,a,td)=>{const p=atP(u,a,td,460);S('water',u);anim(u,'slam',.75);
+ su_fall:SP('Suiton : Daibakufu',su_d('su_fall'),13,{tele:{r:150,max:460},ai:RG(460,.6)},(u,a,td)=>{const p=atP(u,a,td,460);S('water',u);anim(u,'slam',.75);
   jx({jfx:'su_fall',x:p.x,y:p.y,r:150,d:.65,t:1.1,m:1.1});zone(u,p.x,p.y,150,24,.65,{stun:.4},'#3aa8ff');lastZ().deto='su_fallD';zone(u,p.x,p.y,58,12,.65,{},'#bfe6ff');lastZ().deto='su_none';
   later(u,.65,()=>aux.push({type:'su_whirl',x:p.x,y:p.y,r:155,t:3.5,m:3.5,team:u.team,owner:u,vfx:'water',k:.25}))}),
  // Corps liquide (Suika) : glisse intangible, se libère des entraves, éclabousse à l'arrivée
- su_liquid:SP('Suiton : Corps liquide',su_d('su_liquid'),7,{ai:{mode:'gap',min:120,max:280,p:.5}},(u,a)=>{S('water',u);u.root=0;u.slow=0;u.rootV=null;anim(u,'su_melt',.42);jx({jfx:'su_splash',x:u.x,y:u.y,r:40,t:.45,m:.45});
-  aux.push({type:'su_liq',x:u.x,y:u.y,a,r:22,t:.4,m:.4,team:u.team,owner:u,vfx:'water',k:0});jx({jfx:'su_body',ui:su_i(u),x:u.x,y:u.y,t:.42,m:.42});u.phase=Math.max(u.phase||0,.5);
-  dash(u,a,280,.34,{end:()=>{jx({jfx:'su_splash',x:u.x,y:u.y,r:80,t:.5,m:.5});for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<80+e.r)su_hit(e,u,8,{slow:1,silent:1})}})}),
+ su_liquid:SP('Suiton : Corps liquide','Se liquéfie et file au sol : intouchable pendant la glissade, libéré des entraves et ralentissements ; à l\'arrivée, éclabousse (5 dégâts, ralentit)',7,{ai:{mode:'gap',min:120,max:280,p:.5}},(u,a)=>{S('water',u);u.root=0;u.slow=0;u.rootV=null;anim(u,'su_melt',.42);jx({jfx:'su_splash',x:u.x,y:u.y,r:40,t:.45,m:.45});
+  aux.push({type:'su_liq',x:u.x,y:u.y,a,r:22,t:.4,m:.4,team:u.team,owner:u,vfx:'water',k:0});jx({jfx:'su_body',ui:su_i(u),x:u.x,y:u.y,t:.42,m:.42});u.phase=Math.max(u.phase||0,.34);
+  dash(u,a,250,.31,{end:()=>{jx({jfx:'su_splash',x:u.x,y:u.y,r:80,t:.5,m:.5});for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<80+e.r)su_hit(e,u,5,{slow:1,silent:1})}})}),
  // Daikôdan : requin géant qui mange les tirs ennemis (grossit, frappe plus fort) puis explose et inonde
  su_big:ULT('Suiton : Daikôdan',su_d('su_big'),{line:{len:740,w:70},ai:{max:620,p:.8}},(u,a)=>{S('water',u);su_snd('roar',u);anim(u,'throw2',.6);
   proj(u,a,{spd:470,r:24,dmg:44,life:1.6,col:'#3aa8ff',rocket:1,ar:150,kb:340,stun:.6,big:1,kind:'su_bigshark',noClash:1});
   su_pilot(u,(x,p,dt,end)=>{if(!end){su_eat(x,p);return}jx({jfx:'su_tidal',x:p.x,y:p.y,r:p.ar,t:.9,m:.9});aux.push({type:'su_flood',x:p.x,y:p.y,r:p.ar,t:3,m:3,team:x.team,owner:x.owner,vfx:'water',k:.25})})}),
  // Dôme des requins (Suirô Sameodori) : se referme en 0,15 s (le cercle des mudras prévient) ; les ennemis piégés ne sortent plus, les requins mordent
- su_dome:ULT('Suiton : Dôme des requins',su_d('su_dome'),{tele:{self:1,r:230},ai:SELF(190,.8)},(u)=>{S('water',u);su_snd('heavy',u);anim(u,'su_dome',.8);
+ su_dome:SP('Suiton : Dôme des requins',su_d('su_dome'),20,{tele:{self:1,r:230},ai:SELF(190,.8)},(u)=>{S('water',u);su_snd('heavy',u);anim(u,'su_dome',.8);
   aux.push({type:'su_dome',x:u.x,y:u.y,r:230,t:4.65,m:4.65,team:u.team,owner:u,vfx:'water',k:0,bite:1});jx({jfx:'su_domeF',x:u.x,y:u.y,r:230,t:4.65,m:4.65})}),
  // Bakusui Shôha : une vague géante avance et emporte, puis la mer recouvre le passage
- su_tsunami:ULT('Suiton : Bakusui Shôha',su_d('su_tsunami'),{line:{len:600,w:260},ai:{max:420,p:.8}},(u,a)=>{S('water',u);su_snd('heavy',u);anim(u,'su_gush',1.1);
+ su_tsunami:SP('Suiton : Bakusui Shôha',su_d('su_tsunami'),20,{line:{len:600,w:260},ai:{max:420,p:.8}},(u,a)=>{S('water',u);su_snd('heavy',u);anim(u,'su_gush',1.1);
   aux.push({type:'su_tsu',x:u.x,y:u.y,a,len:20,w:280,r:0,t:1.6,m:1.6,team:u.team,owner:u,vfx:'water',k:0,ox:u.x,oy:u.y,hs:[],car:[],sp:0})}),
 });
 Object.assign(NATHERO,{su:'jyn'});
@@ -3119,20 +3126,21 @@ AFTER.push(()=>UK.push('su_pr')); // bulle de Suirô visible chez les invités
 // ===== Fûton (vent) =====
 // Identité : repousser, trancher, bloquer. Les poussées sont des glissades franches (la cible ne peut pas marcher contre) ;
 // la Grande balle d'air écrase la cible contre un obstacle ou un mur. Le vent porte les tirs alliés (le feu grossit en le traversant) ; Fûton bat Raiton.
-// [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Arbre (format v5) : 2 jutsu par rang, on en apprend 1 par rang. [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Dash de nature (Espace, sans-clan) : Fûton : Envol (fu_leap).
 KIT('n2',[
- [1,'D','x.fu_wall','Fûton : Mur de vent','Mur de vent 4 s : bloque et repousse les ennemis, arrête leurs tirs, accélère les tirs alliés','wind'],
- [1,'D','x.fu_bullet','Fûton : Balle d\'air','Balle d\'air rapide qui repousse un peu et interrompt les mudras','wind'],
- [1,'C','x.fu_tri','Fûton : Triple balle d\'air','3 balles d\'air en rafale qui suivent ta visée ; la 3e, plus grosse, repousse fort et interrompt','wind'],
- [1,'C','x.fu_big','Fûton : Grande balle d\'air','Grosse balle lente qui repousse loin ; projetée contre un obstacle, la cible est étourdie','wind'],
- [1,'B','x.fu_shotgun','Fûton : Rafale à bout portant','Immobile, 10 balles d\'air en éventail : ravage au contact, le recul te rejette en arrière','wind'],
- [1,'B','x.fu_stack','Fûton : Balles chargées','3 balles d\'air tournent autour de toi et interceptent les tirs ; relance pour les tirer (5 s)','wind'],
- [1,'A','x.fu_line','Fûton : Lame d\'air','Lame de vent très rapide qui transperce toute la ligne et repousse chaque ennemi touché','wind'],
- [1,'A','x.fu_breath','Fûton : Souffle','Immobile, souffle continu : blesse, ralentit, repousse et disperse les tirs ennemis','wind'],
- [2,'C','x.fu_leap','Fûton : Envol','Bond porté par le vent ; la rafale du départ repousse les ennemis proches','wind'],
- [5,'S','x.fu_corridor','Fûton : Couloir de vent','Rafale puis couloir 4 s : ennemis repoussés, ralentis, réduits au silence, dégâts croissants ; alliés plus rapides','wind'],
- [5,'S','x.fu_tornado','Fûton : Tornade','Tornade guidée par ta visée : aspire et emporte les ennemis, avale leurs tirs, puis les éjecte','wind'],
+ ['D','x.fu_bullet','Fûton : Balle d\'air','Balle d\'air rapide qui repousse un peu et interrompt les mudras','wind'],
+ ['D','x.fu_wall','Fûton : Mur de vent','Mur de vent 4 s : bloque et repousse les ennemis, arrête leurs tirs, accélère les tirs alliés','wind'],
+ ['C','x.fu_tri','Fûton : Triple balle d\'air','3 balles d\'air en rafale qui suivent ta visée ; la 3e, plus grosse, repousse fort et interrompt','wind'],
+ ['C','x.fu_big','Fûton : Grande balle d\'air','Grosse balle lente qui repousse loin ; projetée contre un obstacle, la cible est étourdie','wind'],
+ ['B','x.fu_shotgun','Fûton : Rafale à bout portant','Immobile, 10 balles d\'air en éventail : ravage au contact, le recul te rejette en arrière','wind'],
+ ['B','x.fu_stack','Fûton : Balles chargées','3 balles d\'air tournent autour de toi et interceptent les tirs ; relance pour les tirer (5 s)','wind'],
+ ['A','x.fu_line','Fûton : Lame d\'air','Lame de vent très rapide qui transperce toute la ligne et repousse chaque ennemi touché','wind'],
+ ['A','x.fu_breath','Fûton : Souffle','Immobile, souffle continu : blesse, ralentit, repousse et disperse les tirs ennemis','wind'],
+ ['S','x.fu_corridor','Fûton : Couloir de vent','Rafale puis couloir 4 s : ennemis repoussés, ralentis, réduits au silence, dégâts croissants ; alliés plus rapides','wind'],
+ ['S','x.fu_tornado','Fûton : Tornade','Tornade guidée par ta visée : aspire et emporte les ennemis, avale leurs tirs, puis les éjecte','wind'],
 ]);
+DASHN[2]={src:'x.fu_leap',n:'Fûton : Envol',d:'Bond porté par le vent ; la rafale du départ repousse les ennemis proches (6 dégâts)',vfx:'wind',cd:7};
 // ---- outils du vent
 let FU_N=0;const fuId=()=>FU_N=(FU_N+1)%100000;
 // son « brut » (sans la teinte de l'élément, sinon tout devient « wind »)
@@ -3165,7 +3173,7 @@ function fuCarry(p,tag){if(p[tag]||p.grenade)return false;p[tag]=1;if(ELM[p.vfx]
 
 Object.assign(NAT,{
  // ---- mur de vent : rideau qui bloque (moteur : murs), repousse qui le touche, porte les tirs alliés
- fu_wall:SP('Fûton : Mur de vent','Mur de vent 4 s : bloque et repousse les ennemis, arrête leurs tirs, accélère les tirs alliés',9,{ai:DEF},(u,a)=>{
+ fu_wall:SP('Fûton : Mur de vent','Mur de vent 4 s : bloque et repousse les ennemis, arrête leurs tirs, accélère les tirs alliés',7,{ai:DEF},(u,a)=>{
   const c=fwd(u,a,95),px=-Math.sin(a),py=Math.cos(a),id=fuId();for(let i=-2;i<=2;i++)walls.push({x:c.x+px*i*24,y:c.y+py*i*24,r:14,t:4,team:u.team,owner:u,wind:1,vfx:'fu_wall'});
   aux.push({type:'fu_wall',x:c.x,y:c.y,a:a+Math.PI/2,len:120,r:0,t:4,m:4,team:u.team,owner:u,vfx:'wind',k:0,n:id,hitT:{}});
   jx({jfx:'fu_wallrise',x:c.x,y:c.y,a:a+Math.PI/2,len:120,t:.55,m:.55});anim(u,'fu_wall',.55);S('wind',u);fuS('deflect',u)}),
@@ -3173,7 +3181,7 @@ Object.assign(NAT,{
  fu_bullet:SP('Fûton : Balle d\'air','Balle d\'air rapide qui repousse un peu et interrompt les mudras',4,{ai:RG(480,.7)},(u,a)=>{S('wind',u);anim(u,'fu_puff',.4);fuMuzzle(u,a,14);
   proj(u,a,{spd:900,r:7,dmg:11,life:.55,col:'#c8fff0',vfx:'wind',kind:'fu_ball',onHit:(p,t)=>{fuPush(p.owner,t,Math.atan2(p.vy,p.vx),45,.18);fuPop(p.x,p.y,18)}})}),
  // ---- triple balle : 1-2-3, la dernière cogne
- fu_tri:SP('Fûton : Triple balle d\'air','3 balles d\'air en rafale qui suivent ta visée ; la 3e, plus grosse, repousse fort et interrompt',8,{ai:RG(480,.6)},(u,a)=>{let n=0;
+ fu_tri:SP('Fûton : Triple balle d\'air','3 balles d\'air en rafale qui suivent ta visée ; la 3e, plus grosse, repousse fort et interrompt',7,{ai:RG(480,.6)},(u,a)=>{let n=0;
   const sh=(o,b)=>{const big=n===2;S('wind',o);fuMuzzle(o,b,big?18:11);proj(o,b,{spd:big?960:880,r:big?9.5:6,dmg:big?11:5,life:.55,col:big?'#e8fff8':'#c8fff0',vfx:'wind',kind:'fu_ball',
    onHit:(p,t)=>{fuPush(p.owner,t,Math.atan2(p.vy,p.vx),big?60:18,big?.22:.12,{soft:!big});fuPop(p.x,p.y,big?28:14)}});n++};
   anim(u,'fu_tri',.56);sh(u,a);seqs.push({owner:u,n:2,t:.16,iv:.16,vfx:'wind',f:o=>sh(o,o.aim)})}),
@@ -3192,28 +3200,28 @@ Object.assign(NAT,{
  // ---- balles chargées : 3 sphères en orbite (boucliers) à tirer pendant 5 s
  fu_stack:SP('Fûton : Balles chargées','3 balles d\'air tournent autour de toi et interceptent les tirs ; relance pour les tirer (5 s)',9,{ai:RG(440,.7)},null),
  // ---- lame d'air : croissant tranchant, très rapide, perçant
- fu_line:SP('Fûton : Lame d\'air','Lame de vent très rapide qui transperce toute la ligne et repousse chaque ennemi touché',10,{line:{len:720,w:32},ai:RG(680,.5)},(u,a)=>{S('wind',u);fuS('saber',u);anim(u,'fu_slash',.5);
+ fu_line:SP('Fûton : Lame d\'air','Lame de vent très rapide qui transperce toute la ligne et repousse chaque ennemi touché',11,{line:{len:720,w:32},ai:RG(680,.5)},(u,a)=>{S('wind',u);fuS('saber',u);anim(u,'fu_slash',.5);
   jx({jfx:'fu_slashfx',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.3,m:.3});
   proj(u,a,{spd:1250,r:16,dmg:30,life:.58,col:'#e8fff8',vfx:'wind',pierce:1,kind:'fu_blade',onHit:(p,t)=>{fuPush(p.owner,t,Math.atan2(p.vy,p.vx),70,.22);jx({jfx:'fu_cutmark',ti:units.indexOf(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.42,m:.42})}});
   const pr=projs[projs.length-1];aux.push({type:'fu_scar',x:pr.x,y:pr.y,a,len:0,r:0,t:1.1,m:1.1,team:u.team,owner:u,p:pr,vfx:'wind',k:0})}),
  // ---- souffle : canalisation immobile ; pression continue (tient à distance), disperse les tirs ennemis (le feu passe)
  // (télégraphe en cône pendant les mudras : voir drawTelegraphs plus bas)
- fu_breath:SP('Fûton : Souffle','Immobile, souffle continu : blesse, ralentit, repousse et disperse les tirs ennemis',10,{ai:RG(230,.6)},(u,a)=>{
+ fu_breath:SP('Fûton : Souffle','Immobile, souffle continu : blesse, ralentit, repousse et disperse les tirs ennemis',11,{ai:RG(230,.6)},(u,a)=>{
   // u.flame (moteur) : lanceur immobile, souffle coupé par un étourdissement ou une poussée ; k:99 = le moteur ne frappe pas lui-même
   // (ses coups « kb » annuleraient les ruées des ennemis pris dedans) : dégâts, ralentissement et poussée sont gérés par l'objet fu_breath
   u.flame={t:1.4,k:99,R:270,arc:.5,still:1,v:'wind'};S('wind',u);fuS('roar',u);anim(u,'fu_gale',1.4);jx({jfx:'fu_inhale',ui:units.indexOf(u),x:u.x,y:u.y,t:.3,m:.3});
   aux.push({type:'fu_breath',x:u.x,y:u.y,a,len:270,w:.5,r:0,t:1.45,m:1.45,team:u.team,owner:u,ui:units.indexOf(u),vfx:'wind',k:0,fl:.6,so:.3,hitI:{}})}),
  // ---- envol : bond porté par une rafale qui repousse les ennemis proches au départ
  fu_leap:SP('Fûton : Envol','Bond porté par le vent ; la rafale du départ repousse les ennemis proches',7,{ai:ESC},(u,a,td)=>{S('wind',u);fuS('dash',u);anim(u,'fu_leap',.42);
-  jx({jfx:'fu_gust',x:u.x,y:u.y,r:130,t:.45,m:.45});for(const e of enemies(u))if(dist(u,e)<130+e.r&&hit(e,u,6,{}))fuPush(u,e,ang(u,e),85,.22);
+  jx({jfx:'fu_gust',x:u.x,y:u.y,r:110,t:.45,m:.45});for(const e of enemies(u))if(dist(u,e)<110+e.r&&hit(e,u,6,{}))fuPush(u,e,ang(u,e),85,.22);
   aux.push({type:'fu_trail',x:u.x,y:u.y,r:0,t:.34,m:.34,team:u.team,owner:u,tg:u,ti:units.indexOf(u),a,vfx:'wind',k:0});
   dash(u,a,clamp(td||240,110,260),.3,{jump:46,end:()=>{fuPop(u.x,u.y,34);sparks(u.x,u.y,'#c8fff0',8,'wind')}})}),
  // ---- couloir de vent : rafale d'ouverture (blesse, souffle dans l'axe), puis vent contraire (ralentit), silence et dégâts croissants
  //      pour les ennemis qui restent ; vent arrière pour les alliés
- fu_corridor:ULT('Fûton : Couloir de vent','Rafale puis couloir 4 s : ennemis repoussés, ralentis, réduits au silence, dégâts croissants ; alliés plus rapides',{line:{len:540,w:140},ai:{max:480,p:.8}},(u,a)=>{S('wind',u);fuS('heavy',u);anim(u,'fu_corr',.7);
+ fu_corridor:SP('Fûton : Couloir de vent','Rafale puis couloir 4 s : ennemis repoussés, ralentis, réduits au silence, dégâts croissants ; alliés plus rapides',20,{line:{len:540,w:140},ai:{max:480,p:.8}},(u,a)=>{S('wind',u);fuS('heavy',u);anim(u,'fu_corr',.7);
   aux.push({type:'fu_corr',x:u.x,y:u.y,a,len:540,w:140,r:0,t:4,m:4,team:u.team,owner:u,vfx:'wind',k:0,n:fuId(),inT:{},acc:{},ent:{},gh:{}})}),
  // ---- tornade : avance vers la visée, aspire et emporte (1,5 s au plus par ennemi), avale les tirs ennemis, puis éjecte
- fu_tornado:ULT('Fûton : Tornade','Tornade guidée par ta visée : aspire et emporte les ennemis, avale leurs tirs, puis les éjecte',{line:{len:700,w:156},ai:{max:520,p:.8}},(u,a)=>{S('wind',u);fuS('rasengan',u);anim(u,'fu_spin',.75);
+ fu_tornado:SP('Fûton : Tornade','Tornade guidée par ta visée : aspire et emporte les ennemis, avale leurs tirs, puis les éjecte',20,{line:{len:700,w:156},ai:{max:520,p:.8}},(u,a)=>{S('wind',u);fuS('rasengan',u);anim(u,'fu_spin',.75);
   const id=fuId(),p=fwd(u,a,50);aux.push({type:'fu_tornado',x:p.x,y:p.y,a,r:78,t:4,m:4,team:u.team,owner:u,vfx:'wind',k:0,n:id,spd:175,cap:{},ct:{},out:{}});
   fx.push({jfx:'fu_tornf',x:p.x,y:p.y,n:id,t:4.1,m:4.1});jx({jfx:'fu_gust',x:p.x,y:p.y,r:110,t:.5,m:.5})}),
 });
@@ -3455,21 +3463,21 @@ Object.assign(ANIM,{
 // (ralentir, paralyser les mains, clouer au sol, étourdir, projeter). La foudre punit les cibles trempées (×1,35 et arc vers
 // un autre ennemi trempé) : l'Orage les trempe lui-même. Raiton bat Doton, Fûton bat Raiton.
 // Couleurs : foudre jaune et blanche (Kumo), bleu-blanc pour la famille Chidori et Kirin, noir et or pour la Panthère.
-// [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Arbre (format v5) : 2 jutsu par rang, on en apprend 1 par rang. [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Chaîne d'éclairs (ra_chain) est fondue dans Éclair (code conservé). Dash de nature (Espace, sans-clan) : Raiton : Pas de l'éclair (ra_step).
 KIT('n3',[
- [1,'D','x.ra_bolt','Raiton : Éclair','Trait de foudre fulgurant : transperce les ennemis sur sa ligne et les ralentit','lightning'],
- [1,'D','x.ra_senbon','Raiton : Chidori Senbon','Éventail de 5 aiguilles qui ralentissent ; touché par 3, l\'ennemi est paralysé : ni mudras ni jutsu 1 s','lightning'],
- [1,'C','x.ra_chain','Raiton : Chaîne d\'éclairs','Rebondit sur 3 ennemis proches ; sur une cible seule, la foudre s\'accumule et la frappe 3 fois de plus','lightning'],
- [1,'C','x.ra_nagashi','Raiton : Chidori Nagashi','Te libère des entraves, blesse et étourdit autour de toi, puis 2 s de riposte contre le corps à corps','lightning'],
- [1,'C','x.ra_clone','Raiton : Kage Bunshin','Bondis en arrière en laissant un clone de foudre : il explose au contact d\'un ennemi ou d\'un tir et étourdit','lightning'],
- [1,'B','x.ra_spear','Raiton : Chidori Eisô','Lance de foudre instantanée qui transperce la ligne, se ramifie au bout et étourdit brièvement','lightning'],
- [1,'B','x.ra_panther','Raiton : Panthère noire','Panthère de foudre qui traque l\'ennemi le plus proche et le cloue au sol 1,2 s','lightning'],
- [1,'A','x.ra_chidori','Chidori','Fonce, la foudre au poing : le premier ennemi touché subit un coup imparable, est projeté et étourdi','chidori'],
- [1,'A','x.ra_storm','Raiton : Orage','Nuage d\'orage : sa pluie trempe les ennemis (foudre +35 %) et 3 éclairs frappent ceux restés dessous','lightning'],
- [2,'C','x.ra_step','Raiton : Pas de l\'éclair','Fonce en éclair à travers les ennemis (blesse, ralentit) en laissant une traînée électrique qui ralentit','lightning'],
- [5,'S','x.ra_kirin','Raiton : Kirin','Un orage couvre la zone ; peu après, Kirin foudroie l\'ennemi le plus au centre : énormes dégâts, étourdit','kirin'],
- [5,'S','x.ra_armor','Raiton : Armure de foudre','Étourdit autour de toi, puis 7 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s','lightning'],
+ ['D','x.ra_bolt','Raiton : Éclair','Trait de foudre fulgurant qui transperce et ralentit ; du premier touché, la foudre saute vers un ennemi proche (6 dégâts), deux si la cible est trempée','lightning'],
+ ['D','x.ra_senbon','Raiton : Chidori Senbon','Éventail de 5 aiguilles qui ralentissent ; touché par 3, l\'ennemi est paralysé : ni mudras ni jutsu 1 s','lightning'],
+ ['C','x.ra_nagashi','Raiton : Chidori Nagashi','Te libère des entraves, blesse et étourdit autour de toi, puis 2 s de riposte contre le corps à corps','lightning'],
+ ['C','x.ra_clone','Raiton : Kage Bunshin','Bondis en arrière en laissant un clone de foudre : il explose (16 dégâts) au contact d\'un ennemi ou d\'un tir et étourdit','lightning'],
+ ['B','x.ra_spear','Raiton : Chidori Eisô','Lance de foudre instantanée qui transperce la ligne, se ramifie au bout et étourdit brièvement','lightning'],
+ ['B','x.ra_panther','Raiton : Panthère noire','Panthère de foudre qui traque l\'ennemi le plus proche et le cloue au sol 1,2 s','lightning'],
+ ['A','x.ra_chidori','Chidori','Fonce, la foudre au poing : le premier ennemi touché subit un coup imparable, est projeté et étourdi','chidori'],
+ ['A','x.ra_storm','Raiton : Orage','Nuage d\'orage : sa pluie trempe les ennemis (foudre +35 %) et 3 éclairs frappent ceux restés dessous','lightning'],
+ ['S','x.ra_kirin','Raiton : Kirin','Un orage couvre la zone ; peu après, Kirin foudroie l\'ennemi le plus au centre : énormes dégâts, étourdit','kirin'],
+ ['S','x.ra_armor','Raiton : Armure de foudre','Étourdit autour de toi, puis 7 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s','lightning'],
 ]);
+DASHN[3]={src:'x.ra_step',n:'Raiton : Pas de l\'éclair',d:'Fonce en éclair à travers les ennemis (7 dégâts, ralentit) en laissant une courte traînée électrique qui ralentit',vfx:'lightning',cd:7};
 // ---- outils de la foudre
 // son « brut » : sous l'élément foudre, le moteur change tous les sons en « chidori »
 const raS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V};
@@ -3500,9 +3508,9 @@ AFTER.push(()=>{if(typeof dangers!=='function'||dangers.raW)return;const D0=dang
 
 Object.assign(NAT,{
  // ---- éclair : le tir le plus rapide du jeu, perce la ligne
- ra_bolt:SP('Raiton : Éclair','Trait de foudre fulgurant : transperce les ennemis sur sa ligne et les ralentit',4,{line:{len:560,w:14},ai:RG(540,.7)},(u,a)=>{
+ ra_bolt:SP('Raiton : Éclair','Trait de foudre fulgurant : transperce et ralentit ; la foudre saute du premier touché vers un ennemi proche',5,{line:{len:560,w:14},ai:RG(540,.7)},(u,a)=>{let n=0;
   raS('zap',u);anim(u,'ra_flick',.32);jx({jfx:'ra_muzzle',x:u.x+Math.cos(a)*24,y:u.y+Math.sin(a)*24,a,r:14,t:.2,m:.2});
-  proj(u,a,{spd:1500,r:6,dmg:10,life:.38,col:'#ffe14a',slow:.5,pierce:1,kind:'ra_bolt',onHit:(p,t)=>raPop(t.x,t.y,16)})}),
+  proj(u,a,{spd:1500,r:6,dmg:10,life:.38,col:'#ffe14a',slow:.5,pierce:1,kind:'ra_bolt',onHit:(p,t)=>{raPop(t.x,t.y,16);if(n++)return;raChain(p.owner,t,t.wet>0?2:1,6,[t],1)}})}),
  // ---- chidori senbon : éventail serré ; à bout portant, 3 aiguilles paralysent les mains
  ra_senbon:SP('Raiton : Chidori Senbon','Éventail de 5 aiguilles qui ralentissent ; touché par 3, l\'ennemi est paralysé : ni mudras ni jutsu 1 s',6,{line:{len:330,w:90},ai:RG(210,.75)},(u,a)=>{
   raS('chidori',u);raS('zap',u);anim(u,'ra_fan',.38);jx({jfx:'ra_fan',ui:raUi(u),x:u.x,y:u.y,a,t:.22,m:.22});const vol={};
@@ -3512,13 +3520,13 @@ Object.assign(NAT,{
   raS('zap',u);anim(u,'ra_whip',.4);jx({jfx:'ra_muzzle',x:u.x+Math.cos(a)*24,y:u.y+Math.sin(a)*24,a,r:12,t:.18,m:.18});
   proj(u,a,{spd:1050,r:7,dmg:10,life:.46,col:'#ffe14a',kind:'ra_chain',onHit:(p,t)=>{raPop(t.x,t.y,20);raChain(p.owner,t,3,9,[t],0)}})}),
  // ---- chidori nagashi : le courant jaillit du corps, brise les entraves, puis riposte
- ra_nagashi:SP('Raiton : Chidori Nagashi','Te libère des entraves, blesse et étourdit autour de toi, puis 2 s de riposte contre le corps à corps',10,{tele:{self:1,r:115},ai:SELF(135,.6)},(u)=>{
+ ra_nagashi:SP('Raiton : Chidori Nagashi','Te libère des entraves, blesse et étourdit autour de toi, puis 2 s de riposte contre le corps à corps',8,{tele:{self:1,r:115},ai:SELF(135,.6)},(u)=>{
   const fr=u.root>0||u.slow>0;u.root=0;u.rootV=null;u.slow=0;if(fr)say(u,'LIBÉRÉ','#bfe6ff');
   aoe(u,u.x,u.y,115,12,{stun:.45},'#bfe6ff');u.riposte=Math.max(u.riposte,2);u.riposteS=1;
   jx({jfx:'ra_burst',ui:raUi(u),x:u.x,y:u.y,r:115,c:'#bfe6ff',t:.45,m:.45});jx({jfx:'ra_current',ui:raUi(u),x:u.x,y:u.y,t:2,m:2});
   anim(u,'ra_nagashi',.5);raS('chidori',u);raS('zap',u)}),
  // ---- clone de foudre : leurre piégé, tu bondis en arrière
- ra_clone:SP('Raiton : Kage Bunshin','Bondis en arrière en laissant un clone de foudre : il explose au contact d\'un ennemi ou d\'un tir et étourdit',11,{ai:DEF},(u,a)=>{
+ ra_clone:SP('Raiton : Kage Bunshin','Bondis en arrière en laissant un clone de foudre : il explose au contact d\'un ennemi ou d\'un tir et étourdit',10,{ai:DEF},(u,a)=>{
   aux.push({type:'ra_clone',x:u.x,y:u.y,r:26,t:2.5,m:2.5,team:u.team,owner:u,ui:raUi(u),vfx:'lightning',k:0});
   jx({jfx:'ra_burst',x:u.x,y:u.y,r:44,c:'#bfe6ff',t:.28,m:.28});dash(u,a+Math.PI,170,.24,{jump:24});anim(u,'ra_hop',.36);raS('poof',u);raS('zap',u)}),
  // ---- chidori eisô : lance instantanée, s'arrête au premier obstacle, fourche au bout
@@ -3535,20 +3543,20 @@ Object.assign(NAT,{
   const d=clamp((td||300)+20,120,340),e=fwd(u,a,d);dash(u,a,d,.22,{});aux.push({type:'ra_chid',x:u.x,y:u.y,r:0,t:.6,m:.6,team:u.team,owner:u,a,k:0});
   jx({jfx:'ra_trail',x:u.x,y:u.y,x2:e.x,y2:e.y,c:'#7fd0ff',t:.45,m:.45});anim(u,'ra_chidori',.42);raS('chidori',u);raS('dash',u)}),
  // ---- orage : nuage qui trempe, puis 3 éclairs ciblés (chacun annoncé au sol)
- ra_storm:SP('Raiton : Orage','Nuage d\'orage : sa pluie trempe les ennemis (foudre +35 %) et 3 éclairs frappent ceux restés dessous',12,{tele:{r:150,max:450},ai:RG(450,.6)},(u,a,td)=>{const p=atP(u,a,td,450);
+ ra_storm:SP('Raiton : Orage','Nuage d\'orage : sa pluie trempe les ennemis (foudre +35 %) et 3 éclairs frappent ceux restés dessous',13,{tele:{r:150,max:450},ai:RG(450,.6)},(u,a,td)=>{const p=atP(u,a,td,450);
   aux.push({type:'ra_storm',x:p.x,y:p.y,r:150,t:2.6,m:2.6,team:u.team,owner:u,vfx:'lightning',k:.4,n:3,danger:1});jx({jfx:'ra_cloud',x:p.x,y:p.y,r:150,rain:1,t:2.6,m:2.6});
   anim(u,'ra_call',.7);raS('water',u);raS('zap',u)}),
  // ---- pas de l'éclair : traversée foudroyante + sol électrisé
- ra_step:SP('Raiton : Pas de l\'éclair','Fonce en éclair à travers les ennemis (blesse, ralentit) en laissant une traînée électrique qui ralentit',7,{ai:{mode:'gap',min:120,max:280,p:.4}},(u,a)=>{
+ ra_step:SP('Raiton : Pas de l\'éclair','Fonce en éclair à travers les ennemis (7 dégâts, ralentit) en laissant une courte traînée électrique qui ralentit',7,{ai:{mode:'gap',min:120,max:280,p:.4}},(u,a)=>{
   const s={x:u.x,y:u.y},e=fwd(u,a,260),L=Math.hypot(e.x-s.x,e.y-s.y);dash(u,a,260,.14,{});aux.push({type:'ra_run',x:u.x,y:u.y,r:0,t:.5,m:.5,team:u.team,owner:u,k:0,hs:[]});
-  aux.push({type:'ra_trail',x:s.x,y:s.y,a,len:L,w:34,r:0,t:1.2,m:1.2,team:u.team,owner:u,k:0});jx({jfx:'ra_flash',x:s.x,y:s.y,x2:e.x,y2:e.y,t:.32,m:.32});
+  aux.push({type:'ra_trail',x:s.x,y:s.y,a,len:L,w:30,r:0,t:1,m:1,team:u.team,owner:u,k:0});jx({jfx:'ra_flash',x:s.x,y:s.y,x2:e.x,y2:e.y,t:.32,m:.32});
   anim(u,'ra_dashp',.22);raS('zap',u);raS('dash',u)}),
  // ---- kirin : l'orage s'amasse, puis la foudre-dragon frappe l'ennemi le plus proche du centre
- ra_kirin:ULT('Raiton : Kirin','Un orage couvre la zone ; peu après, Kirin foudroie l\'ennemi le plus au centre : énormes dégâts, étourdit',{tele:{r:200,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480);
+ ra_kirin:SP('Raiton : Kirin','Un orage couvre la zone ; peu après, Kirin foudroie l\'ennemi le plus au centre : énormes dégâts, étourdit',20,{tele:{r:200,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480);
   aux.push({type:'ra_kirin',x:p.x,y:p.y,r:200,t:.8,m:.8,team:u.team,owner:u,vfx:'kirin',k:0,danger:1});jx({jfx:'ra_cloud',x:p.x,y:p.y,r:200,kir:1,c:'#bfe6ff',t:.85,m:.85});
   anim(u,'ra_kirin',.8);raS('zap',u);raS('wind',u)}),
  // ---- armure de foudre (Raikage) : l'armure jaillit (étourdit autour), puis vitesse, force, réflexes, rien ne la retient
- ra_armor:ULT('Raiton : Armure de foudre','Étourdit autour de toi, puis 7 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s',{ai:SELF(320,.8)},(u)=>{const D=7;
+ ra_armor:SP('Raiton : Armure de foudre','Étourdit autour de toi, puis 7 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s',20,{ai:SELF(320,.8)},(u)=>{const D=7;
   u.haste=Math.max(u.haste,D);u.rage=Math.max(u.rage,D);u.slowImm=Math.max(u.slowImm,D);u.slow=0;u.root=0;u.dodge=Math.max(u.dodge,D);aoe(u,u.x,u.y,110,12,{stun:.5},'#bfe6ff');
   for(const x of aux)if(x.type==='ra_armor'&&x.owner===u)x.t=0;aux.push({type:'ra_armor',x:u.x,y:u.y,r:0,t:D,m:D,team:u.team,owner:u,k:2});
   jx({jfx:'ra_armor',ui:raUi(u),x:u.x,y:u.y,t:D,m:D});jx({jfx:'ra_armorburst',ui:raUi(u),x:u.x,y:u.y,t:.6,m:.6});anim(u,'ra_flex',.6);raS('chidori',u);raS('heavy',u)}),
@@ -3560,7 +3568,7 @@ Object.assign(NATHERO,{ra:'ig88'});
 AUXF.ra_clone=x=>{if(x.done)return;const o=x.owner;let go=x.t<=0;
  if(!go)for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r+12){go=true;break}
  if(!go)for(const p of projs)if(p.owner.team!==x.team&&!p.grenade&&!p.dead&&p.life>0&&Math.hypot(p.x-x.x,p.y-x.y)<x.r+p.r+4){p.life=0;go=true;break}
- if(!go)return;x.done=1;x.t=0;raAoe(o,x.x,x.y,95,12,{stun:.6,unblockable:1},'#bfe6ff');jx({jfx:'ra_burst',x:x.x,y:x.y,r:95,c:'#bfe6ff',t:.5,m:.5});
+ if(!go)return;x.done=1;x.t=0;raAoe(o,x.x,x.y,95,16,{stun:.6,unblockable:1},'#bfe6ff');jx({jfx:'ra_burst',x:x.x,y:x.y,r:95,c:'#bfe6ff',t:.5,m:.5});
  if(near(x.x,x.y)){raS('boom',o);raS('zap',o);shake=Math.max(shake,.18)}};
 // chidori : la course s'arrête sur le premier ennemi touché
 AUXF.ra_chid=x=>{const u=x.owner;if(x.done||u.dead){x.t=0;return}
@@ -3582,7 +3590,7 @@ AUXF.ra_kirin=x=>{const o=x.owner;
  jx({jfx:'flashsky',x:x.tx,y:x.ty,t:.4,m:.4});aux.push({type:'ra_scorch',x:x.tx,y:x.ty,r:95,t:1.8,m:1.8,team:x.team,owner:o,k:0});
  if(near(x.tx,x.ty)){raS('boom',o);raS('chidori',o);shake=Math.max(shake,.45)}if(o===player||(player&&Math.hypot(player.x-x.tx,player.y-x.ty)<130))hs=Math.max(hs,.08)};
 // pas de l'éclair : la course foudroie chaque ennemi traversé (une fois)
-AUXF.ra_run=x=>{const u=x.owner;if(u.dead){x.t=0;return}for(const e of enemies(u))if(!x.hs.includes(e)&&Math.hypot(e.x-u.x,e.y-u.y)<u.r+e.r+14){x.hs.push(e);raHit(e,u,10,{melee:1,slow:1});raPop(e.x,e.y,22)}if(!u.dash)x.t=0};
+AUXF.ra_run=x=>{const u=x.owner;if(u.dead){x.t=0;return}for(const e of enemies(u))if(!x.hs.includes(e)&&Math.hypot(e.x-u.x,e.y-u.y)<u.r+e.r+14){x.hs.push(e);raHit(e,u,7,{melee:1,slow:.6});raPop(e.x,e.y,22)}if(!u.dash)x.t=0};
 // pas de l'éclair : la traînée ralentit les ennemis qui la touchent
 AUXF.ra_trail=x=>{if(x.k>0)return;x.k=.2;const c=Math.cos(x.a),s=Math.sin(x.a);for(const e of enemies(x.owner)){const dx=e.x-x.x,dy=e.y-x.y,f=dx*c+dy*s,sd=Math.abs(-dx*s+dy*c);
  if(f>-e.r&&f<x.len+e.r&&sd<x.w/2+e.r&&e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.45)}};
@@ -3764,22 +3772,21 @@ STATD.push((u,p,S)=>{const c=u.cast;if(!c||u.dead)return;const ab=u.ch.abil[c.i]
 // ===== Doton (terre) =====
 // La terre façonne l'arène (murs, piliers, marécage, fleuve de boue), encaisse (Kyôka) et contrôle (projections, saisies, poids).
 // Règle commune : un ennemi repoussé contre un mur, un poteau ou le bord de l'arène est ÉCRASÉ (étourdi).
-// [emplacement, rang, mécanique (x.clé = NAT[clé], sinon perso.sort du moteur), nom, description, élément visuel]
+// Arbre (format v5) : 2 jutsu par rang, on en apprend 1 par rang. [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Retirés de l'arbre (code conservé) : Doton : Taupe (do_mole), Doton : Doryû Taiga (do_river). Dash de nature (Espace, sans-clan) : Doton : Doroku Gaeshi (do_flip).
 KIT('n4',[
- [1,'D','x.do_rock','Doton : Rocher','Rocher roulant qui repousse ; projeté contre un mur ou un obstacle, l\'ennemi est écrasé (étourdi)','earth'],
- [1,'D','x.do_wall','Doton : Doryûheki','Mur de terre au point visé : bloque tirs et passage 4 s, repousse les ennemis pris dessus','earth'],
- [1,'C','x.do_spikes','Doton : Doryûsô','Une ligne de pics de terre jaillit devant soi : blesse et projette en l\'air','earth'],
- [1,'C','x.do_swamp','Doton : Yomi Numa','Marécage 4 s : enlise (immobilise) ceux qui y sont pris, puis ralentit et bloque Espace ; y rester enlise à nouveau','earth'],
- [1,'B','x.do_armor','Doton : Kyôka','Corps de roche 3,5 s : 45 % de dégâts en moins, inarrêtable, plus lent ; puis éclate et repousse (selon les coups encaissés)','earth'],
- [1,'B','x.do_hand','Doton : Main de terre','Une main de terre surgit au point visé (court délai), saisit les ennemis et les jette à tes pieds','earth'],
- [1,'B','x.do_river','Doton : Doryû Taiga','Fleuve de boue devant soi 3 s : emporte et ralentit les ennemis ; plaqués contre un mur, ils sont écrasés','earth'],
- [1,'A','x.do_dragon','Doton : Dragon de terre','Un dragon de terre crache 3 boulets de boue qui suivent ta visée : explosent, ralentissent, laissent de la boue','earth'],
- [1,'A','x.do_weight','Doton : Kajûgan','Projectile qui alourdit 2,5 s (ralenti, sans déplacement) puis plaque au sol (étourdi) ; un jutsu Doton le plaque aussitôt','earth'],
- [2,'C','x.do_mole','Doton : Taupe','Plonge sous terre (intouchable), file vers le curseur et jaillit en projetant en l\'air les ennemis proches','earth'],
- [2,'C','x.do_flip','Doton : Doroku Gaeshi','Bondit vers le curseur et soulève derrière soi une dalle de terre qui arrête tirs et poursuivants 2,5 s','earth'],
- [5,'S','x.do_mountain','Doton : Chute de montagne','Une montagne s\'écrase sur la zone après 1 s (gros dégâts, étourdit), puis un cercle de rochers l\'enferme 4 s','earth'],
- [5,'S','x.do_quake','Doton : Grand séisme','Frappe le sol : 3 ondes de choc projettent en l\'air et repoussent, puis le sol fendu ralentit 3 s','earth'],
+ ['D','x.do_rock','Doton : Rocher','Rocher roulant qui repousse ; projeté contre un mur ou un obstacle, l\'ennemi est écrasé (étourdi)','earth'],
+ ['D','x.do_wall','Doton : Doryûheki','Mur de terre au point visé : bloque tirs et passage 4 s, repousse les ennemis pris dessus','earth'],
+ ['C','x.do_spikes','Doton : Doryûsô','Une ligne de pics de terre jaillit devant soi : blesse et projette en l\'air','earth'],
+ ['C','x.do_swamp','Doton : Yomi Numa','Marécage 4 s : enlise (immobilise) ceux qui y sont pris, puis ralentit et bloque Espace (1,5 s au plus) ; y rester enlise à nouveau','earth'],
+ ['B','x.do_armor','Doton : Kyôka','Corps de roche 3,5 s : 45 % de dégâts en moins, inarrêtable, plus lent ; puis éclate et repousse (selon les coups encaissés)','earth'],
+ ['B','x.do_hand','Doton : Main de terre','Une main de terre surgit au point visé (court délai), saisit les ennemis et les jette à tes pieds','earth'],
+ ['A','x.do_dragon','Doton : Dragon de terre','Un dragon de terre crache 3 boulets de boue qui suivent ta visée : explosent, ralentissent, laissent de la boue','earth'],
+ ['A','x.do_weight','Doton : Kajûgan','Projectile qui alourdit 2,5 s (ralenti, sans déplacement) puis plaque au sol (étourdi) ; un jutsu Doton le plaque aussitôt','earth'],
+ ['S','x.do_mountain','Doton : Chute de montagne','Une montagne s\'écrase sur la zone après 1 s (gros dégâts, étourdit), puis un cercle de rochers l\'enferme 4 s','earth'],
+ ['S','x.do_quake','Doton : Grand séisme','Frappe le sol : 3 ondes de choc projettent en l\'air et repoussent, puis le sol fendu ralentit 3 s','earth'],
 ]);
+DASHN[4]={src:'x.do_flip',n:'Doton : Doroku Gaeshi',d:'Bondit vers le curseur et soulève derrière soi une dalle de terre qui arrête tirs et poursuivants 1,5 s',vfx:'earth',cd:7};
 // ---- outils communs (préfixe do_)
 // son franc : l'élément terre change tous les sons en « rock », on le coupe le temps d'un vrai choc
 function do_S(k,u){const V=VFX;VFX=null;S(k,u);VFX=V}
@@ -3832,25 +3839,25 @@ Object.assign(NAT,{
  do_rock:SP('Doton : Rocher','Rocher roulant qui repousse ; projeté contre un mur ou un obstacle, l\'ennemi est écrasé (étourdi)',5,{line:{len:460,w:30},ai:RG(470,.7)},(u,a)=>{S('rock',u);anim(u,'throw2',.45);do_puff(u.x+Math.cos(a)*22,u.y+Math.sin(a)*22,24,5);
   proj(u,a,{spd:600,r:14,dmg:12,life:.78,col:'#7a5a3a',kind:'do_boulder',o:{kb:230},onHit:(p,e)=>{if(e.do_kj>0)do_kjSlam(e);do_crushArm(e,p.owner,.5,5,.5);do_puff(p.x,p.y,28,8)}})}),
  // Doryûheki : rempart de 7 blocs au point visé (les bots le posent devant eux)
- do_wall:SP('Doton : Doryûheki','Mur de terre au point visé : bloque tirs et passage 4 s, repousse les ennemis pris dessus',10,{tele:{r:60,max:330},ai:DEF},(u,a,td)=>{const d=u.ctrl?clamp(td||200,70,330):clamp((td||200)*.45,70,150),c=fwd(u,a,d),ca=Math.cos(a),sa=Math.sin(a),px=-sa,py=ca;
+ do_wall:SP('Doton : Doryûheki','Mur de terre au point visé : bloque tirs et passage 4 s, repousse les ennemis pris dessus',8,{tele:{r:60,max:330},ai:DEF},(u,a,td)=>{const d=u.ctrl?clamp(td||200,70,330):clamp((td||200)*.45,70,150),c=fwd(u,a,d),ca=Math.cos(a),sa=Math.sin(a),px=-sa,py=ca;
   S('rock',u);do_S('heavy',u);anim(u,'do_palms',.55);
   for(let i=-3;i<=3;i++)walls.push({x:c.x+px*i*25,y:c.y+py*i*25,r:14,t:4,team:u.team,owner:u,earth:1,vfx:'do_wall'});
   for(const e of enemies(u)){const dx=e.x-c.x,dy=e.y-c.y,s=dx*px+dy*py,f=dx*ca+dy*sa;if(Math.abs(s)<90+e.r&&Math.abs(f)<e.r+16){const k=f>=0?1:-1;do_hit(e,u,6,{kb:280,fx:e.x-ca*k*20,fy:e.y-sa*k*20,unblockable:1})}}
   aux.push({type:'do_crack',kind:'line',x:c.x-px*96,y:c.y-py*96,a:a+Math.PI/2,len:192,r:0,t:4,m:4,team:u.team,owner:u});
   do_puff(c.x,c.y,80,0);if(near(c.x,c.y))for(let i=-3;i<=3;i+=2)sparks(c.x+px*i*25,c.y+py*i*25,'#8a6a48',3,'earth')}),
  // Doryûsô : 6 bouquets de pics jaillissent l'un après l'autre le long de la ligne
- do_spikes:SP('Doton : Doryûsô','Une ligne de pics de terre jaillit devant soi : blesse et projette en l\'air',8,{line:{len:350,w:76},ai:RG(330,.6)},(u,a)=>{S('rock',u);anim(u,'do_strike',.55);const o={x:u.x,y:u.y},hs=new Set();
+ do_spikes:SP('Doton : Doryûsô','Une ligne de pics de terre jaillit devant soi : blesse et projette en l\'air',7,{line:{len:350,w:76},ai:RG(330,.6)},(u,a)=>{S('rock',u);anim(u,'do_strike',.55);const o={x:u.x,y:u.y},hs=new Set();
   aux.push({type:'do_crack',kind:'line',x:o.x+Math.cos(a)*24,y:o.y+Math.sin(a)*24,a,len:330,r:0,t:1.3,m:1.3,team:u.team,owner:u,w:.3});
   for(let i=0;i<6;i++){const p=fwd(o,a,60+i*56);later(u,.03+i*.05,()=>{do_prop(u,p.x,p.y,.9,'do_spear',{r:10});
    for(const e of enemies(u))if(!hs.has(e)&&Math.hypot(e.x-p.x,e.y-p.y)<38+e.r){hs.add(e);do_hit(e,u,15,{air:.5,unblockable:1})}
    if(near(p.x,p.y)){sparks(p.x,p.y,'#8a6a48',4,'earth');if(i%2<1)S('rock',u)}},{})}}),
  // Yomi Numa : marécage (ralentit, coupe les déplacements) ; au bout de 1,2 s dedans, on s'enlise
- do_swamp:SP('Doton : Yomi Numa','Marécage 4 s : enlise (immobilise) ceux qui y sont pris, puis ralentit et bloque Espace ; y rester enlise à nouveau',10,{tele:{r:140,max:420},ai:RG(420,.6)},(u,a,td)=>{const p=atP(u,a,td,420);S('rock',u);do_S('water',u);anim(u,'summon',.6);
+ do_swamp:SP('Doton : Yomi Numa','Marécage 4 s : enlise (immobilise) ceux qui y sont pris, puis ralentit et bloque Espace ; y rester enlise à nouveau',9,{tele:{r:140,max:420},ai:RG(420,.6)},(u,a,td)=>{const p=atP(u,a,td,420);S('rock',u);do_S('water',u);anim(u,'summon',.6);
   field(u,p.x,p.y,{r:140,t:4,slow:1,dps:3,col:'#5a4028',vfx:'earth'});aux.push({type:'do_swamp',x:p.x,y:p.y,r:140,t:4,m:4,team:u.team,owner:u,in:{},sunk:{}});
   for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<140+e.r*.4&&(e.z||0)<10){do_hit(e,u,6,{root:.5,unblockable:1});do_puff(e.x,e.y,28,0)}
   if(near(p.x,p.y))jx({jfx:'do_splash',x:p.x,y:p.y,r:140,t:.5,m:.5})}),
  // Kyôka : carapace de roche ; à la fin, elle éclate autour de soi
- do_armor:SP('Doton : Kyôka','Corps de roche 3,5 s : 45 % de dégâts en moins, inarrêtable, plus lent ; puis éclate et repousse (selon les coups encaissés)',13,{ai:DEF},(u)=>{S('rock',u);do_S('heavy',u);anim(u,'do_flex',.7);
+ do_armor:SP('Doton : Kyôka','Corps de roche 3,5 s : 45 % de dégâts en moins, inarrêtable, plus lent ; puis éclate et repousse (selon les coups encaissés)',11,{ai:DEF},(u)=>{S('rock',u);do_S('heavy',u);anim(u,'do_flex',.7);
   u.drT=Math.max(u.drT,3.5);u.dr=.45;u.unstop=Math.max(u.unstop,3.5);u.slow=Math.max(u.slow,3.5);u.do_ar=3.5;u.do_ac=0;
   aux.push({type:'do_armor',x:u.x,y:u.y,r:0,t:3.5,m:3.5,team:u.team,owner:u,hp:u.hp,sh:u.shield||0,abs:0});
   jx({jfx:'do_harden',ui:units.indexOf(u),x:u.x,y:u.y,t:.45,m:.45});later(u,.01,()=>{if(u.auraV==='earth')u.auraV=null},{})}),
@@ -3871,7 +3878,7 @@ Object.assign(NAT,{
   const H=do_prop(u,hx,hy,1.3,'do_dhead',{r:18,tx:hx+Math.cos(a),ty:hy+Math.sin(a)});do_puff(hx,hy,40,8);
   seqs.push({owner:u,n:3,t:.22,iv:.3,vfx:'earth',f:o=>do_mudShot(o,H,d)})}),
  // Kajûgan : projectile de chakra qui alourdit ; plaquage au sol à la fin (ou au prochain coup Doton)
- do_weight:SP('Doton : Kajûgan','Projectile qui alourdit 2,5 s (ralenti, sans déplacement) puis plaque au sol (étourdi) ; un jutsu Doton le plaque aussitôt',11,{line:{len:540,w:24},ai:RG(520,.6)},(u,a)=>{S('rock',u);anim(u,'point',.45);jx({jfx:'do_kcast',ui:units.indexOf(u),x:u.x,y:u.y,t:.3,m:.3});
+ do_weight:SP('Doton : Kajûgan','Projectile qui alourdit 2,5 s (ralenti, sans déplacement) puis plaque au sol (étourdi) ; un jutsu Doton le plaque aussitôt',12,{line:{len:540,w:24},ai:RG(520,.6)},(u,a)=>{S('rock',u);anim(u,'point',.45);jx({jfx:'do_kcast',ui:units.indexOf(u),x:u.x,y:u.y,t:.3,m:.3});
   proj(u,a,{spd:760,r:10,dmg:13,life:.72,col:'#e8d090',kind:'do_kaju',onHit:(p,e)=>do_kjMark(e,p.owner)})}),
  // Taupe : sous terre (intouchable), jaillit avec des pics qui projettent en l'air
  do_mole:SP('Doton : Taupe','Plonge sous terre (intouchable), file vers le curseur et jaillit en projetant en l\'air les ennemis proches',11,{ai:{mode:'gap',min:150,max:320,p:.4}},(u,a,td)=>{const d=clamp(td||300,100,300);S('rock',u);u.phase=Math.max(u.phase||0,.5);u.do_mo=1;anim(u,'do_dive',.5);do_puff(u.x,u.y,34,10);
@@ -3879,19 +3886,19 @@ Object.assign(NAT,{
   dash(u,a,d,.42,{end:()=>{u.do_mo=0;anim(u,'uppercut',.45);for(const e of enemies(u))if(dist(u,e)<70+e.r)do_hit(e,u,6,{air:.25,unblockable:1});
    do_prop(u,u.x,u.y,.75,'do_spear',{r:12,big:1});do_puff(u.x,u.y,60,14);if(near(u.x,u.y)){do_S('heavy',u);shake=Math.max(shake,.12)}}})}),
  // Doroku Gaeshi : bond vers le curseur ; une dalle de terre se retourne derrière soi
- do_flip:SP('Doton : Doroku Gaeshi','Bondit vers le curseur et soulève derrière soi une dalle de terre qui arrête tirs et poursuivants 2,5 s',8,{ai:ESC},(u,a)=>{const b=a+Math.PI,c={x:u.x+Math.cos(b)*28,y:u.y+Math.sin(b)*28},px=-Math.sin(a),py=Math.cos(a);S('rock',u);anim(u,'leap',.38);
-  for(let i=-1;i<=1;i++)walls.push({x:c.x+px*i*27,y:c.y+py*i*27,r:16,t:2.5,team:u.team,owner:u,earth:1,vfx:'do_slab'});
-  for(const e of enemies(u)){const dx=e.x-c.x,dy=e.y-c.y,s=Math.abs(dx*px+dy*py),f=dx*Math.cos(b)+dy*Math.sin(b);if(s<46+e.r&&f>-e.r&&f<70+e.r)do_hit(e,u,5,{kb:320,fx:c.x-Math.cos(b)*40,fy:c.y-Math.sin(b)*40,unblockable:1})}
+ do_flip:SP('Doton : Doroku Gaeshi','Bondit vers le curseur et soulève derrière soi une dalle de terre qui arrête tirs et poursuivants 1,5 s',7,{ai:ESC},(u,a)=>{const b=a+Math.PI,c={x:u.x+Math.cos(b)*28,y:u.y+Math.sin(b)*28},px=-Math.sin(a),py=Math.cos(a);S('rock',u);anim(u,'leap',.38);
+  for(let i=-1;i<=1;i++)walls.push({x:c.x+px*i*27,y:c.y+py*i*27,r:16,t:1.5,team:u.team,owner:u,earth:1,vfx:'do_slab'});
+  for(const e of enemies(u)){const dx=e.x-c.x,dy=e.y-c.y,s=Math.abs(dx*px+dy*py),f=dx*Math.cos(b)+dy*Math.sin(b);if(s<46+e.r&&f>-e.r&&f<70+e.r)do_hit(e,u,5,{kb:220,fx:c.x-Math.cos(b)*40,fy:c.y-Math.sin(b)*40,unblockable:1})}
   dash(u,a,210,.3,{jump:34});do_puff(c.x,c.y,44,8)}),
  // Chute de montagne : la montagne tombe (1 s), puis 18 piliers enferment la zone
- do_mountain:ULT('Doton : Chute de montagne','Une montagne s\'écrase sur la zone après 1 s (gros dégâts, étourdit), puis un cercle de rochers l\'enferme 4 s',{tele:{r:160,max:450},ai:{max:450,p:.8}},(u,a,td)=>{const p=atP(u,a,td,450);do_S('heavy',u);anim(u,'raise',1);
+ do_mountain:SP('Doton : Chute de montagne','Une montagne s\'écrase sur la zone après 1 s (gros dégâts, étourdit), puis un cercle de rochers l\'enferme 4 s',20,{tele:{r:160,max:450},ai:{max:450,p:.8}},(u,a,td)=>{const p=atP(u,a,td,450);do_S('heavy',u);anim(u,'raise',1);
   jx({jfx:'do_mount',x:p.x,y:p.y,r:160,t:1,m:1});zone(u,p.x,p.y,160,55,1,{stun:1},'#a07850');lastZ().deto='do_mount';
   later(u,1,()=>{for(const e of enemies(u)){const d=Math.hypot(e.x-p.x,e.y-p.y);if(e.do_kj>0&&d<160+e.r)do_kjSlam(e);if(d>160&&d<218)do_hit(e,u,8,{kb:300,fx:p.x+(e.x-p.x)*2,fy:p.y+(e.y-p.y)*2,unblockable:1})}
    for(let i=0;i<18;i++){const b=i*Math.PI/9;walls.push({x:p.x+Math.cos(b)*188,y:p.y+Math.sin(b)*188,r:19,t:4,team:u.team,owner:u,earth:1,vfx:'do_pillar'})}
    aux.push({type:'do_crater',x:p.x,y:p.y,r:150,t:5,m:5,team:u.team,owner:u});aux.push({type:'do_crack',kind:'ray',x:p.x,y:p.y,a:0,n:12,len:130,r:70,t:5,m:5,team:u.team,owner:u,w:.15});
    if(near(p.x,p.y)){shake=Math.max(shake,.55);do_S('boom',u)}},{})}),
  // Grand séisme : coup de poing au sol, 3 ondes de plus en plus larges, puis sol fendu qui ralentit
- do_quake:ULT('Doton : Grand séisme','Frappe le sol : 3 ondes de choc projettent en l\'air et repoussent, puis le sol fendu ralentit 3 s',{tele:{self:1,r:290},ai:SELF(240,.8)},(u)=>{do_S('heavy',u);anim(u,'do_quake',.9);const o={x:u.x,y:u.y};
+ do_quake:SP('Doton : Grand séisme','Frappe le sol : 3 ondes de choc projettent en l\'air et repoussent, puis le sol fendu ralentit 3 s',20,{tele:{self:1,r:290},ai:SELF(240,.8)},(u)=>{do_S('heavy',u);anim(u,'do_quake',.9);const o={x:u.x,y:u.y};
   [[.18,0,130,20],[.48,100,215,16],[.78,185,295,14]].forEach(([dl,r0,r1,dm],i)=>later(u,dl,()=>{
    for(const e of enemies(u)){const d=Math.hypot(e.x-o.x,e.y-o.y);if(d>r0-e.r&&d<r1+e.r){do_hit(e,u,dm,{air:.5,kb:140,fx:o.x,fy:o.y,unblockable:1});do_crushArm(e,u,.4,6,.5)}}
    aux.push({type:'do_qring',x:o.x,y:o.y,r:r1,w:r0,t:.45,m:.45,team:u.team,owner:u});
@@ -3912,7 +3919,7 @@ AUXF.do_moT=x=>{const u=x.owner;if(x.t<=0||u.dead||!u.dash){u.do_mo=0;x.t=0;retu
 AUXF.do_swamp=(x,dt)=>{const end=x.t<=0;for(const e of units){if(e.team===x.team)continue;const k=units.indexOf(e);
   if(end||e.dead){if(x.in[k])e.do_sw=0;x.in[k]=0;continue}
   const inn=Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r*.4&&(e.z||0)<10;
-  if(inn){if(e.unstop<=0)e.cds[DASHI]=Math.max(e.cds[DASHI],.15);x.in[k]=(x.in[k]||0)+dt;if(x.in[k]>=1.3&&!x.sunk[k]){x.sunk[k]=1;do_hit(e,x.owner,6,{root:.7,unblockable:1});do_puff(e.x,e.y,30,0)}}
+  if(inn){const bl=x.bl||(x.bl={});if(e.unstop<=0&&(bl[k]||0)<1.5){bl[k]=(bl[k]||0)+dt;e.cds[DASHI]=Math.max(e.cds[DASHI],.15)}x.in[k]=(x.in[k]||0)+dt;if(x.in[k]>=1.3&&!x.sunk[k]){x.sunk[k]=1;bl[k]=0;do_hit(e,x.owner,6,{root:.7,unblockable:1});do_puff(e.x,e.y,30,0)}}
   else if(x.in[k])x.in[k]=Math.max(0,x.in[k]-dt*2);
   if(inn||x.in[k]>0)e.do_sw=Math.min(1,(x.in[k]||0)/1.3);else if(x.in[k]===0&&e.do_sw>0&&!inn){e.do_sw=0;x.in[k]=undefined}}};
 // carapace : compte les dégâts encaissés, éclate à la fin
@@ -10955,52 +10962,42 @@ const JBAL={
  "c9|Doigts-balles":{"d":0.567},
  "c9|Forêt d'os":{"d":1.02},
  "c9|Forêt naissante":{"d":0.492},
- "n0|Katon : Boule de feu suprême":{"cd":5.5},
- "n0|Katon : Dragon de feu":{"d":0.79},
- "n0|Katon : Flamme":{"d":0.871},
- "n0|Katon : Fournaise":{"d":1.044},
+ "n0|Katon : Dragon de feu":{"d":0.75},
+ "n0|Katon : Flamme":{"d":0.93},
+ "n0|Katon : Fournaise":{"d":0.97},
  "n0|Katon : Grand souffle de feu":{"d":1.434},
  "n0|Katon : Mur de feu":{"d":1.474},
- "n0|Katon : Nuée ardente":{"d":1.101},
+ "n0|Katon : Nuée ardente":{"d":1.0},
  "n0|Katon : Shuriken de feu aériens":{"d":1.257},
- "n0|Katon : Tornade de feu":{"d":0.924},
+ "n0|Katon : Tornade de feu":{"d":0.88},
  "n0|Katon : Triple flamme":{"d":1.027},
- "n1|Suiton : Bakusui Shôha":{"d":0.963},
- "n1|Suiton : Corps liquide":{"cd":6.5},
+ "n1|Suiton : Bakusui Shôha":{"d":0.88},
  "n1|Suiton : Daibakufu":{"d":0.853},
- "n1|Suiton : Daikôdan":{"d":1.127},
- "n1|Suiton : Dragon aqueux":{"d":1.137},
+ "n1|Suiton : Dragon aqueux":{"d":1.18},
  "n1|Suiton : Dôme des requins":{"d":1.882},
- "n1|Suiton : Kirigakure":{"cd":8.0},
- "n1|Suiton : Mizurappa":{"d":1.371},
+ "n1|Suiton : Mizurappa":{"d":1.5},
  "n1|Suiton : Suijinheki":{"cd":5.0},
- "n1|Suiton : Suikôdan":{"d":1.662},
+ "n1|Suiton : Suikôdan":{"d":1.55},
  "n1|Suiton : Suirô":{"d":1.285},
- "n2|Fûton : Balle d'air":{"d":0.809},
+ "n1|Suiton : Teppôdama":{"d":1.05},
+ "n2|Fûton : Balle d'air":{"d":0.87},
  "n2|Fûton : Balles chargées":{"d":0.705},
- "n2|Fûton : Couloir de vent":{"d":0.82},
- "n2|Fûton : Envol":{"cd":11.0},
+ "n2|Fûton : Couloir de vent":{"d":0.74},
  "n2|Fûton : Grande balle d'air":{"d":1.049},
- "n2|Fûton : Lame d'air":{"d":0.995},
- "n2|Fûton : Mur de vent":{"cd":5.5},
+ "n2|Fûton : Lame d'air":{"d":1.05},
  "n2|Fûton : Rafale à bout portant":{"d":0.898},
- "n2|Fûton : Souffle":{"d":0.81},
+ "n2|Fûton : Souffle":{"d":0.9},
  "n2|Fûton : Tornade":{"d":0.9},
- "n2|Fûton : Triple balle d'air":{"d":0.953},
+ "n2|Fûton : Triple balle d'air":{"d":1.08},
  "n3|Chidori":{"d":0.98},
- "n3|Raiton : Armure de foudre":{"d":1.215},
- "n3|Raiton : Chidori Eisô":{"d":0.934},
- "n3|Raiton : Chidori Nagashi":{"d":1.64},
- "n3|Raiton : Kage Bunshin":{"d":2.109,"cd":10.5},
- "n3|Raiton : Kirin":{"d":1.26},
- "n3|Raiton : Orage":{"d":1.244},
+ "n3|Raiton : Armure de foudre":{"d":1.0},
+ "n3|Raiton : Chidori Eisô":{"d":0.86},
+ "n3|Raiton : Chidori Nagashi":{"d":1.35},
+ "n3|Raiton : Kirin":{"d":1.15},
+ "n3|Raiton : Orage":{"d":1.15},
  "n3|Raiton : Panthère noire":{"d":1.827},
- "n3|Raiton : Pas de l'éclair":{"d":0.767},
  "n3|Raiton : Éclair":{"d":1.224},
- "n4|Doton : Chute de montagne":{"d":1.581},
- "n4|Doton : Doroku Gaeshi":{"cd":7.5},
- "n4|Doton : Doryû Taiga":{"d":1.455},
- "n4|Doton : Doryûheki":{"d":2.2,"cd":10.0},
+ "n4|Doton : Chute de montagne":{"d":1.45},
  "n4|Doton : Doryûsô":{"d":0.794},
  "n4|Doton : Dragon de terre":{"d":1.077},
  "n4|Doton : Grand séisme":{"d":1.508},
@@ -11008,7 +11005,6 @@ const JBAL={
  "n4|Doton : Kyôka":{"d":1.887},
  "n4|Doton : Main de terre":{"d":1.405},
  "n4|Doton : Rocher":{"d":0.869},
- "n4|Doton : Taupe":{"cd":17.5},
  "n4|Doton : Yomi Numa":{"d":0.482},
  "u|Argile explosive":{"d":0.517},
  "u|Barrière Shishienjin":{"d":0.613},
