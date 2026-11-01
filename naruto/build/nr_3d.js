@@ -217,6 +217,11 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  if(k==='gold')for(const s of['L','R']){add(cyl(.7,.7,3.6,6),'hand'+s,'#8a6a20',[0,-2.8,1.2]);add(cone(1.7,8,4),'hand'+s,'#f0c040',[0,-8.6,1.2],[Math.PI,0,0])}
  if(k==='paper')for(const s of['L','R']){const x=s==='L'?2.8:-2.8;add(box(.5,15,4.2),'fore'+s,'#f6f3ea',[x,-8,0]);add(box(.6,2,4.4),'fore'+s,'#7a9ae0',[x,-2,0])}
  if(k==='shuriken'){add(cyl(1.6,1.6,.8,10),'handR','#3a3a44',[0,-3.6,1.6],[Math.PI/2,0,0]);for(let i=0;i<4;i++){const a=i*Math.PI/2;add(cone(1.4,6,4),'handR','#cfd3dd',[Math.cos(a)*3.6,-3.6+Math.sin(a)*3.6,1.6],[0,0,a-Math.PI/2])}}
+ // armes des arbres Bukijutsu / Kenjutsu : bô (bâton long tenu au milieu), kusarigama (faucille + chaîne), tonfa (un par main, le long de l'avant-bras), ninjatô (lame courte tenue à l'envers)
+ if(k==='staff'){add(cyl(1.1,1.1,74,8),'handR','#6a4a2a',[0,-1,10],[Math.PI/2,0,0]);for(const z of[46.5,-26.5])add(cyl(1.45,1.45,3,8),'handR','#e8c040',[0,-1,z],[Math.PI/2,0,0])}
+ if(k==='kama'){add(cyl(.9,.9,12,6),'handR','#5a3a22',[0,-1,5],[Math.PI/2,0,0]);add(box(.5,6.5,1.6),'handR','#e4e8ee',[0,-4,11],[.35,0,0]);add(box(.5,4,1.3),'handR','#e4e8ee',[0,-7.4,9.4],[1.1,0,0]);for(let i=0;i<5;i++)add(tor(.9,.3,6),'handR','#9aa4b4',[0,-2-i*1.7,-1.5-i*1.2],[0,i*1.2,0])}
+ if(k==='tonfa')for(const s of['L','R']){add(cyl(.8,.8,4.4,6),'hand'+s,'#3a2a1e',[0,-3,1.2]);add(box(2.3,19,2.3),'fore'+s,'#c8a070',[0,-5,3.6]);add(box(2.5,2,2.5),'fore'+s,'#3a2414',[0,-14.2,3.6])}
+ if(k==='ninjato'){add(cyl(.8,.8,6,6),'handR','#2a2a33',[0,-1,1.5],[Math.PI/2,0,0]);add(box(2.4,2.4,.6),'handR','#3a3a44',[0,-1,-1.6]);add(box(1.4,.5,19),'handR','#e8ecf2',[0,-1,-11.5]);add(box(1,4,15),'chest','#2a2a33',[-6,-2,-8],[0,0,-.7])}
  if(k==='ice')for(const s of['L','R']){for(const [x,z,h] of[[-1.5,0,7],[1.3,.6,6],[0,-1.2,5.5]])add(cone(1.2,h,5),'fore'+s,'#7fc8f0',[x,-3-h*.2,z],[Math.PI-.5,0,x*.3]);add(sph(2.5,8,6),'hand'+s,'#bfe6ff',[0,-2,.6]);add(cone(1.5,11,5),'hand'+s,'#5ab4ec',[0,-8.5,1.2],[Math.PI,0,0])} // lame de glace bien bleue (lisible sur une tenue claire)
  // géométrie fusionnée + squelette
  const geo=new T.BufferGeometry();geo.setAttribute('position',new T.Float32BufferAttribute(P,3));geo.setAttribute('normal',new T.Float32BufferAttribute(N,3));geo.setAttribute('color',new T.Float32BufferAttribute(C,3));
