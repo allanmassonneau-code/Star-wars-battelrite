@@ -5,14 +5,14 @@
 KIT('c21',[
  ['D','x.kj_batto','Battô : Coupe du fourreau','Dégaine en arc devant toi (150°) : 13 dégâts ; la lame rengaine aussitôt (trait Iai prêt)','steel'],
  ['D','x.kj_kamae','Kamae : Posture du roc','0,8 s : bloque tout coup au corps à corps porté de face ; chaque coup bloqué déclenche une riposte (14 dégâts)','steel'],
- ['C','x.kj_wave','Lame de chakra : Croissant','Onde tranchante en croissant (portée 380) qui traverse : 20 dégâts à chaque ennemi','steel'],
- ['C','x.kj_kiai','Kiai','Cri de guerre : interrompt les mudras des ennemis proches (150) et les repousse ; 3 s, tes coups de base sont 25 % plus rapides','steel'],
+ ['C','x.kj_wave','Kengeki : Croissant de chakra','Onde tranchante en croissant (portée 380) qui traverse : 20 dégâts à chaque ennemi','steel'],
+ ['C','x.kj_kiai','Kiai : Cri de guerre','Cri de guerre : interrompt les mudras des ennemis proches (150) et les repousse ; 3 s, tes coups de base sont 25 % plus rapides','steel'],
  ['B','x.kj_cross','Jûmonji : Coupe en croix','Deux entailles en X devant toi (la 2e 0,25 s plus tard) : 2 × 14 dégâts ; si les deux touchent : saignement (8 dégâts en 2 s) et ralenti 1 s','steel'],
  ['B','x.kj_uke','Ukenagashi : Lame qui détourne','1 s : le prochain tir qui t\'atteint repart vers son lanceur ; le prochain coup au corps à corps est détourné et l\'attaquant est désarmé 1 s','steel'],
  ['A','x.kj_pass','Iai : Passage du vent','Garde 0,3 s puis tu passes à travers l\'ennemi visé (300 max) ; la coupe tombe 0,4 s après : 36 dégâts, +50 % si le sabre était au fourreau','steel'],
- ['A','x.kj_armor','Armure du Pays du Fer','4 s : 30 % de dégâts en moins, insensible au contrôle 1,5 s ; chaque coup encaissé au corps à corps rengaine ton sabre','steel'],
+ ['A','x.kj_armor','Tetsu no Yoroi : Armure du Pays du Fer','4 s : 30 % de dégâts en moins, insensible au contrôle 1,5 s ; chaque coup encaissé au corps à corps rengaine ton sabre','steel'],
  ['S','x.kj_tenzan','Iai : Tranche-ciel','Garde 0,8 s (demi-cercle d\'alerte de 260) puis coupe en demi-cercle : 60 dégâts, ignore boucliers et parades, étourdi 0,6 s ; frappé pendant la garde, tu coupes aussitôt','steel'],
- ['S','x.kj_seven','Sept fleurs de l\'aube','Intangible 0,9 s : tu fends jusqu\'à 7 fois les ennemis à moins de 220 (4 dégâts par coupe), puis rengaines : la coupe finale inflige 30 dégâts à chacun','steel'],
+ ['S','x.kj_seven','Nanabana : Sept fleurs de l\'aube','Intangible 0,9 s : tu fends jusqu\'à 7 fois les ennemis à moins de 220 (4 dégâts par coupe), puis rengaines : la coupe finale inflige 30 dégâts à chacun','steel'],
 ]);
 Object.assign(NATHERO,{kj:'dooku'});
 // ---------- aides ----------
@@ -27,9 +27,9 @@ Object.assign(NAT,{
   for(const e of stIn(u,a,120,2.6))if(hit(e,u,13*m,{melee:1,unblockable:m>1?1:0}))jx({jfx:'st_glint',ti:stI(e),x:e.x,y:e.y,a,t:.3,m:.3});
   kenArc(u,a,120,2.6,{d:1,c:KJ_STEEL,c2:KJ_BLUE,th:8});later(u,.28,()=>{if(!u.dead)kjSheathe(u)})}),
  kj_kamae:S_('Kamae : Posture du roc','',6,{ai:DEF},(u)=>{u.kj_kam=.8;anim(u,'kj_guard',.8);S('deflect',u);jx({jfx:'kj_kamae',ui:stI(u),x:u.x,y:u.y,t:.8,m:.8})}),
- kj_wave:S_('Lame de chakra : Croissant','',8,{line:{len:380,w:44},ai:RG(380,.65)},(u,a)=>{const m=kjDraw(u)?1.3:1;anim(u,'ken_draw',.3);S('saber',u);S('wind',u);
+ kj_wave:S_('Kengeki : Croissant de chakra','',8,{line:{len:380,w:44},ai:RG(380,.65)},(u,a)=>{const m=kjDraw(u)?1.3:1;anim(u,'ken_draw',.3);S('saber',u);S('wind',u);
   proj(u,a,{spd:950,r:22,dmg:20*m,life:.4,pierce:1,col:'#cfe0ff',kind:'kj_wave',o:{unblockable:1}});kenArc(u,a,90,2.2,{c:KJ_STEEL,c2:KJ_BLUE})}),
- kj_kiai:S_('Kiai','',8,{ai:SELF(150,.6)},(u)=>{u.kj_kiai=3;anim(u,'roar',.5);S('roar',u);say(u,'KIAI !','#ffffff');
+ kj_kiai:S_('Kiai : Cri de guerre','',8,{ai:SELF(150,.6)},(u)=>{u.kj_kiai=3;anim(u,'roar',.5);S('roar',u);say(u,'KIAI !','#ffffff');
   for(const e of enemies(u)){if(dist(u,e)>150+e.r)continue;if(e.cast&&e.unstop<=0){e.cast=null;say(e,'INTERROMPU','#fc6')}hit(e,u,3,{kb:240,fx:u.x,fy:u.y})}
   jx({jfx:'shock',x:u.x,y:u.y,r:150,t:.45,m:.45,col:'#e8eef8'});jx({jfx:'kj_kiai',ui:stI(u),x:u.x,y:u.y,t:3,m:3});if(near(u.x,u.y))shake=Math.max(shake,.15)}),
  kj_cross:S_('Jûmonji : Coupe en croix','',10,{line:{len:125,w:150},ai:SELF(120,.65)},(u,a)=>{const m=kjDraw(u)?1.3:1,H=new Set();anim(u,'kj_cross',.5);S('saber',u);
@@ -40,21 +40,21 @@ Object.assign(NAT,{
  kj_pass:S_('Iai : Passage du vent','',13,{line:{len:300,w:40},ai:RG(290,.65,60)},(u,a,td)=>{const sh=u.kj_sh&&u.ch.clan===KENJ?1:0,D=tjLock(u,.42);anim(u,'ken_draw',.5);S('saber',u);
   later(u,.3,()=>{if(u.dead||u.dash!==D||u.stun>0)return;if(sh)kjDraw(u);const b=u.aim,e=pick(u,b,td||250,300);let d=300,c=b;if(e){c=ang(u,e);d=Math.min(340,dist(u,e)+e.r+u.r+36)}
    S('dash',u);const sx=u.x,sy=u.y;u.phase=Math.max(u.phase||0,.25);dash(u,c,d,.16,{});aux.push({type:'kj_pass',x:u.x,y:u.y,r:0,t:1,m:1,team:u.team,owner:u,ui:stI(u),d:u.dash,hs:new Set(),sx,sy,a:c,m2:sh?1.5:1,ph:0,k:0})})}),
- kj_armor:S_('Armure du Pays du Fer','',13,{ai:SELF(220,.55)},(u)=>{u.drT=Math.max(u.drT,4);u.dr=Math.max(u.dr||0,.3);u.unstop=Math.max(u.unstop,1.5);u.kj_arm=4;anim(u,'kj_guard',.5);S('heavy',u);say(u,'ARMURE','#c8d0dc');
+ kj_armor:S_('Tetsu no Yoroi : Armure du Pays du Fer','',13,{ai:SELF(220,.55)},(u)=>{u.drT=Math.max(u.drT,4);u.dr=Math.max(u.dr||0,.3);u.unstop=Math.max(u.unstop,1.5);u.kj_arm=4;anim(u,'kj_guard',.5);S('heavy',u);say(u,'ARMURE','#c8d0dc');
   jx({jfx:'kj_armor',ui:stI(u),x:u.x,y:u.y,t:4,m:4})}),
  kj_tenzan:S_('Iai : Tranche-ciel','',22,{tele:{self:1,r:260},ai:SELF(240,.7)},(u,a)=>{const D=tjLock(u,1.05);u.kj_ten=.8;anim(u,'kj_tenzan',1.1);S('saber',u);
   aux.push({type:'kj_ten',x:u.x,y:u.y,a,r:260,t:1,m:1,team:u.team,owner:u,ui:stI(u),d:D})}),
- kj_seven:S_('Sept fleurs de l\'aube','',22,{ai:SELF(220,.7)},(u)=>{u.phase=Math.max(u.phase||0,.95);const cx=u.x,cy=u.y,H=new Set();let n=0;anim(u,'ken_flurry',.9);S('dash',u);say(u,'SEPT FLEURS','#ffd8e8');
+ kj_seven:S_('Nanabana : Sept fleurs de l\'aube','',22,{ai:SELF(220,.7)},(u)=>{u.phase=Math.max(u.phase||0,.95);const cx=u.x,cy=u.y,H=new Set();let n=0;anim(u,'ken_flurry',.9);S('dash',u);say(u,'SEPT FLEURS','#ffd8e8');
   jx({jfx:'kj_petals',x:cx,y:cy,r:220,t:1.2,m:1.2});
   seqs.push({owner:u,n:7,t:.02,iv:.12,vfx:'steel',f:o=>{if(o.dead)return;n++;const L=enemies(o).filter(e=>!e.dead&&Math.hypot(e.x-cx,e.y-cy)<220+e.r);if(!L.length)return;const e=L[n%L.length],b=rnd()*6.28,ox=o.x,oy=o.y;
    o.x=e.x+Math.cos(b)*(e.r+o.r+8);o.y=e.y+Math.sin(b)*(e.r+o.r+8);collide(o);o.aim=ang(o,e);jx({jfx:'ken_shade',ui:stI(o),x:ox,y:oy,x2:o.x,y2:o.y,me:1,t:.3,m:.3});S('saber',o);
    if(hit(e,o,4,{melee:1,unblockable:1}))H.add(e);kenArc(o,o.aim,70,1.8,{d:n%2?1:-1,tl:(rnd()-.5)*1.6,c:'#ffe8f0',c2:'#ff9ac8',th:5,t:.2,m:.2});
    if(n===7)later(o,.12,()=>{if(o.dead)return;for(const t of H)if(!t.dead){hit(t,o,30,{unblockable:1});jx({jfx:'tj_impact',x:t.x,y:t.y,a:0,t:.4,m:.4,big:1,col:'#ffd8e8'})}kjSheathe(o);if(H.size&&near(o.x,o.y)){S('heavy',o);shake=Math.max(shake,.3)}})}})}),
  // dash du clan (Espace) : Suriashi — glissé au ras du sol, le sabre rengaine à l'arrivée
- kj_suri:S_('Suriashi','',5,{ai:{mode:'gap',min:120,max:320,p:.45}},(u,a,td)=>{const d=clamp(td||200,60,200);S('dash',u);anim(u,'kj_slide',.22);
+ kj_suri:S_('Suriashi : Pas glissé','',5,{ai:{mode:'gap',min:120,max:320,p:.45}},(u,a,td)=>{const d=clamp(td||200,60,200);S('dash',u);anim(u,'kj_slide',.22);
   dash(u,a,d,.2,{end:()=>{if(!u.dead)kjSheathe(u)}});jx({jfx:'kj_slide',ui:stI(u),x:u.x,y:u.y,a,t:.32,m:.32})}),
 });
-DASHC[KENJ]={src:'x.kj_suri',n:'Suriashi',d:'Glissé au ras du sol (200) vers le curseur ; à l\'arrivée, le sabre rengaine (trait Iai prêt)',vfx:'steel',cd:5};
+DASHC[KENJ]={src:'x.kj_suri',n:'Suriashi : Pas glissé',d:'Glissé au ras du sol (200) vers le curseur ; à l\'arrivée, le sabre rengaine (trait Iai prêt)',vfx:'steel',cd:5};
 // ---------- logique des objets ----------
 // Passage du vent : ennemis traversés pendant la ruée, la coupe tombe 0,4 s après
 AUXF.kj_pass=(x,dt)=>{const u=x.owner;if(u.dead){x.t=0;return}

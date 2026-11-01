@@ -7,7 +7,7 @@ KIT('f0',[
  ['A','x.sub_iry_ran','Ranshinshô : Chaos nerveux','Paume de chakra au contact (24 dégâts) qui brouille les nerfs : la cible titube, confuse 1,2 s, et ne peut plus parer 2 s','chakra'],
  ['S','x.sub_byakugo','Byakugô','Losange sur le front : 4 s, chaque dégât subi est régénéré 1 s plus tard, en brûlant ton chakra (1 chakra pour 4 PV ; sans chakra, plus rien)','heal'],
 ]);
-DASHF[0]={src:'x.sub_d_iry',n:'Pas médical',d:'Glisse de 190 : se libère des entraves et des ralentissements, et récupère 6 PV à l\'arrivée',vfx:'heal',cd:7};
+DASHF[0]={src:'x.sub_d_iry',n:'Iryô : Pas médical',d:'Glisse de 190 : se libère des entraves et des ralentissements, et récupère 6 PV à l\'arrivée',vfx:'heal',cd:7};
 const SUB_IRC='#7fe8ff'; // chakra médical (paume, nerfs)
 Object.assign(NAT,{
  // --- Ranshinshô : courte avancée, paume au contact ; la cible touchée titube (confusion de yamanaka.js) et sa garde est bloquée (blockLock : ni parade ni garde)
@@ -18,7 +18,7 @@ Object.assign(NAT,{
    if(e.unstop<=0){if(typeof yaConfuse==='function')yaConfuse(u,e,1.2);else e.slow=Math.max(e.slow,1.2);e.blockLock=Math.max(e.blockLock||0,2);e.block=false;e.parry=0}
    say(e,'NERFS BROUILLÉS','#7fe8ff');jx({jfx:'sub_nerves',ti:units.indexOf(e),x:e.x,y:e.y,t:2,m:2});if(near(e.x,e.y)){S('zap',u);shake=Math.max(shake,.12)}}})}),
  // --- Pas médical (dash) : la glissade purge entraves et ralentissements, petit soin à l'arrivée
- sub_d_iry:S_('Pas médical','Glissade qui libère et soigne un peu',7,{hero:'rey',ai:ESC},(u,a)=>{u.root=0;u.slow=0;S('dash',u);anim(u,'lunge',.3);const x0=u.x,y0=u.y;
+ sub_d_iry:S_('Iryô : Pas médical','Glissade qui libère et soigne un peu',7,{hero:'rey',ai:ESC},(u,a)=>{u.root=0;u.slow=0;S('dash',u);anim(u,'lunge',.3);const x0=u.x,y0=u.y;
   dash(u,a,190,.2,{end:()=>{const r=gain(u,9.2,u);if(r>=1&&near(u.x,u.y))say(u,'+'+Math.round(r),'#6f9');jx({jfx:'sub_medstep',x:x0,y:y0,x2:u.x,y2:u.y,t:.55,m:.55})}});
   jx({jfx:'sub_medcross',ui:units.indexOf(u),x:u.x,y:u.y,t:.45,m:.45})}),
 });

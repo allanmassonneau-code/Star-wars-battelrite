@@ -440,20 +440,20 @@ KIT('t0',[
  ['C','x.tj_dynamic','Dynamic Entry','Coup de pied sauté vers le curseur (400 max) : le 1er ennemi touché subit 20 dégâts, est éjecté, interrompu et ralenti','tai'],
  ['B','x.tai_oka','Ôkashô','Poing chargé de chakra qui fend le sol devant toi : 28 dégâts au point d\'impact, projette en l\'air ; la fissure frappe en ligne (14 dégâts) et ralentit 1 s','tai'],
  ['A','x.tj_lotus1','Lotus primaire','Fonce sur l\'ennemi visé (300) ; s\'il est touché : projeté, ligoté de bandages puis fracassé au sol : 32 dégâts, étourdi 0,9 s','gate'],
- ['S','x.tai_heel','Tsûtenkyaku','Bond au curseur (320 max) et talon qui s\'abat : 55 dégâts au centre et étourdi 1 s, 30 dégâts et recul autour ; le sol éclaté ralentit 2 s','tai'],
+ ['S','x.tai_heel','Tsûtenkyaku : Talon céleste','Bond au curseur (320 max) et talon qui s\'abat : 55 dégâts au centre et étourdi 1 s, 30 dégâts et recul autour ; le sol éclaté ralentit 2 s','tai'],
 ]);
 KIT('t1',[
  ['D','x.ken_iai','Iai : Dégainé éclair','Coupe instantanée droit devant (ligne de 150) : 14 dégâts, +50 % si la cible est au bout de la lame','steel'],
  ['C','x.ken_ashi','Ashigiri : Coupe aux jarrets','Entaille basse en arc large devant toi : 18 dégâts, ralentit fortement 1,2 s et empêche le dash 1,5 s','steel'],
- ['B','x.ken_kaiten','Tourbillon d\'acier','Tu tournoies 1 s, lame tendue : une coupe toutes les 0,15 s autour de toi (4 dégâts chacune, ≈ 28 en tout) ; renvoie les tirs ; tu peux avancer lentement','steel'],
- ['A','x.ken_mika','Mikazuki no Mai','Danse du croissant de lune : toi et 2 ombres frappez l\'ennemi visé de 3 côtés : 3 × 13 dégâts, le 3e étourdit 0,6 s','steel'],
+ ['B','x.ken_kaiten','Kaiten-giri : Tourbillon d\'acier','Tu tournoies 1 s, lame tendue : une coupe toutes les 0,15 s autour de toi (4 dégâts chacune, ≈ 28 en tout) ; renvoie les tirs ; tu peux avancer lentement','steel'],
+ ['A','x.ken_mika','Mikazuki no Mai : Danse du croissant','Danse du croissant de lune : toi et 2 ombres frappez l\'ennemi visé de 3 côtés : 3 × 13 dégâts, le 3e étourdit 0,6 s','steel'],
  ['S','x.ken_ranbu','Ranbu : Tempête de lames','1,3 s : déluge d\'entailles dans un cône devant toi en avançant lentement : jusqu\'à 55 dégâts, renvoie les tirs ; la coupe finale repousse','steel'],
 ]);
 KIT('t2',[
  ['D','x.buk_sweep','Ashibarai : Balayage','Balayage bas très large (200°) : 12 dégâts, fait trébucher (ralenti 0,8 s, coupe la course et le dash en cours)','kunai'],
  ['C','x.buk_hook','Kusarigama : Harpon','La faucille part au bout de sa chaîne (300) : 18 dégâts et ramène l\'ennemi touché devant toi (entravé 0,4 s)','chain'],
- ['B','x.buk_mouli','Moulinet du bâton','1,4 s : ton arme tournoie devant toi, bloque les tirs de face et frappe ce qui approche (4 dégâts / 0,3 s) ; coup final qui repousse (12 dégâts)','kunai'],
- ['A','x.buk_hyaku','Ruée des cent armes','Fonce vers le curseur (220) en enchaînant kunai, tonfa, bâton, faucille et masse : 5 × 7 dégâts au 1er ennemi rencontré, la masse étourdit 0,8 s','kunai'],
+ ['B','x.buk_mouli','Bôjutsu : Moulinet du bâton','1,4 s : ton arme tournoie devant toi, bloque les tirs de face et frappe ce qui approche (4 dégâts / 0,3 s) ; coup final qui repousse (12 dégâts)','kunai'],
+ ['A','x.buk_hyaku','Hyaku Buki : Ruée des cent armes','Fonce vers le curseur (220) en enchaînant kunai, tonfa, bâton, faucille et masse : 5 × 7 dégâts au 1er ennemi rencontré, la masse étourdit 0,8 s','kunai'],
  ['S','x.buk_nyoi','Kongô Nyoi : Bâton infini','Le bâton s\'allonge d\'un coup jusqu\'à 380 puis balaie un arc de 120° : 50 dégâts et recul ; la pointe (au-delà de 300) étourdit 1 s','kunai'],
 ]);
 Object.assign(NATHERO,{tai:'maul',ken:'dooku',buk:'rey'});
@@ -478,7 +478,7 @@ Object.assign(NAT,{
    jx({jfx:'tai_crack',x:c.x,y:c.y,a,len:180,t:1.4,m:1.4});jx({jfx:'tj_crater',x:c.x,y:c.y,r:80,t:.9,m:.9});jx({jfx:'shock',x:c.x,y:c.y,r:90,t:.4,m:.4,col:'#ffd0e0'});
    if(near(c.x,c.y))shake=Math.max(shake,.32)})}),
  // Tsûtenkyaku : bond et talon qui fend le sol (cercle d'alerte contrable)
- tai_heel:S_('Tsûtenkyaku','',20,{tele:{r:130,max:320},ai:{mode:'gap',min:90,max:320,p:.6}},(u,a,td)=>{const d=clamp(td||250,40,320),p=fwd(u,a,d);S('dash',u);anim(u,'tj_heel',.6);
+ tai_heel:S_('Tsûtenkyaku : Talon céleste','',20,{tele:{r:130,max:320},ai:{mode:'gap',min:90,max:320,p:.6}},(u,a,td)=>{const d=clamp(td||250,40,320),p=fwd(u,a,d);S('dash',u);anim(u,'tj_heel',.6);
   later(u,.55,()=>{},{x:p.x,y:p.y,r:130});jx({jfx:'tai_rise',ui:stI(u),x:u.x,y:u.y,t:.55,m:.55});
   dash(u,a,d,.55,{jump:150,end:()=>{if(u.dead)return;const x=u.x,y=u.y;for(const e of enemies(u)){const dd=Math.hypot(e.x-x,e.y-y);if(dd<78+e.r)hit(e,u,55,{melee:1,stun:1,unblockable:1,fx:x,fy:y});else if(dd<130+e.r)hit(e,u,30,{kb:320,fx:x,fy:y,unblockable:1})}
    field(u,x,y,{r:130,t:2,slow:.45,col:'#c8a070',vfx:'tai'});jx({jfx:'tj_heel',x,y,r:150,t:.7,m:.7});jx({jfx:'tj_crater',x,y,r:130,t:2,m:2});jx({jfx:'tai_shards',x,y,t:.9,m:.9});
@@ -494,10 +494,10 @@ Object.assign(NAT,{
   for(const e of stIn(u,a,115,1.9)){if(!hit(e,u,18*m,{melee:1,slow:1.2,unblockable:m>1?1:0}))continue;e.cds[DASHI]=Math.max(e.cds[DASHI]||0,1.5);aux.push({type:'ken_legs',x:e.x,y:e.y,r:0,t:1.5,m:1.5,team:u.team,owner:u,ti:stI(e)});say(e,'JAMBES TRANCHÉES','#ff8a8a');jx({jfx:'st_bleed',ti:stI(e),x:e.x,y:e.y,t:1.5,m:1.5})}
   kenArc(u,a,115,1.9,{z:8,th:8,d:1,c:'#ffe0e0',c2:'#ff6a6a',tl:-.2})}),
  // Tourbillon d'acier : toupie lame tendue (u.spin du moteur : coupes toutes les 0,25 s) et renvoi des tirs
- ken_kaiten:S_('Tourbillon d\'acier','',10,{ai:SELF(110,.6)},(u,a)=>{const m=kenIai(u)?1.3:1;S('saber',u);u.spin={t:1,k:0,r:105,dmg:4*m,ex:EX};
+ ken_kaiten:S_('Kaiten-giri : Tourbillon d\'acier','',10,{ai:SELF(110,.6)},(u,a)=>{const m=kenIai(u)?1.3:1;S('saber',u);u.spin={t:1,k:0,r:105,dmg:4*m,ex:EX};
   aux.push({type:'ken_spin',x:u.x,y:u.y,r:105,t:1,m:1,team:u.team,owner:u,ui:stI(u)})}),
  // Mikazuki no Mai : marque en croissant sur la cible (0,25 s), puis 3 lames de 3 côtés
- ken_mika:S_('Mikazuki no Mai','',13,{line:{len:260,w:40},ai:RG(240,.65)},(u,a,td)=>{const e=pick(u,a,td||200,260),m=kenIai(u)?1.3:1;anim(u,'ken_draw',.3);S('saber',u);
+ ken_mika:S_('Mikazuki no Mai : Danse du croissant','',13,{line:{len:260,w:40},ai:RG(240,.65)},(u,a,td)=>{const e=pick(u,a,td||200,260),m=kenIai(u)?1.3:1;anim(u,'ken_draw',.3);S('saber',u);
   if(!e){const p=fwd(u,a,90);for(const o of stIn(u,a,110,1.6))hit(o,u,13*m,{melee:1});kenArc(u,a,110,1.6,{});jx({jfx:'ken_moon',x:p.x,y:p.y,a,t:.5,m:.5});return}
   const ex=e.x,ey=e.y;jx({jfx:'ken_moon',ti:stI(e),x:ex,y:ey,a,t:.3,m:.3});
   later(u,.25,()=>{if(u.dead||e.dead||u.stun>0||dist(u,e)>330)return;const b0=ang(e,u);
@@ -505,7 +505,7 @@ Object.assign(NAT,{
     jx({jfx:'ken_shade',ui:stI(u),x:ox,y:oy,x2:e.x,y2:e.y,me:i===1?1:0,t:.4,m:.4});S('saber',u);
     if(hit(e,u,13*m,i===2?{melee:1,unblockable:1,stun:.6}:{melee:1,unblockable:1}))jx({jfx:'st_glint',ti:stI(e),x:e.x,y:e.y,a:b+3.14,t:.3,m:.3})})})}),
  // Ranbu : 1,3 s canalisé (avance lentement), coupes en cône toutes les 0,13 s, renvoie les tirs de face ; coupe finale qui repousse
- ken_ranbu:S_('Ranbu : Tempête de lames','',21,{line:{len:170,w:200},ai:RG(150,.7)},(u,a)=>{const m=kenIai(u)?1.3:1;const D=tjLock(u,1.38);anim(u,'ken_flurry',1.3);let n=0;
+ ken_ranbu:S_('Ranbu : Tempête de lames','',21,{line:{len:170,w:200},ai:RG(150,.7)},(u,a)=>{const m=kenIai(u)?1.3:1;const D=tjLock(u,1.38);D.tx=clamp(u.x+Math.cos(a)*90,B.x+30,B.x+B.w-30);D.ty=clamp(u.y+Math.sin(a)*90,B.y+30,B.y+B.h-30);anim(u,'ken_flurry',1.3);let n=0; // avance lente : 90 en 1,38 s
   seqs.push({owner:u,n:10,t:.05,iv:.13,vfx:'steel',f:o=>{if(o.dash!==D||o.stun>0)return;n++;const b=o.aim;kenReflect(o,o.x,o.y,150,b,1.6);
    for(const e of stIn(o,b,170,1.5))hit(e,o,n<10?5*m:7*m,n<10?{melee:1,silent:n%2?1:0}:{melee:1,kb:340});
    kenArc(o,b+(rnd()-.5)*.6,150+rnd()*20,1.3,{d:n%2?1:-1,tl:(rnd()-.5)*1.4,th:5,t:.22,m:.22});if(n%2)S('saber',o);if(n===10){jx({jfx:'st_iai',ui:stI(o),x:o.x,y:o.y,a:b,R:170,t:.5,m:.5});if(near(o.x,o.y))shake=Math.max(shake,.2)}}})}),
@@ -518,9 +518,9 @@ Object.assign(NAT,{
  buk_hook:S_('Kusarigama : Harpon','',8,{line:{len:300,w:20},ai:RG(300,.6,90)},(u,a)=>{anim(u,'throw2',.3);S('blaster',u);u.thrT=.2;
   proj(u,a,{spd:950,r:9,dmg:18,life:.31,col:'#d8dde6',hook:1,kind:'buk_kama',o:{root:.4}});aux.push({type:'buk_chain',x:u.x,y:u.y,r:0,t:.7,m:.7,team:u.team,owner:u,ui:stI(u),p:projs[projs.length-1]})}),
  // Moulinet du bâton : arme qui tournoie devant soi 1,4 s (bloque les tirs de face, frappe toutes les 0,3 s), coup final qui repousse
- buk_mouli:S_('Moulinet du bâton','',11,{ai:DEF},(u,a)=>{anim(u,'buk_twirl',1.4);S('wind',u);aux.push({type:'buk_mouli',x:u.x,y:u.y,a,r:95,t:1.4,m:1.4,team:u.team,owner:u,ui:stI(u),k:.15,n:0})}),
+ buk_mouli:S_('Bôjutsu : Moulinet du bâton','',11,{ai:DEF},(u,a)=>{anim(u,'buk_twirl',1.4);S('wind',u);aux.push({type:'buk_mouli',x:u.x,y:u.y,a,r:95,t:1.4,m:1.4,team:u.team,owner:u,ui:stI(u),k:.15,n:0})}),
  // Ruée des cent armes : ruée ; au 1er ennemi touché, 5 armes à la suite (la masse étourdit)
- buk_hyaku:S_('Ruée des cent armes','',13,{line:{len:220,w:44},ai:{mode:'gap',min:40,max:220,p:.6}},(u,a)=>{S('dash',u);anim(u,'lunge',.3);dash(u,a,220,.3,{end:()=>bukCombo(u,null,a)});
+ buk_hyaku:S_('Hyaku Buki : Ruée des cent armes','',13,{line:{len:220,w:44},ai:{mode:'gap',min:40,max:220,p:.6}},(u,a)=>{S('dash',u);anim(u,'lunge',.3);dash(u,a,220,.3,{end:()=>bukCombo(u,null,a)});
   jx({jfx:'tj_dash',ui:stI(u),x:u.x,y:u.y,a,t:.32,m:.32});aux.push({type:'buk_rush',x:u.x,y:u.y,r:0,t:.4,m:.4,team:u.team,owner:u,d:u.dash,a})}),
  // Kongô Nyoi : le bâton pousse (0,35 s, ligne d'alerte) puis balaie 120° à 380
  buk_nyoi:S_('Kongô Nyoi : Bâton infini','',22,{line:{len:380,w:30},ai:RG(370,.7,120)},(u,a)=>{const D=tjLock(u,.75);anim(u,'buk_nyoi',.75);S('heavy',u);

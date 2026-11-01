@@ -1320,20 +1320,20 @@ KIT('t0',[
  ['C','x.tj_dynamic','Dynamic Entry','Coup de pied sauté vers le curseur (400 max) : le 1er ennemi touché subit 20 dégâts, est éjecté, interrompu et ralenti','tai'],
  ['B','x.tai_oka','Ôkashô','Poing chargé de chakra qui fend le sol devant toi : 28 dégâts au point d\'impact, projette en l\'air ; la fissure frappe en ligne (14 dégâts) et ralentit 1 s','tai'],
  ['A','x.tj_lotus1','Lotus primaire','Fonce sur l\'ennemi visé (300) ; s\'il est touché : projeté, ligoté de bandages puis fracassé au sol : 32 dégâts, étourdi 0,9 s','gate'],
- ['S','x.tai_heel','Tsûtenkyaku','Bond au curseur (320 max) et talon qui s\'abat : 55 dégâts au centre et étourdi 1 s, 30 dégâts et recul autour ; le sol éclaté ralentit 2 s','tai'],
+ ['S','x.tai_heel','Tsûtenkyaku : Talon céleste','Bond au curseur (320 max) et talon qui s\'abat : 55 dégâts au centre et étourdi 1 s, 30 dégâts et recul autour ; le sol éclaté ralentit 2 s','tai'],
 ]);
 KIT('t1',[
  ['D','x.ken_iai','Iai : Dégainé éclair','Coupe instantanée droit devant (ligne de 150) : 14 dégâts, +50 % si la cible est au bout de la lame','steel'],
  ['C','x.ken_ashi','Ashigiri : Coupe aux jarrets','Entaille basse en arc large devant toi : 18 dégâts, ralentit fortement 1,2 s et empêche le dash 1,5 s','steel'],
- ['B','x.ken_kaiten','Tourbillon d\'acier','Tu tournoies 1 s, lame tendue : une coupe toutes les 0,15 s autour de toi (4 dégâts chacune, ≈ 28 en tout) ; renvoie les tirs ; tu peux avancer lentement','steel'],
- ['A','x.ken_mika','Mikazuki no Mai','Danse du croissant de lune : toi et 2 ombres frappez l\'ennemi visé de 3 côtés : 3 × 13 dégâts, le 3e étourdit 0,6 s','steel'],
+ ['B','x.ken_kaiten','Kaiten-giri : Tourbillon d\'acier','Tu tournoies 1 s, lame tendue : une coupe toutes les 0,15 s autour de toi (4 dégâts chacune, ≈ 28 en tout) ; renvoie les tirs ; tu peux avancer lentement','steel'],
+ ['A','x.ken_mika','Mikazuki no Mai : Danse du croissant','Danse du croissant de lune : toi et 2 ombres frappez l\'ennemi visé de 3 côtés : 3 × 13 dégâts, le 3e étourdit 0,6 s','steel'],
  ['S','x.ken_ranbu','Ranbu : Tempête de lames','1,3 s : déluge d\'entailles dans un cône devant toi en avançant lentement : jusqu\'à 55 dégâts, renvoie les tirs ; la coupe finale repousse','steel'],
 ]);
 KIT('t2',[
  ['D','x.buk_sweep','Ashibarai : Balayage','Balayage bas très large (200°) : 12 dégâts, fait trébucher (ralenti 0,8 s, coupe la course et le dash en cours)','kunai'],
  ['C','x.buk_hook','Kusarigama : Harpon','La faucille part au bout de sa chaîne (300) : 18 dégâts et ramène l\'ennemi touché devant toi (entravé 0,4 s)','chain'],
- ['B','x.buk_mouli','Moulinet du bâton','1,4 s : ton arme tournoie devant toi, bloque les tirs de face et frappe ce qui approche (4 dégâts / 0,3 s) ; coup final qui repousse (12 dégâts)','kunai'],
- ['A','x.buk_hyaku','Ruée des cent armes','Fonce vers le curseur (220) en enchaînant kunai, tonfa, bâton, faucille et masse : 5 × 7 dégâts au 1er ennemi rencontré, la masse étourdit 0,8 s','kunai'],
+ ['B','x.buk_mouli','Bôjutsu : Moulinet du bâton','1,4 s : ton arme tournoie devant toi, bloque les tirs de face et frappe ce qui approche (4 dégâts / 0,3 s) ; coup final qui repousse (12 dégâts)','kunai'],
+ ['A','x.buk_hyaku','Hyaku Buki : Ruée des cent armes','Fonce vers le curseur (220) en enchaînant kunai, tonfa, bâton, faucille et masse : 5 × 7 dégâts au 1er ennemi rencontré, la masse étourdit 0,8 s','kunai'],
  ['S','x.buk_nyoi','Kongô Nyoi : Bâton infini','Le bâton s\'allonge d\'un coup jusqu\'à 380 puis balaie un arc de 120° : 50 dégâts et recul ; la pointe (au-delà de 300) étourdit 1 s','kunai'],
 ]);
 Object.assign(NATHERO,{tai:'maul',ken:'dooku',buk:'rey'});
@@ -1358,7 +1358,7 @@ Object.assign(NAT,{
    jx({jfx:'tai_crack',x:c.x,y:c.y,a,len:180,t:1.4,m:1.4});jx({jfx:'tj_crater',x:c.x,y:c.y,r:80,t:.9,m:.9});jx({jfx:'shock',x:c.x,y:c.y,r:90,t:.4,m:.4,col:'#ffd0e0'});
    if(near(c.x,c.y))shake=Math.max(shake,.32)})}),
  // Tsûtenkyaku : bond et talon qui fend le sol (cercle d'alerte contrable)
- tai_heel:S_('Tsûtenkyaku','',20,{tele:{r:130,max:320},ai:{mode:'gap',min:90,max:320,p:.6}},(u,a,td)=>{const d=clamp(td||250,40,320),p=fwd(u,a,d);S('dash',u);anim(u,'tj_heel',.6);
+ tai_heel:S_('Tsûtenkyaku : Talon céleste','',20,{tele:{r:130,max:320},ai:{mode:'gap',min:90,max:320,p:.6}},(u,a,td)=>{const d=clamp(td||250,40,320),p=fwd(u,a,d);S('dash',u);anim(u,'tj_heel',.6);
   later(u,.55,()=>{},{x:p.x,y:p.y,r:130});jx({jfx:'tai_rise',ui:stI(u),x:u.x,y:u.y,t:.55,m:.55});
   dash(u,a,d,.55,{jump:150,end:()=>{if(u.dead)return;const x=u.x,y=u.y;for(const e of enemies(u)){const dd=Math.hypot(e.x-x,e.y-y);if(dd<78+e.r)hit(e,u,55,{melee:1,stun:1,unblockable:1,fx:x,fy:y});else if(dd<130+e.r)hit(e,u,30,{kb:320,fx:x,fy:y,unblockable:1})}
    field(u,x,y,{r:130,t:2,slow:.45,col:'#c8a070',vfx:'tai'});jx({jfx:'tj_heel',x,y,r:150,t:.7,m:.7});jx({jfx:'tj_crater',x,y,r:130,t:2,m:2});jx({jfx:'tai_shards',x,y,t:.9,m:.9});
@@ -1374,10 +1374,10 @@ Object.assign(NAT,{
   for(const e of stIn(u,a,115,1.9)){if(!hit(e,u,18*m,{melee:1,slow:1.2,unblockable:m>1?1:0}))continue;e.cds[DASHI]=Math.max(e.cds[DASHI]||0,1.5);aux.push({type:'ken_legs',x:e.x,y:e.y,r:0,t:1.5,m:1.5,team:u.team,owner:u,ti:stI(e)});say(e,'JAMBES TRANCHÉES','#ff8a8a');jx({jfx:'st_bleed',ti:stI(e),x:e.x,y:e.y,t:1.5,m:1.5})}
   kenArc(u,a,115,1.9,{z:8,th:8,d:1,c:'#ffe0e0',c2:'#ff6a6a',tl:-.2})}),
  // Tourbillon d'acier : toupie lame tendue (u.spin du moteur : coupes toutes les 0,25 s) et renvoi des tirs
- ken_kaiten:S_('Tourbillon d\'acier','',10,{ai:SELF(110,.6)},(u,a)=>{const m=kenIai(u)?1.3:1;S('saber',u);u.spin={t:1,k:0,r:105,dmg:4*m,ex:EX};
+ ken_kaiten:S_('Kaiten-giri : Tourbillon d\'acier','',10,{ai:SELF(110,.6)},(u,a)=>{const m=kenIai(u)?1.3:1;S('saber',u);u.spin={t:1,k:0,r:105,dmg:4*m,ex:EX};
   aux.push({type:'ken_spin',x:u.x,y:u.y,r:105,t:1,m:1,team:u.team,owner:u,ui:stI(u)})}),
  // Mikazuki no Mai : marque en croissant sur la cible (0,25 s), puis 3 lames de 3 côtés
- ken_mika:S_('Mikazuki no Mai','',13,{line:{len:260,w:40},ai:RG(240,.65)},(u,a,td)=>{const e=pick(u,a,td||200,260),m=kenIai(u)?1.3:1;anim(u,'ken_draw',.3);S('saber',u);
+ ken_mika:S_('Mikazuki no Mai : Danse du croissant','',13,{line:{len:260,w:40},ai:RG(240,.65)},(u,a,td)=>{const e=pick(u,a,td||200,260),m=kenIai(u)?1.3:1;anim(u,'ken_draw',.3);S('saber',u);
   if(!e){const p=fwd(u,a,90);for(const o of stIn(u,a,110,1.6))hit(o,u,13*m,{melee:1});kenArc(u,a,110,1.6,{});jx({jfx:'ken_moon',x:p.x,y:p.y,a,t:.5,m:.5});return}
   const ex=e.x,ey=e.y;jx({jfx:'ken_moon',ti:stI(e),x:ex,y:ey,a,t:.3,m:.3});
   later(u,.25,()=>{if(u.dead||e.dead||u.stun>0||dist(u,e)>330)return;const b0=ang(e,u);
@@ -1385,7 +1385,7 @@ Object.assign(NAT,{
     jx({jfx:'ken_shade',ui:stI(u),x:ox,y:oy,x2:e.x,y2:e.y,me:i===1?1:0,t:.4,m:.4});S('saber',u);
     if(hit(e,u,13*m,i===2?{melee:1,unblockable:1,stun:.6}:{melee:1,unblockable:1}))jx({jfx:'st_glint',ti:stI(e),x:e.x,y:e.y,a:b+3.14,t:.3,m:.3})})})}),
  // Ranbu : 1,3 s canalisé (avance lentement), coupes en cône toutes les 0,13 s, renvoie les tirs de face ; coupe finale qui repousse
- ken_ranbu:S_('Ranbu : Tempête de lames','',21,{line:{len:170,w:200},ai:RG(150,.7)},(u,a)=>{const m=kenIai(u)?1.3:1;const D=tjLock(u,1.38);anim(u,'ken_flurry',1.3);let n=0;
+ ken_ranbu:S_('Ranbu : Tempête de lames','',21,{line:{len:170,w:200},ai:RG(150,.7)},(u,a)=>{const m=kenIai(u)?1.3:1;const D=tjLock(u,1.38);D.tx=clamp(u.x+Math.cos(a)*90,B.x+30,B.x+B.w-30);D.ty=clamp(u.y+Math.sin(a)*90,B.y+30,B.y+B.h-30);anim(u,'ken_flurry',1.3);let n=0; // avance lente : 90 en 1,38 s
   seqs.push({owner:u,n:10,t:.05,iv:.13,vfx:'steel',f:o=>{if(o.dash!==D||o.stun>0)return;n++;const b=o.aim;kenReflect(o,o.x,o.y,150,b,1.6);
    for(const e of stIn(o,b,170,1.5))hit(e,o,n<10?5*m:7*m,n<10?{melee:1,silent:n%2?1:0}:{melee:1,kb:340});
    kenArc(o,b+(rnd()-.5)*.6,150+rnd()*20,1.3,{d:n%2?1:-1,tl:(rnd()-.5)*1.4,th:5,t:.22,m:.22});if(n%2)S('saber',o);if(n===10){jx({jfx:'st_iai',ui:stI(o),x:o.x,y:o.y,a:b,R:170,t:.5,m:.5});if(near(o.x,o.y))shake=Math.max(shake,.2)}}})}),
@@ -1398,9 +1398,9 @@ Object.assign(NAT,{
  buk_hook:S_('Kusarigama : Harpon','',8,{line:{len:300,w:20},ai:RG(300,.6,90)},(u,a)=>{anim(u,'throw2',.3);S('blaster',u);u.thrT=.2;
   proj(u,a,{spd:950,r:9,dmg:18,life:.31,col:'#d8dde6',hook:1,kind:'buk_kama',o:{root:.4}});aux.push({type:'buk_chain',x:u.x,y:u.y,r:0,t:.7,m:.7,team:u.team,owner:u,ui:stI(u),p:projs[projs.length-1]})}),
  // Moulinet du bâton : arme qui tournoie devant soi 1,4 s (bloque les tirs de face, frappe toutes les 0,3 s), coup final qui repousse
- buk_mouli:S_('Moulinet du bâton','',11,{ai:DEF},(u,a)=>{anim(u,'buk_twirl',1.4);S('wind',u);aux.push({type:'buk_mouli',x:u.x,y:u.y,a,r:95,t:1.4,m:1.4,team:u.team,owner:u,ui:stI(u),k:.15,n:0})}),
+ buk_mouli:S_('Bôjutsu : Moulinet du bâton','',11,{ai:DEF},(u,a)=>{anim(u,'buk_twirl',1.4);S('wind',u);aux.push({type:'buk_mouli',x:u.x,y:u.y,a,r:95,t:1.4,m:1.4,team:u.team,owner:u,ui:stI(u),k:.15,n:0})}),
  // Ruée des cent armes : ruée ; au 1er ennemi touché, 5 armes à la suite (la masse étourdit)
- buk_hyaku:S_('Ruée des cent armes','',13,{line:{len:220,w:44},ai:{mode:'gap',min:40,max:220,p:.6}},(u,a)=>{S('dash',u);anim(u,'lunge',.3);dash(u,a,220,.3,{end:()=>bukCombo(u,null,a)});
+ buk_hyaku:S_('Hyaku Buki : Ruée des cent armes','',13,{line:{len:220,w:44},ai:{mode:'gap',min:40,max:220,p:.6}},(u,a)=>{S('dash',u);anim(u,'lunge',.3);dash(u,a,220,.3,{end:()=>bukCombo(u,null,a)});
   jx({jfx:'tj_dash',ui:stI(u),x:u.x,y:u.y,a,t:.32,m:.32});aux.push({type:'buk_rush',x:u.x,y:u.y,r:0,t:.4,m:.4,team:u.team,owner:u,d:u.dash,a})}),
  // Kongô Nyoi : le bâton pousse (0,35 s, ligne d'alerte) puis balaie 120° à 380
  buk_nyoi:S_('Kongô Nyoi : Bâton infini','',22,{line:{len:380,w:30},ai:RG(370,.7,120)},(u,a)=>{const D=tjLock(u,.75);anim(u,'buk_nyoi',.75);S('heavy',u);
@@ -2666,7 +2666,7 @@ KIT('f0',[
  ['A','x.sub_iry_ran','Ranshinshô : Chaos nerveux','Paume de chakra au contact (24 dégâts) qui brouille les nerfs : la cible titube, confuse 1,2 s, et ne peut plus parer 2 s','chakra'],
  ['S','x.sub_byakugo','Byakugô','Losange sur le front : 4 s, chaque dégât subi est régénéré 1 s plus tard, en brûlant ton chakra (1 chakra pour 4 PV ; sans chakra, plus rien)','heal'],
 ]);
-DASHF[0]={src:'x.sub_d_iry',n:'Pas médical',d:'Glisse de 190 : se libère des entraves et des ralentissements, et récupère 6 PV à l\'arrivée',vfx:'heal',cd:7};
+DASHF[0]={src:'x.sub_d_iry',n:'Iryô : Pas médical',d:'Glisse de 190 : se libère des entraves et des ralentissements, et récupère 6 PV à l\'arrivée',vfx:'heal',cd:7};
 const SUB_IRC='#7fe8ff'; // chakra médical (paume, nerfs)
 Object.assign(NAT,{
  // --- Ranshinshô : courte avancée, paume au contact ; la cible touchée titube (confusion de yamanaka.js) et sa garde est bloquée (blockLock : ni parade ni garde)
@@ -2677,7 +2677,7 @@ Object.assign(NAT,{
    if(e.unstop<=0){if(typeof yaConfuse==='function')yaConfuse(u,e,1.2);else e.slow=Math.max(e.slow,1.2);e.blockLock=Math.max(e.blockLock||0,2);e.block=false;e.parry=0}
    say(e,'NERFS BROUILLÉS','#7fe8ff');jx({jfx:'sub_nerves',ti:units.indexOf(e),x:e.x,y:e.y,t:2,m:2});if(near(e.x,e.y)){S('zap',u);shake=Math.max(shake,.12)}}})}),
  // --- Pas médical (dash) : la glissade purge entraves et ralentissements, petit soin à l'arrivée
- sub_d_iry:S_('Pas médical','Glissade qui libère et soigne un peu',7,{hero:'rey',ai:ESC},(u,a)=>{u.root=0;u.slow=0;S('dash',u);anim(u,'lunge',.3);const x0=u.x,y0=u.y;
+ sub_d_iry:S_('Iryô : Pas médical','Glissade qui libère et soigne un peu',7,{hero:'rey',ai:ESC},(u,a)=>{u.root=0;u.slow=0;S('dash',u);anim(u,'lunge',.3);const x0=u.x,y0=u.y;
   dash(u,a,190,.2,{end:()=>{const r=gain(u,9.2,u);if(r>=1&&near(u.x,u.y))say(u,'+'+Math.round(r),'#6f9');jx({jfx:'sub_medstep',x:x0,y:y0,x2:u.x,y2:u.y,t:.55,m:.55})}});
   jx({jfx:'sub_medcross',ui:units.indexOf(u),x:u.x,y:u.y,t:.45,m:.45})}),
 });
@@ -2823,7 +2823,7 @@ KIT('f2',[
  ['A','x.sub_gjub','Genjutsu : Étreinte de l\'arbre','Des racines sortent sous l\'ennemi visé (380) : 0,5 s plus tard il est ligoté par un arbre 1,1 s, puis 32 dégâts. Parer (F) à temps brise l\'illusion : « KAI ! »','genjutsu'],
  ['S','x.sub_gcopy','Sharingan : Œil copieur','Copie le dernier jutsu ennemi vu (10 s) et le relance à 90 % ; sans copie, l\'ennemi regardé s\'endort 1,5 s (12 dégâts le réveillent)','genjutsu'],
 ]);
-DASHF[2]={src:'x.sub_d_gen',n:'Pas fantôme',d:'Clignement de 200 vers le curseur ; ton image reste 1 s à ta place et attire les coups',vfx:'genjutsu',cd:7};
+DASHF[2]={src:'x.sub_d_gen',n:'Maboroshi : Pas fantôme',d:'Clignement de 200 vers le curseur ; ton image reste 1 s à ta place et attire les coups',vfx:'genjutsu',cd:7};
 const SUB_GV='#c07aff',SUB_GR='#ff4a5a';
 const subGI=u=>units.indexOf(u);
 // cible d'un regard : ennemi dans la ligne (380 × 70) le plus proche du point visé, sinon un ennemi tout près du point visé
@@ -2855,7 +2855,7 @@ Object.assign(NAT,{
   jx({jfx:'sub_gspin',ti:subGI(e),x:e.x,y:e.y,t:1.5,m:1.5});VFX='genjutsu';const h=hit(e,u,0,{silent:1,unblockable:1});VFX=null;
   if(h&&e.unstop<=0){e.stun=Math.max(e.stun,1.5);e.sleepT=-1.6;e.cast=null;e.chan=null;say(e,'ENDORMI','#ffd8e8');aux.push({type:'sub_sleepw',x:e.x,y:e.y,r:0,t:1.7,m:1.7,team:u.team,sl:[{e,hp:e.hp}]})}}),
  // --- Pas fantôme (dash) : clignement ; l'image fantôme reste 1 s (leurre visé par les bots)
- sub_d_gen:S_('Pas fantôme','Clignement, ton image reste à ta place',7,{hero:'cadbane',ai:ESC},(u,a)=>{const ox=u.x,oy=u.y,q=subFree(fwd(u,a,200),u.r);S('genjutsu',u);anim(u,'crouch',.25);
+ sub_d_gen:S_('Maboroshi : Pas fantôme','Clignement, ton image reste à ta place',7,{hero:'cadbane',ai:ESC},(u,a)=>{const ox=u.x,oy=u.y,q=subFree(fwd(u,a,200),u.r);S('genjutsu',u);anim(u,'crouch',.25);
   subDecoy(u,ox,oy,1,{ghost:1});jx({jfx:'sub_gblink',x:ox,y:oy,x2:q.x,y2:q.y,t:.4,m:.4});u.x=q.x;u.y=q.y;u.dash=null;u.kx=u.ky=0;collide(u)}),
 });
 // ---------- logique (hôte) ----------
@@ -2927,10 +2927,10 @@ KIT('f3',[
  ['A','x.sub_toad','Invocation : Crapaud','Gamabunta s\'écrase sur la zone (32 dégâts, étourdit), puis reste comme rempart sur un sol boueux','smoke'],
  ['S','x.sub_manda','Invocation : Manda','Un serpent géant charge tout droit à travers l\'arène et avale le 1er ennemi touché : caché et neutralisé 1,2 s, puis recraché (42 dégâts au total)','smoke'],
 ]);
-DASHF[3]={src:'x.sub_d_kuc',n:'Monture : Ninken',d:'Un grand chien surgit et t\'emporte sur 260 ; le 1er ennemi bousculé est repoussé (6 dégâts)',vfx:'claws',cd:8};
+DASHF[3]={src:'x.sub_d_kuc',n:'Ninken : Monture',d:'Un grand chien surgit et t\'emporte sur 260 ; le 1er ennemi bousculé est repoussé (6 dégâts)',vfx:'claws',cd:8};
 Object.assign(NAT,{
  // --- Monture : Ninken (dash) : ruée sur le dos d'un chien invoqué ; il bouscule le 1er ennemi rencontré
- sub_d_kuc:S_('Monture : Ninken','Un chien t\'emporte et bouscule le 1er ennemi',8,{hero:'chewie',ai:{mode:'gap',min:120,max:330,p:.45}},(u,a)=>{subPoof(u.x,u.y,46,u);S('dash',u);anim(u,'crouch',.36);u.sub_mnt=.4;
+ sub_d_kuc:S_('Ninken : Monture','Un chien t\'emporte et bouscule le 1er ennemi',8,{hero:'chewie',ai:{mode:'gap',min:120,max:330,p:.45}},(u,a)=>{subPoof(u.x,u.y,46,u);S('dash',u);anim(u,'crouch',.36);u.sub_mnt=.4;
   dash(u,a,260,.34,{jump:16,end:()=>{subPoof(u.x,u.y,40,u)}});aux.push({type:'sub_mnt',x:u.x,y:u.y,r:0,t:.42,m:.42,team:u.team,owner:u,n:0,a})}),
 });
 AUXF.sub_mnt=x=>{const u=x.owner;if(!u||u.dead){if(u)u.sub_mnt=0;x.t=0;return}x.x=u.x;x.y=u.y;u.sub_mnt=x.t>.04?x.t:0;if(x.n)return;
@@ -2948,7 +2948,7 @@ KIT('f4',[
  ['C','x.sub_fuma','Fûma Shuriken','Shuriken géant perçant qui revient vers toi (12 dégâts) : touchée à l\'aller et au retour, la cible est ralentie','shuriken'],
  ['B','x.sub_kshu','Multiclonage de shuriken','Un shuriken qui se multiplie en éventail de 12 : plus l\'ennemi est proche, plus il en prend (5 au plus, 9 dégâts puis 5) ; à partir du 3e, il est ralenti','shuriken'],
  ['A','x.sub_sofu','Sôfûsha : Shuriken à fil','Trois shuriken reliés par un fil d\'acier (8 dégâts chacun) : l\'ennemi pris entre deux (fil ou deux shuriken) est ligoté 1 s','steel'],
- ['S','x.sub_ronde','Ronde des shuriken','6 grands shuriken tournent autour de toi 3 s : ils arrêtent les tirs ennemis et entaillent au contact (6 dégâts) ; relance : ils partent tous sur la visée (9 dégâts chacun), le dernier étourdit 0,8 s','shuriken'],
+ ['S','x.sub_ronde','Shuriken Kaiten : Ronde des shuriken','6 grands shuriken tournent autour de toi 3 s : ils arrêtent les tirs ennemis et entaillent au contact (6 dégâts) ; relance : ils partent tous sur la visée (9 dégâts chacun), le dernier étourdit 0,8 s','shuriken'],
 ]);
 DASHF[4]={src:'x.sub_grap',n:'Kunai à fil',d:'Kunai à fil : te tire jusqu\'au point d\'impact ; sur un ennemi, finit par un coup de pied étourdissant',vfx:'kunai',cd:7};
 const SUB_ST='#d8dde6';
@@ -2959,7 +2959,7 @@ Object.assign(NAT,{
   for(const d of[-.17,0,.17]){proj(u,a+d,{spd:760,r:9,dmg:8,life:.58,col:SUB_ST,vfx:'shuriken',kind:'sub_kbig',pierce:1,onHit:(q,t)=>{const n=(X.H.get(t)||0)+1;X.H.set(t,n);if(n>=2)subSofBind(X,t)}});L.push(projs[projs.length-1])}
   aux.push(X)}),
  // --- Ronde des shuriken : orbite 3 s (relance par u.jst) ; relance ou fin = la volée part
- sub_ronde:S_('Ronde des shuriken','Shuriken en orbite qui arrêtent les tirs ; relance : volée',22,{hero:'padme',ai:{mode:'gap',min:60,max:420,p:.6}},(u,a)=>{const i=subIdx(u,'sub_ronde'),X=aux.find(x=>x.type==='sub_ronde'&&x.owner===u&&x.t>0&&!x.done);
+ sub_ronde:S_('Shuriken Kaiten : Ronde des shuriken','Shuriken en orbite qui arrêtent les tirs ; relance : volée',22,{hero:'padme',ai:{mode:'gap',min:60,max:420,p:.6}},(u,a)=>{const i=subIdx(u,'sub_ronde'),X=aux.find(x=>x.type==='sub_ronde'&&x.owner===u&&x.t>0&&!x.done);
   if(X&&u.jst&&u.jst.key==='sub_ronde'){u.cds[i]=u.jst.cd;u.jst=null;subRondeFire(X,a);return}
   S('saber',u);S('dash',u);anim(u,'spin',.5);for(const x of aux)if(x.type==='sub_ronde'&&x.owner===u)x.t=0;
   aux.push({type:'sub_ronde',x:u.x,y:u.y,r:58,t:3,m:3,team:u.team,owner:u,ui:units.indexOf(u),n:6,k:.4,hs:new Map()});jx({jfx:'sub_rburst',x:u.x,y:u.y,r:70,t:.35,m:.35});
@@ -3088,7 +3088,7 @@ KIT('f7',[
  ['A','x.sub_nr_kyubi','Chakra de Kyûbi','Rugissement qui repousse (8 dégâts). 5 s : tes coups de base lancent des griffes de chakra (7 dégâts, une par seconde). Régénère 2,5 s ; insensible au contrôle 2 s','fox'],
  ['S','x.sub_kshiki','Shiki Fûjin','Le Shinigami se dresse derrière toi 0,7 s (immobile ; un étourdissement brise le rituel), puis sa main saisit le 1er ennemi de la ligne : 34 dégâts, puis âme scellée 3 s (12 dégâts par seconde, ralenti, ni jutsu ni chakra)','chakra'],
 ]);
-DASHF[7]={src:'x.sub_d_kin',n:'Mue du serpent',d:'Glisse de 190, intangible 0,25 s ; ta mue reste sur place 1,5 s et absorbe le prochain tir ennemi',vfx:'shadow',cd:7};
+DASHF[7]={src:'x.sub_d_kin',n:'Dappi : Mue du serpent',d:'Glisse de 190, intangible 0,25 s ; ta mue reste sur place 1,5 s et absorbe le prochain tir ennemi',vfx:'shadow',cd:7};
 const SUB_JR='#d0202e',SUB_SH='#d8c8ff';
 Object.assign(NAT,{
  // --- Marque de Jashin : lien 4 s ; la perte de PV du lanceur est mesurée à chaque image (dégâts finaux, brûlures comprises) et 30 % sont infligés à la cible
@@ -3102,7 +3102,7 @@ Object.assign(NAT,{
   later(u,.7,()=>{if(u.dead||u.stun>0||u.sleepT<0){say(u,'RITUEL BRISÉ',SUB_SH);return}S('shadow',u);
    proj(u,u.aim,{spd:950,r:16,dmg:34,life:.55,col:SUB_SH,kind:'sub_shand',vfx:'chakra',noClash:1,o:{unblockable:1},onHit:(p,t)=>subSoul(p.owner,t)});if(near(u.x,u.y))shake=Math.max(shake,.25)})}),
  // --- Mue du serpent (dash) : glissade intangible ; la mue laissée sur place avale un tir
- sub_d_kin:S_('Mue du serpent','Glissade intangible, la mue absorbe un tir',7,{hero:'maul',ai:ESC},(u,a)=>{const ox=u.x,oy=u.y;S('shadow',u);S('dash',u);anim(u,'lunge',.3);u.phase=Math.max(u.phase||0,.25);
+ sub_d_kin:S_('Dappi : Mue du serpent','Glissade intangible, la mue absorbe un tir',7,{hero:'maul',ai:ESC},(u,a)=>{const ox=u.x,oy=u.y;S('shadow',u);S('dash',u);anim(u,'lunge',.3);u.phase=Math.max(u.phase||0,.25);
   dash(u,a,190,.2,{});aux.push({type:'sub_mue',x:ox,y:oy,a:u.aim,r:26,t:1.5,m:1.5,team:u.team,owner:u,n:0});subPoof(ox,oy,26,u)}),
 });
 // âme scellée : silence (ni jutsu), plus de chakra (ckLock), ralenti, 6 dégâts toutes les 0,5 s
@@ -11503,14 +11503,14 @@ STATD.push((u,p,S,sk)=>{const gv=u.yu_gv|0,fz=u.yu_frz||0;if(!gv&&!(fz>0))return
 KIT('c21',[
  ['D','x.kj_batto','Battô : Coupe du fourreau','Dégaine en arc devant toi (150°) : 13 dégâts ; la lame rengaine aussitôt (trait Iai prêt)','steel'],
  ['D','x.kj_kamae','Kamae : Posture du roc','0,8 s : bloque tout coup au corps à corps porté de face ; chaque coup bloqué déclenche une riposte (14 dégâts)','steel'],
- ['C','x.kj_wave','Lame de chakra : Croissant','Onde tranchante en croissant (portée 380) qui traverse : 20 dégâts à chaque ennemi','steel'],
- ['C','x.kj_kiai','Kiai','Cri de guerre : interrompt les mudras des ennemis proches (150) et les repousse ; 3 s, tes coups de base sont 25 % plus rapides','steel'],
+ ['C','x.kj_wave','Kengeki : Croissant de chakra','Onde tranchante en croissant (portée 380) qui traverse : 20 dégâts à chaque ennemi','steel'],
+ ['C','x.kj_kiai','Kiai : Cri de guerre','Cri de guerre : interrompt les mudras des ennemis proches (150) et les repousse ; 3 s, tes coups de base sont 25 % plus rapides','steel'],
  ['B','x.kj_cross','Jûmonji : Coupe en croix','Deux entailles en X devant toi (la 2e 0,25 s plus tard) : 2 × 14 dégâts ; si les deux touchent : saignement (8 dégâts en 2 s) et ralenti 1 s','steel'],
  ['B','x.kj_uke','Ukenagashi : Lame qui détourne','1 s : le prochain tir qui t\'atteint repart vers son lanceur ; le prochain coup au corps à corps est détourné et l\'attaquant est désarmé 1 s','steel'],
  ['A','x.kj_pass','Iai : Passage du vent','Garde 0,3 s puis tu passes à travers l\'ennemi visé (300 max) ; la coupe tombe 0,4 s après : 36 dégâts, +50 % si le sabre était au fourreau','steel'],
- ['A','x.kj_armor','Armure du Pays du Fer','4 s : 30 % de dégâts en moins, insensible au contrôle 1,5 s ; chaque coup encaissé au corps à corps rengaine ton sabre','steel'],
+ ['A','x.kj_armor','Tetsu no Yoroi : Armure du Pays du Fer','4 s : 30 % de dégâts en moins, insensible au contrôle 1,5 s ; chaque coup encaissé au corps à corps rengaine ton sabre','steel'],
  ['S','x.kj_tenzan','Iai : Tranche-ciel','Garde 0,8 s (demi-cercle d\'alerte de 260) puis coupe en demi-cercle : 60 dégâts, ignore boucliers et parades, étourdi 0,6 s ; frappé pendant la garde, tu coupes aussitôt','steel'],
- ['S','x.kj_seven','Sept fleurs de l\'aube','Intangible 0,9 s : tu fends jusqu\'à 7 fois les ennemis à moins de 220 (4 dégâts par coupe), puis rengaines : la coupe finale inflige 30 dégâts à chacun','steel'],
+ ['S','x.kj_seven','Nanabana : Sept fleurs de l\'aube','Intangible 0,9 s : tu fends jusqu\'à 7 fois les ennemis à moins de 220 (4 dégâts par coupe), puis rengaines : la coupe finale inflige 30 dégâts à chacun','steel'],
 ]);
 Object.assign(NATHERO,{kj:'dooku'});
 // ---------- aides ----------
@@ -11525,9 +11525,9 @@ Object.assign(NAT,{
   for(const e of stIn(u,a,120,2.6))if(hit(e,u,13*m,{melee:1,unblockable:m>1?1:0}))jx({jfx:'st_glint',ti:stI(e),x:e.x,y:e.y,a,t:.3,m:.3});
   kenArc(u,a,120,2.6,{d:1,c:KJ_STEEL,c2:KJ_BLUE,th:8});later(u,.28,()=>{if(!u.dead)kjSheathe(u)})}),
  kj_kamae:S_('Kamae : Posture du roc','',6,{ai:DEF},(u)=>{u.kj_kam=.8;anim(u,'kj_guard',.8);S('deflect',u);jx({jfx:'kj_kamae',ui:stI(u),x:u.x,y:u.y,t:.8,m:.8})}),
- kj_wave:S_('Lame de chakra : Croissant','',8,{line:{len:380,w:44},ai:RG(380,.65)},(u,a)=>{const m=kjDraw(u)?1.3:1;anim(u,'ken_draw',.3);S('saber',u);S('wind',u);
+ kj_wave:S_('Kengeki : Croissant de chakra','',8,{line:{len:380,w:44},ai:RG(380,.65)},(u,a)=>{const m=kjDraw(u)?1.3:1;anim(u,'ken_draw',.3);S('saber',u);S('wind',u);
   proj(u,a,{spd:950,r:22,dmg:20*m,life:.4,pierce:1,col:'#cfe0ff',kind:'kj_wave',o:{unblockable:1}});kenArc(u,a,90,2.2,{c:KJ_STEEL,c2:KJ_BLUE})}),
- kj_kiai:S_('Kiai','',8,{ai:SELF(150,.6)},(u)=>{u.kj_kiai=3;anim(u,'roar',.5);S('roar',u);say(u,'KIAI !','#ffffff');
+ kj_kiai:S_('Kiai : Cri de guerre','',8,{ai:SELF(150,.6)},(u)=>{u.kj_kiai=3;anim(u,'roar',.5);S('roar',u);say(u,'KIAI !','#ffffff');
   for(const e of enemies(u)){if(dist(u,e)>150+e.r)continue;if(e.cast&&e.unstop<=0){e.cast=null;say(e,'INTERROMPU','#fc6')}hit(e,u,3,{kb:240,fx:u.x,fy:u.y})}
   jx({jfx:'shock',x:u.x,y:u.y,r:150,t:.45,m:.45,col:'#e8eef8'});jx({jfx:'kj_kiai',ui:stI(u),x:u.x,y:u.y,t:3,m:3});if(near(u.x,u.y))shake=Math.max(shake,.15)}),
  kj_cross:S_('Jûmonji : Coupe en croix','',10,{line:{len:125,w:150},ai:SELF(120,.65)},(u,a)=>{const m=kjDraw(u)?1.3:1,H=new Set();anim(u,'kj_cross',.5);S('saber',u);
@@ -11538,21 +11538,21 @@ Object.assign(NAT,{
  kj_pass:S_('Iai : Passage du vent','',13,{line:{len:300,w:40},ai:RG(290,.65,60)},(u,a,td)=>{const sh=u.kj_sh&&u.ch.clan===KENJ?1:0,D=tjLock(u,.42);anim(u,'ken_draw',.5);S('saber',u);
   later(u,.3,()=>{if(u.dead||u.dash!==D||u.stun>0)return;if(sh)kjDraw(u);const b=u.aim,e=pick(u,b,td||250,300);let d=300,c=b;if(e){c=ang(u,e);d=Math.min(340,dist(u,e)+e.r+u.r+36)}
    S('dash',u);const sx=u.x,sy=u.y;u.phase=Math.max(u.phase||0,.25);dash(u,c,d,.16,{});aux.push({type:'kj_pass',x:u.x,y:u.y,r:0,t:1,m:1,team:u.team,owner:u,ui:stI(u),d:u.dash,hs:new Set(),sx,sy,a:c,m2:sh?1.5:1,ph:0,k:0})})}),
- kj_armor:S_('Armure du Pays du Fer','',13,{ai:SELF(220,.55)},(u)=>{u.drT=Math.max(u.drT,4);u.dr=Math.max(u.dr||0,.3);u.unstop=Math.max(u.unstop,1.5);u.kj_arm=4;anim(u,'kj_guard',.5);S('heavy',u);say(u,'ARMURE','#c8d0dc');
+ kj_armor:S_('Tetsu no Yoroi : Armure du Pays du Fer','',13,{ai:SELF(220,.55)},(u)=>{u.drT=Math.max(u.drT,4);u.dr=Math.max(u.dr||0,.3);u.unstop=Math.max(u.unstop,1.5);u.kj_arm=4;anim(u,'kj_guard',.5);S('heavy',u);say(u,'ARMURE','#c8d0dc');
   jx({jfx:'kj_armor',ui:stI(u),x:u.x,y:u.y,t:4,m:4})}),
  kj_tenzan:S_('Iai : Tranche-ciel','',22,{tele:{self:1,r:260},ai:SELF(240,.7)},(u,a)=>{const D=tjLock(u,1.05);u.kj_ten=.8;anim(u,'kj_tenzan',1.1);S('saber',u);
   aux.push({type:'kj_ten',x:u.x,y:u.y,a,r:260,t:1,m:1,team:u.team,owner:u,ui:stI(u),d:D})}),
- kj_seven:S_('Sept fleurs de l\'aube','',22,{ai:SELF(220,.7)},(u)=>{u.phase=Math.max(u.phase||0,.95);const cx=u.x,cy=u.y,H=new Set();let n=0;anim(u,'ken_flurry',.9);S('dash',u);say(u,'SEPT FLEURS','#ffd8e8');
+ kj_seven:S_('Nanabana : Sept fleurs de l\'aube','',22,{ai:SELF(220,.7)},(u)=>{u.phase=Math.max(u.phase||0,.95);const cx=u.x,cy=u.y,H=new Set();let n=0;anim(u,'ken_flurry',.9);S('dash',u);say(u,'SEPT FLEURS','#ffd8e8');
   jx({jfx:'kj_petals',x:cx,y:cy,r:220,t:1.2,m:1.2});
   seqs.push({owner:u,n:7,t:.02,iv:.12,vfx:'steel',f:o=>{if(o.dead)return;n++;const L=enemies(o).filter(e=>!e.dead&&Math.hypot(e.x-cx,e.y-cy)<220+e.r);if(!L.length)return;const e=L[n%L.length],b=rnd()*6.28,ox=o.x,oy=o.y;
    o.x=e.x+Math.cos(b)*(e.r+o.r+8);o.y=e.y+Math.sin(b)*(e.r+o.r+8);collide(o);o.aim=ang(o,e);jx({jfx:'ken_shade',ui:stI(o),x:ox,y:oy,x2:o.x,y2:o.y,me:1,t:.3,m:.3});S('saber',o);
    if(hit(e,o,4,{melee:1,unblockable:1}))H.add(e);kenArc(o,o.aim,70,1.8,{d:n%2?1:-1,tl:(rnd()-.5)*1.6,c:'#ffe8f0',c2:'#ff9ac8',th:5,t:.2,m:.2});
    if(n===7)later(o,.12,()=>{if(o.dead)return;for(const t of H)if(!t.dead){hit(t,o,30,{unblockable:1});jx({jfx:'tj_impact',x:t.x,y:t.y,a:0,t:.4,m:.4,big:1,col:'#ffd8e8'})}kjSheathe(o);if(H.size&&near(o.x,o.y)){S('heavy',o);shake=Math.max(shake,.3)}})}})}),
  // dash du clan (Espace) : Suriashi — glissé au ras du sol, le sabre rengaine à l'arrivée
- kj_suri:S_('Suriashi','',5,{ai:{mode:'gap',min:120,max:320,p:.45}},(u,a,td)=>{const d=clamp(td||200,60,200);S('dash',u);anim(u,'kj_slide',.22);
+ kj_suri:S_('Suriashi : Pas glissé','',5,{ai:{mode:'gap',min:120,max:320,p:.45}},(u,a,td)=>{const d=clamp(td||200,60,200);S('dash',u);anim(u,'kj_slide',.22);
   dash(u,a,d,.2,{end:()=>{if(!u.dead)kjSheathe(u)}});jx({jfx:'kj_slide',ui:stI(u),x:u.x,y:u.y,a,t:.32,m:.32})}),
 });
-DASHC[KENJ]={src:'x.kj_suri',n:'Suriashi',d:'Glissé au ras du sol (200) vers le curseur ; à l\'arrivée, le sabre rengaine (trait Iai prêt)',vfx:'steel',cd:5};
+DASHC[KENJ]={src:'x.kj_suri',n:'Suriashi : Pas glissé',d:'Glissé au ras du sol (200) vers le curseur ; à l\'arrivée, le sabre rengaine (trait Iai prêt)',vfx:'steel',cd:5};
 // ---------- logique des objets ----------
 // Passage du vent : ennemis traversés pendant la ruée, la coupe tombe 0,4 s après
 AUXF.kj_pass=(x,dt)=>{const u=x.owner;if(u.dead){x.t=0;return}
@@ -11666,13 +11666,13 @@ JFXD.kj_slide=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x,u.y,6),s=q.s,ca=M
 // arbre de clan à 2 jutsu par rang (les 10 appris), aucun mudra. Trait « Arsenal » : les armes plantées au sol se ramassent et réduisent les recharges.
 // Les « N dégâts » des descriptions sont les dégâts de base des mécaniques (avant puissance du ninja et JBAL.d).
 KIT('c22',[
- ['D','x.bk_volley','Volée de kunai','3 kunai en éventail : 8 dégâts chacun ; ils restent plantés au sol (armes à ramasser)','kunai'],
+ ['D','x.bk_volley','Kunai Rendan : Volée de kunai','3 kunai en éventail : 8 dégâts chacun ; ils restent plantés au sol (armes à ramasser)','kunai'],
  ['D','x.bk_tonfa','Tonfa : Contre','0,7 s : les tonfa bloquent le prochain coup au corps à corps ; l\'attaquant prend 10 dégâts et il est désarmé 0,8 s','kunai'],
- ['C','x.bk_fundo','Masse à chaîne','La masse part au bout de sa chaîne (280) et revient : 14 dégâts à l\'aller et au retour, ralentit','chain'],
- ['C','x.bk_heavy','Parchemin : Arme lourde','4 s : tes coups de base frappent avec une grande hache (+10 d\'allonge, +25 % de dégâts) ; le 5e coup étourdit 0,5 s','kunai'],
- ['B','x.bk_cage','Cage de kunai','8 kunai reliés par un fil se plantent en cercle au point visé (110) : l\'ennemi qui en sort est entravé 0,8 s et prend 16 dégâts','kunai'],
- ['B','x.bk_hammer','Marteau écraseur','Un marteau géant sort du parchemin et s\'abat devant toi 0,4 s après : 30 dégâts, étourdi 0,7 s','kunai'],
- ['A','x.bk_barrage','Arsenal volant','1,2 s : tu lances 12 armes variées vers le curseur (la visée suit) : 4 dégâts chacune ; elles restent au sol','kunai'],
+ ['C','x.bk_fundo','Fundo : Masse à chaîne','La masse part au bout de sa chaîne (280) et revient : 14 dégâts à l\'aller et au retour, ralentit','chain'],
+ ['C','x.bk_heavy','Makimono : Arme lourde','4 s : tes coups de base frappent avec une grande hache (+10 d\'allonge, +25 % de dégâts) ; le 5e coup étourdit 0,5 s','kunai'],
+ ['B','x.bk_cage','Kunai Ori : Cage de kunai','8 kunai reliés par un fil se plantent en cercle au point visé (110) : l\'ennemi qui en sort est entravé 0,8 s et prend 16 dégâts','kunai'],
+ ['B','x.bk_hammer','Ôtsuchi : Marteau écraseur','Un marteau géant sort du parchemin et s\'abat devant toi 0,4 s après : 30 dégâts, étourdi 0,7 s','kunai'],
+ ['A','x.bk_barrage','Buki Shôkan : Arsenal volant','1,2 s : tu lances 12 armes variées vers le curseur (la visée suit) : 4 dégâts chacune ; elles restent au sol','kunai'],
  ['A','x.bk_spin','Kusarigama : Tourbillon','2 s : la faucille tourne autour de toi au bout de sa chaîne (150) en attirant un peu les ennemis : 8 dégâts à chaque passage','chain'],
  ['S','x.bk_soryu','Sôshôryû','Deux parchemins s\'élèvent en dragons jumeaux : une pluie d\'armes s\'abat 1,5 s sur la zone (140) : jusqu\'à 55 dégâts, ralentit ; la zone se couvre d\'armes','kunai'],
  ['S','x.bk_rope','Kôkinjô : Corde d\'or','Lance la corde dorée des Sages (420) : l\'ennemi touché est ligoté 1,4 s, sans jutsu, et subit 30 dégâts ; son chakra fond de 15','gold'],
@@ -11709,18 +11709,18 @@ AFTER.push(()=>UK.push('bk_w','bk_axe','bk_ton'));
 CLOOK[BUKI]=(look)=>{if(!look.back&&!look.gourd)look.back='rouleaux';look.head.eye=look.head.eye||'#6a4a2a'};
 // ---------- mécaniques ----------
 Object.assign(NAT,{
- bk_volley:S_('Volée de kunai','',4,{line:{len:450,w:60},ai:RG(430,.7)},(u,a)=>{anim(u,'throw2',.3);S('blaster',u);u.thrT=.2;
+ bk_volley:S_('Kunai Rendan : Volée de kunai','',4,{line:{len:450,w:60},ai:RG(430,.7)},(u,a)=>{anim(u,'throw2',.3);S('blaster',u);u.thrT=.2;
   for(const d of[-.2,0,.2]){proj(u,a+d,{spd:950,r:7,dmg:8,life:.48,col:'#d8dde6',kind:'bk_kunai'});bkTrack(u,0)}}),
  bk_tonfa:S_('Tonfa : Contre','',6,{ai:DEF},(u)=>{u.bk_ton=.7;anim(u,'kj_guard',.6);S('deflect',u);say(u,'GARDE','#e8d0a8')}),
- bk_fundo:S_('Masse à chaîne','',8,{line:{len:280,w:30},ai:RG(270,.6)},(u,a)=>{anim(u,'throw2',.35);S('heavy',u);u.thrT=.2;
+ bk_fundo:S_('Fundo : Masse à chaîne','',8,{line:{len:280,w:30},ai:RG(270,.6)},(u,a)=>{anim(u,'throw2',.35);S('heavy',u);u.thrT=.2;
   proj(u,a,{spd:700,r:13,dmg:14,life:2,col:'#9aa4b4',ret:280,pierce:1,kind:'bk_mace',o:{slow:.8}});aux.push({type:'buk_chain',x:u.x,y:u.y,r:0,t:2.2,m:2.2,team:u.team,owner:u,ui:stI(u),p:projs[projs.length-1]})}),
- bk_heavy:S_('Parchemin : Arme lourde','',10,{ai:SELF(150,.6)},(u)=>{u.bk_axe=4;anim(u,'summon',.4);S('poof',u);say(u,'ARME LOURDE','#ffd36a');jx({jfx:'bk_scroll',ui:stI(u),x:u.x,y:u.y,t:.6,m:.6})}),
- bk_cage:S_('Cage de kunai','',11,{tele:{r:110,max:380},ai:RG(380,.6)},(u,a,td)=>{const p=atP(u,a,td,380);anim(u,'throw2',.4);S('blaster',u);u.thrT=.2;
+ bk_heavy:S_('Makimono : Arme lourde','',10,{ai:SELF(150,.6)},(u)=>{u.bk_axe=4;anim(u,'summon',.4);S('poof',u);say(u,'ARME LOURDE','#ffd36a');jx({jfx:'bk_scroll',ui:stI(u),x:u.x,y:u.y,t:.6,m:.6})}),
+ bk_cage:S_('Kunai Ori : Cage de kunai','',11,{tele:{r:110,max:380},ai:RG(380,.6)},(u,a,td)=>{const p=atP(u,a,td,380);anim(u,'throw2',.4);S('blaster',u);u.thrT=.2;
   const ins=new Set(enemies(u).filter(e=>Math.hypot(e.x-p.x,e.y-p.y)<110));aux.push({type:'bk_cage',x:p.x,y:p.y,r:110,t:4,m:4,team:u.team,owner:u,ins,done:new Set(),k:0});jx({jfx:'bk_fly8',x:u.x,y:u.y,x2:p.x,y2:p.y,t:.25,m:.25})}),
- bk_hammer:S_('Marteau écraseur','',11,{line:{len:150,w:170},ai:RG(130,.65)},(u,a)=>{const p=fwd(u,a,85);anim(u,'kj_hammer',.6);S('poof',u);S('heavy',u);const D=tjLock(u,.5);
+ bk_hammer:S_('Ôtsuchi : Marteau écraseur','',11,{line:{len:150,w:170},ai:RG(130,.65)},(u,a)=>{const p=fwd(u,a,85);anim(u,'kj_hammer',.6);S('poof',u);S('heavy',u);const D=tjLock(u,.5);
   jx({jfx:'bk_hammer',x:p.x,y:p.y,a,t:.62,m:.62});later(u,.4,()=>{if(u.dead)return;for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<85+e.r)hit(e,u,30,{melee:1,stun:.7,unblockable:1,fx:p.x,fy:p.y});
    jx({jfx:'tj_crater',x:p.x,y:p.y,r:85,t:.9,m:.9});jx({jfx:'shock',x:p.x,y:p.y,r:95,t:.4,m:.4,col:'#e8d0a8'});bkDrop(u,p.x,p.y,4);if(near(p.x,p.y)){S('boom',u);S('rock',u);shake=Math.max(shake,.35)}},{x:p.x,y:p.y,r:85})}),
- bk_barrage:S_('Arsenal volant','',13,{line:{len:420,w:90},ai:RG(400,.7)},(u)=>{const D=tjLock(u,1.25);anim(u,'bk_barrage',1.2);let n=0;jx({jfx:'bk_scroll',ui:stI(u),x:u.x,y:u.y,t:1.2,m:1.2,big:1});
+ bk_barrage:S_('Buki Shôkan : Arsenal volant','',13,{line:{len:420,w:90},ai:RG(400,.7)},(u)=>{const D=tjLock(u,1.25);anim(u,'bk_barrage',1.2);let n=0;jx({jfx:'bk_scroll',ui:stI(u),x:u.x,y:u.y,t:1.2,m:1.2,big:1});
   seqs.push({owner:u,n:12,t:.02,iv:.1,vfx:'kunai',f:o=>{if(o.dash!==D||o.stun>0)return;const p=tjCur(o,420),b=ang(o,p)+(rnd()-.5)*.18,k=n++%5;o.aim=ang(o,p);S('blaster',o);
    proj(o,b,{spd:980,r:8,dmg:4,life:.48,col:'#d8dde6',kind:'bk_wpnp',bk:k});if(n>8)bkTrack(o,k)}})}),
  bk_spin:S_('Kusarigama : Tourbillon','',14,{ai:SELF(170,.65)},(u,a)=>{anim(u,'buk_twirl',2);S('wind',u);aux.push({type:'bk_spin',x:u.x,y:u.y,a,r:150,t:2,m:2,team:u.team,owner:u,ui:stI(u),hs:new Map()})}),
@@ -11845,214 +11845,219 @@ const JCD={}; // (Lotus primaire / Lotus caché : recharge du barème de leur ra
 // SG.BAL 1,15 / SG.TAKE 1), clans recalés sur bal21 (1v1 sans soin, 150 à 400 duels par catégorie) : 44-55 % pour chaque clan / nature, duel médian ≈ 50 s
 // arbres de compétences (format v5) : builds valides tirés au hasard (barres variées, bots qui changent leur barre), 1v1 avec soin, 700 duels par catégorie :
 // clans, natures, arbres de style, familles et sans-clan à 45-55 %, chaque jutsu lancé à 40-60 %, duel médian ≈ 58 s ; TREEBAL / FAMBAL ci-dessous, PREBAL dans nr_pass.js
-const CLANBAL={"0":[0.805,0.767],"1":[0.755,0.755],"2":[1.057,1.076],"3":[0.974,0.876],"4":[0.937,0.945],"5":[1.157,1.18],"6":[1.054,0.877],"7":[1.005,1.058],"8":[0.895,1.008],"9":[1.009,0.85],"10":[0.972,0.579],"11":[1.045,0.89],"12":[1.03,0.972],"13":[1.135,1.124],"14":[0.945,1.293],"15":[1.07,0.955],"16":[0.949,1.103],"17":[1.022,1.084],"18":[0.979,0.952],"19":[0.877,1.038],"20":[0.959,1.144],"21":[1.202,0.779],"22":[1.043,0.829],"-1":[1.003,0.961]},NATBAL={"0":[1.135,0.952],"1":[1.051,1.091],"2":[0.994,1.013],"3":[1.043,0.995],"4":[1.018,1.052]},STYLEBAL={"0":[1.015,1.016],"1":[1.022,1.005],"2":[0.92,0.876],"2:-1":[0.826,0.734],"3":[0.905,0.954],"7":[0.977,1.0],"8":[0.973,0.914],"10":[1.012,1.108],"12":[0.892,1.031],"15":[1.09,1.266],"18":[0.944,0.849],"19":[1.044,0.848],"23":[0.989,1.035],"24":[0.952,0.962],"25":[1.269,1.153],"26":[1.059,1.092],"29":[1.042,1.043],"31":[1.019,1.019],"32":[1.023,1.063],"33":[1.049,1.041]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
+// puis barème borné (JBAL : recharge à 10 % et chakra à 25 % de la fourchette du rang, nr_bal.js blRk) et PREBAL sans barre ni clans martiaux : nouvelle passe,
+// 700 duels par catégorie : clans, natures, arbres et familles à 45-55 %, 233 jutsu sur 235 à 40-60 % ; persos de l'anime à 39-60 % les uns contre les autres
+const CLANBAL={"0":[0.823,0.785],"1":[0.759,0.763],"2":[1.07,1.113],"3":[0.974,0.875],"4":[0.934,0.934],"5":[1.156,1.161],"6":[1.039,0.88],"7":[0.999,1.041],"8":[0.882,0.998],"9":[1.018,0.86],"10":[0.971,0.572],"11":[1.049,0.913],"12":[1.037,0.975],"13":[1.141,1.123],"14":[0.973,1.318],"15":[1.068,0.965],"16":[0.961,1.098],"17":[1.011,1.074],"18":[0.963,0.952],"19":[0.861,1.063],"20":[0.975,1.152],"21":[1.191,0.814],"22":[1.046,0.822],"-1":[1.003,0.961]},NATBAL={"0":[1.131,0.933],"1":[1.019,1.094],"2":[0.993,1.001],"3":[1.031,0.967],"4":[1.001,1.012]},STYLEBAL={"0":[1.027,1.031],"1":[1.006,0.993],"2":[0.905,0.87],"2:-1":[0.812,0.728],"3":[0.898,0.94],"7":[0.983,1.012],"8":[1.0,0.918],"10":[1.027,1.115],"12":[0.913,1.049],"15":[1.121,1.313],"18":[0.943,0.861],"19":[1.041,0.859],"23":[0.997,1.019],"24":[0.982,0.988],"25":[1.278,1.133],"26":[1.081,1.084],"29":[1.028,1.016],"31":[1.009,1.012],"32":[0.996,1.036],"33":[1.05,1.018]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
 // équilibrage par arbre de style (TREEBAL[st]) et par famille de sub (FAMBAL[f], moyenne géométrique des familles prises) : [PV, puissance], défaut [1, 1]
-const TREEBAL={"1":[1.052,1.023],"0":[1.013,1.057],"2":[0.983,0.99]},FAMBAL={"0":[0.849,1.243],"1":[1.009,0.994],"2":[1.034,1.117],"3":[0.912,1.028],"4":[1.035,1.033],"5":[0.944,1.084],"6":[0.982,1.069],"7":[0.935,0.994]};
+const TREEBAL={"1":[1.065,1.058],"0":[1.01,1.061],"2":[0.986,1.013]},FAMBAL={"0":[0.819,1.242],"1":[1.03,1.013],"2":[1.046,1.144],"3":[0.934,1.059],"4":[1.06,1.039],"5":[0.975,1.13],"6":[0.981,1.064],"7":[0.946,1.008]};
 // équilibrage par jutsu (« catégorie|nom ») : d = dégâts ×, cd = recharge (s), ck = coût en chakra ; appliqué par nr_bal.js (les « N dégâts » des descriptions suivent d)
 const JBAL={
- "c0|Amaterasu":{"d":0.4,"cd":19.0},
- "c0|Genjutsu : Tsukuyomi":{"cd":15.0},
+ "c0|Amaterasu":{"d":0.4,"cd":17.6},
+ "c0|Genjutsu : Tsukuyomi":{"cd":13.0,"ck":21},
  "c0|Katon : Gôkakyû":{"d":0.45},
- "c0|Sharingan":{"cd":11.5},
+ "c0|Sharingan":{"cd":11},
  "c0|Susanô : Totsuka":{"d":1.32},
- "c10|Défi éternel":{"cd":5.0},
- "c10|Esquive du fauve":{"cd":8.5},
- "c10|Huit Portes":{"d":0.654},
- "c10|Konoha Daisenpû":{"d":1.226},
- "c10|Konoha Gôriki Senpû":{"cd":13.5},
- "c10|Lotus caché":{"d":0.91},
- "c10|Paon du matin":{"d":1.332},
- "c10|Poids retirés":{"d":1.985},
- "c10|Portes célestes":{"cd":15.5,"ck":28},
- "c10|Éléphant du soir":{"d":0.834},
- "c11|Arbre millénaire":{"d":0.4,"cd":21.0},
- "c11|Fleur carnivore":{"d":0.52},
- "c11|Floraison mortelle":{"d":0.902},
+ "c10|Défi éternel":{"cd":4.5},
+ "c10|Esquive du fauve":{"cd":9.5},
+ "c10|Huit Portes":{"d":0.603},
+ "c10|Konoha Daisenpû":{"d":1.197},
+ "c10|Konoha Gôriki Senpû":{"cd":13.0,"ck":21},
+ "c10|Lotus caché":{"d":0.889},
+ "c10|Paon du matin":{"d":1.391},
+ "c10|Poids retirés":{"d":2.2,"cd":6.0},
+ "c10|Portes célestes":{"cd":13.0,"ck":25},
+ "c10|Éléphant du soir":{"d":0.764},
+ "c11|Arbre millénaire":{"d":0.329,"cd":17.6},
+ "c11|Fleur carnivore":{"d":0.465},
+ "c11|Floraison mortelle":{"d":0.886},
  "c11|Graine épineuse":{"d":0.507},
- "c11|Liane étrangleuse":{"d":0.436},
+ "c11|Liane étrangleuse":{"d":0.415},
  "c12|Grande Kamaitachi":{"d":0.936},
  "c12|Invocation : Kamatari":{"d":0.587},
  "c12|Kamaitachi":{"d":0.647},
- "c12|Rafale de l'éventail":{"cd":13.0},
+ "c12|Rafale de l'éventail":{"cd":11.0,"ck":15},
  "c12|Tempête tranchante":{"d":0.658},
- "c13|Arc d'or : Kumo Senkyû":{"ck":42,"cd":21.0},
+ "c13|Arc d'or : Kumo Senkyû":{"ck":35,"cd":17.5},
  "c13|Armure d'or":{"cd":8.5},
- "c13|Fil d'araignée":{"d":0.701},
+ "c13|Fil d'araignée":{"d":0.675},
  "c13|Filet d'araignée":{"d":0.67},
- "c13|Invocation : Araignée géante":{"d":0.4,"cd":31.0},
- "c14|Armée de marionnettes":{"d":1.269},
- "c14|Brume toxique":{"cd":17.5,"d":1.097},
- "c14|Fils de chakra":{"cd":10.0},
- "c14|Kuroari":{"d":0.637},
- "c14|Senbon empoisonnés":{"d":0.603},
- "c15|Aiguilles de sang":{"d":0.4,"cd":9.0},
- "c15|Fouet de sang":{"cd":11.0,"d":0.792},
- "c15|Ketsuryûgan : Lune de sang":{"d":0.794},
+ "c13|Invocation : Araignée géante":{"d":0.346,"cd":26.4},
+ "c14|Armée de marionnettes":{"d":1.157},
+ "c14|Brume toxique":{"cd":13.2,"d":1.035},
+ "c14|Fils de chakra":{"cd":10.5},
+ "c14|Kuroari":{"d":0.625},
+ "c14|Senbon empoisonnés":{"d":0.578},
+ "c15|Aiguilles de sang":{"d":0.379,"cd":7.7},
+ "c15|Fouet de sang":{"cd":11.0,"d":0.776},
+ "c15|Ketsuryûgan : Lune de sang":{"d":0.777},
  "c15|Ketsuryûgan : Paralysie":{"cd":11.5},
  "c15|Ketsuryûgan : Sang bouillant":{"d":0.704},
- "c16|Cocon de papier":{"d":0.589},
- "c16|Lance de papier":{"d":0.601},
- "c16|Mer de papiers explosifs":{"d":0.565},
- "c16|Papillons shikigami":{"d":0.64},
- "c16|Shuriken de papier":{"d":0.4,"cd":6.5},
- "c17|Danse des mille ombres":{"d":0.587,"ck":66},
+ "c16|Cocon de papier":{"d":0.607},
+ "c16|Lance de papier":{"d":0.626},
+ "c16|Mer de papiers explosifs":{"d":0.543},
+ "c16|Papillons shikigami":{"d":0.666},
+ "c16|Shuriken de papier":{"d":0.433,"cd":6.5},
+ "c17|Danse des mille ombres":{"d":0.587,"ck":50},
  "c17|Kage shuriken":{"d":0.596},
  "c17|Pluie de shuriken":{"d":0.456},
  "c17|Shuriken du croissant":{"d":0.696},
  "c17|Shuriken traceur":{"d":0.551},
- "c18|Fusion avec Samehada":{"cd":20.0,"d":0.556},
- "c18|Samehada : Morsure":{"cd":9.0},
+ "c18|Fusion avec Samehada":{"cd":20.0,"d":0.466},
+ "c18|Samehada : Morsure":{"cd":7.5},
  "c18|Suiton : Daikôdan":{"d":0.407},
- "c18|Suiton : Prison aqueuse":{"d":0.546},
+ "c18|Suiton : Prison aqueuse":{"d":0.525},
  "c18|Suiton : Requins voraces":{"d":0.458},
- "c19|Kubikiribôchô : Décapitation":{"d":0.4,"cd":28.5},
- "c19|Suika : Contre-courant":{"cd":12.0},
- "c19|Suika : Corps-déluge":{"d":0.437},
- "c19|Suika : Gôwan":{"d":0.597},
- "c19|Suirendan":{"d":0.447},
- "c1|Byakugan":{"cd":9.0,"ck":11},
- "c1|Hakke : 64 / 128 points":{"d":0.925},
- "c1|Hakke Kûshô":{"d":0.465},
- "c1|Jûho Sôshiken":{"d":0.666},
- "c1|Kaiten":{"d":1.132},
+ "c19|Kubikiribôchô : Décapitation":{"d":0.369,"cd":26.4},
+ "c19|Suika : Contre-courant":{"cd":10.5},
+ "c19|Suika : Corps-déluge":{"d":0.412},
+ "c19|Suika : Gôwan":{"d":0.621},
+ "c19|Suirendan":{"d":0.457},
+ "c1|Byakugan":{"cd":7.5,"ck":10},
+ "c1|Hakke : 64 / 128 points":{"d":0.875},
+ "c1|Hakke Kûshô":{"d":0.457},
+ "c1|Jûho Sôshiken":{"d":0.638},
+ "c1|Kaiten":{"d":1.108},
  "c20|Hyôton : Dragon de glace":{"d":0.653},
  "c20|Hyôton : Sensatsu Suishô":{"d":0.536},
- "c20|Hyôton : Tsubame Fubuki":{"d":0.421},
+ "c20|Hyôton : Tsubame Fubuki":{"d":0.399},
  "c20|Makyô Hyôshô":{"d":0.464},
- "c20|Miroir de glace":{"d":2.033},
- "c21|Armure du Pays du Fer":{"cd":9.0},
- "c21|Battô : Coupe du fourreau":{"cd":5.0},
- "c21|Iai : Passage du vent":{"d":0.726},
- "c21|Iai : Tranche-ciel":{"d":0.782},
- "c21|Jûmonji : Coupe en croix":{"d":0.834},
- "c21|Kiai":{"cd":5.0,"ck":12},
- "c21|Lame de chakra : Croissant":{"d":0.946},
- "c21|Sept fleurs de l'aube":{"d":0.555},
- "c21|Ukenagashi : Lame qui détourne":{"cd":6.5,"ck":18},
- "c22|Arsenal volant":{"d":1.552},
- "c22|Cage de kunai":{"cd":9.5},
- "c22|Kusarigama : Tourbillon":{"d":1.442},
- "c22|Marteau écraseur":{"d":0.938},
- "c22|Masse à chaîne":{"d":1.186},
- "c22|Parchemin : Arme lourde":{"cd":6.0,"ck":10},
- "c22|Sôshôryû":{"d":0.744},
+ "c20|Miroir de glace":{"d":2.2,"cd":11.0},
+ "c21|Battô : Coupe du fourreau":{"cd":6.0},
+ "c21|Iai : Passage du vent":{"d":0.622},
+ "c21|Iai : Tranche-ciel":{"d":0.684},
+ "c21|Jûmonji : Coupe en croix":{"d":0.709},
+ "c21|Kamae : Posture du roc":{"cd":6.5},
+ "c21|Kengeki : Croissant de chakra":{"d":0.822},
+ "c21|Kiai : Cri de guerre":{"cd":5.5,"ck":11},
+ "c21|Nanabana : Sept fleurs de l'aube":{"d":0.467},
+ "c21|Tetsu no Yoroi : Armure du Pays du Fer":{"cd":10.0,"ck":25},
+ "c21|Ukenagashi : Lame qui détourne":{"cd":7.2,"ck":16},
+ "c22|Buki Shôkan : Arsenal volant":{"d":1.688},
+ "c22|Fundo : Masse à chaîne":{"d":1.158},
+ "c22|Kunai Ori : Cage de kunai":{"cd":9.0},
+ "c22|Kunai Rendan : Volée de kunai":{"d":0.592},
+ "c22|Kusarigama : Tourbillon":{"d":1.589},
+ "c22|Kôkinjô : Corde d'or":{"d":0.946},
+ "c22|Makimono : Arme lourde":{"cd":6,"ck":11},
+ "c22|Sôshôryû":{"d":0.658},
  "c22|Tonfa : Contre":{"cd":4.0},
- "c22|Volée de kunai":{"d":0.688},
- "c2|Kage Kubi Shibari":{"d":0.57},
- "c2|Kage Mane":{"d":0.651},
- "c2|Kage Nui":{"d":0.706},
+ "c22|Ôtsuchi : Marteau écraseur":{"d":0.801},
+ "c2|Kage Kubi Shibari":{"d":0.533},
+ "c2|Kage Mane":{"d":0.596},
+ "c2|Kage Nui":{"d":0.67},
  "c2|Ombres liées":{"d":2.036},
  "c2|Plan du stratège":{"cd":7.5},
- "c3|Chôdan Bakugeki":{"d":0.63},
+ "c3|Chôdan Bakugeki":{"d":0.591},
  "c3|Décuplement partiel":{"cd":13.0},
  "c3|Paume géante":{"d":0.908},
- "c3|Pilule rouge : Mode Papillon":{"cd":31.0,"ck":60},
- "c3|Pilule verte":{"cd":9.0},
+ "c3|Pilule rouge : Mode Papillon":{"cd":26.4,"ck":50},
+ "c3|Pilule verte":{"cd":7.5,"ck":9},
  "c4|Essaim d'insectes":{"d":0.418,"cd":12.5},
  "c4|Insectes chercheurs":{"d":1.088},
  "c4|Insectes espions":{"d":2.132,"cd":7.0},
  "c4|Mur d'insectes":{"d":1.392},
- "c4|Nuée destructrice":{"d":0.4,"cd":26.0},
+ "c4|Nuée destructrice":{"d":0.351,"cd":26.0},
  "c5|Garôga":{"d":0.778},
- "c5|Gatsûga":{"d":1.098},
- "c5|Loup bicéphale":{"cd":31.0},
+ "c5|Gatsûga":{"d":1.172},
+ "c5|Loup bicéphale":{"cd":26.4,"ck":42},
  "c5|Marquage":{"d":1.387},
- "c5|Shikyaku":{"cd":13.0,"ck":21},
- "c6|Cage adamantine":{"d":0.455},
+ "c5|Shikyaku":{"cd":11,"ck":17},
+ "c6|Cage adamantine":{"d":0.442},
  "c6|Chaîne-harpon":{"d":0.839},
- "c6|Entrave du démon":{"d":0.591},
- "c6|Kunai à sceau":{"d":0.4,"cd":4.0},
- "c6|Sceaux : Détonation":{"cd":14.5,"ck":30},
- "c7|Kunai fleuri":{"d":0.57},
+ "c6|Entrave du démon":{"d":0.575},
+ "c6|Kunai à sceau":{"d":0.39,"cd":4.0},
+ "c6|Sceaux : Détonation":{"cd":13.0,"ck":25},
+ "c7|Kunai fleuri":{"d":0.549},
  "c7|Pollen hypnotique":{"cd":11.0},
  "c7|Shinranshin":{"d":0.667},
- "c7|Shintenshin":{"cd":29.0,"ck":60},
- "c7|Tempête de pétales":{"d":0.479},
- "c8|Bouclier absolu":{"d":1.213},
- "c8|Cercueil de sable":{"d":2.015},
- "c8|Funérailles du désert":{"d":0.665},
- "c8|Sable mouvant":{"d":0.673},
- "c8|Tsunami de sable":{"d":0.891},
+ "c7|Shintenshin":{"cd":26.4,"ck":50},
+ "c7|Tempête de pétales":{"d":0.458},
+ "c8|Bouclier absolu":{"d":1.246},
+ "c8|Cercueil de sable":{"d":2.2,"cd":7.0},
+ "c8|Funérailles du désert":{"d":0.632},
+ "c8|Sable mouvant":{"d":0.708},
+ "c8|Tsunami de sable":{"d":0.788},
  "c9|Danse de la clématite":{"d":0.414},
- "c9|Danse des fougères":{"d":0.577},
- "c9|Danse du mélèze":{"cd":15.5},
+ "c9|Danse des fougères":{"d":0.518},
+ "c9|Danse du mélèze":{"cd":13.0,"ck":25},
  "c9|Danse du saule":{"d":1.72},
  "c9|Doigts-balles":{"d":0.567},
- "f0|Byakugô":{"cd":16.0},
- "f0|Pilule du soldat":{"cd":9.0,"ck":12},
+ "f0|Byakugô":{"cd":16.2,"ck":37},
+ "f0|Pilule du soldat":{"cd":7.5,"ck":10},
  "f0|Ranshinshô : Chaos nerveux":{"d":0.98},
- "f0|Scalpel de chakra":{"cd":5.0},
- "f1|Barrière Shishienjin":{"d":0.58},
- "f1|Hiraishin : Danse de l'éclair jaune":{"cd":31.0,"ck":60},
+ "f0|Scalpel de chakra":{"cd":5.5},
+ "f1|Barrière Shishienjin":{"d":0.568},
+ "f1|Hiraishin : Danse de l'éclair jaune":{"cd":26.4,"ck":50},
  "f1|Hiraishin : Kunai marqué":{"d":0.988},
- "f1|Hiraishin : Éclair jaune":{"cd":9.5},
- "f1|Kunai à parchemin explosif":{"d":0.558},
- "f2|Genjutsu : Ténèbres":{"d":0.642},
- "f2|Genjutsu : Étreinte de l'arbre":{"d":0.6},
- "f2|Sharingan : Œil copieur":{"cd":16.5},
- "f3|Chiens ninja":{"d":0.889},
- "f3|Invocation : Crapaud":{"d":0.485},
- "f3|Invocation : Katsuyu":{"cd":14.5},
- "f3|Invocation : Manda":{"d":0.574},
+ "f1|Hiraishin : Éclair jaune":{"cd":8.5},
+ "f1|Kunai à parchemin explosif":{"d":0.52},
+ "f2|Genjutsu : Ténèbres":{"d":0.622},
+ "f2|Genjutsu : Étreinte de l'arbre":{"d":0.571},
+ "f2|Sharingan : Œil copieur":{"cd":16.2,"ck":37},
+ "f3|Chiens ninja":{"d":0.804},
+ "f3|Invocation : Crapaud":{"d":0.426},
+ "f3|Invocation : Katsuyu":{"cd":13.0,"ck":21},
+ "f3|Invocation : Manda":{"d":0.556},
  "f3|Kuchiyose : Rashômon":{"cd":6.0},
- "f4|Fûma Shuriken":{"d":0.963},
+ "f4|Fûma Shuriken":{"d":0.875},
  "f4|Multiclonage de shuriken":{"d":0.692},
- "f4|Ronde des shuriken":{"d":0.749},
+ "f4|Shuriken Kaiten : Ronde des shuriken":{"d":0.749},
  "f4|Sôfûsha : Shuriken à fil":{"d":1.101},
- "f5|Clone explosif":{"d":0.503},
- "f5|Contre du clone":{"cd":11.5},
- "f5|Kage Bunshin : leurre":{"cd":6.5},
+ "f5|Clone explosif":{"d":0.483},
+ "f5|Contre du clone":{"cd":11.0,"ck":15},
+ "f5|Kage Bunshin : leurre":{"cd":5.5},
  "f5|Multiclonage":{"d":0.554},
  "f5|Rasengan":{"d":1.015},
- "f6|Concentration du chakra":{"cd":9.0,"ck":9},
- "f6|Fûton : Rasenshuriken":{"d":0.4,"cd":30.0},
- "f6|Mode Ermite":{"cd":9.5,"ck":22},
+ "f6|Concentration du chakra":{"cd":7.5,"ck":10},
+ "f6|Fûton : Rasenshuriken":{"d":0.362,"cd":26.4},
+ "f6|Mode Ermite":{"cd":10.0,"ck":21},
  "f6|Senpô : Kawazu Kumite":{"cd":8.5},
- "f6|Senpô : Kebari Senbon":{"d":1.674},
- "f7|Argile explosive":{"d":0.517},
- "f7|Chakra de Kyûbi":{"cd":16.5},
- "f7|Marque de Jashin":{"cd":9.0},
+ "f6|Senpô : Kebari Senbon":{"d":1.958},
+ "f7|Argile explosive":{"d":0.497},
+ "f7|Chakra de Kyûbi":{"cd":17.5},
+ "f7|Marque de Jashin":{"cd":7.5,"ck":9},
  "f7|Serpents de l'ombre":{"d":0.51},
- "f7|Shiki Fûjin":{"d":0.77},
- "n0|Katon : Boule de feu suprême":{"cd":7.5},
+ "f7|Shiki Fûjin":{"d":0.725},
+ "n0|Katon : Boule de feu suprême":{"cd":7.2},
  "n0|Katon : Dragon de feu":{"d":0.721},
- "n0|Katon : Flamme":{"d":0.889},
+ "n0|Katon : Flamme":{"d":0.862},
  "n0|Katon : Fournaise":{"d":0.97},
  "n0|Katon : Grand souffle de feu":{"d":1.159},
  "n0|Katon : Mur de feu":{"d":1.349},
- "n0|Katon : Nuée ardente":{"d":0.73},
- "n0|Katon : Shuriken de feu aériens":{"d":1.088},
+ "n0|Katon : Nuée ardente":{"d":0.708},
+ "n0|Katon : Shuriken de feu aériens":{"d":1.058},
  "n0|Katon : Tornade de feu":{"d":0.88},
- "n0|Katon : Triple flamme":{"d":0.981},
- "n1|Suiton : Bakusui Shôha":{"d":0.496},
- "n1|Suiton : Daibakufu":{"d":0.674},
- "n1|Suiton : Dragon aqueux":{"d":1.145},
- "n1|Suiton : Dôme des requins":{"d":0.864},
- "n1|Suiton : Kirigakure":{"cd":6.5},
- "n1|Suiton : Mizurappa":{"d":1.531},
+ "n0|Katon : Triple flamme":{"d":0.928},
+ "n1|Suiton : Bakusui Shôha":{"d":0.434},
+ "n1|Suiton : Daibakufu":{"d":0.632},
+ "n1|Suiton : Dragon aqueux":{"d":1.09},
+ "n1|Suiton : Dôme des requins":{"d":0.723},
+ "n1|Suiton : Kirigakure":{"cd":7.2},
+ "n1|Suiton : Mizurappa":{"d":1.492},
  "n1|Suiton : Suijinheki":{"cd":5.0,"d":1.23},
- "n1|Suiton : Suikôdan":{"d":1.613},
- "n1|Suiton : Suirô":{"d":1.224},
+ "n1|Suiton : Suikôdan":{"d":1.569},
+ "n1|Suiton : Suirô":{"d":1.156},
+ "n1|Suiton : Teppôdama":{"cd":4.5},
  "n2|Fûton : Balle d'air":{"d":0.87},
  "n2|Fûton : Balles chargées":{"d":0.739},
- "n2|Fûton : Couloir de vent":{"d":0.524},
+ "n2|Fûton : Couloir de vent":{"d":0.48},
  "n2|Fûton : Grande balle d'air":{"d":1.183},
  "n2|Fûton : Lame d'air":{"d":1.05},
- "n2|Fûton : Mur de vent":{"cd":5.5},
+ "n2|Fûton : Mur de vent":{"cd":4.5},
  "n2|Fûton : Souffle":{"d":1.133},
  "n2|Fûton : Tornade":{"d":0.853},
  "n2|Fûton : Triple balle d'air":{"d":1.08},
- "n3|Chidori":{"d":1.03},
- "n3|Raiton : Armure de foudre":{"d":0.4,"cd":23.5},
+ "n3|Chidori":{"d":1.053},
+ "n3|Raiton : Armure de foudre":{"d":0.352,"cd":23.5},
  "n3|Raiton : Chidori Eisô":{"d":0.827},
  "n3|Raiton : Chidori Nagashi":{"d":1.213},
- "n3|Raiton : Kage Bunshin":{"d":1.234},
+ "n3|Raiton : Kage Bunshin":{"d":1.437},
  "n3|Raiton : Kirin":{"d":0.854},
  "n3|Raiton : Orage":{"d":1.15},
  "n3|Raiton : Panthère noire":{"d":2.013},
  "n3|Raiton : Éclair":{"d":1.283},
- "n4|Doton : Chute de montagne":{"d":1.102},
- "n4|Doton : Doryûheki":{"d":1.078},
+ "n4|Doton : Chute de montagne":{"d":1.071},
+ "n4|Doton : Doryûheki":{"d":1.12},
  "n4|Doton : Doryûsô":{"d":0.765},
  "n4|Doton : Dragon de terre":{"d":1.033},
  "n4|Doton : Grand séisme":{"d":1.333},
@@ -12063,12 +12068,13 @@ const JBAL={
  "n4|Doton : Yomi Numa":{"d":0.455},
  "t0|Dynamic Entry":{"d":0.914},
  "t0|Lotus primaire":{"d":0.4,"cd":13.5},
- "t0|Tsûtenkyaku":{"d":0.823},
- "t0|Ôkashô":{"d":0.585},
- "t1|Iai : Dégainé éclair":{"cd":5.5},
- "t1|Mikazuki no Mai":{"d":0.584},
- "t1|Ranbu : Tempête de lames":{"d":1.099},
- "t1|Tourbillon d'acier":{"d":1.156},
+ "t0|Tsûtenkyaku : Talon céleste":{"d":0.823},
+ "t0|Ôkashô":{"d":0.606},
+ "t1|Ashigiri : Coupe aux jarrets":{"cd":8.5},
+ "t1|Iai : Dégainé éclair":{"cd":6.0},
+ "t1|Kaiten-giri : Tourbillon d'acier":{"d":1.156},
+ "t1|Mikazuki no Mai : Danse du croissant":{"d":0.556},
+ "t1|Ranbu : Tempête de lames":{"d":1.16},
  "t2|Kongô Nyoi : Bâton infini":{"d":0.817},
  "u|Hiraishin":{"cd":16.0},
  "u|Kage Bunshin : leurre":{"cd":22.5},
@@ -12159,9 +12165,11 @@ function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Ma
  if(o.clan>=0)o.dsh='c';else{const d=String(b.dsh||'b');o.dsh=dashOpts(o).includes(d)?d:'b'}
  return o}
 // nom → jid dans les arbres du build (un même nom peut exister dans plusieurs arbres : celui du build d'abord)
-function pickName(b,n){const L=treesOf(b),c=JL.filter(j=>j.n===n);return(c.find(j=>L.includes(j.cat))||{id:-1}).id}
+// anciens noms de jutsu renommés (« Japonais : Français ») : une sauvegarde qui porte l'ancien nom retrouve le jutsu
+const JREN={"Tsûtenkyaku":"Tsûtenkyaku : Talon céleste","Tourbillon d'acier":"Kaiten-giri : Tourbillon d'acier","Mikazuki no Mai":"Mikazuki no Mai : Danse du croissant","Moulinet du bâton":"Bôjutsu : Moulinet du bâton","Ruée des cent armes":"Hyaku Buki : Ruée des cent armes","Ronde des shuriken":"Shuriken Kaiten : Ronde des shuriken","Kiai":"Kiai : Cri de guerre","Armure du Pays du Fer":"Tetsu no Yoroi : Armure du Pays du Fer","Sept fleurs de l'aube":"Nanabana : Sept fleurs de l'aube","Volée de kunai":"Kunai Rendan : Volée de kunai","Masse à chaîne":"Fundo : Masse à chaîne","Cage de kunai":"Kunai Ori : Cage de kunai","Marteau écraseur":"Ôtsuchi : Marteau écraseur","Arsenal volant":"Buki Shôkan : Arsenal volant","Lame de chakra : Croissant":"Kengeki : Croissant de chakra","Parchemin : Arme lourde":"Makimono : Arme lourde","Suriashi":"Suriashi : Pas glissé","Pas médical":"Iryô : Pas médical","Pas fantôme":"Maboroshi : Pas fantôme","Mue du serpent":"Dappi : Mue du serpent","Monture : Ninken":"Ninken : Monture"};
+function pickName(b,n){n=JREN[n]||n;const L=treesOf(b),c=JL.filter(j=>j.n===n);return(c.find(j=>L.includes(j.cat))||{id:-1}).id}
 // nom + arbre ('Nom|f3') → jid ; repli sur le nom seul dans les arbres du build
-function pickKey(b,s){s=String(s||'');const i=s.lastIndexOf('|'),n=i>=0?s.slice(0,i):s,c=i>=0?s.slice(i+1):'';const J=c&&JL.find(j=>j.n===n&&j.cat===c);return J&&treesOf(b).includes(J.cat)?J.id:pickName(b,n)}
+function pickKey(b,s){s=String(s||'');const i=s.lastIndexOf('|'),n0=i>=0?s.slice(0,i):s,n=JREN[n0]||n0,c=i>=0?s.slice(i+1):'';const J=c&&JL.find(j=>j.n===n&&j.cat===c);return J&&treesOf(b).includes(J.cat)?J.id:pickName(b,n)}
 const jKey=id=>JL[id]?JL[id].n+'|'+JL[id].cat:'';
 // ===================== BARRE DE JUTSU EN COMBAT (6 cases) : recharges qui suivent le jutsu, blocage de 2 s, règles « equip_jutsu_at » =====================
 // Chaque unité a sa propre copie du ninja (unitCh) : u.ch.abil = [style, case 1 … case 6 (null = vide), dash, Kawarimi], u.ch.bar = 6 jid (-1 = vide).
@@ -12177,10 +12185,15 @@ function unitCh(c,bar){const C=CH[c];if(!C||!C.jab)return C;const b=Array.isArra
 const CHF=new Map();
 function chFor(c,barS){const C=CH[c];if(!C||!C.jab||typeof barS!=='string'||!barS)return C;const k=c+'#'+barS;let e=CHF.get(k);
  if(!e||e.C!==C){if(CHF.size>400)CHF.clear();e={C,ch:unitCh(c,barS.split(',').map(Number))};CHF.set(k,e)}return e.ch}
+// nom affiché d'un jutsu pour une unité (alias propre au perso, ex. « Raikiri » pour le Chidori de Kakashi), sinon celui du catalogue
+const jName=(j,u)=>{u=u===undefined?(typeof player!=='undefined'?player:null):u;const a=u&&u.ch&&u.ch.jab&&u.ch.jab[j];return a&&a.n?a.n:JL[j]?JL[j].n:''};
+// nom court (après « Japonais : »), pour les petites cases
+const jShort=n=>{const i=String(n).indexOf(' : ');return i>0?n.slice(i+3):n};
 // recharge restante d'un jutsu appris (barre ou stash)
 function remCd(u,jid){const i=u.ch.bar?u.ch.bar.indexOf(jid):-1;return i>=0?Math.max(0,u.cds[BAR0+i]||0):Math.max(0,(u.cst&&u.cst[jid])||0)}
-// cases « occupées » : un jutsu en canalisation, en relance (jst), arc bandé (hakumei) ou suivi par un objet aux (BARAUX) ; une incantation (u.cast) garde son jutsu (u.cast.ab)
-function barBusy(u){const s=new Set();if(u.chan&&u.chan.i>0)s.add(u.chan.i);if(u.jst&&u.jst.i>0)s.add(u.jst.i);if(u.hm_bw&&u.hm_bw.i>0)s.add(u.hm_bw.i);
+// cases « occupées » : un jutsu en incantation (mudras, u.cast), en canalisation, en relance (jst), arc bandé (hakumei) ou suivi par un objet aux (BARAUX).
+// L'incantation compte aussi : plusieurs mécaniques (canalisations, charges, dôme…) retrouvent leur case par leur clé au moment où elles partent.
+function barBusy(u){const s=new Set();if(u.cast&&u.cast.i>0)s.add(u.cast.i);if(u.chan&&u.chan.i>0)s.add(u.chan.i);if(u.jst&&u.jst.i>0)s.add(u.jst.i);if(u.hm_bw&&u.hm_bw.i>0)s.add(u.hm_bw.i);
  for(const x of aux)if(x.owner===u&&BARAUX.has(x.type)){if(x.i>0)s.add(x.i);if(x.si>0)s.add(x.si)}return s}
 const barNorm=nb=>{const o=[];for(let s=0;s<BARN;s++){const v=nb&&nb[s];o.push(typeof v==='number'&&Number.isInteger(v)&&v>=0&&!o.includes(v)?v:-1)}return o};
 // applique une nouvelle barre (6 jid) : les recharges suivent le jutsu, un jutsu qui ENTRE reçoit max(stash, 2 s), un jutsu qui SORT garde sa recharge dans le stash (u.cst).
@@ -12188,13 +12201,16 @@ const barNorm=nb=>{const o=[];for(let s=0;s<BARN;s++){const v=nb&&nb[s];o.push(t
 function setBar(u,nb){nb=barNorm(nb).map(j=>j>=0&&u.ch.jab&&u.ch.jab[j]?j:-1);const ob=u.ch.bar.slice();
  for(const i of barBusy(u)){const j=ob[i-BAR0];if(j>=0&&!nb.includes(j)){u.barQ=nb;return{ok:true,pend:true}}}
  u.barQ=null;if(ob.every((j,s)=>j===nb[s]))return{ok:true};
- const cd={},cg={};ob.forEach((j,s)=>{if(j>=0){cd[j]=u.cds[BAR0+s];cg[j]=u.chg?u.chg[BAR0+s]:0}});
+ const cd={},cg={};ob.forEach((j,s)=>{if(j>=0){cd[j]=u.cds[BAR0+s];cg[j]=u.chg?u.chg[BAR0+s]:0}});if(!u.cst)u.cst={};if(!u.csg)u.csg={};
  const mp={};ob.forEach((j,s)=>{if(j>=0&&nb.includes(j))mp[BAR0+s]=BAR0+nb.indexOf(j)});
  for(let s=0;s<BARN;s++){const j=nb[s],i=BAR0+s;
   if(j<0){u.ch.abil[i]=null;u.cds[i]=0;if(u.chg)u.chg[i]=0;continue}
   const ab=u.ch.jab[j];u.ch.abil[i]=ab;
-  if(j in cd){u.cds[i]=cd[j];if(u.chg)u.chg[i]=cg[j]}else{u.cds[i]=Math.max((u.cst&&u.cst[j])||0,CDLOCK);if(u.cst)delete u.cst[j];if(u.chg)u.chg[i]=ab&&ab.charges?0:0}}
- if(!u.cst)u.cst={};ob.forEach(j=>{if(j>=0&&!nb.includes(j)&&cd[j]>0)u.cst[j]=cd[j]});
+  if(j in cd){u.cds[i]=cd[j];if(u.chg)u.chg[i]=cg[j]}
+  else if(ab&&ab.charges){const C=ab.charges,g=u.csg[j],n=g?Math.min(C,g.n):C;if(u.chg)u.chg[i]=n;u.cds[i]=n<C?Math.max(.05,u.cst[j]||ab.cd):0;delete u.cst[j];delete u.csg[j];(u.lkj||(u.lkj={}))[j]=SIMT+CDLOCK}
+  else{u.cds[i]=Math.max(u.cst[j]||0,CDLOCK);delete u.cst[j];if(u.chg)u.chg[i]=0}}
+ // sortants : la recharge part au stash ; un jutsu à charges y garde aussi ses charges (u.csg[jid].n, la recharge en cours = temps avant la charge suivante)
+ ob.forEach(j=>{if(j<0||nb.includes(j))return;const ab=u.ch.jab[j];if(ab&&ab.charges){if(cg[j]<ab.charges){u.csg[j]={n:cg[j]};u.cst[j]=Math.max(.05,cd[j]||ab.cd)}}else if(cd[j]>0)u.cst[j]=cd[j]});
  // états qui gardent un n° de case : suivent leur jutsu
  const rm=o=>{if(o&&o.i>0&&mp[o.i])o.i=mp[o.i]};rm(u.chan);rm(u.jst);rm(u.hm_bw);if(u.cast&&u.cast.i>0&&mp[u.cast.i])u.cast.i=mp[u.cast.i];
  for(const x of aux)if(x.owner===u&&BARAUX.has(x.type)){if(x.i>0&&mp[x.i])x.i=mp[x.i];if(x.si>0&&mp[x.si])x.si=mp[x.si]}
@@ -12202,6 +12218,11 @@ function setBar(u,nb){nb=barNorm(nb).map(j=>j>=0&&u.ch.jab&&u.ch.jab[j]?j:-1);co
  u.ch.bar=nb.slice();u.barS=nb.join(',');MBAR[u.c+'|'+u.team]=nb.slice();u.barN=(u.barN||0)+1;
  for(const f of BARCHG)try{f(u,ob,nb)}catch(e){console.error(e)}
  return{ok:true}}
+// stash : décompte hors barre ; un jutsu à charges y regagne ses charges une à une (comme dans la barre)
+function stashTick(u,dt){const T=u.cst;if(!T)return;for(const k in T){if((T[k]-=dt)>0)continue;const g=u.csg&&u.csg[k],ab=g&&u.ch.jab&&u.ch.jab[k];
+ if(g&&ab&&ab.charges){g.n++;if(g.n<ab.charges){T[k]+=ab.cd;continue}delete u.csg[k]}delete T[k]}}
+// blocage d'entrée d'un jutsu à charges (ses charges reviennent avec lui, mais il attend 2 s comme les autres)
+const barLocked=(u,ab)=>!!(ab&&ab.charges&&ab.jid!=null&&u.lkj&&u.lkj[ab.jid]>SIMT);
 // changement en attente (cast/canalisation en cours) : appliqué dès que possible
 function barTry(u){if(u.barQ&&!u.dead)setBar(u,u.barQ)}
 // barre de référence pour composer une demande : celle en attente si elle existe
@@ -12214,6 +12235,11 @@ function equipAt(u,jid,s){if(!u||!u.ch||!u.ch.jab)return{ok:false,e:'unit'};if(t
 function unequipAt(u,s){if(!u||!u.ch||!u.ch.jab)return{ok:false,e:'unit'};if(typeof s!=='number'||!Number.isInteger(s)||s<0||s>=BARN)return{ok:false,e:'slot'};
  const b=barCur(u);if(b[s]<0)return{ok:false,e:'empty'};b.splice(s,1);b.push(-1);return setBar(u,b)}
 // ---------- en ligne ----------
+// version du protocole (format v5 : barre de 6, menu B) : hôte et invité doivent l'avoir tous les deux, sinon la connexion est coupée avec un message
+const NPV=5,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez toi et chez ton ami.';let NVT=0;
+const netVerT=()=>performance.now()-NVT<4000;
+function netVerHost(P){P.nver=1;net.peers=net.peers.filter(x=>x!==P);try{P.conn.send({t:'nver'})}catch(e){}setTimeout(()=>{try{P.conn.close()}catch(e){}},300);setStat('Un ami a une autre version du jeu : il doit recharger la page.');try{sendLobby()}catch(e){}}
+function netVerGuest(){NVT=performance.now();netReset();state='menu';setStat(VERMSG);try{netUI(true)}catch(e){}}
 // demande d'un joueur (menu B, raccourcis) : hors ligne / hôte → appliquée tout de suite ; invité → envoyée à l'hôte, réponse dans BARNET.last (bmAck)
 const BARNET={seq:0,wait:null,last:null};
 function barReq(a,j,s){if(isGuest()&&net.live){const q=++BARNET.seq;BARNET.wait={q,a,j,s,t:performance.now()};netSend({t:'eq',a,j,s,q});return{ok:true,pend:true,net:true,q}}
@@ -12256,11 +12282,13 @@ const BMUI={open:false,frame(dt){},draw(){},mask(){return false},esc(){return fa
 // Les entrées consommées sont retirées de `pressed` (lmb, rmb, Digit/Numpad 1-6, KeyB) avant la simulation et l'envoi des touches de l'invité.
 const BM={tab:0,tgt:-1,scroll:0,hov:-1,msg:'',msgC:'#ffd38a',msgT:0,okMsg:'',lockL:false,fav:null,favK:'',ck:null};
 const BMP={x:W-436,y:82,w:420,h:556};
-const bmTabs=()=>['fav'].concat(player&&player.ch&&player.ch.build?treesOf(player.ch.build):[]);
+// onglets : ★ puis les arbres où le perso a au moins un jutsu appris (un sans-clan à 5 familles n'a pas d'onglet vide)
+const bmTabs=()=>{if(!(player&&player.ch&&player.ch.build))return['fav'];const L=player.ch.learn||[];return['fav'].concat(treesOf(player.ch.build).filter(t=>L.some(j=>JL[j]&&JL[j].cat===t)))};
 const bmOk=()=>state!=='menu'&&state!=='matchEnd'&&!!player&&!!player.ch&&!!player.ch.jab&&!!player.ch.learn;
 const bmBar=()=>player.barQ&&!isGuest()?player.barQ:player.ch.bar||[];
-// case cible : celle choisie au clic, sinon la 1re case libre, sinon la case 1
-const bmTgt=()=>{if(BM.tgt>=0&&BM.tgt<BARN)return BM.tgt;const b=bmBar(),i=b.indexOf(-1);return i>=0?i:0};
+// case cible : celle choisie au clic, sinon la 1re case libre, sinon (barre pleine) la case du jutsu de même rang que celui qu'on pose, sinon la case 1
+const bmTgt=j=>{if(BM.tgt>=0&&BM.tgt<BARN)return BM.tgt;const b=bmBar(),i=b.indexOf(-1);if(i>=0)return i;
+ if(j!=null&&JL[j]&&!b.includes(j)){const r=JL[j].r,k=b.findIndex(x=>x>=0&&JL[x]&&JL[x].r===r);if(k>=0)return k}return 0};
 // favoris : lus une fois à l'ouverture (et après un changement), pas à chaque image
 function bmFavSync(){const k=favKey();if(BM.fav&&BM.favK===k)return;BM.favK=k;const L=favLoad()[k];BM.fav=new Set(Array.isArray(L)?L:[])}
 const bmIsFav=jid=>{bmFavSync();return BM.fav.has(jKey(jid))};
@@ -12275,21 +12303,24 @@ const bmMax=n=>Math.max(0,n*(BML.rh+BML.gap)-BML.gap-bmLH());
 const bmRowR=i=>({x:BMP.x+10,y:BML.y+i*(BML.rh+BML.gap)-BM.scroll,w:BMP.w-30,h:BML.rh});
 const bmStarR=R=>({x:R.x+4,y:R.y+R.h/2-12,w:24,h:24});
 const bmOver=()=>BMUI.open&&inRect(mouse,BMP);
+// menu ouvert : la caméra se décale vers la droite (le centre de la vue passe au milieu de la partie libre de l'écran) pour que le panneau ne cache pas l'adversaire
+function bmCamOff(){if(!BMUI.open||!player)return 0;try{return(W-BMP.x)/2/Math.max(.2,scl(cam.y)*ZM())}catch(e){return 0}}
 function bmSay(s,c,keep){BM.msg=s;BM.msgC=c||'#ffd38a';BM.msgT=keep?6:2.6}
 // réponse locale (hors ligne / hôte) ou accusé d'envoi (invité)
 function bmRes(r,okMsg){if(!r)return;if(!r.ok){bmSay(BARERR[r.e]||'Refusé','#ff7a6a');return}
  if(r.net){BM.okMsg=okMsg;bmSay('Demande envoyée à l\'hôte…','#c8b89a',1);return}
  if(r.pend){bmSay(okMsg+' · à la fin du jutsu en cours','#ffb347',1);return}
  bmSay(okMsg,'#8fe38f')}
-function bmEquip(jid,s){const J=JL[jid];if(!J)return;const b=bmBar(),t=b.indexOf(jid);
- const m=t>=0&&t!==s?`Échange : ${J.n} en case ${s+1}`+(b[s]>=0&&JL[b[s]]?`, ${JL[b[s]].n} en case ${t+1}`:''):`${J.n} → case ${s+1}`+(t<0&&b[s]>=0&&JL[b[s]]?` (remplace ${JL[b[s]].n})`:'');
+function bmEquip(jid,s){const J=JL[jid];if(!J)return;const b=bmBar(),t=b.indexOf(jid),N=jName(jid);
+ const m=t>=0&&t!==s?`Échange : ${N} en case ${s+1}`+(b[s]>=0&&JL[b[s]]?`, ${jName(b[s])} en case ${t+1}`:''):`${N} → case ${s+1}`+(t<0&&b[s]>=0&&JL[b[s]]?` (remplace ${jName(b[s])})`:'');
  const r=barReq('set',jid,s);bmRes(r,m);if(r&&r.ok&&s===BM.tgt)BM.tgt=-1}
-function bmDel(s){const b=bmBar(),n=b[s]>=0&&JL[b[s]]?JL[b[s]].n:'';const r=barReq('del',null,s);bmRes(r,n?`${n} retiré de la case ${s+1}`:`Case ${s+1} vidée`);if(r&&r.ok&&BM.tgt===s)BM.tgt=-1}
+function bmDel(s){const b=bmBar(),n=b[s]>=0&&JL[b[s]]?jName(b[s]):'';const r=barReq('del',null,s);bmRes(r,n?`${n} retiré de la case ${s+1}`:`Case ${s+1} vidée`);if(r&&r.ok&&BM.tgt===s)BM.tgt=-1}
 function bmOpen(v){BMUI.open=v;BM.hov=-1;BM.lockL=false;if(v){BM.fav=null;BM.tgt=-1;const n=bmTabs().length;if(BM.tab>=n)BM.tab=0;
   if(BM.tab===0&&!bmList().length)BM.tab=Math.min(1,n-1)}} // pas de favori : l'onglet de la nature (ou du style)
 const BMD=[1,2,3,4,5,6];
 Object.assign(BMUI,{
  frame(dt){if(BM.msgT>0)BM.msgT-=dt;
+  if(BARNET.wait&&performance.now()-BARNET.wait.t>3000){BARNET.wait=null;bmSay('L\'hôte ne répond pas','#ff7a6a')} // invité : pas de réponse en 3 s
   if(!bmOk()){if(BMUI.open)bmOpen(false);return}
   if(pressed.KeyB){delete pressed.KeyB;if(!quitOn)bmOpen(!BMUI.open)}
   if(quitOn&&BMUI.open)bmOpen(false);
@@ -12313,14 +12344,20 @@ function bmClick(L){if(inRect(mouse,bmClose())){bmOpen(false);return}
  const mx=bmMax(L.length);if(mx>0&&inRect(mouse,{x:BMP.x+BMP.w-18,y:BML.y,w:16,h:bmLH()})){BM.scroll=clamp((mouse.y-BML.y)/bmLH(),0,1)*mx;return}
  if(!inRect(mouse,{x:BMP.x,y:BML.y,w:BMP.w,h:bmLH()}))return;
  for(let i=0;i<L.length;i++){const R=bmRowR(i);if(!inRect(mouse,R))continue;
-  if(inRect(mouse,bmStarR(R))){const on=favToggle(L[i]);BM.fav=null;bmSay(on?`${JL[L[i]].n} ajouté aux favoris`:`${JL[L[i]].n} retiré des favoris`,'#ffd38a');return}
-  bmEquip(L[i],bmTgt());return}}
+  if(inRect(mouse,bmStarR(R))){const on=favToggle(L[i]);BM.fav=null;bmSay(on?`${jName(L[i])} ajouté aux favoris`:`${jName(L[i])} retiré des favoris`,'#ffd38a');return}
+  bmEquip(L[i],bmTgt(L[i]));return}}
 try{cv.addEventListener('wheel',e=>{if(state!=='menu'&&BMUI.open&&inRect(mouse,BMP)){BM.scroll+=e.deltaY*(e.deltaMode?40:1);e.preventDefault()}},{passive:false})}catch(e){}
 // petit rappel au-dessus du HUD quand le menu est fermé
 function bmHint(){if(state==='fight'||state==='countdown')text(`${lbl.KeyB} : changer la barre (sans pause)`,W/2,H-80,10.5,'rgba(159,179,217,.55)','center','normal')}
 // --- dessin
-function bmDraw(){const P=BMP,b=player.ch.bar||[],tg=bmTgt(),L=bmList(),T=bmTabs(),cur=T[BM.tab]||'fav',t=performance.now()/1000;
- g.save();g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=18;rr(P,12,'rgba(14,10,8,.72)','rgba(255,154,58,.55)',1.5);g.restore();
+// ennemis qui passent sous le panneau : repérés par-dessus (anneau rouge, nom, PV) et le panneau devient plus transparent
+function bmUnder(){const o=[];for(const u of units){if(u.dead||u.team===player.team)continue;let q;try{q=P(u.x,u.y)}catch(e){continue}if(q.x>BMP.x-10&&q.x<BMP.x+BMP.w+10&&q.y>BMP.y-20&&q.y<BMP.y+BMP.h+60)o.push([u,q])}
+ return o.sort((a,b)=>Math.hypot(a[0].x-player.x,a[0].y-player.y)-Math.hypot(b[0].x-player.x,b[0].y-player.y)).slice(0,10)}
+function bmMarks(U,t){for(const [u,q] of U){const s=Math.max(.6,q.s||1),r=26*s,y=Math.min(q.y,BMP.y+BMP.h-6);g.save();g.strokeStyle=rgba('#ff4040',.75+Math.sin(t*8)*.2);g.lineWidth=2.5;g.beginPath();g.ellipse(q.x,y,r,r*.45,0,0,7);g.stroke();
+  g.fillStyle='rgba(0,0,0,.6)';g.fillRect(q.x-26,y-86*s,52,6);g.fillStyle='#ff5050';g.fillRect(q.x-26,y-86*s,52*Math.max(0,u.hp/u.max),6);g.restore();
+  g.strokeStyle=rgba('#ff4040',.6);g.lineWidth=1.5;g.beginPath();g.moveTo(q.x,y-80*s);g.lineTo(q.x,y-6);g.stroke();text(u.ch.name,q.x,y-92*s,11,'#ffb0a0','center')}}
+function bmDraw(){const P=BMP,b=player.ch.bar||[],tg=bmTgt(BM.hov>=0?BM.hov:null),L=bmList(),T=bmTabs(),cur=T[BM.tab]||'fav',t=performance.now()/1000,UN=bmUnder();
+ g.save();g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=18;rr(P,12,UN.length&&!inRect(mouse,P)?'rgba(14,10,8,.45)':'rgba(14,10,8,.72)','rgba(255,154,58,.55)',1.5);g.restore();
  // en-tête
  text('BARRE DE JUTSU',P.x+14,P.y+25,15,'#ffb347','left');text('le combat continue',P.x+152,P.y+25,10.5,'#a89070','left','normal');
  {const R=bmClose(),h=inRect(mouse,R);rr(R,7,h?'#ff9a3a':'rgba(50,34,20,.9)','#8a5a2a');text('✕',R.x+R.w/2,R.y+18,14,h?'#1a1008':'#f3d9b0')}
@@ -12331,7 +12368,7 @@ function bmDraw(){const P=BMP,b=player.ch.bar||[],tg=bmTgt(),L=bmList(),T=bmTabs
   const fg=on?(lum(col)>.5?'#1a1008':'#fff'):'#f3d9b0',nm=tr==='fav'?'Favoris':catName(tr),n=tr==='fav'?player.ch.learn.filter(bmIsFav).length:player.ch.learn.filter(j=>JL[j]&&JL[j].cat===tr).length;
   if(tr==='fav'){text('★',R.x+(R.w>70?16:R.w/2),R.y+19,14,on?'#1a1008':'#ffc53a',R.w>70?'center':'center');if(R.w>70)fitT(`${nm} ${n}`,R.x+28,R.y+18.5,11.5,fg,R.w-32,'bold',8)}
   else{const ic=R.w>70;jIcon(ic?R.x+14:R.x+R.w/2,R.y+14,8,col,tr);if(ic)fitT(`${nm} ${n}`,R.x+26,R.y+18.5,11.5,fg,R.w-30,'bold',8)}
-  if(h)hoverTip('bmt'+i,()=>({t:tr==='fav'?'★ Favoris':catName(tr),col,d:tr==='fav'?'Tes jutsu marqués d\'une étoile (gardés pour ce perso, dans ce navigateur).':`${n} jutsu appris dans cet arbre.`}))});
+  if(h)hoverTip('bmt'+i,()=>({ax:BMP.x,t:tr==='fav'?'★ Favoris':catName(tr),col,d:tr==='fav'?'Tes jutsu marqués d\'une étoile (gardés pour ce perso, dans ce navigateur).':`${n} jutsu appris dans cet arbre.`}))});
  // barre de 6 cases
  text('CLIC : CASE CIBLE · CLIC D : VIDER',P.x+P.w/2,P.y+84,9.5,'#9a8060','center','normal');
  for(let s=0;s<BARN;s++){const R=bmSlotR(s),j=b[s],ab=j>=0&&player.ch.jab[j],J=ab&&JL[j],on=s===tg,h=inRect(mouse,R),cd=player.cds[BAR0+s]||0,hv=BM.hov>=0&&b[s]===BM.hov;
@@ -12339,9 +12376,9 @@ function bmDraw(){const P=BMP,b=player.ch.bar||[],tg=bmTgt(),L=bmList(),T=bmTabs
   if(on){g.fillStyle='#ffe81f';g.beginPath();g.moveTo(R.x+R.w/2-6,R.y-7);g.lineTo(R.x+R.w/2+6,R.y-7);g.lineTo(R.x+R.w/2,R.y-1);g.closePath();g.fill()}
   text(lbl['Digit'+(s+1)]||String(s+1),R.x+8,R.y+15,12,on?'#ffe81f':'#cfd8ea','left');
   if(!ab){text('vide',R.x+R.w/2,R.y+38,10,'#5a6680','center','normal')}
-  else{jIcon(R.x+R.w/2+6,R.y+24,12,catCol(J.cat),J.cat,J.r==='S');fitT(ab.n,R.x+R.w/2,R.y+R.h-6,9,'#d8e0f0',R.w-6,'normal',7,'center');
+  else{jIcon(R.x+R.w/2+6,R.y+24,12,catCol(J.cat),J.cat,J.r==='S');text(J.r,R.x+R.w-7,R.y+15,11,RANKC[J.r]||'#cfd8ea','right');fitT(jShort(ab.n),R.x+R.w/2,R.y+R.h-6,10,'#d8e0f0',R.w-4,'normal',8.5,'center');
    if(cd>0&&ab.cd>0){const k=Math.min(1,cd/ab.cd);g.fillStyle='rgba(0,0,0,.55)';g.fillRect(R.x+1,R.y+1+(R.h-2)*(1-k),R.w-2,(R.h-2)*k);text(cd.toFixed(1),R.x+R.w/2+6,R.y+29,12,'#ffe81f')}}
-  if(h)hoverTip('bms'+s,()=>({t:ab?`Case ${s+1} : ${ab.n}`:`Case ${s+1} (vide)`,col:J?catCol(J.cat):'#9fb3d9',l:ab?[[`${catName(J.cat)} · rang ${J.r} · ${jcostT(ab)} · ${fmtCd(ab.cd)}`,J?catCol(J.cat):'#d8b888']]:[],d:ab?ab.d||' ':'Aucun jutsu dans cette case.',f:'Clic G : choisir comme case cible · clic D : vider (les suivantes glissent)'}))}
+  if(h)hoverTip('bms'+s,()=>({ax:BMP.x,t:ab?`Case ${s+1} : ${ab.n}`:`Case ${s+1} (vide)`,col:J?catCol(J.cat):'#9fb3d9',l:ab?[[`${catName(J.cat)} · rang ${J.r} · ${jcostT(ab)} · ${fmtCd(ab.cd)}`,J?catCol(J.cat):'#d8b888']]:[],d:ab?ab.d||' ':'Aucun jutsu dans cette case.',f:'Clic G : choisir comme case cible · clic D : vider (les suivantes glissent)'}))}
  // ligne de statut
  {const y=P.y+168,pend=player.barQ&&!isGuest(),wait=isGuest()&&BARNET.wait&&performance.now()-BARNET.wait.t<3000;
   rr({x:P.x+10,y:y-14,w:P.w-20,h:20},6,'rgba(0,0,0,.35)');
@@ -12365,12 +12402,13 @@ function bmDraw(){const P=BMP,b=player.ch.bar||[],tg=bmTgt(),L=bmList(),T=bmTabs
   // n° de case
   const sb={x:R.x+R.w-34,y:R.y+7,w:28,h:R.h-14};if(eq){rr(sb,6,'#3aa83a','#9fffa0',1);text(String(s+1),sb.x+sb.w/2,sb.y+21,16,'#0c1a0c')}else rr(sb,6,'rgba(0,0,0,.25)','rgba(90,60,30,.6)',1);
   if(!eq&&h)text('+',sb.x+sb.w/2,sb.y+21,16,'#ffb347');
-  if(h)hoverTip('bmr'+j,()=>({t:ab.n,col:liftC(col,.55),l:[[`${catName(J.cat)} · rang ${J.r} · ${jcostT(ab)} · recharge ${fmtCd(ab.cd)}${ab.mud?' · '+ab.mud+' mudras':''}`,liftC(col,.5)],[eq?`Équipé en case ${s+1}`:rem>0?`Recharge restante : ${rem.toFixed(1)} s (elle continue hors de la barre)`:'Prêt',eq?'#8fe38f':'#d8b888']],
-   d:ab.d||' ',f:`Clic : poser en case ${bmTgt()+1} · 1-6 : poser dans cette case${eq?' · clic D : retirer':''}`}))});
+  if(h)hoverTip('bmr'+j,()=>({ax:BMP.x,t:ab.n,col:liftC(col,.55),l:[[`${catName(J.cat)} · rang ${J.r} · ${jcostT(ab)} · recharge ${fmtCd(ab.cd)}${ab.mud?' · '+ab.mud+' mudras':''}`,liftC(col,.5)],[eq?`Équipé en case ${s+1}`:rem>0?`Recharge restante : ${rem.toFixed(1)} s (elle continue hors de la barre)`:'Prêt',eq?'#8fe38f':'#d8b888']],
+   d:ab.d||' ',f:`Clic : poser en case ${bmTgt(j)+1} · 1-6 : poser dans cette case${eq?' · clic D : retirer':''}`}))});
  g.restore();
  if(mx>0){const tr={x:P.x+P.w-14,y:BML.y,w:5,h:lh},k=lh/(lh+mx);rr(tr,2.5,'rgba(255,255,255,.08)');rr({x:tr.x,y:tr.y+(lh-lh*k)*BM.scroll/mx,w:5,h:lh*k},2.5,'#c08040')}
  // pied
  fitT('Clic : poser · survol + 1-6 : poser dans la case · ☆ favori · molette : défiler',P.x+P.w/2,P.y+P.h-11,10,'#9a8060',P.w-24,'normal',8,'center');
+ bmMarks(UN,t);
  // case cible rappelée sur le HUD
  {const n=player.ch.abil.length,s=72,gap=6,x0=W/2-(n*s+(n-1)*gap+20)/2,i=BAR0+tg,x=x0+i*(s+gap)+10,y=H-72;g.save();g.strokeStyle=rgba('#ffe81f',.55+Math.sin(t*6)*.3);g.lineWidth=2;g.setLineDash([5,4]);g.strokeRect(x-3,y-3,s+6,52+6);g.restore()}}
 
@@ -12478,14 +12516,15 @@ function styleAb(i){const S=STYLES[i],b=srcAb(S[2]);return Object.assign({},b,{n
 function mkDashAb(D,shun){D=D||DASHB;let s=srcAb(D.src);if(!s){D=DASHB;s=srcAb(D.src)}const q=D.key0&&JBAL[D.key0]||{};
  return Object.assign({},s,{n:D.n||s.n,d:D.d||s.d,rank:null,ult:false,cast:s.cast,mud:0,noTele:!s.line&&!s.tele,ex:null,src:srcHero(D.src),vfx:D.vfx||null,dash:shun?0:1,shun:shun?1:0,cd:D.cd||Math.max(5,Math.min(8,s.cd||6))},q.d&&q.d!==1?{bdm:q.d}:{})}
 const dashAbOf=b=>mkDashAb(dashOf(b)),shunAbOf=()=>mkDashAb(SHUN,1);
-// équilibrage des persos de l'anime (PREBAL[nom] = [PV, puissance], nr_pass.js) : appliqué à tout build dont le kit appris est EXACTEMENT celui du perso
-// (même clan, nature, arbre de style, attaque de base, familles, jutsu appris et mêmes 6 jutsu dans la barre de départ, dans n'importe quel ordre ; le dash ne compte pas) :
-// même kit = mêmes stats, hors ligne comme en ligne (l'hôte recalcule à partir du build) ; changer la barre en combat ne recalcule rien (les stats restent celles du départ),
-// mais dès qu'un jutsu appris ou la barre de départ change dans la création, le build redevient un ninja ordinaire. La barre compte parce que les clans martiaux
-// apprennent tout leur arbre : Rock Lee et Gaï (ou Tenten et tout Bukijutsuka à l'Arsenal changeant) n'ont que leur barre pour se distinguer
-const preKitSig=b=>[b.clan,b.nat,b.st,b.w,b.fam.slice().sort((x,y)=>x-y).join('.'),b.k.slice().sort((x,y)=>x-y).join('.'),b.bar.filter(j=>j>=0).sort((x,y)=>x-y).join('.')].join('|');
+// équilibrage des persos de l'anime (PREBAL[nom] = [PV, puissance], nr_pass.js) : appliqué à tout build dont le kit APPRIS est exactement celui du perso
+// (même clan, nature, arbre de style, attaque de base, familles et jutsu appris ; ni la barre de départ ni le dash ne comptent, DESIGN §2 : les stats ne dépendent
+// jamais de la barre). Même kit = mêmes stats, hors ligne comme en ligne (l'hôte recalcule à partir du build).
+// Clans martiaux exclus : tout leur arbre est appris d'office, leur kit appris est donc celui de TOUT le clan (Rock Lee = Gaï = n'importe quel Taijutsuka) ;
+// leur réglage passe par CLANBAL.
+const preKitSig=b=>[b.clan,b.nat,b.st,b.w,b.fam.slice().sort((x,y)=>x-y).join('.'),b.k.slice().sort((x,y)=>x-y).join('.')].join('|');
 let PRESIG=null;
-function preBal(b){if(!PRESIG){if(typeof PRESETS==='undefined'||typeof PREBAL==='undefined')return[1,1];PRESIG={};PRESETS.forEach((P,i)=>{const v=PREBAL[P.n];if(!v)return;try{const k=preKitSig(presetBuild(i,P.n,P.side));if(!PRESIG[k])PRESIG[k]=v}catch(e){}})}
+function preBal(b){if(isMartial(b.clan))return[1,1];if(!PRESIG){if(typeof PRESETS==='undefined'||typeof PREBAL==='undefined')return[1,1];const A={};PRESETS.forEach((P,i)=>{const v=PREBAL[P.n];if(!v||isMartial(P.clan))return;try{const k=preKitSig(presetBuild(i,P.n,P.side));(A[k]=A[k]||[]).push(v)}catch(e){}});
+  PRESIG={};for(const k in A){const L=A[k],g=j=>Math.pow(L.reduce((a,v)=>a*v[j],1),1/L.length);PRESIG[k]=[g(0),g(1)]}}
  return PRESIG[preKitSig(b)]||[1,1]}
 const famBal=F=>{let h=1,p=1;for(const f of F){const v=FAMBAL[f]||[1,1];h*=v[0];p*=v[1]}const n=F.length||1;return[Math.pow(h,1/n),Math.pow(p,1/n)]};
 // stats : moyenne des persos de référence des mécaniques (le style compte pour 5, les jutsu APPRIS pour 5 en tout : la barre ne change rien),
@@ -12552,32 +12591,33 @@ function drawAura(u,p,S,sk,front){const v=u.auraV,t=performance.now()/1000,cx=p.
  g.restore()}
 // ---------- Ultime : bandeau d'annonce façon jeux de combat ----------
 let cutin=null;
-function drawCutin(){if(!cutin)return;cutin.t-=1/60;if(cutin.t<=0){cutin=null;return}const k=cutin.t,in_=Math.min(1,(1.4-k)*6),out=Math.min(1,k*4),a=Math.min(in_,out),y=H*.38;
+function drawCutin(){if(!cutin)return;cutin.t-=1.25/60; // environ 1,1 s à l'écran
+if(cutin.t<=0){cutin=null;return}const k=cutin.t,in_=Math.min(1,(1.4-k)*6),out=Math.min(1,k*4),a=Math.min(in_,out),y=H*.22; // haut de l'écran : l'attaque annoncée au sol reste visible
  g.save();g.globalAlpha=a;g.translate((1-in_)*-300,0);g.fillStyle='rgba(10,6,4,.78)';g.beginPath();g.moveTo(0,y-40);g.lineTo(W,y-62);g.lineTo(W,y+22);g.lineTo(0,y+44);g.fill();
  g.fillStyle=cutin.col;g.fillRect(0,y+38,W,3);g.save();g.translate(W*.5,y);g.rotate(-.018);g.shadowColor=cutin.col;g.shadowBlur=24;text(cutin.s,0,6,46,'#fff4d8');g.restore();text(cutin.who,W*.5,y+30,15,cutin.col,'center');g.restore()}
 // ---------- Persos de l'anime : kits préfaits (apparence + build fidèles au personnage) ----------
-// n nom court (aussi le nom du bot), full nom complet, g groupe (GALG : groupe affiché sur la ligne d'identité de la fiche ; la section de la liste vient de sec, sinon de g, voir rosSec), side camp du bot (0 Alliance, 1 Akatsuki), nat, clan (-1 sans), voie (0 taijutsu, 1 équilibré, 2 ninjutsu),
-// pass passif, sty style de combat, j 5 jutsu (Clic D, Espace, Q, E, T), l apparence {v village,t tenue,c coiffure,h cheveux,p peau,k chakra,a accessoire,f visage,b bandeau,d dos, e yeux,o/s couleurs de tenue,z taille,w carrure,r bras,n cou}, d jeu en une ligne
+// n nom court (aussi le nom du bot), full nom complet, g groupe (GALG : groupe affiché sur la ligne d'identité de la fiche), sec section de la liste (sinon d'après le clan ou g, voir rosSec),
+// side camp du bot (0 Alliance, 1 Akatsuki), nat nature, clan (-1 sans), sty style de combat (Clic G), st arbre de style, fam familles de sub, dsh dash, k jutsu appris (noms), bar barre de départ (6 noms), al alias, l apparence {v village,t tenue,c coiffure,h cheveux,p peau,k chakra,a accessoire,f visage,b bandeau,d dos, e yeux,o/s couleurs de tenue,z taille,w carrure,r bras,n cou}, d jeu en une ligne
 // équilibrage par perso (simulateur, mode « persos » : chaque perso contre les autres, 40-60 % visés) : [PV, puissance] ; voir preBal (nr_ninja.js)
-const PREBAL={"Chino":[0.994,0.994],"Chôji":[0.964,0.964],"Danzô":[1.053,1.053],"Deidara":[1.088,1.088],"Gaara":[1.006,1.006],"Gaï":[0.95,0.95],"Haku":[1.086,1.086],"Hidan":[1.032,1.032],"Hinata":[0.953,0.953],"Hiruzen":[1.057,1.057],"Itachi":[0.966,0.966],"Jiraiya":[1.017,1.017],"Kabuto":[1.136,1.136],"Kakashi":[1.058,1.058],"Kankurô":[0.973,0.973],"Kiba":[0.974,0.974],"Kidômaru":[0.971,0.971],"Kimimaro":[0.906,0.906],"Kisame":[1.011,1.011],"Konan":[1.039,1.039],"Kushina":[0.857,0.857],"Mifune":[1.015,1.015],"Minato":[1.061,1.061],"Naruto":[1.099,1.099],"Neji":[1.017,1.017],"Orochimaru":[0.992,0.992],"Pain":[0.978,0.978],"Rock Lee":[1.007,1.007],"Sakura":[1.007,1.007],"Sasame":[1.015,1.015],"Sasori":[0.985,0.985],"Sasuke":[1.037,1.037],"Shikamaru":[0.961,0.961],"Suigetsu":[0.967,0.967],"Temari":[0.986,0.986],"Tenten":[0.972,0.972],"Tsunade":[1.118,1.118],"Zabuza":[1.021,1.021]};
+const PREBAL={"Chino":[0.994,0.994],"Chôji":[0.978,0.978],"Danzô":[1.037,1.037],"Deidara":[1.088,1.088],"Gaara":[1.006,1.006],"Haku":[1.11,1.11],"Hidan":[1.074,1.074],"Hinata":[0.972,0.972],"Hiruzen":[1.057,1.057],"Ino":[1.023,1.023],"Itachi":[0.961,0.961],"Jiraiya":[1.05,1.05],"Kabuto":[1.099,1.099],"Kakashi":[1.04,1.04],"Kankurô":[0.988,0.988],"Kiba":[0.983,0.983],"Kidômaru":[0.971,0.971],"Kimimaro":[0.924,0.924],"Kisame":[0.995,0.995],"Konan":[1.039,1.039],"Kushina":[0.842,0.842],"Minato":[1.046,1.046],"Naruto":[1.079,1.079],"Neji":[1.017,1.017],"Pain":[0.919,0.919],"Sakura":[1.023,1.023],"Sasame":[1.031,1.031],"Sasori":[0.977,0.977],"Sasuke":[1.018,1.018],"Shikamaru":[0.936,0.936],"Shino":[1.016,1.016],"Suigetsu":[0.982,0.982],"Temari":[0.963,0.963],"Tsunade":[1.084,1.084],"Zabuza":[1.027,1.027]};
 const GALG=['Équipe 7','Akatsuki','Sannin & Hokage','Konoha','Suna','Oto','Kiri','Autres clans'];
 const PRESETS=[
  {n:'Naruto',full:'Naruto Uzumaki',g:0,side:0,nat:2,clan:-1,sty:'Taijutsu',st:0,fam:[5,7],dsh:'f5',k:['Fûton : Balle d\'air','Fûton : Grande balle d\'air','Fûton : Rafale à bout portant','Fûton : Lame d\'air','Fûton : Couloir de vent','Kage Bunshin : leurre','Contre du clone','Clone explosif','Chakra de Kyûbi','Rasengan'],bar:['Rasengan','Contre du clone','Kage Bunshin : leurre','Chakra de Kyûbi','Fûton : Lame d\'air','Fûton : Couloir de vent'],l:{v:0,t:8,c:0,h:0,p:0,k:4,a:0,f:1,b:0,d:0,e:2,y:2},d:'Fonceur increvable : clones, Rasengan au contact, chakra de Kyûbi et couloir de vent'},
  {n:'Sasuke',full:'Sasuke Uchiha',g:0,side:1,nat:3,clan:0,sty:'Kenjutsu',st:1,k:['Raiton : Chidori Senbon','Raiton : Chidori Nagashi','Raiton : Chidori Eisô','Chidori','Raiton : Kirin'],bar:['Chidori','Raiton : Chidori Nagashi','Katon : Gôkakyû','Sharingan','Raiton : Kirin','Iai : Dégainé éclair'],l:{v:0,t:9,c:6,h:15,p:0,k:3,a:0,f:0,b:8,d:0,r:4,w:1},d:'Sabre et foudre : Chidori qui perce, Sharingan qui lit, Kirin qui achève'},
- {n:'Sakura',full:'Sakura Haruno',g:0,side:0,nat:4,clan:-1,sty:'Taijutsu',st:0,fam:[0],dsh:'f0',k:['Doton : Rocher','Doton : Doryûsô','Doton : Main de terre','Doton : Kajûgan','Doton : Grand séisme','Pilule du soldat','Scalpel de chakra','Shôsen','Ranshinshô : Chaos nerveux','Byakugô'],bar:['Ôkashô','Scalpel de chakra','Shôsen','Tsûtenkyaku','Doton : Grand séisme','Pilule du soldat'],l:{v:0,t:37,c:7,h:2,p:0,k:2,a:0,f:0,b:3,d:0,r:3,e:4},d:'Médecin de choc : poings qui fendent le sol et soins rapides'},
+ {n:'Sakura',full:'Sakura Haruno',g:0,side:0,nat:4,clan:-1,sty:'Taijutsu',st:0,fam:[0],dsh:'f0',k:['Doton : Rocher','Doton : Doryûsô','Doton : Main de terre','Doton : Kajûgan','Doton : Grand séisme','Pilule du soldat','Scalpel de chakra','Shôsen','Ranshinshô : Chaos nerveux','Byakugô'],bar:['Ôkashô','Scalpel de chakra','Shôsen','Tsûtenkyaku : Talon céleste','Doton : Grand séisme','Pilule du soldat'],l:{v:0,t:37,c:7,h:2,p:0,k:2,a:0,f:0,b:3,d:0,r:3,e:4},d:'Médecin de choc : poings qui fendent le sol et soins rapides'},
  {n:'Kakashi',full:'Kakashi Hatake',g:0,side:0,nat:3,clan:-1,sty:'Kunai au poing',st:2,fam:[5,3,2],dsh:'n',k:['Raiton : Éclair','Raiton : Kage Bunshin','Raiton : Panthère noire','Chidori','Raiton : Kirin','Kage Bunshin : leurre','Chiens ninja','Clone explosif','Multiclonage','Sharingan : Œil copieur'],bar:['Chidori','Raiton : Kage Bunshin','Chiens ninja','Raiton : Panthère noire','Sharingan : Œil copieur','Raiton : Kirin'],l:{v:0,t:29,c:8,h:8,p:0,k:0,a:1,f:17,b:1,d:0,r:3,z:2,g:2},d:'Ninja copieur : ses chiens entravent, le Raikiri transperce'},
  {n:'Itachi',full:'Itachi Uchiha',g:1,side:1,nat:0,clan:0,sty:'Taijutsu Uchiha',st:0,k:['Katon : Flamme','Katon : Shuriken de feu aériens','Katon : Boule de feu suprême','Katon : Dragon de feu','Katon : Grand souffle de feu'],bar:['Katon : Gôkakyû','Katon : Shuriken de feu aériens','Sharingan','Genjutsu : Tsukuyomi','Amaterasu','Susanô : Totsuka'],l:{v:0,t:2,c:9,h:1,p:0,k:1,a:0,f:3,b:2,d:0,r:6,n:6,w:1},d:'Maître du genjutsu : corbeaux, Tsukuyomi, Amaterasu et Susanô'},
  {n:'Deidara',full:'Deidara',g:1,side:1,nat:4,clan:-1,sty:'Kunai au poing',st:2,fam:[7,1,5],dsh:'b',k:['Doton : Doryûheki','Doton : Doryûsô','Doton : Main de terre','Doton : Dragon de terre','Doton : Chute de montagne','Kage Bunshin : leurre','Kunai à parchemin explosif','Argile explosive','Multiclonage'],vide:['fam:S'],bar:['Argile explosive','Kunai à parchemin explosif','Kage Bunshin : leurre','Doton : Doryûheki','Doton : Dragon de terre','Doton : Chute de montagne'],l:{v:4,t:2,c:10,h:0,p:0,k:4,a:3,f:0,b:2,d:0,r:6,e:2},d:'L\'art est une explosion : oiseaux d\'argile, clones piégés, « Katsu ! »'},
  {n:'Kisame',full:'Kisame Hoshigaki',g:1,side:1,nat:1,clan:18,sty:'Samehada',st:1,k:['Suiton : Teppôdama','Suiton : Suikôdan','Suiton : Kirigakure','Suiton : Daibakufu','Suiton : Dôme des requins'],bar:['Suiton : Requins voraces','Suiton : Prison aqueuse','Suiton : Daikôdan','Fusion avec Samehada','Suiton : Dôme des requins','Samehada : Morsure'],l:{v:2,t:2,c:11,h:13,p:5,k:0,a:0,f:8,b:2,d:3,r:6,z:2,w:2},d:'Requin de Kiri : requins d\'eau, prison aqueuse, Samehada qui dévore le chakra'},
  {n:'Sasori',full:'Sasori',g:1,side:1,nat:0,clan:14,sty:'Lames de marionnette',st:2,k:['Katon : Flamme','Katon : Triple flamme','Katon : Fournaise','Katon : Tornade de feu','Katon : Nuée ardente'],bar:['Senbon empoisonnés','Fils de chakra','Brume toxique','Kuroari','Armée de marionnettes','Katon : Flamme'],l:{v:1,t:2,c:12,h:7,p:0,k:1,a:0,f:0,b:2,d:0,r:6,z:1},d:'Marionnettiste : senbon et brume empoisonnés, fils de chakra, puis son armée de marionnettes'},
- {n:'Hidan',full:'Hidan',g:1,side:1,nat:3,clan:-1,sty:'Kusarigama',st:2,fam:[7,0],dsh:'b',k:['Raiton : Éclair','Raiton : Chidori Nagashi','Raiton : Panthère noire','Raiton : Orage','Raiton : Armure de foudre','Marque de Jashin','Shôsen','Byakugô'],vide:['fam:C','fam:A'],bar:['Kusarigama : Harpon','Marque de Jashin','Moulinet du bâton','Byakugô','Ruée des cent armes','Raiton : Armure de foudre'],l:{v:8,t:32,c:13,h:8,p:4,k:1,a:0,f:0,b:2,d:4,n:4,r:6,e:7},d:'Immortel de Jashin : faux à chaîne, marque du rituel et plaies qui se referment'},
+ {n:'Hidan',full:'Hidan',g:1,side:1,nat:3,clan:-1,sty:'Kusarigama',st:2,fam:[7,0],dsh:'b',k:['Raiton : Éclair','Raiton : Chidori Nagashi','Raiton : Panthère noire','Raiton : Orage','Raiton : Armure de foudre','Marque de Jashin','Shôsen','Byakugô'],vide:['fam:C','fam:A'],bar:['Kusarigama : Harpon','Marque de Jashin','Bôjutsu : Moulinet du bâton','Byakugô','Hyaku Buki : Ruée des cent armes','Raiton : Armure de foudre'],l:{v:8,t:32,c:13,h:8,p:4,k:1,a:0,f:0,b:2,d:4,n:4,r:6,e:7},d:'Immortel de Jashin : faux à chaîne, marque du rituel et plaies qui se referment'},
  {n:'Pain',full:'Pain (Nagato)',g:1,side:1,nat:4,clan:6,sty:'Chaînes au poing',st:2,k:['Doton : Rocher','Doton : Yomi Numa','Doton : Main de terre','Doton : Kajûgan','Doton : Chute de montagne'],bar:['Chaîne-harpon','Doton : Kajûgan','Sceaux : Détonation','Cage adamantine','Doton : Chute de montagne','Kunai à sceau'],l:{v:7,t:2,c:14,h:10,p:0,k:3,a:0,f:9,b:2,d:0,r:6,z:2,w:1},d:'Rinnegan : chaînes qui harponnent, sceaux et gravité qui écrase tout'},
  {n:'Konan',full:'Konan',g:1,side:1,nat:2,clan:16,sty:'Mains-lames de papier',st:2,k:['Fûton : Mur de vent','Fûton : Triple balle d\'air','Fûton : Balles chargées','Fûton : Lame d\'air','Fûton : Tornade'],bar:['Shuriken de papier','Lance de papier','Papillons shikigami','Cocon de papier','Mer de papiers explosifs','Fûton : Lame d\'air'],l:{v:7,t:2,c:15,h:11,p:4,k:5,a:0,f:0,b:8,d:0,r:6,e:5},d:'Ange de papier : papillons qui traquent, cocon qui enserre, mer de papiers explosifs'},
- {n:'Jiraiya',full:'Jiraiya',g:2,side:0,nat:4,clan:-1,sty:'Taijutsu',st:0,fam:[3,6,5],dsh:'f6',k:['Doton : Doryûheki','Doton : Yomi Numa','Doton : Kyôka','Doton : Dragon de terre','Doton : Grand séisme','Concentration du chakra','Senpô : Kawazu Kumite','Senpô : Kebari Senbon','Invocation : Crapaud','Rasengan'],bar:['Rasengan','Doton : Yomi Numa','Senpô : Kebari Senbon','Invocation : Crapaud','Senpô : Kawazu Kumite','Doton : Dragon de terre'],l:{v:0,t:14,c:16,h:4,p:0,k:0,a:0,f:7,b:7,d:2,z:2,w:2},d:'Ermite des crapauds : marécage, aiguilles de cheveux, Rasengan et Gamabunta'},
- {n:'Tsunade',full:'Tsunade',g:2,side:0,nat:4,clan:-1,sty:'Taijutsu',st:0,fam:[0,3],dsh:'f0',k:['Doton : Rocher','Doton : Doryûsô','Doton : Kyôka','Doton : Kajûgan','Doton : Grand séisme','Pilule du soldat','Scalpel de chakra','Invocation : Katsuyu','Ranshinshô : Chaos nerveux','Byakugô'],bar:['Ôkashô','Scalpel de chakra','Invocation : Katsuyu','Tsûtenkyaku','Byakugô','Ranshinshô : Chaos nerveux'],l:{v:0,t:15,c:17,h:0,p:0,k:2,a:0,f:5,b:8,d:0,n:3,e:5},d:'Princesse des limaces : force titanesque, Byakugô et soins de Katsuyu'},
+ {n:'Jiraiya',full:'Jiraiya',g:2,side:0,nat:4,clan:-1,sty:'Taijutsu',st:0,fam:[6,5],dsh:'f6',k:['Doton : Doryûheki','Doton : Yomi Numa','Doton : Kyôka','Doton : Dragon de terre','Doton : Grand séisme','Concentration du chakra','Senpô : Kawazu Kumite','Senpô : Kebari Senbon','Mode Ermite','Rasengan'],bar:['Rasengan','Doton : Yomi Numa','Senpô : Kebari Senbon','Mode Ermite','Senpô : Kawazu Kumite','Doton : Dragon de terre'],l:{v:0,t:14,c:16,h:4,p:0,k:0,a:0,f:7,b:7,d:2,z:2,w:2},d:'Ermite des crapauds : marécage, aiguilles de cheveux, Mode Ermite et Rasengan'},
+ {n:'Tsunade',full:'Tsunade',g:2,side:0,nat:4,clan:-1,sty:'Taijutsu',st:0,fam:[0,3],dsh:'f0',k:['Doton : Rocher','Doton : Doryûsô','Doton : Kyôka','Doton : Kajûgan','Doton : Grand séisme','Pilule du soldat','Scalpel de chakra','Invocation : Katsuyu','Ranshinshô : Chaos nerveux','Byakugô'],bar:['Ôkashô','Scalpel de chakra','Invocation : Katsuyu','Tsûtenkyaku : Talon céleste','Byakugô','Ranshinshô : Chaos nerveux'],l:{v:0,t:15,c:17,h:0,p:0,k:2,a:0,f:5,b:8,d:0,n:3,e:5},d:'Princesse des limaces : force titanesque, Byakugô et soins de Katsuyu'},
  {n:'Orochimaru',full:'Orochimaru',g:2,sec:'Oto',side:1,nat:2,clan:-1,sty:'Kenjutsu',st:1,fam:[3,7,1],dsh:'f7',k:['Fûton : Balle d\'air','Fûton : Grande balle d\'air','Fûton : Rafale à bout portant','Fûton : Souffle','Fûton : Tornade','Kuchiyose : Rashômon','Serpents de l\'ombre','Barrière Shishienjin','Invocation : Manda'],vide:['fam:B'],bar:['Serpents de l\'ombre','Iai : Dégainé éclair','Kuchiyose : Rashômon','Barrière Shishienjin','Fûton : Grande balle d\'air','Invocation : Manda'],l:{v:5,t:16,c:18,h:1,p:6,k:3,a:0,f:10,b:8,d:0,z:2,w:1},d:'Sannin des serpents : Kusanagi, serpents qui attirent, portail Rashômon et Manda'},
  {n:'Hiruzen',full:'Hiruzen Sarutobi',g:2,side:0,nat:0,clan:-1,sty:'Bô',st:2,fam:[4,5,7],dsh:'n',k:['Katon : Flamme','Katon : Triple flamme','Katon : Boule de feu suprême','Katon : Dragon de feu','Katon : Grand souffle de feu','Kage Bunshin : leurre','Fûma Shuriken','Multiclonage de shuriken','Multiclonage','Shiki Fûjin'],bar:['Multiclonage de shuriken','Katon : Dragon de feu','Multiclonage','Katon : Grand souffle de feu','Kongô Nyoi : Bâton infini','Shiki Fûjin'],l:{v:0,t:12,c:3,h:9,p:1,k:4,a:4,f:11,b:8,d:0,z:1},d:'Professeur aux mille jutsu : shuriken démultipliés, bâton d\'Enma, feu et Shiki Fûjin'},
- {n:'Minato',full:'Minato Namikaze',g:2,side:0,nat:2,clan:-1,sty:'Kunai au poing',st:2,fam:[1,5,3],dsh:'f1',k:['Fûton : Balle d\'air','Fûton : Triple balle d\'air','Fûton : Rafale à bout portant','Fûton : Lame d\'air','Fûton : Couloir de vent','Hiraishin : Kunai marqué','Kunai à parchemin explosif','Hiraishin : Éclair jaune','Invocation : Crapaud','Rasengan'],bar:['Rasengan','Hiraishin : Kunai marqué','Hiraishin : Éclair jaune','Invocation : Crapaud','Kunai à parchemin explosif','Fûton : Rafale à bout portant'],l:{v:0,t:13,c:19,h:0,p:0,k:6,a:0,f:0,b:0,d:0,z:2,e:2},d:'Éclair jaune : kunai marqués, téléportation et Rasengan éclair'},
+ {n:'Minato',full:'Minato Namikaze',g:2,side:0,nat:2,clan:-1,sty:'Kunai au poing',st:2,fam:[1,3],dsh:'f1',k:['Fûton : Balle d\'air','Fûton : Triple balle d\'air','Fûton : Rafale à bout portant','Fûton : Lame d\'air','Fûton : Couloir de vent','Hiraishin : Kunai marqué','Kunai à parchemin explosif','Hiraishin : Éclair jaune','Invocation : Crapaud','Hiraishin : Danse de l\'éclair jaune'],bar:['Hiraishin : Danse de l\'éclair jaune','Hiraishin : Kunai marqué','Hiraishin : Éclair jaune','Invocation : Crapaud','Kunai à parchemin explosif','Fûton : Rafale à bout portant'],l:{v:0,t:13,c:19,h:0,p:0,k:6,a:0,f:0,b:0,d:0,z:2,e:2},d:'Éclair jaune : kunai marqués, téléportation éclair et danse de l\'éclair jaune'},
  {n:'Neji',full:'Neji Hyûga',g:3,side:0,nat:2,clan:1,sty:'Poing souple',st:0,k:['Fûton : Mur de vent','Fûton : Grande balle d\'air','Fûton : Rafale à bout portant','Fûton : Souffle','Fûton : Couloir de vent'],bar:['Hakke Kûshô','Byakugan','Kaiten','Hakke : 64 / 128 points','Fûton : Rafale à bout portant','Fûton : Mur de vent'],l:{v:0,t:4,c:20,h:14,p:0,k:5,a:0,f:0,b:0,d:0,r:2},d:'Génie du Jûken : paumes à distance, Kaiten qui renvoie tout, 128 points'},
  {n:'Rock Lee',full:'Rock Lee',g:3,side:0,nat:0,clan:10,sty:'Taijutsu du fauve',k:[],bar:['Dynamic Entry','Poids retirés','Konoha Daisenpû','Portes célestes','Lotus primaire','Lotus caché'],l:{v:0,t:11,c:21,h:1,p:0,k:2,a:0,f:12,b:5,d:0,r:1},d:'Taijutsu pur : poids lâchés, lotus et portes célestes'},
  {n:'Gaï',full:'Gaï Maito',g:3,side:0,nat:0,clan:10,sty:'Taijutsu du fauve',k:[],bar:['Dynamic Entry','Konoha Gôriki Senpû','Portes célestes','Éléphant du soir','Paon du matin','Huit Portes'],l:{v:0,t:7,c:21,h:1,p:0,k:2,a:0,f:12,b:5,d:0,w:2,z:2},d:'Fauve sublime : Dynamic Entry, portes célestes et Nuit de la mort'},
@@ -12587,23 +12627,23 @@ const PRESETS=[
  {n:'Kiba',full:'Kiba Inuzuka',g:3,side:0,nat:4,clan:5,sty:'Crocs et griffes',st:0,k:['Doton : Rocher','Doton : Doryûsô','Doton : Main de terre','Doton : Dragon de terre','Doton : Grand séisme'],bar:['Gatsûga','Marquage','Shikyaku','Garôga','Loup bicéphale','Dynamic Entry'],l:{v:0,t:19,c:25,h:5,p:1,k:4,a:0,f:2,b:0,d:0},d:'Duo avec Akamaru : vrilles, bonds sauvages et loup à deux têtes'},
  {n:'Shino',full:'Shino Aburame',g:3,side:0,nat:4,clan:4,sty:'Paumes de l\'essaim',st:0,k:['Doton : Doryûheki','Doton : Yomi Numa','Doton : Kyôka','Doton : Dragon de terre','Doton : Chute de montagne'],bar:['Insectes chercheurs','Mur d\'insectes','Essaim d\'insectes','Insectes espions','Nuée destructrice','Doton : Doryûheki'],l:{v:0,t:18,c:3,h:14,p:0,k:2,a:2,f:0,b:0,d:0},d:'Maître des insectes : nuées qui traquent, rongent le chakra, dévorent les tirs'},
  {n:'Hinata',full:'Hinata Hyûga',g:3,side:0,nat:0,clan:1,sty:'Poing souple',st:0,k:['Katon : Mur de feu','Katon : Triple flamme','Katon : Fournaise','Katon : Dragon de feu','Katon : Nuée ardente'],bar:['Jûho Sôshiken','Byakugan','Kaiten','Hakke Kûshô','Hakke : 64 / 128 points','Katon : Mur de feu'],l:{v:0,t:17,c:26,h:6,p:0,k:0,a:0,f:19,b:4,d:0},d:'Douceur du Jûken : lions jumeaux et protection des 64 points'},
- {n:'Tenten',full:'Tenten',g:3,side:0,nat:-1,clan:22,sty:'Arsenal changeant',k:[],bar:['Volée de kunai','Kusarigama : Harpon','Cage de kunai','Arsenal volant','Sôshôryû','Kôkinjô : Corde d\'or'],l:{v:0,t:24,c:4,h:5,p:0,k:0,a:0,f:0,b:0,d:11},d:'Maîtresse des armes : kunai en volée, cage d\'acier et dragons jumeaux Sôshôryû'},
+ {n:'Tenten',full:'Tenten',g:3,side:0,nat:-1,clan:22,sty:'Arsenal changeant',k:[],bar:['Kunai Rendan : Volée de kunai','Kusarigama : Harpon','Kunai Ori : Cage de kunai','Buki Shôkan : Arsenal volant','Sôshôryû','Kôkinjô : Corde d\'or'],l:{v:0,t:24,c:4,h:5,p:0,k:0,a:0,f:0,b:0,d:11},d:'Maîtresse des armes : kunai en volée, cage d\'acier et dragons jumeaux Sôshôryû'},
  {n:'Gaara',full:'Gaara',g:4,side:0,nat:2,clan:8,sty:'Poings de sable',st:0,k:['Fûton : Balle d\'air','Fûton : Grande balle d\'air','Fûton : Balles chargées','Fûton : Souffle','Fûton : Tornade'],bar:['Cercueil de sable','Sable mouvant','Bouclier absolu','Tsunami de sable','Funérailles du désert','Fûton : Balle d\'air'],l:{v:1,t:20,c:27,h:3,p:0,k:4,a:0,f:4,b:8,d:1,z:1,w:1,e:4},d:'Bouclier de sable absolu : il emprisonne, enlise et ensevelit'},
- {n:'Kimimaro',full:'Kimimaro Kaguya',g:5,side:1,nat:4,clan:9,sty:'Danse des os',st:1,k:['Doton : Rocher','Doton : Doryûsô','Doton : Kyôka','Doton : Dragon de terre','Doton : Grand séisme'],bar:['Doigts-balles','Danse du saule','Danse du mélèze','Danse des fougères','Danse de la clématite','Iai : Dégainé éclair'],l:{v:5,t:4,c:1,h:4,p:4,k:5,a:0,f:0,b:8,d:0,w:1,e:4},d:'Os vivants : balles d\'os, danses du saule et du mélèze, foreuse de la clématite'},
+ {n:'Kimimaro',full:'Kimimaro Kaguya',g:5,sec:'Oto',side:1,nat:4,clan:9,sty:'Danse des os',st:1,k:['Doton : Rocher','Doton : Doryûsô','Doton : Kyôka','Doton : Dragon de terre','Doton : Grand séisme'],bar:['Doigts-balles','Danse du saule','Danse du mélèze','Danse des fougères','Danse de la clématite','Iai : Dégainé éclair'],l:{v:5,t:4,c:1,h:4,p:4,k:5,a:0,f:0,b:8,d:0,w:1,e:4},d:'Os vivants : balles d\'os, danses du saule et du mélèze, foreuse de la clématite'},
  {n:'Kushina',full:'Kushina Uzumaki',g:3,side:0,nat:1,clan:6,sty:'Chaînes au poing',st:1,k:['Suiton : Teppôdama','Suiton : Suikôdan','Suiton : Suirô','Suiton : Dragon aqueux','Suiton : Bakusui Shôha'],bar:['Chaîne-harpon','Kunai à sceau','Cage adamantine','Sceaux : Détonation','Entrave du démon','Iai : Dégainé éclair'],l:{v:0,t:1,c:18,h:7,p:0,k:6,a:0,f:0,b:8,d:0,e:7},d:'Habanero sanglant : chaînes adamantines qui harponnent, enferment et enchaînent'},
- {n:'Temari',full:'Temari',g:4,side:0,nat:2,clan:12,sty:'Éventail fermé',st:2,k:['Fûton : Balle d\'air','Fûton : Grande balle d\'air','Fûton : Rafale à bout portant','Fûton : Souffle','Fûton : Tornade'],bar:['Kamaitachi','Rafale de l\'éventail','Tempête tranchante','Grande Kamaitachi','Invocation : Kamatari','Moulinet du bâton'],l:{v:1,t:23,c:28,h:0,p:0,k:2,a:0,f:0,b:4,d:5,e:8},d:'Vent de Suna : grand éventail, faux de vent et la belette Kamatari'},
- {n:'Kankurô',full:'Kankurô',g:4,side:0,nat:2,clan:14,sty:'Lames de marionnette',st:2,k:['Fûton : Mur de vent','Fûton : Triple balle d\'air','Fûton : Balles chargées','Fûton : Lame d\'air','Fûton : Couloir de vent'],bar:['Senbon empoisonnés','Fils de chakra','Kuroari','Brume toxique','Armée de marionnettes','Moulinet du bâton'],l:{v:1,t:21,c:3,h:5,p:0,k:3,a:0,f:13,b:0,d:9},d:'Marionnettiste de Suna : senbon et brume empoisonnés, Kuroari qui enferme, Karasu et Kuroari en armée'},
- {n:'Kidômaru',full:'Kidômaru',g:5,side:1,nat:4,clan:13,sty:'Lames d\'or',st:2,k:['Doton : Doryûheki','Doton : Doryûsô','Doton : Kyôka','Doton : Dragon de terre','Doton : Chute de montagne'],bar:['Fil d\'araignée','Filet d\'araignée','Armure d\'or','Arc d\'or : Kumo Senkyû','Invocation : Araignée géante','Ruée des cent armes'],l:{v:5,t:16,c:2,h:5,p:2,k:6,a:0,f:0,b:0,d:0,w:2},d:'Araignée du Son : toiles, araignées, soie d\'or et flèche Kumo Senkyû'},
+ {n:'Temari',full:'Temari',g:4,side:0,nat:2,clan:12,sty:'Éventail fermé',st:2,k:['Fûton : Balle d\'air','Fûton : Grande balle d\'air','Fûton : Rafale à bout portant','Fûton : Souffle','Fûton : Tornade'],bar:['Kamaitachi','Rafale de l\'éventail','Tempête tranchante','Grande Kamaitachi','Invocation : Kamatari','Bôjutsu : Moulinet du bâton'],l:{v:1,t:23,c:28,h:0,p:0,k:2,a:0,f:0,b:4,d:5,e:8},d:'Vent de Suna : grand éventail, faux de vent et la belette Kamatari'},
+ {n:'Kankurô',full:'Kankurô',g:4,side:0,nat:2,clan:14,sty:'Lames de marionnette',st:2,k:['Fûton : Mur de vent','Fûton : Triple balle d\'air','Fûton : Balles chargées','Fûton : Lame d\'air','Fûton : Couloir de vent'],bar:['Senbon empoisonnés','Fils de chakra','Kuroari','Brume toxique','Armée de marionnettes','Bôjutsu : Moulinet du bâton'],l:{v:1,t:21,c:3,h:5,p:0,k:3,a:0,f:13,b:0,d:9},d:'Marionnettiste de Suna : senbon et brume empoisonnés, Kuroari qui enferme, Karasu et Kuroari en armée'},
+ {n:'Kidômaru',full:'Kidômaru',g:5,sec:'Oto',side:1,nat:4,clan:13,sty:'Lames d\'or',st:2,k:['Doton : Doryûheki','Doton : Doryûsô','Doton : Kyôka','Doton : Dragon de terre','Doton : Chute de montagne'],bar:['Fil d\'araignée','Filet d\'araignée','Armure d\'or','Arc d\'or : Kumo Senkyû','Invocation : Araignée géante','Hyaku Buki : Ruée des cent armes'],l:{v:5,t:16,c:2,h:5,p:2,k:6,a:0,f:0,b:0,d:0,w:2},d:'Araignée du Son : toiles, araignées, soie d\'or et flèche Kumo Senkyû'},
  {n:'Haku',full:'Haku Yuki',g:6,side:1,nat:1,clan:20,sty:'Frappes de glace',st:2,k:['Suiton : Suijinheki','Suiton : Mizurappa','Suiton : Kirigakure','Suiton : Daibakufu','Suiton : Bakusui Shôha'],vide:['Hyôton : Dragon de glace'],bar:['Hyôton : Tsubame Fubuki','Hyôton : Sensatsu Suishô','Miroir de glace','Makyô Hyôshô','Suiton : Kirigakure','Suiton : Daibakufu'],l:{v:2,t:15,c:18,h:1,p:4,k:0,a:5,f:0,b:8,d:0,w:1},d:'Glace du Hyôton : senbon, aiguilles d\'eau gelée et dôme des miroirs démoniaques'},
- {n:'Zabuza',full:'Zabuza Momochi',g:6,side:1,nat:1,clan:-1,sty:'Kubikiribôchô',st:1,fam:[5],dsh:'n',k:['Suiton : Suijinheki','Suiton : Mizurappa','Suiton : Kirigakure','Suiton : Dragon aqueux','Suiton : Bakusui Shôha','Kage Bunshin : leurre','Contre du clone'],vide:['fam:B','fam:A','fam:S'],bar:['Suiton : Kirigakure','Iai : Dégainé éclair','Ashigiri : Coupe aux jarrets','Suiton : Dragon aqueux','Tourbillon d\'acier','Suiton : Bakusui Shôha'],l:{v:2,t:38,c:3,h:1,p:1,k:0,a:10,f:0,b:0,d:0,z:2,w:2},d:'Démon du Brouillard : sabre géant, brume, clones d\'eau et dragon d\'eau'},
+ {n:'Zabuza',full:'Zabuza Momochi',g:6,side:1,nat:1,clan:-1,sty:'Kubikiribôchô',st:1,fam:[5],dsh:'n',k:['Suiton : Suijinheki','Suiton : Mizurappa','Suiton : Kirigakure','Suiton : Dragon aqueux','Suiton : Bakusui Shôha','Kage Bunshin : leurre','Contre du clone'],vide:['fam:B','fam:A','fam:S'],bar:['Suiton : Kirigakure','Iai : Dégainé éclair','Ashigiri : Coupe aux jarrets','Suiton : Dragon aqueux','Kaiten-giri : Tourbillon d\'acier','Suiton : Bakusui Shôha'],l:{v:2,t:38,c:3,h:1,p:1,k:0,a:10,f:0,b:0,d:0,z:2,w:2},d:'Démon du Brouillard : sabre géant, brume, clones d\'eau et dragon d\'eau'},
  {n:'Suigetsu',full:'Suigetsu Hôzuki',g:6,side:1,nat:1,clan:19,sty:'Kubikiribôchô',st:1,k:['Suiton : Teppôdama','Suiton : Mizurappa','Suiton : Suirô','Suiton : Daibakufu','Suiton : Bakusui Shôha'],bar:['Suirendan','Suika : Contre-courant','Suika : Gôwan','Suika : Corps-déluge','Kubikiribôchô : Décapitation','Ashigiri : Coupe aux jarrets'],l:{v:2,t:23,c:1,h:4,p:0,k:0,a:0,f:0,b:8,d:0,w:1},d:'Corps d\'eau : il se liquéfie, gonfle ses bras et tranche avec Kubikiribôchô'},
  {n:'Chino',full:'Chino Chinoike',g:7,side:1,nat:0,clan:15,sty:'Lame de sang',st:1,k:['Katon : Flamme','Katon : Triple flamme','Katon : Fournaise','Katon : Tornade de feu','Katon : Nuée ardente'],bar:['Aiguilles de sang','Fouet de sang','Ketsuryûgan : Paralysie','Ketsuryûgan : Sang bouillant','Ketsuryûgan : Lune de sang','Katon : Fournaise'],l:{v:6,t:3,c:1,h:1,p:4,k:1,a:0,f:0,b:8,d:0},d:'Ketsuryûgan : son regard paralyse, son sang bout et la lune de sang dévore'},
- {n:'Sasame',full:'Sasame Fûma',g:7,side:0,nat:2,clan:17,sty:'Shuriken en main',st:2,k:['Fûton : Balle d\'air','Fûton : Triple balle d\'air','Fûton : Balles chargées','Fûton : Lame d\'air','Fûton : Tornade'],bar:['Shuriken traceur','Shuriken du croissant','Kage shuriken','Pluie de shuriken','Danse des mille ombres','Moulinet du bâton'],l:{v:6,t:24,c:26,h:10,p:0,k:4,a:0,f:0,b:8,d:0},d:'Kunoichi Fûma : shuriken traceurs, shuriken cachés dans l\'ombre, pluie d\'acier'},
+ {n:'Sasame',full:'Sasame Fûma',g:7,side:0,nat:2,clan:17,sty:'Shuriken en main',st:2,k:['Fûton : Balle d\'air','Fûton : Triple balle d\'air','Fûton : Balles chargées','Fûton : Lame d\'air','Fûton : Tornade'],bar:['Shuriken traceur','Shuriken du croissant','Kage shuriken','Pluie de shuriken','Danse des mille ombres','Bôjutsu : Moulinet du bâton'],l:{v:6,t:24,c:26,h:10,p:0,k:4,a:0,f:0,b:8,d:0},d:'Kunoichi Fûma : shuriken traceurs, shuriken cachés dans l\'ombre, pluie d\'acier'},
  // persos ajoutés (toujours à la fin : l'ordre des autres ne change pas) ; leurs kits n'utilisent que des jutsu existants
  {n:'Kabuto',full:'Kabuto Yakushi',g:5,sec:'Oto',side:1,nat:2,clan:-1,sty:'Taijutsu',st:0,fam:[0,5,3],dsh:'f0',k:['Fûton : Balle d\'air','Fûton : Grande balle d\'air','Fûton : Rafale à bout portant','Fûton : Souffle','Fûton : Tornade','Kage Bunshin : leurre','Scalpel de chakra','Shôsen','Ranshinshô : Chaos nerveux','Invocation : Manda'],bar:['Scalpel de chakra','Shôsen','Ranshinshô : Chaos nerveux','Kage Bunshin : leurre','Invocation : Manda','Fûton : Grande balle d\'air'],l:{v:5,t:43,c:9,h:8,p:0,k:5,a:16,f:0,b:8,d:0,g:3},d:'Médecin espion d\'Orochimaru : scalpels de chakra, soins, chaos nerveux et Manda'},
  {n:'Danzô',full:'Danzô Shimura',g:2,side:1,nat:2,clan:-1,sty:'Kunai au poing',st:2,fam:[2],dsh:'n',k:['Fûton : Mur de vent','Fûton : Grande balle d\'air','Fûton : Rafale à bout portant','Fûton : Lame d\'air','Fûton : Tornade','Genjutsu : Vision de l\'enfer','Genjutsu : Plumes','Genjutsu : Ténèbres','Genjutsu : Étreinte de l\'arbre','Sharingan : Œil copieur'],bar:['Fûton : Lame d\'air','Fûton : Grande balle d\'air','Fûton : Mur de vent','Fûton : Tornade','Genjutsu : Ténèbres','Sharingan : Œil copieur'],l:{v:0,t:44,c:3,h:1,p:0,k:5,a:9,f:14,b:8,d:0,r:1},d:'Chef de la Racine : lames et balles de vent, genjutsu de l\'œil volé, puis la tornade'},
  {n:'Obito',full:'Obito Uchiha (Tobi)',g:1,side:1,nat:0,clan:0,sty:'Taijutsu Uchiha',st:0,k:['Katon : Flamme','Katon : Triple flamme','Katon : Fournaise','Katon : Tornade de feu','Katon : Nuée ardente'],bar:['Katon : Gôkakyû','Sharingan','Genjutsu : Tsukuyomi','Katon : Tornade de feu','Katon : Nuée ardente','Katon : Fournaise'],l:{v:0,t:2,c:35,h:1,p:0,k:1,a:12,f:0,b:8,d:0,r:6,e:11,m:0},d:'L\'homme au masque : il traverse tout comme le Kamui, genjutsu et nuée ardente'},
- {n:'Madara',full:'Madara Uchiha',g:7,side:1,nat:0,clan:0,sty:'Kenjutsu',st:1,k:['Katon : Mur de feu','Katon : Shuriken de feu aériens','Katon : Boule de feu suprême','Katon : Dragon de feu','Katon : Grand souffle de feu'],bar:['Katon : Gôkakyû','Sharingan','Katon : Dragon de feu','Katon : Grand souffle de feu','Susanô : Totsuka','Genjutsu : Tsukuyomi'],l:{v:0,t:39,c:36,h:1,p:0,k:1,a:0,f:0,b:8,d:5,e:11,z:2,y:1},d:'Fondateur de Konoha : armure rouge, éventail géant, dragon de feu et Susanô'},
+ {n:'Madara',full:'Madara Uchiha',g:7,sec:'Autres ninjas',side:1,nat:0,clan:0,sty:'Kenjutsu',st:1,k:['Katon : Mur de feu','Katon : Shuriken de feu aériens','Katon : Boule de feu suprême','Katon : Dragon de feu','Katon : Grand souffle de feu'],bar:['Katon : Gôkakyû','Sharingan','Katon : Dragon de feu','Katon : Grand souffle de feu','Susanô : Totsuka','Genjutsu : Tsukuyomi'],l:{v:0,t:39,c:36,h:1,p:0,k:1,a:0,f:0,b:8,d:5,e:11,z:2,y:1},d:'Fondateur de Konoha : armure rouge, éventail géant, dragon de feu et Susanô'},
  {n:'Mifune',full:'Mifune',g:7,sec:'Pays du Fer',side:0,nat:-1,clan:21,sty:'Iaidô du samouraï',k:[],bar:['Iai : Passage du vent','Battô : Coupe du fourreau','Kamae : Posture du roc','Ukenagashi : Lame qui détourne','Jûmonji : Coupe en croix','Iai : Tranche-ciel'],l:{v:6,t:39,c:20,h:9,p:1,k:5,a:15,f:11,b:8,d:7,e:6,z:0,w:0},d:'Général samouraï du Pays du Fer : dégainés éclair, garde du roc et Tranche-ciel'},
 ];
 // i : index dans PRESETS ; le nom et le camp du joueur sont gardés (sinon ceux du perso)
@@ -12680,7 +12720,7 @@ const teamN=()=>Math.min(4,Math.max(mode==='arena'&&coop()?2:1,CFG.team,humansPe
 const sdR=()=>mode!=='arena'||!CFG.sd||timer<SD_START?9999:lerp(1150,70,clamp((timer-SD_START)/SD_LEN,0,1));
 // UXK : champs ajoutés en cours de partie, déclarés d'avance (forme cachée unique)
 const UXK=["rid","wet","mk","stk","rootV","blockT","chk","sprintLock","sprint","run","runT","_tri","sub_nd","jstN","jstV","aiSprint","hy_byak","hy_stepB","hy_seen","uc_tm","uc_obs","uc_cpN","uc_cpT","uc_rcT","tj_g","tj_cT","tj_n","tj_cds","ak_cal","sa_shT","sa_cds","sa_arm","sa_armT","sa_sph","sa_fly","sa_brk","ab_eat","ab_tk","in_bcd","na_dk","kg_os","kg_osT","kg_armT","kg_larT","cmb","cmbH","cmbT","thrT","st_kn","st_kt","anim","relT","auraV","dmgBy","st_sh","uc_tmF","uc_cp","phase","uc_shB","uc_rec","uc_rdT","st_vp","ya_mkU","ya_mk","ya_mkB","uc_suT","tj_8","tj_red","ak_roll","shieldBy","ak_bf","ya_lnkT","ya_lnkU","dotSrc","dotEl","dotK","ya_pz","ya_pa","na_tT","in_flair","in_wolf","do_sw","jst","sa_sink","ab_last","ab_col","ab_colT","ab_src","ak_arm","ya_sl","ya_slI","sub_ctr","ak_spk","hy_tkN","hy_tk","hy_tkU","sub_slug","thirdImm","st_luT","do_ar","do_ac","chan","tj_life","tj_esq","na_pl","riposteS","hy_dg","uc_am","na_by","na_hT","hy_rvU","c3T","hy_imU","ka_ht","counterS","absorbEn","izT","izS","parry","aiParry","fearX","fearY","tauntSrc","su_pr","ab_vd","ab_vdT","ab_spyT","ab_spyS","uz_clT","_tr","_pz","_land","_dog3","buf","bufL","ckLock","chkT","exh","ckMsg","aiCkLo","aiLowT","aiCkSt","aiCkTo","hlC","hlTg","hlCd","hlN","hlR","hlMsg","hlQ","sub_hk","sub_sage","sub_byk","sub_rskW","sub_nr_kyu","sub_nr_clQ","sub_hm","sub_hrR","sub_hrRT","sub_cp","sub_cpN","sub_cpM","_cpC","_cpOn","sub_obs","sub_mnt","sub_kum","sub_kumT","sub_kebT","sub_kumH","su_mA","do_mo","uc_gk","na_sh","ab_ven","in_four","uz_st","uz_scE","uz_rtE","uz_rtB","uz_fv","tj_pb","hk_pol","hk_polT","hk_polS","hk_polN","hk_imm","hk_gT","hk_wc","hk_mg","rr_mn","rr_mT","rr_gl","rr_gh","rr_cds","rr_mF","hm_armE","hm_arm","hm_bw","hm_bow","hm_cd0","sg_px","sg_py","sg_pa","sg_hp","sg_dn","sg_hT","sg_ax","sg_ay","sg_ox","sg_oy","_sgf","_sgx","_sgy","_sgT","_sgF","_sgH","ci_hp","ci_bl","ci_pd","ci_aiT","km_pp","km_hc","km_sc","km_sw","km_ang","km_angK","km_ppT","km_rs","fm_side","fm_bcd","hs_eat","hs_scl","hs_fus","hs_cds","hz_w","hz_ctr","hz_arm","hz_armB","hz_pud","hz_gT","hz_zap","yu_mk","yu_cds","kj_sh","kj_t","kj_kam","kj_kiai","kj_uke","kj_arm","kj_ten","kj_tenHit","kj_cds","bk_w","bk_axe","bk_ton","bk_cds","barQ","barN","aiSwT","gvx","gvy","usedJ"];
-function mkUnit(c,x,y,team){const ch=unitCh(c,state==='menu'?null:MBAR[c+'|'+team]);return{c,ch,x,y,z:0,vx:0,vy:0,kx:0,ky:0,r:18*(ch.look.scale>1?1.1:1),hp:ch.hp,max:ch.hp,energy:0,team,hero:!ch.trooper,cds:[0,0,0,0,0,0,0,0,0],cst:{},barS:ch.bar?ch.bar.join(','):'',stun:0,slow:0,haste:0,rage:0,rapid:0,unstop:0,deflect:0,shield:0,shieldT:0,
+function mkUnit(c,x,y,team){const ch=unitCh(c,state==='menu'?null:MBAR[c+'|'+team]);return{c,ch,x,y,z:0,vx:0,vy:0,kx:0,ky:0,r:18*(ch.look.scale>1?1.1:1),hp:ch.hp,max:ch.hp,energy:0,team,hero:!ch.trooper,cds:[0,0,0,0,0,0,0,0,0],cst:{},csg:{},lkj:{},barS:ch.bar?ch.bar.join(','):'',stun:0,slow:0,haste:0,rage:0,rapid:0,unstop:0,deflect:0,shield:0,shieldT:0,
  stam:100,stamT:0,block:false,blockLock:0,aiBlock:0,dash:null,cast:null,spin:null,flame:null,aim:team?Math.PI:0,swing:0,swingA:0,saberOut:0,walk:0,moving:0,aiT:.3+rnd()*.4,strT:0,strDir:rnd()<.5?1:-1,flash:0,dead:false,deadT:0,respawn:0,tgt:null,lane:y,ctrl:null,human:false,nx:x,ny:y,root:0,stealth:0,ambush:0,airT:0,hits:0,chg:ch.abil.map(a=>a&&a.charges||0),ammo:ch.abil[0].ammo||0,silence:0,fear:0,taunt:0,disarm:0,vuln:0,counter:0,riposte:0,dodge:0,absorb:0,thorns:0,dr:0,drT:0,cdrHit:0,lsB:0,regenB:0,slowImm:0,giant:0,riot:0,chrome:0,parryAll:0,thornSlow:0,wallStun:0,critBuf:0,pierceBuf:0,dot:0,dotT:0,sleepT:0,markB:null,stick:null,rid:undefined,wet:undefined,mk:undefined,stk:undefined,rootV:undefined,blockT:undefined,chk:undefined,sprintLock:undefined,sprint:undefined,run:undefined,runT:undefined,_tri:undefined,sub_nd:undefined,jstN:undefined,jstV:undefined,aiSprint:undefined,hy_byak:undefined,hy_stepB:undefined,hy_seen:undefined,uc_tm:undefined,uc_obs:undefined,uc_cpN:undefined,uc_cpT:undefined,uc_rcT:undefined,tj_g:undefined,tj_cT:undefined,tj_n:undefined,tj_cds:undefined,ak_cal:undefined,sa_shT:undefined,sa_cds:undefined,sa_arm:undefined,sa_armT:undefined,sa_sph:undefined,sa_fly:undefined,sa_brk:undefined,ab_eat:undefined,ab_tk:undefined,in_bcd:undefined,na_dk:undefined,kg_os:undefined,kg_osT:undefined,kg_armT:undefined,kg_larT:undefined,cmb:undefined,cmbH:undefined,cmbT:undefined,thrT:undefined,st_kn:undefined,st_kt:undefined,anim:undefined,relT:undefined,auraV:undefined,dmgBy:undefined,st_sh:undefined,uc_tmF:undefined,uc_cp:undefined,phase:undefined,uc_shB:undefined,uc_rec:undefined,uc_rdT:undefined,st_vp:undefined,ya_mkU:undefined,ya_mk:undefined,ya_mkB:undefined,uc_suT:undefined,tj_8:undefined,tj_red:undefined,ak_roll:undefined,shieldBy:undefined,ak_bf:undefined,ya_lnkT:undefined,ya_lnkU:undefined,dotSrc:undefined,dotEl:undefined,dotK:undefined,ya_pz:undefined,ya_pa:undefined,na_tT:undefined,in_flair:undefined,in_wolf:undefined,do_sw:undefined,jst:undefined,sa_sink:undefined,ab_last:undefined,ab_col:undefined,ab_colT:undefined,ab_src:undefined,ak_arm:undefined,ya_sl:undefined,ya_slI:undefined,sub_ctr:undefined,ak_spk:undefined,hy_tkN:undefined,hy_tk:undefined,hy_tkU:undefined,sub_slug:undefined,thirdImm:undefined,st_luT:undefined,do_ar:undefined,do_ac:undefined,chan:undefined,tj_life:undefined,tj_esq:undefined,na_pl:undefined,riposteS:undefined,hy_dg:undefined,uc_am:undefined,na_by:undefined,na_hT:undefined,hy_rvU:undefined,c3T:undefined,hy_imU:undefined,ka_ht:undefined,counterS:undefined,absorbEn:undefined,izT:undefined,izS:undefined,parry:undefined,aiParry:undefined,fearX:undefined,fearY:undefined,tauntSrc:undefined,su_pr:undefined,ab_vd:undefined,ab_vdT:undefined,ab_spyT:undefined,ab_spyS:undefined,uz_clT:undefined,_tr:undefined,_pz:undefined,_land:undefined,_dog3:undefined,buf:undefined,bufL:undefined,ckLock:undefined,chkT:undefined,exh:undefined,ckMsg:undefined,aiCkLo:undefined,aiLowT:undefined,aiCkSt:undefined,aiCkTo:undefined,hlC:undefined,hlTg:undefined,hlCd:undefined,hlN:undefined,hlR:undefined,hlMsg:undefined,hlQ:undefined,sub_hk:undefined,sub_sage:undefined,sub_byk:undefined,sub_rskW:undefined,sub_nr_kyu:undefined,sub_nr_clQ:undefined,sub_hm:undefined,sub_hrR:undefined,sub_hrRT:undefined,sub_cp:undefined,sub_cpN:undefined,sub_cpM:undefined,_cpC:undefined,_cpOn:undefined,sub_obs:undefined,sub_mnt:undefined,sub_kum:undefined,sub_kumT:undefined,sub_kebT:undefined,sub_kumH:undefined,su_mA:undefined,do_mo:undefined,uc_gk:undefined,na_sh:undefined,ab_ven:undefined,in_four:undefined,uz_st:undefined,uz_scE:undefined,uz_rtE:undefined,uz_rtB:undefined,uz_fv:undefined,tj_pb:undefined,hk_pol:undefined,hk_polT:undefined,hk_polS:undefined,hk_polN:undefined,hk_imm:undefined,hk_gT:undefined,hk_wc:undefined,hk_mg:undefined,rr_mn:undefined,rr_mT:undefined,rr_gl:undefined,rr_gh:undefined,rr_cds:undefined,rr_mF:undefined,hm_armE:undefined,hm_arm:undefined,hm_bw:undefined,hm_bow:undefined,hm_cd0:undefined,sg_px:undefined,sg_py:undefined,sg_pa:undefined,sg_hp:undefined,sg_dn:undefined,sg_hT:undefined,sg_ax:undefined,sg_ay:undefined,sg_ox:undefined,sg_oy:undefined,_sgf:undefined,_sgx:undefined,_sgy:undefined,_sgT:undefined,_sgF:undefined,_sgH:undefined,ci_hp:undefined,ci_bl:undefined,ci_pd:undefined,ci_aiT:undefined,km_pp:undefined,km_hc:undefined,km_sc:undefined,km_sw:undefined,km_ang:undefined,km_angK:undefined,km_ppT:undefined,km_rs:undefined,fm_side:undefined,fm_bcd:undefined,hs_eat:undefined,hs_scl:undefined,hs_fus:undefined,hs_cds:undefined,hz_w:undefined,hz_ctr:undefined,hz_arm:undefined,hz_armB:undefined,hz_pud:undefined,hz_gT:undefined,hz_zap:undefined,yu_mk:undefined,yu_cds:undefined,kj_sh:undefined,kj_t:undefined,kj_kam:undefined,kj_kiai:undefined,kj_uke:undefined,kj_arm:undefined,kj_ten:undefined,kj_tenHit:undefined,kj_cds:undefined,bk_w:undefined,bk_axe:undefined,bk_ton:undefined,bk_cds:undefined,barQ:undefined,barN:undefined,aiSwT:undefined,gvx:undefined,gvy:undefined,usedJ:undefined}}
 // statistiques de la partie (éliminations, morts, assistances, dégâts infligés/subis, soins), par perso et par camp
 let STATS={},CUR=null;
@@ -12721,7 +12761,7 @@ function battleObstacles(){let s=7;const r=()=>(s=s*16807%2147483647)/2147483647
 const enemies=u=>units.filter(e=>e.team!==u.team&&!e.dead);
 
 // ---------- Mécaniques ----------
-function use(u,i,td,aimOv,ex){let ab=u.ch.abil[i];const chg=ab&&ab.charges;if(!ab||(chg?u.chg[i]<=0:u.cds[i]>0)||(i>0&&u.silence>0)||(i===0&&u.disarm>0)||u.stun>0||u.dash||u.cast||u.spin||u.flame||u.block||u.hlC>0)return false;const rec=(u.chan&&u.chan.i===i)||(u.jst&&u.jst.i===i),ck=i>0&&!rec?jcost(ab):0;if(u.energy<ck){ckLack(u,i);return false}const hpc=i>0&&!rec?hpcost(u,ab):0;if(hpc&&u.hp<=hpc+1){hpLack(u,i);return false}if((ab.throw||ab.melee)&&u.saberOut>0)return false;
+function use(u,i,td,aimOv,ex){let ab=u.ch.abil[i];const chg=ab&&ab.charges;if(!ab||(chg?u.chg[i]<=0:u.cds[i]>0)||(i>0&&u.silence>0)||(i===0&&u.disarm>0)||u.stun>0||u.dash||u.cast||u.spin||u.flame||u.block||u.hlC>0||barLocked(u,ab))return false;const rec=(u.chan&&u.chan.i===i)||(u.jst&&u.jst.i===i),ck=i>0&&!rec?jcost(ab):0;if(u.energy<ck){ckLack(u,i);return false}const hpc=i>0&&!rec?hpcost(u,ab):0;if(hpc&&u.hp<=hpc+1){hpLack(u,i);return false}if((ab.throw||ab.melee)&&u.saberOut>0)return false;
  ex=false;if(i===0){const ml=meleeU(u),sc=ml?20:10;if(u.stam<sc-.01){if(u===player)say(u,'ENDURANCE !','#7df');return false}u.stam-=sc;u.stamT=Math.max(u.stamT||0,.6);u.cmb=ml?(u.cmbT>0?u.cmb||0:0)%5+1:0;u.cmbH=u.cmb;u.cmbT=1.1}if(ex){u.energy-=25;if(ab.ex)ab=exAb(ab)}if(u.stealth>0){u.stealth=0;u.ambush=2}
  if(chg){u.chg[i]--;if(u.cds[i]<=0)u.cds[i]=ab.cd}else u.cds[i]=(ab.cd||1)*(i===0&&u.rapid>0?.45:1);
  if(ab.ammo){if(u.ammo<=0)u.ammo=ab.ammo;u.ammo--;if(u.ammo<=0){u.ammo=ab.ammo;u.cds[i]=ab.reload}}u.energy-=ck;if(hpc)hpPay(u,hpc,ab);if(ab.rank==='S'&&(ck||hpc)){S('v_'+u.c,u);if(u===player)flashS=.25;if(near(u.x,u.y))shake=.3}
@@ -12873,7 +12913,7 @@ function collide(u){
 function respawn(u){const p=spawnPos(u.team),n=mkUnit(u.c,p.x,p.y,u.team);n.lane=u.lane;n.ctrl=u.ctrl;n.human=u.human;n.rid=u.rid;n.energy=CK.spawn;for(const k of UXK)if(k!=='rid')delete n[k];Object.assign(u,n);if(u===player)deathPos=null}
 function updUnit(u,dt,active){hlTick(u,dt,active);if(u.barQ)barTry(u);
  for(let i=0;i<u.cds.length;i++){const ab=u.ch.abil[i];if(ab&&ab.charges){if(u.chg[i]<ab.charges){u.cds[i]-=dt;if(u.cds[i]<=0){u.chg[i]++;u.cds[i]=u.chg[i]<ab.charges?ab.cd:0}}}else u.cds[i]=Math.max(0,u.cds[i]-dt)}
- if(u.cst)for(const k in u.cst)if((u.cst[k]-=dt)<=0)delete u.cst[k];
+ stashTick(u,dt);
  for(const k of['silence','fear','taunt','disarm','vuln','counter','riposte','dodge','absorb','thorns','drT','cdrHit','lsB','regenB','slowImm','giant','riot','chrome','parryAll','thornSlow','wallStun','stun','deflect','slow','haste','rage','rapid','unstop','swing','blockLock','aiBlock','root','stealth','ambush','wet'])u[k]=Math.max(0,u[k]-dt);u.flash-=dt;
  if(u.shieldT>0){u.shieldT-=dt;if(u.shieldT<=0)u.shield=0}
  if(u.ch.pass==='regen')gain(u,3*dt,u);
@@ -12982,7 +13022,7 @@ function update(dt){SIMT+=dt;
  netCapture(fx0,tx0);
  ageFx(dt);
  for(const k of killfeed)k.t-=dt;killfeed=killfeed.filter(k=>k.t>0);
- {const tg=player.dead&&deathPos?deathPos:player,k=Math.min(1,dt*6);const la=tg===player&&!player.dead?1:0;cam.x+=(clamp(tg.x+la*Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)-cam.x)*k*.8;cam.y+=(clamp(tg.y+la*Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*k*.8}
+ {const tg=player.dead&&deathPos?deathPos:player,k=Math.min(1,dt*6);const la=tg===player&&!player.dead?1:0;cam.x+=(clamp(tg.x+la*Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)+bmCamOff()-cam.x)*k*.8;cam.y+=(clamp(tg.y+la*Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*k*.8}
 }
 
 // ---------- Rendu : caméra 3/4 en plongée (comme Battlerite) ----------
@@ -14884,7 +14924,18 @@ const getB=k=>k==='clan'?EB.clan+1:k.startsWith('l.')?EB.l[k[2]]:EB[k],setB=(k,v
  else if(k.startsWith('l.')){EB.l[k[2]]=v;if(k==='l.t'&&TENUES[v]&&TENUES[v][1].hatC&&!EB.l.a)EB.l.a=4} // robe de Kage : son chapeau est proposé d'office (on peut l'enlever)
  else EB[k]=v};
 const appOff=k=>(k==='nat'||k==='st')&&isMartial(EB.clan);
-function edTrees(){EB=sanitizeBuild(EB);EB.k=autoLearn(EB,EB.k);EB=sanitizeBuild(EB)}
+// nouveau clan / nature / style / familles : les jutsu gardés restent dans leur case ; une case dont le jutsu a disparu reçoit un jutsu appris du même rang
+// (de préférence du nouvel arbre : Lame d'air A → Chidori A), puis les cases vidées qui restent sont complétées (ordre de la barre automatique)
+function edTrees(){const ob=(EB.bar||[]).slice(),ok=(EB.k||[]).slice();EB=sanitizeBuild(EB);EB.k=autoLearn(EB,EB.k);EB=sanitizeBuild(EB);
+ const hole=ob.map((id,s)=>id>=0&&JL[id]&&EB.bar[s]===-1);if(!hole.some(Boolean))return;const free=()=>EB.k.filter(id=>!EB.bar.includes(id));
+ hole.forEach((h,s)=>{if(!h)return;const c=free().filter(id=>JL[id].r===JL[ob[s]].r),p=c.find(id=>!ok.includes(id))??c[0];if(p!=null)EB.bar[s]=p});
+ const rest=hole.map((h,s)=>h&&EB.bar[s]===-1?s:-1).filter(s=>s>=0);if(rest.length){const A=autoBar(Object.assign({},EB,{k:free()})).filter(id=>id>=0);for(const s of rest){if(!A.length)break;EB.bar[s]=A.shift()}}
+ EB=sanitizeBuild(EB)}
+// nom affiché d'un jutsu dans la création (alias propre au perso, ex. « Raikiri »)
+const crN=jid=>(EB&&EB.al&&EB.al[jKey(jid)])||(JL[jid]?JL[jid].n:'');
+// cases vides alors que des jutsu appris sont hors de la barre (avertissement à l'enregistrement)
+const crHoles=()=>{const n=EB.bar.filter(id=>id<0).length,f=EB.k.filter(id=>!EB.bar.includes(id)).length;return Math.min(n,f)};
+let EDW=0;
 const edOver=()=>false; // (plus de budget de points)
 const cycleJ=(s,d)=>{if(!s){const L=stylesOf(EB),i=L.indexOf(EB.w);EB.w=L[(i+d+L.length)%L.length]}};
 // --- disposition : à gauche ton ninja et son APPARENCE (lignes l.*), à droite son BUILD DE COMBAT (camp, clan, nature, style, Clic G, barre de 6, dash, familles, jutsu appris)
@@ -14913,11 +14964,12 @@ function wrapL(s,w,font){g.font=font;const out=[];let cur='';for(const wd of Str
 const rr=(R,r,fill,stroke,lw=1)=>{g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,r);if(fill){g.fillStyle=fill;g.fill()}if(stroke){g.strokeStyle=stroke;g.lineWidth=lw;g.stroke()}};
 // ninja d'aperçu du créateur : gardé d'une image à l'autre (son modèle 3D n'est refait que si l'apparence change)
 let MF=null;const menuFake=ch=>{if(!MF||MF.ch!==ch){const o=CH.p0;CH.p0=ch;MF=mkUnit('p0',0,0,ch.side);CH.p0=o}return MF};
-// perso joué (MY) : gardé aussi dans 'nrBuild4' ; en ligne, envoyé à l'hôte (invité) ou diffusé dans le salon (hôte)
+// perso joué (MY) : gardé dans « Mes ninjas » (nrRoster2, champ last.me) ; en ligne, envoyé à l'hôte (invité) ou diffusé dans le salon (hôte)
 // aide des touches (ZQSD en AZERTY : libellés lbl suivant la disposition du clavier)
 const HELPK=()=>`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · Clic G frapper · 1-6 jutsu · ${lbl.Space} dash · ${lbl.KeyQ} Kawarimi · ${lbl.KeyB} jutsu (barre) · ${lbl.KeyF} parade · ${lbl.KeyR} maintenu = chakra · ${lbl.KeyH} soin · Maj sprint · Tab scores · ${lbl.KeyM} son`;
-function rebuildMine(){MY=sanitizeBuild(MY);if(!RSIM)try{localStorage.setItem('nrBuild5',JSON.stringify(bOut(MY)))}catch(e){}MYCH=mkNinja(MY);if(!isGuest())CH.p0=MYCH;
- if(net.role==='host'){net.ready=false;sendLobby()}else if(isGuest()&&coop()){net.ready=false;netSend({t:'build',b:MY});netSend({t:'ready',v:false})}}
+function rebuildMine(){MY=sanitizeBuild(MY);MYCH=mkNinja(MY); // (le perso joué est gardé dans nrRoster2 : last.me)
+ if(!isGuest())CH.p0=MYCH;
+ if(net.role==='host'){net.ready=false;sendLobby()}else if(isGuest()&&coop()){net.ready=false;netSend({t:'build',b:MY,pv:NPV});netSend({t:'ready',v:false})}}
 // perso en création : seul l'aperçu change (rien n'est envoyé ni gardé avant « Enregistrer »)
 function edRebuild(){EB=sanitizeBuild(EB);EBCH=mkNinja(EB)}
 const lookTabD=['Coiffure, couleur des cheveux, yeux (dont dôjutsu purement décoratifs), marques du visage, accessoire de tête et bandeau.','Peau, taille et carrure (purement visuelles : la zone de coups ne change pas), couleur du chakra et village.','Tenue et ses deux couleurs (principale et secondaire, « D\'origine » garde celles de la tenue), haori ou cape par-dessus, couleur du masque et de l\'écharpe.','Accessoires des bras et du cou, objet et symbole dans le dos, porte-kunai et pochette, couleur du bandeau (le ninja tourne pour montrer son dos).'];
@@ -14958,6 +15010,7 @@ let tipK=null,tipT0=0,TIP=null;
 const hoverTip=(k,f)=>{if(k!==tipK){tipK=k;tipT0=performance.now()}TIP=f};
 function drawTip(){if(!TIP){tipK=null;return}if(performance.now()-tipT0<300)return;const T=TIP(),w=380,F=FNT(12);const L=wrapL(T.d,w-24,F),extra=T.l||[];
  const h=34+extra.length*16+L.length*15+(T.f?20:0);let x=mouse.x+18,y=mouse.y+18;if(x+w>W-8)x=mouse.x-w-14;if(y+h>H-8)y=Math.max(8,H-8-h);
+ if(T.ax!=null){x=Math.max(8,T.ax-w-10);y=clamp(mouse.y-20,8,Math.max(8,H-8-h))} // ancrée à gauche d'un panneau (menu B)
  g.save();g.shadowColor='rgba(0,0,0,.6)';g.shadowBlur=14;rr({x,y,w,h},8,'rgba(18,12,8,.98)',T.col||'#ffb347',1.5);g.restore();
  fitT(T.t,x+12,y+22,15,T.col||'#ffd38a',w-24,'bold',11);let yy=y+40;for(const [s,c] of extra){fitT(s,x+12,yy,11.5,c||'#d8b888',w-24,'normal',9);yy+=16}
  g.font=F;g.fillStyle='#ecdcc0';g.textAlign='left';for(const s of L){g.fillText(s,x+12,yy+2);yy+=15}if(T.f)text(T.f,x+12,yy+12,11,'#ffb347','left','bold')}
@@ -14969,7 +15022,7 @@ function pickData(p){
  if(typeof p==='number'&&p>=BAR0&&p<BAR0+BARN){const tr=treesOf(EB),cur=EB.bar[p-BAR0];const A=[];
   for(const t of tr)for(const r of RANKO)for(const id of TREE[t][r])A.push(JL[id]);
   const items=A.map(J=>{const ab=jutsu(J.id),sel=J.id===cur,o=EB.bar.indexOf(J.id),lr=EB.k.includes(J.id),T=TREES[J.cat];
-   return{v:J.id,n:J.n,col:catCol(J.cat),ic:J.cat,ult:J.r==='S',rank:J.r,tab:catName(J.cat),l2:`${jcostT(ab)} · ${fmtCd(ab.cd)} · ${ab.mud?ab.mud+' mudras':'sans mudra'}${lr?' · appris':''}`,d:J.d,sel,used:!sel&&o>=0?BAR0+o:0,learned:lr,
+   return{v:J.id,n:crN(J.id),col:catCol(J.cat),ic:J.cat,ult:J.r==='S',rank:J.r,tab:catName(J.cat),l2:`${jcostT(ab)} · ${fmtCd(ab.cd)} · ${ab.mud?ab.mud+' mudras':'sans mudra'}${lr?' · appris':''}`,d:J.d,sel,used:!sel&&o>=0?BAR0+o:0,learned:lr,
     warn:lr?'':learnBlock(EB.k,J.id)?(T.pool?'remplace le sub de rang '+J.r+' déjà appris':'remplace le jutsu de rang '+J.r+' de '+T.name):''}});
   if(cur>=0)items.unshift({v:'clear',n:'Vider la case',col:'#8a7458',ic:null,style:1,l2:'La case reste vide au début du combat',d:'Le jutsu reste appris (menu B en combat).',sel:false});
   return{kind:'j',title:`Touche ${lbl[SLOTS[p]]} · barre de départ`,sub:`Clique un jutsu : il est appris (au besoin à la place d'un autre du même rang) et posé ici · ${EB.k.length} jutsu appris`,tabs:tr.length>1?['Tous'].concat(tr.map(catName)):null,tabC:['#ffb347'].concat(tr.map(catCol)),items}}
@@ -15025,7 +15078,7 @@ function creatorClick(){
  for(const c of crCols())if(c.t==='+fam'&&inRect(mouse,{x:c.x,y:CRG.y,w:c.w,h:4*CRG.rh+CRG.ch})){openPicker('fam');return true}
  if(inRect(mouse,crAutoBtn)){EB.bar=autoBar(EB);edRebuild();crSay('Barre refaite : du rang S au rang D, en alternant les arbres','#8fe38f');return true}
  if(inRect(mouse,crFillBtn)){const n=crFill();crSay(n?n+' case'+(n>1?'s':'')+' remplie'+(n>1?'s':''):'Aucune case vide à remplir (ou plus de jutsu appris hors de la barre)',n?'#8fe38f':'#c8b89a');return true}
- if(inRect(mouse,saveBtn)){if(!edOver())edSave();return true}
+ if(inRect(mouse,saveBtn)){if(edOver())return true;const n=crHoles();if(n&&!(EDW&&performance.now()-EDW<6000)){EDW=performance.now();crSay(`${n} case${n>1?'s':''} vide${n>1?'s':''} alors que des jutsu appris sont hors de la barre : « Compléter » les remplit · clique encore « Enregistrer » pour garder la barre ainsi`,'#ffb347');return true}EDW=0;edSave();return true}
  return false}
 // --- dessin d'une carte du panneau de choix
 function drawCard(D,it,R,hov){const j=D.kind==='j',a=D.kind==='a';
@@ -15076,11 +15129,11 @@ function crLearn(jid){const ob=EB.bar.slice(),ok=EB.k.slice();if(!learnJ(EB,jid)
  const gone=ok.filter(id=>!EB.k.includes(id));ob.forEach((id,s)=>{if(gone.includes(id)&&EB.bar[s]===-1&&!EB.bar.includes(jid))EB.bar[s]=jid});return gone}
 function crToggle(jid){const J=JL[jid];if(!J)return;
  if(crForced(jid)&&EB.k.includes(jid)){crSay('Clan martial : ce jutsu est appris d\'office','#c8b89a');return}
- if(EB.k.includes(jid)){unlearnJ(EB,jid);edRebuild();crSay(`${J.n} oublié : le rang ${J.r} de ${catName(J.cat)} reste vide`,'#ffb347');return}
- const g0=crLearn(jid);edRebuild();crSay(g0&&g0.length?`${J.n} appris (remplace ${g0.map(id=>JL[id].n).join(', ')})`:`${J.n} appris`,'#8fe38f')}
+ if(EB.k.includes(jid)){unlearnJ(EB,jid);edRebuild();crSay(`${crN(jid)} oublié : le rang ${J.r} de ${catName(J.cat)} reste vide`,'#ffb347');return}
+ const g0=crLearn(jid);edRebuild();crSay(g0&&g0.length?`${crN(jid)} appris (remplace ${g0.map(id=>JL[id].n).join(', ')})`:`${crN(jid)} appris`,'#8fe38f')}
 // survol + 1-6 : pose dans la case (apprend au besoin ; déjà ailleurs dans la barre = échange)
 function crPlace(jid,s){const J=JL[jid];if(!J)return;if(!EB.k.includes(jid))crLearn(jid);if(!EB.k.includes(jid))return;
- const t=EB.bar.indexOf(jid);if(t===s){crSay(`${J.n} est déjà en case ${s+1}`,'#c8b89a');return}if(t>=0)EB.bar[t]=EB.bar[s];EB.bar[s]=jid;edRebuild();crSay(`${J.n} → case ${s+1}`,'#8fe38f')}
+ const t=EB.bar.indexOf(jid);if(t===s){crSay(`${crN(jid)} est déjà en case ${s+1}`,'#c8b89a');return}if(t>=0)EB.bar[t]=EB.bar[s];EB.bar[s]=jid;edRebuild();crSay(`${crN(jid)} → case ${s+1}`,'#8fe38f')}
 // complète les cases vides avec les jutsu appris hors de la barre (ordre de la barre automatique) ; renvoie le nombre de cases remplies
 function crFill(){const A=autoBar(Object.assign({},EB,{k:EB.k.filter(id=>!EB.bar.includes(id))})).filter(id=>id>=0);let n=0;EB.bar=EB.bar.map(id=>id>=0||!A.length?id:(n++,A.shift()));edRebuild();return n}
 // une carte de jutsu (appris : couleur de l'arbre ; non appris : sombre ; n° de case en vert si dans la barre)
@@ -15090,10 +15143,11 @@ function crCard(C,hov){const R=C.R,col=catCol(C.t);
  rr(R,7,lr?(hov?rgba(col,.42):rgba(col,.24)):hov?'rgba(74,48,24,.95)':'rgba(22,15,10,.88)',lr?liftC(col,.55):hov?'#c08040':'rgba(110,80,50,.55)',lr?2:1);
  if(!lr){g.fillStyle='rgba(0,0,0,.18)';g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,7);g.fill()}
  const ir=nar?9:12,ix=R.x+(nar?12:17);jIcon(ix,R.y+(nar?13:R.h/2),ir,lr?col:'#4a3c2e',C.t,gold&&lr);
- const nm=TREES[C.t].type==='nature'?J.n.replace(/^[^:]{2,12} : /,''):J.n,fg=lr?(gold?'#ffe81f':'#fff3dc'):'#a08a70',bw=s>=0?22:4;
+ const nm=TREES[C.t].type==='nature'?crN(C.jid).replace(/^[^:]{2,12} : /,''):crN(C.jid),fg=lr?(gold?'#ffe81f':'#fff3dc'):'#a08a70',bw=s>=0?22:4;
  const sub=lr?(fo?'appris d\'office':'✓ appris'):'clic : apprendre',sc=lr?liftC(col,.5):'#6a5a48';
  if(nar){const L=crWrap(nm,R.w-26-bw,R.w-10,FNT(10,'bold'));fitT(L[0],R.x+23,R.y+17,10,fg,R.w-26-bw,'bold',8);if(L[1])fitT(L[1],R.x+5,R.y+32,10,fg,R.w-10,'bold',8);else fitT(sub,R.x+5,R.y+33,9,sc,R.w-10,'normal',7)}
  else{const tx=R.x+33,tw=R.x+R.w-tx-bw,L=crWrap(nm,tw,tw,FNT(11.5,'bold'));if(L[1]){fitT(L[0],tx,R.y+19,11.5,fg,tw,'bold',9);fitT(L[1],tx,R.y+34,11.5,fg,tw,'bold',9)}else{fitT(L[0],tx,R.y+20,11.5,fg,tw,'bold',9);fitT(sub,tx,R.y+35,9.5,sc,tw,'normal',8)}}
+ if(lr&&crWrap(nm,nar?R.w-26-bw:R.x+R.w-R.x-33-bw,nar?R.w-10:R.w-33-bw,FNT(nar?10:11.5,'bold'))[1])text(fo?'✓✓':'✓',R.x+R.w-6,R.y+R.h-4,10,liftC(col,.6),'right','bold');
  if(s>=0){const b={x:R.x+R.w-21,y:R.y+4,w:17,h:17};rr(b,5,'#3aa83a','#9fffa0',1);text(String(s+1),b.x+8.5,b.y+13,11,'#0c1a0c')}}
 // coupe un nom en 2 lignes : la 1re tient dans w1, la 2e (le reste) dans w2
 function crWrap(s,w1,w2,font){g.font=font;const W0=String(s).split(' ');let a='';let i=0;for(;i<W0.length;i++){const t=a?a+' '+W0[i]:W0[i];if(a&&g.measureText(t).width>w1)break;a=t}return[a,W0.slice(i).join(' ')]}
@@ -15102,7 +15156,7 @@ function crHead(c,hov){const y=CRG.hy;if(c.t==='+fam'){const R={x:c.x,y,w:c.w,h:
  const T=TREES[c.t],col=catCol(c.t),n=EB.k.filter(id=>JL[id].cat===c.t).length,tot=[...RANKO].reduce((a,r)=>a+Math.min(TREE[c.t][r].length,tTake(T,r)),0);
  rr({x:c.x,y,w:c.w,h:19},6,rgba(col,hov?.34:.2),rgba(col,.6),1);jIcon(c.x+10,y+9.5,7,col,c.t);
  const k=T.type==='nature'?'nature':T.type==='style'?'style':T.type==='famille'?'famille':'clan';
- fitT(`${catName(c.t)}`,c.x+21,y+14,11,liftC(col,.62),c.w-21-38,'bold',8);text(`${n}/${tot}`,c.x+c.w-6,y+14,10.5,'#ffd38a','right');
+ const cnt=T.type==='famille'?String(n):`${n}/${tot}`;g.font=FNT(10.5,'bold');const cw=g.measureText(cnt).width+8;fitT(`${catName(c.t)}`,c.x+21,y+14,11,liftC(col,.62),c.w-21-cw,'bold',7);text(cnt,c.x+c.w-6,y+14,10.5,'#ffd38a','right');
  return k}
 // ---------- écran de création / modification d'un perso (EB) ----------
 function drawCreator(){
@@ -15164,7 +15218,7 @@ function drawCreator(){
    tip={t:nm,col,l:[[EB.clan>=0?'Dash propre au clan (sans chakra)':'Dash : normal, celui de ta nature ou celui d\'une de tes familles (sans chakra)',col],[ab?`recharge ${fmtCd(ab.cd)}`:'','#d8b888']],d:ab?ab.d||' ':' ',f:click?'Clic : choisir le dash':''}}
   else if(k===SHUNI){const ab=ch.shunAb||ch.abil[SHUNI];key=lbl.KeyQ;nm=ab?ab.n:'Kawarimi';col='#c8b89a';ic=undefined;click=false;sub='commun · sans chakra';tip={t:nm,col,l:[['Commun à tous les ninjas (sans chakra)',col],[ab?`recharge ${fmtCd(ab.cd)}`:'','#d8b888']],d:ab?ab.d||' ':' '}}
   else{const fr=EB.clan<0;key=fr?'SUB':'JUTSU';col=fr?'#7fd87f':'#ffb347';click=fr;
-   nm=fr?`Familles ${EB.fam.length}/${FAMMAX}`:`${EB.k.length} jutsu appris`;sub=fr?(EB.fam.length?'clic : ajouter / retirer':'clic : en choisir (jusqu\'à '+FAMMAX+')'):[...RANKO].map(r=>r+'×'+EB.k.filter(id=>JL[id].r===r).length).join(' ');
+   nm=fr?`Familles ${EB.fam.length}/${FAMMAX} · sub ${EB.k.filter(id=>TREES[JL[id].cat].type==='famille').length}/5`:`${EB.k.length} jutsu appris`;sub=fr?(EB.fam.length?'clic : ajouter / retirer':'clic : en choisir (jusqu\'à '+FAMMAX+')'):[...RANKO].map(r=>r+'×'+EB.k.filter(id=>JL[id].r===r).length).join(' ');
    tip={t:fr?'Familles de sub':'Jutsu appris',col,d:fr?`Sans clan : jusqu'à ${FAMMAX} familles parmi ${FAMS.length} (${EB.fam.map(f=>FAMS[f][0]).join(', ')||'aucune'}). Tu apprends 5 sub au total : 1 par rang, toutes familles confondues.`:isMartial(EB.clan)?'Clan martial : arbre de clan à 2 jutsu par rang (tous appris d\'office) et arbre de style imposé ; pas de nature.':'Nature : 1 jutsu par rang (parmi 2) · style : 1 par rang · clan : 1 par rang. Un rang peut rester vide. Tous les jutsu appris se posent en combat avec le menu B.',f:fr?'Clic : choisir les familles':''}}
   rr(T,9,h&&click?'rgba(74,48,24,.95)':'rgba(20,14,10,.85)',h&&click?'#c08040':rgba(col,.55),1.2);
   const kb={x:T.x+5,y:T.y+5,w:k==='fam'?44:k===SHUNI?30:54,h:T.h-10};rr(kb,6,'rgba(50,32,16,.95)','#8a5a2a',1.2);fitT(key,kb.x+kb.w/2,kb.y+kb.h/2+4.5,key.length>4?10:12.5,'#fff',kb.w-6,'bold',8,'center');
@@ -15424,7 +15478,9 @@ function ficheCell(R,s,ch,b,tip){const free=!CONF;let key,col,ic,nm,d,badge=null
   if(!ab){col='#5a4a3a';ic=null;nm='(case vide)';d='Aucun jutsu dans cette case de la barre de départ.';cat='barre';badge=null}
   else{col=J?catCol(J.cat):b.clan>=0?CLANS[b.clan][1]:'#e8cfa8';ic=J?J.cat:null;nm=ab.n;d=ab.d||'';gold=J&&J.r==='S';badge=J?J.r:s===0?'st':null;cat=J?catName(J.cat):s===0?'style de combat':s===DASHI?'dash (sans chakra)':'Kawarimi, commun à tous (sans chakra)'}}
  else{const T=TRAITS[b.clan];key='TRAIT';col=b.clan>=0?CLANS[b.clan][1]:'#c8b89a';ic=b.clan>=0?'c'+b.clan:'u';nm=T?T.nom||T.name||'Trait':b.clan>=0?CLANS[b.clan][0]:'Sans clan';d=T?T.desc||'':''}
- const h=free&&inRect(mouse,R);if(tip){if(h)hoverTip('fc'+s+':'+nm,()=>({t:nm,col:liftC(col,.55),l:[[s<ABN?`${key} · ${cat}${badge&&badge!=='st'?` · rang ${badge}`:''}`:'Trait du clan',liftC(col,.5)]],d:d||' '}));return}
+ const h=free&&inRect(mouse,R);if(tip){if(h){const ab=s<ABN?ch.abil[s]:null,rk=ab&&ab.rank,L=[[s<ABN?`${key} · ${cat}${badge&&badge!=='st'?` · rang ${badge}`:''}`:'Trait du clan',liftC(col,.5)]];
+  if(ab&&s>0)L.push([`${rk?jcostT(ab):'sans chakra'} · recharge ${fmtCd(ab.cd)}${ab.mud?' · '+ab.mud+' mudras':rk?' · sans mudra':''}`,'#d8b888']);
+  if(h)hoverTip('fc'+s+':'+nm,()=>({t:nm,col:liftC(col,.55),l:L,d:d||' '}))}return}
  rr(R,8,h?'rgba(70,46,24,.95)':'rgba(36,24,14,.82)',gold?'#ffb347':h?'#c08040':'#4a3220',gold?1.5:1);
  const kb={x:R.x+5,y:R.y+5,w:50,h:R.h-10};rr(kb,6,'rgba(50,32,16,.95)',gold?'#ffe81f':'#8a5a2a',1.2);fitT(key,kb.x+kb.w/2,kb.y+kb.h/2+4.5,key.length>6?10:12,gold?'#ffe81f':'#fff',kb.w-6,'bold',8,'center');
  jIcon(R.x+73,R.y+R.h/2,11.5,col,ic,gold);const x=R.x+90;
@@ -15467,6 +15523,10 @@ function drawFiche(E,t){const opp=scr==='opp',me=rosGet(MEK);if(!E)return;const 
  // Clic G, la barre de départ (1-6), le dash, le Kawarimi et le trait : 2 colonnes de 5
  for(let s=0;s<=ABN;s++)ficheCell(cellR(s),s,ch,b)});
  if(hs>=0)ficheCell(cellR(hs),hs,ch,b,true)
+ // ligne « N jutsu appris » : infobulle avec la liste par arbre (★ = dans la barre de départ)
+ if(free&&ch.jab&&inRect(mouse,{x:FI.x+216,y:FI.y+100,w:320,h:18}))hoverTip('flearn'+E.k,()=>({t:`${b.k.length} jutsu appris`,col:liftC(col,.55),
+  l:treesOf(b).flatMap(t=>{const L=b.k.filter(j=>JL[j]&&JL[j].cat===t).sort((x,y)=>RANKO.indexOf(JL[x].r)-RANKO.indexOf(JL[y].r));return wrapL(`${catName(t)} : `+(L.map(j=>`${JL[j].r} ${(b.bar.includes(j)?'★ ':'')+jName(j,{ch})}`).join(' · ')||'—'),352,FNT(11.5)).map(x=>[x,liftC(catCol(t),.5)])}),
+  d:'★ = dans la barre de départ. Les autres se posent en combat avec le menu B (sans pause).'}))
  // boutons
  for(const q of ficheBtns(E)){const h=free&&!q.off&&inRect(mouse,q.R),c=q.danger||q.warn?'#ff6a5a':'#ff9a3a';g.save();if(q.p&&!q.off&&!q.warn){g.shadowColor='#ff9a3a';g.shadowBlur=h?18:8}
   rr(q.R,q.R.h/2,q.off?'rgba(60,90,50,.9)':q.warn?(h?'rgba(170,60,45,.98)':'rgba(130,45,35,.95)'):q.p?(h?'#ffb347':'#ff9a3a'):h?(q.danger?'rgba(120,40,30,.95)':'rgba(90,60,30,.95)'):'rgba(40,28,18,.92)',q.off?'#7f7':c,1.5);g.restore();
@@ -15573,7 +15633,7 @@ function drawHud(){
   text(k,x+s/2,y+24,k.length>2?13:20,ready?'#fff':'#667','center');
   if(exS)text('EX',x+5,y+13,10,'#ffe81f','left');
   if(ab.charges)text('×'+p.chg[i],x+s-5,y+sh-5,12,'#7df','right');if(ab.ammo)text(p.ammo+'/'+ab.ammo,x+s-5,y+sh-5,11,'#ffb03a','right');
-  if(ab.cast)text(`${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');hudCost(p,ab,i,x,y,s,sh);
+  if(ab.cast)text(ab.mud?`${ab.mud} mudras`:`incant. ${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');hudCost(p,ab,i,x,y,s,sh);
   if(!ab.ult&&p.cds[i]>0&&!(ab.charges&&p.chg[i]>0)){const kk=Math.min(1,p.cds[i]/ab.cd);g.fillStyle='rgba(0,0,0,.6)';g.fillRect(x,y+sh*(1-kk),s,sh*kk);text(p.cds[i].toFixed(1),x+s/2,y+42,13,'#ffe81f')}
   if(ab.ult&&!ready&&p.cds[i]<=0){const f=Math.min(1,p.energy/Math.max(1,jcost(ab)));g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-f),s,sh*f)}
   hudAbN(exS&&ab.ex?ab.ex.n:ab.n,x+s/2,y+sh+13,exS&&ab.ex?'#ffe81f':'#9fb3d9',s+gap-4)});
@@ -15614,7 +15674,7 @@ function draw(){
  g.restore();
  const vg=g.createRadialGradient(W/2,H/2,H*.45,W/2,H/2,H*.95);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');g.fillStyle=vg;g.fillRect(0,0,W,H);
  if(flashS>0){g.fillStyle=`rgba(255,255,255,${flashS*1.2})`;g.fillRect(0,0,W,H)}
- drawAmbient();drawHud();try{BMUI.draw()}catch(e){console.error(e)}drawCutin();
+ drawAmbient();drawHud();drawCutin();
  if(keys.Tab&&state!=='menu'&&state!=='matchEnd'&&player){g.fillStyle='rgba(0,0,0,.45)';g.fillRect(0,0,W,H);text(mode==='battle'?`Bataille · ${tickets[0]} – ${tickets[1]} renforts`:`Manche ${round} · ${score[0]} – ${score[1]}`,W/2,70,20,'#ffe81f');drawBoard(120,mode==='battle'&&CFG.bsize>10?24:28)}
  if(banner&&state==='fight'){g.globalAlpha=Math.min(1,banner.t*2);g.fillStyle='rgba(0,0,0,.5)';g.fillRect(0,H/2-130,W,46);text(banner.s,W/2,H/2-98,26,banner.s.startsWith('MORT')?'#ff6060':'#ffe81f');g.globalAlpha=1}
  if(state==='countdown'){g.fillStyle='rgba(0,0,0,.35)';g.fillRect(0,0,W,H);text(mode!=='battle'?`Manche ${round}`:`Bataille · ${CFG.bsize} contre ${CFG.bsize}`,W/2,H/2-60,28,'#9fb3d9');text(mode!=='battle'?units.filter(u=>u.team===0).map(u=>u.ch.name).join(' + ')+'  contre  '+units.filter(u=>u.team===1).map(u=>u.ch.name).join(' + '):'Élimine les ennemis pour vider leurs renforts',W/2,H/2-30,18,'#dfe8ff','center','normal');text(String(Math.ceil(stateT)),W/2,H/2+50,90,'#ffe81f')}
@@ -15625,7 +15685,7 @@ function draw(){
   text((win===light?'La Volonté du Feu l\'emporte !':'L\'Akatsuki triomphe…')+(mode==='battle'?`  ·  renforts ${tickets[0]} – ${tickets[1]}`:`  ·  ${score[0]} – ${score[1]}`),W/2,big?102:y0-44,18,'#dfe8ff','center','normal');
   drawBoard(y0,big?22:28);
   text('Clic ou Entrée pour revenir au menu',W/2,H-16,15,'#9fb3d9','center','normal')}
- drawCursor();
+ try{BMUI.draw()}catch(e){console.error(e)}drawCursor();
 }
 let last=performance.now();
 function ageFx(dt){for(const f of fx){f.t-=dt;if(f.vx!==undefined){f.x+=f.vx*dt;f.y+=f.vy*dt;f.vx*=.92;f.vy*=.92}}fx=fx.filter(f=>f.t>0);for(const t of txt){t.t-=dt;t.z+=40*dt}txt=txt.filter(t=>t.t>0)}
@@ -15650,9 +15710,9 @@ function hostGame(){if(noPeer())return;netReset();net.myPick='p0';const code=Mat
  p.on('open',()=>setStat(cnt()));
  p.on('connection',c=>{const P={id:net.nextId++,conn:c,c:null,ready:false,team:0,in:null,pressed:{},gcam:null};
   c.on('open',()=>{if(livePeers().length>=MAXP||state!=='menu'){c.send({t:'full',v:state!=='menu'});setTimeout(()=>c.close(),400);return}
-   net.peers.push(P);net.pU=null;setStat(cnt());c.send({t:'hello',mode,cfg:CFG,id:P.id});net.ready=false;for(const q of net.peers)q.ready=false;sendLobby()});
+   net.peers.push(P);net.pU=null;setStat(cnt());c.send({t:'hello',mode,cfg:CFG,id:P.id,pv:NPV});net.ready=false;for(const q of net.peers)q.ready=false;sendLobby()});
   c.on('data',d=>{if(!d||typeof d!=='object'||!net.peers.includes(P))return;
-   if(d.t==='build'){P.b=sanitizeBuild(d.b,true);P.c='p'+P.id;CH[P.c]=mkNinja(P.b,true);P.ready=false;sendLobby()}
+   if(d.t==='build'){if(d.pv!==NPV){netVerHost(P);return}P.b=sanitizeBuild(d.b,true);P.c='p'+P.id;CH[P.c]=mkNinja(P.b,true);P.ready=false;sendLobby()}
    if(d.t==='ready'){P.ready=!!d.v&&!!P.c;sendLobby()}
    if(d.t==='team'){P.team=d.v?1:0;P.ready=false;sendLobby()}
    if(d.t==='eq'){bmNet(P,d);return}
@@ -15662,13 +15722,14 @@ function hostGame(){if(noPeer())return;netReset();net.myPick='p0';const code=Mat
 function joinGame(code){if(noPeer())return;code=(code||'').trim().toUpperCase();if(code.length!==4){setStat('Entre le code à 4 caractères de l\'hôte.');return}
  netReset();net.role='guest';setStat('Connexion…');const p=new Peer();net.peer=p;
  p.on('open',()=>{const c=p.connect('nrarena-'+code,{reliable:true,serialization:'binary'});net.conn=c;
-  c.on('open',()=>{netSend({t:'build',b:MY});setStat(`Connecté au salon ${code}. Choisis ton perso dans la liste puis clique PRÊT.`);netUI(false)});
-  c.on('data',d=>{if(!d)return;if(d.t==='snap'){const s=d.j?netDec(d):(net.gU=null,d);if(s)applySnap(s)}else if(d.t==='hello'){mode=d.mode;if(d.cfg)Object.assign(CFG,d.cfg);if(d.id){net.myId=d.id;netSend({t:'build',b:MY})}}
+  c.on('open',()=>{netSend({t:'build',b:MY,pv:NPV});setStat(`Connecté au salon ${code}. Choisis ton perso dans la liste puis clique PRÊT.`);netUI(false)});
+  c.on('data',d=>{if(!d)return;if(d.t==='snap'){const s=d.j?netDec(d):(net.gU=null,d);if(s)applySnap(s)}else if(d.t==='hello'){mode=d.mode;if(d.cfg)Object.assign(CFG,d.cfg);if(d.id){if(d.pv!==NPV){netVerGuest();return}net.myId=d.id;netSend({t:'build',b:MY,pv:NPV})}}
    else if(d.t==='lobby'){if(d.cfg)Object.assign(CFG,d.cfg);mode=d.mode;net.lobby=d.P||[];for(const x of net.lobby)if(x.b&&x.c)CH[x.c]=mkNinja(x.b,true);const me=net.lobby.find(x=>x.id===net.myId);if(me){net.mate=me.c;net.ready=me.ready;net.myTeam=me.team}}
    else if(d.t==='bal')blRecv(d);
    else if(d.t==='eqr')bmAck(d);
+   else if(d.t==='nver')netVerGuest();
    else if(d.t==='full')setStat(d.v?'La partie a déjà commencé : attends la fin et reconnecte-toi.':`Salon complet (${MAXP} joueurs maximum).`)});
-  c.on('close',()=>{netReset();state='menu';setStat('L\'hôte a fermé la partie.')})});
+  c.on('close',()=>{if(netVerT())return;netReset();state='menu';setStat('L\'hôte a fermé la partie.')})});
  p.on('error',e=>setStat(e.type==='peer-unavailable'?'Salon introuvable : vérifie le code.':'Erreur réseau : '+e.type))}
 // panneau d'options audio
 const CSEL=[['cMap','map'],['cTeam','team'],['cWins','wins'],['cBsize','bsize'],['cTickets','tickets']],CCHK=[['cSd','sd'],['cOrb','orb'],['cPk','pk']];
@@ -15724,7 +15785,7 @@ function guestFrame(dt){for(const k in pressed)net.gp[k]=1;
  for(const p of projs){p.x+=p.vx*dt;p.y+=p.vy*dt;p.rot=(p.rot||0)+dt*25;if(p.life0)p.life=Math.max(.001,p.life-dt)}
  for(const z of zones)z.t=Math.max(0,z.t-dt);
  ageFx(dt);shake=Math.max(0,shake-dt);
- if(player){const c=Math.min(1,dt*6);const la=player.dead||!isFinite(player.aim)?0:1;cam.x+=(clamp(player.x+la*Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)-cam.x)*c*.8;cam.y+=(clamp(player.y+la*Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*c*.8}}
+ if(player){const c=Math.min(1,dt*6);const la=player.dead||!isFinite(player.aim)?0:1;cam.x+=(clamp(player.x+la*Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)+bmCamOff()-cam.x)*c*.8;cam.y+=(clamp(player.y+la*Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*c*.8}}
 // instantané encodé une seule fois par tick (JSON) ; lignes d'unités en différences par rapport au dernier envoi (K : image clé, sans référence)
 const NSEC=['Pj','Z','Tr','Tu','Fi','Wl','Ax'];
 function netEnc(s){const P=net.pU,K=!P,ci=UK.indexOf('c'),U=s.U.map((a,i)=>{const q=!K&&P[i];if(!q||q.length!==a.length||q[ci]!==a[ci])return{f:a};const d=[];for(let j=0;j<a.length;j++){const v=a[j],w=q[j];if((v!==w&&!(v!==v&&w!==w))||(v!==null&&typeof v==='object'))d.push(j,v)}return d.length?d:0});
@@ -15809,7 +15870,11 @@ const blData=p=>({g:p.g,c:p.c,n:p.n,s:p.s,j:p.j});
 // le multiplicateur de dégâts ne s'y applique qu'en partie (mesuré : ×2 demandé → ×1 à ×1,55) ; le panneau le signale
 const BLPART=new Set(['x.su_ball','x.hm_arc','x.km_angel','x.ka_goka','x.ka_dragon','x.ak_arm']);
 let BLJ0=null; // jutsu(id) d'origine (avant le profil) : recharge et rang de chaque jutsu
-const blJD=id=>JBAL[blJK(JL[id])]||JBAL[JL[id].ocat+'|'+JL[id].n]||{}; // (transition : clé d'origine d'un jutsu déplacé dans un autre arbre) // réglage par défaut du jutsu (JBAL, nr_ninja.js) : d dégâts ×, cd recharge, ck coût
+// barème par rang (DESIGN §3) : le réglage JBAL d'un jutsu reste dans la fourchette de son rang, à 10 % près pour la recharge et 25 % près pour le chakra
+// (le reste de l'équilibrage passe par les dégâts, d) ; un profil F8 (BLC.pj) n'est pas borné (outil de test)
+const BLCD=.1,BLCK=.25,blRk=(r,cd,ck)=>{const R=RKB[r];if(!R)return[cd,ck];return[cd==null?cd:Math.round(clamp(cd,R.cd[0]*(1-BLCD),R.cd[1]*(1+BLCD))*10)/10,ck==null?ck:clamp(Math.round(ck),Math.ceil(R.ck*(1-BLCK)),Math.floor(R.ck*(1+BLCK)))]};
+const blJD0=id=>JBAL[blJK(JL[id])]||JBAL[JL[id].ocat+'|'+JL[id].n]||{};
+const blJD=id=>{const q=blJD0(id);if(q.cd==null&&q.ck==null)return q;const [cd,ck]=blRk(JL[id].r,q.cd,q.ck);return Object.assign({},q,cd!=null?{cd}:{},ck!=null?{ck}:{})}; // (transition : clé d'origine d'un jutsu déplacé dans un autre arbre) // réglage par défaut du jutsu (JBAL, nr_ninja.js) : d dégâts ×, cd recharge, ck coût
 const blJBase=(p,id)=>{const o=BLJ0[id],J=blJD(id);return{cd:Math.round((J.cd??o.cd)*blG(p,'jcd')*10)/10,ck:o.hpc?null:J.ck??blG(p,'ck'+o.rank),d:J.d??1}};
 // chiffres des descriptions : les « N dégâts » (et les listes « 12, 12 puis 16 dégâts ») suivent le multiplicateur ; un réglage propre au jutsu est signalé
 const blDescScale=(d,m)=>m===1?d:d.replace(/(\d+(?:,\d+)?)(?=(?:\s*(?:,|puis|et)\s*\d+(?:,\d+)?)*\s*(?:de\s+|d'\s*)?dégâts)/g,s=>{const v=parseFloat(s.replace(',','.'))*m;return v<10&&!Number.isInteger(v)?blF(v,1):String(Math.round(v))});
@@ -15899,8 +15964,14 @@ function blRecv(d){if(net.role!=='guest')return;const p=blNorm(d.p||{});p.name=S
 // ---------- profils (navigateur) ----------
 const blLS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
 function blLoad(){const s=blLS('nrBalProfiles');BLC.saved={};if(s&&typeof s==='object')for(const n in s){const p=blNorm(s[n]);p.name=n.slice(0,40);BLC.saved[p.name]=p}
- const c=blLS('nrBalCur');BLC.cur=c?Object.assign(blNorm(c),{mod:!!c.mod}):Object.assign(blNorm({}),{name:'Standard',mod:false});if(c&&c.name)BLC.cur.name=String(c.name).slice(0,40)}
-const blSaveCur=()=>blLS('nrBalCur',Object.assign(blData(BLC.cur),{name:BLC.cur.name,mod:!!BLC.cur.mod})),blSaveAll=()=>{const o={};for(const n in BLC.saved)o[n]=blData(BLC.saved[n]);blLS('nrBalProfiles',o)};
+ let c=blLS('nrBalCur');
+ // profil actif enregistré par une version d'avant les arbres de compétences (sans gv) : ses valeurs absolues de clan remplaceraient les nouvelles en silence.
+ // Il est rangé dans les profils sous « … (ancienne version) » et le profil Standard reprend la main, avec un message.
+ if(c&&typeof c==='object'&&c.mod&&c.gv!==BLGV){const n=(String(c.name||'Personnalisé').slice(0,24)+' (ancienne version)');const p=blNorm(c);p.name=n;BLC.saved[n]=p;try{blSaveAll()}catch(e){}c=null;
+  try{localStorage.removeItem('nrBalCur')}catch(e){}if(!BLSIM)setTimeout(()=>{try{blToast('Ton profil d\'équilibrage venait d\'une ancienne version du jeu : il est gardé sous « '+n+' », le profil Standard est actif.')}catch(e){}},1500)}
+ BLC.cur=c?Object.assign(blNorm(c),{mod:!!c.mod}):Object.assign(blNorm({}),{name:'Standard',mod:false});if(c&&c.name)BLC.cur.name=String(c.name).slice(0,40)}
+const BLGV=5; // version du jeu des profils (5 = arbres de compétences)
+const blSaveCur=()=>blLS('nrBalCur',Object.assign(blData(BLC.cur),{name:BLC.cur.name,mod:!!BLC.cur.mod,gv:BLGV})),blSaveAll=()=>{const o={};for(const n in BLC.saved)o[n]=blData(BLC.saved[n]);blLS('nrBalProfiles',o)};
 const blView=()=>BLC.ro&&BLC.host?BLC.host.p:BLC.cur;
 // une modification : profil courant marqué « modifié », appliqué tout de suite au menu (sinon à la prochaine partie), envoyé aux invités
 function blTouch(){const c=BLC.cur;if(!c.mod&&c.name==='Standard')c.name='Personnalisé';c.mod=true;blSaveCur();blBadge();blCounts();clearTimeout(BLC.tm);BLC.tm=setTimeout(blSync,140)}
@@ -16132,7 +16203,8 @@ function blImport(){const ta=blH('textarea',{placeholder:'Colle ici un profil ex
 // ---------- simulateur : côté panneau ----------
 const BLS={run:false,fr:null,opt:{grp:{c:1,n:1,s:0,f:0},N:800,mode:'heal',kits:'random',dur:blCl(+blLS('nrBalDur')||52,30,90)},res:null,t0:0,rate:.05,last:0,sug:null,cancelled:false,prof:''};
 function blSimCats(){const o=BLS.opt.grp,c=[];if(o.c){for(let i=0;i<CLANS.length;i++)c.push('c'+i);c.push('u')}if(o.n)for(let i=0;i<NATURES.length;i++)c.push('n'+i);if(o.c){for(let i=0;i<STREE.length;i++)c.push('t'+i);for(let i=0;i<FAMS.length;i++)c.push('f'+i)}if(o.s)STYLES.forEach((_,i)=>c.push('s'+i));if(o.f)c.push('free');return c}
-const blCatInfo=c=>c==='u'?{nm:'Sans clan',col:'#9aa3ad',tag:'—',g:'Clans'}:c==='free'?{nm:'Duels libres',col:'#c8b89a',tag:'∗',g:'Libres'}:c[0]==='c'?{nm:CLANS[+c.slice(1)][0],col:CLANS[+c.slice(1)][1],tag:clanTag(+c.slice(1)),g:'Clans'}:
+// catégories : u sans clan, free duels libres, c<k> clans, n<k> natures, t<k> arbres de style (Tai / Ken / Buki), f<k> familles de sub, s<k> styles d'attaque de base (M1)
+const blCatInfo=c=>c==='u'?{nm:'Sans clan',col:'#9aa3ad',tag:'—',g:'Clans'}:c[0]==='t'&&TREES[c]?{nm:'Arbre '+catName(c),col:catCol(c),tag:catName(c).slice(0,2),g:'Arbres de style'}:c[0]==='f'&&TREES[c]?{nm:'Famille '+catName(c),col:catCol(c),tag:catName(c).slice(0,2),g:'Familles de sub'}:c==='free'?{nm:'Duels libres',col:'#c8b89a',tag:'∗',g:'Libres'}:c[0]==='c'?{nm:CLANS[+c.slice(1)][0],col:CLANS[+c.slice(1)][1],tag:clanTag(+c.slice(1)),g:'Clans'}:
  c[0]==='n'?{nm:NATURES[+c.slice(1)][0],col:NATURES[+c.slice(1)][2],tag:NATURES[+c.slice(1)][0].slice(0,2),g:'Natures'}:{nm:(STYLES[+c.slice(1)]||['?'])[0],col:MELEEK.has((STYLES[+c.slice(1)]||[])[4])?'#e8cfa8':'#8fc8ff',tag:MELEEK.has((STYLES[+c.slice(1)]||[])[4])?'⚔':'➶',g:'Styles (M1)'};
 function blSimStart(){if(BLS.run||state!=='menu')return;const cats=blSimCats();if(!cats.length){blToast('Choisis au moins une catégorie à tester.');return}
  const per=Math.max(1,Math.round(BLS.opt.N/cats.length)),job={prof:blData(BLC.cur),cats,per,mode:BLS.opt.mode,kits:BLS.opt.kits,seed:77+Math.floor(Math.random()*9000)};
@@ -16215,7 +16287,7 @@ function blSimPaint(el){el=el||BLS.resEl;if(!el||!BLC.open||BLC.tab!=='sim')retu
  el.replaceChildren(...out)}
 // suggestion : force (PV × puissance) corrigée de l'écart à 50 %, répartie selon la durée des duels de la catégorie (trop courts : plus de PV, moins de puissance)
 function blSuggest(R){const p0=BLC.cur,T=BLS.opt.dur,out=[];
- for(const c in R.cats){const r=R.cats[c];if(r.n<30||c==='free')continue;const p=r.w/r.n,ci=1.96*Math.sqrt(Math.max(p*(1-p),.0025)/r.n),dev=p-.5;if(Math.abs(dev)<Math.max(.03,ci*.6))continue;
+ for(const c in R.cats){const r=R.cats[c];if(r.n<30||c==='free'||/^[tf]\d/.test(c))continue; // arbres de style et familles : réglés dans TREEBAL / FAMBAL (nr_ninja.js), pas dans un profil F8const p=r.w/r.n,ci=1.96*Math.sqrt(Math.max(p*(1-p),.0025)/r.n),dev=p-.5;if(Math.abs(dev)<Math.max(.03,ci*.6))continue;
   const f=blCl(1-dev*.9,.8,1.2),md=blMed(r.ts),dk=md?blCl(Math.pow(T/md,.5),.94,1.06):1,fh=Math.sqrt(f)*dk,fp=Math.sqrt(f)/dk,I=blCatInfo(c);
   if(c[0]==='s'){const k=STYLES[+c.slice(1)][0],cur=p0.s[k]||[1,1,1];out.push({on:true,kind:'s',key:k,nm:I.nm,tag:I.tag,col:I.col,p,md,to:[blCl(blR(cur[0]*fh,.01),.5,2),blCl(blR(cur[1]*fp,.01),.5,2),cur[2]],lab:[['PV ×',cur[0],0],['Puissance ×',cur[1],0]]})}
   else{const kind=c[0]==='n'?'n':'c',key=c==='u'?'-1':c.slice(1),cur=p0[kind][key]||BLC.D[kind][key]||[1,1];out.push({on:true,kind,key,nm:I.nm,tag:I.tag,col:I.col,p,md,to:[blCl(blR(cur[0]*fh,.01),.3,2.5),blCl(blR(cur[1]*fp,.01),.3,2.5)],lab:[['PV ×',cur[0],0],['Puissance ×',cur[1],0]]})}

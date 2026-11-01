@@ -210,7 +210,9 @@ function ficheCell(R,s,ch,b,tip){const free=!CONF;let key,col,ic,nm,d,badge=null
   if(!ab){col='#5a4a3a';ic=null;nm='(case vide)';d='Aucun jutsu dans cette case de la barre de départ.';cat='barre';badge=null}
   else{col=J?catCol(J.cat):b.clan>=0?CLANS[b.clan][1]:'#e8cfa8';ic=J?J.cat:null;nm=ab.n;d=ab.d||'';gold=J&&J.r==='S';badge=J?J.r:s===0?'st':null;cat=J?catName(J.cat):s===0?'style de combat':s===DASHI?'dash (sans chakra)':'Kawarimi, commun à tous (sans chakra)'}}
  else{const T=TRAITS[b.clan];key='TRAIT';col=b.clan>=0?CLANS[b.clan][1]:'#c8b89a';ic=b.clan>=0?'c'+b.clan:'u';nm=T?T.nom||T.name||'Trait':b.clan>=0?CLANS[b.clan][0]:'Sans clan';d=T?T.desc||'':''}
- const h=free&&inRect(mouse,R);if(tip){if(h)hoverTip('fc'+s+':'+nm,()=>({t:nm,col:liftC(col,.55),l:[[s<ABN?`${key} · ${cat}${badge&&badge!=='st'?` · rang ${badge}`:''}`:'Trait du clan',liftC(col,.5)]],d:d||' '}));return}
+ const h=free&&inRect(mouse,R);if(tip){if(h){const ab=s<ABN?ch.abil[s]:null,rk=ab&&ab.rank,L=[[s<ABN?`${key} · ${cat}${badge&&badge!=='st'?` · rang ${badge}`:''}`:'Trait du clan',liftC(col,.5)]];
+  if(ab&&s>0)L.push([`${rk?jcostT(ab):'sans chakra'} · recharge ${fmtCd(ab.cd)}${ab.mud?' · '+ab.mud+' mudras':rk?' · sans mudra':''}`,'#d8b888']);
+  if(h)hoverTip('fc'+s+':'+nm,()=>({t:nm,col:liftC(col,.55),l:L,d:d||' '}))}return}
  rr(R,8,h?'rgba(70,46,24,.95)':'rgba(36,24,14,.82)',gold?'#ffb347':h?'#c08040':'#4a3220',gold?1.5:1);
  const kb={x:R.x+5,y:R.y+5,w:50,h:R.h-10};rr(kb,6,'rgba(50,32,16,.95)',gold?'#ffe81f':'#8a5a2a',1.2);fitT(key,kb.x+kb.w/2,kb.y+kb.h/2+4.5,key.length>6?10:12,gold?'#ffe81f':'#fff',kb.w-6,'bold',8,'center');
  jIcon(R.x+73,R.y+R.h/2,11.5,col,ic,gold);const x=R.x+90;
@@ -253,6 +255,10 @@ function drawFiche(E,t){const opp=scr==='opp',me=rosGet(MEK);if(!E)return;const 
  // Clic G, la barre de départ (1-6), le dash, le Kawarimi et le trait : 2 colonnes de 5
  for(let s=0;s<=ABN;s++)ficheCell(cellR(s),s,ch,b)});
  if(hs>=0)ficheCell(cellR(hs),hs,ch,b,true)
+ // ligne « N jutsu appris » : infobulle avec la liste par arbre (★ = dans la barre de départ)
+ if(free&&ch.jab&&inRect(mouse,{x:FI.x+216,y:FI.y+100,w:320,h:18}))hoverTip('flearn'+E.k,()=>({t:`${b.k.length} jutsu appris`,col:liftC(col,.55),
+  l:treesOf(b).flatMap(t=>{const L=b.k.filter(j=>JL[j]&&JL[j].cat===t).sort((x,y)=>RANKO.indexOf(JL[x].r)-RANKO.indexOf(JL[y].r));return wrapL(`${catName(t)} : `+(L.map(j=>`${JL[j].r} ${(b.bar.includes(j)?'★ ':'')+jName(j,{ch})}`).join(' · ')||'—'),352,FNT(11.5)).map(x=>[x,liftC(catCol(t),.5)])}),
+  d:'★ = dans la barre de départ. Les autres se posent en combat avec le menu B (sans pause).'}))
  // boutons
  for(const q of ficheBtns(E)){const h=free&&!q.off&&inRect(mouse,q.R),c=q.danger||q.warn?'#ff6a5a':'#ff9a3a';g.save();if(q.p&&!q.off&&!q.warn){g.shadowColor='#ff9a3a';g.shadowBlur=h?18:8}
   rr(q.R,q.R.h/2,q.off?'rgba(60,90,50,.9)':q.warn?(h?'rgba(170,60,45,.98)':'rgba(130,45,35,.95)'):q.p?(h?'#ffb347':'#ff9a3a'):h?(q.danger?'rgba(120,40,30,.95)':'rgba(90,60,30,.95)'):'rgba(40,28,18,.92)',q.off?'#7f7':c,1.5);g.restore();

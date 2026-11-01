@@ -3,13 +3,13 @@
 // arbre de clan à 2 jutsu par rang (les 10 appris), aucun mudra. Trait « Arsenal » : les armes plantées au sol se ramassent et réduisent les recharges.
 // Les « N dégâts » des descriptions sont les dégâts de base des mécaniques (avant puissance du ninja et JBAL.d).
 KIT('c22',[
- ['D','x.bk_volley','Volée de kunai','3 kunai en éventail : 8 dégâts chacun ; ils restent plantés au sol (armes à ramasser)','kunai'],
+ ['D','x.bk_volley','Kunai Rendan : Volée de kunai','3 kunai en éventail : 8 dégâts chacun ; ils restent plantés au sol (armes à ramasser)','kunai'],
  ['D','x.bk_tonfa','Tonfa : Contre','0,7 s : les tonfa bloquent le prochain coup au corps à corps ; l\'attaquant prend 10 dégâts et il est désarmé 0,8 s','kunai'],
- ['C','x.bk_fundo','Masse à chaîne','La masse part au bout de sa chaîne (280) et revient : 14 dégâts à l\'aller et au retour, ralentit','chain'],
- ['C','x.bk_heavy','Parchemin : Arme lourde','4 s : tes coups de base frappent avec une grande hache (+10 d\'allonge, +25 % de dégâts) ; le 5e coup étourdit 0,5 s','kunai'],
- ['B','x.bk_cage','Cage de kunai','8 kunai reliés par un fil se plantent en cercle au point visé (110) : l\'ennemi qui en sort est entravé 0,8 s et prend 16 dégâts','kunai'],
- ['B','x.bk_hammer','Marteau écraseur','Un marteau géant sort du parchemin et s\'abat devant toi 0,4 s après : 30 dégâts, étourdi 0,7 s','kunai'],
- ['A','x.bk_barrage','Arsenal volant','1,2 s : tu lances 12 armes variées vers le curseur (la visée suit) : 4 dégâts chacune ; elles restent au sol','kunai'],
+ ['C','x.bk_fundo','Fundo : Masse à chaîne','La masse part au bout de sa chaîne (280) et revient : 14 dégâts à l\'aller et au retour, ralentit','chain'],
+ ['C','x.bk_heavy','Makimono : Arme lourde','4 s : tes coups de base frappent avec une grande hache (+10 d\'allonge, +25 % de dégâts) ; le 5e coup étourdit 0,5 s','kunai'],
+ ['B','x.bk_cage','Kunai Ori : Cage de kunai','8 kunai reliés par un fil se plantent en cercle au point visé (110) : l\'ennemi qui en sort est entravé 0,8 s et prend 16 dégâts','kunai'],
+ ['B','x.bk_hammer','Ôtsuchi : Marteau écraseur','Un marteau géant sort du parchemin et s\'abat devant toi 0,4 s après : 30 dégâts, étourdi 0,7 s','kunai'],
+ ['A','x.bk_barrage','Buki Shôkan : Arsenal volant','1,2 s : tu lances 12 armes variées vers le curseur (la visée suit) : 4 dégâts chacune ; elles restent au sol','kunai'],
  ['A','x.bk_spin','Kusarigama : Tourbillon','2 s : la faucille tourne autour de toi au bout de sa chaîne (150) en attirant un peu les ennemis : 8 dégâts à chaque passage','chain'],
  ['S','x.bk_soryu','Sôshôryû','Deux parchemins s\'élèvent en dragons jumeaux : une pluie d\'armes s\'abat 1,5 s sur la zone (140) : jusqu\'à 55 dégâts, ralentit ; la zone se couvre d\'armes','kunai'],
  ['S','x.bk_rope','Kôkinjô : Corde d\'or','Lance la corde dorée des Sages (420) : l\'ennemi touché est ligoté 1,4 s, sans jutsu, et subit 30 dégâts ; son chakra fond de 15','gold'],
@@ -46,18 +46,18 @@ AFTER.push(()=>UK.push('bk_w','bk_axe','bk_ton'));
 CLOOK[BUKI]=(look)=>{if(!look.back&&!look.gourd)look.back='rouleaux';look.head.eye=look.head.eye||'#6a4a2a'};
 // ---------- mécaniques ----------
 Object.assign(NAT,{
- bk_volley:S_('Volée de kunai','',4,{line:{len:450,w:60},ai:RG(430,.7)},(u,a)=>{anim(u,'throw2',.3);S('blaster',u);u.thrT=.2;
+ bk_volley:S_('Kunai Rendan : Volée de kunai','',4,{line:{len:450,w:60},ai:RG(430,.7)},(u,a)=>{anim(u,'throw2',.3);S('blaster',u);u.thrT=.2;
   for(const d of[-.2,0,.2]){proj(u,a+d,{spd:950,r:7,dmg:8,life:.48,col:'#d8dde6',kind:'bk_kunai'});bkTrack(u,0)}}),
  bk_tonfa:S_('Tonfa : Contre','',6,{ai:DEF},(u)=>{u.bk_ton=.7;anim(u,'kj_guard',.6);S('deflect',u);say(u,'GARDE','#e8d0a8')}),
- bk_fundo:S_('Masse à chaîne','',8,{line:{len:280,w:30},ai:RG(270,.6)},(u,a)=>{anim(u,'throw2',.35);S('heavy',u);u.thrT=.2;
+ bk_fundo:S_('Fundo : Masse à chaîne','',8,{line:{len:280,w:30},ai:RG(270,.6)},(u,a)=>{anim(u,'throw2',.35);S('heavy',u);u.thrT=.2;
   proj(u,a,{spd:700,r:13,dmg:14,life:2,col:'#9aa4b4',ret:280,pierce:1,kind:'bk_mace',o:{slow:.8}});aux.push({type:'buk_chain',x:u.x,y:u.y,r:0,t:2.2,m:2.2,team:u.team,owner:u,ui:stI(u),p:projs[projs.length-1]})}),
- bk_heavy:S_('Parchemin : Arme lourde','',10,{ai:SELF(150,.6)},(u)=>{u.bk_axe=4;anim(u,'summon',.4);S('poof',u);say(u,'ARME LOURDE','#ffd36a');jx({jfx:'bk_scroll',ui:stI(u),x:u.x,y:u.y,t:.6,m:.6})}),
- bk_cage:S_('Cage de kunai','',11,{tele:{r:110,max:380},ai:RG(380,.6)},(u,a,td)=>{const p=atP(u,a,td,380);anim(u,'throw2',.4);S('blaster',u);u.thrT=.2;
+ bk_heavy:S_('Makimono : Arme lourde','',10,{ai:SELF(150,.6)},(u)=>{u.bk_axe=4;anim(u,'summon',.4);S('poof',u);say(u,'ARME LOURDE','#ffd36a');jx({jfx:'bk_scroll',ui:stI(u),x:u.x,y:u.y,t:.6,m:.6})}),
+ bk_cage:S_('Kunai Ori : Cage de kunai','',11,{tele:{r:110,max:380},ai:RG(380,.6)},(u,a,td)=>{const p=atP(u,a,td,380);anim(u,'throw2',.4);S('blaster',u);u.thrT=.2;
   const ins=new Set(enemies(u).filter(e=>Math.hypot(e.x-p.x,e.y-p.y)<110));aux.push({type:'bk_cage',x:p.x,y:p.y,r:110,t:4,m:4,team:u.team,owner:u,ins,done:new Set(),k:0});jx({jfx:'bk_fly8',x:u.x,y:u.y,x2:p.x,y2:p.y,t:.25,m:.25})}),
- bk_hammer:S_('Marteau écraseur','',11,{line:{len:150,w:170},ai:RG(130,.65)},(u,a)=>{const p=fwd(u,a,85);anim(u,'kj_hammer',.6);S('poof',u);S('heavy',u);const D=tjLock(u,.5);
+ bk_hammer:S_('Ôtsuchi : Marteau écraseur','',11,{line:{len:150,w:170},ai:RG(130,.65)},(u,a)=>{const p=fwd(u,a,85);anim(u,'kj_hammer',.6);S('poof',u);S('heavy',u);const D=tjLock(u,.5);
   jx({jfx:'bk_hammer',x:p.x,y:p.y,a,t:.62,m:.62});later(u,.4,()=>{if(u.dead)return;for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<85+e.r)hit(e,u,30,{melee:1,stun:.7,unblockable:1,fx:p.x,fy:p.y});
    jx({jfx:'tj_crater',x:p.x,y:p.y,r:85,t:.9,m:.9});jx({jfx:'shock',x:p.x,y:p.y,r:95,t:.4,m:.4,col:'#e8d0a8'});bkDrop(u,p.x,p.y,4);if(near(p.x,p.y)){S('boom',u);S('rock',u);shake=Math.max(shake,.35)}},{x:p.x,y:p.y,r:85})}),
- bk_barrage:S_('Arsenal volant','',13,{line:{len:420,w:90},ai:RG(400,.7)},(u)=>{const D=tjLock(u,1.25);anim(u,'bk_barrage',1.2);let n=0;jx({jfx:'bk_scroll',ui:stI(u),x:u.x,y:u.y,t:1.2,m:1.2,big:1});
+ bk_barrage:S_('Buki Shôkan : Arsenal volant','',13,{line:{len:420,w:90},ai:RG(400,.7)},(u)=>{const D=tjLock(u,1.25);anim(u,'bk_barrage',1.2);let n=0;jx({jfx:'bk_scroll',ui:stI(u),x:u.x,y:u.y,t:1.2,m:1.2,big:1});
   seqs.push({owner:u,n:12,t:.02,iv:.1,vfx:'kunai',f:o=>{if(o.dash!==D||o.stun>0)return;const p=tjCur(o,420),b=ang(o,p)+(rnd()-.5)*.18,k=n++%5;o.aim=ang(o,p);S('blaster',o);
    proj(o,b,{spd:980,r:8,dmg:4,life:.48,col:'#d8dde6',kind:'bk_wpnp',bk:k});if(n>8)bkTrack(o,k)}})}),
  bk_spin:S_('Kusarigama : Tourbillon','',14,{ai:SELF(170,.65)},(u,a)=>{anim(u,'buk_twirl',2);S('wind',u);aux.push({type:'bk_spin',x:u.x,y:u.y,a,r:150,t:2,m:2,team:u.team,owner:u,ui:stI(u),hs:new Map()})}),

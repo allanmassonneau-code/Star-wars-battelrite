@@ -76,11 +76,14 @@ rep("cards.forEach(c=>{if(inRect(mouse,c)){if(takenBy(c.c))return;if(isGuest()){
 rep("function lobbyList(){return net.role==='host'?[{id:0,c:net.myPick||null,ready:!!net.ready,team:0}].concat(livePeers().map(p=>({id:p.id,c:p.c,ready:!!p.ready,team:p.team}))):net.role==='guest'?net.lobby:[]}",
     "function lobbyList(){return net.role==='host'?[{id:0,c:'p0',ready:!!net.ready,team:0,b:MY}].concat(livePeers().map(p=>({id:p.id,c:p.c,ready:!!p.ready,team:p.team,b:p.b}))):net.role==='guest'?net.lobby:[]}")
 rep("   if(d.t==='hero'&&CH[d.c]&&!CH[d.c].trooper&&!lobbyList().some(x=>x.id!==P.id&&x.c===d.c)){P.c=d.c;P.ready=false;sendLobby()}\n   else if(d.t==='hero')sendLobby();",
-    "   if(d.t==='build'){P.b=sanitizeBuild(d.b,true);P.c='p'+P.id;CH[P.c]=mkNinja(P.b,true);P.ready=false;sendLobby()}")
+    "   if(d.t==='build'){if(d.pv!==NPV){netVerHost(P);return}P.b=sanitizeBuild(d.b,true);P.c='p'+P.id;CH[P.c]=mkNinja(P.b,true);P.ready=false;sendLobby()}")
 rep("net.lobby=d.P||[];const me=net.lobby.find(x=>x.id===net.myId);",
     "net.lobby=d.P||[];for(const x of net.lobby)if(x.b&&x.c)CH[x.c]=mkNinja(x.b,true);const me=net.lobby.find(x=>x.id===net.myId);")
-rep("if(d.id)net.myId=d.id}","if(d.id){net.myId=d.id;netSend({t:'build',b:MY})}}")
-rep("c.on('open',()=>{setStat(`Connecté au salon ${code}.","c.on('open',()=>{netSend({t:'build',b:MY});setStat(`Connecté au salon ${code}.")
+rep("if(d.id)net.myId=d.id}","if(d.id){if(d.pv!==NPV){netVerGuest();return}net.myId=d.id;netSend({t:'build',b:MY,pv:NPV})}}")
+# version du protocole en ligne (NPV) : l'hôte l'annonce dans hello, l'invité dans build ; une version différente coupe la connexion avec un message clair
+rep("c.send({t:'hello',mode,cfg:CFG,id:P.id});","c.send({t:'hello',mode,cfg:CFG,id:P.id,pv:NPV});")
+rep("c.on('close',()=>{netReset();state='menu';","c.on('close',()=>{if(netVerT())return;netReset();state='menu';")
+rep("c.on('open',()=>{setStat(`Connecté au salon ${code}.","c.on('open',()=>{netSend({t:'build',b:MY,pv:NPV});setStat(`Connecté au salon ${code}.")
 rep("function hostGame(){if(noPeer())return;netReset();","function hostGame(){if(noPeer())return;netReset();net.myPick='p0';")
 rep("Tu:turrets.map(t=>pickK(t,['x','y','t','team','col','aim','big']))","Tu:turrets.map(t=>Object.assign(pickK(t,['x','y','t','team','col','aim','big','follow']),{oc:t.owner&&t.owner.c,follow:!!t.follow}))")
 # ---------- rendu : décor, tête de ninja, kunai, manteau Akatsuki
@@ -304,8 +307,8 @@ rep("u.vx=mx*sp;u.vy=my*sp;","{const ac=sp?1-Math.exp(-ACCEL*dt):1;u.vx+=(mx*sp-
 rep("const vx=mx*sp,vy=my*sp;u.x+=vx*dt;","const ac=sp?1-Math.exp(-ACCEL*dt):1;u.gvx=(u.gvx||0)+(mx*sp-(u.gvx||0))*ac;u.gvy=(u.gvy||0)+(my*sp-(u.gvy||0))*ac;const vx=u.gvx,vy=u.gvy;u.x+=vx*dt;")
 rep("if(I.l||p.lmb)use(u,0,td);if(p.rmb)use(u,1,td,undefined,ex);if(p.Space)use(u,2,td,undefined,ex);if(p.KeyQ)use(u,3,td,undefined,ex);if(p.KeyE)use(u,4,td,undefined,ex);if(p.KeyT)use(u,5,td)}",
  "for(let k=1;k<=BARN;k++)if(p['Digit'+k]||p['Numpad'+k])tryUse(u,k,td,false);if(p.Space)tryUse(u,DASHI,td,false);if(p.KeyQ)tryUse(u,SHUNI,td,false);bufTick(u,dt,td,I)}")
-rep("cam.x+=(clamp(player.x,B.x+420,B.x+B.w-420)-cam.x)*c;cam.y+=(clamp(player.y,B.y+240,B.y+B.h-170)-cam.y)*c","const la=player.dead||!isFinite(player.aim)?0:1;cam.x+=(clamp(player.x+la*Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)-cam.x)*c*.8;cam.y+=(clamp(player.y+la*Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*c*.8")
-rep("cam.x+=(clamp(tg.x,B.x+420,B.x+B.w-420)-cam.x)*k;cam.y+=(clamp(tg.y,B.y+240,B.y+B.h-170)-cam.y)*k","const la=tg===player&&!player.dead?1:0;cam.x+=(clamp(tg.x+la*Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)-cam.x)*k*.8;cam.y+=(clamp(tg.y+la*Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*k*.8")
+rep("cam.x+=(clamp(player.x,B.x+420,B.x+B.w-420)-cam.x)*c;cam.y+=(clamp(player.y,B.y+240,B.y+B.h-170)-cam.y)*c","const la=player.dead||!isFinite(player.aim)?0:1;cam.x+=(clamp(player.x+la*Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)+bmCamOff()-cam.x)*c*.8;cam.y+=(clamp(player.y+la*Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*c*.8")
+rep("cam.x+=(clamp(tg.x,B.x+420,B.x+B.w-420)-cam.x)*k;cam.y+=(clamp(tg.y,B.y+240,B.y+B.h-170)-cam.y)*k","const la=tg===player&&!player.dead?1:0;cam.x+=(clamp(tg.x+la*Math.cos(player.aim)*70,B.x+420,B.x+B.w-420)+bmCamOff()-cam.x)*k*.8;cam.y+=(clamp(tg.y+la*Math.sin(player.aim)*45,B.y+240,B.y+B.h-170)-cam.y)*k*.8")
 rep("BASIC=u.ch.abil[0]===ab;COMBO3","BASIC=u.ch.abil[0]===ab;if(!BASIC)u.relT=.3;else if(!meleeU(u))u.thrT=.2;COMBO3")
 rep("const UK=['phase',","const UK=['relT','thrT','phase',")
 # impacts francs, chiffres de dégâts qui « claquent », images rémanentes
@@ -380,7 +383,7 @@ rep("I.sh&&(u.run??100)>1&&!I.f?SPRINT_K:1","I.sh&&(u.run??100)>1&&!I.f&&!u.exh?
 rep("u.stam=Math.min(100,u.stam+(u.ch.taij?50:32)*dt)","u.stam=Math.min(100,u.stam+(u.ch.taij?50:32)*(u.exh?CK.exhStam:1)*dt)")
 rep("if(u.block){u.stam-=12*dt;","if(u.block){u.stam-=12*(u.exh?CK.exhBlock:1)*dt;")
 # soin (H) : pas de jutsu pendant l'incantation ; recharge, soin sur la durée et incantation à chaque image ; touche H (joueur, ami en ligne)
-rep("||u.flame||u.block)return false;const rec=","||u.flame||u.block||u.hlC>0)return false;const rec=")
+rep("||u.flame||u.block)return false;const rec=","||u.flame||u.block||u.hlC>0||barLocked(u,ab))return false;const rec=")
 rep("function updUnit(u,dt,active){\n","function updUnit(u,dt,active){hlTick(u,dt,active);\n")
 rep("if(p.KeyQ)tryUse(u,SHUNI,td,false);bufTick(u,dt,td,I)}","if(p.KeyQ)tryUse(u,SHUNI,td,false);bufTick(u,dt,td,I);hlInput(u,dt,I)}")
 # IA : soin des alliés en difficulté, distance pour se recharger quand le chakra manque, chakra gardé pour l'ultime
@@ -389,7 +392,7 @@ rep("for(const i of[5,3,1,2,4]){","for(const i of aiOrder(u)){") # bots : barre 
 rep("const pref=u.ch.pref,rad=d>pref+40?1:","const pref=aiPref(u,e),rad=d>aiIn(u,pref)?1:")
 rep("if(!h||u.cds[i]>0||u.energy<jcost(ab))continue;","if(!h||u.cds[i]>0||u.energy<jcost(ab)||aiSave(u,i,h))continue;")
 # HUD : coût en chakra des cases, jauge chiffrée, case du soin
-rep("if(ab.cast)text(`${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');","if(ab.cast)text(`${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');hudCost(p,ab,i,x,y,s,sh);")
+rep("if(ab.cast)text(`${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');","if(ab.cast)text(ab.mud?`${ab.mud} mudras`:`incant. ${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');hudCost(p,ab,i,x,y,s,sh);") # temps d'incantation dit comme tel (pas confondu avec une recharge)
 rep("if(ab.ult&&!ready){g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-p.energy/100),s,sh*p.energy/100)}","if(ab.ult&&!ready&&p.cds[i]<=0){const f=Math.min(1,p.energy/Math.max(1,jcost(ab)));g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-f),s,sh*f)}")
 rep("text(muted?`${lbl.KeyM} : son coupé`","drawHealHud(p,x0+n*(s+gap)+6,y,sh);text(muted?`${lbl.KeyM} : son coupé`")
 rep("eBar(30,59,360,p.energy/100);{const T=trait(p);","eBar(30,59,360,p.energy/100);ckHud(p,30,59,360);{const T=trait(p);")
@@ -410,11 +413,11 @@ rep("const SD_START=45,SD_LEN=35;","const SD_START=90,SD_LEN=55;")
 # ---------- arbre de compétences (v5) : barre de 6 cases PAR UNITÉ, stash des recharges, dash (Espace), Kawarimi (A), menu B (crochets BMUI), réseau
 # unité : sa copie du ninja avec SA barre (MBAR, gardée pour tout le match ; dans le menu = barre du build, pour les aperçus), 9 recharges, stash u.cst {jid: s restantes}, barS (barre synchronisée)
 rep("function mkUnit(c,x,y,team){const ch=CH[c];","function mkUnit(c,x,y,team){const ch=unitCh(c,state==='menu'?null:MBAR[c+'|'+team]);")
-rep("cds:[0,0,0,0,0,0],stun:0,","cds:[0,0,0,0,0,0,0,0,0],cst:{},barS:ch.bar?ch.bar.join(','):'',stun:0,")
+rep("cds:[0,0,0,0,0,0],stun:0,","cds:[0,0,0,0,0,0,0,0,0],cst:{},csg:{},lkj:{},barS:ch.bar?ch.bar.join(','):'',stun:0,")
 rep("function startMatch(c){playerChamp=c;STATS={};","function startMatch(c){playerChamp=c;STATS={};MBAR={};")
 # recharges : toutes les cases (9), puis le stash décompte même hors barre ; un changement de barre en attente (cast en cours) est appliqué dès que possible
 rep(" for(let i=0;i<6;i++){const ab=u.ch.abil[i];if(ab&&ab.charges){if(u.chg[i]<ab.charges){u.cds[i]-=dt;if(u.cds[i]<=0){u.chg[i]++;u.cds[i]=u.chg[i]<ab.charges?ab.cd:0}}}else u.cds[i]=Math.max(0,u.cds[i]-dt)}",
-    " for(let i=0;i<u.cds.length;i++){const ab=u.ch.abil[i];if(ab&&ab.charges){if(u.chg[i]<ab.charges){u.cds[i]-=dt;if(u.cds[i]<=0){u.chg[i]++;u.cds[i]=u.chg[i]<ab.charges?ab.cd:0}}}else u.cds[i]=Math.max(0,u.cds[i]-dt)}\n if(u.cst)for(const k in u.cst)if((u.cst[k]-=dt)<=0)delete u.cst[k];")
+    " for(let i=0;i<u.cds.length;i++){const ab=u.ch.abil[i];if(ab&&ab.charges){if(u.chg[i]<ab.charges){u.cds[i]-=dt;if(u.cds[i]<=0){u.chg[i]++;u.cds[i]=u.chg[i]<ab.charges?ab.cd:0}}}else u.cds[i]=Math.max(0,u.cds[i]-dt)}\n stashTick(u,dt);")
 rep("function updUnit(u,dt,active){hlTick(u,dt,active);","function updUnit(u,dt,active){hlTick(u,dt,active);if(u.barQ)barTry(u);")
 # incantation : le jutsu est gardé dans u.cast (ab) : changer la barre ne l'interrompt pas ; l'invité reçoit son jid (j)
 rep("if(ab.cast&&!rec){u.cast={i,t:0,dur:ab.cast,td:td??200,aimOv,ex};return true}","if(ab.cast&&!rec){u.cast={i,t:0,dur:ab.cast,td:td??200,aimOv,ex,ab};return true}")
@@ -428,14 +431,16 @@ rep("drawHealHud(p,x0+n*(s+gap)+6,y,sh);","drawHealHud(p,x0+n*(s+gap)+26,y,sh);"
 # menu B (interface à brancher : BMUI, nr_bar.js) : une entrée par image avant la simulation et l'envoi des touches de l'invité, dessin après le HUD,
 # clic sur le panneau = pas de coup, Échap ferme le menu sans ouvrir « Quitter », mini-carte à gauche quand le menu est ouvert
 rep("function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;","function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;try{BMUI.frame(dt)}catch(e){console.error(e)}")
-rep(" drawAmbient();drawHud();drawCutin();"," drawAmbient();drawHud();try{BMUI.draw()}catch(e){console.error(e)}drawCutin();")
+rep(" drawAmbient();drawHud();drawCutin();"," drawAmbient();drawHud();drawCutin();")
+# le menu B est dessiné en dernier (avant le curseur) : bandeaux plein écran (COMBATTEZ !, mort, jutsu S) et compte à rebours passent dessous
+rep("text('Clic ou Entrée pour revenir au menu',W/2,H-16,15,'#9fb3d9','center','normal')}\n drawCursor();","text('Clic ou Entrée pour revenir au menu',W/2,H-16,15,'#9fb3d9','center','normal')}\n try{BMUI.draw()}catch(e){console.error(e)}drawCursor();")
 rep("if(e.code==='Escape'&&state!=='menu'&&!e.repeat)quitUI(!quitOn)","if(e.code==='Escape'&&state!=='menu'&&!e.repeat){if(!BMUI.esc())quitUI(!quitOn)}")
 rep("l:mouse.l,p:pressed","l:mouse.l&&!BMUI.mask(),p:pressed")
 rep("l:!!mouse.l,p:Object.keys(net.gp)","l:!!mouse.l&&!BMUI.mask(),p:Object.keys(net.gp)") # invité : clic maintenu sur le menu B = pas de coup
 rep("const w=230,h=w*MAP.h/MAP.w,x=W-w-20,","const w=230,h=w*MAP.h/MAP.w,x=BMUI.open?20:W-w-20,")
 # en ligne : l'invité demande ({t:'eq'}), l'hôte valide avec les mêmes règles et répond ({t:'eqr'}) ; la barre de l'invité vient de l'instantané (barS), son stash de ms
 rep("   if(d.t==='in'){","   if(d.t==='eq'){bmNet(P,d);return}\n   if(d.t==='in'){")
-rep("   else if(d.t==='bal')blRecv(d);","   else if(d.t==='bal')blRecv(d);\n   else if(d.t==='eqr')bmAck(d);")
+rep("   else if(d.t==='bal')blRecv(d);","   else if(d.t==='bal')blRecv(d);\n   else if(d.t==='eqr')bmAck(d);\n   else if(d.t==='nver')netVerGuest();")
 rep("mc:i>=0?units[i].cds:null,","mc:i>=0?units[i].cds:null,ms:i>=0&&units[i].ch.learn?units[i].ch.learn.map(k=>rd(units[i].cst[k]||0)):null,")
 rep("s.you=d.you;s.mc=d.mc;","s.you=d.you;s.mc=d.mc;s.ms=d.ms;")
 rep("u.flame=a[n+2];u.dash=a[n+3];u.ch=CH[d.c];","u.flame=a[n+2];u.dash=a[n+3];u.ch=chFor(d.c,u.barS);")

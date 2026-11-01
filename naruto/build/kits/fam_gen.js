@@ -7,7 +7,7 @@ KIT('f2',[
  ['A','x.sub_gjub','Genjutsu : Étreinte de l\'arbre','Des racines sortent sous l\'ennemi visé (380) : 0,5 s plus tard il est ligoté par un arbre 1,1 s, puis 32 dégâts. Parer (F) à temps brise l\'illusion : « KAI ! »','genjutsu'],
  ['S','x.sub_gcopy','Sharingan : Œil copieur','Copie le dernier jutsu ennemi vu (10 s) et le relance à 90 % ; sans copie, l\'ennemi regardé s\'endort 1,5 s (12 dégâts le réveillent)','genjutsu'],
 ]);
-DASHF[2]={src:'x.sub_d_gen',n:'Pas fantôme',d:'Clignement de 200 vers le curseur ; ton image reste 1 s à ta place et attire les coups',vfx:'genjutsu',cd:7};
+DASHF[2]={src:'x.sub_d_gen',n:'Maboroshi : Pas fantôme',d:'Clignement de 200 vers le curseur ; ton image reste 1 s à ta place et attire les coups',vfx:'genjutsu',cd:7};
 const SUB_GV='#c07aff',SUB_GR='#ff4a5a';
 const subGI=u=>units.indexOf(u);
 // cible d'un regard : ennemi dans la ligne (380 × 70) le plus proche du point visé, sinon un ennemi tout près du point visé
@@ -39,7 +39,7 @@ Object.assign(NAT,{
   jx({jfx:'sub_gspin',ti:subGI(e),x:e.x,y:e.y,t:1.5,m:1.5});VFX='genjutsu';const h=hit(e,u,0,{silent:1,unblockable:1});VFX=null;
   if(h&&e.unstop<=0){e.stun=Math.max(e.stun,1.5);e.sleepT=-1.6;e.cast=null;e.chan=null;say(e,'ENDORMI','#ffd8e8');aux.push({type:'sub_sleepw',x:e.x,y:e.y,r:0,t:1.7,m:1.7,team:u.team,sl:[{e,hp:e.hp}]})}}),
  // --- Pas fantôme (dash) : clignement ; l'image fantôme reste 1 s (leurre visé par les bots)
- sub_d_gen:S_('Pas fantôme','Clignement, ton image reste à ta place',7,{hero:'cadbane',ai:ESC},(u,a)=>{const ox=u.x,oy=u.y,q=subFree(fwd(u,a,200),u.r);S('genjutsu',u);anim(u,'crouch',.25);
+ sub_d_gen:S_('Maboroshi : Pas fantôme','Clignement, ton image reste à ta place',7,{hero:'cadbane',ai:ESC},(u,a)=>{const ox=u.x,oy=u.y,q=subFree(fwd(u,a,200),u.r);S('genjutsu',u);anim(u,'crouch',.25);
   subDecoy(u,ox,oy,1,{ghost:1});jx({jfx:'sub_gblink',x:ox,y:oy,x2:q.x,y2:q.y,t:.4,m:.4});u.x=q.x;u.y=q.y;u.dash=null;u.kx=u.ky=0;collide(u)}),
 });
 // ---------- logique (hôte) ----------

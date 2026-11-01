@@ -6,7 +6,7 @@ KIT('f4',[
  ['C','x.sub_fuma','Fûma Shuriken','Shuriken géant perçant qui revient vers toi (12 dégâts) : touchée à l\'aller et au retour, la cible est ralentie','shuriken'],
  ['B','x.sub_kshu','Multiclonage de shuriken','Un shuriken qui se multiplie en éventail de 12 : plus l\'ennemi est proche, plus il en prend (5 au plus, 9 dégâts puis 5) ; à partir du 3e, il est ralenti','shuriken'],
  ['A','x.sub_sofu','Sôfûsha : Shuriken à fil','Trois shuriken reliés par un fil d\'acier (8 dégâts chacun) : l\'ennemi pris entre deux (fil ou deux shuriken) est ligoté 1 s','steel'],
- ['S','x.sub_ronde','Ronde des shuriken','6 grands shuriken tournent autour de toi 3 s : ils arrêtent les tirs ennemis et entaillent au contact (6 dégâts) ; relance : ils partent tous sur la visée (9 dégâts chacun), le dernier étourdit 0,8 s','shuriken'],
+ ['S','x.sub_ronde','Shuriken Kaiten : Ronde des shuriken','6 grands shuriken tournent autour de toi 3 s : ils arrêtent les tirs ennemis et entaillent au contact (6 dégâts) ; relance : ils partent tous sur la visée (9 dégâts chacun), le dernier étourdit 0,8 s','shuriken'],
 ]);
 DASHF[4]={src:'x.sub_grap',n:'Kunai à fil',d:'Kunai à fil : te tire jusqu\'au point d\'impact ; sur un ennemi, finit par un coup de pied étourdissant',vfx:'kunai',cd:7};
 const SUB_ST='#d8dde6';
@@ -17,7 +17,7 @@ Object.assign(NAT,{
   for(const d of[-.17,0,.17]){proj(u,a+d,{spd:760,r:9,dmg:8,life:.58,col:SUB_ST,vfx:'shuriken',kind:'sub_kbig',pierce:1,onHit:(q,t)=>{const n=(X.H.get(t)||0)+1;X.H.set(t,n);if(n>=2)subSofBind(X,t)}});L.push(projs[projs.length-1])}
   aux.push(X)}),
  // --- Ronde des shuriken : orbite 3 s (relance par u.jst) ; relance ou fin = la volée part
- sub_ronde:S_('Ronde des shuriken','Shuriken en orbite qui arrêtent les tirs ; relance : volée',22,{hero:'padme',ai:{mode:'gap',min:60,max:420,p:.6}},(u,a)=>{const i=subIdx(u,'sub_ronde'),X=aux.find(x=>x.type==='sub_ronde'&&x.owner===u&&x.t>0&&!x.done);
+ sub_ronde:S_('Shuriken Kaiten : Ronde des shuriken','Shuriken en orbite qui arrêtent les tirs ; relance : volée',22,{hero:'padme',ai:{mode:'gap',min:60,max:420,p:.6}},(u,a)=>{const i=subIdx(u,'sub_ronde'),X=aux.find(x=>x.type==='sub_ronde'&&x.owner===u&&x.t>0&&!x.done);
   if(X&&u.jst&&u.jst.key==='sub_ronde'){u.cds[i]=u.jst.cd;u.jst=null;subRondeFire(X,a);return}
   S('saber',u);S('dash',u);anim(u,'spin',.5);for(const x of aux)if(x.type==='sub_ronde'&&x.owner===u)x.t=0;
   aux.push({type:'sub_ronde',x:u.x,y:u.y,r:58,t:3,m:3,team:u.team,owner:u,ui:units.indexOf(u),n:6,k:.4,hs:new Map()});jx({jfx:'sub_rburst',x:u.x,y:u.y,r:70,t:.35,m:.35});

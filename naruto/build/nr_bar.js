@@ -12,10 +12,15 @@ function unitCh(c,bar){const C=CH[c];if(!C||!C.jab)return C;const b=Array.isArra
 const CHF=new Map();
 function chFor(c,barS){const C=CH[c];if(!C||!C.jab||typeof barS!=='string'||!barS)return C;const k=c+'#'+barS;let e=CHF.get(k);
  if(!e||e.C!==C){if(CHF.size>400)CHF.clear();e={C,ch:unitCh(c,barS.split(',').map(Number))};CHF.set(k,e)}return e.ch}
+// nom affiché d'un jutsu pour une unité (alias propre au perso, ex. « Raikiri » pour le Chidori de Kakashi), sinon celui du catalogue
+const jName=(j,u)=>{u=u===undefined?(typeof player!=='undefined'?player:null):u;const a=u&&u.ch&&u.ch.jab&&u.ch.jab[j];return a&&a.n?a.n:JL[j]?JL[j].n:''};
+// nom court (après « Japonais : »), pour les petites cases
+const jShort=n=>{const i=String(n).indexOf(' : ');return i>0?n.slice(i+3):n};
 // recharge restante d'un jutsu appris (barre ou stash)
 function remCd(u,jid){const i=u.ch.bar?u.ch.bar.indexOf(jid):-1;return i>=0?Math.max(0,u.cds[BAR0+i]||0):Math.max(0,(u.cst&&u.cst[jid])||0)}
-// cases « occupées » : un jutsu en canalisation, en relance (jst), arc bandé (hakumei) ou suivi par un objet aux (BARAUX) ; une incantation (u.cast) garde son jutsu (u.cast.ab)
-function barBusy(u){const s=new Set();if(u.chan&&u.chan.i>0)s.add(u.chan.i);if(u.jst&&u.jst.i>0)s.add(u.jst.i);if(u.hm_bw&&u.hm_bw.i>0)s.add(u.hm_bw.i);
+// cases « occupées » : un jutsu en incantation (mudras, u.cast), en canalisation, en relance (jst), arc bandé (hakumei) ou suivi par un objet aux (BARAUX).
+// L'incantation compte aussi : plusieurs mécaniques (canalisations, charges, dôme…) retrouvent leur case par leur clé au moment où elles partent.
+function barBusy(u){const s=new Set();if(u.cast&&u.cast.i>0)s.add(u.cast.i);if(u.chan&&u.chan.i>0)s.add(u.chan.i);if(u.jst&&u.jst.i>0)s.add(u.jst.i);if(u.hm_bw&&u.hm_bw.i>0)s.add(u.hm_bw.i);
  for(const x of aux)if(x.owner===u&&BARAUX.has(x.type)){if(x.i>0)s.add(x.i);if(x.si>0)s.add(x.si)}return s}
 const barNorm=nb=>{const o=[];for(let s=0;s<BARN;s++){const v=nb&&nb[s];o.push(typeof v==='number'&&Number.isInteger(v)&&v>=0&&!o.includes(v)?v:-1)}return o};
 // applique une nouvelle barre (6 jid) : les recharges suivent le jutsu, un jutsu qui ENTRE reçoit max(stash, 2 s), un jutsu qui SORT garde sa recharge dans le stash (u.cst).
@@ -23,13 +28,16 @@ const barNorm=nb=>{const o=[];for(let s=0;s<BARN;s++){const v=nb&&nb[s];o.push(t
 function setBar(u,nb){nb=barNorm(nb).map(j=>j>=0&&u.ch.jab&&u.ch.jab[j]?j:-1);const ob=u.ch.bar.slice();
  for(const i of barBusy(u)){const j=ob[i-BAR0];if(j>=0&&!nb.includes(j)){u.barQ=nb;return{ok:true,pend:true}}}
  u.barQ=null;if(ob.every((j,s)=>j===nb[s]))return{ok:true};
- const cd={},cg={};ob.forEach((j,s)=>{if(j>=0){cd[j]=u.cds[BAR0+s];cg[j]=u.chg?u.chg[BAR0+s]:0}});
+ const cd={},cg={};ob.forEach((j,s)=>{if(j>=0){cd[j]=u.cds[BAR0+s];cg[j]=u.chg?u.chg[BAR0+s]:0}});if(!u.cst)u.cst={};if(!u.csg)u.csg={};
  const mp={};ob.forEach((j,s)=>{if(j>=0&&nb.includes(j))mp[BAR0+s]=BAR0+nb.indexOf(j)});
  for(let s=0;s<BARN;s++){const j=nb[s],i=BAR0+s;
   if(j<0){u.ch.abil[i]=null;u.cds[i]=0;if(u.chg)u.chg[i]=0;continue}
   const ab=u.ch.jab[j];u.ch.abil[i]=ab;
-  if(j in cd){u.cds[i]=cd[j];if(u.chg)u.chg[i]=cg[j]}else{u.cds[i]=Math.max((u.cst&&u.cst[j])||0,CDLOCK);if(u.cst)delete u.cst[j];if(u.chg)u.chg[i]=ab&&ab.charges?0:0}}
- if(!u.cst)u.cst={};ob.forEach(j=>{if(j>=0&&!nb.includes(j)&&cd[j]>0)u.cst[j]=cd[j]});
+  if(j in cd){u.cds[i]=cd[j];if(u.chg)u.chg[i]=cg[j]}
+  else if(ab&&ab.charges){const C=ab.charges,g=u.csg[j],n=g?Math.min(C,g.n):C;if(u.chg)u.chg[i]=n;u.cds[i]=n<C?Math.max(.05,u.cst[j]||ab.cd):0;delete u.cst[j];delete u.csg[j];(u.lkj||(u.lkj={}))[j]=SIMT+CDLOCK}
+  else{u.cds[i]=Math.max(u.cst[j]||0,CDLOCK);delete u.cst[j];if(u.chg)u.chg[i]=0}}
+ // sortants : la recharge part au stash ; un jutsu à charges y garde aussi ses charges (u.csg[jid].n, la recharge en cours = temps avant la charge suivante)
+ ob.forEach(j=>{if(j<0||nb.includes(j))return;const ab=u.ch.jab[j];if(ab&&ab.charges){if(cg[j]<ab.charges){u.csg[j]={n:cg[j]};u.cst[j]=Math.max(.05,cd[j]||ab.cd)}}else if(cd[j]>0)u.cst[j]=cd[j]});
  // états qui gardent un n° de case : suivent leur jutsu
  const rm=o=>{if(o&&o.i>0&&mp[o.i])o.i=mp[o.i]};rm(u.chan);rm(u.jst);rm(u.hm_bw);if(u.cast&&u.cast.i>0&&mp[u.cast.i])u.cast.i=mp[u.cast.i];
  for(const x of aux)if(x.owner===u&&BARAUX.has(x.type)){if(x.i>0&&mp[x.i])x.i=mp[x.i];if(x.si>0&&mp[x.si])x.si=mp[x.si]}
@@ -37,6 +45,11 @@ function setBar(u,nb){nb=barNorm(nb).map(j=>j>=0&&u.ch.jab&&u.ch.jab[j]?j:-1);co
  u.ch.bar=nb.slice();u.barS=nb.join(',');MBAR[u.c+'|'+u.team]=nb.slice();u.barN=(u.barN||0)+1;
  for(const f of BARCHG)try{f(u,ob,nb)}catch(e){console.error(e)}
  return{ok:true}}
+// stash : décompte hors barre ; un jutsu à charges y regagne ses charges une à une (comme dans la barre)
+function stashTick(u,dt){const T=u.cst;if(!T)return;for(const k in T){if((T[k]-=dt)>0)continue;const g=u.csg&&u.csg[k],ab=g&&u.ch.jab&&u.ch.jab[k];
+ if(g&&ab&&ab.charges){g.n++;if(g.n<ab.charges){T[k]+=ab.cd;continue}delete u.csg[k]}delete T[k]}}
+// blocage d'entrée d'un jutsu à charges (ses charges reviennent avec lui, mais il attend 2 s comme les autres)
+const barLocked=(u,ab)=>!!(ab&&ab.charges&&ab.jid!=null&&u.lkj&&u.lkj[ab.jid]>SIMT);
 // changement en attente (cast/canalisation en cours) : appliqué dès que possible
 function barTry(u){if(u.barQ&&!u.dead)setBar(u,u.barQ)}
 // barre de référence pour composer une demande : celle en attente si elle existe
@@ -49,6 +62,11 @@ function equipAt(u,jid,s){if(!u||!u.ch||!u.ch.jab)return{ok:false,e:'unit'};if(t
 function unequipAt(u,s){if(!u||!u.ch||!u.ch.jab)return{ok:false,e:'unit'};if(typeof s!=='number'||!Number.isInteger(s)||s<0||s>=BARN)return{ok:false,e:'slot'};
  const b=barCur(u);if(b[s]<0)return{ok:false,e:'empty'};b.splice(s,1);b.push(-1);return setBar(u,b)}
 // ---------- en ligne ----------
+// version du protocole (format v5 : barre de 6, menu B) : hôte et invité doivent l'avoir tous les deux, sinon la connexion est coupée avec un message
+const NPV=5,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez toi et chez ton ami.';let NVT=0;
+const netVerT=()=>performance.now()-NVT<4000;
+function netVerHost(P){P.nver=1;net.peers=net.peers.filter(x=>x!==P);try{P.conn.send({t:'nver'})}catch(e){}setTimeout(()=>{try{P.conn.close()}catch(e){}},300);setStat('Un ami a une autre version du jeu : il doit recharger la page.');try{sendLobby()}catch(e){}}
+function netVerGuest(){NVT=performance.now();netReset();state='menu';setStat(VERMSG);try{netUI(true)}catch(e){}}
 // demande d'un joueur (menu B, raccourcis) : hors ligne / hôte → appliquée tout de suite ; invité → envoyée à l'hôte, réponse dans BARNET.last (bmAck)
 const BARNET={seq:0,wait:null,last:null};
 function barReq(a,j,s){if(isGuest()&&net.live){const q=++BARNET.seq;BARNET.wait={q,a,j,s,t:performance.now()};netSend({t:'eq',a,j,s,q});return{ok:true,pend:true,net:true,q}}

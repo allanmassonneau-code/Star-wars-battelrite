@@ -79,7 +79,9 @@ function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Ma
  if(o.clan>=0)o.dsh='c';else{const d=String(b.dsh||'b');o.dsh=dashOpts(o).includes(d)?d:'b'}
  return o}
 // nom → jid dans les arbres du build (un même nom peut exister dans plusieurs arbres : celui du build d'abord)
-function pickName(b,n){const L=treesOf(b),c=JL.filter(j=>j.n===n);return(c.find(j=>L.includes(j.cat))||{id:-1}).id}
+// anciens noms de jutsu renommés (« Japonais : Français ») : une sauvegarde qui porte l'ancien nom retrouve le jutsu
+const JREN={"Tsûtenkyaku":"Tsûtenkyaku : Talon céleste","Tourbillon d'acier":"Kaiten-giri : Tourbillon d'acier","Mikazuki no Mai":"Mikazuki no Mai : Danse du croissant","Moulinet du bâton":"Bôjutsu : Moulinet du bâton","Ruée des cent armes":"Hyaku Buki : Ruée des cent armes","Ronde des shuriken":"Shuriken Kaiten : Ronde des shuriken","Kiai":"Kiai : Cri de guerre","Armure du Pays du Fer":"Tetsu no Yoroi : Armure du Pays du Fer","Sept fleurs de l'aube":"Nanabana : Sept fleurs de l'aube","Volée de kunai":"Kunai Rendan : Volée de kunai","Masse à chaîne":"Fundo : Masse à chaîne","Cage de kunai":"Kunai Ori : Cage de kunai","Marteau écraseur":"Ôtsuchi : Marteau écraseur","Arsenal volant":"Buki Shôkan : Arsenal volant","Lame de chakra : Croissant":"Kengeki : Croissant de chakra","Parchemin : Arme lourde":"Makimono : Arme lourde","Suriashi":"Suriashi : Pas glissé","Pas médical":"Iryô : Pas médical","Pas fantôme":"Maboroshi : Pas fantôme","Mue du serpent":"Dappi : Mue du serpent","Monture : Ninken":"Ninken : Monture"};
+function pickName(b,n){n=JREN[n]||n;const L=treesOf(b),c=JL.filter(j=>j.n===n);return(c.find(j=>L.includes(j.cat))||{id:-1}).id}
 // nom + arbre ('Nom|f3') → jid ; repli sur le nom seul dans les arbres du build
-function pickKey(b,s){s=String(s||'');const i=s.lastIndexOf('|'),n=i>=0?s.slice(0,i):s,c=i>=0?s.slice(i+1):'';const J=c&&JL.find(j=>j.n===n&&j.cat===c);return J&&treesOf(b).includes(J.cat)?J.id:pickName(b,n)}
+function pickKey(b,s){s=String(s||'');const i=s.lastIndexOf('|'),n0=i>=0?s.slice(0,i):s,n=JREN[n0]||n0,c=i>=0?s.slice(i+1):'';const J=c&&JL.find(j=>j.n===n&&j.cat===c);return J&&treesOf(b).includes(J.cat)?J.id:pickName(b,n)}
 const jKey=id=>JL[id]?JL[id].n+'|'+JL[id].cat:'';

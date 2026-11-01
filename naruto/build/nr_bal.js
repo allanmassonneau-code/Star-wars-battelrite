@@ -54,7 +54,11 @@ const blData=p=>({g:p.g,c:p.c,n:p.n,s:p.s,j:p.j});
 // le multiplicateur de dégâts ne s'y applique qu'en partie (mesuré : ×2 demandé → ×1 à ×1,55) ; le panneau le signale
 const BLPART=new Set(['x.su_ball','x.hm_arc','x.km_angel','x.ka_goka','x.ka_dragon','x.ak_arm']);
 let BLJ0=null; // jutsu(id) d'origine (avant le profil) : recharge et rang de chaque jutsu
-const blJD=id=>JBAL[blJK(JL[id])]||JBAL[JL[id].ocat+'|'+JL[id].n]||{}; // (transition : clé d'origine d'un jutsu déplacé dans un autre arbre) // réglage par défaut du jutsu (JBAL, nr_ninja.js) : d dégâts ×, cd recharge, ck coût
+// barème par rang (DESIGN §3) : le réglage JBAL d'un jutsu reste dans la fourchette de son rang, à 10 % près pour la recharge et 25 % près pour le chakra
+// (le reste de l'équilibrage passe par les dégâts, d) ; un profil F8 (BLC.pj) n'est pas borné (outil de test)
+const BLCD=.1,BLCK=.25,blRk=(r,cd,ck)=>{const R=RKB[r];if(!R)return[cd,ck];return[cd==null?cd:Math.round(clamp(cd,R.cd[0]*(1-BLCD),R.cd[1]*(1+BLCD))*10)/10,ck==null?ck:clamp(Math.round(ck),Math.ceil(R.ck*(1-BLCK)),Math.floor(R.ck*(1+BLCK)))]};
+const blJD0=id=>JBAL[blJK(JL[id])]||JBAL[JL[id].ocat+'|'+JL[id].n]||{};
+const blJD=id=>{const q=blJD0(id);if(q.cd==null&&q.ck==null)return q;const [cd,ck]=blRk(JL[id].r,q.cd,q.ck);return Object.assign({},q,cd!=null?{cd}:{},ck!=null?{ck}:{})}; // (transition : clé d'origine d'un jutsu déplacé dans un autre arbre) // réglage par défaut du jutsu (JBAL, nr_ninja.js) : d dégâts ×, cd recharge, ck coût
 const blJBase=(p,id)=>{const o=BLJ0[id],J=blJD(id);return{cd:Math.round((J.cd??o.cd)*blG(p,'jcd')*10)/10,ck:o.hpc?null:J.ck??blG(p,'ck'+o.rank),d:J.d??1}};
 // chiffres des descriptions : les « N dégâts » (et les listes « 12, 12 puis 16 dégâts ») suivent le multiplicateur ; un réglage propre au jutsu est signalé
 const blDescScale=(d,m)=>m===1?d:d.replace(/(\d+(?:,\d+)?)(?=(?:\s*(?:,|puis|et)\s*\d+(?:,\d+)?)*\s*(?:de\s+|d'\s*)?dégâts)/g,s=>{const v=parseFloat(s.replace(',','.'))*m;return v<10&&!Number.isInteger(v)?blF(v,1):String(Math.round(v))});
@@ -144,8 +148,14 @@ function blRecv(d){if(net.role!=='guest')return;const p=blNorm(d.p||{});p.name=S
 // ---------- profils (navigateur) ----------
 const blLS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
 function blLoad(){const s=blLS('nrBalProfiles');BLC.saved={};if(s&&typeof s==='object')for(const n in s){const p=blNorm(s[n]);p.name=n.slice(0,40);BLC.saved[p.name]=p}
- const c=blLS('nrBalCur');BLC.cur=c?Object.assign(blNorm(c),{mod:!!c.mod}):Object.assign(blNorm({}),{name:'Standard',mod:false});if(c&&c.name)BLC.cur.name=String(c.name).slice(0,40)}
-const blSaveCur=()=>blLS('nrBalCur',Object.assign(blData(BLC.cur),{name:BLC.cur.name,mod:!!BLC.cur.mod})),blSaveAll=()=>{const o={};for(const n in BLC.saved)o[n]=blData(BLC.saved[n]);blLS('nrBalProfiles',o)};
+ let c=blLS('nrBalCur');
+ // profil actif enregistré par une version d'avant les arbres de compétences (sans gv) : ses valeurs absolues de clan remplaceraient les nouvelles en silence.
+ // Il est rangé dans les profils sous « … (ancienne version) » et le profil Standard reprend la main, avec un message.
+ if(c&&typeof c==='object'&&c.mod&&c.gv!==BLGV){const n=(String(c.name||'Personnalisé').slice(0,24)+' (ancienne version)');const p=blNorm(c);p.name=n;BLC.saved[n]=p;try{blSaveAll()}catch(e){}c=null;
+  try{localStorage.removeItem('nrBalCur')}catch(e){}if(!BLSIM)setTimeout(()=>{try{blToast('Ton profil d\'équilibrage venait d\'une ancienne version du jeu : il est gardé sous « '+n+' », le profil Standard est actif.')}catch(e){}},1500)}
+ BLC.cur=c?Object.assign(blNorm(c),{mod:!!c.mod}):Object.assign(blNorm({}),{name:'Standard',mod:false});if(c&&c.name)BLC.cur.name=String(c.name).slice(0,40)}
+const BLGV=5; // version du jeu des profils (5 = arbres de compétences)
+const blSaveCur=()=>blLS('nrBalCur',Object.assign(blData(BLC.cur),{name:BLC.cur.name,mod:!!BLC.cur.mod,gv:BLGV})),blSaveAll=()=>{const o={};for(const n in BLC.saved)o[n]=blData(BLC.saved[n]);blLS('nrBalProfiles',o)};
 const blView=()=>BLC.ro&&BLC.host?BLC.host.p:BLC.cur;
 // une modification : profil courant marqué « modifié », appliqué tout de suite au menu (sinon à la prochaine partie), envoyé aux invités
 function blTouch(){const c=BLC.cur;if(!c.mod&&c.name==='Standard')c.name='Personnalisé';c.mod=true;blSaveCur();blBadge();blCounts();clearTimeout(BLC.tm);BLC.tm=setTimeout(blSync,140)}
@@ -377,7 +387,8 @@ function blImport(){const ta=blH('textarea',{placeholder:'Colle ici un profil ex
 // ---------- simulateur : côté panneau ----------
 const BLS={run:false,fr:null,opt:{grp:{c:1,n:1,s:0,f:0},N:800,mode:'heal',kits:'random',dur:blCl(+blLS('nrBalDur')||52,30,90)},res:null,t0:0,rate:.05,last:0,sug:null,cancelled:false,prof:''};
 function blSimCats(){const o=BLS.opt.grp,c=[];if(o.c){for(let i=0;i<CLANS.length;i++)c.push('c'+i);c.push('u')}if(o.n)for(let i=0;i<NATURES.length;i++)c.push('n'+i);if(o.c){for(let i=0;i<STREE.length;i++)c.push('t'+i);for(let i=0;i<FAMS.length;i++)c.push('f'+i)}if(o.s)STYLES.forEach((_,i)=>c.push('s'+i));if(o.f)c.push('free');return c}
-const blCatInfo=c=>c==='u'?{nm:'Sans clan',col:'#9aa3ad',tag:'—',g:'Clans'}:c==='free'?{nm:'Duels libres',col:'#c8b89a',tag:'∗',g:'Libres'}:c[0]==='c'?{nm:CLANS[+c.slice(1)][0],col:CLANS[+c.slice(1)][1],tag:clanTag(+c.slice(1)),g:'Clans'}:
+// catégories : u sans clan, free duels libres, c<k> clans, n<k> natures, t<k> arbres de style (Tai / Ken / Buki), f<k> familles de sub, s<k> styles d'attaque de base (M1)
+const blCatInfo=c=>c==='u'?{nm:'Sans clan',col:'#9aa3ad',tag:'—',g:'Clans'}:c[0]==='t'&&TREES[c]?{nm:'Arbre '+catName(c),col:catCol(c),tag:catName(c).slice(0,2),g:'Arbres de style'}:c[0]==='f'&&TREES[c]?{nm:'Famille '+catName(c),col:catCol(c),tag:catName(c).slice(0,2),g:'Familles de sub'}:c==='free'?{nm:'Duels libres',col:'#c8b89a',tag:'∗',g:'Libres'}:c[0]==='c'?{nm:CLANS[+c.slice(1)][0],col:CLANS[+c.slice(1)][1],tag:clanTag(+c.slice(1)),g:'Clans'}:
  c[0]==='n'?{nm:NATURES[+c.slice(1)][0],col:NATURES[+c.slice(1)][2],tag:NATURES[+c.slice(1)][0].slice(0,2),g:'Natures'}:{nm:(STYLES[+c.slice(1)]||['?'])[0],col:MELEEK.has((STYLES[+c.slice(1)]||[])[4])?'#e8cfa8':'#8fc8ff',tag:MELEEK.has((STYLES[+c.slice(1)]||[])[4])?'⚔':'➶',g:'Styles (M1)'};
 function blSimStart(){if(BLS.run||state!=='menu')return;const cats=blSimCats();if(!cats.length){blToast('Choisis au moins une catégorie à tester.');return}
  const per=Math.max(1,Math.round(BLS.opt.N/cats.length)),job={prof:blData(BLC.cur),cats,per,mode:BLS.opt.mode,kits:BLS.opt.kits,seed:77+Math.floor(Math.random()*9000)};
@@ -460,7 +471,7 @@ function blSimPaint(el){el=el||BLS.resEl;if(!el||!BLC.open||BLC.tab!=='sim')retu
  el.replaceChildren(...out)}
 // suggestion : force (PV × puissance) corrigée de l'écart à 50 %, répartie selon la durée des duels de la catégorie (trop courts : plus de PV, moins de puissance)
 function blSuggest(R){const p0=BLC.cur,T=BLS.opt.dur,out=[];
- for(const c in R.cats){const r=R.cats[c];if(r.n<30||c==='free')continue;const p=r.w/r.n,ci=1.96*Math.sqrt(Math.max(p*(1-p),.0025)/r.n),dev=p-.5;if(Math.abs(dev)<Math.max(.03,ci*.6))continue;
+ for(const c in R.cats){const r=R.cats[c];if(r.n<30||c==='free'||/^[tf]\d/.test(c))continue; // arbres de style et familles : réglés dans TREEBAL / FAMBAL (nr_ninja.js), pas dans un profil F8const p=r.w/r.n,ci=1.96*Math.sqrt(Math.max(p*(1-p),.0025)/r.n),dev=p-.5;if(Math.abs(dev)<Math.max(.03,ci*.6))continue;
   const f=blCl(1-dev*.9,.8,1.2),md=blMed(r.ts),dk=md?blCl(Math.pow(T/md,.5),.94,1.06):1,fh=Math.sqrt(f)*dk,fp=Math.sqrt(f)/dk,I=blCatInfo(c);
   if(c[0]==='s'){const k=STYLES[+c.slice(1)][0],cur=p0.s[k]||[1,1,1];out.push({on:true,kind:'s',key:k,nm:I.nm,tag:I.tag,col:I.col,p,md,to:[blCl(blR(cur[0]*fh,.01),.5,2),blCl(blR(cur[1]*fp,.01),.5,2),cur[2]],lab:[['PV ×',cur[0],0],['Puissance ×',cur[1],0]]})}
   else{const kind=c[0]==='n'?'n':'c',key=c==='u'?'-1':c.slice(1),cur=p0[kind][key]||BLC.D[kind][key]||[1,1];out.push({on:true,kind,key,nm:I.nm,tag:I.tag,col:I.col,p,md,to:[blCl(blR(cur[0]*fh,.01),.3,2.5),blCl(blR(cur[1]*fp,.01),.3,2.5)],lab:[['PV ×',cur[0],0],['Puissance ×',cur[1],0]]})}

@@ -8,7 +8,7 @@ KIT('f7',[
  ['A','x.sub_nr_kyubi','Chakra de Kyûbi','Rugissement qui repousse (8 dégâts). 5 s : tes coups de base lancent des griffes de chakra (7 dégâts, une par seconde). Régénère 2,5 s ; insensible au contrôle 2 s','fox'],
  ['S','x.sub_kshiki','Shiki Fûjin','Le Shinigami se dresse derrière toi 0,7 s (immobile ; un étourdissement brise le rituel), puis sa main saisit le 1er ennemi de la ligne : 34 dégâts, puis âme scellée 3 s (12 dégâts par seconde, ralenti, ni jutsu ni chakra)','chakra'],
 ]);
-DASHF[7]={src:'x.sub_d_kin',n:'Mue du serpent',d:'Glisse de 190, intangible 0,25 s ; ta mue reste sur place 1,5 s et absorbe le prochain tir ennemi',vfx:'shadow',cd:7};
+DASHF[7]={src:'x.sub_d_kin',n:'Dappi : Mue du serpent',d:'Glisse de 190, intangible 0,25 s ; ta mue reste sur place 1,5 s et absorbe le prochain tir ennemi',vfx:'shadow',cd:7};
 const SUB_JR='#d0202e',SUB_SH='#d8c8ff';
 Object.assign(NAT,{
  // --- Marque de Jashin : lien 4 s ; la perte de PV du lanceur est mesurée à chaque image (dégâts finaux, brûlures comprises) et 30 % sont infligés à la cible
@@ -22,7 +22,7 @@ Object.assign(NAT,{
   later(u,.7,()=>{if(u.dead||u.stun>0||u.sleepT<0){say(u,'RITUEL BRISÉ',SUB_SH);return}S('shadow',u);
    proj(u,u.aim,{spd:950,r:16,dmg:34,life:.55,col:SUB_SH,kind:'sub_shand',vfx:'chakra',noClash:1,o:{unblockable:1},onHit:(p,t)=>subSoul(p.owner,t)});if(near(u.x,u.y))shake=Math.max(shake,.25)})}),
  // --- Mue du serpent (dash) : glissade intangible ; la mue laissée sur place avale un tir
- sub_d_kin:S_('Mue du serpent','Glissade intangible, la mue absorbe un tir',7,{hero:'maul',ai:ESC},(u,a)=>{const ox=u.x,oy=u.y;S('shadow',u);S('dash',u);anim(u,'lunge',.3);u.phase=Math.max(u.phase||0,.25);
+ sub_d_kin:S_('Dappi : Mue du serpent','Glissade intangible, la mue absorbe un tir',7,{hero:'maul',ai:ESC},(u,a)=>{const ox=u.x,oy=u.y;S('shadow',u);S('dash',u);anim(u,'lunge',.3);u.phase=Math.max(u.phase||0,.25);
   dash(u,a,190,.2,{});aux.push({type:'sub_mue',x:ox,y:oy,a:u.aim,r:26,t:1.5,m:1.5,team:u.team,owner:u,n:0});subPoof(ox,oy,26,u)}),
 });
 // âme scellée : silence (ni jutsu), plus de chakra (ckLock), ralenti, 6 dégâts toutes les 0,5 s
