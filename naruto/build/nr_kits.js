@@ -28,22 +28,7 @@ FAMS.forEach((f,i)=>defTree('f'+i,{type:'famille',name:f[0],col:f[1],take:1,pool
 // TREEMOVE (transition, catalogue actuel) : 'catégorie|nom' → [arbre, rang] (déplace une ligne dans un arbre, au besoin à un autre rang) ou null (retirée des arbres, code conservé)
 // les agents de contenu déplacent les lignes dans le bon fichier kits/… puis retirent l'entrée d'ici
 const TREEMOVE={
- // Iryô (f0)
- 'u|Pilule du soldat':['f0','D'],'u|Scalpel de chakra':['f0','C'],'u|Shôsen':['f0','B'],'u|Byakugô':['f0','S'],
- // Fûinjutsu / Hiraishin (f1)
- 'u|Hiraishin':['f1','D'],'u|Kunai explosifs':['f1','C'],'u|Parchemin explosif':['f1','C'],'u|Barrière Shishienjin':['f1','A'],
- // Genjutsu (f2)
- 'u|Genjutsu : Plumes':['f2','C'],
- // Kuchiyose (f3)
- 'u|Rashômon':['f3','D'],'u|Chiens ninja':['f3','C'],'u|Invocation : Katsuyu':['f3','B'],'u|Invocation : Crapaud':['f3','A'],'u|Invocation : Manda':['f3','S'],
- // Shurikenjutsu (f4)
- 'u|Piège ninja':['f4','D'],'u|Fûma Shuriken':['f4','C'],'u|Multiclonage de shuriken':['f4','B'],
- // Kage Bunshin (f5)
- 'u|Kage Bunshin : leurre':['f5','D'],'u|Contre du clone':['f5','C'],'u|Clone explosif':['f5','B'],'u|Multiclonage':['f5','A'],'u|Rasengan':['f5','S'],
- // Senjutsu (f6)
- 'u|Concentration du chakra':['f6','D'],'u|Mode Ermite':['f6','A'],'u|Fûton : Rasenshuriken':['f6','S'],
- // Jutsu interdits (f7)
- 'u|Serpents de l\'ombre':['f7','C'],'u|Argile explosive':['f7','B'],'u|Chakra de Kyûbi':['f7','A'],
+ // familles de sub (f0-f7) : lignes réécrites dans kits/fam_*.js (les anciennes lignes 'u' de kits/sub*.js sont ignorées)
  // arbre Taijutsu (t0) et Taijutsuka (c10) : réécrits dans kits/styles.js et kits/taijutsuka.js (Ôkashô et Lotus primaire du Subjutsu ne sont plus repris)
  // Bukijutsuka (c22) : Sôshôryû réécrit dans kits/bukijutsuka.js ; la ligne du Subjutsu n'est plus reprise
  'u|Sôshôryû':null,

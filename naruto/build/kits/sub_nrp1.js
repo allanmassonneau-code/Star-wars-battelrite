@@ -12,20 +12,20 @@ KIT('u',[
 ]);
 // ---------- aides ----------
 const subS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son sans la couleur sonore de l'élément
-const SUB_RT=2.2,SUB_RH=118; // Rashômon : durée des blocs, hauteur du portail
+const SUB_RT=1.2,SUB_RH=118; // Rashômon : durée des blocs, hauteur du portail
 const subRashoV=v=>v==='sub_rasho'||v==='sub_rashoC';
 // Sôshôryû : 36 armes, lancées l'une après l'autre ; point de chute (décalage fixe par indice, identique chez l'hôte et les invités)
 const SUB_SN=36,SUB_ST0=.45,SUB_SDT=.03,SUB_SFL=.32;
 function subSoOff(i,r){const b=i*2.39996,d=r*.92*Math.sqrt((((i*23)%SUB_SN)+.5)/SUB_SN);return[Math.cos(b)*d,Math.sin(b)*d]}
 Object.assign(NAT,{
  // --- Rashômon : 7 blocs du moteur (arrêtent les ennemis et leurs tirs) + objet qui arrête aussi les tirs alliés, les boomerangs, et bloque les alliés
- sub_rasho:S_('Rashômon','Portail géant qui bloque tirs et passage 2 s',13,{ai:DEF},(u,a)=>{const c=subFree(fwd(u,a,82),24),ca=Math.cos(a),sa=Math.sin(a),px=-sa,py=ca,SPc=30;
+ sub_rasho:S_('Kuchiyose : Rashômon','Portail qui bloque tirs et passage 1,2 s',7,{ai:DEF},(u,a)=>{const c=subFree(fwd(u,a,82),24),ca=Math.cos(a),sa=Math.sin(a),px=-sa,py=ca,SPc=30;
   anim(u,'sub_rasho',.6);subS('heavy',u);subS('rock',u);say(u,'RASHÔMON !','#c8b8e0');
   // le bloc central (visage du démon) est ajouté en dernier : à profondeur égale, il est dessiné par-dessus ses voisins
-  for(const i of[-3,-2,-1,1,2,3,0])walls.push({x:c.x+px*i*SPc,y:c.y+py*i*SPc,r:19,t:SUB_RT,team:u.team,owner:u,vfx:i?'sub_rasho':'sub_rashoC'});
-  for(const e of units){if(e.dead||e===u)continue;const dx=e.x-c.x,dy=e.y-c.y,f=dx*px+dy*py,s=dx*ca+dy*sa;if(Math.abs(f)>SPc*3+19+e.r||Math.abs(s)>26+e.r)continue;const sg=s>=0?1:-1;
-   if(e.team!==u.team)hit(e,u,12,{kb:320,fx:e.x-ca*sg*40,fy:e.y-sa*sg*40,unblockable:1});else if(e.unstop<=0){e.kx+=ca*sg*260;e.ky+=sa*sg*260}}
-  aux.push({type:'sub_rasho',x:c.x,y:c.y,a:a+Math.PI/2,len:SPc*6+38,r:0,t:SUB_RT,m:SUB_RT,team:u.team,owner:u});
+  for(const i of[-2,-1,1,2,0])walls.push({x:c.x+px*i*SPc,y:c.y+py*i*SPc,r:19,t:SUB_RT,team:u.team,owner:u,vfx:i?'sub_rasho':'sub_rashoC'});
+  for(const e of units){if(e.dead||e===u)continue;const dx=e.x-c.x,dy=e.y-c.y,f=dx*px+dy*py,s=dx*ca+dy*sa;if(Math.abs(f)>SPc*2+19+e.r||Math.abs(s)>26+e.r)continue;const sg=s>=0?1:-1;
+   if(e.team!==u.team)hit(e,u,8,{kb:300,fx:e.x-ca*sg*40,fy:e.y-sa*sg*40,unblockable:1});else if(e.unstop<=0){e.kx+=ca*sg*260;e.ky+=sa*sg*260}}
+  aux.push({type:'sub_rasho',x:c.x,y:c.y,a:a+Math.PI/2,len:SPc*4+38,r:0,t:SUB_RT,m:SUB_RT,team:u.team,owner:u});
   jx({jfx:'sub_rashoin',x:c.x,y:c.y,a:a+Math.PI/2,r:115,t:.75,m:.75});subPoof(c.x,c.y,70,u);if(near(c.x,c.y)){subS('boom',u);shake=Math.max(shake,.3)}}),
  // --- Sôshôryû : deux rouleaux en hélice autour de Tenten, puis une pluie d'armes sur la zone (8 vagues de 5, ralentissent)
  sub_soryu:S_('Sôshôryû','Pluie d\'armes sur la zone',12,{tele:{r:130,max:420},ai:RG(420,.6)},(u,a,td)=>{const p=subFree(atP(u,a,td,420),20),T=1.9;anim(u,'sub_soryu',1.1);subS('wind',u);subS('poof',u);
@@ -69,12 +69,12 @@ AUXF.sub_kshu=x=>{const p=x.p;if(x.n||!p)return;const alive=!p.dead&&p.life>0;
  if(alive){x.x=p.x;x.y=p.y;if(p.life0-p.life<.2)return;p.life=0;p.dead=1;p.boom=1}else if(!p.hitAny){x.t=0;return}
  x.n=1;x.t=.5;const o=x.owner,b=Math.atan2(p.vy,p.vx),X=p.x-Math.cos(b)*8,Y=p.y-Math.sin(b)*8;subPoof(X,Y,30,o);jx({jfx:'sub_kfan',x:X,y:Y,a:b,t:.3,m:.3});
  for(let i=0;i<12;i++){const c=b+(i-5.5)*(1.1/11);projs.push({x:X+Math.cos(c)*6,y:Y+Math.sin(c)*6,vx:Math.cos(c)*680,vy:Math.sin(c)*680,owner:o,src:o,rot:i,r:6,dmg:0,life:.42,life0:.42,col:'#d8dde6',vfx:'sub_kmini',kind:'sub_kmini',jn:'Multiclonage de shuriken',ex:false,basic:false,hitSet:null,o:{silent:1},
-  onHit:(q,t)=>{const n=x.G.get(t)||0;if(n>=4||t.dead)return;x.G.set(t,n+1);hit(t,o,n?3:7,n>=2?{slow:.7}:{})}})}};
+  onHit:(q,t)=>{const n=x.G.get(t)||0;if(n>=5||t.dead)return;x.G.set(t,n+1);hit(t,o,n?5:9,n>=2?{slow:.7}:{})}})}};
 // Chiens ninja : le terrier suit la cible à 105 px/s ; à 0,6 s, la meute jaillit : le plus proche du centre est mordu et entravé
 AUXF.sub_dig=(x,dt)=>{if(x.n)return;const e=x.tg,o=x.owner;
  if(e&&!e.dead&&x.t>0){const dx=e.x-x.x,dy=e.y-x.y,d=Math.hypot(dx,dy);if(d>1){const s=Math.min(d,105*dt);x.x+=dx/d*s;x.y+=dy/d*s}return}if(x.t>0)return;x.n=1;
  const C=[];for(const v of enemies(o)){const d=Math.hypot(v.x-x.x,v.y-x.y);if(d<x.r+v.r*.6&&!(v.phase>0))C.push([d,v])}C.sort((p,q)=>p[0]-q[0]);let m=null;
- const V=VFX;VFX='claws';if(C.length&&hit(C[0][1],o,16,{root:1.2,unblockable:1}))m=C[0][1];for(const [,v] of C.slice(1))hit(v,o,8,{slow:.8,unblockable:1});VFX=V;
+ const V=VFX;VFX='claws';if(C.length&&hit(C[0][1],o,16,{root:1,unblockable:1}))m=C[0][1];for(const [,v] of C.slice(1))hit(v,o,8,{slow:.8,unblockable:1});VFX=V;
  if(m)say(m,'CHIENS NINJA !','#e8c890');aux.push({type:'sub_dhole',x:x.x,y:x.y,r:44,t:1.4,m:1.4,team:x.team});
  jx({jfx:'sub_dogs',x:x.x,y:x.y,ti:m?units.indexOf(m):undefined,a:o.aim||0,t:m?1.3:.6,m:m?1.3:.6});sparks(x.x,x.y,'#8a6a48',12,'earth');
  if(near(x.x,x.y)){S('rock',o);S('hit',o);shake=Math.max(shake,.16)}};

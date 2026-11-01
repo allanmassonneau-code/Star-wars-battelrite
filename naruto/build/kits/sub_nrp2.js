@@ -34,20 +34,20 @@ function subBFlame(x,y,h,s,t,sd,al){g.save();for(const [c,m,o,add] of[['#7a2ad0'
 function subBDiamond(x,y,w,h,fill,line,lw){g.fillStyle=fill;g.beginPath();g.moveTo(x,y-h);g.lineTo(x+w,y);g.lineTo(x,y+h);g.lineTo(x-w,y);g.closePath();g.fill();if(line){g.strokeStyle=line;g.lineWidth=lw||1;g.stroke()}}
 Object.assign(NAT,{
  // --- Serpents de l'ombre (Sen'ei Jashu) : trois serpents jaillissent de la manche ; le 1er ennemi mordu est ramené au lanceur et reste enlacé
- sub_jashu:S_('Serpents de l\'ombre','Serpents qui mordent et ramènent la cible',10,{ai:RG(430,.6,60)},(u,a)=>{anim(u,'sub_jashu',.55);S('shadow',u);S('dash',u);
-  proj(u,a,{spd:900,r:13,dmg:14,life:.5,col:'#6f8f3c',vfx:'kunai',kind:'sub_snkh',noClash:1,o:{root:.9,dot:{dps:4,dur:3}},onHit:(p,t)=>{const o=p.owner,x=aux.find(q=>q.type==='sub_snk'&&q.p===p);
+ sub_jashu:S_('Serpents de l\'ombre','Serpents qui mordent et ramènent la cible',9,{ai:RG(430,.6,60)},(u,a)=>{anim(u,'sub_jashu',.55);S('shadow',u);S('dash',u);
+  proj(u,a,{spd:900,r:13,dmg:14,life:.5,col:'#6f8f3c',vfx:'kunai',kind:'sub_snkh',noClash:1,o:{root:.7,dot:{dps:4,dur:3}},onHit:(p,t)=>{const o=p.owner,x=aux.find(q=>q.type==='sub_snk'&&q.p===p);
    if(x){x.n=1;x.tg=t;x.ti=subBI(t);x.t=x.m=1.05;x.x=t.x;x.y=t.y}jx({jfx:'sub_coil',ti:subBI(t),x:t.x,y:t.y,t:1.1,m:1.1});
    if(t.unstop<=0&&!o.dead&&!t.dead){const b=ang(o,t),q=subFree({x:o.x+Math.cos(b)*(o.r+t.r+8),y:o.y+Math.sin(b)*(o.r+t.r+8)},t.r);t.dash={sx:t.x,sy:t.y,tx:q.x,ty:q.y,t:0,dur:.3,jump:10};t.cast=null;t.kx=t.ky=0}}});
   const p=projs[projs.length-1];aux.push({type:'sub_snk',x:p.x,y:p.y,r:0,t:.8,m:.8,team:u.team,owner:u,ui:subBI(u),p,n:0,a})}),
  // --- Kage Bunshin : leurre — invisible, le clone continue la course ; les bots le visent (voir pickTarget plus bas)
- sub_leurre:S_('Kage Bunshin : leurre','Invisible, un clone court à ta place',14,{ai:{mode:'esc',max:230,p:.55}},(u,a)=>{anim(u,'sub_seal',.3);S('poof',u);subPoof(u.x,u.y,40,u);
+ sub_leurre:S_('Kage Bunshin : leurre','Invisible, un clone court à ta place',7,{ai:{mode:'esc',max:230,p:.55}},(u,a)=>{anim(u,'sub_seal',.3);S('poof',u);subPoof(u.x,u.y,40,u);
   const q=subFree({x:u.x,y:u.y},16),p=subCarrier(u,q.x,q.y,'sub_decoy',{life:1.3,r:1,ox:a,zapP:1});
   const D=Object.create(u);Object.assign(D,{x:q.x,y:q.y,vx:0,vy:0,dead:false,stealth:0,swing:0,cast:null,spin:null,flame:null,dash:null,z:0,phase:0,sub_eat:0,sub_dk:1});
   aux.push({type:'sub_leurre',x:q.x,y:q.y,r:0,t:1.3,m:1.3,team:u.team,owner:u,p,D,a,a0:a,ck:0});
-  u.stealth=Math.max(u.stealth,.8);
+  u.stealth=Math.max(u.stealth,.6);
   for(const e of units)if(e.team!==u.team&&e.tgt===u)e.tgt=D}),
  // --- Barrière Shishienjin : quatre flammes violettes puis le dôme ; enfermés dedans, ou tenus dehors
- sub_shishi:S_('Barrière Shishienjin','Dôme violet : les ennemis enfermés ne sortent plus',17,{cast:.25,tele:{r:150,max:420},ai:RG(400,.55)},(u,a,td)=>{const p=subFree(atP(u,a,td,420),60);anim(u,'sub_shishi',.75);S('genjutsu',u);
+ sub_shishi:S_('Barrière Shishienjin','Dôme violet : les ennemis enfermés ne sortent plus',14,{cast:.25,tele:{r:150,max:420},ai:RG(400,.55)},(u,a,td)=>{const p=subFree(atP(u,a,td,420),60);anim(u,'sub_shishi',.75);S('genjutsu',u);
   aux.push({type:'sub_shishi',x:p.x,y:p.y,r:150,t:3.45,m:3.45,team:u.team,owner:u,n:0,side:new Map(),bt:new Map()});jx({jfx:'sub_shishiup',x:p.x,y:p.y,r:150,t:.45,m:.45})}),
  // --- Byakugô (Tsunade) : le sceau libère le chakra stocké ; chaque blessure se referme 1 s plus tard, tant qu'il reste du chakra
  sub_byakugo:S_('Byakugô','4 s : régénère les dégâts subis 1 s plus tard',18,{ai:{mode:'self',max:280,p:.45}},(u)=>{anim(u,'sub_byk',.75);S('ignite',u);S('orb',u);u.sub_byk=4;
@@ -59,7 +59,7 @@ Object.assign(NAT,{
   const c=subCarrier(u,s.x,s.y,'sub_mandah',{life:4.3,r:1,ox:a,ar:0,zapP:0});aux.push({type:'sub_manda',x:s.x,y:s.y,a,len:0,r:46,t:4.2,m:4.2,team:u.team,owner:u,p:c,n:0,w:0,sw:0})}),
  // --- Fûton : Rasenshuriken : formé au-dessus de la main (incantation), lancé loin ; la sphère de lames tranche le chakra
  sub_rsk:ULT('Fûton : Rasenshuriken','Sphère de lames de vent qui tranche le chakra',{cast:.5,line:{len:640,w:70},ai:{max:600,p:.8}},(u,a,td)=>{anim(u,'sub_rsk',.45);S('wind',u);S('rasengan',u);
-  const L=clamp(td||600,140,640);proj(u,a,{spd:640,r:20,dmg:8,life:L/640,col:'#c8fff0',vfx:'rasenshuriken',kind:'sub_rskp',big:1,noClash:1,onHit:(p,t)=>{p.bx=t.x;p.by=t.y}});
+  const L=clamp(td||600,140,640),sg=u.sub_sage>0?1:0;u.sub_rskW=4;if(sg)say(u,'SENPÔ : RASENSHURIKEN !','#9ad05a');proj(u,a,{spd:640,r:20+sg*5,dmg:8,life:L/640,col:'#c8fff0',vfx:'rasenshuriken',kind:'sub_rskp',big:1,noClash:1,sg,onHit:(p,t)=>{p.bx=t.x;p.by=t.y}});
   aux.push({type:'sub_rskt',x:u.x,y:u.y,r:0,t:2,m:2,team:u.team,owner:u,p:projs[projs.length-1]})}),
 });
 AFTER.push(()=>UK.push('sub_byk','sub_eat','sub_ckc'));
@@ -120,14 +120,14 @@ AUXF.sub_manda=(x,dt)=>{const u=x.owner,ca=Math.cos(x.a),sa=Math.sin(x.a);
  if(x.t<=0&&x.tg&&x.tg.sub_eat>0)x.tg.sub_eat=0;
  if(c){c.x=x.x;c.y=x.y;c.ox=x.a;c.zapP=x.n;c.ar=x.n===3?Math.max(0,x.t/.55):x.w;c.rock=x.n===2?1:0;c.life=Math.max(.02,x.t+.02)}};
 // Rasenshuriken : suit le projectile ; à l'impact (ou au bout de sa course, ou contre un pilier) la sphère de lames éclate
-AUXF.sub_rskt=x=>{const p=x.p;if(!p){x.t=0;return}if(!p.dead&&p.life>0){x.x=p.x;x.y=p.y;return}x.t=0;const u=p.owner||x.owner;if(!u)return;const q=subFree({x:p.bx??p.x,y:p.by??p.y},20);subBRskBoom(u,q.x,q.y)}; // renvoyé (parade, renvoi) : il explose pour celui qui l'a renvoyé
-function subBRskBoom(u,x,y){aux.push({type:'sub_rskd',x,y,r:135,t:1.05,m:1.05,k:0,team:u.team,owner:u,hs:new Set()});jx({jfx:'sub_rskboom',x,y,r:135,t:.5,m:.5});jx({jfx:'sub_rskdome',x,y,r:135,t:1.05,m:1.05});
+AUXF.sub_rskt=x=>{const p=x.p;if(!p){x.t=0;return}if(!p.dead&&p.life>0){x.x=p.x;x.y=p.y;return}x.t=0;const u=p.owner||x.owner;if(!u)return;const q=subFree({x:p.bx??p.x,y:p.by??p.y},20);subBRskBoom(u,q.x,q.y,p.sg)}; // renvoyé (parade, renvoi) : il explose pour celui qui l'a renvoyé
+function subBRskBoom(u,x,y,sg){const R=sg?165:135;aux.push({type:'sub_rskd',x,y,r:R,t:1.05,m:1.05,k:0,team:u.team,owner:u,hs:new Set(),sgm:sg?1.3:1});jx({jfx:'sub_rskboom',x,y,r:R,t:.5,m:.5});jx({jfx:'sub_rskdome',x,y,r:R,t:1.05,m:1.05});
  if(near(x,y)){S('boom',u);S('wind',u);shake=Math.max(shake,.4)}}
 function subBCut(u,e){const lost=Math.min(e.energy,30);e.energy-=lost;if(near(e.x,e.y))say(e,'-'+Math.round(lost)+' CHAKRA','#4ab0ff');jx({jfx:'sub_ckdrain',ti:subBI(e),x:e.x,y:e.y,t:.9,m:.9});
  const o=aux.find(a=>a.type==='sub_ckc'&&a.tg===e);if(o){o.t=o.m=3;o.cap=e.energy}else aux.push({type:'sub_ckc',x:e.x,y:e.y,r:0,t:3,m:3,team:u.team,owner:u,tg:e,ti:subBI(e),cap:e.energy,sh:0});e.sub_ckc=3}
 AUXF.sub_rskd=x=>{const u=x.owner;if(!u)return;
- if(x.k<=0&&x.t>.05){x.k=.15;VFX='rasenshuriken';for(const e of enemies(u)){if(Math.hypot(e.x-x.x,e.y-x.y)>=x.r+e.r)continue;if(hit(e,u,3,{unblockable:1,slow:.5,pull:150,fx:x.x,fy:x.y})&&!x.hs.has(e)){x.hs.add(e);subBCut(u,e)}}VFX=null}
- if(x.t<=0&&!x.done){x.done=1;VFX='rasenshuriken';for(const e of enemies(u))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)hit(e,u,10,{kb:380,unblockable:1,fx:x.x,fy:x.y});VFX=null;detoFx(x.x,x.y,x.r,'rasenshuriken');if(near(x.x,x.y)){S('boom',u);shake=Math.max(shake,.3)}}};
+ if(x.k<=0&&x.t>.05){x.k=.15;VFX='rasenshuriken';for(const e of enemies(u)){if(Math.hypot(e.x-x.x,e.y-x.y)>=x.r+e.r)continue;if(hit(e,u,3*(x.sgm||1),{unblockable:1,slow:.5,pull:150,fx:x.x,fy:x.y})&&!x.hs.has(e)){x.hs.add(e);subBCut(u,e)}}VFX=null}
+ if(x.t<=0&&!x.done){x.done=1;VFX='rasenshuriken';for(const e of enemies(u))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)hit(e,u,10*(x.sgm||1),{kb:380,unblockable:1,fx:x.x,fy:x.y});VFX=null;detoFx(x.x,x.y,x.r,'rasenshuriken');if(near(x.x,x.y)){S('boom',u);shake=Math.max(shake,.3)}}};
 // chakra tranché : le chakra de la cible ne peut plus remonter (charge, coups, pilules…)
 AUXF.sub_ckc=(x,dt)=>{const e=x.tg;if(!e||e.dead){if(e)e.sub_ckc=0;x.t=0;return}x.x=e.x;x.y=e.y;e.sub_ckc=Math.max(0,x.t);x.sh-=dt;
  if(e.energy>x.cap+.01){e.energy=x.cap;if(x.sh<=0&&e.chk){x.sh=1.2;if(near(e.x,e.y))say(e,'CHAKRA COUPÉ','#4ab0ff')}}else x.cap=e.energy;if(x.t<=0)e.sub_ckc=0};
