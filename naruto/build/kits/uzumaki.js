@@ -2,19 +2,17 @@
 // Chaînes adamantines (Kongô Fûsa), sceaux marqueurs qu'on fait exploser, parchemins de stockage, et le Shiki Fûjin du Shinigami.
 // (Rasengan, Multiclonage, Rasenshuriken et chakra de Kyûbi sont des techniques de Naruto : subjutsu des ninjas sans clan, voir sub_naruto.js.)
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés (code conservé) : Parchemin de stockage, Sceau des cinq éléments, Sceau d'échange, Rempart de chaînes (→ Cage adamantine),
+// Bond des chaînes (→ dash), Shiki Fûjin (→ famille Jutsu interdits, rang S : mécanique uz_shiki gardée ici)
 KIT('c6',[
- [1,'D','x.uz_tagk','Kunai à sceau','Kunai rapide : 14 dégâts et colle un sceau sur l\'ennemi touché','kunai'],
- [1,'C','x.uz_harpoon','Chaîne-harpon','Une chaîne adamantine harponne le 1er ennemi : ramené à toi (16 dégâts), étourdi 0,4 s et marqué d\'un sceau','chain'],
- [1,'B','x.uz_kai','Sceaux : Détonation','Fait exploser les sceaux des ennemis à moins de 480 : 12 + 12 par sceau ; à 3 sceaux, étourdi 0,7 s','tag'],
- [3,'A','x.uz_cage','Cage adamantine','Des chaînes jaillissent sous la zone : 20 dégâts, entrave 0,7 s et un sceau, puis enferment 2,5 s (ni ennemi ni tir ne passe)','chain'],
- [3,'B','x.uz_store','Parchemin de stockage','1,5 s : le parchemin scelle les tirs ennemis. Relance (5 s) : renvoie le plus fort (+25 %, 15 dégâts au moins), sinon 4 armes stockées (8 dégâts chacune)','kunai'],
- [4,'B','x.uz_gogyo','Sceau des cinq éléments','Cinq flammes : la cible (14 dégâts) perd 20 de chakra, ne peut ni lancer de jutsu ni se recharger (R) 2 s, et reçoit un sceau','chakra'],
- [4,'C','x.uz_wall','Rempart de chaînes','Un rempart de chaînes jaillit devant toi 3 s : il arrête les tirs et le passage des ennemis ; en surgissant, 14 dégâts et repousse','chain'],
- [2,'B','x.uz_swap','Sceau d\'échange','Kunai-sceau : échange ta place avec l\'ennemi touché (ralenti), sinon te téléporte là où il se plante','chain'],
- [2,'C','x.uz_leap','Bond des chaînes','Des chaînes te catapultent au curseur ; à l\'atterrissage, elles fouettent autour de toi : 12 dégâts, entrave 0,5 s et un sceau','chain'],
- [5,'S','x.uz_shiki','Shiki Fûjin','En plus du chakra, coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34 dégâts, puis âme scellée 3 s (12 dégâts/s, ralenti, ni jutsu ni recharge) ; +8 dégâts par sceau','chakra'],
- [5,'A','x.uz_bind','Entrave du démon','Après 0,4 s, des chaînes saisissent 3 ennemis à moins de 380 : entravés 0,6 s puis enchaînés à toi 3 s (170 au plus, ralentis), 8 dégâts par 0,5 s et un sceau par seconde ; tu restes immobile, un étourdissement les brise','chain'],
+ ['D','x.uz_tagk','Kunai à sceau','Kunai rapide : 14 dégâts et colle un sceau sur l\'ennemi touché','kunai'],
+ ['C','x.uz_harpoon','Chaîne-harpon','Une chaîne adamantine harponne le 1er ennemi : ramené à toi (16 dégâts), étourdi 0,4 s et marqué d\'un sceau','chain'],
+ ['B','x.uz_kai','Sceaux : Détonation','Fait exploser les sceaux des ennemis à moins de 480 : 12 + 12 par sceau ; à 3 sceaux, étourdi 0,7 s','tag'],
+ ['A','x.uz_cageA','Cage adamantine','Des chaînes jaillissent sous la zone : 20 dégâts, entrave 0,7 s et un sceau, puis enferment 2,5 s. Lancée tout près de toi (moins de 150), elle se dresse en rempart devant toi 3 s : arrête tirs et passage, 14 dégâts et repousse','chain'],
+ ['S','x.uz_bind','Entrave du démon','Après 0,4 s, des chaînes saisissent 3 ennemis à moins de 380 : entravés 0,6 s puis enchaînés à toi 3,5 s (170 au plus, ralentis), 9 dégâts par 0,5 s et un sceau par seconde ; tu restes immobile, un étourdissement les brise','chain'],
 ]);
+// dash (Espace) : Bond des chaînes (réduit)
+DASHC[6]={src:'x.uz_leap',n:'Bond des chaînes',d:'Des chaînes te catapultent au curseur ; à l\'atterrissage, elles fouettent autour de toi : 8 dégâts et entrave 0,3 s (un sceau de plus sur un ennemi déjà scellé)',vfx:'chain',cd:7};
 // ---- sceaux marqueurs (cœur du clan) : jusqu'à 3 sur un ennemi, 8 s après le dernier posé ; le 3e scelle son chakra (une fois toutes les 8 s)
 const UZ_MKT=8,UZ_KAIR=480,UZ_BL=170,UZ_WL=230,UZ_KAI_AI={max:UZ_KAIR-20,p:.75},UZ_ST_AI={max:520,p:.9},UZ_ST_DEF={mode:'def',p:.6};
 const uzMk=t=>t&&!t.dead&&SIMT<t.uz_mkE?t.uz_mk|0:0;
@@ -48,6 +46,8 @@ Object.assign(NAT,{
     if(near(e.x,e.y)){S('boom',u);shake=Math.max(shake,.1+.06*n);sparks(e.x,e.y,'#ff9a3a',6+4*n,'tag')}})}}),
  uz_cage:SP('Cage adamantine','Des chaînes jaillissent sous la zone : 20 dégâts, entrave 0,7 s et un sceau, puis enferment 2,5 s (ni ennemi ni tir ne passe)',13,{tele:{r:130,max:420},ai:RG(420,.55)},(u,a,td)=>{const p=atP(u,a,td,420);S('deflect',u);anim(u,'uz_slam',.45);u.root=Math.max(u.root,.3);
   aux.push({type:'uz_cage',x:p.x,y:p.y,r:130,t:2.95,m:2.95,team:u.team,owner:u,vfx:'chain',k:0,sd:{}})}),
+ // Cage adamantine (v5, fusion avec le Rempart) : visée tout près de soi (< 150), elle se dresse en rempart
+ uz_cageA:SP('Cage adamantine','',13,{tele:{r:130,max:420},ai:RG(420,.55)},(u,a,td,P)=>{if((td||300)<150){NAT.uz_wall.f(u,a,td,P);return}NAT.uz_cage.f(u,a,td,P)}),
  uz_store:SP('Parchemin de stockage','1,5 s : le parchemin scelle les tirs ennemis. Relance (5 s) : renvoie le plus fort (+25 %, 15 dégâts au moins), sinon 4 armes stockées (8 dégâts chacune)',11,{hero:'dooku',ai:UZ_ST_DEF},(u,a)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='uz_store');if(i<0)return;const cd=u.ch.abil[i].cd;
   if(u.jst&&u.jst.key==='uz_store'){u.jst=null;u.cds[i]=cd;uzRelease(u,a);return}
   S('poof',u);S('jyuken',u);anim(u,'uz_absorb',1.5);const ui=units.indexOf(u);u.uz_st=null;u.uz_scE=SIMT+1.5;
@@ -66,18 +66,18 @@ Object.assign(NAT,{
   aux.push({type:'uz_swapk',x:u.x,y:u.y,r:0,t:1,m:1,team:u.team,owner:u,p:projs[projs.length-1]})}),
  uz_leap:SP('Bond des chaînes','Des chaînes te catapultent au curseur ; à l\'atterrissage, elles fouettent autour de toi : 12 dégâts, entrave 0,5 s et un sceau',8,{ai:{mode:'gap',min:150,max:300,p:.45}},(u,a,td)=>{S('dash',u);S('deflect',u);anim(u,'leap',.42);const L=clamp(td||260,90,290);
   jx({jfx:'uz_leapc',x:u.x,y:u.y,a,t:.5,m:.5});
-  dash(u,a,L,.38,{jump:46,end:()=>{if(u.dead)return;VFX='chain';for(const e of enemies(u))if(dist(u,e)<92+e.r){hit(e,u,12,{root:.5,unblockable:1});uzMark(u,e,1)}VFX=null;
+  dash(u,a,L,.38,{jump:46,end:()=>{if(u.dead)return;VFX='chain';for(const e of enemies(u))if(dist(u,e)<92+e.r){const sd=uzMk(e)>0;if(hit(e,u,8,{root:.3,unblockable:1})&&sd)uzMark(u,e,1)}VFX=null;
    jx({jfx:'uz_lash',x:u.x,y:u.y,t:.5,m:.5});if(near(u.x,u.y)){S('heavy',u);shake=Math.max(shake,.12)}}})}),
  uz_shiki:ULT('Shiki Fûjin','En plus du chakra, coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34 dégâts, puis âme scellée 3 s (12 dégâts/s, ralenti, ni jutsu ni recharge) ; +8 dégâts par sceau',{hero:'thrawn',line:{len:520,w:36},ai:{max:480,p:.8}},(u,a)=>{S('genjutsu',u);S('roar',u);anim(u,'uz_shiki',1.1);u.root=Math.max(u.root,.75);u.uz_rtE=SIMT+.7;u.uz_rtB=0;
   jx({jfx:'uz_shini',ui:units.indexOf(u),x:u.x,y:u.y,a,t:1.35,m:1.35});
   later(u,.7,()=>{if(u.dead||u.uz_rtB||u.stun>0||u.sleepT<0){say(u,'RITUEL BRISÉ','#c8a8ff');return}const h0=u.hp;u.hp=Math.max(1,u.hp-Math.round(u.max*.12));say(u,'-'+Math.round(h0-u.hp)+' PV : LE PRIX DU SCEAU','#c8a8ff');S('shadow',u);
    proj(u,u.aim,{spd:950,r:16,dmg:34,life:.55,col:'#d8c8ff',kind:'uz_shand',vfx:'chakra',noClash:1,o:{unblockable:1},onHit:(p,t)=>uzSoul(p.owner,t)});if(near(u.x,u.y))shake=Math.max(shake,.25)})}),
- uz_bind:ULT('Entrave du démon','Après 0,4 s, des chaînes saisissent 3 ennemis à moins de 380 : entravés 0,6 s puis enchaînés à toi 3 s (170 au plus, ralentis), 8 dégâts par 0,5 s et un sceau par seconde ; tu restes immobile, un étourdissement les brise',{tele:{self:1,r:380},ai:SELF(330,.8)},(u)=>{S('heavy',u);S('deflect',u);anim(u,'uz_bind',3.5);u.root=Math.max(u.root,.45);u.uz_rtE=SIMT+.4;u.uz_rtB=0;
+ uz_bind:ULT('Entrave du démon','Après 0,4 s, des chaînes saisissent 3 ennemis à moins de 380 : entravés 0,6 s puis enchaînés à toi 3 s (170 au plus, ralentis), 8 dégâts par 0,5 s et un sceau par seconde ; tu restes immobile, un étourdissement les brise',{tele:{self:1,r:380},ai:SELF(330,.8)},(u)=>{S('heavy',u);S('deflect',u);anim(u,'uz_bind',4);u.root=Math.max(u.root,.45);u.uz_rtE=SIMT+.4;u.uz_rtB=0;
   const ui=units.indexOf(u);jx({jfx:'uz_bindw',ui,x:u.x,y:u.y,t:.45,m:.45});
   later(u,.4,()=>{if(u.dead||u.uz_rtB||u.stun>0||u.sleepT<0){say(u,'CHAÎNES BRISÉES','#e8c860');if(u.anim&&u.anim.k==='uz_bind')u.anim=null;return}
    const L=enemies(u).filter(e=>dist(u,e)<380+e.r&&!(e.stealth>0)).sort((p,q)=>dist(u,p)-dist(u,q)).slice(0,3);if(!L.length){say(u,'PERSONNE À ENCHAÎNER','#e8c860');if(u.anim&&u.anim.k==='uz_bind')u.anim=null;return}
    if(near(u.x,u.y)){S('heavy',u);shake=Math.max(shake,.3)}
-   for(const e of L){aux.push({type:'uz_bind',x:e.x,y:e.y,r:0,t:3,m:3,team:u.team,owner:u,tg:e,ui,ti:units.indexOf(e),k:.5,n:0});VFX='chain';hit(e,u,8,{root:.6,unblockable:1});VFX=null;uzMark(u,e,1);if(near(e.x,e.y))sparks(e.x,e.y,'#e8c860',10,'chain')}})}),
+   for(const e of L){aux.push({type:'uz_bind',x:e.x,y:e.y,r:0,t:3.5,m:3.5,team:u.team,owner:u,tg:e,ui,ti:units.indexOf(e),k:.5,n:0});VFX='chain';hit(e,u,8,{root:.6,unblockable:1});VFX=null;uzMark(u,e,1);if(near(e.x,e.y))sparks(e.x,e.y,'#e8c860',10,'chain')}})}),
 });
 Object.assign(NATHERO,{uz:'savage'});
 // ---- mécaniques (hôte)
@@ -113,7 +113,7 @@ AUXF.uz_bind=(x,dt)=>{const o=x.owner,e=x.tg;
  o.root=Math.max(o.root,.1);x.x=e.x;x.y=e.y;const d=dist(o,e);
  if(d>UZ_BL&&e.unstop<=0){const a=ang(e,o),m=Math.min(d-UZ_BL,620*dt);e.x+=Math.cos(a)*m;e.y+=Math.sin(a)*m;e.kx*=.5;e.ky*=.5;if(e.dash&&d>UZ_BL+24)e.dash=null;collide(e)}
  if(e.unstop<=0)e.slow=Math.max(e.slow,.2);
- if(x.k<=0&&x.t>.05){x.k=.5;x.n++;VFX='chain';hit(e,o,8,{unblockable:1});VFX=null;if(x.n%2===0)uzMark(o,e,1)}};
+ if(x.k<=0&&x.t>.05){x.k=.5;x.n++;VFX='chain';hit(e,o,9,{unblockable:1});VFX=null;if(x.n%2===0)uzMark(o,e,1)}};
 // suivi des sceaux d'une cible : ils disparaissent 8 s après le dernier posé, à la mort de la cible, ou après une Détonation
 AUXF.uz_mkt=x=>{const e=x.tg;if(!e||e.dead||!(e.uz_mk>0)||!(SIMT<e.uz_mkE)){if(e)e.uz_mk=0;x.t=0;return}x.t=1;x.x=e.x;x.y=e.y};
 AUXD.uz_swapk=AUXD.uz_soul=AUXD.uz_mkt=()=>{};
