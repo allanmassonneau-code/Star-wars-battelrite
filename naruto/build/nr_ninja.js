@@ -21,7 +21,7 @@ const clanStyle=c=>c<0?-1:STYLES.findIndex(x=>x[5].includes(c)&&!x[5].includes(-
 const JD=KITROWS; // le catalogue est assemblé par les fichiers kits/*.js (un par catégorie)
 // réglages propres à certains jutsu (réglés par duels simulés)
 const JPAR={'Multiclonage':{d:1.2},'Ninken':{d:3},'Insectes dévoreurs':{dps:4}};
-const JCD={'Lotus primaire':10,'Lotus caché':9}; // temps de recharge propres à certains jutsu
+const JCD={}; // (Lotus primaire / Lotus caché : recharge du barème de leur rang, A / S) // temps de recharge propres à certains jutsu
 // équilibrage par clan (-1 = sans clan) et par nature : [multiplicateur PV, multiplicateur puissance], réglés par duels simulés
 // réglés à nouveau pour l'ambiance NRP (PV ×1,2 puis ×1,1, chakra rare) : duels simulés de chaque clan / nature contre des kits aléatoires, 45-55 % visés
 // puis pour les 21 clans (Hoki … Yuki, refonte Uzumaki) : duels 1v1 sans soin, 46-56 % pour chaque clan / nature ; les clans aux combats trop courts
@@ -30,9 +30,9 @@ const JCD={'Lotus primaire':10,'Lotus caché':9}; // temps de recharge propres �
 // kits aléatoires de chaque clan / nature / style contre un ninja aléatoire, 45-55 % visés pour chacun et 40-60 % pour chaque jutsu (JBAL) ; duel médian ≈ 52 s
 // puis, quand les bots ont enfin frappé au corps à corps (aiIn) : PV ×1,3 (HPK) et attaques de base ×0,4 (M1K), Shirogane refait (M1 au contact,
 // SG.BAL 1,15 / SG.TAKE 1), clans recalés sur bal21 (1v1 sans soin, 150 à 400 duels par catégorie) : 44-55 % pour chaque clan / nature, duel médian ≈ 50 s
-const CLANBAL={"0":[0.842,0.781],"1":[0.636,0.687],"2":[1.123,1.139],"3":[0.962,0.903],"4":[0.992,0.888],"5":[1.209,1.204],"6":[1.02,0.903],"7":[1.096,1.018],"8":[0.964,0.994],"9":[0.975,0.831],"10":[0.838,0.681],"11":[0.996,0.962],"12":[1.053,0.968],"13":[1.162,1.192],"14":[0.867,1.184],"15":[1.275,0.83],"16":[1.046,1.115],"17":[1.078,0.999],"18":[1.001,0.961],"19":[1.029,0.994],"20":[1.01,1.052],"-1":[0.974,0.955]},NATBAL={"0":[1.13,0.865],"1":[1.01,1.003],"2":[0.928,0.971],"3":[1.02,0.954],"4":[0.946,1.04]},STYLEBAL={"0":[1.003,1.017],"1":[0.945,1.054],"2":[0.876,0.859],"2:-1":[0.79,0.721],"3":[0.89,0.955],"7":[1.052,1.004],"8":[1.033,0.875],"10":[1.007,1.122],"12":[0.9,0.999],"15":[1.148,1.207],"18":[0.913,0.819],"19":[1.042,0.887],"23":[1.029,1.07],"24":[0.931,0.928],"25":[1.15,1.015],"26":[0.978,1.01]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
+const CLANBAL={"0":[0.842,0.781],"1":[0.636,0.687],"2":[1.123,1.139],"3":[0.962,0.903],"4":[0.992,0.888],"5":[1.209,1.204],"6":[1.02,0.903],"7":[1.096,1.018],"8":[0.964,0.994],"9":[0.975,0.831],"10":[0.76,0.59],"11":[0.996,0.962],"12":[1.053,0.968],"13":[1.162,1.192],"14":[0.867,1.184],"15":[1.275,0.83],"16":[1.046,1.115],"17":[1.078,0.999],"18":[1.001,0.961],"19":[1.029,0.994],"20":[1.01,1.052],"-1":[0.974,0.955],"21":[0.9,0.85],"22":[0.92,0.86]},NATBAL={"0":[1.13,0.865],"1":[1.01,1.003],"2":[0.928,0.971],"3":[1.02,0.954],"4":[0.946,1.04]},STYLEBAL={"0":[1.003,1.017],"1":[0.945,1.054],"2":[0.876,0.859],"2:-1":[0.79,0.721],"3":[0.89,0.955],"7":[1.052,1.004],"8":[1.033,0.875],"10":[1.007,1.122],"12":[0.9,0.999],"15":[1.148,1.207],"18":[0.913,0.819],"19":[1.042,0.887],"23":[1.029,1.07],"24":[0.931,0.928],"25":[1.15,1.015],"26":[0.978,1.01]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
 // équilibrage par arbre de style (TREEBAL[st]) et par famille de sub (FAMBAL[f], moyenne géométrique des familles prises) : [PV, puissance], défaut [1, 1]
-const TREEBAL={},FAMBAL={};
+const TREEBAL={"1":[1.04,1.05]},FAMBAL={};
 // équilibrage par jutsu (« catégorie|nom ») : d = dégâts ×, cd = recharge (s), ck = coût en chakra ; appliqué par nr_bal.js (les « N dégâts » des descriptions suivent d)
 const JBAL={
  "c0|Amaterasu":{"d":0.4,"ck":51},
@@ -46,25 +46,6 @@ const JBAL={
  "c0|Shunshin Uchiha":{"cd":8.5},
  "c0|Susanô : Totsuka":{"d":1.549},
  "c0|Tsukuyomi":{"ck":75},
- "c10|Bond du fauve":{"d":1.186},
- "c10|Corps de jade":{"cd":7.0},
- "c10|Dynamic Entry":{"d":1.311},
- "c10|Défi éternel":{"cd":6.0},
- "c10|Esquive du fauve":{"cd":11.5},
- "c10|Huit Portes":{"ck":52},
- "c10|Konoha Daisenpû":{"d":1.238},
- "c10|Konoha Gôriki Senpû":{"cd":8.0},
- "c10|Konoha Senpû":{"cd":4.5},
- "c10|Lotus caché":{"d":1.617},
- "c10|Lotus primaire":{"d":1.155},
- "c10|Nuit de la mort":{"d":1.073},
- "c10|Paon du matin":{"d":1.295},
- "c10|Poids retirés":{"cd":11.0},
- "c10|Porte de la Vie":{"cd":19.0},
- "c10|Première Porte":{"cd":17.0},
- "c10|Tigre de midi":{"d":0.867},
- "c10|Vitesse du fauve":{"cd":5.0},
- "c10|Éléphant du soir":{"d":1.764},
  "c11|Arbre millénaire":{"d":0.4},
  "c11|Cocon de sève":{"cd":27.0},
  "c11|Fleur carnivore":{"d":0.745},

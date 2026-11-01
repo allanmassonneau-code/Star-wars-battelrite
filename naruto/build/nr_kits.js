@@ -44,10 +44,9 @@ const TREEMOVE={
  'u|Concentration du chakra':['f6','D'],'u|Mode Ermite':['f6','A'],'u|Fûton : Rasenshuriken':['f6','S'],
  // Jutsu interdits (f7)
  'u|Serpents de l\'ombre':['f7','C'],'u|Argile explosive':['f7','B'],'u|Chakra de Kyûbi':['f7','A'],
- // arbre Taijutsu (t0) ; Taijutsuka (c10) : Poids retirés devient un jutsu D
- 'c10|Konoha Senpû':['t0','D'],'c10|Dynamic Entry':['t0','C'],'u|Ôkashô':['t0','B'],'u|Lotus primaire':['t0','A'],'c10|Lotus primaire':null,'c10|Tigre de midi':null,'c10|Poids retirés':['c10','D'],
- // Bukijutsuka (c22)
- 'u|Sôshôryû':['c22','S'],
+ // arbre Taijutsu (t0) et Taijutsuka (c10) : réécrits dans kits/styles.js et kits/taijutsuka.js (Ôkashô et Lotus primaire du Subjutsu ne sont plus repris)
+ // Bukijutsuka (c22) : Sôshôryû réécrit dans kits/bukijutsuka.js ; la ligne du Subjutsu n'est plus reprise
+ 'u|Sôshôryû':null,
  // retirés (code conservé)
  'u|Bombe fumigène':null,'u|Raikiri':null,'u|Pluie de parchemins':null};
 // ---------- Dashs (Espace) et Kawarimi (touche A) : {src mécanique 'x.clé', n nom, d description, vfx, cd recharge (5-8 s ; défaut : celle de la mécanique bornée à 5-8)} ----------

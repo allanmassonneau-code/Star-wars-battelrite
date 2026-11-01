@@ -8,7 +8,7 @@ const jcost=ab=>ab&&ab.rank&&RKB[ab.rank]&&!ab.hpc?(ab.ckO!=null?ab.ckO:RKB[ab.r
 let COMBO3=false; // vrai pendant le 5e coup du combo corps à corps (petit étourdissement)
 // attaque de base = toujours au corps à corps : combo de 5 coups (20 d'endurance chacun = un combo complet) ; toutes les armes des styles sont de mêlée
 // (le moteur garde le cas « distance » : 10 d'endurance par tir, sans combo, pour une arme hors de cette liste)
-const MELEEK=new Set(['fist','bigfist','palm','claws','bone','sword','kunai','shadow','bugs','chain','senbon','sand','puppet','vine','fan','gold','paper','shuriken','ice']);
+const MELEEK=new Set(['fist','bigfist','palm','claws','bone','sword','kunai','shadow','bugs','chain','senbon','sand','puppet','vine','fan','gold','paper','shuriken','ice','staff','kama','tonfa','ninjato']); // staff (bô), kama (kusarigama), tonfa, ninjato : armes des arbres Bukijutsu / Kenjutsu
 const meleeU=u=>MELEEK.has(u.ch.look.weapon.k);
 function drawFlowN(u,p,S,sk){const t=performance.now()/1000,col=u.ch.look.weapon.col||'#3af';
  // recharge de chakra (R) : aura toujours bleue — lueur au sol, onde qui s'élargit, flammes de chakra autour du corps, étincelles aspirées, éclat quand la jauge est pleine
