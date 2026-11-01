@@ -3,21 +3,21 @@
 // (ralentir, paralyser les mains, clouer au sol, étourdir, projeter). La foudre punit les cibles trempées (×1,35 et arc vers
 // un autre ennemi trempé) : l'Orage les trempe lui-même. Raiton bat Doton, Fûton bat Raiton.
 // Couleurs : foudre jaune et blanche (Kumo), bleu-blanc pour la famille Chidori et Kirin, noir et or pour la Panthère.
-// [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Arbre (format v5) : 2 jutsu par rang, on en apprend 1 par rang. [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Chaîne d'éclairs (ra_chain) est fondue dans Éclair (code conservé). Dash de nature (Espace, sans-clan) : Raiton : Pas de l'éclair (ra_step).
 KIT('n3',[
- [1,'D','x.ra_bolt','Raiton : Éclair','Trait de foudre fulgurant : transperce les ennemis sur sa ligne et les ralentit','lightning'],
- [1,'D','x.ra_senbon','Raiton : Chidori Senbon','Éventail de 5 aiguilles qui ralentissent ; touché par 3, l\'ennemi est paralysé : ni mudras ni jutsu 1 s','lightning'],
- [1,'C','x.ra_chain','Raiton : Chaîne d\'éclairs','Rebondit sur 3 ennemis proches ; sur une cible seule, la foudre s\'accumule et la frappe 3 fois de plus','lightning'],
- [1,'C','x.ra_nagashi','Raiton : Chidori Nagashi','Te libère des entraves, blesse et étourdit autour de toi, puis 2 s de riposte contre le corps à corps','lightning'],
- [1,'C','x.ra_clone','Raiton : Kage Bunshin','Bondis en arrière en laissant un clone de foudre : il explose au contact d\'un ennemi ou d\'un tir et étourdit','lightning'],
- [1,'B','x.ra_spear','Raiton : Chidori Eisô','Lance de foudre instantanée qui transperce la ligne, se ramifie au bout et étourdit brièvement','lightning'],
- [1,'B','x.ra_panther','Raiton : Panthère noire','Panthère de foudre qui traque l\'ennemi le plus proche et le cloue au sol 1,2 s','lightning'],
- [1,'A','x.ra_chidori','Chidori','Fonce, la foudre au poing : le premier ennemi touché subit un coup imparable, est projeté et étourdi','chidori'],
- [1,'A','x.ra_storm','Raiton : Orage','Nuage d\'orage : sa pluie trempe les ennemis (foudre +35 %) et 3 éclairs frappent ceux restés dessous','lightning'],
- [2,'C','x.ra_step','Raiton : Pas de l\'éclair','Fonce en éclair à travers les ennemis (blesse, ralentit) en laissant une traînée électrique qui ralentit','lightning'],
- [5,'S','x.ra_kirin','Raiton : Kirin','Un orage couvre la zone ; peu après, Kirin foudroie l\'ennemi le plus au centre : énormes dégâts, étourdit','kirin'],
- [5,'S','x.ra_armor','Raiton : Armure de foudre','Étourdit autour de toi, puis 7 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s','lightning'],
+ ['D','x.ra_bolt','Raiton : Éclair','Trait de foudre fulgurant qui transperce et ralentit ; du premier touché, la foudre saute vers un ennemi proche (6 dégâts), deux si la cible est trempée','lightning'],
+ ['D','x.ra_senbon','Raiton : Chidori Senbon','Éventail de 5 aiguilles qui ralentissent ; touché par 3, l\'ennemi est paralysé : ni mudras ni jutsu 1 s','lightning'],
+ ['C','x.ra_nagashi','Raiton : Chidori Nagashi','Te libère des entraves, blesse et étourdit autour de toi, puis 2 s de riposte contre le corps à corps','lightning'],
+ ['C','x.ra_clone','Raiton : Kage Bunshin','Bondis en arrière en laissant un clone de foudre : il explose (16 dégâts) au contact d\'un ennemi ou d\'un tir et étourdit','lightning'],
+ ['B','x.ra_spear','Raiton : Chidori Eisô','Lance de foudre instantanée qui transperce la ligne, se ramifie au bout et étourdit brièvement','lightning'],
+ ['B','x.ra_panther','Raiton : Panthère noire','Panthère de foudre qui traque l\'ennemi le plus proche et le cloue au sol 1,2 s','lightning'],
+ ['A','x.ra_chidori','Chidori','Fonce, la foudre au poing : le premier ennemi touché subit un coup imparable, est projeté et étourdi','chidori'],
+ ['A','x.ra_storm','Raiton : Orage','Nuage d\'orage : sa pluie trempe les ennemis (foudre +35 %) et 3 éclairs frappent ceux restés dessous','lightning'],
+ ['S','x.ra_kirin','Raiton : Kirin','Un orage couvre la zone ; peu après, Kirin foudroie l\'ennemi le plus au centre : énormes dégâts, étourdit','kirin'],
+ ['S','x.ra_armor','Raiton : Armure de foudre','Étourdit autour de toi, puis 7 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s','lightning'],
 ]);
+DASHN[3]={src:'x.ra_step',n:'Raiton : Pas de l\'éclair',d:'Fonce en éclair à travers les ennemis (7 dégâts, ralentit) en laissant une courte traînée électrique qui ralentit',vfx:'lightning',cd:7};
 // ---- outils de la foudre
 // son « brut » : sous l'élément foudre, le moteur change tous les sons en « chidori »
 const raS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V};
@@ -48,9 +48,9 @@ AFTER.push(()=>{if(typeof dangers!=='function'||dangers.raW)return;const D0=dang
 
 Object.assign(NAT,{
  // ---- éclair : le tir le plus rapide du jeu, perce la ligne
- ra_bolt:SP('Raiton : Éclair','Trait de foudre fulgurant : transperce les ennemis sur sa ligne et les ralentit',4,{line:{len:560,w:14},ai:RG(540,.7)},(u,a)=>{
+ ra_bolt:SP('Raiton : Éclair','Trait de foudre fulgurant : transperce et ralentit ; la foudre saute du premier touché vers un ennemi proche',5,{line:{len:560,w:14},ai:RG(540,.7)},(u,a)=>{let n=0;
   raS('zap',u);anim(u,'ra_flick',.32);jx({jfx:'ra_muzzle',x:u.x+Math.cos(a)*24,y:u.y+Math.sin(a)*24,a,r:14,t:.2,m:.2});
-  proj(u,a,{spd:1500,r:6,dmg:10,life:.38,col:'#ffe14a',slow:.5,pierce:1,kind:'ra_bolt',onHit:(p,t)=>raPop(t.x,t.y,16)})}),
+  proj(u,a,{spd:1500,r:6,dmg:10,life:.38,col:'#ffe14a',slow:.5,pierce:1,kind:'ra_bolt',onHit:(p,t)=>{raPop(t.x,t.y,16);if(n++)return;raChain(p.owner,t,t.wet>0?2:1,6,[t],1)}})}),
  // ---- chidori senbon : éventail serré ; à bout portant, 3 aiguilles paralysent les mains
  ra_senbon:SP('Raiton : Chidori Senbon','Éventail de 5 aiguilles qui ralentissent ; touché par 3, l\'ennemi est paralysé : ni mudras ni jutsu 1 s',6,{line:{len:330,w:90},ai:RG(210,.75)},(u,a)=>{
   raS('chidori',u);raS('zap',u);anim(u,'ra_fan',.38);jx({jfx:'ra_fan',ui:raUi(u),x:u.x,y:u.y,a,t:.22,m:.22});const vol={};
@@ -60,13 +60,13 @@ Object.assign(NAT,{
   raS('zap',u);anim(u,'ra_whip',.4);jx({jfx:'ra_muzzle',x:u.x+Math.cos(a)*24,y:u.y+Math.sin(a)*24,a,r:12,t:.18,m:.18});
   proj(u,a,{spd:1050,r:7,dmg:10,life:.46,col:'#ffe14a',kind:'ra_chain',onHit:(p,t)=>{raPop(t.x,t.y,20);raChain(p.owner,t,3,9,[t],0)}})}),
  // ---- chidori nagashi : le courant jaillit du corps, brise les entraves, puis riposte
- ra_nagashi:SP('Raiton : Chidori Nagashi','Te libère des entraves, blesse et étourdit autour de toi, puis 2 s de riposte contre le corps à corps',10,{tele:{self:1,r:115},ai:SELF(135,.6)},(u)=>{
+ ra_nagashi:SP('Raiton : Chidori Nagashi','Te libère des entraves, blesse et étourdit autour de toi, puis 2 s de riposte contre le corps à corps',8,{tele:{self:1,r:115},ai:SELF(135,.6)},(u)=>{
   const fr=u.root>0||u.slow>0;u.root=0;u.rootV=null;u.slow=0;if(fr)say(u,'LIBÉRÉ','#bfe6ff');
   aoe(u,u.x,u.y,115,12,{stun:.45},'#bfe6ff');u.riposte=Math.max(u.riposte,2);u.riposteS=1;
   jx({jfx:'ra_burst',ui:raUi(u),x:u.x,y:u.y,r:115,c:'#bfe6ff',t:.45,m:.45});jx({jfx:'ra_current',ui:raUi(u),x:u.x,y:u.y,t:2,m:2});
   anim(u,'ra_nagashi',.5);raS('chidori',u);raS('zap',u)}),
  // ---- clone de foudre : leurre piégé, tu bondis en arrière
- ra_clone:SP('Raiton : Kage Bunshin','Bondis en arrière en laissant un clone de foudre : il explose au contact d\'un ennemi ou d\'un tir et étourdit',11,{ai:DEF},(u,a)=>{
+ ra_clone:SP('Raiton : Kage Bunshin','Bondis en arrière en laissant un clone de foudre : il explose au contact d\'un ennemi ou d\'un tir et étourdit',10,{ai:DEF},(u,a)=>{
   aux.push({type:'ra_clone',x:u.x,y:u.y,r:26,t:2.5,m:2.5,team:u.team,owner:u,ui:raUi(u),vfx:'lightning',k:0});
   jx({jfx:'ra_burst',x:u.x,y:u.y,r:44,c:'#bfe6ff',t:.28,m:.28});dash(u,a+Math.PI,170,.24,{jump:24});anim(u,'ra_hop',.36);raS('poof',u);raS('zap',u)}),
  // ---- chidori eisô : lance instantanée, s'arrête au premier obstacle, fourche au bout
@@ -83,20 +83,20 @@ Object.assign(NAT,{
   const d=clamp((td||300)+20,120,340),e=fwd(u,a,d);dash(u,a,d,.22,{});aux.push({type:'ra_chid',x:u.x,y:u.y,r:0,t:.6,m:.6,team:u.team,owner:u,a,k:0});
   jx({jfx:'ra_trail',x:u.x,y:u.y,x2:e.x,y2:e.y,c:'#7fd0ff',t:.45,m:.45});anim(u,'ra_chidori',.42);raS('chidori',u);raS('dash',u)}),
  // ---- orage : nuage qui trempe, puis 3 éclairs ciblés (chacun annoncé au sol)
- ra_storm:SP('Raiton : Orage','Nuage d\'orage : sa pluie trempe les ennemis (foudre +35 %) et 3 éclairs frappent ceux restés dessous',12,{tele:{r:150,max:450},ai:RG(450,.6)},(u,a,td)=>{const p=atP(u,a,td,450);
+ ra_storm:SP('Raiton : Orage','Nuage d\'orage : sa pluie trempe les ennemis (foudre +35 %) et 3 éclairs frappent ceux restés dessous',13,{tele:{r:150,max:450},ai:RG(450,.6)},(u,a,td)=>{const p=atP(u,a,td,450);
   aux.push({type:'ra_storm',x:p.x,y:p.y,r:150,t:2.6,m:2.6,team:u.team,owner:u,vfx:'lightning',k:.4,n:3,danger:1});jx({jfx:'ra_cloud',x:p.x,y:p.y,r:150,rain:1,t:2.6,m:2.6});
   anim(u,'ra_call',.7);raS('water',u);raS('zap',u)}),
  // ---- pas de l'éclair : traversée foudroyante + sol électrisé
- ra_step:SP('Raiton : Pas de l\'éclair','Fonce en éclair à travers les ennemis (blesse, ralentit) en laissant une traînée électrique qui ralentit',7,{ai:{mode:'gap',min:120,max:280,p:.4}},(u,a)=>{
+ ra_step:SP('Raiton : Pas de l\'éclair','Fonce en éclair à travers les ennemis (7 dégâts, ralentit) en laissant une courte traînée électrique qui ralentit',7,{ai:{mode:'gap',min:120,max:280,p:.4}},(u,a)=>{
   const s={x:u.x,y:u.y},e=fwd(u,a,260),L=Math.hypot(e.x-s.x,e.y-s.y);dash(u,a,260,.14,{});aux.push({type:'ra_run',x:u.x,y:u.y,r:0,t:.5,m:.5,team:u.team,owner:u,k:0,hs:[]});
-  aux.push({type:'ra_trail',x:s.x,y:s.y,a,len:L,w:34,r:0,t:1.2,m:1.2,team:u.team,owner:u,k:0});jx({jfx:'ra_flash',x:s.x,y:s.y,x2:e.x,y2:e.y,t:.32,m:.32});
+  aux.push({type:'ra_trail',x:s.x,y:s.y,a,len:L,w:30,r:0,t:1,m:1,team:u.team,owner:u,k:0});jx({jfx:'ra_flash',x:s.x,y:s.y,x2:e.x,y2:e.y,t:.32,m:.32});
   anim(u,'ra_dashp',.22);raS('zap',u);raS('dash',u)}),
  // ---- kirin : l'orage s'amasse, puis la foudre-dragon frappe l'ennemi le plus proche du centre
- ra_kirin:ULT('Raiton : Kirin','Un orage couvre la zone ; peu après, Kirin foudroie l\'ennemi le plus au centre : énormes dégâts, étourdit',{tele:{r:200,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480);
+ ra_kirin:SP('Raiton : Kirin','Un orage couvre la zone ; peu après, Kirin foudroie l\'ennemi le plus au centre : énormes dégâts, étourdit',20,{tele:{r:200,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480);
   aux.push({type:'ra_kirin',x:p.x,y:p.y,r:200,t:.8,m:.8,team:u.team,owner:u,vfx:'kirin',k:0,danger:1});jx({jfx:'ra_cloud',x:p.x,y:p.y,r:200,kir:1,c:'#bfe6ff',t:.85,m:.85});
   anim(u,'ra_kirin',.8);raS('zap',u);raS('wind',u)}),
  // ---- armure de foudre (Raikage) : l'armure jaillit (étourdit autour), puis vitesse, force, réflexes, rien ne la retient
- ra_armor:ULT('Raiton : Armure de foudre','Étourdit autour de toi, puis 7 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s',{ai:SELF(320,.8)},(u)=>{const D=7;
+ ra_armor:SP('Raiton : Armure de foudre','Étourdit autour de toi, puis 7 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s',20,{ai:SELF(320,.8)},(u)=>{const D=7;
   u.haste=Math.max(u.haste,D);u.rage=Math.max(u.rage,D);u.slowImm=Math.max(u.slowImm,D);u.slow=0;u.root=0;u.dodge=Math.max(u.dodge,D);aoe(u,u.x,u.y,110,12,{stun:.5},'#bfe6ff');
   for(const x of aux)if(x.type==='ra_armor'&&x.owner===u)x.t=0;aux.push({type:'ra_armor',x:u.x,y:u.y,r:0,t:D,m:D,team:u.team,owner:u,k:2});
   jx({jfx:'ra_armor',ui:raUi(u),x:u.x,y:u.y,t:D,m:D});jx({jfx:'ra_armorburst',ui:raUi(u),x:u.x,y:u.y,t:.6,m:.6});anim(u,'ra_flex',.6);raS('chidori',u);raS('heavy',u)}),
@@ -108,7 +108,7 @@ Object.assign(NATHERO,{ra:'ig88'});
 AUXF.ra_clone=x=>{if(x.done)return;const o=x.owner;let go=x.t<=0;
  if(!go)for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r+12){go=true;break}
  if(!go)for(const p of projs)if(p.owner.team!==x.team&&!p.grenade&&!p.dead&&p.life>0&&Math.hypot(p.x-x.x,p.y-x.y)<x.r+p.r+4){p.life=0;go=true;break}
- if(!go)return;x.done=1;x.t=0;raAoe(o,x.x,x.y,95,12,{stun:.6,unblockable:1},'#bfe6ff');jx({jfx:'ra_burst',x:x.x,y:x.y,r:95,c:'#bfe6ff',t:.5,m:.5});
+ if(!go)return;x.done=1;x.t=0;raAoe(o,x.x,x.y,95,16,{stun:.6,unblockable:1},'#bfe6ff');jx({jfx:'ra_burst',x:x.x,y:x.y,r:95,c:'#bfe6ff',t:.5,m:.5});
  if(near(x.x,x.y)){raS('boom',o);raS('zap',o);shake=Math.max(shake,.18)}};
 // chidori : la course s'arrête sur le premier ennemi touché
 AUXF.ra_chid=x=>{const u=x.owner;if(x.done||u.dead){x.t=0;return}
@@ -130,7 +130,7 @@ AUXF.ra_kirin=x=>{const o=x.owner;
  jx({jfx:'flashsky',x:x.tx,y:x.ty,t:.4,m:.4});aux.push({type:'ra_scorch',x:x.tx,y:x.ty,r:95,t:1.8,m:1.8,team:x.team,owner:o,k:0});
  if(near(x.tx,x.ty)){raS('boom',o);raS('chidori',o);shake=Math.max(shake,.45)}if(o===player||(player&&Math.hypot(player.x-x.tx,player.y-x.ty)<130))hs=Math.max(hs,.08)};
 // pas de l'éclair : la course foudroie chaque ennemi traversé (une fois)
-AUXF.ra_run=x=>{const u=x.owner;if(u.dead){x.t=0;return}for(const e of enemies(u))if(!x.hs.includes(e)&&Math.hypot(e.x-u.x,e.y-u.y)<u.r+e.r+14){x.hs.push(e);raHit(e,u,10,{melee:1,slow:1});raPop(e.x,e.y,22)}if(!u.dash)x.t=0};
+AUXF.ra_run=x=>{const u=x.owner;if(u.dead){x.t=0;return}for(const e of enemies(u))if(!x.hs.includes(e)&&Math.hypot(e.x-u.x,e.y-u.y)<u.r+e.r+14){x.hs.push(e);raHit(e,u,7,{melee:1,slow:.6});raPop(e.x,e.y,22)}if(!u.dash)x.t=0};
 // pas de l'éclair : la traînée ralentit les ennemis qui la touchent
 AUXF.ra_trail=x=>{if(x.k>0)return;x.k=.2;const c=Math.cos(x.a),s=Math.sin(x.a);for(const e of enemies(x.owner)){const dx=e.x-x.x,dy=e.y-x.y,f=dx*c+dy*s,sd=Math.abs(-dx*s+dy*c);
  if(f>-e.r&&f<x.len+e.r&&sd<x.w/2+e.r&&e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.45)}};

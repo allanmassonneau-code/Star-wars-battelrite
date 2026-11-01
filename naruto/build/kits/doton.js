@@ -1,22 +1,21 @@
 // ===== Doton (terre) =====
 // La terre façonne l'arène (murs, piliers, marécage, fleuve de boue), encaisse (Kyôka) et contrôle (projections, saisies, poids).
 // Règle commune : un ennemi repoussé contre un mur, un poteau ou le bord de l'arène est ÉCRASÉ (étourdi).
-// [emplacement, rang, mécanique (x.clé = NAT[clé], sinon perso.sort du moteur), nom, description, élément visuel]
+// Arbre (format v5) : 2 jutsu par rang, on en apprend 1 par rang. [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// Retirés de l'arbre (code conservé) : Doton : Taupe (do_mole), Doton : Doryû Taiga (do_river). Dash de nature (Espace, sans-clan) : Doton : Doroku Gaeshi (do_flip).
 KIT('n4',[
- [1,'D','x.do_rock','Doton : Rocher','Rocher roulant qui repousse ; projeté contre un mur ou un obstacle, l\'ennemi est écrasé (étourdi)','earth'],
- [1,'D','x.do_wall','Doton : Doryûheki','Mur de terre au point visé : bloque tirs et passage 4 s, repousse les ennemis pris dessus','earth'],
- [1,'C','x.do_spikes','Doton : Doryûsô','Une ligne de pics de terre jaillit devant soi : blesse et projette en l\'air','earth'],
- [1,'C','x.do_swamp','Doton : Yomi Numa','Marécage 4 s : enlise (immobilise) ceux qui y sont pris, puis ralentit et bloque Espace ; y rester enlise à nouveau','earth'],
- [1,'B','x.do_armor','Doton : Kyôka','Corps de roche 3,5 s : 45 % de dégâts en moins, inarrêtable, plus lent ; puis éclate et repousse (selon les coups encaissés)','earth'],
- [1,'B','x.do_hand','Doton : Main de terre','Une main de terre surgit au point visé (court délai), saisit les ennemis et les jette à tes pieds','earth'],
- [1,'B','x.do_river','Doton : Doryû Taiga','Fleuve de boue devant soi 3 s : emporte et ralentit les ennemis ; plaqués contre un mur, ils sont écrasés','earth'],
- [1,'A','x.do_dragon','Doton : Dragon de terre','Un dragon de terre crache 3 boulets de boue qui suivent ta visée : explosent, ralentissent, laissent de la boue','earth'],
- [1,'A','x.do_weight','Doton : Kajûgan','Projectile qui alourdit 2,5 s (ralenti, sans déplacement) puis plaque au sol (étourdi) ; un jutsu Doton le plaque aussitôt','earth'],
- [2,'C','x.do_mole','Doton : Taupe','Plonge sous terre (intouchable), file vers le curseur et jaillit en projetant en l\'air les ennemis proches','earth'],
- [2,'C','x.do_flip','Doton : Doroku Gaeshi','Bondit vers le curseur et soulève derrière soi une dalle de terre qui arrête tirs et poursuivants 2,5 s','earth'],
- [5,'S','x.do_mountain','Doton : Chute de montagne','Une montagne s\'écrase sur la zone après 1 s (gros dégâts, étourdit), puis un cercle de rochers l\'enferme 4 s','earth'],
- [5,'S','x.do_quake','Doton : Grand séisme','Frappe le sol : 3 ondes de choc projettent en l\'air et repoussent, puis le sol fendu ralentit 3 s','earth'],
+ ['D','x.do_rock','Doton : Rocher','Rocher roulant qui repousse ; projeté contre un mur ou un obstacle, l\'ennemi est écrasé (étourdi)','earth'],
+ ['D','x.do_wall','Doton : Doryûheki','Mur de terre au point visé : bloque tirs et passage 4 s, repousse les ennemis pris dessus','earth'],
+ ['C','x.do_spikes','Doton : Doryûsô','Une ligne de pics de terre jaillit devant soi : blesse et projette en l\'air','earth'],
+ ['C','x.do_swamp','Doton : Yomi Numa','Marécage 4 s : enlise (immobilise) ceux qui y sont pris, puis ralentit et bloque Espace (1,5 s au plus) ; y rester enlise à nouveau','earth'],
+ ['B','x.do_armor','Doton : Kyôka','Corps de roche 3,5 s : 45 % de dégâts en moins, inarrêtable, plus lent ; puis éclate et repousse (selon les coups encaissés)','earth'],
+ ['B','x.do_hand','Doton : Main de terre','Une main de terre surgit au point visé (court délai), saisit les ennemis et les jette à tes pieds','earth'],
+ ['A','x.do_dragon','Doton : Dragon de terre','Un dragon de terre crache 3 boulets de boue qui suivent ta visée : explosent, ralentissent, laissent de la boue','earth'],
+ ['A','x.do_weight','Doton : Kajûgan','Projectile qui alourdit 2,5 s (ralenti, sans déplacement) puis plaque au sol (étourdi) ; un jutsu Doton le plaque aussitôt','earth'],
+ ['S','x.do_mountain','Doton : Chute de montagne','Une montagne s\'écrase sur la zone après 1 s (gros dégâts, étourdit), puis un cercle de rochers l\'enferme 4 s','earth'],
+ ['S','x.do_quake','Doton : Grand séisme','Frappe le sol : 3 ondes de choc projettent en l\'air et repoussent, puis le sol fendu ralentit 3 s','earth'],
 ]);
+DASHN[4]={src:'x.do_flip',n:'Doton : Doroku Gaeshi',d:'Bondit vers le curseur et soulève derrière soi une dalle de terre qui arrête tirs et poursuivants 1,5 s',vfx:'earth',cd:7};
 // ---- outils communs (préfixe do_)
 // son franc : l'élément terre change tous les sons en « rock », on le coupe le temps d'un vrai choc
 function do_S(k,u){const V=VFX;VFX=null;S(k,u);VFX=V}
@@ -69,25 +68,25 @@ Object.assign(NAT,{
  do_rock:SP('Doton : Rocher','Rocher roulant qui repousse ; projeté contre un mur ou un obstacle, l\'ennemi est écrasé (étourdi)',5,{line:{len:460,w:30},ai:RG(470,.7)},(u,a)=>{S('rock',u);anim(u,'throw2',.45);do_puff(u.x+Math.cos(a)*22,u.y+Math.sin(a)*22,24,5);
   proj(u,a,{spd:600,r:14,dmg:12,life:.78,col:'#7a5a3a',kind:'do_boulder',o:{kb:230},onHit:(p,e)=>{if(e.do_kj>0)do_kjSlam(e);do_crushArm(e,p.owner,.5,5,.5);do_puff(p.x,p.y,28,8)}})}),
  // Doryûheki : rempart de 7 blocs au point visé (les bots le posent devant eux)
- do_wall:SP('Doton : Doryûheki','Mur de terre au point visé : bloque tirs et passage 4 s, repousse les ennemis pris dessus',10,{tele:{r:60,max:330},ai:DEF},(u,a,td)=>{const d=u.ctrl?clamp(td||200,70,330):clamp((td||200)*.45,70,150),c=fwd(u,a,d),ca=Math.cos(a),sa=Math.sin(a),px=-sa,py=ca;
+ do_wall:SP('Doton : Doryûheki','Mur de terre au point visé : bloque tirs et passage 4 s, repousse les ennemis pris dessus',8,{tele:{r:60,max:330},ai:DEF},(u,a,td)=>{const d=u.ctrl?clamp(td||200,70,330):clamp((td||200)*.45,70,150),c=fwd(u,a,d),ca=Math.cos(a),sa=Math.sin(a),px=-sa,py=ca;
   S('rock',u);do_S('heavy',u);anim(u,'do_palms',.55);
   for(let i=-3;i<=3;i++)walls.push({x:c.x+px*i*25,y:c.y+py*i*25,r:14,t:4,team:u.team,owner:u,earth:1,vfx:'do_wall'});
   for(const e of enemies(u)){const dx=e.x-c.x,dy=e.y-c.y,s=dx*px+dy*py,f=dx*ca+dy*sa;if(Math.abs(s)<90+e.r&&Math.abs(f)<e.r+16){const k=f>=0?1:-1;do_hit(e,u,6,{kb:280,fx:e.x-ca*k*20,fy:e.y-sa*k*20,unblockable:1})}}
   aux.push({type:'do_crack',kind:'line',x:c.x-px*96,y:c.y-py*96,a:a+Math.PI/2,len:192,r:0,t:4,m:4,team:u.team,owner:u});
   do_puff(c.x,c.y,80,0);if(near(c.x,c.y))for(let i=-3;i<=3;i+=2)sparks(c.x+px*i*25,c.y+py*i*25,'#8a6a48',3,'earth')}),
  // Doryûsô : 6 bouquets de pics jaillissent l'un après l'autre le long de la ligne
- do_spikes:SP('Doton : Doryûsô','Une ligne de pics de terre jaillit devant soi : blesse et projette en l\'air',8,{line:{len:350,w:76},ai:RG(330,.6)},(u,a)=>{S('rock',u);anim(u,'do_strike',.55);const o={x:u.x,y:u.y},hs=new Set();
+ do_spikes:SP('Doton : Doryûsô','Une ligne de pics de terre jaillit devant soi : blesse et projette en l\'air',7,{line:{len:350,w:76},ai:RG(330,.6)},(u,a)=>{S('rock',u);anim(u,'do_strike',.55);const o={x:u.x,y:u.y},hs=new Set();
   aux.push({type:'do_crack',kind:'line',x:o.x+Math.cos(a)*24,y:o.y+Math.sin(a)*24,a,len:330,r:0,t:1.3,m:1.3,team:u.team,owner:u,w:.3});
   for(let i=0;i<6;i++){const p=fwd(o,a,60+i*56);later(u,.03+i*.05,()=>{do_prop(u,p.x,p.y,.9,'do_spear',{r:10});
    for(const e of enemies(u))if(!hs.has(e)&&Math.hypot(e.x-p.x,e.y-p.y)<38+e.r){hs.add(e);do_hit(e,u,15,{air:.5,unblockable:1})}
    if(near(p.x,p.y)){sparks(p.x,p.y,'#8a6a48',4,'earth');if(i%2<1)S('rock',u)}},{})}}),
  // Yomi Numa : marécage (ralentit, coupe les déplacements) ; au bout de 1,2 s dedans, on s'enlise
- do_swamp:SP('Doton : Yomi Numa','Marécage 4 s : enlise (immobilise) ceux qui y sont pris, puis ralentit et bloque Espace ; y rester enlise à nouveau',10,{tele:{r:140,max:420},ai:RG(420,.6)},(u,a,td)=>{const p=atP(u,a,td,420);S('rock',u);do_S('water',u);anim(u,'summon',.6);
+ do_swamp:SP('Doton : Yomi Numa','Marécage 4 s : enlise (immobilise) ceux qui y sont pris, puis ralentit et bloque Espace ; y rester enlise à nouveau',9,{tele:{r:140,max:420},ai:RG(420,.6)},(u,a,td)=>{const p=atP(u,a,td,420);S('rock',u);do_S('water',u);anim(u,'summon',.6);
   field(u,p.x,p.y,{r:140,t:4,slow:1,dps:3,col:'#5a4028',vfx:'earth'});aux.push({type:'do_swamp',x:p.x,y:p.y,r:140,t:4,m:4,team:u.team,owner:u,in:{},sunk:{}});
   for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<140+e.r*.4&&(e.z||0)<10){do_hit(e,u,6,{root:.5,unblockable:1});do_puff(e.x,e.y,28,0)}
   if(near(p.x,p.y))jx({jfx:'do_splash',x:p.x,y:p.y,r:140,t:.5,m:.5})}),
  // Kyôka : carapace de roche ; à la fin, elle éclate autour de soi
- do_armor:SP('Doton : Kyôka','Corps de roche 3,5 s : 45 % de dégâts en moins, inarrêtable, plus lent ; puis éclate et repousse (selon les coups encaissés)',13,{ai:DEF},(u)=>{S('rock',u);do_S('heavy',u);anim(u,'do_flex',.7);
+ do_armor:SP('Doton : Kyôka','Corps de roche 3,5 s : 45 % de dégâts en moins, inarrêtable, plus lent ; puis éclate et repousse (selon les coups encaissés)',11,{ai:DEF},(u)=>{S('rock',u);do_S('heavy',u);anim(u,'do_flex',.7);
   u.drT=Math.max(u.drT,3.5);u.dr=.45;u.unstop=Math.max(u.unstop,3.5);u.slow=Math.max(u.slow,3.5);u.do_ar=3.5;u.do_ac=0;
   aux.push({type:'do_armor',x:u.x,y:u.y,r:0,t:3.5,m:3.5,team:u.team,owner:u,hp:u.hp,sh:u.shield||0,abs:0});
   jx({jfx:'do_harden',ui:units.indexOf(u),x:u.x,y:u.y,t:.45,m:.45});later(u,.01,()=>{if(u.auraV==='earth')u.auraV=null},{})}),
@@ -108,7 +107,7 @@ Object.assign(NAT,{
   const H=do_prop(u,hx,hy,1.3,'do_dhead',{r:18,tx:hx+Math.cos(a),ty:hy+Math.sin(a)});do_puff(hx,hy,40,8);
   seqs.push({owner:u,n:3,t:.22,iv:.3,vfx:'earth',f:o=>do_mudShot(o,H,d)})}),
  // Kajûgan : projectile de chakra qui alourdit ; plaquage au sol à la fin (ou au prochain coup Doton)
- do_weight:SP('Doton : Kajûgan','Projectile qui alourdit 2,5 s (ralenti, sans déplacement) puis plaque au sol (étourdi) ; un jutsu Doton le plaque aussitôt',11,{line:{len:540,w:24},ai:RG(520,.6)},(u,a)=>{S('rock',u);anim(u,'point',.45);jx({jfx:'do_kcast',ui:units.indexOf(u),x:u.x,y:u.y,t:.3,m:.3});
+ do_weight:SP('Doton : Kajûgan','Projectile qui alourdit 2,5 s (ralenti, sans déplacement) puis plaque au sol (étourdi) ; un jutsu Doton le plaque aussitôt',12,{line:{len:540,w:24},ai:RG(520,.6)},(u,a)=>{S('rock',u);anim(u,'point',.45);jx({jfx:'do_kcast',ui:units.indexOf(u),x:u.x,y:u.y,t:.3,m:.3});
   proj(u,a,{spd:760,r:10,dmg:13,life:.72,col:'#e8d090',kind:'do_kaju',onHit:(p,e)=>do_kjMark(e,p.owner)})}),
  // Taupe : sous terre (intouchable), jaillit avec des pics qui projettent en l'air
  do_mole:SP('Doton : Taupe','Plonge sous terre (intouchable), file vers le curseur et jaillit en projetant en l\'air les ennemis proches',11,{ai:{mode:'gap',min:150,max:320,p:.4}},(u,a,td)=>{const d=clamp(td||300,100,300);S('rock',u);u.phase=Math.max(u.phase||0,.5);u.do_mo=1;anim(u,'do_dive',.5);do_puff(u.x,u.y,34,10);
@@ -116,19 +115,19 @@ Object.assign(NAT,{
   dash(u,a,d,.42,{end:()=>{u.do_mo=0;anim(u,'uppercut',.45);for(const e of enemies(u))if(dist(u,e)<70+e.r)do_hit(e,u,6,{air:.25,unblockable:1});
    do_prop(u,u.x,u.y,.75,'do_spear',{r:12,big:1});do_puff(u.x,u.y,60,14);if(near(u.x,u.y)){do_S('heavy',u);shake=Math.max(shake,.12)}}})}),
  // Doroku Gaeshi : bond vers le curseur ; une dalle de terre se retourne derrière soi
- do_flip:SP('Doton : Doroku Gaeshi','Bondit vers le curseur et soulève derrière soi une dalle de terre qui arrête tirs et poursuivants 2,5 s',8,{ai:ESC},(u,a)=>{const b=a+Math.PI,c={x:u.x+Math.cos(b)*28,y:u.y+Math.sin(b)*28},px=-Math.sin(a),py=Math.cos(a);S('rock',u);anim(u,'leap',.38);
-  for(let i=-1;i<=1;i++)walls.push({x:c.x+px*i*27,y:c.y+py*i*27,r:16,t:2.5,team:u.team,owner:u,earth:1,vfx:'do_slab'});
-  for(const e of enemies(u)){const dx=e.x-c.x,dy=e.y-c.y,s=Math.abs(dx*px+dy*py),f=dx*Math.cos(b)+dy*Math.sin(b);if(s<46+e.r&&f>-e.r&&f<70+e.r)do_hit(e,u,5,{kb:320,fx:c.x-Math.cos(b)*40,fy:c.y-Math.sin(b)*40,unblockable:1})}
+ do_flip:SP('Doton : Doroku Gaeshi','Bondit vers le curseur et soulève derrière soi une dalle de terre qui arrête tirs et poursuivants 1,5 s',7,{ai:ESC},(u,a)=>{const b=a+Math.PI,c={x:u.x+Math.cos(b)*28,y:u.y+Math.sin(b)*28},px=-Math.sin(a),py=Math.cos(a);S('rock',u);anim(u,'leap',.38);
+  for(let i=-1;i<=1;i++)walls.push({x:c.x+px*i*27,y:c.y+py*i*27,r:16,t:1.5,team:u.team,owner:u,earth:1,vfx:'do_slab'});
+  for(const e of enemies(u)){const dx=e.x-c.x,dy=e.y-c.y,s=Math.abs(dx*px+dy*py),f=dx*Math.cos(b)+dy*Math.sin(b);if(s<46+e.r&&f>-e.r&&f<70+e.r)do_hit(e,u,5,{kb:220,fx:c.x-Math.cos(b)*40,fy:c.y-Math.sin(b)*40,unblockable:1})}
   dash(u,a,210,.3,{jump:34});do_puff(c.x,c.y,44,8)}),
  // Chute de montagne : la montagne tombe (1 s), puis 18 piliers enferment la zone
- do_mountain:ULT('Doton : Chute de montagne','Une montagne s\'écrase sur la zone après 1 s (gros dégâts, étourdit), puis un cercle de rochers l\'enferme 4 s',{tele:{r:160,max:450},ai:{max:450,p:.8}},(u,a,td)=>{const p=atP(u,a,td,450);do_S('heavy',u);anim(u,'raise',1);
+ do_mountain:SP('Doton : Chute de montagne','Une montagne s\'écrase sur la zone après 1 s (gros dégâts, étourdit), puis un cercle de rochers l\'enferme 4 s',20,{tele:{r:160,max:450},ai:{max:450,p:.8}},(u,a,td)=>{const p=atP(u,a,td,450);do_S('heavy',u);anim(u,'raise',1);
   jx({jfx:'do_mount',x:p.x,y:p.y,r:160,t:1,m:1});zone(u,p.x,p.y,160,55,1,{stun:1},'#a07850');lastZ().deto='do_mount';
   later(u,1,()=>{for(const e of enemies(u)){const d=Math.hypot(e.x-p.x,e.y-p.y);if(e.do_kj>0&&d<160+e.r)do_kjSlam(e);if(d>160&&d<218)do_hit(e,u,8,{kb:300,fx:p.x+(e.x-p.x)*2,fy:p.y+(e.y-p.y)*2,unblockable:1})}
    for(let i=0;i<18;i++){const b=i*Math.PI/9;walls.push({x:p.x+Math.cos(b)*188,y:p.y+Math.sin(b)*188,r:19,t:4,team:u.team,owner:u,earth:1,vfx:'do_pillar'})}
    aux.push({type:'do_crater',x:p.x,y:p.y,r:150,t:5,m:5,team:u.team,owner:u});aux.push({type:'do_crack',kind:'ray',x:p.x,y:p.y,a:0,n:12,len:130,r:70,t:5,m:5,team:u.team,owner:u,w:.15});
    if(near(p.x,p.y)){shake=Math.max(shake,.55);do_S('boom',u)}},{})}),
  // Grand séisme : coup de poing au sol, 3 ondes de plus en plus larges, puis sol fendu qui ralentit
- do_quake:ULT('Doton : Grand séisme','Frappe le sol : 3 ondes de choc projettent en l\'air et repoussent, puis le sol fendu ralentit 3 s',{tele:{self:1,r:290},ai:SELF(240,.8)},(u)=>{do_S('heavy',u);anim(u,'do_quake',.9);const o={x:u.x,y:u.y};
+ do_quake:SP('Doton : Grand séisme','Frappe le sol : 3 ondes de choc projettent en l\'air et repoussent, puis le sol fendu ralentit 3 s',20,{tele:{self:1,r:290},ai:SELF(240,.8)},(u)=>{do_S('heavy',u);anim(u,'do_quake',.9);const o={x:u.x,y:u.y};
   [[.18,0,130,20],[.48,100,215,16],[.78,185,295,14]].forEach(([dl,r0,r1,dm],i)=>later(u,dl,()=>{
    for(const e of enemies(u)){const d=Math.hypot(e.x-o.x,e.y-o.y);if(d>r0-e.r&&d<r1+e.r){do_hit(e,u,dm,{air:.5,kb:140,fx:o.x,fy:o.y,unblockable:1});do_crushArm(e,u,.4,6,.5)}}
    aux.push({type:'do_qring',x:o.x,y:o.y,r:r1,w:r0,t:.45,m:.45,team:u.team,owner:u});
@@ -149,7 +148,7 @@ AUXF.do_moT=x=>{const u=x.owner;if(x.t<=0||u.dead||!u.dash){u.do_mo=0;x.t=0;retu
 AUXF.do_swamp=(x,dt)=>{const end=x.t<=0;for(const e of units){if(e.team===x.team)continue;const k=units.indexOf(e);
   if(end||e.dead){if(x.in[k])e.do_sw=0;x.in[k]=0;continue}
   const inn=Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r*.4&&(e.z||0)<10;
-  if(inn){if(e.unstop<=0)e.cds[DASHI]=Math.max(e.cds[DASHI],.15);x.in[k]=(x.in[k]||0)+dt;if(x.in[k]>=1.3&&!x.sunk[k]){x.sunk[k]=1;do_hit(e,x.owner,6,{root:.7,unblockable:1});do_puff(e.x,e.y,30,0)}}
+  if(inn){const bl=x.bl||(x.bl={});if(e.unstop<=0&&(bl[k]||0)<1.5){bl[k]=(bl[k]||0)+dt;e.cds[DASHI]=Math.max(e.cds[DASHI],.15)}x.in[k]=(x.in[k]||0)+dt;if(x.in[k]>=1.3&&!x.sunk[k]){x.sunk[k]=1;bl[k]=0;do_hit(e,x.owner,6,{root:.7,unblockable:1});do_puff(e.x,e.y,30,0)}}
   else if(x.in[k])x.in[k]=Math.max(0,x.in[k]-dt*2);
   if(inn||x.in[k]>0)e.do_sw=Math.min(1,(x.in[k]||0)/1.3);else if(x.in[k]===0&&e.do_sw>0&&!inn){e.do_sw=0;x.in[k]=undefined}}};
 // carapace : compte les dégâts encaissés, éclate à la fin
