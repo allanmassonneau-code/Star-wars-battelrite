@@ -9,7 +9,7 @@ const STYLES=[
  ['Kunai au poing','Kunai tenu en main, coups très vifs ; 4e coup : taille tout autour ; 5e : estoc en fente qui fait saigner (5 en 2 s)','x.st_kunai','kunai','kunai',[-1],1.16,1.11],
  ['Kenjutsu','Sabre à longue allonge : frapper de la pointe, à distance, inflige +20 % ; 4e coup : estoc perçant','x.st_ken','steel','sword',[0,-1],1.56,1.5],
  ['Taijutsu Uchiha','Coups de pied vifs ; le Sharingan lit qui attaque (+20 %) et coupe les mudras (une fois toutes les 4 s)','x.st_uch','tai','fist',[0],1.37,1.32],
- ['Poing souple','Paumes du Jûken qui volent du chakra ; le 5e coup ferme les points de chakra : plus de jutsu 0,8 s','x.st_juk','jyuken','palm',[1],1.45,1.4],
+ ['Poing souple','Paumes du Jûken (sans vol de chakra) ; le 5e coup ferme les points de chakra : plus de jutsu 0,8 s','x.st_juk','jyuken','palm',[1],1.45,1.4],
  ['Frappes d\'ombre','Poings drapés d\'ombre : chaque coup ralentit ; 3e : une pique d\'ombre jaillit du sol en ligne ; 5e : des mains d\'ombre agrippent (ralenti 1 s)','x.st_nara','shadow','shadow',[2],1.12,1.07],
  ['Poing décuplé','Poings géants, lents et larges ; aux 3e et 5e coups, le poing s\'écrase sur toute la zone devant soi','x.st_aki','tai','bigfist',[3],1.5,1.45],
  ['Paumes de l\'essaim','Paumes enrobées d\'insectes ; 3e coup : l\'essaim jaillit en gerbe (+1 insecte) ; 5e : il engloutit la cible (+2 insectes, révélée)','x.st_bug','bugs','bugs',[4],1.17,1.12],
@@ -72,9 +72,9 @@ Object.assign(NAT,{
   stMelee(u,a,T[0],T[1],all?T[2]*1.2:T[2],{},[0,{d:-1,tl:.75,z:36,th:6,c:'#e4eeff',blade:1},{d:1,tl:-.75,z:36,th:6,c:'#e4eeff',blade:1},{d:-1,z:30,th:6,c:'#e4eeff',blade:1},{jfx:'st_thrust',z:32,c:'#e4eeff'},{d:-1,z:28,th:8,c:'#ffffff',blade:1,rr:.8}][c],e=>{
    if(!tip.includes(e)||e.dead)return;if(!all)hit(e,u,T[2]*.2,{unblockable:1,silent:1});jx({jfx:'st_glint',ti:stI(e),x:e.x,y:e.y,a,t:.34,m:.34})});
   if(c===5)jx({jfx:'st_iai',ui:stI(u),x:u.x,y:u.y,a,R:T[0],t:.5,m:.5});stCd(u,T[3]);anim(u,'st_ken'+c,c===4?.3:.27)}),
- // Poing souple : chaque paume vole 3 de chakra ; le 5e coup ferme les points de chakra (silence 0,8 s) et repousse
+ // Poing souple : paumes sans vol de chakra ; le 5e coup ferme les points de chakra (silence 0,8 s) et repousse
  st_juk:SP('Poing souple','',.32,{hero:'yoda',melee:1,ai:{max:86,p:1}},(u,a)=>{const c=stC(u),T=[0,[80,2,10,.3],[80,2,10,.3],[86,1.4,10,.32],[82,2.6,11,.36],[88,2,12,.52]][c];
-  stMelee(u,a,T[0],T[1],T[2],c===5?{silence:.8,kb:140}:{},null,e=>{const d=Math.min(e.energy,3);e.energy-=d;u.energy=Math.min(100,u.energy+d);jx({jfx:'st_tenketsu',ti:stI(e),x:e.x,y:e.y,n:c,seal:c===5?1:0,t:c===5?1:.5,m:c===5?1:.5})});
+  stMelee(u,a,T[0],T[1],T[2],c===5?{silence:.8,kb:140}:{},null,e=>{jx({jfx:'st_tenketsu',ti:stI(e),x:e.x,y:e.y,n:c,seal:c===5?1:0,t:c===5?1:.5,m:c===5?1:.5})});
   jx({jfx:'st_palm',ui:stI(u),x:u.x,y:u.y,a,off:c===1?6:c===2?-6:0,R:T[0]*.6,big:c===5?1:0,t:.32,m:.32});
   if(c===5){jx({jfx:'veins',ui:stI(u),x:u.x,y:u.y,t:.9,m:.9});S('heavy',u)}stCd(u,T[3]);anim(u,'st_juk'+c,c===4?.32:.27)}),
  // Poing décuplé : crochets géants ; 3e et 5e coups : le poing s'écrase sur un disque devant soi ([distance, rayon, dégâts, recharge]) ; 4e : charge du ventre

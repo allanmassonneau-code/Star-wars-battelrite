@@ -27,7 +27,8 @@ const hyLock=(e,d)=>{if(e.unstop>0)return;e.stun=Math.max(e.stun,d);e.cast=null;
 // ---------- tenketsu : points de chakra fermés sur la cible (hy_tk), tenus 3,5 s puis perdus un à un ----------
 const HYMAX=8;let hyF=-1;
 const hyTkN=t=>{const n=t.hy_tk||0;if(!n)return 0;const o=SIMT-(t.hy_tkU||0);return o<=0?n:Math.max(0,n-1-Math.floor(o/.6))};
-function hyTk(src,t,n){if(!t||t.dead||n<=0)return;const d=Math.min(t.energy||0,3*n);t.energy-=d;if(t.hy_imU>SIMT)return; // (SIMT peut être < 0 juste après le chargement : pas de « ||0 »)
+function hyTk(src,t,n,nd){if(!t||t.dead||n<=0)return;if(!nd){const d=Math.min(t.energy||0,3*n);t.energy-=d} // nd : attaque de base, ferme les tenketsu sans drainer de chakra
+ if(t.hy_imU>SIMT)return; // (SIMT peut être < 0 juste après le chargement : pas de « ||0 »)
  const c=Math.min(HYMAX,hyTkN(t)+n);t.hy_tk=t.hy_tkN=c;t.hy_tkU=SIMT+3.5;
  if(c>=HYMAX){t.hy_tk=t.hy_tkN=0;t.hy_imU=SIMT+5;if(t.unstop<=0){t.silence=Math.max(t.silence,1);if(t.cast){t.cast=null;say(t,'INTERROMPU','#fc6')}}
   // texte placé au-dessus des autres (dégâts, « étourdi »…) qui tombent souvent sur la même frappe
@@ -300,7 +301,7 @@ Object.assign(ANIM,{
  hy_finale:(P,e)=>{const k=e<.2?ezo(e/.2):1;pz(P,'armL',-1.6*k,0,-.22);pz(P,'armR',-1.6*k,0,.22);pz(P,'foreL',-.05);pz(P,'foreR',-.05);pz(P,'chest',.45*k);P.root.z=15*k;P.root.y=-8*k;pz(P,'thighR',-1.15*k);pz(P,'shinR',1*k);pz(P,'thighL',.8*k);pz(P,'shinL',.5*k)},
 });
 // ---------- trait de clan : Byakugan et tenketsu ----------
-TRAITS[1]={nom:'Byakugan : tenketsu',desc:'Chaque coup de Jûken ferme un tenketsu de la cible et lui draine 3 chakra ; à 8 tenketsu fermés, son chakra est scellé (silence 1 s). Le Byakugan révèle les ennemis invisibles proches.',
+TRAITS[1]={nom:'Byakugan : tenketsu',desc:'Chaque coup de Jûken ferme un tenketsu de la cible et lui draine 3 chakra (pas l\'attaque de base) ; à 8 tenketsu fermés, son chakra est scellé (silence 1 s). Le Byakugan révèle les ennemis invisibles proches.',
  init(u){u.hy_byak=u.hy_byak||0;u.hy_stepB=u.hy_stepB||0},
  update(u,dt){if(SIMT-(u.hy_seen??SIMT)>.5)u.hy_byak=u.hy_stepB=u.hy_dg=0;u.hy_seen=SIMT; // revenu à la vie (mode bataille) : plus d'état d'avant la mort
   if(u.hy_byak>0)u.hy_byak=Math.max(0,u.hy_byak-dt);if(u.hy_stepB>0)u.hy_stepB=Math.max(0,u.hy_stepB-dt);
@@ -309,7 +310,7 @@ TRAITS[1]={nom:'Byakugan : tenketsu',desc:'Chaque coup de Jûken ferme un tenket
   const R=u.hy_byak>0?520:240;for(const e of enemies(u))if(e.stealth>0&&dist(u,e)<R){e.stealth=0;if(!(e.hy_rvU>SIMT)){e.hy_rvU=SIMT+2;say(e,'RÉVÉLÉ','#cfe0ff');jx({jfx:'hy_net',ti:hyI(e),x:e.x,y:e.y,t:.9,m:.9})}}},
  deal(src,t,dmg,o){if(o.silent||o.thorn||!t||t===src||t.team===src.team)return dmg;if(o.hy_tk==null&&!(o.melee&&HYV[VFX]))return dmg;let n=o.hy_tk??1;
   if(src.hy_stepB>0&&o.melee){src.hy_stepB=0;dmg*=1.4;n+=1;jx({jfx:'hy_stamp',ti:hyI(t),x:t.x,y:t.y,a:ang(src,t),t:.45,m:.45})}
-  if(n>0&&src.hy_byak>0)n+=1;if(n>0)hyTk(src,t,n);return dmg},
+  if(n>0&&src.hy_byak>0)n+=1;if(n>0)hyTk(src,t,n,o.basic);return dmg},
  draw(u,p,S,sk){const t=performance.now()/1000,z=S*sk;g.save();g.globalCompositeOperation='lighter';
   // Byakugan actif : veines aux tempes
   if(u.hy_byak>0){const al=Math.min(1,u.hy_byak*2);g.strokeStyle=rgba('#9ab8ff',.85*al);g.lineWidth=1.6;g.beginPath();for(const d of[-1,1])for(let i=0;i<3;i++){g.moveTo(p.x+d*9*z,p.y-(47+i*2)*z);g.lineTo(p.x+d*(14+i*2)*z,p.y-(44+i*5)*z)}g.stroke()}
