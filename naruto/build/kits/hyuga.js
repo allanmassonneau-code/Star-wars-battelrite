@@ -1,17 +1,16 @@
 // ===== Clan Hyûga =====
 // Jûken (poing souple) : chaque frappe ferme des tenketsu (points de chakra) de la cible ; 8 fermés = chakra scellé (voir le trait de clan en bas)
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés des arbres (code conservé) : Hakke : Paume (→ Kûshô à bout portant), Hakke Kûhekishô, Hakke : 64 points seul (→ champ du S)
 KIT('c1',[
- [1,'D','x.hy_palm','Hakke : Paume','Paume à bout portant devant soi : étourdit 0,4 s et ferme 2 tenketsu','jyuken'],
- [3,'D','x.hy_byak','Byakugan','8 s : chaque frappe de Jûken ferme 1 tenketsu de plus ; tu esquives la prochaine attaque et ta riposte cogne plus fort ; révèle les invisibles','jyuken'],
- [4,'C','x.hy_kaiten','Kaiten','Tourbillon divin 1,2 s sur place : renvoie tous les tirs, repousse et blesse qui t\'approche ; agir l\'arrête','jyuken'],
- [1,'B','x.hy_kusho','Hakke Kûshô','Paume d\'air à distance qui repousse violemment ; projeté contre un obstacle, l\'ennemi est étourdi','jyuken'],
- [1,'B','x.hy_lions','Jûho Sôshiken','Bondit avec deux lions de chakra : double frappe qui ferme 4 tenketsu et vole du chakra','jyuken'],
- [1,'A','x.hy_great','Hakke Kûhekishô','Mur d\'air géant qui avance : emporte les ennemis, détruit leurs tirs, puis les projette et les étourdit','jyuken'],
- [2,'C','x.hy_step','Pas du Hakke','2 glissades rapides ; ta frappe de Jûken suivante cogne plus fort et ferme 1 tenketsu de plus','jyuken'],
- [5,'S','x.hy_128','Hakke : 128 points','Fonce sur la cible ; si tu l\'atteins, 7 salves la bloquent, puis l\'étourdissent et la réduisent au silence','jyuken'],
- [5,'C','x.hy_64','Hakke : 64 points','Champ des trigrammes autour de toi : 6 salves qui ralentissent les ennemis dedans, la dernière étourdit et rend vulnérable','jyuken'],
+ ['D','x.hy_byak','Byakugan','8 s : chaque frappe de Jûken ferme 1 tenketsu de plus ; tu esquives la prochaine attaque et ta riposte cogne plus fort ; révèle les invisibles','jyuken'],
+ ['C','x.hy_kushoC','Hakke Kûshô','Paume d\'air à distance qui repousse violemment (étourdit contre un obstacle) ; à bout portant, l\'onde traverse le corps : étourdit 0,4 s et ferme 2 tenketsu','jyuken'],
+ ['B','x.hy_kaiten','Kaiten','Tourbillon divin 1,2 s sur place : renvoie tous les tirs, repousse et blesse qui t\'approche ; agir l\'arrête','jyuken'],
+ ['A','x.hy_lions','Jûho Sôshiken','Bondit avec deux lions de chakra : double frappe qui ferme 4 tenketsu, vole du chakra et ralentit','jyuken'],
+ ['S','x.hy_128','Hakke : 64 / 128 points','Fonce sur la cible ; si tu l\'atteins, le champ des trigrammes s\'ouvre : 7 salves la bloquent puis l\'étourdissent et la réduisent au silence ; les autres ennemis du champ sont ralentis','jyuken'],
 ]);
+// dash (Espace) : Pas du Hakke
+DASHC[1]={src:'x.hy_step',n:'Pas du Hakke',d:'2 glissades rapides ; ta frappe de Jûken suivante cogne plus fort et ferme 1 tenketsu de plus',vfx:'jyuken',cd:6};
 // ---------- aides ----------
 const hyI=u=>units.indexOf(u);
 const hyS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son sans la teinte « jyuken »
@@ -54,10 +53,16 @@ Object.assign(NAT,{
  hy_kusho:S_('Hakke Kûshô','Paume d\'air à distance qui repousse violemment ; projeté contre un obstacle, l\'ennemi est étourdi',8,{hero:'quigon',line:{len:430,w:30},ai:RG(430,.6)},(u,a)=>{S('jyuken',u);hyS('wind',u);anim(u,'hy_kusho',.5);
   jx({jfx:'hy_muzzle',ui:hyI(u),x:u.x,y:u.y,a,t:.3,m:.3});
   proj(u,a,{spd:980,r:13,dmg:20,life:.44,col:'#cfe0ff',kind:'hy_kusho',big:1,o:{kb:720,wall:1,hy_tk:1},onHit:(p,t)=>jx({jfx:'hy_burst',x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.45,m:.45})})}),
+ // Hakke Kûshô (v5, fusion avec la Paume) : à bout portant (< 90 devant soi), frappe comme la Paume ; sinon paume d'air à distance
+ hy_kushoC:S_('Hakke Kûshô','',8,{hero:'quigon',line:{len:430,w:30},ai:RG(430,.6)},(u,a,td,P)=>{
+  const close=enemies(u).some(e=>dist(u,e)<90+e.r&&angDiff(ang(u,e),a)<.7);
+  if(close){NAT.hy_palm.f(u,a,td,P);hyS('wind',u);for(const e of enemies(u))if(e.stun>0&&dist(u,e)<130+e.r&&angDiff(ang(u,e),a)<.8&&e.unstop<=0){e.kx+=Math.cos(a)*260;e.ky+=Math.sin(a)*260}return}
+  S('jyuken',u);hyS('wind',u);anim(u,'hy_kusho',.5);jx({jfx:'hy_muzzle',ui:hyI(u),x:u.x,y:u.y,a,t:.3,m:.3});
+  proj(u,a,{spd:980,r:13,dmg:19,life:.44,col:'#cfe0ff',kind:'hy_kusho',big:1,o:{kb:700,wall:1,hy_tk:1},onHit:(p,t)=>jx({jfx:'hy_burst',x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.45,m:.45})})}),
  // Jûho Sôshiken : deux lions de chakra sur les poings
  hy_lions:S_('Jûho Sôshiken','Bondit avec deux lions de chakra : double frappe qui ferme 4 tenketsu et vole du chakra',11,{hero:'quigon',line:{len:200,w:70},ai:{mode:'gap',min:30,max:205,p:.6}},(u,a,td)=>{S('jyuken',u);hyS('roar',u);anim(u,'hy_lion',.62);
   jx({jfx:'hy_lions',ui:hyI(u),x:u.x,y:u.y,t:.62,m:.62});
-  const bite=i=>{if(u.dead||u.stun>0)return;for(const e of hyCone(u,u.aim,115,1.2,8,{hy_tk:2,slow:i?0:.8,kb:i?300:0})){const s=Math.min(e.energy,5);e.energy-=s;u.energy=Math.min(100,u.energy+s);jx({jfx:'hy_bite',ti:hyI(e),x:e.x,y:e.y,a:ang(u,e),n:i,t:.42,m:.42})}if(near(u.x,u.y))S('jyuken',u)};
+  const bite=i=>{if(u.dead||u.stun>0)return;for(const e of hyCone(u,u.aim,115,1.2,13,{hy_tk:2,slow:i?.6:.8,kb:i?300:0})){const s=Math.min(e.energy,5);e.energy-=s;u.energy=Math.min(100,u.energy+s);jx({jfx:'hy_bite',ti:hyI(e),x:e.x,y:e.y,a:ang(u,e),n:i,t:.42,m:.42})}if(near(u.x,u.y))S('jyuken',u)};
   dash(u,a,clamp((td||200)-45,0,160),.16,{end:()=>{bite(0);later(u,.16,()=>bite(1))}})}),
  // Kûhekishô : un mur d'air qui avance et emporte tout
  hy_great:S_('Hakke Kûhekishô','Mur d\'air géant qui avance : emporte les ennemis, détruit leurs tirs, puis les projette et les étourdit',13,{hero:'quigon',line:{len:380,w:170},ai:RG(320,.6)},(u,a)=>{S('jyuken',u);hyS('heavy',u);hyS('wind',u);anim(u,'hy_kuheki',.65);
@@ -73,7 +78,9 @@ Object.assign(NAT,{
   hyS('dash',u);anim(u,'hy_glide',.22);u.aim=b;jx({jfx:'hy_steps',x:u.x,y:u.y,a:b,t:.5,m:.5});
   dash(u,b,dd,.2,{end:()=>{if(u.dead||u.stun>0)return;const t=nearE(u,u.x,u.y,96);if(!t){say(u,'MANQUÉ','#9fb3d9');return}u.aim=ang(u,t);
    // la 1re salve est le contact : esquive, intangibilité, Kaiten (renvoi) ou contre l'annulent
-   aux.push({type:'hy_combo',x:(u.x+t.x)/2,y:(u.y+t.y)/2,r:115,t:1.4,m:1.4,team:u.team,owner:u,tg:t,ui:hyI(u),ti:hyI(t),vfx:'jyuken',k:0,n:0,kind:'128'})}})}),
+   aux.push({type:'hy_combo',x:(u.x+t.x)/2,y:(u.y+t.y)/2,r:115,t:1.4,m:1.4,team:u.team,owner:u,tg:t,ui:hyI(u),ti:hyI(t),vfx:'jyuken',k:0,n:0,kind:'128'});
+   // (v5, fusion avec 64 points) : le champ des trigrammes ralentit les autres ennemis proches
+   aux.push({type:'hy_f64',x:u.x,y:u.y,r:150,t:1.45,m:1.45,team:u.team,owner:u,ui:hyI(u),vfx:'jyuken',k:.3,n:0,kind:'64',lite:1,tg:t})}})}),
  // 64 points : champ des huit trigrammes autour de soi, salves sur tous ceux qui y restent
  hy_64:ULT('Hakke : 64 points','Champ des trigrammes autour de toi : 6 salves qui ralentissent les ennemis dedans, la dernière étourdit et rend vulnérable',{hero:'mace',tele:{self:1,r:150},ai:SELF(140,.8)},(u)=>{S('jyuken',u);anim(u,'hy_stance',.5);
   aux.push({type:'hy_f64',x:u.x,y:u.y,r:150,t:1.45,m:1.45,team:u.team,owner:u,ui:hyI(u),vfx:'jyuken',k:.3,n:0,kind:'64'})}),
@@ -88,7 +95,7 @@ AUXF.hy_kaiten=x=>{const o=x.owner;
  o.root=Math.max(o.root,.1);if(!o.ctrl)o.aiT=Math.max(o.aiT||0,.1); // un bot tient son tourbillon jusqu'au bout
  x.x=o.x;x.y=o.y;const V=VFX;VFX='jyuken';
  for(const e of enemies(o)){const d=Math.hypot(e.x-x.x,e.y-x.y),m=x.r+e.r-12;if(d>=m)continue;
-  if(!x.hs.has(e)){x.hs.add(e);if(hit(e,o,x.n?8:10,{kb:430,fx:x.x,fy:x.y,hy_tk:1})&&near(e.x,e.y))sparks(e.x,e.y,'#ffffff',8,'jyuken')}
+  if(!x.hs.has(e)){x.hs.add(e);if(hit(e,o,x.n?11:14,{kb:460,fx:x.x,fy:x.y,hy_tk:1})&&near(e.x,e.y))sparks(e.x,e.y,'#ffffff',8,'jyuken')}
   if(e.unstop<=0&&d>1){e.x=x.x+(e.x-x.x)/d*m;e.y=x.y+(e.y-x.y)/d*m;collide(e)}}
  VFX=V;x.n=1;
  for(const p of projs){if(p.owner.team===x.team||p.grenade||p.dead||p.life<=0||Math.hypot(p.x-x.x,p.y-x.y)>x.r)continue;
@@ -127,9 +134,9 @@ AUXF.hy_combo=x=>{const o=x.owner,e=x.tg;if(x.end||x.n>=7)return;
 AUXF.hy_f64=x=>{const o=x.owner;if(x.end||x.n>=6)return;if(!o||o.dead||o.stun>0||Math.hypot(o.x-x.x,o.y-x.y)>40){x.end=1;x.t=Math.min(x.t,.25);hyAnimOff(o,'hy_rapid');return}
  o.root=Math.max(o.root,.12);if(x.k>0)return;
  x.n++;x.k=.17;const fin=x.n===6,V=VFX;VFX='jyuken';
- for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r&&hyVolley(o,e,fin?10:x.n%2?0:6,1,fin?{stun:.6,vuln:3}:{slow:.6})){if(e.unstop<=0)e.slow=Math.max(e.slow,.6);
+ for(const e of enemies(o))if(e!==x.tg&&Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r&&(x.lite?e.unstop<=0&&!(e.phase>0)&&(e.slow=Math.max(e.slow,.6))>0:hyVolley(o,e,fin?10:x.n%2?0:6,1,fin?{stun:.6,vuln:3}:{slow:.6}))){if(e.unstop<=0)e.slow=Math.max(e.slow,.6);
   jx({jfx:'hy_hits',ui:hyI(o),ti:hyI(e),x:e.x,y:e.y,n:x.n,a:ang(o,e),small:1,t:fin?.5:.2,m:fin?.5:.2})}
- VFX=V;anim(o,'hy_rapid',.3);jx({jfx:'hy_count',x:x.x,y:x.y,r:x.r,n:2**x.n,fin:fin?1:0,t:fin?1:.17,m:fin?1:.17});
+ VFX=V;if(x.lite){if(fin)x.t=.4;return}anim(o,'hy_rapid',.3);jx({jfx:'hy_count',x:x.x,y:x.y,r:x.r,n:2**x.n,fin:fin?1:0,t:fin?1:.17,m:fin?1:.17});
  if(fin){x.t=.4;if(near(x.x,x.y)){shake=Math.max(shake,.2);hyS('heavy',o)}}else S('jyuken',o)};
 // ---------- dessins ----------
 // empreinte de paume (doigts vers le haut), en coordonnées écran

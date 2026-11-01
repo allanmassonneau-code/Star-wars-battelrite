@@ -3,17 +3,16 @@
 // Trait « Marque de l'esprit » : tes jutsu marquent l'esprit des ennemis touchés ; ton attaque de base suivante fait éclater la marque.
 // Les projectiles mentaux (objets aux « ya_mind ») traversent parades et projectiles, mais pas les obstacles ni les murs ennemis.
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés : Transposition (→ dash), Champ de fleurs (→ Tempête), Esprit destructeur (→ fin du Shintenshin), Shinden : Lien des esprits
 KIT('c7',[
- [1,'A','x.ya_shinran','Shinranshin','Onde mentale imparable : la cible confuse titube au hasard et subit +25 % de dégâts 1,2 s (1,6 s si marquée)','mind'],
- [2,'C','x.ya_swap','Transposition','Échange ta place avec l\'allié visé (bouclier aux deux) ; sans allié, file au curseur en esprit, intangible','mind'],
- [1,'D','x.ya_flower','Kunai fleuri','Kunai rapide enveloppé de pétales : transperce, blesse et ralentit chaque ennemi touché','flower'],
- [3,'C','x.ya_pollen','Pollen hypnotique','Nuage de pollen 4 s qui ralentit ; l\'ennemi qui y reste 0,8 s s\'endort 1,8 s, mais un coup le réveille','flower'],
- [4,'B','x.ya_storm','Tempête de pétales','3 vagues de pétales devant toi : blessent, ralentissent puis repoussent, et hachent les projectiles ennemis','flower'],
- [3,'S','x.ya_shinten','Shintenshin','Esprit imparable : possède la cible 1,5 s, qui marche vers ton curseur et se frappe. Corps inerte, sonné si raté','mind'],
- [4,'B','x.ya_garden','Champ de fleurs','Champ de fleurs 4 s autour de toi : tes alliés et toi y régénérez, les ennemis y sont ralentis et marqués','flower'],
- [5,'S','x.ya_shinden','Shinden : Lien des esprits','Lie ton esprit à l\'ennemi visé 5 s : la moitié des dégâts que tu subis lui revient. Brisé au loin ou si tu es étourdi','mind'],
- [5,'S','x.ya_destroy','Esprit destructeur','Verrouille l\'esprit visé 1 s puis le brise : dégâts + 30 % des PV manquants (45 % si marqué), étourdit','mind'],
+ ['D','x.ya_flower','Kunai fleuri','Kunai rapide enveloppé de pétales : transperce, blesse et ralentit chaque ennemi touché','flower'],
+ ['C','x.ya_pollen','Pollen hypnotique','Nuage de pollen 4 s qui ralentit ; l\'ennemi qui y reste 0,8 s s\'endort 1,8 s, mais un coup le réveille','flower'],
+ ['B','x.ya_stormB','Tempête de pétales','3 vagues de pétales devant toi : blessent, ralentissent puis repoussent, et hachent les projectiles ennemis ; elles laissent un champ de fleurs 2 s où tes alliés régénèrent','flower'],
+ ['A','x.ya_shinran','Shinranshin','Onde mentale imparable : la cible confuse titube au hasard et subit +25 % de dégâts 1,2 s (1,6 s si marquée)','mind'],
+ ['S','x.ya_shinten','Shintenshin','Esprit imparable : possède la cible 1,5 s, qui marche vers ton curseur et se frappe. À la fin, son esprit est brisé : dégâts + 25 % des PV manquants. Corps inerte, sonné si raté','mind'],
 ]);
+// dash (Espace) : Transposition
+DASHC[7]={src:'x.ya_swap',n:'Transposition',d:'Échange ta place avec l\'allié visé (bouclier aux deux) ; sans allié, file au curseur en esprit, intangible',vfx:'mind',cd:7};
 // ---------- aides ----------
 const yaI=u=>units.indexOf(u);
 const yaS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son propre, sans la teinte « genjutsu » des éléments mind / flower
@@ -80,6 +79,9 @@ Object.assign(NAT,{
    for(const p of projs)if(p.owner.team!==u.team&&!p.dead&&p.life>0&&!p.rocket&&!p.grenade&&!p.big&&p.r<=16&&Math.hypot(p.x-u.x,p.y-u.y)<275&&angDiff(Math.atan2(p.y-u.y,p.x-u.x),a)<.62){p.life=0;if(near(p.x,p.y))jx({jfx:'ya_burst',x:p.x,y:p.y,a:a,t:.35,m:.35,s:.6})}
    VFX=V;if(i===2)yaS('saber',u)};
   wave(0);later(u,.13,()=>wave(1));later(u,.26,()=>wave(2))}),
+ // Tempête de pétales (v5, fusion avec le Champ de fleurs) : les vagues laissent un petit champ de fleurs 2 s devant toi
+ ya_stormB:S_('Tempête de pétales','',10,{line:{len:250,w:180},ai:RG(230,.6)},(u,a,td,P)=>{NAT.ya_storm.f(u,a,td,P);const c=fwd(u,a,130);
+  later(u,.3,()=>{if(u.dead)return;aux.push({type:'ya_garden',x:c.x,y:c.y,r:115,t:2,m:2,team:u.team,owner:u,vfx:'flower',k:.1});jx({jfx:'ya_bloom',x:c.x,y:c.y,r:115,t:.6,m:.6,g:1})})}),
  // Champ de fleurs : jardin posé au sol, soigne les alliés, ralentit et marque les ennemis
  ya_garden:S_('Champ de fleurs','Champ de fleurs 4 s autour de toi : tes alliés et toi y régénérez, les ennemis y sont ralentis et marqués',15,{hero:'quigon',tele:{self:1,r:160},ai:HEALM},(u)=>{yaS('orb',u);yaS('genjutsu',u);anim(u,'ya_bloom',.9);
   aux.push({type:'ya_garden',x:u.x,y:u.y,r:160,t:4,m:4,team:u.team,owner:u,vfx:'flower',k:.1});jx({jfx:'ya_bloom',x:u.x,y:u.y,r:160,t:.7,m:.7,g:1})}),
@@ -122,7 +124,7 @@ AUXF.ya_poss=(x,dt)=>{const o=x.owner,e=x.tg;
  if(dd>stop){const sp=e.ch.spd*.8*dt,k=Math.min(1,(dd-stop)/sp);e.x+=dx/dd*sp*k;e.y+=dy/dd*sp*k;e.aim=Math.atan2(dy,dx);collide(e)}
  x.x=e.x;x.y=e.y;x.a=Math.atan2(dy,dx);e.ya_pa=x.a;
  if(x.k<=0&&x.t>.2){x.k=.5;yaHit(e,o,5,{});e.flash=.12;if(near(e.x,e.y))jx({jfx:'ya_slap',ti:yaI(e),x:e.x,y:e.y,t:.3,m:.3})}
- if(x.t<=0){e.ya_pz=0;yaHit(e,o,22,{silence:1,stun:.4});yaBack(o,e.x,e.y,0);if(near(e.x,e.y)){jx({jfx:'ya_ripple',x:e.x,y:e.y,t:.55,m:.55,s:1.3});yaS('genjutsu',e)}}};
+ if(x.t<=0){e.ya_pz=0;yaHit(e,o,22,{silence:1,stun:.4,exec:.25});yaBack(o,e.x,e.y,0);say(e,'ESPRIT BRISÉ','#ffffff');if(near(e.x,e.y)){jx({jfx:'ya_ripple',x:e.x,y:e.y,t:.55,m:.55,s:1.3});jx({jfx:'ya_shatter',ti:yaI(e),x:e.x,y:e.y,t:.9,m:.9});shake=Math.max(shake,.25);yaS('genjutsu',e);yaS('deflect',e)}}};
 AUXF.ya_sleep=x=>{const e=x.tg;if(!e||e.dead){x.t=0;if(e){e.ya_sl=0;e.sleepT=0}return}x.x=e.x;x.y=e.y;const rem=Math.max(0,x.t);
  if(e.hp<x.hp-.5&&x.m-rem>.1){if(e.stun<=rem+.1)e.stun=Math.min(e.stun,.12);e.sleepT=0;e.ya_sl=0;e.ya_slI=SIMT+2.5;x.t=0;say(e,'RÉVEILLÉ','#ffd8e8');if(near(e.x,e.y))jx({jfx:'ya_wake',ti:yaI(e),x:e.x,y:e.y,t:.4,m:.4});return}
  x.hp=Math.max(x.hp,e.hp);e.ya_sl=rem;if(rem<=0){e.ya_sl=0;e.ya_slI=SIMT+2.5}};

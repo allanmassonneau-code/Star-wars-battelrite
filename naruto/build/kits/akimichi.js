@@ -2,24 +2,23 @@
 // Identité : les décuplements (Baika) et les calories. Encaisser, frapper au corps à corps et manger remplissent la jauge ;
 // chaque décuplement en brûle 50 pour frapper plus fort et plus large (+20 % de dégâts, +15 % de taille), le Mode Papillon brûle tout.
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés : Boulet humain et Boulet à pointes (→ dash), Pilule rouge seule (→ S), Décuplement (→ Chôdan Bakugeki)
 KIT('c3',[
- [1,'C','x.ak_palm','Paume géante','Gifle géante devant soi : repousse fort, renvoie les projectiles, étourdit si la cible heurte un obstacle','tai'],
- [2,'D','x.ak_roll','Boulet humain','Roule en boulet 0,6 s en suivant la visée : percute les ennemis sur sa route, les écarte et les ralentit','tai'],
- [3,'B','x.ak_arm','Décuplement partiel','Bras géant lancé droit devant : saisit le 1er ennemi et le jette derrière soi, étourdi à l\'atterrissage','tai'],
- [3,'B','x.ak_spike','Boulet à pointes','Boulet hérissé inarrêtable, peu maniable : rebondit sur obstacles et bords ; chaque passage fait saigner','tai'],
- [4,'C','x.ak_red','Pilule rouge','Pilule du piment : soigne, libère des contrôles et remplit la jauge de calories','heal'],
- [1,'A','x.ak_slam','Chôdan Bakugeki','Le ventre enfle et s\'abat devant soi : gros dégâts et étourdit, bien plus au centre','tai'],
- [4,'D','x.ak_pill','Pilule verte','Pilule d\'épinards : bouclier, vitesse 3 s, endurance et +25 calories','heal'],
- [5,'S','x.ak_butterfly','Mode Papillon','Ailes de chakra 4,5 s (+1 s / 34 calories) : géant, rapide, +35 % de dégâts, bouclier, ignore les ralentissements ; épuisé après','ak_bf'],
- [5,'B','x.ak_baika','Décuplement','Devient géant 3 s : inarrêtable, et le sol tremble sans cesse autour de lui (dégâts, ralentit)','tai'],
+ ['D','x.ak_pill','Pilule verte','Pilule d\'épinards : bouclier, vitesse 3 s, endurance et +25 calories','heal'],
+ ['C','x.ak_palm','Paume géante','Gifle géante devant soi : repousse fort, renvoie les projectiles, étourdit si la cible heurte un obstacle','tai'],
+ ['B','x.ak_arm','Décuplement partiel','Bras géant lancé droit devant : saisit le 1er ennemi et le jette derrière soi, étourdi à l\'atterrissage','tai'],
+ ['A','x.ak_chodan','Chôdan Bakugeki','Devient géant (inarrêtable 1,2 s, le sol tremble autour de lui) puis le ventre s\'abat devant soi : gros dégâts et étourdit, bien plus au centre','tai'],
+ ['S','x.ak_redbf','Pilule rouge : Mode Papillon','Avale la pilule rouge : soin et libération des contrôles, puis ailes de chakra 4,5 s (+1 s / 34 calories) : géant, rapide, +35 % de dégâts, bouclier ; épuisé après','ak_bf'],
 ]);
+// dash (Espace) : Boulet humain ; à 50 calories ou plus, il se hérisse de pointes (saignement) et les brûle
+DASHC[3]={src:'x.ak_rollD',n:'Boulet humain',d:'Roule en boulet 0,6 s en suivant la visée : percute, écarte et ralentit ; à 50 calories ou plus, le boulet se hérisse de pointes (saignement) et brûle 50 calories',vfx:'tai',cd:7};
 // ---- calories : jauge 0-100 (2 portions de 50)
 // décuplement : brûle 50 calories si possible → 1 (suralimenté : +20 % de dégâts, +15 % de taille), sinon 0
 function ak_burn(u){if((u.ak_cal||0)<50)return 0;u.ak_cal-=50;say(u,'SURALIMENTÉ','#ffb04a');jx({jfx:'ak_fed',ui:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6});return 1}
 const ak_add=(u,v)=>{u.ak_cal=Math.min(100,(u.ak_cal||0)+v)};
 // tenue sombre ? (boulet et ventre prennent la couleur de la tenue : motifs clairs sur une tenue sombre)
 const ak_dark=c=>{if(typeof c!=='string'||c[0]!=='#')return false;const h=c.length===4?c.slice(1).split('').map(x=>x+x).join(''):c.slice(1,7),n=parseInt(h,16);return .299*(n>>16)+.587*(n>>8&255)+.114*(n&255)<85};
-TRAITS[3]={nom:'Calories',desc:'Encaisser des coups, frapper au corps à corps et manger (pilules, ou chips en rechargeant le chakra) remplit la jauge. Paume, bras, ventre et Décuplement brûlent 50 calories : +20 % de dégâts et plus grands. Le Mode Papillon brûle tout.',
+TRAITS[3]={nom:'Calories',desc:'Encaisser des coups, frapper au corps à corps et manger (pilules, ou chips en rechargeant le chakra) remplit la jauge. Paume, bras, ventre et Boulet humain brûlent 50 calories : +20 % de dégâts et plus grands. Le Mode Papillon brûle tout.',
  init(u){u.ak_cal=20},
  update(u,dt){if(u.chk){ak_add(u,9*dt);if(!u.anim||u.anim.k!=='ak_eat')anim(u,'ak_eat',.7)}
   // filet de sécurité : un état dessiné (boulet, bras, ailes) sans son objet aux est remis à zéro
@@ -60,11 +59,23 @@ Object.assign(NAT,{
  ak_red:S_('Pilule rouge','Pilule du piment : soigne, libère des contrôles et remplit la jauge de calories',12,{hero:'bossk',ai:HEALM},(u)=>{heal(u,40);cleanse(u);u.ak_cal=100;anim(u,'ak_pill',.55);S('fire',u);
   jx({jfx:'ak_pill',ui:units.indexOf(u),x:u.x,y:u.y,col:'#ff3a2a',red:1,t:.9,m:.9});later(u,.27,()=>{if(u.dead)return;say(u,'CALORIES MAX','#ff7a2a');if(near(u.x,u.y))S('roar',u)})}),
  // Chôdan Bakugeki : le ventre enfle, monte puis s'abat ; le centre écrase bien plus fort (zone d'alerte sans dégâts : les bots l'esquivent comme les autres)
- ak_slam:S_('Chôdan Bakugeki','Le ventre enfle et s\'abat devant soi : gros dégâts et étourdit, bien plus au centre',11,{tele:{r:140,max:120},ai:RG(220,.6)},(u,a,td)=>{const F=ak_burn(u),R=135*(1+.15*F),M=1+.2*F,D=AK_SLAM,p=fwd(u,a,clamp(td||120,40,120));
+ ak_slam:S_('Chôdan Bakugeki','Le ventre enfle et s\'abat devant soi : gros dégâts et étourdit, bien plus au centre',11,{tele:{r:140,max:120},ai:RG(220,.6)},(u,a,td)=>ak_slamDo(u,a,td,ak_burn(u))),
+ // (le ventre qui s'abat, commun au Chôdan Bakugeki v5)
+ ak_slam0:S_('',0,0,{},(u,a,td,F)=>{const R=135*(1+.15*F),M=1+.2*F,D=AK_SLAM,p=fwd(u,a,clamp(td||120,40,120));
   S('heavy',u);anim(u,'ak_belly',D*1.5);u.unstop=Math.max(u.unstop,D+.05);u.giant=Math.max(u.giant,D+.4);jx({jfx:'ak_belly',ui:units.indexOf(u),x:p.x,y:p.y,a,r:R,t:D/.66,m:D/.66});
   zone(u,p.x,p.y,R,0,D,{silent:1,quiet:1},'#e8dcc8');lastZ().deto='ak_none';
-  later(u,D,()=>{if(u.dead)return;for(const e of enemies(u)){const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<R+e.r){const c=d<R*.5+e.r;hit(e,u,(c?32:22)*M,{stun:c?.9:.4,kb:c?120:280,fx:p.x,fy:p.y,unblockable:1})}}
+  later(u,D,()=>{if(u.dead)return;for(const e of enemies(u)){const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<R+e.r){const c=d<R*.5+e.r;hit(e,u,(c?29:20)*M,{stun:c?.9:.4,kb:c?120:280,fx:p.x,fy:p.y,unblockable:1})}}
    jx({jfx:'ak_crack',x:p.x,y:p.y,r:R,t:.9,m:.9});jx({jfx:'shock',x:p.x,y:p.y,r:R*1.2,t:.5,m:.5,col:'#e8c8a0'});sparks(p.x,p.y,'#a07850',16,'earth');sparks(p.x,p.y,'#e8dcc8',10,'smoke');if(near(p.x,p.y)){S('rock',u);if(nearMe(p.x,p.y))shake=Math.max(shake,.35)}})}),
+ // Chôdan Bakugeki (v5, fusion avec le Décuplement) : grandit, inarrêtable 1,2 s, le sol tremble ; le ventre s'abat à 0,8 s
+ ak_chodan:S_('Chôdan Bakugeki','',13,{hero:'savage',tele:{r:140,max:120},ai:RG(220,.6)},(u,a,td)=>{const F=ak_burn(u),T=1.2;S('roar',u);anim(u,'ak_grow',.8);
+  u.giant=Math.max(u.giant,T+.4);u.unstop=Math.max(u.unstop,T);aux.push({type:'ak_quake',x:u.x,y:u.y,r:95*(1+.15*F),t:T,m:T,team:u.team,owner:u,ui:units.indexOf(u),k:.25,M:1+.2*F,vfx:'tai'});
+  jx({jfx:'ak_grow',ui:units.indexOf(u),x:u.x,y:u.y,t:.8,m:.8});const d0=td;later(u,.4,()=>{if(u.dead||u.stun>0&&!(u.unstop>0))return;ak_slamDo(u,u.aim,d0,F)})}),
+ // Pilule rouge : Mode Papillon (v5, fusion) : soin + libération, puis le Papillon (les calories gardées allongent les ailes)
+ ak_redbf:ULT('Pilule rouge : Mode Papillon','',{ai:SELF(320,.8)},(u,a,td,P)=>{heal(u,30);cleanse(u);anim(u,'ak_pill',.4);S('fire',u);jx({jfx:'ak_pill',ui:units.indexOf(u),x:u.x,y:u.y,col:'#ff3a2a',red:1,t:.9,m:.9});
+  NAT.ak_butterfly.f(u,a,td,P)}),
+ // dash : Boulet humain (pointes à 50 calories)
+ ak_rollD:S_('Boulet humain','',7,{hero:'chewie',ai:{mode:'gap',min:130,max:360,p:.5}},(u,a)=>{const bl=(u.ak_cal||0)>=50;if(bl){u.ak_cal-=50;say(u,'BOULET À POINTES','#ffb04a')}S('dash',u);S(bl?'saber':'heavy',u);anim(u,'ak_ball',.7);
+  aux.push({type:'ak_roll',x:u.x,y:u.y,a,r:0,t:.6,m:.6,team:u.team,owner:u,ui:units.indexOf(u),vfx:'tai',k:0,hs:[],bl:bl?1:0,dm:8});u.ak_roll=.6;u.ak_spk=bl?1:0;sparks(u.x,u.y,bl?'#d8dde6':'#e8dcc8',10,'smoke')}),
  // Pilule verte (épinards) : bouclier, vitesse, endurance, et c'est de la nourriture : +25 calories
  ak_pill:S_('Pilule verte','Pilule d\'épinards : bouclier, vitesse 3 s, endurance et +25 calories',8,{ai:DEF},(u)=>{shieldU(u,20,3);u.haste=Math.max(u.haste,3);u.stam=Math.min(100,u.stam+40);u.blockLock=0;ak_add(u,25);anim(u,'ak_pill',.45);S('poof',u);
   jx({jfx:'ak_pill',ui:units.indexOf(u),x:u.x,y:u.y,col:'#4ad04a',t:.8,m:.8})}),
@@ -78,6 +89,7 @@ Object.assign(NAT,{
   u.giant=Math.max(u.giant,3);u.unstop=Math.max(u.unstop,3);aux.push({type:'ak_quake',x:u.x,y:u.y,r:95*(1+.15*F),t:3,m:3,team:u.team,owner:u,ui:units.indexOf(u),k:.35,M:1+.2*F,vfx:'tai'});
   jx({jfx:'ak_grow',ui:units.indexOf(u),x:u.x,y:u.y,t:.8,m:.8})}),
 });
+const ak_slamDo=NAT.ak_slam0.f;delete NAT.ak_slam0; // aide (pas une mécanique du catalogue)
 Object.assign(NATHERO,{ak:'chewie'});
 AFTER.push(()=>{UK.push('ak_cal','ak_roll','ak_spk','ak_arm','ak_bf');Object.assign(VP,{ak_bf:['#ff7ad8','#a8f0ff','#ffffff']})});
 // ---- logique des objets (hôte)
@@ -88,11 +100,11 @@ function ak_trail(u,air){for(let i=Math.max(0,fx.length-12);i<fx.length;i++){con
  if(air){f.col='rgba(246,242,234,.75)';f.r=3.5}else{f.z=3;f.col='#ddd0bc';f.vfx='smoke';f.r=2.5+rnd()*2;f.t=f.m=.5;f.vx=(rnd()-.5)*50;f.vy=(rnd()-.5)*30}}}
 // boulet : avance en tournant vers la visée et s'arrête contre un obstacle (le boulet à pointes, lui, rebondit) ; un étourdissement l'arrête
 AUXF.ak_roll=(x,dt)=>{const u=x.owner;if(u.dead||(!x.spk&&u.stun>0)){x.t=0;u.ak_roll=0;u.ak_spk=0;return}if(x.spk)return ak_spikeF(x,u,dt);
- if(x.lx!=null&&x.ex>2&&Math.hypot(u.x-x.lx,u.y-x.ly)<x.ex*.45){x.t=0;u.ak_roll=0;u.kx=-Math.cos(x.a)*160;u.ky=-Math.sin(x.a)*160;jx({jfx:'shock',x:u.x,y:u.y,r:40,t:.3,m:.3,col:'#e8dcc8'});sparks(u.x,u.y,'#e8dcc8',10,'smoke');if(near(u.x,u.y))S('rock',u);return}
+ if(x.lx!=null&&x.ex>2&&Math.hypot(u.x-x.lx,u.y-x.ly)<x.ex*.45){x.t=0;u.ak_roll=0;u.ak_spk=0;u.kx=-Math.cos(x.a)*160;u.ky=-Math.sin(x.a)*160;jx({jfx:'shock',x:u.x,y:u.y,r:40,t:.3,m:.3,col:'#e8dcc8'});sparks(u.x,u.y,'#e8dcc8',10,'smoke');if(near(u.x,u.y))S('rock',u);return}
  let d=ak_want(u)-x.a;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;x.a+=clamp(d,-4.2*dt,4.2*dt);u.aim=x.a;
  for(const e of enemies(u))if(!x.hs.includes(e)&&Math.hypot(e.x-u.x,e.y-u.y)<u.r+e.r+16){x.hs.push(e);const s=(-(e.x-u.x)*Math.sin(x.a)+(e.y-u.y)*Math.cos(x.a))<0?-1:1,b=x.a+s*1.1;
-  VFX='tai';hit(e,u,10,{unblockable:1,slow:.6,kb:430,fx:e.x-Math.cos(b)*20,fy:e.y-Math.sin(b)*20});VFX=null;jx({jfx:'shock',x:e.x,y:e.y,r:44,t:.3,m:.3,col:'#ffe0b0'});if(near(e.x,e.y)){S('heavy',u);if(nearMe(e.x,e.y))shake=Math.max(shake,.12)}}
- if(x.t<=0){u.ak_roll=0;sparks(u.x,u.y,'#e8dcc8',8,'smoke');return}
+  VFX='tai';hit(e,u,x.dm||10,Object.assign({unblockable:1,slow:.6,kb:430,fx:e.x-Math.cos(b)*20,fy:e.y-Math.sin(b)*20},x.bl?{dot:{dps:3,dur:3},el:-2}:{}));VFX=null;if(x.bl)sparks(e.x,e.y,'#c03030',6);jx({jfx:'shock',x:e.x,y:e.y,r:44,t:.3,m:.3,col:'#ffe0b0'});if(near(e.x,e.y)){S('heavy',u);if(nearMe(e.x,e.y))shake=Math.max(shake,.12)}}
+ if(x.t<=0){u.ak_roll=0;u.ak_spk=0;sparks(u.x,u.y,'#e8dcc8',8,'smoke');return}
  ak_trail(u,0);
  const sp=560;x.lx=u.x;x.ly=u.y;x.ex=sp*dt;u.dash={sx:u.x,sy:u.y,tx:u.x+Math.cos(x.a)*sp*dt,ty:u.y+Math.sin(x.a)*sp*dt,t:0,dur:dt,jump:0};x.x=u.x;x.y=u.y;u.ak_roll=x.t};
 AUXD.ak_roll=()=>{};

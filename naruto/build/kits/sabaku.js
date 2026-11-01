@@ -4,22 +4,22 @@
 // [emplacement, rang, mécanique (x.clé = NAT[clé], sinon perso.sort du moteur), nom, description, élément visuel]
 const SAD={coffin:'Rampe au sol sous les tirs ; enveloppe la 1re cible : immobilisée 0,5 s (1 s dans le sable mouvant)',
  fly:'Vole sur un nuage de sable jusqu\'au point visé ; à l\'envol, le nuage avale les tirs ennemis (0,25 s)',
- quick:'Sable mouvant 3 s : aspire, ralentit et freine les tirs ennemis ; rester 1,5 s dedans enlise (immobilisé)',
+ quick:'Sable mouvant 3,5 s : aspire, ralentit et freine les tirs ennemis ; rester 1,5 s dedans enlise (immobilisé)',
  armor:'Armure qui absorbe 28 dégâts 4 s (bouclier de 16 aux alliés proches) ; brisée, elle éclate et ralentit',
  tsunami:'Vague de sable qui emporte les ennemis et avale leurs tirs, puis s\'écrase : dégâts, repousse et ralentit',
  funeral:'Le sable engloutit la zone : immobilise puis écrase (énormes dégâts, étourdit ; plus fort si déjà immobilisé)',
- shield:'Sphère de sable 1,5 s : intouchable mais immobile ; à l\'ouverture, des pics jaillissent : dégâts et repousse',
+ shield:'Sphère de sable 1,5 s : intouchable mais immobile ; à l\'ouverture, des pics jaillissent (dégâts, repousse) et une armure de sable t\'enveloppe 3 s (absorbe 15 dégâts)',
  spears:'3 lances perçantes qui suivent la visée ; 2 lances sur la même cible la clouent au sol 0,6 s'};
+// arbre de clan (v5) : 1 jutsu par rang. Retirés : Sable volant (→ dash), Armure de sable (→ Bouclier absolu), Lances de sable
 KIT('c8',[
- [1,'D','x.sa_coffin','Cercueil de sable',SAD.coffin,'sand'],
- [2,'C','x.sa_fly','Sable volant',SAD.fly,'sand'],
- [3,'D','x.sa_quick','Sable mouvant',SAD.quick,'sand'],
- [4,'C','x.sa_armor','Armure de sable',SAD.armor,'sand'],
- [5,'B','x.sa_tsunami','Tsunami de sable',SAD.tsunami,'sand'],
- [5,'S','x.sa_funeral','Funérailles du désert',SAD.funeral,'sand'],
- [4,'A','x.sa_shield','Bouclier absolu',SAD.shield,'sand'],
- [1,'B','x.sa_spears','Lances de sable',SAD.spears,'sand'],
+ ['D','x.sa_coffin','Cercueil de sable',SAD.coffin,'sand'],
+ ['C','x.sa_quick','Sable mouvant',SAD.quick,'sand'],
+ ['B','x.sa_tsunami','Tsunami de sable',SAD.tsunami,'sand'],
+ ['A','x.sa_shield','Bouclier absolu',SAD.shield,'sand'],
+ ['S','x.sa_funeral','Funérailles du désert',SAD.funeral,'sand'],
 ]);
+// dash (Espace) : Sable volant
+DASHC[8]={src:'x.sa_fly',n:'Sable volant',d:SAD.fly,vfx:'sand',cd:7};
 // son « brut » (sans la teinte sable que l'élément impose à tous les sons du jutsu)
 const sa_S=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V};
 // le Sable mouvant du lanceur sous ce ninja ?
@@ -34,8 +34,8 @@ Object.assign(NAT,{
   jx({jfx:'sa_cloud',ui:units.indexOf(u),x:u.x,y:u.y,t:D+.12,m:D+.12});sparks(u.x,u.y,'#d8b878',10,'sand');
   dash(u,a,d,D,{jump:62,end:()=>{jx({jfx:'sa_dust',x:u.x,y:u.y,r:95,t:.5,m:.5});S('sand',u)}})}),
  // sable mouvant : aspire vers le centre, ralentit, freine les tirs ; 1,5 s dedans = enlisé
- sa_quick:S_('Sable mouvant',SAD.quick,10,{hero:'cal',tele:{r:120,max:420},ai:RG(420,.5)},(u,a,td)=>{const p=atP(u,a,td,420);S('sand',u);anim(u,'sa_sink',.55);
-  field(u,p.x,p.y,{r:120,t:3,slow:1,timeSlow:1,col:'#d8b878',vfx:'sand'});aux.push({type:'sa_qs',x:p.x,y:p.y,r:120,t:3,m:3,team:u.team,owner:u,vfx:'sand',k:0,in:{}});jx({jfx:'shock',x:p.x,y:p.y,r:120,t:.45,m:.45,col:'#d8b878'});sparks(p.x,p.y,'#d8b878',14,'sand')}),
+ sa_quick:S_('Sable mouvant',SAD.quick,10,{hero:'cal',tele:{r:128,max:420},ai:RG(420,.5)},(u,a,td)=>{const p=atP(u,a,td,420);S('sand',u);anim(u,'sa_sink',.55);
+  field(u,p.x,p.y,{r:128,t:3.5,slow:1,timeSlow:1,col:'#d8b878',vfx:'sand'});aux.push({type:'sa_qs',x:p.x,y:p.y,r:128,t:3.5,m:3.5,team:u.team,owner:u,vfx:'sand',k:0,in:{}});jx({jfx:'shock',x:p.x,y:p.y,r:120,t:.45,m:.45,col:'#d8b878'});sparks(p.x,p.y,'#d8b878',14,'sand')}),
  // armure de sable (absorbe, gérée par le trait) ; alliés proches : bouclier ; brisée, elle éclate
  sa_armor:S_('Armure de sable',SAD.armor,13,{hero:'thrawn',ai:DEF},(u)=>{S('sand',u);anim(u,'sa_crust',.6);u.sa_arm=28;u.sa_armT=4;u.sa_brk=0;
   for(const x of allies(u,320)){if(x!==u)shieldU(x,16,4);jx({jfx:'sa_crust',ti:units.indexOf(x),x:x.x,y:x.y,t:.6,m:.6})}}),
@@ -55,7 +55,7 @@ Object.assign(NAT,{
  // Bouclier absolu : sphère intouchable (gérée par le trait), puis pics de sable à l'ouverture
  sa_shield:S_('Bouclier absolu',SAD.shield,17,{tele:{self:1,r:125},ai:DEF},(u)=>{const D=1.5;S('sand',u);sa_S('heavy',u);u.sa_sph=D;u.root=Math.max(u.root,D);u.silence=Math.max(u.silence,D);u.disarm=Math.max(u.disarm,D);
   anim(u,'sa_cross',D);jx({jfx:'sa_sphere',ui:units.indexOf(u),x:u.x,y:u.y,t:D,m:D});zone(u,u.x,u.y,125,26,D,{kb:320},'#d8b878');lastZ().deto='sa_spk';
-  later(u,D,()=>{u.sa_sph=0;if(u.dead)return;u.sa_shT=0;anim(u,'roar',.45);sa_S('rock',u)})}),
+  later(u,D,()=>{u.sa_sph=0;if(u.dead)return;u.sa_shT=0;anim(u,'roar',.45);sa_S('rock',u);u.sa_arm=Math.max(u.sa_arm||0,15);u.sa_armT=Math.max(u.sa_armT||0,3);u.sa_brk=0;jx({jfx:'sa_crust',ti:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6})})}),
  // lances de sable : 3 lances perçantes qui suivent la visée ; 2 touches sur la même cible = clouée
  sa_spears:S_('Lances de sable',SAD.spears,8,{line:{len:520,w:20},ai:RG(500,.6)},(u)=>{const V={};jx({jfx:'sa_forge',ui:units.indexOf(u),x:u.x,y:u.y,t:.5,m:.5});
   const f=o=>{S('sand',o);anim(o,'sa_flick',.3);proj(o,o.aim,{vfx:'sand',spd:980,r:8,dmg:8,life:.54,col:'#d8b878',pierce:1,kind:'sa_spear',onHit:(p,t)=>{const k=t.c+'|'+t.team;V[k]=(V[k]||0)+1;if(near(t.x,t.y))sparks(t.x,t.y,'#d8b878',5,'sand');

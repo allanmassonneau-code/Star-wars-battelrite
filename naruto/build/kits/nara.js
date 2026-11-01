@@ -1,16 +1,16 @@
 // ===== Clan Nara =====
 // Les ombres rampent au sol (aux 'na_ten') : elles passent sous les projectiles mais s'arrêtent sur les poteaux et les murs.
 // [emplacement, rang, mécanique (x.clé = NAT[clé], sinon perso.sort du moteur), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés : Ombre explosive (→ Plan du stratège), Course de l'ombre et Ombre protectrice (→ dash)
 KIT('c2',[
- [1,'B','x.na_mane','Kage Mane','Ombre au sol : possédée 1 s puis ralentie, la cible imite tes pas en miroir et ne peut plus agir ; toi, jutsu seulement','shadow'],
- [2,'C','x.na_run','Course de l\'ombre','2 s très rapide, insensible aux ralentissements et entraves ; ta traînée d\'ombre ralentit les ennemis','shadow'],
- [3,'A','x.na_kubi','Kage Kubi Shibari','Étrangle la cible : entravée, réduite au silence et blessée 1 s ; instantané si ton ombre la tient déjà','shadow'],
- [1,'D','x.na_trap','Ombre explosive','Piège : parchemin caché dans une flaque d\'ombre (2 max) ; l\'ennemi est entravé, puis tout explose','shadow'],
- [5,'S','x.na_nui','Kage Nui','5 aiguilles d\'ombre en éventail transpercent tout : dégâts et entrave ; de près, plusieurs touchent','shadow'],
- [4,'C','x.na_prot','Ombre protectrice','Recule d\'un bond (à l\'opposé de la visée) avec un bouclier ; ton ombre fouette et ralentit les proches','shadow'],
- [4,'D','x.na_plan','Plan du stratège','Réfléchis 0,4 s sans bouger ni agir : ton prochain jutsu à mudras (dans les 8 s) part aussitôt et sans chakra','shadow'],
- [5,'S','x.na_lie','Ombres liées','Ton ombre s\'étend autour de toi puis saisit les ennemis dedans : ramenés vers toi et entravés 1 s','shadow'],
+ ['D','x.na_planD','Plan du stratège','Réfléchis 0,4 s sans bouger ni agir en posant une ombre explosive à tes pieds (1 max) ; ton prochain jutsu à mudras (dans les 8 s) part aussitôt','shadow'],
+ ['C','x.na_mane','Kage Mane','Ombre au sol : possédée 0,8 s puis ralentie, la cible imite tes pas en miroir et ne peut plus agir ; toi, jutsu seulement','shadow'],
+ ['B','x.na_kubi','Kage Kubi Shibari','Étrangle la cible : entravée, réduite au silence et blessée 1 s ; instantané si ton ombre la tient déjà','shadow'],
+ ['A','x.na_nui','Kage Nui','5 aiguilles d\'ombre en éventail transpercent tout : dégâts et entrave ; de près, plusieurs touchent','shadow'],
+ ['S','x.na_lie','Ombres liées','Ton ombre s\'étend autour de toi puis saisit les ennemis dedans : ramenés vers toi et entravés 1 s','shadow'],
 ]);
+// dash (Espace) : Course de l'ombre (glissade) ; en reculant (déplacement opposé à la visée), petit bouclier (souvenir d'Ombre protectrice)
+DASHC[2]={src:'x.na_run',n:'Course de l\'ombre',d:'Glissade de l\'ombre, insensible aux ralentissements et entraves ; ta traînée ralentit les ennemis. En reculant : petit bouclier',vfx:'shadow',cd:6};
 // ---- outils communs
 const naI=u=>units.indexOf(u);
 const naS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son joué tel quel (sans le mappage de l'élément)
@@ -62,7 +62,7 @@ AUXF.na_ten=(x,dt)=>{const o=x.owner;if(!o||o.dead){if(x.n===1)naFree(x);x.t=0;r
  if(x.n===1){const e=x.tg;x.hold-=dt;if(!e||e.dead||x.hold<=0||!NA_HOLD[x.kind](x,dt,o,e)){naFree(x);return}x.x=e.x;x.y=e.y;return}
  const b=Math.atan2(o.y-x.y,o.x-x.x),s=1500*dt;x.x+=Math.cos(b)*s;x.y+=Math.sin(b)*s;if(Math.hypot(o.x-x.x,o.y-x.y)<34)x.t=0};
 // Kage Mane : la tête de l'ombre touche → possession
-function naManeHit(x,e){const o=x.owner,D=naLong(e);if(!hit(e,o,NA_MANE.dmg,{})||e.dead||e.unstop>0)return false;if(D>1)naTenace(e);
+function naManeHit(x,e){const o=x.owner,D=NA_MANE.hold*naLong(e);if(!hit(e,o,NA_MANE.dmg,{})||e.dead||e.unstop>0)return false;if(D>1)naTenace(e);
  x.hold=x.h0=D;x.px=o.x;x.py=o.y;e.na_posT=SIMT+D;naHold(e,o,D);for(const k of NA_LOCK)e[k]=Math.max(e[k],D);naStop(e);e.slowImm=0;e.dash=null;e.block=false;e.anim={k:'na_ne',t:D,m:D};
  say(e,'POSSÉDÉ','#d8d8f0');naS('genjutsu',o);naG({kind:'snap',x:e.x,y:e.y,t:.45});jx({jfx:'na_pos',ti:naI(e),ui:naI(o),x:e.x,y:e.y,t:D+.1,m:D+.1});return true}
 // Kage Kubi Shibari : entrave + silence (allongés par le trait), interrompt les mudras, puis l'ombre serre
@@ -70,7 +70,7 @@ function naKubi(u,e,inst,x){const O={root:1};if(!hit(e,u,6,O)||e.dead)return fal
  if(e.unstop<=0){e.silence=Math.max(e.silence,H);e.dash=null;if(naStop(e))say(e,'INTERROMPU','#fc6');naSay(e,'ÉTRANGLÉ','#d8d8f0')} // silence posé ici : un seul texte au lieu de deux superposés
  if(!x){x=naTen(u,ang(u,e),{kind:'kubi',w:7,n:1,x:e.x,y:e.y});naG({kind:'snap',x:e.x,y:e.y,t:.4});naS('genjutsu',u)}
  // N tics réguliers, le dernier juste avant la fin de la prise (sinon il tombe après et se perd)
- const N=Math.max(1,Math.round(H/.25)),iv=H/N;Object.assign(x,{kind:'kubi',n:1,tg:e,ti:naI(e),hold:H,iv,k:iv-.07,ticks:N,tick:6});naHold(e,u,H);
+ const N=Math.max(1,Math.round(H/.25)),iv=H/N;Object.assign(x,{kind:'kubi',n:1,tg:e,ti:naI(e),hold:H,iv,k:iv-.07,ticks:N,tick:5});naHold(e,u,H);
  jx({jfx:'na_hands',ti:naI(e),ui:naI(u),x:e.x,y:e.y,t:H,m:H});return true}
 Object.assign(NAT,{
  na_mane:S_('Kage Mane','Ombre au sol : possédée 1 s puis ralentie, la cible imite tes pas en miroir et ne peut plus agir ; toi, jutsu seulement',10,{hero:'padme',line:{len:460,w:22},ai:RG(430,.55)},(u,a)=>{S('shadow',u);anim(u,'na_ne',.6);naG({kind:'burst',x:u.x,y:u.y,a,t:.35,n:3});naTen(u,a,{kind:'mane',spd:NA_MANE.spd,max:460,r:11,w:9,hit:naManeHit})}),
@@ -82,19 +82,23 @@ Object.assign(NAT,{
   for(let i=-2;i<=2;i++)naTen(u,a+i*.17,{kind:'nui',spd:980,max:470,r:9,w:4,hit:(x,e)=>{const c=grp.get(e)||0,T=NA_NUI;if(c<T.max){grp.set(e,c+1);if(hit(e,x.owner,c?T.more:T.first,{root:T.root})){naHold(e,x.owner,e.root);jx({jfx:'na_spike',ti:naI(e),ui:naI(x.owner),x:e.x,y:e.y,a:x.a,c,t:1.2,m:1.2})}}return 'p'}})}),
  na_prot:S_('Ombre protectrice','Recule d\'un bond (à l\'opposé de la visée) avec un bouclier ; ton ombre fouette et ralentit les proches',8,{hero:'gideon',tele:{self:1,r:135},ai:SELF(170,.55)},(u,a)=>{const ox=u.x,oy=u.y;S('shadow',u);naS('dash',u);anim(u,'backflip',.42);dash(u,a+Math.PI,210,.32,{jump:38});shieldU(u,22,2.5);u.na_sh=2.5;
   naG({kind:'lash',x:ox,y:oy,a,t:.42});for(const e of enemies(u))if(Math.hypot(e.x-ox,e.y-oy)<135+e.r&&hit(e,u,6,{slow:1.5}))naG({kind:'lash',x:ox,y:oy,a,t:.42,ti:naI(e)})}),
- na_run:S_('Course de l\'ombre','2 s très rapide, insensible aux ralentissements et entraves ; ta traînée d\'ombre ralentit les ennemis',8,{hero:'grievous',ai:{mode:'esc',max:220,p:.45}},(u,a)=>{S('shadow',u);anim(u,'na_melt',.32);u.haste=Math.max(u.haste,2);u.slowImm=Math.max(u.slowImm,2);u.slow=0;u.root=0;
-  aux.push({type:'na_run',x:u.x,y:u.y,a,r:0,t:2,m:2,team:u.team,owner:u,ui:naI(u),vfx:'shadow',k:0,lx:u.x,ly:u.y});aux.push({type:'na_pud',x:u.x,y:u.y,a,r:34,t:1.6,m:1.6,team:u.team,owner:u,vfx:'shadow',k:0});naG({kind:'snap',x:u.x,y:u.y,t:.35})}),
+ na_run:S_('Course de l\'ombre','Glissade de l\'ombre',6,{hero:'grievous',ai:{mode:'esc',max:220,p:.45}},(u,a)=>{const v=Math.hypot(u.vx||0,u.vy||0),mv=v>40?Math.atan2(u.vy,u.vx):a,back=v>40&&angDiff(mv,a)>2.1;
+  S('shadow',u);anim(u,'na_melt',.32);u.slowImm=Math.max(u.slowImm,.7);u.slow=0;u.root=0;
+  aux.push({type:'na_run',x:u.x,y:u.y,a:mv,r:0,t:.7,m:.7,team:u.team,owner:u,ui:naI(u),vfx:'shadow',k:0,lx:u.x,ly:u.y});aux.push({type:'na_pud',x:u.x,y:u.y,a:mv,r:30,t:1.6,m:1.6,team:u.team,owner:u,vfx:'shadow',k:0});naG({kind:'snap',x:u.x,y:u.y,t:.35});
+  dash(u,mv,220,.3,{});if(back){shieldU(u,14,1.5);naSay(u,'OMBRE PROTECTRICE','#c8c8e0');naG({kind:'lash',x:u.x,y:u.y,a,t:.42})}}),
  // réflexion : un vrai temps mort (ni pas, ni jutsu, ni attaque, ni parade) ; la Course ne la contourne pas
  na_plan:S_('Plan du stratège','Réfléchis 0,4 s sans bouger ni agir : ton prochain jutsu à mudras (dans les 8 s) part aussitôt et sans chakra',10,{ai:RG(900,.35,260)},(u)=>{const R=NA_PLAN.think;S('shadow',u);anim(u,'na_think',R+.05);u.slowImm=0;for(const k of NA_SELF)u[k]=Math.max(u[k],R);
   aux.push({type:'na_plan',x:u.x,y:u.y,r:0,t:R,m:R,team:u.team,owner:u,ui:naI(u),vfx:'shadow',k:0});jx({jfx:'na_shogi',ui:naI(u),x:u.x,y:u.y,t:R+.05,m:R+.05})}),
+ na_planD:S_('Plan du stratège','',8,{ai:RG(900,.35,260)},(u,a,td,P)=>{for(const x of aux)if(x.type==='na_trap'&&x.owner===u&&x.n<2)x.t=0;
+  aux.push({type:'na_trap',x:u.x,y:u.y,r:58,t:16,m:16,team:u.team,owner:u,ui:naI(u),ti:-1,vfx:'shadow',k:0,n:0,arm:.5,dmg:11});NAT.na_plan.f(u,a,td,P)}),
  na_lie:ULT('Ombres liées','Ton ombre s\'étend autour de toi puis saisit les ennemis dedans : ramenés vers toi et entravés 1 s',{hero:'rey',tele:{self:1,r:225},ai:SELF(190,.8)},(u)=>{S('shadow',u);anim(u,'na_ne',.5);u.slowImm=0;u.root=Math.max(u.root,.5);
   aux.push({type:'na_lie',x:u.x,y:u.y,r:30,w:225,t:1,m:1,team:u.team,owner:u,ui:naI(u),vfx:'shadow',k:0,n:0})}),
 });
 Object.assign(NATHERO,{na:'padme'});
 // ---- réglages : Ombres liées (dégâts, étourdissement, entrave, distance d'attraction), Kage Mane, Plan du stratège
-const NA_LIE={dmg:10,stun:0,root:1,pull:62};
-const NA_MANE={dmg:12,spd:660,after:1}; // after : ralentissement quand la possession va à son terme
-const NA_NUI={first:34,more:10,max:3,root:1}; // 1re aiguille sur une cible, aiguilles suivantes (bout portant), aiguilles max par cible
+const NA_LIE={dmg:8,stun:0,root:1,pull:62};
+const NA_MANE={dmg:10,spd:660,after:1,hold:.8}; // after : ralentissement quand la possession va à son terme
+const NA_NUI={first:26,more:10,max:3,root:1}; // 1re aiguille sur une cible, aiguilles suivantes (bout portant), aiguilles max par cible
 const NA_PLAN={think:.4,ready:8};
 const NA_SELF=['root','disarm','silence','blockLock']; // ce que la réflexion du Plan bloque chez le Nara (rendu si elle est rompue)
 // ---- objets au sol (hôte)
@@ -103,7 +107,7 @@ AUXF.na_trap=(x,dt)=>{const o=x.owner;if(!o||o.dead){x.t=0;return}
  if(x.n<2){if((x.arm-=dt)>0)return;x.n=1;
   for(const e of enemies(o))if(!(e.phase>0)&&Math.hypot(e.x-x.x,e.y-x.y)<x.r*.62+e.r){x.n=2;x.tg=e;x.ti=naI(e);x.fuse=.55;x.t=1;const V=VFX;VFX='shadow';hit(e,o,4,{root:.55});VFX=V;naHold(e,o,.55);naSay(e,'PIÈGE !','#ffb04a');naS('deflect',o);
    jx({jfx:'na_wrap',ti:naI(e),x:e.x,y:e.y,t:.55,m:.55,legs:1});jx({jfx:'na_fuse',x:x.x,y:x.y,t:.55,m:.55});break}return}
- if((x.fuse-=dt)>0||x.done)return;x.done=1;x.t=0;const V=VFX;VFX='tag';for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<85+e.r)hit(e,o,16,{fx:x.x,fy:x.y,kb:70});
+ if((x.fuse-=dt)>0||x.done)return;x.done=1;x.t=0;const V=VFX;VFX='tag';for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<85+e.r)hit(e,o,x.dmg||16,{fx:x.x,fy:x.y,kb:70});
  sparks(x.x,x.y,'#ff9a3a',16,'tag');VFX=V;naS('boom',o);jx({jfx:'na_boom',x:x.x,y:x.y,r:85,t:.55,m:.55});if(near(x.x,x.y))shake=Math.max(shake,.22)};
 // Course de l'ombre : une flaque tous les ~30 px ; chaque flaque ralentit les ennemis qui la traversent
 AUXF.na_run=(x)=>{const o=x.owner;if(!o||o.dead){x.t=0;return}x.x=o.x;x.y=o.y;if(Math.hypot(o.vx||0,o.vy||0)>40)x.a=Math.atan2(o.vy,o.vx);
@@ -128,7 +132,7 @@ TRAITS[2]={nom:'Ombre tenace',desc:'Tes contrôles (entrave, étourdissement, si
  deal(src,t,dmg,o){const m=NA_OB.get(o);if(m)for(const k of NA_K)if(o[k]===m.x[k])o[k]=m.b[k];
   if((o.root||o.stun||o.silence)&&t.unstop<=0&&naCtl(t)){const b={},x={};for(const k of NA_K){b[k]=o[k];if(o[k])o[k]*=1.25;x[k]=o[k]}NA_OB.set(o,{b,x});naTenace(t)}return dmg},
  update(u,dt){if(u.na_sh>0)u.na_sh-=dt;if(u.auraV==='shadow')u.auraV=null;
-  if(u.na_pl>0){u.na_pl-=dt;const c=u.cast;if(c&&c.i>0&&!c.na){const ab=castAb(u,c);if(ab&&ab.mud&&ab.key!=='na_plan'){c.na=1;c.dur=Math.min(c.dur,c.t+.01);u.energy=Math.min(100,u.energy+jcost(ab));u.na_pl=0;naSay(u,'COMME PRÉVU !','#ffd38a');naG({kind:'snap',x:u.x,y:u.y,t:.4})}}}
+  if(u.na_pl>0){u.na_pl-=dt;const c=u.cast;if(c&&c.i>0&&!c.na){const ab=castAb(u,c);if(ab&&ab.mud&&ab.key!=='na_plan'){c.na=1;c.dur=Math.min(c.dur,c.t+.01);u.na_pl=0;naSay(u,'COMME PRÉVU !','#ffd38a');naG({kind:'snap',x:u.x,y:u.y,t:.4})}}}
   if(!u.na_dk||aux.indexOf(u.na_dk)<0){u.na_dk={type:'na_dusk',x:u.x,y:u.y,r:0,t:1e9,m:1e9,team:u.team,owner:u,ui:naI(u),vfx:'shadow',k:0};aux.push(u.na_dk)}},
 };
 AFTER.push(()=>{UK.push('na_sh','na_pl');JFX.shadow=()=>{}}); // les signatures « shadow » génériques sont remplacées par celles de ce fichier

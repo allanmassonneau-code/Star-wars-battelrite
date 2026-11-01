@@ -81,6 +81,8 @@ const PRESETS=[
 // i : index dans PRESETS ; le nom et le camp du joueur sont gardés (sinon ceux du perso)
 // format v5 d'un perso : {…, clan, nat, st (arbre de style 0-2, sinon celui de sty), sty (nom du style d'attaque de base), fam:[familles], dsh, k:[noms appris] | 'all', bar:[6 noms]}
 // ancien format (transition) : j = 5 noms de jutsu → appris (familles ajoutées d'office pour un sans-clan) et posés dans la barre ; le reste des arbres est appris d'office (rangs libres)
+// noms affichés propres à un perso de l'anime (champ al d'un perso, sinon cette table) : {nom du jutsu: nom affiché}
+const PRESETAL={'Kakashi':{'Chidori':'Raikiri'}};
 function presetBuild(i,name,side){const P=PRESETS[i],w=STYLES.findIndex(x=>x[0]===P.sty);
  const b={name:name||(typeof MY!=='undefined'&&MY?MY.name:P.n),side:side??P.side,clan:P.clan,nat:P.nat,w,fam:Array.isArray(P.fam)?P.fam.slice():[],dsh:P.dsh||'b',l:Object.assign({},P.l),k:[],bar:[]};
  b.st=P.st!=null?P.st:w>=0&&STREE.includes(STYLES[w][8])?STREE.indexOf(STYLES[w][8]):0;
@@ -91,6 +93,7 @@ function presetBuild(i,name,side){const P=PRESETS[i],w=STYLES.findIndex(x=>x[0]=
   if(learnJ(o,id)&&(!P.bar)&&!bar.includes(id))bar.push(id)}
  o.k=autoLearn(o,o.k);
  if(P.bar)for(const n of P.bar){const id=pickName(o,n);if(id>=0&&o.k.includes(id)&&!bar.includes(id))bar.push(id);else if(n)console.warn('Perso '+P.n+' : barre, jutsu non appris « '+n+' »')}
+ {const al=P.al||PRESETAL[P.n];if(al){o.al={};for(const n in al){const id=pickName(o,n);if(id>=0&&o.k.includes(id))o.al[jKey(id)]=al[n]}}}
  o.bar=bar.filter(id=>o.k.includes(id)).slice(0,BARN);for(const id of autoBar(o))if(o.bar.length<BARN&&id>=0&&!o.bar.includes(id))o.bar.push(id);while(o.bar.length<BARN)o.bar.push(-1);
  return sanitizeBuild(o,true)}
 // « Modèles de kit » (création) : le perso en cours prend le kit et l'apparence du perso de l'anime ; son nom et son camp sont gardés.

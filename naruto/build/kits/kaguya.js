@@ -1,33 +1,33 @@
 // ===== Clan Kaguya (Shikotsumyaku : le clan façonne ses os, style Kimimaro) =====
 // [emplacement, rang, mécanique (x.clé = NAT[clé], sinon perso.sort du moteur), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés : Bond d'os (→ dash), Armure d'os, Danse du camélia, Forêt naissante + Forêt d'os (→ Danse des fougères), Liane (→ Clématite)
 KIT('c9',[
- [1,'C','x.kg_finger','Doigts-balles','Rafale de 3 balles d\'os tirées du bout des doigts, qui suivent la visée ; chaque balle ralentit','bone'],
- [2,'B','x.kg_leap','Bond d\'os','Bondit vers le point visé ; à l\'atterrissage, une couronne d\'os jaillit : dégâts et projette en l\'air','bone'],
- [3,'B','x.kg_sprout','Forêt naissante','Des os percent le sol au point visé après un court délai : dégâts et étourdit, puis le bosquet ralentit','bone'],
- [4,'B','x.kg_armor','Armure d\'os','3 s : inarrêtable, 30 % de dégâts en moins, plaques d\'os reformées ; puis l\'armure éclate et blesse autour','bone'],
- [1,'D','x.kg_willow','Danse du saule','Tourbillon de lames d\'os : blesse autour, renvoie les tirs et étourdit qui te frappe au corps à corps','bone'],
- [1,'C','x.kg_camellia','Danse du camélia','Tire son humérus comme une épée : 5 estocades éclair devant soi, la dernière repousse et ralentit','bone'],
- [3,'B','x.kg_whip','Danse de la clématite : Liane','Fouet de vertèbres : le premier ennemi touché est ramené contre toi et ralenti','bone'],
- [4,'A','x.kg_larch','Danse du mélèze','Des os jaillissent de tout le corps : gros dégâts, entrave qui est collé ; 3 s d\'épines qui brisent les tirs et blessent','bone'],
- [5,'S','x.kg_drill','Danse de la clématite','Foreuse d\'os géante : fonce en ligne, perce boucliers et murs, énormes dégâts et projette','bone'],
- [5,'B','x.kg_forest','Forêt d\'os','3 anneaux d\'os géants jaillissent autour de soi : blessent, étourdissent, puis bloquent ennemis et tirs 1,5 s','bone'],
+ ['D','x.kg_finger','Doigts-balles','Rafale de 2 balles d\'os tirées du bout des doigts, qui suivent la visée ; chaque balle ralentit','bone'],
+ ['C','x.kg_willow','Danse du saule','Tourbillon de lames d\'os : blesse autour, renvoie les tirs et étourdit qui te frappe au corps à corps','bone'],
+ ['B','x.kg_larch','Danse du mélèze','Des os jaillissent de tout le corps : dégâts, entrave qui est collé ; 2 s d\'épines qui brisent les tirs et blessent','bone'],
+ ['A','x.kg_fern','Danse des fougères','Des os percent le sol au point visé après un court délai (dégâts, étourdit), puis la forêt s\'étend en anneau autour de ce point : elle bloque ennemis et tirs 1,5 s','bone'],
+ ['S','x.kg_clem','Danse de la clématite','Le fouet de vertèbres harponne le 1er ennemi et le ramène, puis la foreuse d\'os géante fonce en ligne : perce boucliers et murs, énormes dégâts et projette','bone'],
 ]);
+// dash (Espace) : Bond d'os (couronne réduite)
+DASHC[9]={src:'x.kg_leap',n:'Bond d\'os',d:'Bondit vers le point visé ; à l\'atterrissage, une petite couronne d\'os jaillit : dégâts et repousse',vfx:'bone',cd:7};
+// descriptions des anciennes lignes (mécaniques gardées hors arbre)
+const KGOLD={'Doigts-balles':'Rafale de 3 balles d\'os tirées du bout des doigts, qui suivent la visée ; chaque balle ralentit','Bond d\'os':'Bondit vers le point visé ; à l\'atterrissage, une couronne d\'os jaillit : dégâts et projette en l\'air','Forêt naissante':'Des os percent le sol au point visé après un court délai : dégâts et étourdit, puis le bosquet ralentit','Armure d\'os':'3 s : inarrêtable, 30 % de dégâts en moins, plaques d\'os reformées ; puis l\'armure éclate et blesse autour','Danse du saule':'Tourbillon de lames d\'os : blesse autour, renvoie les tirs et étourdit qui te frappe au corps à corps','Danse du camélia':'Tire son humérus comme une épée : 5 estocades éclair devant soi, la dernière repousse et ralentit','Danse de la clématite : Liane':'Fouet de vertèbres : le premier ennemi touché est ramené contre toi et ralenti','Danse du mélèze':'Des os jaillissent de tout le corps : gros dégâts, entrave qui est collé ; 3 s d\'épines qui brisent les tirs et blessent','Danse de la clématite':'Foreuse d\'os géante : fonce en ligne, perce boucliers et murs, énormes dégâts et projette','Forêt d\'os':'3 anneaux d\'os géants jaillissent autour de soi : blessent, étourdissent, puis bloquent ennemis et tirs 1,5 s'};
 // ---- petites aides du clan
 const kgS=(n,u)=>{const V=VFX;VFX=null;S(n,u);VFX=V}; // son hors palette (sinon tout son d'un jutsu d'os devient « bone »)
 const KG_REG=12,KG_PCT=.2,KG_CAP=4; // trait : une plaque repousse toutes les 12 s ; chaque plaque retire 20 % d'un coup (4 au plus)
-const kgD=n=>{const r=KITROWS.find(r=>r[0]==='c9'&&r[4]===n);return r?r[5]:''};
+const kgD=n=>{const r=KITROWS.find(r=>r[0]==='c9'&&r[4]===n);return r?r[5]:KGOLD[n]||''};
 // atterrissage du Bond d'os : couronne d'os qui projette
-function kgLand(u){const x=u.x,y=u.y,V=VFX;VFX='bone';for(const e of enemies(u))if(Math.hypot(e.x-x,e.y-y)<85+e.r)hit(e,u,7,{air:.2,kb:70,fx:x,fy:y});VFX=V;
- jx({jfx:'kg_crown',x,y,r:85,t:.75,m:.75});jx({jfx:'shock',x,y,r:115,t:.4,m:.4,col:'#f2efe6'});sparks(x,y,'#f2efe6',10,'bone');if(near(x,y)){kgS('rock',u);S('bone',u);shake=Math.max(shake,.18)}}
+function kgLand(u,sm){const x=u.x,y=u.y,V=VFX,R=sm?70:85;VFX='bone';for(const e of enemies(u))if(Math.hypot(e.x-x,e.y-y)<R+e.r)hit(e,u,sm?5:7,sm?{kb:110,fx:x,fy:y}:{air:.2,kb:70,fx:x,fy:y});VFX=V;
+ jx({jfx:'kg_crown',x,y,r:R,t:.75,m:.75});jx({jfx:'shock',x,y,r:115,t:.4,m:.4,col:'#f2efe6'});sparks(x,y,'#f2efe6',10,'bone');if(near(x,y)){kgS('rock',u);S('bone',u);shake=Math.max(shake,.18)}}
 // fin de l'Armure d'os : elle éclate en éclats tranchants
 function kgShatter(u){if(u.dead)return;const V=VFX;VFX='bone';for(const e of enemies(u))if(dist(u,e)<100+e.r)hit(e,u,12,{slow:1,fx:u.x,fy:u.y});VFX=V;
  jx({jfx:'kg_burst',x:u.x,y:u.y,r:100,t:.5,m:.5});sparks(u.x,u.y,'#f2efe6',18,'bone');if(near(u.x,u.y))S('bone',u)}
 Object.assign(NAT,{
  kg_finger:S_('Doigts-balles',kgD('Doigts-balles'),6,{hero:'gideon',line:{len:560,w:14},ai:RG(540,.65)},(u,a)=>{anim(u,'kg_finger',.6);
-  const f=o=>{S('bone',o);const b=o.aim,h=fwd(o,b,22);proj(o,b,{spd:1150,r:5,dmg:7,life:.48,col:'#f2efe6',slow:.4,kind:'kg_finger',onHit:(p,t)=>jx({jfx:'kg_stuck',ti:units.indexOf(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),o:(rnd()-.5)*14,t:1,m:1})});jx({jfx:'kg_muzzle',x:h.x,y:h.y,a:b,t:.16,m:.16})};
-  f(u);seqs.push({owner:u,n:2,t:.12,iv:.12,vfx:'bone',f})}),
+  const f=o=>{S('bone',o);const b=o.aim,h=fwd(o,b,22);proj(o,b,{spd:1150,r:5,dmg:6,life:.48,col:'#f2efe6',slow:.4,kind:'kg_finger',onHit:(p,t)=>jx({jfx:'kg_stuck',ti:units.indexOf(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),o:(rnd()-.5)*14,t:1,m:1})});jx({jfx:'kg_muzzle',x:h.x,y:h.y,a:b,t:.16,m:.16})};
+  f(u);seqs.push({owner:u,n:1,t:.12,iv:.12,vfx:'bone',f})}),
  kg_leap:S_('Bond d\'os',kgD('Bond d\'os'),11,{hero:'savage',ai:{mode:'gap',min:110,max:280,p:.5}},(u,a,td)=>{const d=clamp(td||250,60,280),p=fwd(u,a,d);anim(u,'kg_leap',.6);kgS('dash',u);
-  later(u,.42,()=>{},{x:p.x,y:p.y,r:85});jx({jfx:'shock',x:u.x,y:u.y,r:45,t:.3,m:.3,col:'#e8e2d0'});sparks(u.x,u.y,'#c8c2b0',6,'bone');dash(u,a,d,.42,{jump:100,end:()=>kgLand(u)})}),
+  later(u,.42,()=>{},{x:p.x,y:p.y,r:70});jx({jfx:'shock',x:u.x,y:u.y,r:45,t:.3,m:.3,col:'#e8e2d0'});sparks(u.x,u.y,'#c8c2b0',6,'bone');dash(u,a,d,.42,{jump:100,end:()=>kgLand(u,1)})}),
  kg_sprout:S_('Forêt naissante',kgD('Forêt naissante'),10,{hero:'iden',tele:{r:88,max:430},ai:RG(430,.6)},(u,a,td)=>{const p=atP(u,a,td,430);anim(u,'kg_ground',.55);S('bone',u);
   aux.push({type:'kg_sprout',x:p.x,y:p.y,r:88,t:.45,m:.45,team:u.team,owner:u,vfx:'bone',k:0});
   zone(u,p.x,p.y,88,18,.45,{stun:.65},'#f2efe6');lastZ().deto='kg_grove';
@@ -36,7 +36,7 @@ Object.assign(NAT,{
   u.unstop=Math.max(u.unstop,3);u.dr=u.drT>0?Math.max(u.dr,.3):.3;u.drT=Math.max(u.drT,3);u.kg_armT=3;u.kg_os=3;u.kg_osT=0;
   jx({jfx:'kg_armor',ui:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6});ring(u.x,u.y,60,'#f2efe6');later(u,3,()=>kgShatter(u))}),
  kg_willow:S_('Danse du saule',kgD('Danse du saule'),8,{ai:{mode:'def',p:.45,max:110}},(u)=>{S('bone',u);kgS('saber',u);anim(u,'kg_willow',.5);
-  u.spin={t:.5,k:0,r:95,dmg:3.5};u.deflect=Math.max(u.deflect,.35);jx({jfx:'kg_willow',ui:units.indexOf(u),x:u.x,y:u.y,t:.55,m:.55})}),
+  u.spin={t:.6,k:0,r:100,dmg:4.5};u.deflect=Math.max(u.deflect,.5);jx({jfx:'kg_willow',ui:units.indexOf(u),x:u.x,y:u.y,t:.55,m:.55})}),
  kg_camellia:S_('Danse du camélia',kgD('Danse du camélia'),9,{line:{len:135,w:40},ai:RG(130,.7)},(u)=>{anim(u,'kg_thrust',.6);kgS('saber',u);let i=0;
   const f=o=>{const b=o.aim,last=i===4,V=VFX;S('bone',o);o.kx+=Math.cos(b)*60;o.ky+=Math.sin(b)*60;if(!last)o.slow=Math.max(o.slow,.13);VFX='bone';
    for(const e of enemies(o))if(dist(o,e)<135+e.r&&angDiff(ang(o,e),b)<.34){if(e.block&&facing(e,o)){stamHit(e,8);sparks(e.x,e.y,'#f2efe6',4,'bone');continue}hit(e,o,last?5:2,{kb:last?190:0,slow:last?.5:0})}VFX=V;i++};
@@ -44,12 +44,21 @@ Object.assign(NAT,{
  kg_whip:S_('Danse de la clématite : Liane',kgD('Danse de la clématite : Liane'),12,{line:{len:350,w:18},ai:RG(340,.55,110)},(u,a)=>{anim(u,'kg_whip',.6);kgS('saber',u);S('bone',u);
   proj(u,a,{spd:1050,r:9,dmg:8,life:.33,col:'#f2efe6',hook:1,slow:.4,kind:'kg_whip',noClash:1,onHit:(p,t)=>{if(t.unstop>0)return;jx({jfx:'kg_yank',ui:units.indexOf(p.owner),ti:units.indexOf(t),x:t.x,y:t.y,t:.3,m:.3});say(t,'ATTRAPÉ','#f2efe6')}})}),
  kg_larch:S_('Danse du mélèze',kgD('Danse du mélèze'),11,{tele:{self:1,r:120},ai:SELF(115,.65)},(u)=>{anim(u,'kg_larch',.7);S('bone',u);kgS('heavy',u);
-  for(const e of enemies(u)){const d=dist(u,e);if(d<120+e.r){const c=d<65+e.r;hit(e,u,c?36:30,{kb:c?0:260,root:c?.8:0,fx:u.x,fy:u.y})}}
-  u.thorns=Math.max(u.thorns,3);u.thornSlow=Math.max(u.thornSlow,3);u.chrome=Math.max(u.chrome,3);u.kg_larT=3;
+  for(const e of enemies(u)){const d=dist(u,e);if(d<120+e.r){const c=d<65+e.r;hit(e,u,c?28:24,{kb:c?0:260,root:c?.8:0,fx:u.x,fy:u.y})}}
+  u.thorns=Math.max(u.thorns,2);u.thornSlow=Math.max(u.thornSlow,2);u.chrome=Math.max(u.chrome,2);u.kg_larT=2;
   jx({jfx:'kg_larch',ui:units.indexOf(u),x:u.x,y:u.y,t:.8,m:.8});jx({jfx:'shock',x:u.x,y:u.y,r:130,t:.45,m:.45,col:'#f2efe6'});sparks(u.x,u.y,'#f2efe6',14,'bone');if(near(u.x,u.y))shake=Math.max(shake,.22)}),
  kg_drill:ULT('Danse de la clématite',kgD('Danse de la clématite'),{hero:'gideon',line:{len:360,w:60},ai:{mode:'gap',min:80,max:360,p:.8}},(u,a)=>{S('bone',u);kgS('heavy',u);anim(u,'kg_drill',.5);
   u.unstop=Math.max(u.unstop,.5);dash(u,a,360,.34,{});aux.push({type:'kg_drill',x:u.x,y:u.y,a,r:44,t:.6,m:.6,team:u.team,owner:u,vfx:'bone',k:0,hs:new Set()});
   jx({jfx:'kg_drill',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.42,m:.42})}),
+ // Danse des fougères (v5, fusion Forêt naissante + Forêt d'os) : os qui percent le sol au point visé, puis anneau d'os qui enferme 1,5 s
+ kg_fern:S_('Danse des fougères','',14,{hero:'iden',tele:{r:110,max:430},ai:RG(430,.6)},(u,a,td,P)=>{const p=atP(u,a,td,430);NAT.kg_sprout.f(u,a,td,P);
+  later(u,.5,()=>{const n=11,R=112,hs=new Set(),V=VFX;VFX='bone';for(let i=0;i<n;i++){const b=i*Math.PI*2/n,x=clamp(p.x+Math.cos(b)*R,B.x+20,B.x+B.w-20),y=clamp(p.y+Math.sin(b)*R*.9,B.y+20,B.y+B.h-20);
+    for(const e of enemies(u))if(!hs.has(e)&&Math.hypot(e.x-x,e.y-y)<34+e.r){hs.add(e);hit(e,u,8,{stun:.2,fx:p.x,fy:p.y})}
+    walls.push({x,y,r:15,t:1.5,m:1.5,team:u.team,owner:u,vfx:'bone'})}VFX=V;
+   jx({jfx:'kg_ringfx',x:p.x,y:p.y,r:R,n,w:1,t:.6,m:.6});if(near(p.x,p.y)){kgS('rock',u);S('bone',u);shake=Math.max(shake,.2)}},{x:p.x,y:p.y})}),
+ // Danse de la clématite (v5, fusion avec la Liane) : fouet qui ramène le 1er ennemi, puis la foreuse fonce en ligne
+ kg_clem:ULT('Danse de la clématite','',{hero:'gideon',line:{len:360,w:60},ai:{mode:'gap',min:80,max:340,p:.8}},(u,a,td,P)=>{NAT.kg_whip.f(u,a,td,P);u.root=Math.max(u.root,.3);
+  later(u,.38,()=>{if(u.dead||u.stun>0||u.sleepT<0)return;NAT.kg_drill.f(u,u.aim,td,P)})}),
  kg_forest:ULT('Forêt d\'os',kgD('Forêt d\'os'),{hero:'inquisitor',tele:{self:1,r:250},ai:SELF(210,.8)},(u)=>{anim(u,'kg_ground',1.1);S('bone',u);kgS('rock',u);const o={x:u.x,y:u.y},hs=new Set();jx({jfx:'shock',x:o.x,y:o.y,r:60,t:.35,m:.35,col:'#e8e2d0'});
   // Danse de la fougère (Sawarabi) : 3 vagues, anneaux d'os géants de plus en plus loin ; chaque ennemi n'est empalé qu'une fois
   [[0,75,6,48],[.15,152,9,44],[.3,228,12,42]].forEach(([dl,R,n,hr],w)=>later(u,dl+.05,()=>{const V=VFX;VFX='bone';

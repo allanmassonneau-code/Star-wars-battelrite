@@ -4,17 +4,16 @@
 // surtout quand il le malaxe (mudras, recharge) : les kikaichû se nourrissent du chakra qu'on concentre.
 // Les jutsu jouent avec les colonies : les espions infestent, les chercheurs traquent les infestés, les dévoreurs et la sphère s'en nourrissent.
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés : Clone d'insectes (→ dash), Insectes dévoreurs (→ Chercheurs), Sphère d'insectes (→ Nuée), Nano-insectes de Torune
 KIT('c4',[
- [1,'D','x.ab_spy','Insectes espions','Insecte femelle rapide : infeste la cible (+2 insectes) et la piste 5 s (révélée, traquée)','bugs'],
- [1,'B','x.ab_seek','Insectes chercheurs','Nuée qui file droit, puis traque l\'ennemi infesté le plus proche : dégâts et +2 insectes','bugs'],
- [2,'B','x.ab_clone','Clone d\'insectes','Bond qui laisse un clone d\'insectes : il éclate au contact (ralentit). Relance : reprends sa place','bugs'],
- [3,'A','x.ab_swarm','Essaim d\'insectes','Grande nuée qui suit ton curseur 3,5 s : ronge, ralentit et infeste. Le feu la brûle','bugs'],
- [4,'C','x.ab_wall','Mur d\'insectes','Rideau d\'insectes 3,5 s : dévore les projectiles (+chakra), ralentit et infeste qui le traverse','bugs'],
- [4,'B','x.ab_drain','Insectes dévoreurs','Nuée accrochée à l\'ennemi touché 3 s : vole chakra et PV (plus s\'il est infesté), à portée','bugs'],
- [1,'C','x.ab_venom','Nano-insectes de Torune','6 s : tes attaques de base injectent un venin cumulable (×3) ; à 3 doses, la cible ralentit','bugs'],
- [5,'S','x.ab_nuee','Nuée destructrice','Nuée colossale sur la zone : immobilise et réduit au silence 0,8 s, puis ronge PV et chakra 3 s','bugs'],
- [5,'S','x.ab_sphere','Sphère d\'insectes','Enferme le 1er ennemi touché dans une sphère d\'insectes : dévore PV et chakra, dure plus s\'il est infesté','bugs'],
+ ['D','x.ab_spy','Insectes espions','Insecte femelle rapide : infeste la cible (+2 insectes) et la piste 5 s (révélée, traquée)','bugs'],
+ ['C','x.ab_wall','Mur d\'insectes','Rideau d\'insectes 3,5 s : dévore les projectiles (+chakra), ralentit et infeste qui le traverse','bugs'],
+ ['B','x.ab_seekB','Insectes chercheurs','Nuée qui file droit, puis traque l\'ennemi infesté le plus proche : dégâts, +2 insectes, puis elle s\'accroche 2 s et vole chakra et PV (plus s\'il est infesté)','bugs'],
+ ['A','x.ab_swarm','Essaim d\'insectes','Grande nuée qui suit ton curseur 3,5 s : ronge, ralentit et infeste. Le feu la brûle','bugs'],
+ ['S','x.ab_nueeS','Nuée destructrice','Nuée colossale sur la zone : immobilise et réduit au silence 0,8 s, puis ronge PV et chakra 3 s ; un ennemi qui porte 5 insectes est enfermé dans une sphère d\'insectes','bugs'],
 ]);
+// dash (Espace) : Clone d'insectes (relance : reprends sa place)
+DASHC[4]={src:'x.ab_clone',n:'Clone d\'insectes',d:'Bond qui laisse un clone d\'insectes : il éclate au contact (ralentit). Relance : reprends sa place',vfx:'bugs',cd:8};
 // ---- colonies de kikaichû (trait du clan)
 const AB_MAX=5,AB_DR=.12; // insectes max par cible ; chakra rongé par insecte et par seconde (×3 quand la cible malaxe son chakra)
 // dépose n insectes sur e ; la colonie appartient au dernier Aburame qui l'a nourrie
@@ -90,6 +89,12 @@ Object.assign(NAT,{
  // Essaim d'insectes : grande nuée qui suit le curseur ; elle ronge, ralentit et infeste ; le feu la brûle
  ab_swarm:S_('Essaim d\'insectes','Grande nuée qui suit ton curseur 3,5 s : ronge, ralentit et infeste. Le feu la brûle',12,{hero:'boba',ai:RG(480,.6),tele:{r:80,max:500}},(u,a,td)=>{S('bugs',u);S('wind',u);anim(u,'ab_swarm',.7);const p=fwd(u,a,55);
   aux.push({type:'ab_swarm',x:p.x,y:p.y,a,r:88,t:3.5,m:3.5,team:u.team,owner:u,ui:units.indexOf(u),k:.15,vfx:'bugs',n:0,acc:0,hs:{}});jx({jfx:'ab_pour',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.5,m:.5,big:1})}),
+ // Insectes chercheurs (v5, fusion avec les Dévoreurs) : la nuée traque, puis s'accroche 2 s à l'ennemi touché
+ ab_seekB:S_('Insectes chercheurs','',10,{hero:'lando',ai:RG(560,.65),line:{len:600,w:28}},(u,a)=>{S('bugs',u);anim(u,'ab_sleeve',.55);
+  jx({jfx:'ab_pour',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.45,m:.45});
+  proj(u,a,{spd:470,r:12,dmg:16,life:1.6,col:'#4a5a3a',kind:'ab_seek',onHit:(p,t)=>{ab_add(t,p.owner,1);ab_burst(t.x,t.y,50);if(t.dead)return;const o=p.owner;for(const x of aux)if(x.type==='ab_drain'&&x.owner===o)x.t=0;
+   aux.push({type:'ab_drain',x:t.x,y:t.y,r:0,t:2,m:2,team:o.team,owner:o,tg:t,ui:units.indexOf(o),ti:units.indexOf(t),k:.5,vfx:'bugs',n:0});say(t,'DÉVORÉ','#c8e07a')}});
+  aux.push({type:'ab_seek',x:u.x,y:u.y,r:0,t:1.7,m:1.7,team:u.team,owner:u,p:projs[projs.length-1],k:0})}),
  // Nano-insectes de Torune : venin cumulable sur les attaques de base
  ab_venom:S_('Nano-insectes de Torune','6 s : tes attaques de base injectent un venin cumulable (×3) ; à 3 doses, la cible ralentit',12,{ai:SELF(330,.55)},(u)=>{u.ab_ven=6;S('bugs',u);anim(u,'ab_venom',.6);
   jx({jfx:'ab_venup',ui:units.indexOf(u),x:u.x,y:u.y,t:.8,m:.8});say(u,'NANO-INSECTES','#c8a0ff')}),
@@ -97,6 +102,12 @@ Object.assign(NAT,{
  ab_nuee:ULT('Nuée destructrice','Nuée colossale sur la zone : immobilise et réduit au silence 0,8 s, puis ronge PV et chakra 3 s',{hero:'deathtrooper',tele:{r:150,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480);S('bugs',u);S('heavy',u);anim(u,'ab_nuee',.9);
   zone(u,p.x,p.y,150,20,.75,{root:.8,silence:.8},'#26302a');lastZ().deto='ab_fall';jx({jfx:'ab_fall',x:p.x,y:p.y,r:150,t:.75,m:.75});
   later(u,.76,()=>{for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<150+e.r){ab_add(e,u,1);jx({jfx:'ab_engulf',ti:units.indexOf(e),x:e.x,y:e.y,t:1,m:1})}
+   aux.push({type:'ab_nuee',x:p.x,y:p.y,r:125,t:3,m:3,team:u.team,owner:u,ui:units.indexOf(u),k:.2,vfx:'bugs',n:0})},{x:p.x,y:p.y})}),
+ // Nuée destructrice (v5, fusion avec la Sphère) : à l'impact, l'ennemi qui porte 5 insectes est enfermé dans une sphère
+ ab_nueeS:ULT('Nuée destructrice','',{hero:'deathtrooper',tele:{r:150,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480);S('bugs',u);S('heavy',u);anim(u,'ab_nuee',.9);
+  zone(u,p.x,p.y,150,20,.75,{root:.8,silence:.8},'#26302a');lastZ().deto='ab_fall';jx({jfx:'ab_fall',x:p.x,y:p.y,r:150,t:.75,m:.75});
+  later(u,.76,()=>{for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<150+e.r){ab_add(e,u,1);jx({jfx:'ab_engulf',ti:units.indexOf(e),x:e.x,y:e.y,t:1,m:1});
+    const c=ab_n(e);if(c>=AB_MAX&&!e.dead&&e.unstop<=0&&!(e.ab_sph>0)){const D=1+.16*c;say(e,'SPHÈRE D\'INSECTES','#c8e07a');aux.push({type:'ab_sphere',x:e.x,y:e.y,r:36,t:D,m:D,team:u.team,owner:u,tg:e,ui:units.indexOf(u),ti:units.indexOf(e),k:.25,vfx:'bugs',n:c})}}
    aux.push({type:'ab_nuee',x:p.x,y:p.y,r:125,t:3,m:3,team:u.team,owner:u,ui:units.indexOf(u),k:.2,vfx:'bugs',n:0})},{x:p.x,y:p.y})}),
  // Sphère d'insectes (Mushi Dama) : le premier ennemi touché est enfermé dans une sphère qui le dévore ; elle tient plus longtemps sur une cible infestée
  ab_sphere:ULT('Sphère d\'insectes','Enferme le 1er ennemi touché dans une sphère d\'insectes : dévore PV et chakra, dure plus s\'il est infesté',{line:{len:560,w:30},ai:{max:520,p:.8}},(u,a)=>{S('bugs',u);S('wind',u);anim(u,'ab_sphere',.7);

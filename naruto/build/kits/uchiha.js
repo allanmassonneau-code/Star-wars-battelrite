@@ -3,36 +3,34 @@
 // Katon du clan (Gôkakyû, Ryûka), kenjutsu (Kusanagi), corbeaux (Shunshin), Kamui, Izanagi et Susanô.
 const ucD={
  kusa:'Le sabre s\'allonge d\'un coup : estoc en ligne qui ignore les parades et ralentit ; la pointe frappe 55 % plus fort',
- goka:'Grande boule de feu qui grossit en avançant, explose et brûle ; relance pour la faire exploser où tu veux',
+ goka:'Boule de feu qui grossit en avançant, explose et brûle ; relance pour la faire exploser où tu veux',
  shar:'Copie le dernier jutsu ennemi vu (10 s) et le relance aussitôt, à 90 % ; sans copie, esquive le prochain coup (2,5 s)',
  ryuka:'3 shuriken à fil : le premier ennemi touché est ligoté, puis le feu court le long du fil et l\'embrase',
  genj:'Regard droit devant : qui te regarde est paralysé 0,9 s, les autres sont ralentis. Détourner les yeux protège',
+ gtsu:'Regard droit devant : qui te regarde est paralysé 0,9 s, les autres ralentis. À 3 tomoe, c\'est Tsukuyomi : la cible est en plus torturée, vidée de chakra et vulnérable 1,5 s (consomme les tomoe)',
  iza:'Pendant 4 s la réalité se réécrit : à la fin, ou si tu meurs, tu reviens au point et aux PV du lancement',
- shun:'Disparaît en corbeaux et surgit dans le dos de l\'ennemi visé ; ta prochaine attaque de base frappe +15 %',
+ shun:'Se disperse en corbeaux, intangible : réapparaît ≈ 220 plus loin, ou dans le dos de l\'ennemi visé ; ta prochaine attaque de base frappe +15 %',
  kamui:'Aspiré dans ta dimension : intangible et invisible, tu réapparais au point visé (300 max)',
- amat:'Le regard embrase la cible de flammes noires inextinguibles : longue brûlure qui se propage aux ennemis proches',
+ amat:'Le regard embrase la cible de flammes noires inextinguibles : brûlure qui se propage aux ennemis proches',
  tsuku:'Si la cible croise ton regard : 72 h de torture en 0,9 s (paralysée, blessée, vidée de chakra), puis vulnérable 1,5 s ; sinon ralentie',
- susa:'Le Susanô t\'entoure 3 s (−15 % de dégâts) et frappe 3 fois devant toi ; le dernier coup scelle (étourdit)',
+ susa:'Le Susanô t\'entoure 3,5 s (−20 % de dégâts, inarrêtable un instant) et frappe 3 fois devant toi ; le dernier coup scelle (étourdit)',
 };
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés des arbres (code conservé) : Lame de Kusanagi, Katon : Ryûka, Izanagi, Kamui (→ intangibilité du dash), Tsukuyomi seul (→ Genjutsu : Tsukuyomi)
 KIT('c0',[
- [1,'D','x.uc_kusa','Lame de Kusanagi',ucD.kusa,'steel'],
- [1,'C','x.uc_goka','Katon : Gôkakyû',ucD.goka,'fire'],
- [4,'C','x.uc_shar','Sharingan',ucD.shar,'genjutsu'],
- [3,'B','x.uc_ryuka','Katon : Ryûka',ucD.ryuka,'fire'],
- [3,'B','x.uc_genj','Sharingan : Genjutsu',ucD.genj,'genjutsu'],
- [4,'A','x.uc_iza','Izanagi',ucD.iza,'genjutsu'],
- [2,'C','x.uc_shun','Shunshin Uchiha',ucD.shun,'genjutsu'],
- [2,'B','x.uc_kamui','Kamui',ucD.kamui,'genjutsu'],
- [5,'S','x.uc_amat','Amaterasu',ucD.amat,'black'],
- [5,'S','x.uc_tsuku','Tsukuyomi',ucD.tsuku,'tsukuyomi'],
- [5,'A','x.uc_susa','Susanô : Totsuka',ucD.susa,'susano'],
+ ['D','x.uc_goka','Katon : Gôkakyû',ucD.goka,'fire'],
+ ['C','x.uc_shar','Sharingan',ucD.shar,'genjutsu'],
+ ['B','x.uc_gtsu','Genjutsu : Tsukuyomi',ucD.gtsu,'tsukuyomi'],
+ ['A','x.uc_amat','Amaterasu',ucD.amat,'black'],
+ ['S','x.uc_susa','Susanô : Totsuka',ucD.susa,'susano'],
 ]);
+// dash (Espace) : Shunshin des corbeaux (ancien Shunshin Uchiha, réduit, + intangibilité de Kamui)
+DASHC[0]={src:'x.uc_shun',n:'Shunshin des corbeaux',d:ucD.shun,vfx:'genjutsu',cd:7};
 // ---- aides
 let ucCopy=null; // lanceur d'un jutsu copié : ses coups immédiats font −10 %
 const ucTR={rng:560,rec:40,part:.65}; // trait : portée de lecture des mudras, repos de l'œil après une lecture, part des dégâts encore subie (le contrôle est toujours annulé)
 // réglages d'équilibre (dégâts de base avant la puissance du ninja)
-const ucK={kusa:9,kusaP:14,kusaS:.3,gkD:6,gkA:5,gkR:46,cpM:.9,ryuS:4,ryuR:.65,ryuF:12,genD:12,genS:.9,genL:345,genW:120,shB:1.15,shT:.22,amD:15,amP:7.5,tsuD:8,tsuS:.9,tsuT:6,tsuC:15,tsuV:1.5,susD:7,susL:12,susR:.15,susT:3,susU:.8,susS:.6};
+const ucK={kusa:9,kusaP:14,kusaS:.3,gkD:5,gkA:4,gkR:40,cpM:.9,ryuS:4,ryuR:.65,ryuF:12,genD:12,genS:.9,genL:345,genW:120,shB:1.15,shT:.22,amD:13,amP:6.5,amT:5,tsuD:8,tsuS:.9,tsuT:6,tsuC:15,tsuV:1.5,susD:6,susL:12,susR:.2,susT:3.5,susU:.8,susS:.6};
 const ucAI={cp:{max:420,p:.75},wake:{mode:'def',p:.45},izF:{mode:'self',max:260,p:.6},izN:{mode:'heal',p:0}}; // conduite des bots : Sharingan (copie prête ou non), Izanagi (blessé et au contact), Kamui (esquive, fuite si presque mort)
 const ucI=u=>units.indexOf(u),ucCol=u=>u.ch.look.weapon.col||'#a5f';
 function ucS(k,u){const V=VFX;VFX=null;S(k,u);VFX=V} // son exact (sans la teinte sonore de l'élément)
@@ -70,14 +68,18 @@ Object.assign(NAT,{
   for(const e of ucLine(u,a,ucK.genL,ucK.genW)){
    if(ucEye(e,u)){if(hit(e,u,ucK.genD,{stun:ucK.genS,unblockable:1,reveal:1})){jx({jfx:'uc_bind',ti:ucI(e),x:e.x,y:e.y,t:ucK.genS,m:ucK.genS});jx({jfx:'uc_gazeline',ui:ucI(u),ti:ucI(e),x:e.x,y:e.y,t:.4,m:.4});ucSay(e,'GENJUTSU','#ff5a6a',28)}}
    else if(hit(e,u,ucK.genD*.5,{slow:1.6,unblockable:1}))ucSay(e,'REGARD ÉVITÉ','#ffb0c0',28)}}),
+ // Genjutsu : Tsukuyomi (v5, fusion) : regard du Genjutsu ; à 3 tomoe éveillés (trait), le regard devient Tsukuyomi et consomme les tomoe
+ uc_gtsu:S_('Genjutsu : Tsukuyomi',ucD.gtsu,10,{hero:'inquisitor',line:{len:ucK.genL,w:ucK.genW},ai:RG(320,.6)},(u,a,td,P)=>{
+  if((u.uc_tm|0)>=3){u.uc_tm=0;u.uc_tmF=.6;say(u,'TSUKUYOMI','#ff3a4a');NAT.uc_tsuku.f(u,a,td,P);return}
+  NAT.uc_genj.f(u,a,td,P)}),
  // Izanagi : ancre (position + PV) ; au bout de 4 s, ou à la mort (moteur : izRevive), retour à l'ancre
  uc_iza:S_('Izanagi',ucD.iza,14,{ai:HEALM},(u)=>{ucS('genjutsu',u);anim(u,'pray',.5);const T=4;u.izT=T+.3;u.izS={x:u.x,y:u.y,hp:u.hp};
   aux.push({type:'uc_iza',x:u.x,y:u.y,r:0,t:T,m:T,team:u.team,owner:u,ui:ucI(u),hp:u.hp,lx:u.x,ly:u.y});jx({jfx:'uc_izaon',ui:ucI(u),x:u.x,y:u.y,t:T,m:T});ring(u.x,u.y,46,'#e0304a');say(u,'IZANAGI','#ff5a6a')}),
  // Shunshin Uchiha : éclair dans une nuée de corbeaux, réapparaît dans le dos de l'ennemi visé (sinon au curseur)
- uc_shun:S_('Shunshin Uchiha',ucD.shun,10,{hero:'maul',ai:GAP},(u,a,td)=>{const p=fwd(u,a,Math.min(td||260,330)),e=nearE(u,p.x,p.y,150);let tx,ty;
-  if(e){const b=ang(u,e);tx=e.x+Math.cos(b)*52;ty=e.y+Math.sin(b)*52}else{const q=fwd(u,a,Math.min(td||260,280));tx=q.x;ty=q.y}
+ uc_shun:S_('Shunshin des corbeaux',ucD.shun,7,{hero:'maul',ai:GAP},(u,a,td)=>{const p=fwd(u,a,Math.min(td||220,250)),e0=nearE(u,p.x,p.y,120),e=e0&&dist(u,e0)<270?e0:null;let tx,ty;
+  if(e){const b=ang(u,e);tx=e.x+Math.cos(b)*48;ty=e.y+Math.sin(b)*48}else{const q=fwd(u,a,Math.min(td||220,220));tx=q.x;ty=q.y}
   tx=clamp(tx,B.x+u.r,B.x+B.w-u.r);ty=clamp(ty,B.y+u.r,B.y+B.h-u.r);const b=Math.atan2(ty-u.y,tx-u.x),d=Math.hypot(tx-u.x,ty-u.y);
-  ucS('dash',u);ucS('poof',u);jx({jfx:'uc_crows',x:u.x,y:u.y,a:b,t:.8,m:.8,out:1});u.phase=Math.max(u.phase||0,.1);
+  ucS('dash',u);ucS('poof',u);jx({jfx:'uc_crows',x:u.x,y:u.y,a:b,t:.8,m:.8,out:1});u.phase=Math.max(u.phase||0,ucK.shT+.08); // intangible pendant le trajet (souvenir de Kamui)
   dash(u,b,d,ucK.shT,{end:()=>{if(e&&!e.dead)u.aim=ang(u,e);u.uc_shB=SIMT+1.6;anim(u,'uc_land',.4);jx({jfx:'uc_crows',x:u.x,y:u.y,a:b+Math.PI,t:.55,m:.55,out:0})}})}),
  // Kamui : aspiré dans l'autre dimension (intangible, invisible) puis recraché au point visé, sans traverser la carte ; le point d'arrivée tourbillonne d'avance
  // (deux « dash » immobiles : ni déplacement visible ni jutsu pendant le passage)
@@ -90,7 +92,7 @@ Object.assign(NAT,{
   ucS('genjutsu',u);anim(u,'uc_amat',1);
   jx({jfx:'uc_mgk',ui:ucI(u),x:u.x,y:u.y,t:1.4,m:1.4,blood:1});if(tg)jx({jfx:'uc_gazeline',ui:ucI(u),ti:ucI(tg),x:tg.x,y:tg.y,t:.3,m:.3,dark:1});
   later(u,.28,()=>{const live=tg&&!tg.dead,x=live?tg.x:p.x,y=live?tg.y:p.y;ucS('fire',u);jx({jfx:'uc_amatb',x,y,r:72,t:1.1,m:1.1});field(u,x,y,{r:62,t:3.5,dps:6,col:'#120a16',vfx:'black'});
-   if(live){ucIgnite(u,tg,ucK.amD,ucK.amP,6);for(const o of enemies(u))if(o!==tg&&dist(o,tg)<110)ucIgnite(u,o,10,5,4)}else for(const o of enemies(u))if(Math.hypot(o.x-x,o.y-y)<72+o.r)ucIgnite(u,o,12,6,5);
+   if(live){ucIgnite(u,tg,ucK.amD,ucK.amP,ucK.amT);for(const o of enemies(u))if(o!==tg&&dist(o,tg)<110)ucIgnite(u,o,10,5,4)}else for(const o of enemies(u))if(Math.hypot(o.x-x,o.y-y)<72+o.r)ucIgnite(u,o,12,6,5);
    if(near(x,y))shake=Math.max(shake,.3)})}),
  // Tsukuyomi : contact visuel obligatoire ; crucifiée 0,9 s, 3 « jours » de tourments, chakra perdu, puis esprit brisé (vulnérable) ; sinon simple ralentissement
  // cible : l'ennemi de la ligne de regard (télégraphe) le plus proche du point visé, sinon celui tout près du point visé
@@ -178,7 +180,7 @@ TRAITS[0]={nom:'Sharingan',desc:'Chaque jutsu ennemi vu éveille un tomoe ; à 3
   text(n>=3?'Sharingan : lecture prête':u.uc_rcT>0?'Sharingan : l\'œil récupère ('+u.uc_rcT+' s)':'Sharingan '+n+'/3',X+16,Y+4,12,n>=3?'#ff6a7a':'#e8b0b8','left');if(u.uc_cpN)tfit('Copie : '+u.uc_cpN+' ('+u.uc_cpT+' s)',X+16,Y+18,11,'#ffd0d8',230);g.restore()}};
 AFTER.push(()=>{UK.push('uc_tm','uc_cpN','uc_cpT','uc_rcT','uc_am');
  // Susanô et Tsukuyomi du clan ont leurs propres effets : on coupe les effets génériques de l'élément pour eux
- for(const v of['susano','tsukuyomi']){const o=JFX[v];if(o)JFX[v]=(u,a,td,pre,ab)=>{if(ab&&(ab.key==='uc_susa'||ab.key==='uc_tsuku'))return;o(u,a,td,pre,ab)}}});
+ for(const v of['susano','tsukuyomi']){const o=JFX[v];if(o)JFX[v]=(u,a,td,pre,ab)=>{if(ab&&(ab.key==='uc_susa'||ab.key==='uc_tsuku'||ab.key==='uc_gtsu'))return;o(u,a,td,pre,ab)}}});
 
 // ---- dessins
 // tomoe (virgule) : tête ronde + queue qui s'enroule dans la direction a

@@ -74,6 +74,8 @@ function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Ma
  o.k=K;
  const B=Array.isArray(b.bar)?b.bar:[];for(let s=0;s<BARN;s++){const v=B[s];const id=typeof v==='number'?v|0:-1;o.bar.push(id===v&&K.includes(id)&&!o.bar.includes(id)?id:-1)}
  if(o.bar.every(id=>id<0))o.bar=autoBar(o);
+ // al (facultatif) : noms affichés propres au perso, {'Nom|arbre': 'Alias'} pour des jutsu appris (ex. Kakashi : Chidori → « Raikiri »)
+ if(b.al&&typeof b.al==='object'){const A={};let n=0;for(const k in b.al){const id=pickKey(o,k),v=String(b.al[k]||'').replace(/[<>]/g,'').slice(0,24);if(n<BARN&&id>=0&&K.includes(id)&&jKey(id)===k&&v){A[k]=v;n++}}if(n)o.al=A}
  if(o.clan>=0)o.dsh='c';else{const d=String(b.dsh||'b');o.dsh=dashOpts(o).includes(d)?d:'b'}
  return o}
 // nom → jid dans les arbres du build (un même nom peut exister dans plusieurs arbres : celui du build d'abord)

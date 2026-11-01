@@ -4157,36 +4157,34 @@ AFTER.push(()=>{UK.push('do_kj','do_ar','do_ac','do_sw','do_mo');DARKV.do_prop=1
 // Katon du clan (Gôkakyû, Ryûka), kenjutsu (Kusanagi), corbeaux (Shunshin), Kamui, Izanagi et Susanô.
 const ucD={
  kusa:'Le sabre s\'allonge d\'un coup : estoc en ligne qui ignore les parades et ralentit ; la pointe frappe 55 % plus fort',
- goka:'Grande boule de feu qui grossit en avançant, explose et brûle ; relance pour la faire exploser où tu veux',
+ goka:'Boule de feu qui grossit en avançant, explose et brûle ; relance pour la faire exploser où tu veux',
  shar:'Copie le dernier jutsu ennemi vu (10 s) et le relance aussitôt, à 90 % ; sans copie, esquive le prochain coup (2,5 s)',
  ryuka:'3 shuriken à fil : le premier ennemi touché est ligoté, puis le feu court le long du fil et l\'embrase',
  genj:'Regard droit devant : qui te regarde est paralysé 0,9 s, les autres sont ralentis. Détourner les yeux protège',
+ gtsu:'Regard droit devant : qui te regarde est paralysé 0,9 s, les autres ralentis. À 3 tomoe, c\'est Tsukuyomi : la cible est en plus torturée, vidée de chakra et vulnérable 1,5 s (consomme les tomoe)',
  iza:'Pendant 4 s la réalité se réécrit : à la fin, ou si tu meurs, tu reviens au point et aux PV du lancement',
- shun:'Disparaît en corbeaux et surgit dans le dos de l\'ennemi visé ; ta prochaine attaque de base frappe +15 %',
+ shun:'Se disperse en corbeaux, intangible : réapparaît ≈ 220 plus loin, ou dans le dos de l\'ennemi visé ; ta prochaine attaque de base frappe +15 %',
  kamui:'Aspiré dans ta dimension : intangible et invisible, tu réapparais au point visé (300 max)',
- amat:'Le regard embrase la cible de flammes noires inextinguibles : longue brûlure qui se propage aux ennemis proches',
+ amat:'Le regard embrase la cible de flammes noires inextinguibles : brûlure qui se propage aux ennemis proches',
  tsuku:'Si la cible croise ton regard : 72 h de torture en 0,9 s (paralysée, blessée, vidée de chakra), puis vulnérable 1,5 s ; sinon ralentie',
- susa:'Le Susanô t\'entoure 3 s (−15 % de dégâts) et frappe 3 fois devant toi ; le dernier coup scelle (étourdit)',
+ susa:'Le Susanô t\'entoure 3,5 s (−20 % de dégâts, inarrêtable un instant) et frappe 3 fois devant toi ; le dernier coup scelle (étourdit)',
 };
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés des arbres (code conservé) : Lame de Kusanagi, Katon : Ryûka, Izanagi, Kamui (→ intangibilité du dash), Tsukuyomi seul (→ Genjutsu : Tsukuyomi)
 KIT('c0',[
- [1,'D','x.uc_kusa','Lame de Kusanagi',ucD.kusa,'steel'],
- [1,'C','x.uc_goka','Katon : Gôkakyû',ucD.goka,'fire'],
- [4,'C','x.uc_shar','Sharingan',ucD.shar,'genjutsu'],
- [3,'B','x.uc_ryuka','Katon : Ryûka',ucD.ryuka,'fire'],
- [3,'B','x.uc_genj','Sharingan : Genjutsu',ucD.genj,'genjutsu'],
- [4,'A','x.uc_iza','Izanagi',ucD.iza,'genjutsu'],
- [2,'C','x.uc_shun','Shunshin Uchiha',ucD.shun,'genjutsu'],
- [2,'B','x.uc_kamui','Kamui',ucD.kamui,'genjutsu'],
- [5,'S','x.uc_amat','Amaterasu',ucD.amat,'black'],
- [5,'S','x.uc_tsuku','Tsukuyomi',ucD.tsuku,'tsukuyomi'],
- [5,'A','x.uc_susa','Susanô : Totsuka',ucD.susa,'susano'],
+ ['D','x.uc_goka','Katon : Gôkakyû',ucD.goka,'fire'],
+ ['C','x.uc_shar','Sharingan',ucD.shar,'genjutsu'],
+ ['B','x.uc_gtsu','Genjutsu : Tsukuyomi',ucD.gtsu,'tsukuyomi'],
+ ['A','x.uc_amat','Amaterasu',ucD.amat,'black'],
+ ['S','x.uc_susa','Susanô : Totsuka',ucD.susa,'susano'],
 ]);
+// dash (Espace) : Shunshin des corbeaux (ancien Shunshin Uchiha, réduit, + intangibilité de Kamui)
+DASHC[0]={src:'x.uc_shun',n:'Shunshin des corbeaux',d:ucD.shun,vfx:'genjutsu',cd:7};
 // ---- aides
 let ucCopy=null; // lanceur d'un jutsu copié : ses coups immédiats font −10 %
 const ucTR={rng:560,rec:40,part:.65}; // trait : portée de lecture des mudras, repos de l'œil après une lecture, part des dégâts encore subie (le contrôle est toujours annulé)
 // réglages d'équilibre (dégâts de base avant la puissance du ninja)
-const ucK={kusa:9,kusaP:14,kusaS:.3,gkD:6,gkA:5,gkR:46,cpM:.9,ryuS:4,ryuR:.65,ryuF:12,genD:12,genS:.9,genL:345,genW:120,shB:1.15,shT:.22,amD:15,amP:7.5,tsuD:8,tsuS:.9,tsuT:6,tsuC:15,tsuV:1.5,susD:7,susL:12,susR:.15,susT:3,susU:.8,susS:.6};
+const ucK={kusa:9,kusaP:14,kusaS:.3,gkD:5,gkA:4,gkR:40,cpM:.9,ryuS:4,ryuR:.65,ryuF:12,genD:12,genS:.9,genL:345,genW:120,shB:1.15,shT:.22,amD:13,amP:6.5,amT:5,tsuD:8,tsuS:.9,tsuT:6,tsuC:15,tsuV:1.5,susD:6,susL:12,susR:.2,susT:3.5,susU:.8,susS:.6};
 const ucAI={cp:{max:420,p:.75},wake:{mode:'def',p:.45},izF:{mode:'self',max:260,p:.6},izN:{mode:'heal',p:0}}; // conduite des bots : Sharingan (copie prête ou non), Izanagi (blessé et au contact), Kamui (esquive, fuite si presque mort)
 const ucI=u=>units.indexOf(u),ucCol=u=>u.ch.look.weapon.col||'#a5f';
 function ucS(k,u){const V=VFX;VFX=null;S(k,u);VFX=V} // son exact (sans la teinte sonore de l'élément)
@@ -4224,14 +4222,18 @@ Object.assign(NAT,{
   for(const e of ucLine(u,a,ucK.genL,ucK.genW)){
    if(ucEye(e,u)){if(hit(e,u,ucK.genD,{stun:ucK.genS,unblockable:1,reveal:1})){jx({jfx:'uc_bind',ti:ucI(e),x:e.x,y:e.y,t:ucK.genS,m:ucK.genS});jx({jfx:'uc_gazeline',ui:ucI(u),ti:ucI(e),x:e.x,y:e.y,t:.4,m:.4});ucSay(e,'GENJUTSU','#ff5a6a',28)}}
    else if(hit(e,u,ucK.genD*.5,{slow:1.6,unblockable:1}))ucSay(e,'REGARD ÉVITÉ','#ffb0c0',28)}}),
+ // Genjutsu : Tsukuyomi (v5, fusion) : regard du Genjutsu ; à 3 tomoe éveillés (trait), le regard devient Tsukuyomi et consomme les tomoe
+ uc_gtsu:S_('Genjutsu : Tsukuyomi',ucD.gtsu,10,{hero:'inquisitor',line:{len:ucK.genL,w:ucK.genW},ai:RG(320,.6)},(u,a,td,P)=>{
+  if((u.uc_tm|0)>=3){u.uc_tm=0;u.uc_tmF=.6;say(u,'TSUKUYOMI','#ff3a4a');NAT.uc_tsuku.f(u,a,td,P);return}
+  NAT.uc_genj.f(u,a,td,P)}),
  // Izanagi : ancre (position + PV) ; au bout de 4 s, ou à la mort (moteur : izRevive), retour à l'ancre
  uc_iza:S_('Izanagi',ucD.iza,14,{ai:HEALM},(u)=>{ucS('genjutsu',u);anim(u,'pray',.5);const T=4;u.izT=T+.3;u.izS={x:u.x,y:u.y,hp:u.hp};
   aux.push({type:'uc_iza',x:u.x,y:u.y,r:0,t:T,m:T,team:u.team,owner:u,ui:ucI(u),hp:u.hp,lx:u.x,ly:u.y});jx({jfx:'uc_izaon',ui:ucI(u),x:u.x,y:u.y,t:T,m:T});ring(u.x,u.y,46,'#e0304a');say(u,'IZANAGI','#ff5a6a')}),
  // Shunshin Uchiha : éclair dans une nuée de corbeaux, réapparaît dans le dos de l'ennemi visé (sinon au curseur)
- uc_shun:S_('Shunshin Uchiha',ucD.shun,10,{hero:'maul',ai:GAP},(u,a,td)=>{const p=fwd(u,a,Math.min(td||260,330)),e=nearE(u,p.x,p.y,150);let tx,ty;
-  if(e){const b=ang(u,e);tx=e.x+Math.cos(b)*52;ty=e.y+Math.sin(b)*52}else{const q=fwd(u,a,Math.min(td||260,280));tx=q.x;ty=q.y}
+ uc_shun:S_('Shunshin des corbeaux',ucD.shun,7,{hero:'maul',ai:GAP},(u,a,td)=>{const p=fwd(u,a,Math.min(td||220,250)),e0=nearE(u,p.x,p.y,120),e=e0&&dist(u,e0)<270?e0:null;let tx,ty;
+  if(e){const b=ang(u,e);tx=e.x+Math.cos(b)*48;ty=e.y+Math.sin(b)*48}else{const q=fwd(u,a,Math.min(td||220,220));tx=q.x;ty=q.y}
   tx=clamp(tx,B.x+u.r,B.x+B.w-u.r);ty=clamp(ty,B.y+u.r,B.y+B.h-u.r);const b=Math.atan2(ty-u.y,tx-u.x),d=Math.hypot(tx-u.x,ty-u.y);
-  ucS('dash',u);ucS('poof',u);jx({jfx:'uc_crows',x:u.x,y:u.y,a:b,t:.8,m:.8,out:1});u.phase=Math.max(u.phase||0,.1);
+  ucS('dash',u);ucS('poof',u);jx({jfx:'uc_crows',x:u.x,y:u.y,a:b,t:.8,m:.8,out:1});u.phase=Math.max(u.phase||0,ucK.shT+.08); // intangible pendant le trajet (souvenir de Kamui)
   dash(u,b,d,ucK.shT,{end:()=>{if(e&&!e.dead)u.aim=ang(u,e);u.uc_shB=SIMT+1.6;anim(u,'uc_land',.4);jx({jfx:'uc_crows',x:u.x,y:u.y,a:b+Math.PI,t:.55,m:.55,out:0})}})}),
  // Kamui : aspiré dans l'autre dimension (intangible, invisible) puis recraché au point visé, sans traverser la carte ; le point d'arrivée tourbillonne d'avance
  // (deux « dash » immobiles : ni déplacement visible ni jutsu pendant le passage)
@@ -4244,7 +4246,7 @@ Object.assign(NAT,{
   ucS('genjutsu',u);anim(u,'uc_amat',1);
   jx({jfx:'uc_mgk',ui:ucI(u),x:u.x,y:u.y,t:1.4,m:1.4,blood:1});if(tg)jx({jfx:'uc_gazeline',ui:ucI(u),ti:ucI(tg),x:tg.x,y:tg.y,t:.3,m:.3,dark:1});
   later(u,.28,()=>{const live=tg&&!tg.dead,x=live?tg.x:p.x,y=live?tg.y:p.y;ucS('fire',u);jx({jfx:'uc_amatb',x,y,r:72,t:1.1,m:1.1});field(u,x,y,{r:62,t:3.5,dps:6,col:'#120a16',vfx:'black'});
-   if(live){ucIgnite(u,tg,ucK.amD,ucK.amP,6);for(const o of enemies(u))if(o!==tg&&dist(o,tg)<110)ucIgnite(u,o,10,5,4)}else for(const o of enemies(u))if(Math.hypot(o.x-x,o.y-y)<72+o.r)ucIgnite(u,o,12,6,5);
+   if(live){ucIgnite(u,tg,ucK.amD,ucK.amP,ucK.amT);for(const o of enemies(u))if(o!==tg&&dist(o,tg)<110)ucIgnite(u,o,10,5,4)}else for(const o of enemies(u))if(Math.hypot(o.x-x,o.y-y)<72+o.r)ucIgnite(u,o,12,6,5);
    if(near(x,y))shake=Math.max(shake,.3)})}),
  // Tsukuyomi : contact visuel obligatoire ; crucifiée 0,9 s, 3 « jours » de tourments, chakra perdu, puis esprit brisé (vulnérable) ; sinon simple ralentissement
  // cible : l'ennemi de la ligne de regard (télégraphe) le plus proche du point visé, sinon celui tout près du point visé
@@ -4332,7 +4334,7 @@ TRAITS[0]={nom:'Sharingan',desc:'Chaque jutsu ennemi vu éveille un tomoe ; à 3
   text(n>=3?'Sharingan : lecture prête':u.uc_rcT>0?'Sharingan : l\'œil récupère ('+u.uc_rcT+' s)':'Sharingan '+n+'/3',X+16,Y+4,12,n>=3?'#ff6a7a':'#e8b0b8','left');if(u.uc_cpN)tfit('Copie : '+u.uc_cpN+' ('+u.uc_cpT+' s)',X+16,Y+18,11,'#ffd0d8',230);g.restore()}};
 AFTER.push(()=>{UK.push('uc_tm','uc_cpN','uc_cpT','uc_rcT','uc_am');
  // Susanô et Tsukuyomi du clan ont leurs propres effets : on coupe les effets génériques de l'élément pour eux
- for(const v of['susano','tsukuyomi']){const o=JFX[v];if(o)JFX[v]=(u,a,td,pre,ab)=>{if(ab&&(ab.key==='uc_susa'||ab.key==='uc_tsuku'))return;o(u,a,td,pre,ab)}}});
+ for(const v of['susano','tsukuyomi']){const o=JFX[v];if(o)JFX[v]=(u,a,td,pre,ab)=>{if(ab&&(ab.key==='uc_susa'||ab.key==='uc_tsuku'||ab.key==='uc_gtsu'))return;o(u,a,td,pre,ab)}}});
 
 // ---- dessins
 // tomoe (virgule) : tête ronde + queue qui s'enroule dans la direction a
@@ -4511,17 +4513,16 @@ Object.assign(ANIM,{
 // ===== Clan Hyûga =====
 // Jûken (poing souple) : chaque frappe ferme des tenketsu (points de chakra) de la cible ; 8 fermés = chakra scellé (voir le trait de clan en bas)
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés des arbres (code conservé) : Hakke : Paume (→ Kûshô à bout portant), Hakke Kûhekishô, Hakke : 64 points seul (→ champ du S)
 KIT('c1',[
- [1,'D','x.hy_palm','Hakke : Paume','Paume à bout portant devant soi : étourdit 0,4 s et ferme 2 tenketsu','jyuken'],
- [3,'D','x.hy_byak','Byakugan','8 s : chaque frappe de Jûken ferme 1 tenketsu de plus ; tu esquives la prochaine attaque et ta riposte cogne plus fort ; révèle les invisibles','jyuken'],
- [4,'C','x.hy_kaiten','Kaiten','Tourbillon divin 1,2 s sur place : renvoie tous les tirs, repousse et blesse qui t\'approche ; agir l\'arrête','jyuken'],
- [1,'B','x.hy_kusho','Hakke Kûshô','Paume d\'air à distance qui repousse violemment ; projeté contre un obstacle, l\'ennemi est étourdi','jyuken'],
- [1,'B','x.hy_lions','Jûho Sôshiken','Bondit avec deux lions de chakra : double frappe qui ferme 4 tenketsu et vole du chakra','jyuken'],
- [1,'A','x.hy_great','Hakke Kûhekishô','Mur d\'air géant qui avance : emporte les ennemis, détruit leurs tirs, puis les projette et les étourdit','jyuken'],
- [2,'C','x.hy_step','Pas du Hakke','2 glissades rapides ; ta frappe de Jûken suivante cogne plus fort et ferme 1 tenketsu de plus','jyuken'],
- [5,'S','x.hy_128','Hakke : 128 points','Fonce sur la cible ; si tu l\'atteins, 7 salves la bloquent, puis l\'étourdissent et la réduisent au silence','jyuken'],
- [5,'C','x.hy_64','Hakke : 64 points','Champ des trigrammes autour de toi : 6 salves qui ralentissent les ennemis dedans, la dernière étourdit et rend vulnérable','jyuken'],
+ ['D','x.hy_byak','Byakugan','8 s : chaque frappe de Jûken ferme 1 tenketsu de plus ; tu esquives la prochaine attaque et ta riposte cogne plus fort ; révèle les invisibles','jyuken'],
+ ['C','x.hy_kushoC','Hakke Kûshô','Paume d\'air à distance qui repousse violemment (étourdit contre un obstacle) ; à bout portant, l\'onde traverse le corps : étourdit 0,4 s et ferme 2 tenketsu','jyuken'],
+ ['B','x.hy_kaiten','Kaiten','Tourbillon divin 1,2 s sur place : renvoie tous les tirs, repousse et blesse qui t\'approche ; agir l\'arrête','jyuken'],
+ ['A','x.hy_lions','Jûho Sôshiken','Bondit avec deux lions de chakra : double frappe qui ferme 4 tenketsu, vole du chakra et ralentit','jyuken'],
+ ['S','x.hy_128','Hakke : 64 / 128 points','Fonce sur la cible ; si tu l\'atteins, le champ des trigrammes s\'ouvre : 7 salves la bloquent puis l\'étourdissent et la réduisent au silence ; les autres ennemis du champ sont ralentis','jyuken'],
 ]);
+// dash (Espace) : Pas du Hakke
+DASHC[1]={src:'x.hy_step',n:'Pas du Hakke',d:'2 glissades rapides ; ta frappe de Jûken suivante cogne plus fort et ferme 1 tenketsu de plus',vfx:'jyuken',cd:6};
 // ---------- aides ----------
 const hyI=u=>units.indexOf(u);
 const hyS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son sans la teinte « jyuken »
@@ -4564,10 +4565,16 @@ Object.assign(NAT,{
  hy_kusho:S_('Hakke Kûshô','Paume d\'air à distance qui repousse violemment ; projeté contre un obstacle, l\'ennemi est étourdi',8,{hero:'quigon',line:{len:430,w:30},ai:RG(430,.6)},(u,a)=>{S('jyuken',u);hyS('wind',u);anim(u,'hy_kusho',.5);
   jx({jfx:'hy_muzzle',ui:hyI(u),x:u.x,y:u.y,a,t:.3,m:.3});
   proj(u,a,{spd:980,r:13,dmg:20,life:.44,col:'#cfe0ff',kind:'hy_kusho',big:1,o:{kb:720,wall:1,hy_tk:1},onHit:(p,t)=>jx({jfx:'hy_burst',x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.45,m:.45})})}),
+ // Hakke Kûshô (v5, fusion avec la Paume) : à bout portant (< 90 devant soi), frappe comme la Paume ; sinon paume d'air à distance
+ hy_kushoC:S_('Hakke Kûshô','',8,{hero:'quigon',line:{len:430,w:30},ai:RG(430,.6)},(u,a,td,P)=>{
+  const close=enemies(u).some(e=>dist(u,e)<90+e.r&&angDiff(ang(u,e),a)<.7);
+  if(close){NAT.hy_palm.f(u,a,td,P);hyS('wind',u);for(const e of enemies(u))if(e.stun>0&&dist(u,e)<130+e.r&&angDiff(ang(u,e),a)<.8&&e.unstop<=0){e.kx+=Math.cos(a)*260;e.ky+=Math.sin(a)*260}return}
+  S('jyuken',u);hyS('wind',u);anim(u,'hy_kusho',.5);jx({jfx:'hy_muzzle',ui:hyI(u),x:u.x,y:u.y,a,t:.3,m:.3});
+  proj(u,a,{spd:980,r:13,dmg:19,life:.44,col:'#cfe0ff',kind:'hy_kusho',big:1,o:{kb:700,wall:1,hy_tk:1},onHit:(p,t)=>jx({jfx:'hy_burst',x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.45,m:.45})})}),
  // Jûho Sôshiken : deux lions de chakra sur les poings
  hy_lions:S_('Jûho Sôshiken','Bondit avec deux lions de chakra : double frappe qui ferme 4 tenketsu et vole du chakra',11,{hero:'quigon',line:{len:200,w:70},ai:{mode:'gap',min:30,max:205,p:.6}},(u,a,td)=>{S('jyuken',u);hyS('roar',u);anim(u,'hy_lion',.62);
   jx({jfx:'hy_lions',ui:hyI(u),x:u.x,y:u.y,t:.62,m:.62});
-  const bite=i=>{if(u.dead||u.stun>0)return;for(const e of hyCone(u,u.aim,115,1.2,8,{hy_tk:2,slow:i?0:.8,kb:i?300:0})){const s=Math.min(e.energy,5);e.energy-=s;u.energy=Math.min(100,u.energy+s);jx({jfx:'hy_bite',ti:hyI(e),x:e.x,y:e.y,a:ang(u,e),n:i,t:.42,m:.42})}if(near(u.x,u.y))S('jyuken',u)};
+  const bite=i=>{if(u.dead||u.stun>0)return;for(const e of hyCone(u,u.aim,115,1.2,13,{hy_tk:2,slow:i?.6:.8,kb:i?300:0})){const s=Math.min(e.energy,5);e.energy-=s;u.energy=Math.min(100,u.energy+s);jx({jfx:'hy_bite',ti:hyI(e),x:e.x,y:e.y,a:ang(u,e),n:i,t:.42,m:.42})}if(near(u.x,u.y))S('jyuken',u)};
   dash(u,a,clamp((td||200)-45,0,160),.16,{end:()=>{bite(0);later(u,.16,()=>bite(1))}})}),
  // Kûhekishô : un mur d'air qui avance et emporte tout
  hy_great:S_('Hakke Kûhekishô','Mur d\'air géant qui avance : emporte les ennemis, détruit leurs tirs, puis les projette et les étourdit',13,{hero:'quigon',line:{len:380,w:170},ai:RG(320,.6)},(u,a)=>{S('jyuken',u);hyS('heavy',u);hyS('wind',u);anim(u,'hy_kuheki',.65);
@@ -4583,7 +4590,9 @@ Object.assign(NAT,{
   hyS('dash',u);anim(u,'hy_glide',.22);u.aim=b;jx({jfx:'hy_steps',x:u.x,y:u.y,a:b,t:.5,m:.5});
   dash(u,b,dd,.2,{end:()=>{if(u.dead||u.stun>0)return;const t=nearE(u,u.x,u.y,96);if(!t){say(u,'MANQUÉ','#9fb3d9');return}u.aim=ang(u,t);
    // la 1re salve est le contact : esquive, intangibilité, Kaiten (renvoi) ou contre l'annulent
-   aux.push({type:'hy_combo',x:(u.x+t.x)/2,y:(u.y+t.y)/2,r:115,t:1.4,m:1.4,team:u.team,owner:u,tg:t,ui:hyI(u),ti:hyI(t),vfx:'jyuken',k:0,n:0,kind:'128'})}})}),
+   aux.push({type:'hy_combo',x:(u.x+t.x)/2,y:(u.y+t.y)/2,r:115,t:1.4,m:1.4,team:u.team,owner:u,tg:t,ui:hyI(u),ti:hyI(t),vfx:'jyuken',k:0,n:0,kind:'128'});
+   // (v5, fusion avec 64 points) : le champ des trigrammes ralentit les autres ennemis proches
+   aux.push({type:'hy_f64',x:u.x,y:u.y,r:150,t:1.45,m:1.45,team:u.team,owner:u,ui:hyI(u),vfx:'jyuken',k:.3,n:0,kind:'64',lite:1,tg:t})}})}),
  // 64 points : champ des huit trigrammes autour de soi, salves sur tous ceux qui y restent
  hy_64:ULT('Hakke : 64 points','Champ des trigrammes autour de toi : 6 salves qui ralentissent les ennemis dedans, la dernière étourdit et rend vulnérable',{hero:'mace',tele:{self:1,r:150},ai:SELF(140,.8)},(u)=>{S('jyuken',u);anim(u,'hy_stance',.5);
   aux.push({type:'hy_f64',x:u.x,y:u.y,r:150,t:1.45,m:1.45,team:u.team,owner:u,ui:hyI(u),vfx:'jyuken',k:.3,n:0,kind:'64'})}),
@@ -4598,7 +4607,7 @@ AUXF.hy_kaiten=x=>{const o=x.owner;
  o.root=Math.max(o.root,.1);if(!o.ctrl)o.aiT=Math.max(o.aiT||0,.1); // un bot tient son tourbillon jusqu'au bout
  x.x=o.x;x.y=o.y;const V=VFX;VFX='jyuken';
  for(const e of enemies(o)){const d=Math.hypot(e.x-x.x,e.y-x.y),m=x.r+e.r-12;if(d>=m)continue;
-  if(!x.hs.has(e)){x.hs.add(e);if(hit(e,o,x.n?8:10,{kb:430,fx:x.x,fy:x.y,hy_tk:1})&&near(e.x,e.y))sparks(e.x,e.y,'#ffffff',8,'jyuken')}
+  if(!x.hs.has(e)){x.hs.add(e);if(hit(e,o,x.n?11:14,{kb:460,fx:x.x,fy:x.y,hy_tk:1})&&near(e.x,e.y))sparks(e.x,e.y,'#ffffff',8,'jyuken')}
   if(e.unstop<=0&&d>1){e.x=x.x+(e.x-x.x)/d*m;e.y=x.y+(e.y-x.y)/d*m;collide(e)}}
  VFX=V;x.n=1;
  for(const p of projs){if(p.owner.team===x.team||p.grenade||p.dead||p.life<=0||Math.hypot(p.x-x.x,p.y-x.y)>x.r)continue;
@@ -4637,9 +4646,9 @@ AUXF.hy_combo=x=>{const o=x.owner,e=x.tg;if(x.end||x.n>=7)return;
 AUXF.hy_f64=x=>{const o=x.owner;if(x.end||x.n>=6)return;if(!o||o.dead||o.stun>0||Math.hypot(o.x-x.x,o.y-x.y)>40){x.end=1;x.t=Math.min(x.t,.25);hyAnimOff(o,'hy_rapid');return}
  o.root=Math.max(o.root,.12);if(x.k>0)return;
  x.n++;x.k=.17;const fin=x.n===6,V=VFX;VFX='jyuken';
- for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r&&hyVolley(o,e,fin?10:x.n%2?0:6,1,fin?{stun:.6,vuln:3}:{slow:.6})){if(e.unstop<=0)e.slow=Math.max(e.slow,.6);
+ for(const e of enemies(o))if(e!==x.tg&&Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r&&(x.lite?e.unstop<=0&&!(e.phase>0)&&(e.slow=Math.max(e.slow,.6))>0:hyVolley(o,e,fin?10:x.n%2?0:6,1,fin?{stun:.6,vuln:3}:{slow:.6}))){if(e.unstop<=0)e.slow=Math.max(e.slow,.6);
   jx({jfx:'hy_hits',ui:hyI(o),ti:hyI(e),x:e.x,y:e.y,n:x.n,a:ang(o,e),small:1,t:fin?.5:.2,m:fin?.5:.2})}
- VFX=V;anim(o,'hy_rapid',.3);jx({jfx:'hy_count',x:x.x,y:x.y,r:x.r,n:2**x.n,fin:fin?1:0,t:fin?1:.17,m:fin?1:.17});
+ VFX=V;if(x.lite){if(fin)x.t=.4;return}anim(o,'hy_rapid',.3);jx({jfx:'hy_count',x:x.x,y:x.y,r:x.r,n:2**x.n,fin:fin?1:0,t:fin?1:.17,m:fin?1:.17});
  if(fin){x.t=.4;if(near(x.x,x.y)){shake=Math.max(shake,.2);hyS('heavy',o)}}else S('jyuken',o)};
 // ---------- dessins ----------
 // empreinte de paume (doigts vers le haut), en coordonnées écran
@@ -4835,16 +4844,16 @@ TRAITS[1]={nom:'Byakugan : tenketsu',desc:'Chaque coup de Jûken ferme un tenket
 // ===== Clan Nara =====
 // Les ombres rampent au sol (aux 'na_ten') : elles passent sous les projectiles mais s'arrêtent sur les poteaux et les murs.
 // [emplacement, rang, mécanique (x.clé = NAT[clé], sinon perso.sort du moteur), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés : Ombre explosive (→ Plan du stratège), Course de l'ombre et Ombre protectrice (→ dash)
 KIT('c2',[
- [1,'B','x.na_mane','Kage Mane','Ombre au sol : possédée 1 s puis ralentie, la cible imite tes pas en miroir et ne peut plus agir ; toi, jutsu seulement','shadow'],
- [2,'C','x.na_run','Course de l\'ombre','2 s très rapide, insensible aux ralentissements et entraves ; ta traînée d\'ombre ralentit les ennemis','shadow'],
- [3,'A','x.na_kubi','Kage Kubi Shibari','Étrangle la cible : entravée, réduite au silence et blessée 1 s ; instantané si ton ombre la tient déjà','shadow'],
- [1,'D','x.na_trap','Ombre explosive','Piège : parchemin caché dans une flaque d\'ombre (2 max) ; l\'ennemi est entravé, puis tout explose','shadow'],
- [5,'S','x.na_nui','Kage Nui','5 aiguilles d\'ombre en éventail transpercent tout : dégâts et entrave ; de près, plusieurs touchent','shadow'],
- [4,'C','x.na_prot','Ombre protectrice','Recule d\'un bond (à l\'opposé de la visée) avec un bouclier ; ton ombre fouette et ralentit les proches','shadow'],
- [4,'D','x.na_plan','Plan du stratège','Réfléchis 0,4 s sans bouger ni agir : ton prochain jutsu à mudras (dans les 8 s) part aussitôt et sans chakra','shadow'],
- [5,'S','x.na_lie','Ombres liées','Ton ombre s\'étend autour de toi puis saisit les ennemis dedans : ramenés vers toi et entravés 1 s','shadow'],
+ ['D','x.na_planD','Plan du stratège','Réfléchis 0,4 s sans bouger ni agir en posant une ombre explosive à tes pieds (1 max) ; ton prochain jutsu à mudras (dans les 8 s) part aussitôt','shadow'],
+ ['C','x.na_mane','Kage Mane','Ombre au sol : possédée 0,8 s puis ralentie, la cible imite tes pas en miroir et ne peut plus agir ; toi, jutsu seulement','shadow'],
+ ['B','x.na_kubi','Kage Kubi Shibari','Étrangle la cible : entravée, réduite au silence et blessée 1 s ; instantané si ton ombre la tient déjà','shadow'],
+ ['A','x.na_nui','Kage Nui','5 aiguilles d\'ombre en éventail transpercent tout : dégâts et entrave ; de près, plusieurs touchent','shadow'],
+ ['S','x.na_lie','Ombres liées','Ton ombre s\'étend autour de toi puis saisit les ennemis dedans : ramenés vers toi et entravés 1 s','shadow'],
 ]);
+// dash (Espace) : Course de l'ombre (glissade) ; en reculant (déplacement opposé à la visée), petit bouclier (souvenir d'Ombre protectrice)
+DASHC[2]={src:'x.na_run',n:'Course de l\'ombre',d:'Glissade de l\'ombre, insensible aux ralentissements et entraves ; ta traînée ralentit les ennemis. En reculant : petit bouclier',vfx:'shadow',cd:6};
 // ---- outils communs
 const naI=u=>units.indexOf(u);
 const naS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son joué tel quel (sans le mappage de l'élément)
@@ -4896,7 +4905,7 @@ AUXF.na_ten=(x,dt)=>{const o=x.owner;if(!o||o.dead){if(x.n===1)naFree(x);x.t=0;r
  if(x.n===1){const e=x.tg;x.hold-=dt;if(!e||e.dead||x.hold<=0||!NA_HOLD[x.kind](x,dt,o,e)){naFree(x);return}x.x=e.x;x.y=e.y;return}
  const b=Math.atan2(o.y-x.y,o.x-x.x),s=1500*dt;x.x+=Math.cos(b)*s;x.y+=Math.sin(b)*s;if(Math.hypot(o.x-x.x,o.y-x.y)<34)x.t=0};
 // Kage Mane : la tête de l'ombre touche → possession
-function naManeHit(x,e){const o=x.owner,D=naLong(e);if(!hit(e,o,NA_MANE.dmg,{})||e.dead||e.unstop>0)return false;if(D>1)naTenace(e);
+function naManeHit(x,e){const o=x.owner,D=NA_MANE.hold*naLong(e);if(!hit(e,o,NA_MANE.dmg,{})||e.dead||e.unstop>0)return false;if(D>1)naTenace(e);
  x.hold=x.h0=D;x.px=o.x;x.py=o.y;e.na_posT=SIMT+D;naHold(e,o,D);for(const k of NA_LOCK)e[k]=Math.max(e[k],D);naStop(e);e.slowImm=0;e.dash=null;e.block=false;e.anim={k:'na_ne',t:D,m:D};
  say(e,'POSSÉDÉ','#d8d8f0');naS('genjutsu',o);naG({kind:'snap',x:e.x,y:e.y,t:.45});jx({jfx:'na_pos',ti:naI(e),ui:naI(o),x:e.x,y:e.y,t:D+.1,m:D+.1});return true}
 // Kage Kubi Shibari : entrave + silence (allongés par le trait), interrompt les mudras, puis l'ombre serre
@@ -4904,7 +4913,7 @@ function naKubi(u,e,inst,x){const O={root:1};if(!hit(e,u,6,O)||e.dead)return fal
  if(e.unstop<=0){e.silence=Math.max(e.silence,H);e.dash=null;if(naStop(e))say(e,'INTERROMPU','#fc6');naSay(e,'ÉTRANGLÉ','#d8d8f0')} // silence posé ici : un seul texte au lieu de deux superposés
  if(!x){x=naTen(u,ang(u,e),{kind:'kubi',w:7,n:1,x:e.x,y:e.y});naG({kind:'snap',x:e.x,y:e.y,t:.4});naS('genjutsu',u)}
  // N tics réguliers, le dernier juste avant la fin de la prise (sinon il tombe après et se perd)
- const N=Math.max(1,Math.round(H/.25)),iv=H/N;Object.assign(x,{kind:'kubi',n:1,tg:e,ti:naI(e),hold:H,iv,k:iv-.07,ticks:N,tick:6});naHold(e,u,H);
+ const N=Math.max(1,Math.round(H/.25)),iv=H/N;Object.assign(x,{kind:'kubi',n:1,tg:e,ti:naI(e),hold:H,iv,k:iv-.07,ticks:N,tick:5});naHold(e,u,H);
  jx({jfx:'na_hands',ti:naI(e),ui:naI(u),x:e.x,y:e.y,t:H,m:H});return true}
 Object.assign(NAT,{
  na_mane:S_('Kage Mane','Ombre au sol : possédée 1 s puis ralentie, la cible imite tes pas en miroir et ne peut plus agir ; toi, jutsu seulement',10,{hero:'padme',line:{len:460,w:22},ai:RG(430,.55)},(u,a)=>{S('shadow',u);anim(u,'na_ne',.6);naG({kind:'burst',x:u.x,y:u.y,a,t:.35,n:3});naTen(u,a,{kind:'mane',spd:NA_MANE.spd,max:460,r:11,w:9,hit:naManeHit})}),
@@ -4916,19 +4925,23 @@ Object.assign(NAT,{
   for(let i=-2;i<=2;i++)naTen(u,a+i*.17,{kind:'nui',spd:980,max:470,r:9,w:4,hit:(x,e)=>{const c=grp.get(e)||0,T=NA_NUI;if(c<T.max){grp.set(e,c+1);if(hit(e,x.owner,c?T.more:T.first,{root:T.root})){naHold(e,x.owner,e.root);jx({jfx:'na_spike',ti:naI(e),ui:naI(x.owner),x:e.x,y:e.y,a:x.a,c,t:1.2,m:1.2})}}return 'p'}})}),
  na_prot:S_('Ombre protectrice','Recule d\'un bond (à l\'opposé de la visée) avec un bouclier ; ton ombre fouette et ralentit les proches',8,{hero:'gideon',tele:{self:1,r:135},ai:SELF(170,.55)},(u,a)=>{const ox=u.x,oy=u.y;S('shadow',u);naS('dash',u);anim(u,'backflip',.42);dash(u,a+Math.PI,210,.32,{jump:38});shieldU(u,22,2.5);u.na_sh=2.5;
   naG({kind:'lash',x:ox,y:oy,a,t:.42});for(const e of enemies(u))if(Math.hypot(e.x-ox,e.y-oy)<135+e.r&&hit(e,u,6,{slow:1.5}))naG({kind:'lash',x:ox,y:oy,a,t:.42,ti:naI(e)})}),
- na_run:S_('Course de l\'ombre','2 s très rapide, insensible aux ralentissements et entraves ; ta traînée d\'ombre ralentit les ennemis',8,{hero:'grievous',ai:{mode:'esc',max:220,p:.45}},(u,a)=>{S('shadow',u);anim(u,'na_melt',.32);u.haste=Math.max(u.haste,2);u.slowImm=Math.max(u.slowImm,2);u.slow=0;u.root=0;
-  aux.push({type:'na_run',x:u.x,y:u.y,a,r:0,t:2,m:2,team:u.team,owner:u,ui:naI(u),vfx:'shadow',k:0,lx:u.x,ly:u.y});aux.push({type:'na_pud',x:u.x,y:u.y,a,r:34,t:1.6,m:1.6,team:u.team,owner:u,vfx:'shadow',k:0});naG({kind:'snap',x:u.x,y:u.y,t:.35})}),
+ na_run:S_('Course de l\'ombre','Glissade de l\'ombre',6,{hero:'grievous',ai:{mode:'esc',max:220,p:.45}},(u,a)=>{const v=Math.hypot(u.vx||0,u.vy||0),mv=v>40?Math.atan2(u.vy,u.vx):a,back=v>40&&angDiff(mv,a)>2.1;
+  S('shadow',u);anim(u,'na_melt',.32);u.slowImm=Math.max(u.slowImm,.7);u.slow=0;u.root=0;
+  aux.push({type:'na_run',x:u.x,y:u.y,a:mv,r:0,t:.7,m:.7,team:u.team,owner:u,ui:naI(u),vfx:'shadow',k:0,lx:u.x,ly:u.y});aux.push({type:'na_pud',x:u.x,y:u.y,a:mv,r:30,t:1.6,m:1.6,team:u.team,owner:u,vfx:'shadow',k:0});naG({kind:'snap',x:u.x,y:u.y,t:.35});
+  dash(u,mv,220,.3,{});if(back){shieldU(u,14,1.5);naSay(u,'OMBRE PROTECTRICE','#c8c8e0');naG({kind:'lash',x:u.x,y:u.y,a,t:.42})}}),
  // réflexion : un vrai temps mort (ni pas, ni jutsu, ni attaque, ni parade) ; la Course ne la contourne pas
  na_plan:S_('Plan du stratège','Réfléchis 0,4 s sans bouger ni agir : ton prochain jutsu à mudras (dans les 8 s) part aussitôt et sans chakra',10,{ai:RG(900,.35,260)},(u)=>{const R=NA_PLAN.think;S('shadow',u);anim(u,'na_think',R+.05);u.slowImm=0;for(const k of NA_SELF)u[k]=Math.max(u[k],R);
   aux.push({type:'na_plan',x:u.x,y:u.y,r:0,t:R,m:R,team:u.team,owner:u,ui:naI(u),vfx:'shadow',k:0});jx({jfx:'na_shogi',ui:naI(u),x:u.x,y:u.y,t:R+.05,m:R+.05})}),
+ na_planD:S_('Plan du stratège','',8,{ai:RG(900,.35,260)},(u,a,td,P)=>{for(const x of aux)if(x.type==='na_trap'&&x.owner===u&&x.n<2)x.t=0;
+  aux.push({type:'na_trap',x:u.x,y:u.y,r:58,t:16,m:16,team:u.team,owner:u,ui:naI(u),ti:-1,vfx:'shadow',k:0,n:0,arm:.5,dmg:11});NAT.na_plan.f(u,a,td,P)}),
  na_lie:ULT('Ombres liées','Ton ombre s\'étend autour de toi puis saisit les ennemis dedans : ramenés vers toi et entravés 1 s',{hero:'rey',tele:{self:1,r:225},ai:SELF(190,.8)},(u)=>{S('shadow',u);anim(u,'na_ne',.5);u.slowImm=0;u.root=Math.max(u.root,.5);
   aux.push({type:'na_lie',x:u.x,y:u.y,r:30,w:225,t:1,m:1,team:u.team,owner:u,ui:naI(u),vfx:'shadow',k:0,n:0})}),
 });
 Object.assign(NATHERO,{na:'padme'});
 // ---- réglages : Ombres liées (dégâts, étourdissement, entrave, distance d'attraction), Kage Mane, Plan du stratège
-const NA_LIE={dmg:10,stun:0,root:1,pull:62};
-const NA_MANE={dmg:12,spd:660,after:1}; // after : ralentissement quand la possession va à son terme
-const NA_NUI={first:34,more:10,max:3,root:1}; // 1re aiguille sur une cible, aiguilles suivantes (bout portant), aiguilles max par cible
+const NA_LIE={dmg:8,stun:0,root:1,pull:62};
+const NA_MANE={dmg:10,spd:660,after:1,hold:.8}; // after : ralentissement quand la possession va à son terme
+const NA_NUI={first:26,more:10,max:3,root:1}; // 1re aiguille sur une cible, aiguilles suivantes (bout portant), aiguilles max par cible
 const NA_PLAN={think:.4,ready:8};
 const NA_SELF=['root','disarm','silence','blockLock']; // ce que la réflexion du Plan bloque chez le Nara (rendu si elle est rompue)
 // ---- objets au sol (hôte)
@@ -4937,7 +4950,7 @@ AUXF.na_trap=(x,dt)=>{const o=x.owner;if(!o||o.dead){x.t=0;return}
  if(x.n<2){if((x.arm-=dt)>0)return;x.n=1;
   for(const e of enemies(o))if(!(e.phase>0)&&Math.hypot(e.x-x.x,e.y-x.y)<x.r*.62+e.r){x.n=2;x.tg=e;x.ti=naI(e);x.fuse=.55;x.t=1;const V=VFX;VFX='shadow';hit(e,o,4,{root:.55});VFX=V;naHold(e,o,.55);naSay(e,'PIÈGE !','#ffb04a');naS('deflect',o);
    jx({jfx:'na_wrap',ti:naI(e),x:e.x,y:e.y,t:.55,m:.55,legs:1});jx({jfx:'na_fuse',x:x.x,y:x.y,t:.55,m:.55});break}return}
- if((x.fuse-=dt)>0||x.done)return;x.done=1;x.t=0;const V=VFX;VFX='tag';for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<85+e.r)hit(e,o,16,{fx:x.x,fy:x.y,kb:70});
+ if((x.fuse-=dt)>0||x.done)return;x.done=1;x.t=0;const V=VFX;VFX='tag';for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<85+e.r)hit(e,o,x.dmg||16,{fx:x.x,fy:x.y,kb:70});
  sparks(x.x,x.y,'#ff9a3a',16,'tag');VFX=V;naS('boom',o);jx({jfx:'na_boom',x:x.x,y:x.y,r:85,t:.55,m:.55});if(near(x.x,x.y))shake=Math.max(shake,.22)};
 // Course de l'ombre : une flaque tous les ~30 px ; chaque flaque ralentit les ennemis qui la traversent
 AUXF.na_run=(x)=>{const o=x.owner;if(!o||o.dead){x.t=0;return}x.x=o.x;x.y=o.y;if(Math.hypot(o.vx||0,o.vy||0)>40)x.a=Math.atan2(o.vy,o.vx);
@@ -4962,7 +4975,7 @@ TRAITS[2]={nom:'Ombre tenace',desc:'Tes contrôles (entrave, étourdissement, si
  deal(src,t,dmg,o){const m=NA_OB.get(o);if(m)for(const k of NA_K)if(o[k]===m.x[k])o[k]=m.b[k];
   if((o.root||o.stun||o.silence)&&t.unstop<=0&&naCtl(t)){const b={},x={};for(const k of NA_K){b[k]=o[k];if(o[k])o[k]*=1.25;x[k]=o[k]}NA_OB.set(o,{b,x});naTenace(t)}return dmg},
  update(u,dt){if(u.na_sh>0)u.na_sh-=dt;if(u.auraV==='shadow')u.auraV=null;
-  if(u.na_pl>0){u.na_pl-=dt;const c=u.cast;if(c&&c.i>0&&!c.na){const ab=castAb(u,c);if(ab&&ab.mud&&ab.key!=='na_plan'){c.na=1;c.dur=Math.min(c.dur,c.t+.01);u.energy=Math.min(100,u.energy+jcost(ab));u.na_pl=0;naSay(u,'COMME PRÉVU !','#ffd38a');naG({kind:'snap',x:u.x,y:u.y,t:.4})}}}
+  if(u.na_pl>0){u.na_pl-=dt;const c=u.cast;if(c&&c.i>0&&!c.na){const ab=castAb(u,c);if(ab&&ab.mud&&ab.key!=='na_plan'){c.na=1;c.dur=Math.min(c.dur,c.t+.01);u.na_pl=0;naSay(u,'COMME PRÉVU !','#ffd38a');naG({kind:'snap',x:u.x,y:u.y,t:.4})}}}
   if(!u.na_dk||aux.indexOf(u.na_dk)<0){u.na_dk={type:'na_dusk',x:u.x,y:u.y,r:0,t:1e9,m:1e9,team:u.team,owner:u,ui:naI(u),vfx:'shadow',k:0};aux.push(u.na_dk)}},
 };
 AFTER.push(()=>{UK.push('na_sh','na_pl');JFX.shadow=()=>{}}); // les signatures « shadow » génériques sont remplacées par celles de ce fichier
@@ -5072,24 +5085,23 @@ STATD.push((u,p,S)=>{if(!(u.na_sh>0)||!(u.shield>0))return;const t=performance.n
 // Identité : les décuplements (Baika) et les calories. Encaisser, frapper au corps à corps et manger remplissent la jauge ;
 // chaque décuplement en brûle 50 pour frapper plus fort et plus large (+20 % de dégâts, +15 % de taille), le Mode Papillon brûle tout.
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés : Boulet humain et Boulet à pointes (→ dash), Pilule rouge seule (→ S), Décuplement (→ Chôdan Bakugeki)
 KIT('c3',[
- [1,'C','x.ak_palm','Paume géante','Gifle géante devant soi : repousse fort, renvoie les projectiles, étourdit si la cible heurte un obstacle','tai'],
- [2,'D','x.ak_roll','Boulet humain','Roule en boulet 0,6 s en suivant la visée : percute les ennemis sur sa route, les écarte et les ralentit','tai'],
- [3,'B','x.ak_arm','Décuplement partiel','Bras géant lancé droit devant : saisit le 1er ennemi et le jette derrière soi, étourdi à l\'atterrissage','tai'],
- [3,'B','x.ak_spike','Boulet à pointes','Boulet hérissé inarrêtable, peu maniable : rebondit sur obstacles et bords ; chaque passage fait saigner','tai'],
- [4,'C','x.ak_red','Pilule rouge','Pilule du piment : soigne, libère des contrôles et remplit la jauge de calories','heal'],
- [1,'A','x.ak_slam','Chôdan Bakugeki','Le ventre enfle et s\'abat devant soi : gros dégâts et étourdit, bien plus au centre','tai'],
- [4,'D','x.ak_pill','Pilule verte','Pilule d\'épinards : bouclier, vitesse 3 s, endurance et +25 calories','heal'],
- [5,'S','x.ak_butterfly','Mode Papillon','Ailes de chakra 4,5 s (+1 s / 34 calories) : géant, rapide, +35 % de dégâts, bouclier, ignore les ralentissements ; épuisé après','ak_bf'],
- [5,'B','x.ak_baika','Décuplement','Devient géant 3 s : inarrêtable, et le sol tremble sans cesse autour de lui (dégâts, ralentit)','tai'],
+ ['D','x.ak_pill','Pilule verte','Pilule d\'épinards : bouclier, vitesse 3 s, endurance et +25 calories','heal'],
+ ['C','x.ak_palm','Paume géante','Gifle géante devant soi : repousse fort, renvoie les projectiles, étourdit si la cible heurte un obstacle','tai'],
+ ['B','x.ak_arm','Décuplement partiel','Bras géant lancé droit devant : saisit le 1er ennemi et le jette derrière soi, étourdi à l\'atterrissage','tai'],
+ ['A','x.ak_chodan','Chôdan Bakugeki','Devient géant (inarrêtable 1,2 s, le sol tremble autour de lui) puis le ventre s\'abat devant soi : gros dégâts et étourdit, bien plus au centre','tai'],
+ ['S','x.ak_redbf','Pilule rouge : Mode Papillon','Avale la pilule rouge : soin et libération des contrôles, puis ailes de chakra 4,5 s (+1 s / 34 calories) : géant, rapide, +35 % de dégâts, bouclier ; épuisé après','ak_bf'],
 ]);
+// dash (Espace) : Boulet humain ; à 50 calories ou plus, il se hérisse de pointes (saignement) et les brûle
+DASHC[3]={src:'x.ak_rollD',n:'Boulet humain',d:'Roule en boulet 0,6 s en suivant la visée : percute, écarte et ralentit ; à 50 calories ou plus, le boulet se hérisse de pointes (saignement) et brûle 50 calories',vfx:'tai',cd:7};
 // ---- calories : jauge 0-100 (2 portions de 50)
 // décuplement : brûle 50 calories si possible → 1 (suralimenté : +20 % de dégâts, +15 % de taille), sinon 0
 function ak_burn(u){if((u.ak_cal||0)<50)return 0;u.ak_cal-=50;say(u,'SURALIMENTÉ','#ffb04a');jx({jfx:'ak_fed',ui:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6});return 1}
 const ak_add=(u,v)=>{u.ak_cal=Math.min(100,(u.ak_cal||0)+v)};
 // tenue sombre ? (boulet et ventre prennent la couleur de la tenue : motifs clairs sur une tenue sombre)
 const ak_dark=c=>{if(typeof c!=='string'||c[0]!=='#')return false;const h=c.length===4?c.slice(1).split('').map(x=>x+x).join(''):c.slice(1,7),n=parseInt(h,16);return .299*(n>>16)+.587*(n>>8&255)+.114*(n&255)<85};
-TRAITS[3]={nom:'Calories',desc:'Encaisser des coups, frapper au corps à corps et manger (pilules, ou chips en rechargeant le chakra) remplit la jauge. Paume, bras, ventre et Décuplement brûlent 50 calories : +20 % de dégâts et plus grands. Le Mode Papillon brûle tout.',
+TRAITS[3]={nom:'Calories',desc:'Encaisser des coups, frapper au corps à corps et manger (pilules, ou chips en rechargeant le chakra) remplit la jauge. Paume, bras, ventre et Boulet humain brûlent 50 calories : +20 % de dégâts et plus grands. Le Mode Papillon brûle tout.',
  init(u){u.ak_cal=20},
  update(u,dt){if(u.chk){ak_add(u,9*dt);if(!u.anim||u.anim.k!=='ak_eat')anim(u,'ak_eat',.7)}
   // filet de sécurité : un état dessiné (boulet, bras, ailes) sans son objet aux est remis à zéro
@@ -5130,11 +5142,23 @@ Object.assign(NAT,{
  ak_red:S_('Pilule rouge','Pilule du piment : soigne, libère des contrôles et remplit la jauge de calories',12,{hero:'bossk',ai:HEALM},(u)=>{heal(u,40);cleanse(u);u.ak_cal=100;anim(u,'ak_pill',.55);S('fire',u);
   jx({jfx:'ak_pill',ui:units.indexOf(u),x:u.x,y:u.y,col:'#ff3a2a',red:1,t:.9,m:.9});later(u,.27,()=>{if(u.dead)return;say(u,'CALORIES MAX','#ff7a2a');if(near(u.x,u.y))S('roar',u)})}),
  // Chôdan Bakugeki : le ventre enfle, monte puis s'abat ; le centre écrase bien plus fort (zone d'alerte sans dégâts : les bots l'esquivent comme les autres)
- ak_slam:S_('Chôdan Bakugeki','Le ventre enfle et s\'abat devant soi : gros dégâts et étourdit, bien plus au centre',11,{tele:{r:140,max:120},ai:RG(220,.6)},(u,a,td)=>{const F=ak_burn(u),R=135*(1+.15*F),M=1+.2*F,D=AK_SLAM,p=fwd(u,a,clamp(td||120,40,120));
+ ak_slam:S_('Chôdan Bakugeki','Le ventre enfle et s\'abat devant soi : gros dégâts et étourdit, bien plus au centre',11,{tele:{r:140,max:120},ai:RG(220,.6)},(u,a,td)=>ak_slamDo(u,a,td,ak_burn(u))),
+ // (le ventre qui s'abat, commun au Chôdan Bakugeki v5)
+ ak_slam0:S_('',0,0,{},(u,a,td,F)=>{const R=135*(1+.15*F),M=1+.2*F,D=AK_SLAM,p=fwd(u,a,clamp(td||120,40,120));
   S('heavy',u);anim(u,'ak_belly',D*1.5);u.unstop=Math.max(u.unstop,D+.05);u.giant=Math.max(u.giant,D+.4);jx({jfx:'ak_belly',ui:units.indexOf(u),x:p.x,y:p.y,a,r:R,t:D/.66,m:D/.66});
   zone(u,p.x,p.y,R,0,D,{silent:1,quiet:1},'#e8dcc8');lastZ().deto='ak_none';
-  later(u,D,()=>{if(u.dead)return;for(const e of enemies(u)){const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<R+e.r){const c=d<R*.5+e.r;hit(e,u,(c?32:22)*M,{stun:c?.9:.4,kb:c?120:280,fx:p.x,fy:p.y,unblockable:1})}}
+  later(u,D,()=>{if(u.dead)return;for(const e of enemies(u)){const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<R+e.r){const c=d<R*.5+e.r;hit(e,u,(c?29:20)*M,{stun:c?.9:.4,kb:c?120:280,fx:p.x,fy:p.y,unblockable:1})}}
    jx({jfx:'ak_crack',x:p.x,y:p.y,r:R,t:.9,m:.9});jx({jfx:'shock',x:p.x,y:p.y,r:R*1.2,t:.5,m:.5,col:'#e8c8a0'});sparks(p.x,p.y,'#a07850',16,'earth');sparks(p.x,p.y,'#e8dcc8',10,'smoke');if(near(p.x,p.y)){S('rock',u);if(nearMe(p.x,p.y))shake=Math.max(shake,.35)}})}),
+ // Chôdan Bakugeki (v5, fusion avec le Décuplement) : grandit, inarrêtable 1,2 s, le sol tremble ; le ventre s'abat à 0,8 s
+ ak_chodan:S_('Chôdan Bakugeki','',13,{hero:'savage',tele:{r:140,max:120},ai:RG(220,.6)},(u,a,td)=>{const F=ak_burn(u),T=1.2;S('roar',u);anim(u,'ak_grow',.8);
+  u.giant=Math.max(u.giant,T+.4);u.unstop=Math.max(u.unstop,T);aux.push({type:'ak_quake',x:u.x,y:u.y,r:95*(1+.15*F),t:T,m:T,team:u.team,owner:u,ui:units.indexOf(u),k:.25,M:1+.2*F,vfx:'tai'});
+  jx({jfx:'ak_grow',ui:units.indexOf(u),x:u.x,y:u.y,t:.8,m:.8});const d0=td;later(u,.4,()=>{if(u.dead||u.stun>0&&!(u.unstop>0))return;ak_slamDo(u,u.aim,d0,F)})}),
+ // Pilule rouge : Mode Papillon (v5, fusion) : soin + libération, puis le Papillon (les calories gardées allongent les ailes)
+ ak_redbf:ULT('Pilule rouge : Mode Papillon','',{ai:SELF(320,.8)},(u,a,td,P)=>{heal(u,30);cleanse(u);anim(u,'ak_pill',.4);S('fire',u);jx({jfx:'ak_pill',ui:units.indexOf(u),x:u.x,y:u.y,col:'#ff3a2a',red:1,t:.9,m:.9});
+  NAT.ak_butterfly.f(u,a,td,P)}),
+ // dash : Boulet humain (pointes à 50 calories)
+ ak_rollD:S_('Boulet humain','',7,{hero:'chewie',ai:{mode:'gap',min:130,max:360,p:.5}},(u,a)=>{const bl=(u.ak_cal||0)>=50;if(bl){u.ak_cal-=50;say(u,'BOULET À POINTES','#ffb04a')}S('dash',u);S(bl?'saber':'heavy',u);anim(u,'ak_ball',.7);
+  aux.push({type:'ak_roll',x:u.x,y:u.y,a,r:0,t:.6,m:.6,team:u.team,owner:u,ui:units.indexOf(u),vfx:'tai',k:0,hs:[],bl:bl?1:0,dm:8});u.ak_roll=.6;u.ak_spk=bl?1:0;sparks(u.x,u.y,bl?'#d8dde6':'#e8dcc8',10,'smoke')}),
  // Pilule verte (épinards) : bouclier, vitesse, endurance, et c'est de la nourriture : +25 calories
  ak_pill:S_('Pilule verte','Pilule d\'épinards : bouclier, vitesse 3 s, endurance et +25 calories',8,{ai:DEF},(u)=>{shieldU(u,20,3);u.haste=Math.max(u.haste,3);u.stam=Math.min(100,u.stam+40);u.blockLock=0;ak_add(u,25);anim(u,'ak_pill',.45);S('poof',u);
   jx({jfx:'ak_pill',ui:units.indexOf(u),x:u.x,y:u.y,col:'#4ad04a',t:.8,m:.8})}),
@@ -5148,6 +5172,7 @@ Object.assign(NAT,{
   u.giant=Math.max(u.giant,3);u.unstop=Math.max(u.unstop,3);aux.push({type:'ak_quake',x:u.x,y:u.y,r:95*(1+.15*F),t:3,m:3,team:u.team,owner:u,ui:units.indexOf(u),k:.35,M:1+.2*F,vfx:'tai'});
   jx({jfx:'ak_grow',ui:units.indexOf(u),x:u.x,y:u.y,t:.8,m:.8})}),
 });
+const ak_slamDo=NAT.ak_slam0.f;delete NAT.ak_slam0; // aide (pas une mécanique du catalogue)
 Object.assign(NATHERO,{ak:'chewie'});
 AFTER.push(()=>{UK.push('ak_cal','ak_roll','ak_spk','ak_arm','ak_bf');Object.assign(VP,{ak_bf:['#ff7ad8','#a8f0ff','#ffffff']})});
 // ---- logique des objets (hôte)
@@ -5158,11 +5183,11 @@ function ak_trail(u,air){for(let i=Math.max(0,fx.length-12);i<fx.length;i++){con
  if(air){f.col='rgba(246,242,234,.75)';f.r=3.5}else{f.z=3;f.col='#ddd0bc';f.vfx='smoke';f.r=2.5+rnd()*2;f.t=f.m=.5;f.vx=(rnd()-.5)*50;f.vy=(rnd()-.5)*30}}}
 // boulet : avance en tournant vers la visée et s'arrête contre un obstacle (le boulet à pointes, lui, rebondit) ; un étourdissement l'arrête
 AUXF.ak_roll=(x,dt)=>{const u=x.owner;if(u.dead||(!x.spk&&u.stun>0)){x.t=0;u.ak_roll=0;u.ak_spk=0;return}if(x.spk)return ak_spikeF(x,u,dt);
- if(x.lx!=null&&x.ex>2&&Math.hypot(u.x-x.lx,u.y-x.ly)<x.ex*.45){x.t=0;u.ak_roll=0;u.kx=-Math.cos(x.a)*160;u.ky=-Math.sin(x.a)*160;jx({jfx:'shock',x:u.x,y:u.y,r:40,t:.3,m:.3,col:'#e8dcc8'});sparks(u.x,u.y,'#e8dcc8',10,'smoke');if(near(u.x,u.y))S('rock',u);return}
+ if(x.lx!=null&&x.ex>2&&Math.hypot(u.x-x.lx,u.y-x.ly)<x.ex*.45){x.t=0;u.ak_roll=0;u.ak_spk=0;u.kx=-Math.cos(x.a)*160;u.ky=-Math.sin(x.a)*160;jx({jfx:'shock',x:u.x,y:u.y,r:40,t:.3,m:.3,col:'#e8dcc8'});sparks(u.x,u.y,'#e8dcc8',10,'smoke');if(near(u.x,u.y))S('rock',u);return}
  let d=ak_want(u)-x.a;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;x.a+=clamp(d,-4.2*dt,4.2*dt);u.aim=x.a;
  for(const e of enemies(u))if(!x.hs.includes(e)&&Math.hypot(e.x-u.x,e.y-u.y)<u.r+e.r+16){x.hs.push(e);const s=(-(e.x-u.x)*Math.sin(x.a)+(e.y-u.y)*Math.cos(x.a))<0?-1:1,b=x.a+s*1.1;
-  VFX='tai';hit(e,u,10,{unblockable:1,slow:.6,kb:430,fx:e.x-Math.cos(b)*20,fy:e.y-Math.sin(b)*20});VFX=null;jx({jfx:'shock',x:e.x,y:e.y,r:44,t:.3,m:.3,col:'#ffe0b0'});if(near(e.x,e.y)){S('heavy',u);if(nearMe(e.x,e.y))shake=Math.max(shake,.12)}}
- if(x.t<=0){u.ak_roll=0;sparks(u.x,u.y,'#e8dcc8',8,'smoke');return}
+  VFX='tai';hit(e,u,x.dm||10,Object.assign({unblockable:1,slow:.6,kb:430,fx:e.x-Math.cos(b)*20,fy:e.y-Math.sin(b)*20},x.bl?{dot:{dps:3,dur:3},el:-2}:{}));VFX=null;if(x.bl)sparks(e.x,e.y,'#c03030',6);jx({jfx:'shock',x:e.x,y:e.y,r:44,t:.3,m:.3,col:'#ffe0b0'});if(near(e.x,e.y)){S('heavy',u);if(nearMe(e.x,e.y))shake=Math.max(shake,.12)}}
+ if(x.t<=0){u.ak_roll=0;u.ak_spk=0;sparks(u.x,u.y,'#e8dcc8',8,'smoke');return}
  ak_trail(u,0);
  const sp=560;x.lx=u.x;x.ly=u.y;x.ex=sp*dt;u.dash={sx:u.x,sy:u.y,tx:u.x+Math.cos(x.a)*sp*dt,ty:u.y+Math.sin(x.a)*sp*dt,t:0,dur:dt,jump:0};x.x=u.x;x.y=u.y;u.ak_roll=x.t};
 AUXD.ak_roll=()=>{};
@@ -5315,17 +5340,16 @@ Object.assign(ANIM,{
 // surtout quand il le malaxe (mudras, recharge) : les kikaichû se nourrissent du chakra qu'on concentre.
 // Les jutsu jouent avec les colonies : les espions infestent, les chercheurs traquent les infestés, les dévoreurs et la sphère s'en nourrissent.
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés : Clone d'insectes (→ dash), Insectes dévoreurs (→ Chercheurs), Sphère d'insectes (→ Nuée), Nano-insectes de Torune
 KIT('c4',[
- [1,'D','x.ab_spy','Insectes espions','Insecte femelle rapide : infeste la cible (+2 insectes) et la piste 5 s (révélée, traquée)','bugs'],
- [1,'B','x.ab_seek','Insectes chercheurs','Nuée qui file droit, puis traque l\'ennemi infesté le plus proche : dégâts et +2 insectes','bugs'],
- [2,'B','x.ab_clone','Clone d\'insectes','Bond qui laisse un clone d\'insectes : il éclate au contact (ralentit). Relance : reprends sa place','bugs'],
- [3,'A','x.ab_swarm','Essaim d\'insectes','Grande nuée qui suit ton curseur 3,5 s : ronge, ralentit et infeste. Le feu la brûle','bugs'],
- [4,'C','x.ab_wall','Mur d\'insectes','Rideau d\'insectes 3,5 s : dévore les projectiles (+chakra), ralentit et infeste qui le traverse','bugs'],
- [4,'B','x.ab_drain','Insectes dévoreurs','Nuée accrochée à l\'ennemi touché 3 s : vole chakra et PV (plus s\'il est infesté), à portée','bugs'],
- [1,'C','x.ab_venom','Nano-insectes de Torune','6 s : tes attaques de base injectent un venin cumulable (×3) ; à 3 doses, la cible ralentit','bugs'],
- [5,'S','x.ab_nuee','Nuée destructrice','Nuée colossale sur la zone : immobilise et réduit au silence 0,8 s, puis ronge PV et chakra 3 s','bugs'],
- [5,'S','x.ab_sphere','Sphère d\'insectes','Enferme le 1er ennemi touché dans une sphère d\'insectes : dévore PV et chakra, dure plus s\'il est infesté','bugs'],
+ ['D','x.ab_spy','Insectes espions','Insecte femelle rapide : infeste la cible (+2 insectes) et la piste 5 s (révélée, traquée)','bugs'],
+ ['C','x.ab_wall','Mur d\'insectes','Rideau d\'insectes 3,5 s : dévore les projectiles (+chakra), ralentit et infeste qui le traverse','bugs'],
+ ['B','x.ab_seekB','Insectes chercheurs','Nuée qui file droit, puis traque l\'ennemi infesté le plus proche : dégâts, +2 insectes, puis elle s\'accroche 2 s et vole chakra et PV (plus s\'il est infesté)','bugs'],
+ ['A','x.ab_swarm','Essaim d\'insectes','Grande nuée qui suit ton curseur 3,5 s : ronge, ralentit et infeste. Le feu la brûle','bugs'],
+ ['S','x.ab_nueeS','Nuée destructrice','Nuée colossale sur la zone : immobilise et réduit au silence 0,8 s, puis ronge PV et chakra 3 s ; un ennemi qui porte 5 insectes est enfermé dans une sphère d\'insectes','bugs'],
 ]);
+// dash (Espace) : Clone d'insectes (relance : reprends sa place)
+DASHC[4]={src:'x.ab_clone',n:'Clone d\'insectes',d:'Bond qui laisse un clone d\'insectes : il éclate au contact (ralentit). Relance : reprends sa place',vfx:'bugs',cd:8};
 // ---- colonies de kikaichû (trait du clan)
 const AB_MAX=5,AB_DR=.12; // insectes max par cible ; chakra rongé par insecte et par seconde (×3 quand la cible malaxe son chakra)
 // dépose n insectes sur e ; la colonie appartient au dernier Aburame qui l'a nourrie
@@ -5401,6 +5425,12 @@ Object.assign(NAT,{
  // Essaim d'insectes : grande nuée qui suit le curseur ; elle ronge, ralentit et infeste ; le feu la brûle
  ab_swarm:S_('Essaim d\'insectes','Grande nuée qui suit ton curseur 3,5 s : ronge, ralentit et infeste. Le feu la brûle',12,{hero:'boba',ai:RG(480,.6),tele:{r:80,max:500}},(u,a,td)=>{S('bugs',u);S('wind',u);anim(u,'ab_swarm',.7);const p=fwd(u,a,55);
   aux.push({type:'ab_swarm',x:p.x,y:p.y,a,r:88,t:3.5,m:3.5,team:u.team,owner:u,ui:units.indexOf(u),k:.15,vfx:'bugs',n:0,acc:0,hs:{}});jx({jfx:'ab_pour',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.5,m:.5,big:1})}),
+ // Insectes chercheurs (v5, fusion avec les Dévoreurs) : la nuée traque, puis s'accroche 2 s à l'ennemi touché
+ ab_seekB:S_('Insectes chercheurs','',10,{hero:'lando',ai:RG(560,.65),line:{len:600,w:28}},(u,a)=>{S('bugs',u);anim(u,'ab_sleeve',.55);
+  jx({jfx:'ab_pour',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.45,m:.45});
+  proj(u,a,{spd:470,r:12,dmg:16,life:1.6,col:'#4a5a3a',kind:'ab_seek',onHit:(p,t)=>{ab_add(t,p.owner,1);ab_burst(t.x,t.y,50);if(t.dead)return;const o=p.owner;for(const x of aux)if(x.type==='ab_drain'&&x.owner===o)x.t=0;
+   aux.push({type:'ab_drain',x:t.x,y:t.y,r:0,t:2,m:2,team:o.team,owner:o,tg:t,ui:units.indexOf(o),ti:units.indexOf(t),k:.5,vfx:'bugs',n:0});say(t,'DÉVORÉ','#c8e07a')}});
+  aux.push({type:'ab_seek',x:u.x,y:u.y,r:0,t:1.7,m:1.7,team:u.team,owner:u,p:projs[projs.length-1],k:0})}),
  // Nano-insectes de Torune : venin cumulable sur les attaques de base
  ab_venom:S_('Nano-insectes de Torune','6 s : tes attaques de base injectent un venin cumulable (×3) ; à 3 doses, la cible ralentit',12,{ai:SELF(330,.55)},(u)=>{u.ab_ven=6;S('bugs',u);anim(u,'ab_venom',.6);
   jx({jfx:'ab_venup',ui:units.indexOf(u),x:u.x,y:u.y,t:.8,m:.8});say(u,'NANO-INSECTES','#c8a0ff')}),
@@ -5408,6 +5438,12 @@ Object.assign(NAT,{
  ab_nuee:ULT('Nuée destructrice','Nuée colossale sur la zone : immobilise et réduit au silence 0,8 s, puis ronge PV et chakra 3 s',{hero:'deathtrooper',tele:{r:150,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480);S('bugs',u);S('heavy',u);anim(u,'ab_nuee',.9);
   zone(u,p.x,p.y,150,20,.75,{root:.8,silence:.8},'#26302a');lastZ().deto='ab_fall';jx({jfx:'ab_fall',x:p.x,y:p.y,r:150,t:.75,m:.75});
   later(u,.76,()=>{for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<150+e.r){ab_add(e,u,1);jx({jfx:'ab_engulf',ti:units.indexOf(e),x:e.x,y:e.y,t:1,m:1})}
+   aux.push({type:'ab_nuee',x:p.x,y:p.y,r:125,t:3,m:3,team:u.team,owner:u,ui:units.indexOf(u),k:.2,vfx:'bugs',n:0})},{x:p.x,y:p.y})}),
+ // Nuée destructrice (v5, fusion avec la Sphère) : à l'impact, l'ennemi qui porte 5 insectes est enfermé dans une sphère
+ ab_nueeS:ULT('Nuée destructrice','',{hero:'deathtrooper',tele:{r:150,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480);S('bugs',u);S('heavy',u);anim(u,'ab_nuee',.9);
+  zone(u,p.x,p.y,150,20,.75,{root:.8,silence:.8},'#26302a');lastZ().deto='ab_fall';jx({jfx:'ab_fall',x:p.x,y:p.y,r:150,t:.75,m:.75});
+  later(u,.76,()=>{for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<150+e.r){ab_add(e,u,1);jx({jfx:'ab_engulf',ti:units.indexOf(e),x:e.x,y:e.y,t:1,m:1});
+    const c=ab_n(e);if(c>=AB_MAX&&!e.dead&&e.unstop<=0&&!(e.ab_sph>0)){const D=1+.16*c;say(e,'SPHÈRE D\'INSECTES','#c8e07a');aux.push({type:'ab_sphere',x:e.x,y:e.y,r:36,t:D,m:D,team:u.team,owner:u,tg:e,ui:units.indexOf(u),ti:units.indexOf(e),k:.25,vfx:'bugs',n:c})}}
    aux.push({type:'ab_nuee',x:p.x,y:p.y,r:125,t:3,m:3,team:u.team,owner:u,ui:units.indexOf(u),k:.2,vfx:'bugs',n:0})},{x:p.x,y:p.y})}),
  // Sphère d'insectes (Mushi Dama) : le premier ennemi touché est enfermé dans une sphère qui le dévore ; elle tient plus longtemps sur une cible infestée
  ab_sphere:ULT('Sphère d\'insectes','Enferme le 1er ennemi touché dans une sphère d\'insectes : dévore PV et chakra, dure plus s\'il est infesté',{line:{len:560,w:30},ai:{max:520,p:.8}},(u,a)=>{S('bugs',u);S('wind',u);anim(u,'ab_sphere',.7);
@@ -5623,28 +5659,29 @@ Object.assign(ANIM,{
 // descriptions (une seule source pour le catalogue et les mécaniques)
 const IN_D={
  gatsuga:'Double vrille avec ton ninken : chacune blesse ; un ennemi pris entre les deux est projeté en l\'air',
- instinct:'Bond au curseur ; une proie proche de l\'arrivée (sous 50 % de PV ou marquée) attire le bond : morsure qui saigne',
+ instinct:'Bond au curseur ; une proie proche de l\'arrivée (sous 50 % de PV ou marquée) attire le bond : petite morsure qui saigne',
  ninken:'Ton ninken grandit et se bat seul 8 s : il plaque l\'ennemi visé (immobilisé 0,8 s), puis le traque et le mord',
  flair:'1,5 s : tu esquives le prochain coup d\'un écart, et ton ninken mord l\'attaquant, qui est révélé',
  tsuga:'Vrille éclair : au premier ennemi touché, tu le repousses et rebondis en arrière (frappe et repli)',
  beast:'À quatre pattes 4 s : rapide, ni ralenti ni entravé (3 s) ; griffes qui saignent (12 dégâts en 2 s), ninken qui mord deux fois plus',
  mark:'Le ninken bondit sur l\'ennemi visé et le marque 5 s : révélé, il subit +12 % de tes dégâts, tes vrilles le traquent',
  wolf:'Fusion en loup géant à deux têtes 7 s : rapide, vol de vie, chaque coup de base mord deux fois ; hurlement qui ralentit',
+ beastC:'À quatre pattes 4 s : rapide, ni ralenti ni entravé (3 s), griffes qui saignent, ninken qui mord deux fois plus ; le 1er coup reçu est esquivé d\'un écart et le ninken mord l\'attaquant',
+ gatB:'Double vrille avec ton ninken : un ennemi pris entre les deux est projeté en l\'air ; si ta vrille touche, tu rebondis en arrière',
  garoga:'Double vrille géante qui fonce loin : emporte les ennemis touchés et les écrase à l\'arrivée (étourdis)'};
+// arbre de clan (v5) : 1 jutsu par rang. Retirés : Instinct bestial (→ dash), Flair du chien (→ Shikyaku), Tsûga (→ Gatsûga), Ninken (le trait garde le chien)
 KIT('c5',[
- [1,'B','x.in_gatsuga','Gatsûga',IN_D.gatsuga,'tai'],
- [2,'C','x.in_instinct','Instinct bestial',IN_D.instinct,'claws'],
- [3,'S','x.in_ninken','Ninken',IN_D.ninken,'claws'],
- [4,'C','x.in_flair','Flair du chien',IN_D.flair,'claws'],
- [1,'C','x.in_tsuga','Tsûga',IN_D.tsuga,'tai'],
- [4,'D','x.in_beast','Shikyaku',IN_D.beast,'claws'],
- [1,'D','x.in_mark','Marquage',IN_D.mark,'claws'],
- [5,'S','x.in_wolf','Loup bicéphale',IN_D.wolf,'claws'],
- [5,'A','x.in_garoga','Garôga',IN_D.garoga,'tai'],
+ ['D','x.in_mark','Marquage',IN_D.mark,'claws'],
+ ['C','x.in_beastC','Shikyaku',IN_D.beastC,'claws'],
+ ['B','x.in_gatB','Gatsûga',IN_D.gatB,'tai'],
+ ['A','x.in_garoga','Garôga',IN_D.garoga,'tai'],
+ ['S','x.in_wolf','Loup bicéphale',IN_D.wolf,'claws'],
 ]);
+// dash (Espace) : Instinct bestial (réduit)
+DASHC[5]={src:'x.in_instinct',n:'Instinct bestial',d:IN_D.instinct,vfx:'claws',cd:7};
 // équilibrage du clan : facteur sur les dégâts infligés par un Inuzuka ; CLANBAL[5] (PV ×1,4, puissance ×1,4, dans nr_ninja.js) a été réglé
 // en tenant compte de ce facteur (ambiance NRP)
-const IN_BAL=.86;
+const IN_BAL=.83;
 // ---------- outils : le ninken partenaire ----------
 const in_I=u=>units.indexOf(u);
 // place du ninken au repos, à côté de son maître (comme le chien dessiné du clan)
@@ -5678,12 +5715,17 @@ Object.assign(NAT,{
   aux.push({type:'in_tsu',x:u.x,y:u.y,a,t:.3,m:.3,team:u.team,owner:u,ui:i,n:0});aux.push({type:'in_scr',x:u.x,y:u.y,a,len:280,w:0,t:.8,m:.8,team:u.team,owner:u,n:.25,r:0});
   jx({jfx:'in_drill',ui:i,x:u.x,y:u.y,a,t:.3,m:.3,small:1})}),
  // Instinct bestial : bond ; une proie (blessée ou marquée) près de l'arrivée attire le bond, morsure qui saigne
- in_instinct:S_('Instinct bestial',IN_D.instinct,7,{hero:'bossk',ai:{mode:'gap',min:110,max:330,p:.45}},(u,a,td)=>{const p=fwd(u,a,clamp(td||260,70,270));let prey=null,bd=150;
-  for(const e of enemies(u)){const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<bd&&dist(u,e)<380&&(e.hp<e.max*.5||in_marked(e,u))){bd=d;prey=e}}
+ in_instinct:S_('Instinct bestial',IN_D.instinct,7,{hero:'bossk',ai:{mode:'gap',min:110,max:330,p:.45}},(u,a,td)=>{const p=fwd(u,a,clamp(td||230,70,230));let prey=null,bd=130;
+  for(const e of enemies(u)){const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<bd&&dist(u,e)<330&&(e.hp<e.max*.5||in_marked(e,u))){bd=d;prey=e}}
   let tx=p.x,ty=p.y;if(prey){const b=ang(prey,u),r=prey.r+u.r+4;tx=prey.x+Math.cos(b)*r;ty=prey.y+Math.sin(b)*r;say(u,'PROIE !','#ff8a5a');jx({jfx:'in_prey',ti:in_I(prey),x:prey.x,y:prey.y,t:.55,m:.55})}
   const aa=Math.atan2(ty-u.y,tx-u.x);u.aim=aa;S('dash',u);anim(u,'in_pounce',.42);
   dash(u,aa,Math.hypot(tx-u.x,ty-u.y),.3,{jump:58,end:()=>{jx({jfx:'in_land',x:u.x,y:u.y,t:.4,m:.4,r:40});
-   if(prey&&!prey.dead&&dist(u,prey)<prey.r+u.r+32){u.aim=ang(u,prey);VFX='claws';hit(prey,u,6,{melee:1,dot:{dps:2,dur:3}});VFX=null;jx({jfx:'in_claw',x:prey.x,y:prey.y,a:u.aim,t:.4,m:.4});S('bone',u)}}})}),
+   if(prey&&!prey.dead&&dist(u,prey)<prey.r+u.r+32){u.aim=ang(u,prey);VFX='claws';hit(prey,u,5,{melee:1,dot:{dps:2,dur:2}});VFX=null;jx({jfx:'in_claw',x:prey.x,y:prey.y,a:u.aim,t:.4,m:.4});S('bone',u)}}})}),
+ // Shikyaku (v5, fusion avec le Flair) : posture à quatre pattes + le 1er coup reçu (4 s) est esquivé et le chien mord
+ in_beastC:S_('Shikyaku','',9,{ai:SELF(320,.5)},(u,a,td,P)=>{NAT.in_beast.f(u,a,td,P);u.in_flair=4;jx({jfx:'in_nose',x:u.x,y:u.y,ui:in_I(u),t:.7,m:.7})}),
+ // Gatsûga (v5, fusion avec Tsûga) : si la vrille du lanceur a touché, rebond en arrière à la fin
+ in_gatB:S_('Gatsûga','',9,{hero:'rey',line:{len:300,w:84},ai:{mode:'gap',min:60,max:290,p:.6}},(u,a,td,P)=>{const n0=aux.length;NAT.in_gatsuga.f(u,a,td,P);let gx=null;for(let k=n0;k<aux.length;k++)if(aux[k].type==='in_gat')gx=aux[k];if(!gx)return;
+  later(u,gx.m+.02,()=>{if(u.dead||u.stun>0||!gx.hc.size)return;u.dash=null;dash(u,gx.a+Math.PI+(rnd()-.5)*.25,140,.28,{jump:46});anim(u,'backflip',.4);jx({jfx:'in_ric',x:u.x,y:u.y,a:gx.a,t:.35,m:.35});if(near(u.x,u.y))S('hit',u)})}),
  // Ninken : le chien grandit, plaque la cible visée puis la traque et la mord
  in_ninken:S_('Ninken',IN_D.ninken,14,{hero:'iden',line:{len:460,w:30},ai:RG(460,.6)},(u,a,td)=>{const e=pick(u,a,td||300,480),s=in_side(u);S('poof',u);S('roar',u);anim(u,'point',.55);
   for(const x of aux)if(x.type==='in_dog'&&x.owner===u)x.t=0;const tp=e?{x:e.x,y:e.y}:fwd(u,a,Math.min(td||300,420));
@@ -5919,19 +5961,17 @@ AFTER.push(()=>{UK.push('in_bcd','in_four','in_flair','in_wolf');
 // Chaînes adamantines (Kongô Fûsa), sceaux marqueurs qu'on fait exploser, parchemins de stockage, et le Shiki Fûjin du Shinigami.
 // (Rasengan, Multiclonage, Rasenshuriken et chakra de Kyûbi sont des techniques de Naruto : subjutsu des ninjas sans clan, voir sub_naruto.js.)
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés (code conservé) : Parchemin de stockage, Sceau des cinq éléments, Sceau d'échange, Rempart de chaînes (→ Cage adamantine),
+// Bond des chaînes (→ dash), Shiki Fûjin (→ famille Jutsu interdits, rang S : mécanique uz_shiki gardée ici)
 KIT('c6',[
- [1,'D','x.uz_tagk','Kunai à sceau','Kunai rapide : 14 dégâts et colle un sceau sur l\'ennemi touché','kunai'],
- [1,'C','x.uz_harpoon','Chaîne-harpon','Une chaîne adamantine harponne le 1er ennemi : ramené à toi (16 dégâts), étourdi 0,4 s et marqué d\'un sceau','chain'],
- [1,'B','x.uz_kai','Sceaux : Détonation','Fait exploser les sceaux des ennemis à moins de 480 : 12 + 12 par sceau ; à 3 sceaux, étourdi 0,7 s','tag'],
- [3,'A','x.uz_cage','Cage adamantine','Des chaînes jaillissent sous la zone : 20 dégâts, entrave 0,7 s et un sceau, puis enferment 2,5 s (ni ennemi ni tir ne passe)','chain'],
- [3,'B','x.uz_store','Parchemin de stockage','1,5 s : le parchemin scelle les tirs ennemis. Relance (5 s) : renvoie le plus fort (+25 %, 15 dégâts au moins), sinon 4 armes stockées (8 dégâts chacune)','kunai'],
- [4,'B','x.uz_gogyo','Sceau des cinq éléments','Cinq flammes : la cible (14 dégâts) perd 20 de chakra, ne peut ni lancer de jutsu ni se recharger (R) 2 s, et reçoit un sceau','chakra'],
- [4,'C','x.uz_wall','Rempart de chaînes','Un rempart de chaînes jaillit devant toi 3 s : il arrête les tirs et le passage des ennemis ; en surgissant, 14 dégâts et repousse','chain'],
- [2,'B','x.uz_swap','Sceau d\'échange','Kunai-sceau : échange ta place avec l\'ennemi touché (ralenti), sinon te téléporte là où il se plante','chain'],
- [2,'C','x.uz_leap','Bond des chaînes','Des chaînes te catapultent au curseur ; à l\'atterrissage, elles fouettent autour de toi : 12 dégâts, entrave 0,5 s et un sceau','chain'],
- [5,'S','x.uz_shiki','Shiki Fûjin','En plus du chakra, coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34 dégâts, puis âme scellée 3 s (12 dégâts/s, ralenti, ni jutsu ni recharge) ; +8 dégâts par sceau','chakra'],
- [5,'A','x.uz_bind','Entrave du démon','Après 0,4 s, des chaînes saisissent 3 ennemis à moins de 380 : entravés 0,6 s puis enchaînés à toi 3 s (170 au plus, ralentis), 8 dégâts par 0,5 s et un sceau par seconde ; tu restes immobile, un étourdissement les brise','chain'],
+ ['D','x.uz_tagk','Kunai à sceau','Kunai rapide : 14 dégâts et colle un sceau sur l\'ennemi touché','kunai'],
+ ['C','x.uz_harpoon','Chaîne-harpon','Une chaîne adamantine harponne le 1er ennemi : ramené à toi (16 dégâts), étourdi 0,4 s et marqué d\'un sceau','chain'],
+ ['B','x.uz_kai','Sceaux : Détonation','Fait exploser les sceaux des ennemis à moins de 480 : 12 + 12 par sceau ; à 3 sceaux, étourdi 0,7 s','tag'],
+ ['A','x.uz_cageA','Cage adamantine','Des chaînes jaillissent sous la zone : 20 dégâts, entrave 0,7 s et un sceau, puis enferment 2,5 s. Lancée tout près de toi (moins de 150), elle se dresse en rempart devant toi 3 s : arrête tirs et passage, 14 dégâts et repousse','chain'],
+ ['S','x.uz_bind','Entrave du démon','Après 0,4 s, des chaînes saisissent 3 ennemis à moins de 380 : entravés 0,6 s puis enchaînés à toi 3,5 s (170 au plus, ralentis), 9 dégâts par 0,5 s et un sceau par seconde ; tu restes immobile, un étourdissement les brise','chain'],
 ]);
+// dash (Espace) : Bond des chaînes (réduit)
+DASHC[6]={src:'x.uz_leap',n:'Bond des chaînes',d:'Des chaînes te catapultent au curseur ; à l\'atterrissage, elles fouettent autour de toi : 8 dégâts et entrave 0,3 s (un sceau de plus sur un ennemi déjà scellé)',vfx:'chain',cd:7};
 // ---- sceaux marqueurs (cœur du clan) : jusqu'à 3 sur un ennemi, 8 s après le dernier posé ; le 3e scelle son chakra (une fois toutes les 8 s)
 const UZ_MKT=8,UZ_KAIR=480,UZ_BL=170,UZ_WL=230,UZ_KAI_AI={max:UZ_KAIR-20,p:.75},UZ_ST_AI={max:520,p:.9},UZ_ST_DEF={mode:'def',p:.6};
 const uzMk=t=>t&&!t.dead&&SIMT<t.uz_mkE?t.uz_mk|0:0;
@@ -5965,6 +6005,8 @@ Object.assign(NAT,{
     if(near(e.x,e.y)){S('boom',u);shake=Math.max(shake,.1+.06*n);sparks(e.x,e.y,'#ff9a3a',6+4*n,'tag')}})}}),
  uz_cage:SP('Cage adamantine','Des chaînes jaillissent sous la zone : 20 dégâts, entrave 0,7 s et un sceau, puis enferment 2,5 s (ni ennemi ni tir ne passe)',13,{tele:{r:130,max:420},ai:RG(420,.55)},(u,a,td)=>{const p=atP(u,a,td,420);S('deflect',u);anim(u,'uz_slam',.45);u.root=Math.max(u.root,.3);
   aux.push({type:'uz_cage',x:p.x,y:p.y,r:130,t:2.95,m:2.95,team:u.team,owner:u,vfx:'chain',k:0,sd:{}})}),
+ // Cage adamantine (v5, fusion avec le Rempart) : visée tout près de soi (< 150), elle se dresse en rempart
+ uz_cageA:SP('Cage adamantine','',13,{tele:{r:130,max:420},ai:RG(420,.55)},(u,a,td,P)=>{if((td||300)<150){NAT.uz_wall.f(u,a,td,P);return}NAT.uz_cage.f(u,a,td,P)}),
  uz_store:SP('Parchemin de stockage','1,5 s : le parchemin scelle les tirs ennemis. Relance (5 s) : renvoie le plus fort (+25 %, 15 dégâts au moins), sinon 4 armes stockées (8 dégâts chacune)',11,{hero:'dooku',ai:UZ_ST_DEF},(u,a)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='uz_store');if(i<0)return;const cd=u.ch.abil[i].cd;
   if(u.jst&&u.jst.key==='uz_store'){u.jst=null;u.cds[i]=cd;uzRelease(u,a);return}
   S('poof',u);S('jyuken',u);anim(u,'uz_absorb',1.5);const ui=units.indexOf(u);u.uz_st=null;u.uz_scE=SIMT+1.5;
@@ -5983,18 +6025,18 @@ Object.assign(NAT,{
   aux.push({type:'uz_swapk',x:u.x,y:u.y,r:0,t:1,m:1,team:u.team,owner:u,p:projs[projs.length-1]})}),
  uz_leap:SP('Bond des chaînes','Des chaînes te catapultent au curseur ; à l\'atterrissage, elles fouettent autour de toi : 12 dégâts, entrave 0,5 s et un sceau',8,{ai:{mode:'gap',min:150,max:300,p:.45}},(u,a,td)=>{S('dash',u);S('deflect',u);anim(u,'leap',.42);const L=clamp(td||260,90,290);
   jx({jfx:'uz_leapc',x:u.x,y:u.y,a,t:.5,m:.5});
-  dash(u,a,L,.38,{jump:46,end:()=>{if(u.dead)return;VFX='chain';for(const e of enemies(u))if(dist(u,e)<92+e.r){hit(e,u,12,{root:.5,unblockable:1});uzMark(u,e,1)}VFX=null;
+  dash(u,a,L,.38,{jump:46,end:()=>{if(u.dead)return;VFX='chain';for(const e of enemies(u))if(dist(u,e)<92+e.r){const sd=uzMk(e)>0;if(hit(e,u,8,{root:.3,unblockable:1})&&sd)uzMark(u,e,1)}VFX=null;
    jx({jfx:'uz_lash',x:u.x,y:u.y,t:.5,m:.5});if(near(u.x,u.y)){S('heavy',u);shake=Math.max(shake,.12)}}})}),
  uz_shiki:ULT('Shiki Fûjin','En plus du chakra, coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34 dégâts, puis âme scellée 3 s (12 dégâts/s, ralenti, ni jutsu ni recharge) ; +8 dégâts par sceau',{hero:'thrawn',line:{len:520,w:36},ai:{max:480,p:.8}},(u,a)=>{S('genjutsu',u);S('roar',u);anim(u,'uz_shiki',1.1);u.root=Math.max(u.root,.75);u.uz_rtE=SIMT+.7;u.uz_rtB=0;
   jx({jfx:'uz_shini',ui:units.indexOf(u),x:u.x,y:u.y,a,t:1.35,m:1.35});
   later(u,.7,()=>{if(u.dead||u.uz_rtB||u.stun>0||u.sleepT<0){say(u,'RITUEL BRISÉ','#c8a8ff');return}const h0=u.hp;u.hp=Math.max(1,u.hp-Math.round(u.max*.12));say(u,'-'+Math.round(h0-u.hp)+' PV : LE PRIX DU SCEAU','#c8a8ff');S('shadow',u);
    proj(u,u.aim,{spd:950,r:16,dmg:34,life:.55,col:'#d8c8ff',kind:'uz_shand',vfx:'chakra',noClash:1,o:{unblockable:1},onHit:(p,t)=>uzSoul(p.owner,t)});if(near(u.x,u.y))shake=Math.max(shake,.25)})}),
- uz_bind:ULT('Entrave du démon','Après 0,4 s, des chaînes saisissent 3 ennemis à moins de 380 : entravés 0,6 s puis enchaînés à toi 3 s (170 au plus, ralentis), 8 dégâts par 0,5 s et un sceau par seconde ; tu restes immobile, un étourdissement les brise',{tele:{self:1,r:380},ai:SELF(330,.8)},(u)=>{S('heavy',u);S('deflect',u);anim(u,'uz_bind',3.5);u.root=Math.max(u.root,.45);u.uz_rtE=SIMT+.4;u.uz_rtB=0;
+ uz_bind:ULT('Entrave du démon','Après 0,4 s, des chaînes saisissent 3 ennemis à moins de 380 : entravés 0,6 s puis enchaînés à toi 3 s (170 au plus, ralentis), 8 dégâts par 0,5 s et un sceau par seconde ; tu restes immobile, un étourdissement les brise',{tele:{self:1,r:380},ai:SELF(330,.8)},(u)=>{S('heavy',u);S('deflect',u);anim(u,'uz_bind',4);u.root=Math.max(u.root,.45);u.uz_rtE=SIMT+.4;u.uz_rtB=0;
   const ui=units.indexOf(u);jx({jfx:'uz_bindw',ui,x:u.x,y:u.y,t:.45,m:.45});
   later(u,.4,()=>{if(u.dead||u.uz_rtB||u.stun>0||u.sleepT<0){say(u,'CHAÎNES BRISÉES','#e8c860');if(u.anim&&u.anim.k==='uz_bind')u.anim=null;return}
    const L=enemies(u).filter(e=>dist(u,e)<380+e.r&&!(e.stealth>0)).sort((p,q)=>dist(u,p)-dist(u,q)).slice(0,3);if(!L.length){say(u,'PERSONNE À ENCHAÎNER','#e8c860');if(u.anim&&u.anim.k==='uz_bind')u.anim=null;return}
    if(near(u.x,u.y)){S('heavy',u);shake=Math.max(shake,.3)}
-   for(const e of L){aux.push({type:'uz_bind',x:e.x,y:e.y,r:0,t:3,m:3,team:u.team,owner:u,tg:e,ui,ti:units.indexOf(e),k:.5,n:0});VFX='chain';hit(e,u,8,{root:.6,unblockable:1});VFX=null;uzMark(u,e,1);if(near(e.x,e.y))sparks(e.x,e.y,'#e8c860',10,'chain')}})}),
+   for(const e of L){aux.push({type:'uz_bind',x:e.x,y:e.y,r:0,t:3.5,m:3.5,team:u.team,owner:u,tg:e,ui,ti:units.indexOf(e),k:.5,n:0});VFX='chain';hit(e,u,8,{root:.6,unblockable:1});VFX=null;uzMark(u,e,1);if(near(e.x,e.y))sparks(e.x,e.y,'#e8c860',10,'chain')}})}),
 });
 Object.assign(NATHERO,{uz:'savage'});
 // ---- mécaniques (hôte)
@@ -6030,7 +6072,7 @@ AUXF.uz_bind=(x,dt)=>{const o=x.owner,e=x.tg;
  o.root=Math.max(o.root,.1);x.x=e.x;x.y=e.y;const d=dist(o,e);
  if(d>UZ_BL&&e.unstop<=0){const a=ang(e,o),m=Math.min(d-UZ_BL,620*dt);e.x+=Math.cos(a)*m;e.y+=Math.sin(a)*m;e.kx*=.5;e.ky*=.5;if(e.dash&&d>UZ_BL+24)e.dash=null;collide(e)}
  if(e.unstop<=0)e.slow=Math.max(e.slow,.2);
- if(x.k<=0&&x.t>.05){x.k=.5;x.n++;VFX='chain';hit(e,o,8,{unblockable:1});VFX=null;if(x.n%2===0)uzMark(o,e,1)}};
+ if(x.k<=0&&x.t>.05){x.k=.5;x.n++;VFX='chain';hit(e,o,9,{unblockable:1});VFX=null;if(x.n%2===0)uzMark(o,e,1)}};
 // suivi des sceaux d'une cible : ils disparaissent 8 s après le dernier posé, à la mort de la cible, ou après une Détonation
 AUXF.uz_mkt=x=>{const e=x.tg;if(!e||e.dead||!(e.uz_mk>0)||!(SIMT<e.uz_mkE)){if(e)e.uz_mk=0;x.t=0;return}x.t=1;x.x=e.x;x.y=e.y};
 AUXD.uz_swapk=AUXD.uz_soul=AUXD.uz_mkt=()=>{};
@@ -6231,17 +6273,16 @@ AFTER.push(()=>UK.push('uz_mk','uz_soul','uz_fv'));
 // Trait « Marque de l'esprit » : tes jutsu marquent l'esprit des ennemis touchés ; ton attaque de base suivante fait éclater la marque.
 // Les projectiles mentaux (objets aux « ya_mind ») traversent parades et projectiles, mais pas les obstacles ni les murs ennemis.
 // [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés : Transposition (→ dash), Champ de fleurs (→ Tempête), Esprit destructeur (→ fin du Shintenshin), Shinden : Lien des esprits
 KIT('c7',[
- [1,'A','x.ya_shinran','Shinranshin','Onde mentale imparable : la cible confuse titube au hasard et subit +25 % de dégâts 1,2 s (1,6 s si marquée)','mind'],
- [2,'C','x.ya_swap','Transposition','Échange ta place avec l\'allié visé (bouclier aux deux) ; sans allié, file au curseur en esprit, intangible','mind'],
- [1,'D','x.ya_flower','Kunai fleuri','Kunai rapide enveloppé de pétales : transperce, blesse et ralentit chaque ennemi touché','flower'],
- [3,'C','x.ya_pollen','Pollen hypnotique','Nuage de pollen 4 s qui ralentit ; l\'ennemi qui y reste 0,8 s s\'endort 1,8 s, mais un coup le réveille','flower'],
- [4,'B','x.ya_storm','Tempête de pétales','3 vagues de pétales devant toi : blessent, ralentissent puis repoussent, et hachent les projectiles ennemis','flower'],
- [3,'S','x.ya_shinten','Shintenshin','Esprit imparable : possède la cible 1,5 s, qui marche vers ton curseur et se frappe. Corps inerte, sonné si raté','mind'],
- [4,'B','x.ya_garden','Champ de fleurs','Champ de fleurs 4 s autour de toi : tes alliés et toi y régénérez, les ennemis y sont ralentis et marqués','flower'],
- [5,'S','x.ya_shinden','Shinden : Lien des esprits','Lie ton esprit à l\'ennemi visé 5 s : la moitié des dégâts que tu subis lui revient. Brisé au loin ou si tu es étourdi','mind'],
- [5,'S','x.ya_destroy','Esprit destructeur','Verrouille l\'esprit visé 1 s puis le brise : dégâts + 30 % des PV manquants (45 % si marqué), étourdit','mind'],
+ ['D','x.ya_flower','Kunai fleuri','Kunai rapide enveloppé de pétales : transperce, blesse et ralentit chaque ennemi touché','flower'],
+ ['C','x.ya_pollen','Pollen hypnotique','Nuage de pollen 4 s qui ralentit ; l\'ennemi qui y reste 0,8 s s\'endort 1,8 s, mais un coup le réveille','flower'],
+ ['B','x.ya_stormB','Tempête de pétales','3 vagues de pétales devant toi : blessent, ralentissent puis repoussent, et hachent les projectiles ennemis ; elles laissent un champ de fleurs 2 s où tes alliés régénèrent','flower'],
+ ['A','x.ya_shinran','Shinranshin','Onde mentale imparable : la cible confuse titube au hasard et subit +25 % de dégâts 1,2 s (1,6 s si marquée)','mind'],
+ ['S','x.ya_shinten','Shintenshin','Esprit imparable : possède la cible 1,5 s, qui marche vers ton curseur et se frappe. À la fin, son esprit est brisé : dégâts + 25 % des PV manquants. Corps inerte, sonné si raté','mind'],
 ]);
+// dash (Espace) : Transposition
+DASHC[7]={src:'x.ya_swap',n:'Transposition',d:'Échange ta place avec l\'allié visé (bouclier aux deux) ; sans allié, file au curseur en esprit, intangible',vfx:'mind',cd:7};
 // ---------- aides ----------
 const yaI=u=>units.indexOf(u);
 const yaS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son propre, sans la teinte « genjutsu » des éléments mind / flower
@@ -6308,6 +6349,9 @@ Object.assign(NAT,{
    for(const p of projs)if(p.owner.team!==u.team&&!p.dead&&p.life>0&&!p.rocket&&!p.grenade&&!p.big&&p.r<=16&&Math.hypot(p.x-u.x,p.y-u.y)<275&&angDiff(Math.atan2(p.y-u.y,p.x-u.x),a)<.62){p.life=0;if(near(p.x,p.y))jx({jfx:'ya_burst',x:p.x,y:p.y,a:a,t:.35,m:.35,s:.6})}
    VFX=V;if(i===2)yaS('saber',u)};
   wave(0);later(u,.13,()=>wave(1));later(u,.26,()=>wave(2))}),
+ // Tempête de pétales (v5, fusion avec le Champ de fleurs) : les vagues laissent un petit champ de fleurs 2 s devant toi
+ ya_stormB:S_('Tempête de pétales','',10,{line:{len:250,w:180},ai:RG(230,.6)},(u,a,td,P)=>{NAT.ya_storm.f(u,a,td,P);const c=fwd(u,a,130);
+  later(u,.3,()=>{if(u.dead)return;aux.push({type:'ya_garden',x:c.x,y:c.y,r:115,t:2,m:2,team:u.team,owner:u,vfx:'flower',k:.1});jx({jfx:'ya_bloom',x:c.x,y:c.y,r:115,t:.6,m:.6,g:1})})}),
  // Champ de fleurs : jardin posé au sol, soigne les alliés, ralentit et marque les ennemis
  ya_garden:S_('Champ de fleurs','Champ de fleurs 4 s autour de toi : tes alliés et toi y régénérez, les ennemis y sont ralentis et marqués',15,{hero:'quigon',tele:{self:1,r:160},ai:HEALM},(u)=>{yaS('orb',u);yaS('genjutsu',u);anim(u,'ya_bloom',.9);
   aux.push({type:'ya_garden',x:u.x,y:u.y,r:160,t:4,m:4,team:u.team,owner:u,vfx:'flower',k:.1});jx({jfx:'ya_bloom',x:u.x,y:u.y,r:160,t:.7,m:.7,g:1})}),
@@ -6350,7 +6394,7 @@ AUXF.ya_poss=(x,dt)=>{const o=x.owner,e=x.tg;
  if(dd>stop){const sp=e.ch.spd*.8*dt,k=Math.min(1,(dd-stop)/sp);e.x+=dx/dd*sp*k;e.y+=dy/dd*sp*k;e.aim=Math.atan2(dy,dx);collide(e)}
  x.x=e.x;x.y=e.y;x.a=Math.atan2(dy,dx);e.ya_pa=x.a;
  if(x.k<=0&&x.t>.2){x.k=.5;yaHit(e,o,5,{});e.flash=.12;if(near(e.x,e.y))jx({jfx:'ya_slap',ti:yaI(e),x:e.x,y:e.y,t:.3,m:.3})}
- if(x.t<=0){e.ya_pz=0;yaHit(e,o,22,{silence:1,stun:.4});yaBack(o,e.x,e.y,0);if(near(e.x,e.y)){jx({jfx:'ya_ripple',x:e.x,y:e.y,t:.55,m:.55,s:1.3});yaS('genjutsu',e)}}};
+ if(x.t<=0){e.ya_pz=0;yaHit(e,o,22,{silence:1,stun:.4,exec:.25});yaBack(o,e.x,e.y,0);say(e,'ESPRIT BRISÉ','#ffffff');if(near(e.x,e.y)){jx({jfx:'ya_ripple',x:e.x,y:e.y,t:.55,m:.55,s:1.3});jx({jfx:'ya_shatter',ti:yaI(e),x:e.x,y:e.y,t:.9,m:.9});shake=Math.max(shake,.25);yaS('genjutsu',e);yaS('deflect',e)}}};
 AUXF.ya_sleep=x=>{const e=x.tg;if(!e||e.dead){x.t=0;if(e){e.ya_sl=0;e.sleepT=0}return}x.x=e.x;x.y=e.y;const rem=Math.max(0,x.t);
  if(e.hp<x.hp-.5&&x.m-rem>.1){if(e.stun<=rem+.1)e.stun=Math.min(e.stun,.12);e.sleepT=0;e.ya_sl=0;e.ya_slI=SIMT+2.5;x.t=0;say(e,'RÉVEILLÉ','#ffd8e8');if(near(e.x,e.y))jx({jfx:'ya_wake',ti:yaI(e),x:e.x,y:e.y,t:.4,m:.4});return}
  x.hp=Math.max(x.hp,e.hp);e.ya_sl=rem;if(rem<=0){e.ya_sl=0;e.ya_slI=SIMT+2.5}};
@@ -6570,22 +6614,22 @@ Object.assign(ANIM,{
 // [emplacement, rang, mécanique (x.clé = NAT[clé], sinon perso.sort du moteur), nom, description, élément visuel]
 const SAD={coffin:'Rampe au sol sous les tirs ; enveloppe la 1re cible : immobilisée 0,5 s (1 s dans le sable mouvant)',
  fly:'Vole sur un nuage de sable jusqu\'au point visé ; à l\'envol, le nuage avale les tirs ennemis (0,25 s)',
- quick:'Sable mouvant 3 s : aspire, ralentit et freine les tirs ennemis ; rester 1,5 s dedans enlise (immobilisé)',
+ quick:'Sable mouvant 3,5 s : aspire, ralentit et freine les tirs ennemis ; rester 1,5 s dedans enlise (immobilisé)',
  armor:'Armure qui absorbe 28 dégâts 4 s (bouclier de 16 aux alliés proches) ; brisée, elle éclate et ralentit',
  tsunami:'Vague de sable qui emporte les ennemis et avale leurs tirs, puis s\'écrase : dégâts, repousse et ralentit',
  funeral:'Le sable engloutit la zone : immobilise puis écrase (énormes dégâts, étourdit ; plus fort si déjà immobilisé)',
- shield:'Sphère de sable 1,5 s : intouchable mais immobile ; à l\'ouverture, des pics jaillissent : dégâts et repousse',
+ shield:'Sphère de sable 1,5 s : intouchable mais immobile ; à l\'ouverture, des pics jaillissent (dégâts, repousse) et une armure de sable t\'enveloppe 3 s (absorbe 15 dégâts)',
  spears:'3 lances perçantes qui suivent la visée ; 2 lances sur la même cible la clouent au sol 0,6 s'};
+// arbre de clan (v5) : 1 jutsu par rang. Retirés : Sable volant (→ dash), Armure de sable (→ Bouclier absolu), Lances de sable
 KIT('c8',[
- [1,'D','x.sa_coffin','Cercueil de sable',SAD.coffin,'sand'],
- [2,'C','x.sa_fly','Sable volant',SAD.fly,'sand'],
- [3,'D','x.sa_quick','Sable mouvant',SAD.quick,'sand'],
- [4,'C','x.sa_armor','Armure de sable',SAD.armor,'sand'],
- [5,'B','x.sa_tsunami','Tsunami de sable',SAD.tsunami,'sand'],
- [5,'S','x.sa_funeral','Funérailles du désert',SAD.funeral,'sand'],
- [4,'A','x.sa_shield','Bouclier absolu',SAD.shield,'sand'],
- [1,'B','x.sa_spears','Lances de sable',SAD.spears,'sand'],
+ ['D','x.sa_coffin','Cercueil de sable',SAD.coffin,'sand'],
+ ['C','x.sa_quick','Sable mouvant',SAD.quick,'sand'],
+ ['B','x.sa_tsunami','Tsunami de sable',SAD.tsunami,'sand'],
+ ['A','x.sa_shield','Bouclier absolu',SAD.shield,'sand'],
+ ['S','x.sa_funeral','Funérailles du désert',SAD.funeral,'sand'],
 ]);
+// dash (Espace) : Sable volant
+DASHC[8]={src:'x.sa_fly',n:'Sable volant',d:SAD.fly,vfx:'sand',cd:7};
 // son « brut » (sans la teinte sable que l'élément impose à tous les sons du jutsu)
 const sa_S=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V};
 // le Sable mouvant du lanceur sous ce ninja ?
@@ -6600,8 +6644,8 @@ Object.assign(NAT,{
   jx({jfx:'sa_cloud',ui:units.indexOf(u),x:u.x,y:u.y,t:D+.12,m:D+.12});sparks(u.x,u.y,'#d8b878',10,'sand');
   dash(u,a,d,D,{jump:62,end:()=>{jx({jfx:'sa_dust',x:u.x,y:u.y,r:95,t:.5,m:.5});S('sand',u)}})}),
  // sable mouvant : aspire vers le centre, ralentit, freine les tirs ; 1,5 s dedans = enlisé
- sa_quick:S_('Sable mouvant',SAD.quick,10,{hero:'cal',tele:{r:120,max:420},ai:RG(420,.5)},(u,a,td)=>{const p=atP(u,a,td,420);S('sand',u);anim(u,'sa_sink',.55);
-  field(u,p.x,p.y,{r:120,t:3,slow:1,timeSlow:1,col:'#d8b878',vfx:'sand'});aux.push({type:'sa_qs',x:p.x,y:p.y,r:120,t:3,m:3,team:u.team,owner:u,vfx:'sand',k:0,in:{}});jx({jfx:'shock',x:p.x,y:p.y,r:120,t:.45,m:.45,col:'#d8b878'});sparks(p.x,p.y,'#d8b878',14,'sand')}),
+ sa_quick:S_('Sable mouvant',SAD.quick,10,{hero:'cal',tele:{r:128,max:420},ai:RG(420,.5)},(u,a,td)=>{const p=atP(u,a,td,420);S('sand',u);anim(u,'sa_sink',.55);
+  field(u,p.x,p.y,{r:128,t:3.5,slow:1,timeSlow:1,col:'#d8b878',vfx:'sand'});aux.push({type:'sa_qs',x:p.x,y:p.y,r:128,t:3.5,m:3.5,team:u.team,owner:u,vfx:'sand',k:0,in:{}});jx({jfx:'shock',x:p.x,y:p.y,r:120,t:.45,m:.45,col:'#d8b878'});sparks(p.x,p.y,'#d8b878',14,'sand')}),
  // armure de sable (absorbe, gérée par le trait) ; alliés proches : bouclier ; brisée, elle éclate
  sa_armor:S_('Armure de sable',SAD.armor,13,{hero:'thrawn',ai:DEF},(u)=>{S('sand',u);anim(u,'sa_crust',.6);u.sa_arm=28;u.sa_armT=4;u.sa_brk=0;
   for(const x of allies(u,320)){if(x!==u)shieldU(x,16,4);jx({jfx:'sa_crust',ti:units.indexOf(x),x:x.x,y:x.y,t:.6,m:.6})}}),
@@ -6621,7 +6665,7 @@ Object.assign(NAT,{
  // Bouclier absolu : sphère intouchable (gérée par le trait), puis pics de sable à l'ouverture
  sa_shield:S_('Bouclier absolu',SAD.shield,17,{tele:{self:1,r:125},ai:DEF},(u)=>{const D=1.5;S('sand',u);sa_S('heavy',u);u.sa_sph=D;u.root=Math.max(u.root,D);u.silence=Math.max(u.silence,D);u.disarm=Math.max(u.disarm,D);
   anim(u,'sa_cross',D);jx({jfx:'sa_sphere',ui:units.indexOf(u),x:u.x,y:u.y,t:D,m:D});zone(u,u.x,u.y,125,26,D,{kb:320},'#d8b878');lastZ().deto='sa_spk';
-  later(u,D,()=>{u.sa_sph=0;if(u.dead)return;u.sa_shT=0;anim(u,'roar',.45);sa_S('rock',u)})}),
+  later(u,D,()=>{u.sa_sph=0;if(u.dead)return;u.sa_shT=0;anim(u,'roar',.45);sa_S('rock',u);u.sa_arm=Math.max(u.sa_arm||0,15);u.sa_armT=Math.max(u.sa_armT||0,3);u.sa_brk=0;jx({jfx:'sa_crust',ti:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6})})}),
  // lances de sable : 3 lances perçantes qui suivent la visée ; 2 touches sur la même cible = clouée
  sa_spears:S_('Lances de sable',SAD.spears,8,{line:{len:520,w:20},ai:RG(500,.6)},(u)=>{const V={};jx({jfx:'sa_forge',ui:units.indexOf(u),x:u.x,y:u.y,t:.5,m:.5});
   const f=o=>{S('sand',o);anim(o,'sa_flick',.3);proj(o,o.aim,{vfx:'sand',spd:980,r:8,dmg:8,life:.54,col:'#d8b878',pierce:1,kind:'sa_spear',onHit:(p,t)=>{const k=t.c+'|'+t.team;V[k]=(V[k]||0)+1;if(near(t.x,t.y))sparks(t.x,t.y,'#d8b878',5,'sand');
@@ -6808,34 +6852,34 @@ STATD.push((u,p,S,sk)=>{const t=performance.now()/1000;
 
 // ===== Clan Kaguya (Shikotsumyaku : le clan façonne ses os, style Kimimaro) =====
 // [emplacement, rang, mécanique (x.clé = NAT[clé], sinon perso.sort du moteur), nom, description, élément visuel]
+// arbre de clan (v5) : 1 jutsu par rang. Retirés : Bond d'os (→ dash), Armure d'os, Danse du camélia, Forêt naissante + Forêt d'os (→ Danse des fougères), Liane (→ Clématite)
 KIT('c9',[
- [1,'C','x.kg_finger','Doigts-balles','Rafale de 3 balles d\'os tirées du bout des doigts, qui suivent la visée ; chaque balle ralentit','bone'],
- [2,'B','x.kg_leap','Bond d\'os','Bondit vers le point visé ; à l\'atterrissage, une couronne d\'os jaillit : dégâts et projette en l\'air','bone'],
- [3,'B','x.kg_sprout','Forêt naissante','Des os percent le sol au point visé après un court délai : dégâts et étourdit, puis le bosquet ralentit','bone'],
- [4,'B','x.kg_armor','Armure d\'os','3 s : inarrêtable, 30 % de dégâts en moins, plaques d\'os reformées ; puis l\'armure éclate et blesse autour','bone'],
- [1,'D','x.kg_willow','Danse du saule','Tourbillon de lames d\'os : blesse autour, renvoie les tirs et étourdit qui te frappe au corps à corps','bone'],
- [1,'C','x.kg_camellia','Danse du camélia','Tire son humérus comme une épée : 5 estocades éclair devant soi, la dernière repousse et ralentit','bone'],
- [3,'B','x.kg_whip','Danse de la clématite : Liane','Fouet de vertèbres : le premier ennemi touché est ramené contre toi et ralenti','bone'],
- [4,'A','x.kg_larch','Danse du mélèze','Des os jaillissent de tout le corps : gros dégâts, entrave qui est collé ; 3 s d\'épines qui brisent les tirs et blessent','bone'],
- [5,'S','x.kg_drill','Danse de la clématite','Foreuse d\'os géante : fonce en ligne, perce boucliers et murs, énormes dégâts et projette','bone'],
- [5,'B','x.kg_forest','Forêt d\'os','3 anneaux d\'os géants jaillissent autour de soi : blessent, étourdissent, puis bloquent ennemis et tirs 1,5 s','bone'],
+ ['D','x.kg_finger','Doigts-balles','Rafale de 2 balles d\'os tirées du bout des doigts, qui suivent la visée ; chaque balle ralentit','bone'],
+ ['C','x.kg_willow','Danse du saule','Tourbillon de lames d\'os : blesse autour, renvoie les tirs et étourdit qui te frappe au corps à corps','bone'],
+ ['B','x.kg_larch','Danse du mélèze','Des os jaillissent de tout le corps : dégâts, entrave qui est collé ; 2 s d\'épines qui brisent les tirs et blessent','bone'],
+ ['A','x.kg_fern','Danse des fougères','Des os percent le sol au point visé après un court délai (dégâts, étourdit), puis la forêt s\'étend en anneau autour de ce point : elle bloque ennemis et tirs 1,5 s','bone'],
+ ['S','x.kg_clem','Danse de la clématite','Le fouet de vertèbres harponne le 1er ennemi et le ramène, puis la foreuse d\'os géante fonce en ligne : perce boucliers et murs, énormes dégâts et projette','bone'],
 ]);
+// dash (Espace) : Bond d'os (couronne réduite)
+DASHC[9]={src:'x.kg_leap',n:'Bond d\'os',d:'Bondit vers le point visé ; à l\'atterrissage, une petite couronne d\'os jaillit : dégâts et repousse',vfx:'bone',cd:7};
+// descriptions des anciennes lignes (mécaniques gardées hors arbre)
+const KGOLD={'Doigts-balles':'Rafale de 3 balles d\'os tirées du bout des doigts, qui suivent la visée ; chaque balle ralentit','Bond d\'os':'Bondit vers le point visé ; à l\'atterrissage, une couronne d\'os jaillit : dégâts et projette en l\'air','Forêt naissante':'Des os percent le sol au point visé après un court délai : dégâts et étourdit, puis le bosquet ralentit','Armure d\'os':'3 s : inarrêtable, 30 % de dégâts en moins, plaques d\'os reformées ; puis l\'armure éclate et blesse autour','Danse du saule':'Tourbillon de lames d\'os : blesse autour, renvoie les tirs et étourdit qui te frappe au corps à corps','Danse du camélia':'Tire son humérus comme une épée : 5 estocades éclair devant soi, la dernière repousse et ralentit','Danse de la clématite : Liane':'Fouet de vertèbres : le premier ennemi touché est ramené contre toi et ralenti','Danse du mélèze':'Des os jaillissent de tout le corps : gros dégâts, entrave qui est collé ; 3 s d\'épines qui brisent les tirs et blessent','Danse de la clématite':'Foreuse d\'os géante : fonce en ligne, perce boucliers et murs, énormes dégâts et projette','Forêt d\'os':'3 anneaux d\'os géants jaillissent autour de soi : blessent, étourdissent, puis bloquent ennemis et tirs 1,5 s'};
 // ---- petites aides du clan
 const kgS=(n,u)=>{const V=VFX;VFX=null;S(n,u);VFX=V}; // son hors palette (sinon tout son d'un jutsu d'os devient « bone »)
 const KG_REG=12,KG_PCT=.2,KG_CAP=4; // trait : une plaque repousse toutes les 12 s ; chaque plaque retire 20 % d'un coup (4 au plus)
-const kgD=n=>{const r=KITROWS.find(r=>r[0]==='c9'&&r[4]===n);return r?r[5]:''};
+const kgD=n=>{const r=KITROWS.find(r=>r[0]==='c9'&&r[4]===n);return r?r[5]:KGOLD[n]||''};
 // atterrissage du Bond d'os : couronne d'os qui projette
-function kgLand(u){const x=u.x,y=u.y,V=VFX;VFX='bone';for(const e of enemies(u))if(Math.hypot(e.x-x,e.y-y)<85+e.r)hit(e,u,7,{air:.2,kb:70,fx:x,fy:y});VFX=V;
- jx({jfx:'kg_crown',x,y,r:85,t:.75,m:.75});jx({jfx:'shock',x,y,r:115,t:.4,m:.4,col:'#f2efe6'});sparks(x,y,'#f2efe6',10,'bone');if(near(x,y)){kgS('rock',u);S('bone',u);shake=Math.max(shake,.18)}}
+function kgLand(u,sm){const x=u.x,y=u.y,V=VFX,R=sm?70:85;VFX='bone';for(const e of enemies(u))if(Math.hypot(e.x-x,e.y-y)<R+e.r)hit(e,u,sm?5:7,sm?{kb:110,fx:x,fy:y}:{air:.2,kb:70,fx:x,fy:y});VFX=V;
+ jx({jfx:'kg_crown',x,y,r:R,t:.75,m:.75});jx({jfx:'shock',x,y,r:115,t:.4,m:.4,col:'#f2efe6'});sparks(x,y,'#f2efe6',10,'bone');if(near(x,y)){kgS('rock',u);S('bone',u);shake=Math.max(shake,.18)}}
 // fin de l'Armure d'os : elle éclate en éclats tranchants
 function kgShatter(u){if(u.dead)return;const V=VFX;VFX='bone';for(const e of enemies(u))if(dist(u,e)<100+e.r)hit(e,u,12,{slow:1,fx:u.x,fy:u.y});VFX=V;
  jx({jfx:'kg_burst',x:u.x,y:u.y,r:100,t:.5,m:.5});sparks(u.x,u.y,'#f2efe6',18,'bone');if(near(u.x,u.y))S('bone',u)}
 Object.assign(NAT,{
  kg_finger:S_('Doigts-balles',kgD('Doigts-balles'),6,{hero:'gideon',line:{len:560,w:14},ai:RG(540,.65)},(u,a)=>{anim(u,'kg_finger',.6);
-  const f=o=>{S('bone',o);const b=o.aim,h=fwd(o,b,22);proj(o,b,{spd:1150,r:5,dmg:7,life:.48,col:'#f2efe6',slow:.4,kind:'kg_finger',onHit:(p,t)=>jx({jfx:'kg_stuck',ti:units.indexOf(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),o:(rnd()-.5)*14,t:1,m:1})});jx({jfx:'kg_muzzle',x:h.x,y:h.y,a:b,t:.16,m:.16})};
-  f(u);seqs.push({owner:u,n:2,t:.12,iv:.12,vfx:'bone',f})}),
+  const f=o=>{S('bone',o);const b=o.aim,h=fwd(o,b,22);proj(o,b,{spd:1150,r:5,dmg:6,life:.48,col:'#f2efe6',slow:.4,kind:'kg_finger',onHit:(p,t)=>jx({jfx:'kg_stuck',ti:units.indexOf(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),o:(rnd()-.5)*14,t:1,m:1})});jx({jfx:'kg_muzzle',x:h.x,y:h.y,a:b,t:.16,m:.16})};
+  f(u);seqs.push({owner:u,n:1,t:.12,iv:.12,vfx:'bone',f})}),
  kg_leap:S_('Bond d\'os',kgD('Bond d\'os'),11,{hero:'savage',ai:{mode:'gap',min:110,max:280,p:.5}},(u,a,td)=>{const d=clamp(td||250,60,280),p=fwd(u,a,d);anim(u,'kg_leap',.6);kgS('dash',u);
-  later(u,.42,()=>{},{x:p.x,y:p.y,r:85});jx({jfx:'shock',x:u.x,y:u.y,r:45,t:.3,m:.3,col:'#e8e2d0'});sparks(u.x,u.y,'#c8c2b0',6,'bone');dash(u,a,d,.42,{jump:100,end:()=>kgLand(u)})}),
+  later(u,.42,()=>{},{x:p.x,y:p.y,r:70});jx({jfx:'shock',x:u.x,y:u.y,r:45,t:.3,m:.3,col:'#e8e2d0'});sparks(u.x,u.y,'#c8c2b0',6,'bone');dash(u,a,d,.42,{jump:100,end:()=>kgLand(u,1)})}),
  kg_sprout:S_('Forêt naissante',kgD('Forêt naissante'),10,{hero:'iden',tele:{r:88,max:430},ai:RG(430,.6)},(u,a,td)=>{const p=atP(u,a,td,430);anim(u,'kg_ground',.55);S('bone',u);
   aux.push({type:'kg_sprout',x:p.x,y:p.y,r:88,t:.45,m:.45,team:u.team,owner:u,vfx:'bone',k:0});
   zone(u,p.x,p.y,88,18,.45,{stun:.65},'#f2efe6');lastZ().deto='kg_grove';
@@ -6844,7 +6888,7 @@ Object.assign(NAT,{
   u.unstop=Math.max(u.unstop,3);u.dr=u.drT>0?Math.max(u.dr,.3):.3;u.drT=Math.max(u.drT,3);u.kg_armT=3;u.kg_os=3;u.kg_osT=0;
   jx({jfx:'kg_armor',ui:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6});ring(u.x,u.y,60,'#f2efe6');later(u,3,()=>kgShatter(u))}),
  kg_willow:S_('Danse du saule',kgD('Danse du saule'),8,{ai:{mode:'def',p:.45,max:110}},(u)=>{S('bone',u);kgS('saber',u);anim(u,'kg_willow',.5);
-  u.spin={t:.5,k:0,r:95,dmg:3.5};u.deflect=Math.max(u.deflect,.35);jx({jfx:'kg_willow',ui:units.indexOf(u),x:u.x,y:u.y,t:.55,m:.55})}),
+  u.spin={t:.6,k:0,r:100,dmg:4.5};u.deflect=Math.max(u.deflect,.5);jx({jfx:'kg_willow',ui:units.indexOf(u),x:u.x,y:u.y,t:.55,m:.55})}),
  kg_camellia:S_('Danse du camélia',kgD('Danse du camélia'),9,{line:{len:135,w:40},ai:RG(130,.7)},(u)=>{anim(u,'kg_thrust',.6);kgS('saber',u);let i=0;
   const f=o=>{const b=o.aim,last=i===4,V=VFX;S('bone',o);o.kx+=Math.cos(b)*60;o.ky+=Math.sin(b)*60;if(!last)o.slow=Math.max(o.slow,.13);VFX='bone';
    for(const e of enemies(o))if(dist(o,e)<135+e.r&&angDiff(ang(o,e),b)<.34){if(e.block&&facing(e,o)){stamHit(e,8);sparks(e.x,e.y,'#f2efe6',4,'bone');continue}hit(e,o,last?5:2,{kb:last?190:0,slow:last?.5:0})}VFX=V;i++};
@@ -6852,12 +6896,21 @@ Object.assign(NAT,{
  kg_whip:S_('Danse de la clématite : Liane',kgD('Danse de la clématite : Liane'),12,{line:{len:350,w:18},ai:RG(340,.55,110)},(u,a)=>{anim(u,'kg_whip',.6);kgS('saber',u);S('bone',u);
   proj(u,a,{spd:1050,r:9,dmg:8,life:.33,col:'#f2efe6',hook:1,slow:.4,kind:'kg_whip',noClash:1,onHit:(p,t)=>{if(t.unstop>0)return;jx({jfx:'kg_yank',ui:units.indexOf(p.owner),ti:units.indexOf(t),x:t.x,y:t.y,t:.3,m:.3});say(t,'ATTRAPÉ','#f2efe6')}})}),
  kg_larch:S_('Danse du mélèze',kgD('Danse du mélèze'),11,{tele:{self:1,r:120},ai:SELF(115,.65)},(u)=>{anim(u,'kg_larch',.7);S('bone',u);kgS('heavy',u);
-  for(const e of enemies(u)){const d=dist(u,e);if(d<120+e.r){const c=d<65+e.r;hit(e,u,c?36:30,{kb:c?0:260,root:c?.8:0,fx:u.x,fy:u.y})}}
-  u.thorns=Math.max(u.thorns,3);u.thornSlow=Math.max(u.thornSlow,3);u.chrome=Math.max(u.chrome,3);u.kg_larT=3;
+  for(const e of enemies(u)){const d=dist(u,e);if(d<120+e.r){const c=d<65+e.r;hit(e,u,c?28:24,{kb:c?0:260,root:c?.8:0,fx:u.x,fy:u.y})}}
+  u.thorns=Math.max(u.thorns,2);u.thornSlow=Math.max(u.thornSlow,2);u.chrome=Math.max(u.chrome,2);u.kg_larT=2;
   jx({jfx:'kg_larch',ui:units.indexOf(u),x:u.x,y:u.y,t:.8,m:.8});jx({jfx:'shock',x:u.x,y:u.y,r:130,t:.45,m:.45,col:'#f2efe6'});sparks(u.x,u.y,'#f2efe6',14,'bone');if(near(u.x,u.y))shake=Math.max(shake,.22)}),
  kg_drill:ULT('Danse de la clématite',kgD('Danse de la clématite'),{hero:'gideon',line:{len:360,w:60},ai:{mode:'gap',min:80,max:360,p:.8}},(u,a)=>{S('bone',u);kgS('heavy',u);anim(u,'kg_drill',.5);
   u.unstop=Math.max(u.unstop,.5);dash(u,a,360,.34,{});aux.push({type:'kg_drill',x:u.x,y:u.y,a,r:44,t:.6,m:.6,team:u.team,owner:u,vfx:'bone',k:0,hs:new Set()});
   jx({jfx:'kg_drill',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.42,m:.42})}),
+ // Danse des fougères (v5, fusion Forêt naissante + Forêt d'os) : os qui percent le sol au point visé, puis anneau d'os qui enferme 1,5 s
+ kg_fern:S_('Danse des fougères','',14,{hero:'iden',tele:{r:110,max:430},ai:RG(430,.6)},(u,a,td,P)=>{const p=atP(u,a,td,430);NAT.kg_sprout.f(u,a,td,P);
+  later(u,.5,()=>{const n=11,R=112,hs=new Set(),V=VFX;VFX='bone';for(let i=0;i<n;i++){const b=i*Math.PI*2/n,x=clamp(p.x+Math.cos(b)*R,B.x+20,B.x+B.w-20),y=clamp(p.y+Math.sin(b)*R*.9,B.y+20,B.y+B.h-20);
+    for(const e of enemies(u))if(!hs.has(e)&&Math.hypot(e.x-x,e.y-y)<34+e.r){hs.add(e);hit(e,u,8,{stun:.2,fx:p.x,fy:p.y})}
+    walls.push({x,y,r:15,t:1.5,m:1.5,team:u.team,owner:u,vfx:'bone'})}VFX=V;
+   jx({jfx:'kg_ringfx',x:p.x,y:p.y,r:R,n,w:1,t:.6,m:.6});if(near(p.x,p.y)){kgS('rock',u);S('bone',u);shake=Math.max(shake,.2)}},{x:p.x,y:p.y})}),
+ // Danse de la clématite (v5, fusion avec la Liane) : fouet qui ramène le 1er ennemi, puis la foreuse fonce en ligne
+ kg_clem:ULT('Danse de la clématite','',{hero:'gideon',line:{len:360,w:60},ai:{mode:'gap',min:80,max:340,p:.8}},(u,a,td,P)=>{NAT.kg_whip.f(u,a,td,P);u.root=Math.max(u.root,.3);
+  later(u,.38,()=>{if(u.dead||u.stun>0||u.sleepT<0)return;NAT.kg_drill.f(u,u.aim,td,P)})}),
  kg_forest:ULT('Forêt d\'os',kgD('Forêt d\'os'),{hero:'inquisitor',tele:{self:1,r:250},ai:SELF(210,.8)},(u)=>{anim(u,'kg_ground',1.1);S('bone',u);kgS('rock',u);const o={x:u.x,y:u.y},hs=new Set();jx({jfx:'shock',x:o.x,y:o.y,r:60,t:.35,m:.35,col:'#e8e2d0'});
   // Danse de la fougère (Sawarabi) : 3 vagues, anneaux d'os géants de plus en plus loin ; chaque ennemi n'est empalé qu'une fois
   [[0,75,6,48],[.15,152,9,44],[.3,228,12,42]].forEach(([dl,R,n,hr],w)=>later(u,dl+.05,()=>{const V=VFX;VFX='bone';
@@ -10756,17 +10809,10 @@ const CLANBAL={"0":[0.842,0.781],"1":[0.636,0.687],"2":[1.123,1.139],"3":[0.962,
 const TREEBAL={},FAMBAL={};
 // équilibrage par jutsu (« catégorie|nom ») : d = dégâts ×, cd = recharge (s), ck = coût en chakra ; appliqué par nr_bal.js (les « N dégâts » des descriptions suivent d)
 const JBAL={
- "c0|Amaterasu":{"d":0.4,"ck":51},
- "c0|Izanagi":{"cd":16.5},
- "c0|Kamui":{"cd":15.0},
+ "c0|Amaterasu":{"d":0.4},
  "c0|Katon : Gôkakyû":{"d":0.49},
  "c0|Katon : Ryûka":{"d":0.445},
- "c0|Lame de Kusanagi":{"cd":7.0},
- "c0|Sharingan":{"cd":13.5},
- "c0|Sharingan : Genjutsu":{"cd":16.0},
- "c0|Shunshin Uchiha":{"cd":8.5},
  "c0|Susanô : Totsuka":{"d":1.549},
- "c0|Tsukuyomi":{"ck":75},
  "c10|Bond du fauve":{"d":1.186},
  "c10|Corps de jade":{"cd":7.0},
  "c10|Dynamic Entry":{"d":1.311},
@@ -10873,15 +10919,11 @@ const JBAL={
  "c19|Suika : Corps-déluge":{"d":0.581},
  "c19|Suika : Gôwan":{"d":0.626},
  "c19|Suirendan":{"d":0.525},
- "c1|Byakugan":{"cd":14.5},
- "c1|Hakke : 128 points":{"d":0.4,"ck":52},
+ "c1|Hakke : 128 points":{"d":0.4},
  "c1|Hakke : 64 points":{"d":1.913},
- "c1|Hakke : Paume":{"cd":13.0},
- "c1|Hakke Kûhekishô":{"d":0.4,"cd":13.5},
+ "c1|Hakke Kûhekishô":{"d":0.4},
  "c1|Hakke Kûshô":{"d":0.448},
  "c1|Jûho Sôshiken":{"d":0.601},
- "c1|Kaiten":{"cd":6.0},
- "c1|Pas du Hakke":{"cd":6.0},
  "c20|Glissade de glace":{"d":1.317},
  "c20|Hyôton : Blizzard":{"d":1.139},
  "c20|Hyôton : Dragon de glace":{"d":0.67},
@@ -10892,38 +10934,26 @@ const JBAL={
  "c20|Makyô Hyôshô":{"d":0.516},
  "c20|Miroir de glace":{"d":1.733},
  "c20|Pas du miroir":{"cd":17.5},
- "c2|Course de l'ombre":{"cd":5.0},
  "c2|Kage Kubi Shibari":{"d":0.691},
  "c2|Kage Mane":{"d":0.94},
  "c2|Kage Nui":{"d":0.829},
  "c2|Ombre explosive":{"d":0.766},
- "c2|Ombre protectrice":{"cd":7.0},
- "c2|Ombres liées":{"d":2.169,"ck":47},
- "c2|Plan du stratège":{"cd":6.0},
+ "c2|Ombres liées":{"d":2.169},
  "c3|Boulet humain":{"d":1.154},
  "c3|Boulet à pointes":{"d":1.11},
  "c3|Chôdan Bakugeki":{"d":0.701},
- "c3|Décuplement partiel":{"cd":18.0},
- "c3|Mode Papillon":{"ck":56},
  "c3|Paume géante":{"d":0.811},
- "c3|Pilule rouge":{"cd":19.0},
- "c3|Pilule verte":{"cd":7.0},
- "c4|Clone d'insectes":{"cd":9.0},
- "c4|Essaim d'insectes":{"d":0.439,"cd":13.0},
+ "c4|Essaim d'insectes":{"d":0.439},
  "c4|Insectes chercheurs":{"d":1.282},
  "c4|Insectes dévoreurs":{"d":0.765},
  "c4|Insectes espions":{"d":2.192},
  "c4|Mur d'insectes":{"d":1.252},
  "c4|Nuée destructrice":{"d":0.803},
  "c4|Sphère d'insectes":{"d":0.764},
- "c5|Flair du chien":{"cd":13.0},
  "c5|Garôga":{"d":0.775},
  "c5|Gatsûga":{"d":0.685},
- "c5|Instinct bestial":{"cd":4.0},
- "c5|Loup bicéphale":{"ck":35},
  "c5|Marquage":{"d":1.51},
  "c5|Ninken":{"d":0.599},
- "c5|Shikyaku":{"cd":9.0},
  "c5|Tsûga":{"d":1.396},
  "c6|Bond des chaînes":{"d":0.753},
  "c6|Cage adamantine":{"d":0.581},
@@ -10931,34 +10961,25 @@ const JBAL={
  "c6|Entrave du démon":{"d":0.718},
  "c6|Kunai à sceau":{"d":0.488},
  "c6|Parchemin de stockage":{"d":0.798},
- "c6|Sceau d'échange":{"cd":6.0},
  "c6|Sceau des cinq éléments":{"d":0.517},
- "c6|Sceaux : Détonation":{"cd":14.0},
  "c6|Shiki Fûjin":{"d":1.446},
- "c7|Champ de fleurs":{"cd":12.0},
  "c7|Esprit destructeur":{"d":0.715},
  "c7|Kunai fleuri":{"d":0.623},
- "c7|Pollen hypnotique":{"cd":6.0},
- "c7|Shinden : Lien des esprits":{"ck":30},
  "c7|Shinranshin":{"d":0.657},
  "c7|Shintenshin":{"d":0.537},
  "c7|Tempête de pétales":{"d":0.51},
- "c7|Transposition":{"cd":5.5},
- "c8|Armure de sable":{"cd":15.5},
  "c8|Bouclier absolu":{"d":1.229},
  "c8|Cercueil de sable":{"d":1.724},
  "c8|Funérailles du désert":{"d":0.797},
  "c8|Lances de sable":{"d":0.549},
  "c8|Sable mouvant":{"d":0.648},
- "c8|Sable volant":{"cd":9.0},
  "c8|Tsunami de sable":{"d":1.124},
  "c9|Armure d'os":{"d":0.982},
  "c9|Bond d'os":{"d":0.899},
  "c9|Danse de la clématite":{"d":0.414},
  "c9|Danse de la clématite : Liane":{"d":1.427},
  "c9|Danse du camélia":{"d":1.007},
- "c9|Danse du mélèze":{"cd":17.5},
- "c9|Danse du saule":{"d":1.769,"cd":7.5},
+ "c9|Danse du saule":{"d":1.769},
  "c9|Doigts-balles":{"d":0.567},
  "c9|Forêt d'os":{"d":1.02},
  "c9|Forêt naissante":{"d":0.492},
@@ -11122,6 +11143,8 @@ function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Ma
  o.k=K;
  const B=Array.isArray(b.bar)?b.bar:[];for(let s=0;s<BARN;s++){const v=B[s];const id=typeof v==='number'?v|0:-1;o.bar.push(id===v&&K.includes(id)&&!o.bar.includes(id)?id:-1)}
  if(o.bar.every(id=>id<0))o.bar=autoBar(o);
+ // al (facultatif) : noms affichés propres au perso, {'Nom|arbre': 'Alias'} pour des jutsu appris (ex. Kakashi : Chidori → « Raikiri »)
+ if(b.al&&typeof b.al==='object'){const A={};let n=0;for(const k in b.al){const id=pickKey(o,k),v=String(b.al[k]||'').replace(/[<>]/g,'').slice(0,24);if(n<BARN&&id>=0&&K.includes(id)&&jKey(id)===k&&v){A[k]=v;n++}}if(n)o.al=A}
  if(o.clan>=0)o.dsh='c';else{const d=String(b.dsh||'b');o.dsh=dashOpts(o).includes(d)?d:'b'}
  return o}
 // nom → jid dans les arbres du build (un même nom peut exister dans plusieurs arbres : celui du build d'abord)
@@ -11323,7 +11346,7 @@ const famBal=F=>{let h=1,p=1;for(const f of F){const v=FAMBAL[f]||[1,1];h*=v[0];
 // stats : moyenne des persos de référence des mécaniques (le style compte pour 5, les jutsu APPRIS pour 5 en tout : la barre ne change rien),
 // puis CLANBAL / NATBAL / STYLEBAL / TREEBAL / FAMBAL. Le ninja « catalogue » porte tous ses jutsu appris (jab), sa barre de départ (bar0), son dash et son Kawarimi ;
 // chaque unité en combat reçoit sa propre copie avec SA barre (unitCh, nr_bar.js) : abil = [style, 6 cases (null = vide), dash, Kawarimi]
-function mkNinja(b,strict){b=sanitizeBuild(b,strict);const S=STYLES[b.w]||STYLES[0],a0=styleAb(b.w),jab={};for(const id of b.k)jab[id]=jutsu(id);
+function mkNinja(b,strict){b=sanitizeBuild(b,strict);const S=STYLES[b.w]||STYLES[0],a0=styleAb(b.w),jab={};for(const id of b.k){jab[id]=jutsu(id);const al=b.al&&b.al[jKey(id)];if(al)jab[id].n=al} // al : nom affiché propre au perso (ex. « Raikiri » pour le Chidori de Kakashi)
  let hp=0,pw=0,sp=0,W=0;const add=(a,w)=>{const o=SRC[a.src]||SRC[a0.src];hp+=o.hp*w;pw+=o.pw*w;sp+=o.spd*w;W+=w};add(a0,5);const wk=b.k.length?5/b.k.length:0;for(const id of b.k)add(jab[id],wk);if(!b.k.length)add(a0,5);
  hp*=S[6];pw*=S[7];if(isMartial(b.clan)){hp*=1.05;sp+=4*W} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
  {const cb=CLANBAL[b.clan]||[1,1],nb=b.nat>=0?NATBAL[b.nat]||[1,1]:[1,1],sb=STYLEBAL[b.w+':'+b.clan]||STYLEBAL[b.w]||[1,1],tb=TREEBAL[b.st]||[1,1],fb=b.clan<0?famBal(b.fam):[1,1];hp*=cb[0]*nb[0]*sb[0]*tb[0]*fb[0];pw*=cb[1]*nb[1]*sb[1]*tb[1]*fb[1]}
@@ -11438,6 +11461,8 @@ const PRESETS=[
 // i : index dans PRESETS ; le nom et le camp du joueur sont gardés (sinon ceux du perso)
 // format v5 d'un perso : {…, clan, nat, st (arbre de style 0-2, sinon celui de sty), sty (nom du style d'attaque de base), fam:[familles], dsh, k:[noms appris] | 'all', bar:[6 noms]}
 // ancien format (transition) : j = 5 noms de jutsu → appris (familles ajoutées d'office pour un sans-clan) et posés dans la barre ; le reste des arbres est appris d'office (rangs libres)
+// noms affichés propres à un perso de l'anime (champ al d'un perso, sinon cette table) : {nom du jutsu: nom affiché}
+const PRESETAL={'Kakashi':{'Chidori':'Raikiri'}};
 function presetBuild(i,name,side){const P=PRESETS[i],w=STYLES.findIndex(x=>x[0]===P.sty);
  const b={name:name||(typeof MY!=='undefined'&&MY?MY.name:P.n),side:side??P.side,clan:P.clan,nat:P.nat,w,fam:Array.isArray(P.fam)?P.fam.slice():[],dsh:P.dsh||'b',l:Object.assign({},P.l),k:[],bar:[]};
  b.st=P.st!=null?P.st:w>=0&&STREE.includes(STYLES[w][8])?STREE.indexOf(STYLES[w][8]):0;
@@ -11448,6 +11473,7 @@ function presetBuild(i,name,side){const P=PRESETS[i],w=STYLES.findIndex(x=>x[0]=
   if(learnJ(o,id)&&(!P.bar)&&!bar.includes(id))bar.push(id)}
  o.k=autoLearn(o,o.k);
  if(P.bar)for(const n of P.bar){const id=pickName(o,n);if(id>=0&&o.k.includes(id)&&!bar.includes(id))bar.push(id);else if(n)console.warn('Perso '+P.n+' : barre, jutsu non appris « '+n+' »')}
+ {const al=P.al||PRESETAL[P.n];if(al){o.al={};for(const n in al){const id=pickName(o,n);if(id>=0&&o.k.includes(id))o.al[jKey(id)]=al[n]}}}
  o.bar=bar.filter(id=>o.k.includes(id)).slice(0,BARN);for(const id of autoBar(o))if(o.bar.length<BARN&&id>=0&&!o.bar.includes(id))o.bar.push(id);while(o.bar.length<BARN)o.bar.push(-1);
  return sanitizeBuild(o,true)}
 // « Modèles de kit » (création) : le perso en cours prend le kit et l'apparence du perso de l'anime ; son nom et son camp sont gardés.

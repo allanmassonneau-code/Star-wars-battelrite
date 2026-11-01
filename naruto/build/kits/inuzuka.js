@@ -4,28 +4,29 @@
 // descriptions (une seule source pour le catalogue et les mécaniques)
 const IN_D={
  gatsuga:'Double vrille avec ton ninken : chacune blesse ; un ennemi pris entre les deux est projeté en l\'air',
- instinct:'Bond au curseur ; une proie proche de l\'arrivée (sous 50 % de PV ou marquée) attire le bond : morsure qui saigne',
+ instinct:'Bond au curseur ; une proie proche de l\'arrivée (sous 50 % de PV ou marquée) attire le bond : petite morsure qui saigne',
  ninken:'Ton ninken grandit et se bat seul 8 s : il plaque l\'ennemi visé (immobilisé 0,8 s), puis le traque et le mord',
  flair:'1,5 s : tu esquives le prochain coup d\'un écart, et ton ninken mord l\'attaquant, qui est révélé',
  tsuga:'Vrille éclair : au premier ennemi touché, tu le repousses et rebondis en arrière (frappe et repli)',
  beast:'À quatre pattes 4 s : rapide, ni ralenti ni entravé (3 s) ; griffes qui saignent (12 dégâts en 2 s), ninken qui mord deux fois plus',
  mark:'Le ninken bondit sur l\'ennemi visé et le marque 5 s : révélé, il subit +12 % de tes dégâts, tes vrilles le traquent',
  wolf:'Fusion en loup géant à deux têtes 7 s : rapide, vol de vie, chaque coup de base mord deux fois ; hurlement qui ralentit',
+ beastC:'À quatre pattes 4 s : rapide, ni ralenti ni entravé (3 s), griffes qui saignent, ninken qui mord deux fois plus ; le 1er coup reçu est esquivé d\'un écart et le ninken mord l\'attaquant',
+ gatB:'Double vrille avec ton ninken : un ennemi pris entre les deux est projeté en l\'air ; si ta vrille touche, tu rebondis en arrière',
  garoga:'Double vrille géante qui fonce loin : emporte les ennemis touchés et les écrase à l\'arrivée (étourdis)'};
+// arbre de clan (v5) : 1 jutsu par rang. Retirés : Instinct bestial (→ dash), Flair du chien (→ Shikyaku), Tsûga (→ Gatsûga), Ninken (le trait garde le chien)
 KIT('c5',[
- [1,'B','x.in_gatsuga','Gatsûga',IN_D.gatsuga,'tai'],
- [2,'C','x.in_instinct','Instinct bestial',IN_D.instinct,'claws'],
- [3,'S','x.in_ninken','Ninken',IN_D.ninken,'claws'],
- [4,'C','x.in_flair','Flair du chien',IN_D.flair,'claws'],
- [1,'C','x.in_tsuga','Tsûga',IN_D.tsuga,'tai'],
- [4,'D','x.in_beast','Shikyaku',IN_D.beast,'claws'],
- [1,'D','x.in_mark','Marquage',IN_D.mark,'claws'],
- [5,'S','x.in_wolf','Loup bicéphale',IN_D.wolf,'claws'],
- [5,'A','x.in_garoga','Garôga',IN_D.garoga,'tai'],
+ ['D','x.in_mark','Marquage',IN_D.mark,'claws'],
+ ['C','x.in_beastC','Shikyaku',IN_D.beastC,'claws'],
+ ['B','x.in_gatB','Gatsûga',IN_D.gatB,'tai'],
+ ['A','x.in_garoga','Garôga',IN_D.garoga,'tai'],
+ ['S','x.in_wolf','Loup bicéphale',IN_D.wolf,'claws'],
 ]);
+// dash (Espace) : Instinct bestial (réduit)
+DASHC[5]={src:'x.in_instinct',n:'Instinct bestial',d:IN_D.instinct,vfx:'claws',cd:7};
 // équilibrage du clan : facteur sur les dégâts infligés par un Inuzuka ; CLANBAL[5] (PV ×1,4, puissance ×1,4, dans nr_ninja.js) a été réglé
 // en tenant compte de ce facteur (ambiance NRP)
-const IN_BAL=.86;
+const IN_BAL=.83;
 // ---------- outils : le ninken partenaire ----------
 const in_I=u=>units.indexOf(u);
 // place du ninken au repos, à côté de son maître (comme le chien dessiné du clan)
@@ -59,12 +60,17 @@ Object.assign(NAT,{
   aux.push({type:'in_tsu',x:u.x,y:u.y,a,t:.3,m:.3,team:u.team,owner:u,ui:i,n:0});aux.push({type:'in_scr',x:u.x,y:u.y,a,len:280,w:0,t:.8,m:.8,team:u.team,owner:u,n:.25,r:0});
   jx({jfx:'in_drill',ui:i,x:u.x,y:u.y,a,t:.3,m:.3,small:1})}),
  // Instinct bestial : bond ; une proie (blessée ou marquée) près de l'arrivée attire le bond, morsure qui saigne
- in_instinct:S_('Instinct bestial',IN_D.instinct,7,{hero:'bossk',ai:{mode:'gap',min:110,max:330,p:.45}},(u,a,td)=>{const p=fwd(u,a,clamp(td||260,70,270));let prey=null,bd=150;
-  for(const e of enemies(u)){const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<bd&&dist(u,e)<380&&(e.hp<e.max*.5||in_marked(e,u))){bd=d;prey=e}}
+ in_instinct:S_('Instinct bestial',IN_D.instinct,7,{hero:'bossk',ai:{mode:'gap',min:110,max:330,p:.45}},(u,a,td)=>{const p=fwd(u,a,clamp(td||230,70,230));let prey=null,bd=130;
+  for(const e of enemies(u)){const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<bd&&dist(u,e)<330&&(e.hp<e.max*.5||in_marked(e,u))){bd=d;prey=e}}
   let tx=p.x,ty=p.y;if(prey){const b=ang(prey,u),r=prey.r+u.r+4;tx=prey.x+Math.cos(b)*r;ty=prey.y+Math.sin(b)*r;say(u,'PROIE !','#ff8a5a');jx({jfx:'in_prey',ti:in_I(prey),x:prey.x,y:prey.y,t:.55,m:.55})}
   const aa=Math.atan2(ty-u.y,tx-u.x);u.aim=aa;S('dash',u);anim(u,'in_pounce',.42);
   dash(u,aa,Math.hypot(tx-u.x,ty-u.y),.3,{jump:58,end:()=>{jx({jfx:'in_land',x:u.x,y:u.y,t:.4,m:.4,r:40});
-   if(prey&&!prey.dead&&dist(u,prey)<prey.r+u.r+32){u.aim=ang(u,prey);VFX='claws';hit(prey,u,6,{melee:1,dot:{dps:2,dur:3}});VFX=null;jx({jfx:'in_claw',x:prey.x,y:prey.y,a:u.aim,t:.4,m:.4});S('bone',u)}}})}),
+   if(prey&&!prey.dead&&dist(u,prey)<prey.r+u.r+32){u.aim=ang(u,prey);VFX='claws';hit(prey,u,5,{melee:1,dot:{dps:2,dur:2}});VFX=null;jx({jfx:'in_claw',x:prey.x,y:prey.y,a:u.aim,t:.4,m:.4});S('bone',u)}}})}),
+ // Shikyaku (v5, fusion avec le Flair) : posture à quatre pattes + le 1er coup reçu (4 s) est esquivé et le chien mord
+ in_beastC:S_('Shikyaku','',9,{ai:SELF(320,.5)},(u,a,td,P)=>{NAT.in_beast.f(u,a,td,P);u.in_flair=4;jx({jfx:'in_nose',x:u.x,y:u.y,ui:in_I(u),t:.7,m:.7})}),
+ // Gatsûga (v5, fusion avec Tsûga) : si la vrille du lanceur a touché, rebond en arrière à la fin
+ in_gatB:S_('Gatsûga','',9,{hero:'rey',line:{len:300,w:84},ai:{mode:'gap',min:60,max:290,p:.6}},(u,a,td,P)=>{const n0=aux.length;NAT.in_gatsuga.f(u,a,td,P);let gx=null;for(let k=n0;k<aux.length;k++)if(aux[k].type==='in_gat')gx=aux[k];if(!gx)return;
+  later(u,gx.m+.02,()=>{if(u.dead||u.stun>0||!gx.hc.size)return;u.dash=null;dash(u,gx.a+Math.PI+(rnd()-.5)*.25,140,.28,{jump:46});anim(u,'backflip',.4);jx({jfx:'in_ric',x:u.x,y:u.y,a:gx.a,t:.35,m:.35});if(near(u.x,u.y))S('hit',u)})}),
  // Ninken : le chien grandit, plaque la cible visée puis la traque et la mord
  in_ninken:S_('Ninken',IN_D.ninken,14,{hero:'iden',line:{len:460,w:30},ai:RG(460,.6)},(u,a,td)=>{const e=pick(u,a,td||300,480),s=in_side(u);S('poof',u);S('roar',u);anim(u,'point',.55);
   for(const x of aux)if(x.type==='in_dog'&&x.owner===u)x.t=0;const tp=e?{x:e.x,y:e.y}:fwd(u,a,Math.min(td||300,420));
