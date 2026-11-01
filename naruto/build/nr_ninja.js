@@ -407,9 +407,9 @@ function randomKit(r,b){const k=a=>Math.floor(r()*a.length),CR=CLANRND();b.nat=k
 const RND_T=[0,1,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,37,38,39,40,41,42,43,44,45,46,47],RND_A=[0,0,0,0,0,0,1,2,3,5,6,7,9,10,15,16],RND_P=[0,0,1,1,2,3,4,7],RND_B=[0,0,0,0,0,0,0,1,3,4,5,6,8];
 // cosmétiques ajoutés : tirés avec leur propre générateur (même nom et même camp = même tirage), pour ne pas changer le kit des bots
 function randomCosm(l,name,side){let h=7+side;for(const c of String(name))h=(h*31+c.charCodeAt(0))%2147483646;const r=srnd(h+1),k=a=>Math.floor(r()*a.length);r();
- l.e=r()<.72?0:1+k(EYES.slice(1,10));if(r()<.08)l.e=10+k(EYES.slice(10));l.o=r()<.7?0:k(TENCOL);l.s=r()<.75?0:k(TENCOL);l.z=r()<.7?0:k(TAILLES);l.w=r()<.7?0:k(CARRURES);
- l.r=r()<.65?0:1+k(ARMS.slice(1));l.n=r()<.75?0:1+k(NECKS.slice(1));
- l.g=r()<.6?0:1+k(GEARS.slice(1));l.m=r()<.88?0:1+k(OVERS.slice(1));l.y=r()<.8?0:1+k(SYMS.slice(1));l.q=r()<.75?0:k(BANDC);l.x=r()<.8?0:k(TENCOL);if(!l.f&&r()<.12)l.f=16+k(FACES.slice(16));return l}
+ l.e=r()<.72?0:1+k(EYES.slice(1,10));if(r()<.08)l.e=10+k(EYES.slice(10));l.o=r()<.8?0:k(TENCOL);l.s=r()<.85?0:k(TENCOL);l.z=r()<.85?0:k(TAILLES);l.w=r()<.85?0:k(CARRURES);
+ l.r=r()<.85?0:1+k(ARMS.slice(1));l.n=r()<.9?0:1+k(NECKS.slice(1)); // accessoires plus rares : des ninjas moins chargés
+ l.g=r()<.85?0:1+k(GEARS.slice(1));l.m=r()<.95?0:1+k(OVERS.slice(1));l.y=r()<.92?0:1+k(SYMS.slice(1));l.q=r()<.75?0:k(BANDC);l.x=r()<.9?0:k(TENCOL);if(!l.f&&r()<.06)l.f=16+k(FACES.slice(16));return l}
 function randomBuild(r,side,name){const k=a=>Math.floor(r()*a.length),o=a=>a[k(a)],l={v:side&&r()<.6?6:k(VILLAGES.slice(0,6)),t:side?(r()<.55?2:k(TENUES)):o(RND_T),c:k(COIFS),h:k(HAIRC),p:o(RND_P),k:k(CHAKRAS),a:r()<.6?0:o(RND_A)};
  l.f=r()<.65?0:1+Math.floor(r()*15);if(l.f===11&&r()<.7)l.f=0;l.b=side&&r()<.5?2:o(RND_B);l.d=r()<.8?0:1+k(BACKS.slice(1));if(l.t===12)l.t=1;
  return randomKit(r,{name,side,l:randomCosm(l,name,side)})}
