@@ -24,13 +24,17 @@ const cycleJ=(s,d)=>{if(!s){const L=stylesOf(EB),i=L.indexOf(EB.w);EB.w=L[(i+d+L
 // picker : panneau de choix ouvert = n° de case (0 Clic G, 1-6 barre, 7 dash), 'fam' (familles), 'preset' ou une clé de APP ('clan', 'nat', 'st', 'l.c'…)
 const BX=428,BW=812,buildKeys=()=>APP.filter(a=>!a[2].startsWith('l.')),lookKeys=()=>APP.filter(a=>a[2].startsWith('l.')&&a[3]===LTAB);
 const selRect=i=>{const n=buildKeys().length,w=(BW-(n-1)*8)/n;return{x:BX+i*(w+8),y:146,w,h:44}};
-const slotRow=s=>({x:BX,y:216+s*38,w:BW,h:35}); // 0 Clic G · 1-6 barre de départ · 7 dash (Espace)
-const passRow={x:BX,y:524,w:BW,h:44},budBox={x:BX,y:576,w:582,h:54},autoBarBtn={x:BX+582-150,y:582,w:140,h:26};
+// colonne de droite (création en ARBRES) : rangée du haut (Clic G, Espace, A, familles ou trait), grille des arbres (colonnes Nature / Style / Clan ou familles, rangs D→S en lignes),
+// barre de départ (6 cases) ; cartes cliquables : clic = apprendre / oublier, survol + 1-6 = poser dans la barre, clic D sur une case = la vider
+const CRTOP=[{k:0,x:BX,w:236},{k:DASHI,x:BX+244,w:236},{k:SHUNI,x:BX+488,w:128},{k:'fam',x:BX+624,w:188}].map(o=>Object.assign(o,{y:216,h:40}));
+const CRG={x:BX+34,y:288,w:BW-34,rh:49,ch:45,hy:266},crBarR=s=>({x:BX+98+s*80,y:540,w:74,h:56});
+const crAutoBtn={x:BX+582,y:606,w:126,h:32},crFillBtn={x:BX+716,y:606,w:96,h:32};
+const passRow=null; // (ancienne ligne des familles : remplacée par CRTOP)
 // les listes d'apparence peuvent s'allonger : la hauteur des lignes s'adapte (et chaque valeur ouvre une grille de choix)
 const lookRow=i=>{const n=lookKeys().length,h=Math.max(19,Math.min(34,236/n)),y=422+i*h;return{y:y+h/2+5,h,l:{x:150,y:y+2,w:24,h:h-4},v:{x:177,y:y+2,w:194,h:h-4},r:{x:374,y:y+2,w:24,h:h-4}}};
 let presetI=-1,EB=null,EBCH=null; // EB : build en cours de création ou de modification (MY reste le perso joué)
-const rndBuildBtn={x:BX,y:638,w:190,h:32},presetBtn={x:BX+198,y:638,w:200,h:32};
-const nameBtn={x:40,y:150,w:300,h:30},rndBtn={x:348,y:150,w:52,h:30},cancelBtn={x:44,y:662,w:352,h:32},saveBtn={x:1030,y:576,w:210,h:54};
+const rndBuildBtn={x:BX,y:606,w:180,h:32},presetBtn={x:BX+188,y:606,w:190,h:32};
+const nameBtn={x:40,y:150,w:300,h:30},rndBtn={x:348,y:150,w:52,h:30},cancelBtn={x:44,y:662,w:352,h:32},saveBtn={x:1030,y:540,w:210,h:56};
 const itN=it=>Array.isArray(it)?String(it[0]):String(it),swCol=it=>Array.isArray(it)&&typeof it[1]==='string'&&it[1][0]==='#'?it[1]:null;
 const fmtCd=cd=>(Math.round((+cd||0)*100)/100)+' s';
 // recharge affichée : pour un style, le rythme réel de ses 5 coups (de … à …, ou la moyenne avec avg)
@@ -90,7 +94,7 @@ function drawTip(){if(!TIP){tipK=null;return}if(performance.now()-tipT0<300)retu
  g.save();g.shadowColor='rgba(0,0,0,.6)';g.shadowBlur=14;rr({x,y,w,h},8,'rgba(18,12,8,.98)',T.col||'#ffb347',1.5);g.restore();
  fitT(T.t,x+12,y+22,15,T.col||'#ffd38a',w-24,'bold',11);let yy=y+40;for(const [s,c] of extra){fitT(s,x+12,yy,11.5,c||'#d8b888',w-24,'normal',9);yy+=16}
  g.font=F;g.fillStyle='#ecdcc0';g.textAlign='left';for(const s of L){g.fillText(s,x+12,yy+2);yy+=15}if(T.f)text(T.f,x+12,yy+12,11,'#ffb347','left','bold')}
-// --- panneau de choix (un emplacement, le passif, un modèle, une option de build ou d'apparence)
+// --- panneau de choix (Clic G, une case de la barre, le dash, les familles, un modèle, une option de build ou d'apparence)
 let pickTab=0,pickScroll=0,menuLast=0;
 function pickData(p){
  if(p===0){const L=stylesOf(EB),col=EB.clan>=0?CLANS[EB.clan][1]:'#e8cfa8';return{kind:'j',title:`${lbl[SLOTS[0]]} · Style de combat`,sub:'Ton attaque de base (sans chakra) : le style de ton clan, ou un style de ton arbre '+STNAME[EB.st],
@@ -148,9 +152,12 @@ function creatorClick(){
  for(const [i,[,list,k]] of buildKeys().entries()){const R=selRect(i);if(!inRect(mouse,R))continue;if(appOff(k))return true;const n=list().length;
   if(mouse.x<R.x+24)cyc(k,n,-1);else if(mouse.x>R.x+R.w-24)cyc(k,n,1);else openPicker(k);return true}
  for(const [i,[,list,k]] of lookKeys().entries()){const R=lookRow(i),n=list().length;if(inRect(mouse,R.l)){cyc(k,n,-1);return true}if(inRect(mouse,R.r)){cyc(k,n,1);return true}if(inRect(mouse,R.v)){openPicker(k);return true}}
- for(let s=0;s<=DASHI;s++)if(inRect(mouse,slotRow(s))){openPicker(s);return true}
- if(inRect(mouse,passRow)){if(EB.clan<0)openPicker('fam');return true}
- if(inRect(mouse,autoBarBtn)){EB.bar=autoBar(EB);edRebuild();return true}
+ for(const T of CRTOP)if(inRect(mouse,T)){if(T.k===0)openPicker(0);else if(T.k===DASHI){if(EB.clan<0)openPicker(DASHI);else crSay('Dash propre au clan : il ne se change pas','#c8b89a')}else if(T.k==='fam'){if(EB.clan<0)openPicker('fam')}else crSay('Kawarimi : commun à tous les ninjas ('+lbl.KeyQ+')','#c8b89a');return true}
+ for(let s=0;s<BARN;s++)if(inRect(mouse,crBarR(s))){openPicker(BAR0+s);return true}
+ for(const C of crCards())if(inRect(mouse,C.R)){if(C.jid>=0)crToggle(C.jid);return true}
+ for(const c of crCols())if(c.t==='+fam'&&inRect(mouse,{x:c.x,y:CRG.y,w:c.w,h:4*CRG.rh+CRG.ch})){openPicker('fam');return true}
+ if(inRect(mouse,crAutoBtn)){EB.bar=autoBar(EB);edRebuild();crSay('Barre refaite : du rang S au rang D, en alternant les arbres','#8fe38f');return true}
+ if(inRect(mouse,crFillBtn)){const n=crFill();crSay(n?n+' case'+(n>1?'s':'')+' remplie'+(n>1?'s':''):'Aucune case vide à remplir (ou plus de jutsu appris hors de la barre)',n?'#8fe38f':'#c8b89a');return true}
  if(inRect(mouse,saveBtn)){if(!edOver())edSave();return true}
  return false}
 // --- dessin d'une carte du panneau de choix
@@ -186,12 +193,60 @@ function drawHead(edit,noSt){
  if(edit)return;
  {const b=coopBtn,h=inRect(mouse,b),on=coop()||net.role==='host';g.fillStyle=on?'#7f7':h?'rgba(90,60,30,.95)':'rgba(40,28,18,.9)';g.strokeStyle=on?'#7f7':'#8a5a2a';g.lineWidth=1.5;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,15);g.fill();g.stroke();text(!on?'EN LIGNE':net.role==='host'?`SALON ${net.code||''} · ${lobbyList().length}/${MAXP}`:`EN LIGNE · ${lobbyList().length} joueurs`,b.x+b.w/2,b.y+20,13,on?'#10131c':'#f3d9b0')}
  for(const b of modeBtns){const on=mode===b.m,h=inRect(mouse,b)&&!isGuest();g.fillStyle=on?'#ff9a3a':h?'rgba(90,60,30,.95)':'rgba(40,28,18,.9)';g.strokeStyle=on?'#ff9a3a':'#8a5a2a';g.lineWidth=1.5;g.beginPath();g.roundRect(b.x,b.y,b.w,b.h,15);g.fill();g.stroke();text(modeLabel(b),b.x+b.w/2,b.y+20,13,on?'#1a1008':'#f3d9b0')}}
+// ---------- création en ARBRES : grille des cartes, apprendre / oublier, barre de départ ----------
+// message bref sous la barre (retour d'une action)
+let CRMSG='',CRMC='#c8b89a',CRMT=0,CRH=-1;
+const crSay=(s,c)=>{CRMSG=s;CRMC=c||'#c8b89a';CRMT=performance.now()+2600};
+// colonnes : les arbres du perso (nature, style, clan ou familles) ; largeur ∝ nombre de cartes par rang (nature et clans martiaux : 2) ; sans clan sans famille : colonne d'invitation
+function crCols(){const tr=treesOf(EB),L=tr.map(t=>({t,k:Math.max(1,Math.min(3,...[...RANKO].map(r=>TREE[t][r].length)))}));if(EB.clan<0&&!EB.fam.length)L.push({t:'+fam',k:1});
+ const gap=6,U=(CRG.w-gap*(L.length-1))/L.reduce((a,c)=>a+c.k,0);let x=CRG.x;for(const c of L){c.x=x;c.w=U*c.k;x+=c.w+gap}return L}
+// cartes de la grille : {jid, t, r, R} (jid -1 = rang vide de l'arbre)
+function crCards(){const out=[];for(const c of crCols()){if(c.t==='+fam')continue;[...RANKO].forEach((r,ri)=>{const L=TREE[c.t][r],y=CRG.y+ri*CRG.rh;if(!L.length){out.push({jid:-1,t:c.t,r,R:{x:c.x,y,w:c.w,h:CRG.ch}});return}
+  const n=L.length,w=(c.w-4*(n-1))/n;L.forEach((id,i)=>out.push({jid:id,t:c.t,r,R:{x:c.x+i*(w+4),y,w,h:CRG.ch}}))})}return out}
+const crForced=jid=>!!(JL[jid]&&TREES[JL[jid].cat]&&TREES[JL[jid].cat].force);
+// apprendre : un jutsu remplacé (même rang, même arbre ou même réserve de familles) laisse sa case de barre au nouveau
+function crLearn(jid){const ob=EB.bar.slice(),ok=EB.k.slice();if(!learnJ(EB,jid))return false;
+ const gone=ok.filter(id=>!EB.k.includes(id));ob.forEach((id,s)=>{if(gone.includes(id)&&EB.bar[s]===-1&&!EB.bar.includes(jid))EB.bar[s]=jid});return gone}
+function crToggle(jid){const J=JL[jid];if(!J)return;
+ if(crForced(jid)&&EB.k.includes(jid)){crSay('Clan martial : ce jutsu est appris d\'office','#c8b89a');return}
+ if(EB.k.includes(jid)){unlearnJ(EB,jid);edRebuild();crSay(`${J.n} oublié : le rang ${J.r} de ${catName(J.cat)} reste vide`,'#ffb347');return}
+ const g0=crLearn(jid);edRebuild();crSay(g0&&g0.length?`${J.n} appris (remplace ${g0.map(id=>JL[id].n).join(', ')})`:`${J.n} appris`,'#8fe38f')}
+// survol + 1-6 : pose dans la case (apprend au besoin ; déjà ailleurs dans la barre = échange)
+function crPlace(jid,s){const J=JL[jid];if(!J)return;if(!EB.k.includes(jid))crLearn(jid);if(!EB.k.includes(jid))return;
+ const t=EB.bar.indexOf(jid);if(t===s){crSay(`${J.n} est déjà en case ${s+1}`,'#c8b89a');return}if(t>=0)EB.bar[t]=EB.bar[s];EB.bar[s]=jid;edRebuild();crSay(`${J.n} → case ${s+1}`,'#8fe38f')}
+// complète les cases vides avec les jutsu appris hors de la barre (ordre de la barre automatique) ; renvoie le nombre de cases remplies
+function crFill(){const A=autoBar(Object.assign({},EB,{k:EB.k.filter(id=>!EB.bar.includes(id))})).filter(id=>id>=0);let n=0;EB.bar=EB.bar.map(id=>id>=0||!A.length?id:(n++,A.shift()));edRebuild();return n}
+// une carte de jutsu (appris : couleur de l'arbre ; non appris : sombre ; n° de case en vert si dans la barre)
+function crCard(C,hov){const R=C.R,col=catCol(C.t);
+ if(C.jid<0){g.save();g.setLineDash([4,4]);rr(R,7,'rgba(20,14,10,.35)','rgba(120,90,60,.45)',1);g.restore();text('—',R.x+R.w/2,R.y+R.h/2+5,13,'#5a4a3a');return}
+ const J=JL[C.jid],lr=EB.k.includes(C.jid),s=EB.bar.indexOf(C.jid),fo=crForced(C.jid),gold=J.r==='S',nar=R.w<132;
+ rr(R,7,lr?(hov?rgba(col,.42):rgba(col,.24)):hov?'rgba(74,48,24,.95)':'rgba(22,15,10,.88)',lr?liftC(col,.55):hov?'#c08040':'rgba(110,80,50,.55)',lr?2:1);
+ if(!lr){g.fillStyle='rgba(0,0,0,.18)';g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,7);g.fill()}
+ const ir=nar?9:12,ix=R.x+(nar?12:17);jIcon(ix,R.y+(nar?13:R.h/2),ir,lr?col:'#4a3c2e',C.t,gold&&lr);
+ const nm=TREES[C.t].type==='nature'?J.n.replace(/^[^:]{2,12} : /,''):J.n,fg=lr?(gold?'#ffe81f':'#fff3dc'):'#a08a70',bw=s>=0?22:4;
+ const sub=lr?(fo?'appris d\'office':'✓ appris'):'clic : apprendre',sc=lr?liftC(col,.5):'#6a5a48';
+ if(nar){const L=crWrap(nm,R.w-26-bw,R.w-10,FNT(10,'bold'));fitT(L[0],R.x+23,R.y+17,10,fg,R.w-26-bw,'bold',8);if(L[1])fitT(L[1],R.x+5,R.y+32,10,fg,R.w-10,'bold',8);else fitT(sub,R.x+5,R.y+33,9,sc,R.w-10,'normal',7)}
+ else{const tx=R.x+33,tw=R.x+R.w-tx-bw,L=crWrap(nm,tw,tw,FNT(11.5,'bold'));if(L[1]){fitT(L[0],tx,R.y+19,11.5,fg,tw,'bold',9);fitT(L[1],tx,R.y+34,11.5,fg,tw,'bold',9)}else{fitT(L[0],tx,R.y+20,11.5,fg,tw,'bold',9);fitT(sub,tx,R.y+35,9.5,sc,tw,'normal',8)}}
+ if(s>=0){const b={x:R.x+R.w-21,y:R.y+4,w:17,h:17};rr(b,5,'#3aa83a','#9fffa0',1);text(String(s+1),b.x+8.5,b.y+13,11,'#0c1a0c')}}
+// coupe un nom en 2 lignes : la 1re tient dans w1, la 2e (le reste) dans w2
+function crWrap(s,w1,w2,font){g.font=font;const W0=String(s).split(' ');let a='';let i=0;for(;i<W0.length;i++){const t=a?a+' '+W0[i]:W0[i];if(a&&g.measureText(t).width>w1)break;a=t}return[a,W0.slice(i).join(' ')]}
+// en-tête de colonne : icône, nom de l'arbre, appris / possibles
+function crHead(c,hov){const y=CRG.hy;if(c.t==='+fam'){const R={x:c.x,y,w:c.w,h:18};text('FAMILLES DE SUB',c.x+c.w/2,y+13,10.5,'#9f9');return}
+ const T=TREES[c.t],col=catCol(c.t),n=EB.k.filter(id=>JL[id].cat===c.t).length,tot=[...RANKO].reduce((a,r)=>a+Math.min(TREE[c.t][r].length,tTake(T,r)),0);
+ rr({x:c.x,y,w:c.w,h:19},6,rgba(col,hov?.34:.2),rgba(col,.6),1);jIcon(c.x+10,y+9.5,7,col,c.t);
+ const k=T.type==='nature'?'nature':T.type==='style'?'style':T.type==='famille'?'famille':'clan';
+ fitT(`${catName(c.t)}`,c.x+21,y+14,11,liftC(col,.62),c.w-21-38,'bold',8);text(`${n}/${tot}`,c.x+c.w-6,y+14,10.5,'#ffd38a','right');
+ return k}
 // ---------- écran de création / modification d'un perso (EB) ----------
 function drawCreator(){
  // clavier du panneau de choix : Échap ferme, flèches haut/bas défilent, gauche/droite changent d'onglet
  if(picker!==null){if(pressed.Escape)picker=null;else{const D=pickData(picker);if(D){const G=pickGrid(D);if(pressed.ArrowDown||pressed.PageDown)pickScroll+=pressed.PageDown?G.gh:G.step;if(pressed.ArrowUp||pressed.PageUp)pickScroll-=pressed.PageUp?G.gh:G.step;
   if(D.tabs&&(pressed.ArrowLeft||pressed.ArrowRight)){pickTab=(pickTab+(pressed.ArrowRight?1:-1)+D.tabs.length)%D.tabs.length;pickScroll=0}}}}
  else if(pressed.Escape&&!CONF){edCancel();if(scr!=='edit')return drawRoster()}
+ // survol d'une carte + 1-6 : posée dans la barre ; clic D sur une case de la barre (ou sur une carte posée) : retirée
+ if(picker===null&&!CONF){if(CRH>=0)for(let k=1;k<=BARN;k++)if(pressed['Digit'+k]||pressed['Numpad'+k])crPlace(CRH,k-1);
+  if(pressed.rmb){let s0=-1;for(let s=0;s<BARN;s++)if(inRect(mouse,crBarR(s)))s0=s;if(s0<0&&CRH>=0)s0=EB.bar.indexOf(CRH);
+   if(s0>=0&&EB.bar[s0]>=0){const n=JL[EB.bar[s0]].n;EB.bar[s0]=-1;if(EB.bar.every(id=>id<0))crSay('La barre ne peut pas être toute vide : elle a été remplie automatiquement','#ffb347');else crSay(`${n} retiré de la case ${s0+1} (toujours appris)`,'#ffb347');edRebuild()}}}
  const free=picker===null&&!CONF,hv=R=>free&&inRect(mouse,R);
  drawHead(true);
  {const E=ED.k?rosGet(ED.k):null,s=ED.k?(E&&E.P?`MODIFIER · ${E.P.full} (perso de l'anime)`:`MODIFIER · ${E?E.b.name:EB.name}`):'CRÉATION D\'UN PERSO',R={x:290,y:76,w:700,h:30};
@@ -220,11 +275,11 @@ function drawCreator(){
  {const R=cancelBtn,h=hv(R),dt=edDirty();rr(R,R.h/2,h?'rgba(90,60,30,.95)':'rgba(40,28,18,.92)','#c08040',1.5);text(dt?'◀ Annuler (sans enregistrer)':'◀ Retour à la liste',R.x+R.w/2,R.y+21,14,'#f3d9b0');
   if(h)hoverTip('cancel',()=>({t:dt?'Annuler':'Retour',d:dt?'Revient à la liste sans garder tes changements (une confirmation est demandée).':'Revient à la liste des persos.',f:'Échap'}))}
  // ===== colonne de droite : build de combat
- // camp, voie, clan, nature : ◀ ▶ pour défiler, clic au centre pour la grille
+ // camp, clan, nature, style : ◀ ▶ pour défiler, clic au centre pour la grille
  buildKeys().forEach(([lab,list,k],i)=>{const R=selRect(i),L=list(),v=getB(k),it=L[v],off=appOff(k),h=hv(R)&&!off,sw=swCol(it);
   rr(R,10,h?'rgba(70,46,24,.95)':'rgba(20,14,10,.85)',off?'#3a2a1a':k==='clan'&&EB.clan>=0?CLANS[EB.clan][1]:'#5a3a1e',k==='clan'&&EB.clan>=0?1.5:1);
   text(lab.toUpperCase(),R.x+R.w/2,R.y+15,10,'#b89a70','center');
-  if(off){text('aucune (taijutsu pur)',R.x+R.w/2,R.y+34,12,'#7a6a58','center','normal');if(inRect(mouse,R)&&free)hoverTip('off'+k,()=>({t:'Pas de nature',d:'Les Taijutsuka n\'utilisent que leur corps : pas de nature, pas de mudras.'}));return}
+  if(off){text(k==='st'?STNAME[EB.st]+' (imposé)':'aucune (clan martial)',R.x+R.w/2,R.y+34,12,k==='st'?'#c8b89a':'#7a6a58','center','normal');if(inRect(mouse,R)&&free)hoverTip('off'+k,()=>k==='st'?{t:'Style imposé : '+STNAME[EB.st],d:'Un clan martial a son arbre de style imposé (Taijutsuka : Taijutsu, Kenjutsuka : Kenjutsu, Bukijutsuka : Bukijutsu).'}:{t:'Pas de nature',d:'Les clans martiaux (Taijutsuka, Kenjutsuka, Bukijutsuka) n\'ont pas de nature : pas de mudras.'});return}
   const ax=h&&mouse.x<R.x+24,bx=h&&mouse.x>R.x+R.w-24;text('◀',R.x+13,R.y+30,13,ax?'#fff':'#ffb347');text('▶',R.x+R.w-13,R.y+30,13,bx?'#fff':'#ffb347');
   const nm=itN(it);g.font=FNT(14,'bold');const tw=Math.min(R.w-60-(sw?18:0),g.measureText(nm).width),x0=R.x+R.w/2-(tw+(sw?18:0))/2;if(sw)rr({x:x0,y:R.y+22,w:12,h:12},3,sw,'#14100a',1.5);
   fitT(nm,x0+(sw?18:0),R.y+33,14,k==='clan'||k==='nat'?'#ffd38a':'#fff',R.w-60-(sw?18:0),'bold',10);
@@ -233,41 +288,59 @@ function drawCreator(){
  {const T=TRAITS[EB.clan],tl=T?`${EB.clan<0?'Sans clan':'Trait'} · ${T.nom||T.name||''} : ${T.desc||''}`:'',col=EB.clan>=0?CLANS[EB.clan][1]:'#e8cfa8',aff=EB.nat>=0?`${NATURES[EB.nat][0]} : fort contre ${NATURES[BEATS[EB.nat]][0]}, faible contre ${NATURES[BEATS.indexOf(EB.nat)][0]}`:'Clan martial : aucune nature';
   g.font=FNT(11.5);const aw=Math.min(300,g.measureText(aff).width);fitT(aff,BX+BW-4,207,11.5,EB.nat>=0?NATURES[EB.nat][2]:'#b89a70',300,'normal',9,'right');
   if(tl){fitT(tl,BX+4,207,11.5,liftC(col,.5),BW-aw-30,'normal',10.5);if(free&&inRect(mouse,{x:BX,y:194,w:BW-aw-20,h:18}))hoverTip('trait',()=>({t:T.nom||T.name||'Trait',col,d:T.desc||''}))}}
- // Clic G, la barre de départ (touches 1-6) et le dash : touche, icône, nom, rang, chakra, recharge, mudras
- for(let s=0;s<=DASHI;s++){const R=slotRow(s),ab=ch.abil[s],h=hv(R),J=ab&&ab.jid!=null?JL[ab.jid]:null,col=J?catCol(J.cat):EB.clan>=0?CLANS[EB.clan][1]:'#e8cfa8',gold=!!J&&J.r==='S',kn=s===0?'Clic G':s===DASHI?'Dash':'Case '+s;
-  rr(R,9,h?'rgba(74,48,24,.95)':'rgba(20,14,10,.85)',gold?'#ffb347':h?'#c08040':'#5a3a1e',gold?2:1);
-  rr({x:R.x+6,y:R.y+4,w:66,h:R.h-8},7,'rgba(50,32,16,.95)',gold?'#ffe81f':'#8a5a2a',1.5);text(lbl[SLOTS[s]],R.x+39,R.y+17,13,gold?'#ffe81f':'#fff');text(kn,R.x+39,R.y+28,8.5,'#c8a878','center','normal');
-  if(!ab){text('(case vide) · clic : choisir un jutsu',R.x+124,R.y+22,12,'#8a7458','left','normal');text('›',R.x+R.w-14,R.y+24,20,h?'#fff':'#8a5a2a','center');if(h)hoverTip('sl'+s,()=>({t:'Case vide',d:'Clique pour poser un jutsu dans cette case de la barre de départ (il est appris au besoin).'}));continue}
-  jIcon(R.x+96,R.y+R.h/2,13,col,J?J.cat:null,gold);
-  const nw=fitT(ab.n,R.x+118,R.y+16,13.5,gold?'#ffe81f':'#ffd38a',290,'bold',10);if(J)rankBadge(R.x+126+nw,R.y+4,J.r);else if(s===0)styleBadge(R.x+126+nw,R.y+4);
-  if(J)fitT(catName(J.cat),R.x+180+nw,R.y+16,10,catCol(J.cat),Math.max(10,560-180-nw),'normal',9);else if(s===DASHI)fitT(EB.clan>=0?'dash du clan':'dash · clic : changer',R.x+130+nw,R.y+16,10,'#c8a878',200,'normal',9);
-  fitT(ab.d||'',R.x+118,R.y+30,10.5,'#d8c0a0',470,'normal',9);
-  const st=[[J?jcostT(ab).replace(' chakra',''):'0',J&&ab.hpc?'PV max':'chakra','#7fc8ff'],[s?fmtCd(ab.cd):abCd(ab,1),s?'recharge':'moy./coup','#ffd38a'],[J?ab.mud?String(ab.mud):'aucun':'—','mudras','#d8b888']];
-  st.forEach(([v,l,c],k)=>{const x=R.x+612+k*62;text(v,x,R.y+17,13,c,'center');text(l,x,R.y+29,9,'#9a8060','center','normal')});
-  text('›',R.x+R.w-14,R.y+24,20,h?'#fff':'#8a5a2a','center');
-  if(h)hoverTip('sl'+s,()=>({t:ab.n,col,l:[[J?`Touche ${lbl[SLOTS[s]]} · ${catName(J.cat)} · rang ${J.r}`:s===0?`${lbl[SLOTS[s]]} · style de combat (sans chakra)`:`${lbl[SLOTS[s]]} · dash (sans chakra)`,col],[J?`${jcostT(ab)} · ${fmtCd(ab.cd)} · ${ab.mud?ab.mud+' mudras':'sans mudra'}`:s===0?`attaque de base · ${abCd(ab)} par coup`:`recharge ${fmtCd(ab.cd)}`,'#d8b888']],d:ab.d||'',f:s===DASHI&&EB.clan>=0?'Dash propre au clan':'Clic : choisir'}))}
- // familles de sub (sans clan) ou rappel des arbres du perso
- {const R=passRow,fr=EB.clan<0,h=hv(R)&&fr;rr(R,10,h?'rgba(50,62,36,.95)':'rgba(20,14,10,.85)',h?'#7fd87f':'#3a5a3a');
-  rr({x:R.x+7,y:R.y+6,w:66,h:R.h-12},8,'rgba(30,50,26,.95)','#5aa85a',1.5);text(fr?'FAMILLES':'ARBRES',R.x+40,R.y+27,10.5,'#9f9');
-  const tr=treesOf(EB);let x=R.x+86;for(const t of tr){const n=EB.k.filter(id=>JL[id].cat===t).length,tot=RANKO.split('').reduce((a,r)=>a+Math.min(TREE[t][r].length,tTake(TREES[t],r)),0),s2=`${catName(t)} ${n}/${tot}`;g.font=FNT(11.5,'bold');const w=g.measureText(s2).width+26;if(x+w>R.x+R.w-30)break;
-   jIcon(x+8,R.y+R.h/2,7,catCol(t),t);fitT(s2,x+19,R.y+R.h/2+4,11.5,liftC(catCol(t),.6),w,'bold',9);x+=w+6}
-  if(fr&&!EB.fam.length)text('aucune famille : clic pour en choisir (jusqu\'à '+FAMMAX+')',x,R.y+R.h/2+4,11.5,'#a8c898','left','normal');
-  if(fr)text('›',R.x+R.w-14,R.y+R.h/2+6,22,h?'#fff':'#3a6a3a','center');
-  if(hv(R))hoverTip('fam',()=>({t:fr?'Familles de sub':'Arbres du perso',col:'#7fd87f',d:fr?`Sans clan : jusqu'à ${FAMMAX} familles parmi ${FAMS.length} ; 5 sub au total, 1 par rang toutes familles confondues. Nature : 1 jutsu par rang. Style : 1 par rang.`:isMartial(EB.clan)?'Clan martial : arbre de clan à 2 jutsu par rang (tous appris) et arbre de style imposé.':'Nature : 1 jutsu par rang (parmi 2) · style : 1 par rang · clan : 1 par rang. Un rang peut rester vide.',f:fr?'Clic : choisir les familles':''}))}
- // jutsu appris (tous utilisables en combat via le menu B) et barre automatique
- {const R=budBox;rr(R,10,'rgba(20,14,10,.9)','#5a3a1e');text('JUTSU APPRIS',R.x+12,R.y+18,11,'#b89a70','left');text(String(EB.k.length),R.x+150,R.y+20,17,'#ffd38a','right');
-  let x=R.x+160;for(const r of RANKO){const n=EB.k.filter(id=>JL[id].r===r).length;rr({x,y:R.y+7,w:44,h:16},5,RANKC[r]);text(`${r} × ${n}`,x+22,R.y+19,11,'#14100a');x+=48}
-  fitT('Tous les jutsu appris se posent en combat (menu B) ; la barre de départ se change ici, case par case.',R.x+12,R.y+44,11,'#c8a878',R.w-170,'normal',9);
-  btn(autoBarBtn,'↻ Barre auto',false);if(hv(autoBarBtn))hoverTip('autobar',()=>({t:'Barre automatique',d:'Remplit les 6 cases avec tes jutsu appris, du rang S au rang D, en alternant les arbres.'}))}
+ // rangée du haut : Clic G (style ou arme), Espace (dash), A (Kawarimi commun), familles de sub (sans clan) ou jutsu appris
+ for(const T of CRTOP){const h=hv(T),k=T.k;let key,nm,sub,col,ic,click=true,tip;
+  if(k===0){const ab=ch.abil[0],armes=EB.clan<0&&STREE[EB.st]==='buki';key=lbl.lmb||'Clic G';nm=ab.n;col=EB.clan>=0?CLANS[EB.clan][1]:catCol('t'+EB.st);ic=null;sub=(armes?'arme · ':'attaque de base · ')+abCd(ab,1)+' / coup';click=stylesOf(EB).length>1;
+   tip={t:ab.n,col,l:[[armes?`Arme du Bukijutsu (${stylesOf(EB).length} au choix)`:EB.clan>=0?'Style de combat du clan (sans chakra)':`Style de combat de l'arbre ${STNAME[EB.st]} (sans chakra)`,col],[`${abCd(ab)} par coup`,'#d8b888']],d:ab.d||' ',f:click?'Clic : changer':'Seul style possible pour ce perso'}}
+  else if(k===DASHI){const ab=ch.dashAb||ch.abil[DASHI];key=lbl.Space;nm=ab?ab.n:'—';col=EB.clan>=0?CLANS[EB.clan][1]:EB.dsh==='n'&&EB.nat>=0?NATURES[EB.nat][2]:EB.dsh&&EB.dsh[0]==='f'?FAMS[+EB.dsh.slice(1)][1]:'#e8cfa8';ic=EB.clan>=0?'c'+EB.clan:EB.dsh==='n'?'n'+EB.nat:EB.dsh&&EB.dsh[0]==='f'?'f'+EB.dsh.slice(1):null;
+   click=EB.clan<0;sub=EB.clan>=0?'dash du clan · sans chakra':`dash ${EB.dsh==='n'?'de ta nature':EB.dsh[0]==='f'?'de la famille '+FAMS[+EB.dsh.slice(1)][0]:'normal'} · clic : changer`;
+   tip={t:nm,col,l:[[EB.clan>=0?'Dash propre au clan (sans chakra)':'Dash : normal, celui de ta nature ou celui d\'une de tes familles (sans chakra)',col],[ab?`recharge ${fmtCd(ab.cd)}`:'','#d8b888']],d:ab?ab.d||' ':' ',f:click?'Clic : choisir le dash':''}}
+  else if(k===SHUNI){const ab=ch.shunAb||ch.abil[SHUNI];key=lbl.KeyQ;nm=ab?ab.n:'Kawarimi';col='#c8b89a';ic=undefined;click=false;sub='commun · sans chakra';tip={t:nm,col,l:[['Commun à tous les ninjas (sans chakra)',col],[ab?`recharge ${fmtCd(ab.cd)}`:'','#d8b888']],d:ab?ab.d||' ':' '}}
+  else{const fr=EB.clan<0;key=fr?'SUB':'JUTSU';col=fr?'#7fd87f':'#ffb347';click=fr;
+   nm=fr?`Familles ${EB.fam.length}/${FAMMAX}`:`${EB.k.length} jutsu appris`;sub=fr?(EB.fam.length?'clic : ajouter / retirer':'clic : en choisir (jusqu\'à '+FAMMAX+')'):[...RANKO].map(r=>r+'×'+EB.k.filter(id=>JL[id].r===r).length).join(' ');
+   tip={t:fr?'Familles de sub':'Jutsu appris',col,d:fr?`Sans clan : jusqu'à ${FAMMAX} familles parmi ${FAMS.length} (${EB.fam.map(f=>FAMS[f][0]).join(', ')||'aucune'}). Tu apprends 5 sub au total : 1 par rang, toutes familles confondues.`:isMartial(EB.clan)?'Clan martial : arbre de clan à 2 jutsu par rang (tous appris d\'office) et arbre de style imposé ; pas de nature.':'Nature : 1 jutsu par rang (parmi 2) · style : 1 par rang · clan : 1 par rang. Un rang peut rester vide. Tous les jutsu appris se posent en combat avec le menu B.',f:fr?'Clic : choisir les familles':''}}
+  rr(T,9,h&&click?'rgba(74,48,24,.95)':'rgba(20,14,10,.85)',h&&click?'#c08040':rgba(col,.55),1.2);
+  const kb={x:T.x+5,y:T.y+5,w:k==='fam'?44:k===SHUNI?30:54,h:T.h-10};rr(kb,6,'rgba(50,32,16,.95)','#8a5a2a',1.2);fitT(key,kb.x+kb.w/2,kb.y+kb.h/2+4.5,key.length>4?10:12.5,'#fff',kb.w-6,'bold',8,'center');
+  let x=kb.x+kb.w+8;if(k==='fam'&&EB.clan<0){EB.fam.forEach((f,i)=>jIcon(x+7+i*15,T.y+29,6,FAMS[f][1],'f'+f))}
+  if(ic!==undefined&&k!=='fam'){jIcon(x+11,T.y+T.h/2,10,col,ic);x+=26}
+  fitT(nm,x,T.y+17,12.5,'#ffd38a',T.x+T.w-x-(click?16:6),'bold',9);if(!(k==='fam'&&EB.clan<0&&EB.fam.length))fitT(sub,x,T.y+32,10,'#c8a878',T.x+T.w-x-(click?16:6),'normal',8);else fitT('',x,T.y+32,10,'#c8a878',10);
+  if(click)text('›',T.x+T.w-9,T.y+T.h/2+6,18,h?'#fff':'#8a5a2a','center');
+  if(h)hoverTip('top'+k,()=>tip)}
+ // grille des arbres : colonnes (Nature, Style, Clan ou familles), rangs D → S en lignes
+ {const cols=crCols(),cards=crCards();CRH=-1;
+  [...RANKO].forEach((r,ri)=>{const y=CRG.y+ri*CRG.rh;rr({x:BX,y:y+4,w:28,h:CRG.ch-8},7,RANKC[r]);text(r,BX+14,y+CRG.ch/2+2,15,'#14100a');text(String(RKB[r].ck),BX+14,y+CRG.ch/2+14,8.5,'#14100a','center','normal');
+   if(free&&inRect(mouse,{x:BX,y,w:30,h:CRG.ch}))hoverTip('rk'+r,()=>({t:'Rang '+r,col:RANKC[r],d:`Chakra ${RKB[r].ck} par lancer · recharge ${RKB[r].cd.join(' à ')} s${r==='S'?' · cut-in au lancer':''}. Les jutsu de nature demandent aussi des mudras (${'DCBAS'.indexOf(r)+2}). Dash et Kawarimi : sans chakra.`}))});
+  for(const c of cols){const k=crHead(c,false);if(c.t==='+fam'){const R={x:c.x,y:CRG.y,w:c.w,h:4*CRG.rh+CRG.ch},h=hv(R);g.save();g.setLineDash([6,5]);rr(R,9,h?'rgba(50,62,36,.6)':'rgba(20,30,16,.35)',h?'#9f9':'#3a6a3a',1.4);g.restore();
+    wrapL('Sans clan : choisis jusqu\'à '+FAMMAX+' familles de sub (Iryô, Fûinjutsu, Genjutsu…) ; tu apprends 1 sub par rang, toutes familles confondues.',c.w-30,FNT(12)).forEach((l,i)=>text(l,c.x+c.w/2,CRG.y+90+i*17,12,'#a8c898','center','normal'));
+    text('+ Choisir des familles',c.x+c.w/2,CRG.y+200,14,h?'#fff':'#9f9');if(h)hoverTip('addfam',()=>({t:'Familles de sub',col:'#7fd87f',d:'Clique pour choisir tes familles (jusqu\'à '+FAMMAX+').'}));continue}
+   const hd={x:c.x,y:CRG.hy,w:c.w,h:19};if(free&&inRect(mouse,hd)){const T=TREES[c.t];hoverTip('hd'+c.t,()=>({t:catName(c.t),col:catCol(c.t),d:k==='nature'?'Arbre de nature : 2 jutsu par rang, tu en apprends 1 par rang (avec mudras).':k==='style'?`Arbre de style ${STNAME[EB.st]} : 1 jutsu par rang, sans mudra.`:k==='famille'?'Famille de sub : la limite est partagée entre tes familles (1 sub par rang au total), sans mudra.':T.force?'Clan martial : 2 jutsu par rang, tous appris d\'office, sans mudra.':'Arbre de clan : 1 jutsu par rang, sans mudra.'}))}}
+  for(const C of cards){const h=free&&inRect(mouse,C.R)&&C.jid>=0;if(h)CRH=C.jid;crCard(C,h);
+   if(h){const J=JL[C.jid],ab=jutsu(C.jid),lr=EB.k.includes(C.jid),s=EB.bar.indexOf(C.jid),bl=lr?'':learnBlock(EB.k,C.jid),rep=bl?EB.k.filter(id=>JL[id].r===J.r&&(bl==='tree'?JL[id].cat===J.cat:TREES[JL[id].cat].pool===TREES[J.cat].pool)).map(id=>JL[id].n):[];
+    hoverTip('cr'+C.jid,()=>({t:J.n,col:liftC(catCol(J.cat),.55),l:[[`${catName(J.cat)} · rang ${J.r}`,liftC(catCol(J.cat),.5)],[`${jcostT(ab)} · recharge ${fmtCd(ab.cd)} · ${ab.mud?ab.mud+' mudras':'sans mudra'}`,'#d8b888'],
+     [lr?(s>=0?`Appris · barre de départ : case ${s+1}`:'Appris · hors de la barre de départ (se pose en combat avec le menu B)'):rep.length?`Non appris · l'apprendre remplace : ${rep.join(', ')}`:'Non appris',lr?'#8fe38f':rep.length?'#ffb347':'#c8a878']],
+     d:J.d,f:crForced(C.jid)?'Appris d\'office (clan martial) · 1-6 : poser dans la barre':lr?'Clic : oublier (le rang reste vide) · 1-6 : poser dans la barre':'Clic : apprendre · 1-6 : apprendre et poser dans la barre'}))}}}
+ // barre de départ : 6 cases (clic : choisir dans la liste · clic D : vider)
+ {text('BARRE DE',BX+46,560,10.5,'#b89a70','center');text('DÉPART',BX+46,574,10.5,'#b89a70','center');text('touches 1-6',BX+46,589,9,'#8a7458','center','normal');
+  for(let s=0;s<BARN;s++){const R=crBarR(s),id=EB.bar[s],J=id>=0?JL[id]:null,h=hv(R),gold=J&&J.r==='S',hl=CRH>=0&&id===CRH;
+   rr(R,8,h?'rgba(74,48,24,.95)':'rgba(13,19,32,.88)',hl?'#6fe36f':gold?'#ffb347':h?'#c08040':'#3a4a66',hl||gold?2:1.3);
+   text(lbl['Digit'+(s+1)]||String(s+1),R.x+8,R.y+15,12,'#cfd8ea','left');
+   if(!J){text('vide',R.x+R.w/2,R.y+38,10,'#5a6680','center','normal');if(h)hoverTip('cb'+s,()=>({t:`Case ${s+1} (vide)`,d:'Clic : choisir un jutsu pour cette case (il est appris au besoin). Tu peux aussi survoler une carte et taper '+(s+1)+'.'}));continue}
+   const ab=ch.jab&&ch.jab[id]||jutsu(id);jIcon(R.x+R.w/2+8,R.y+19,11,catCol(J.cat),J.cat,gold);rr({x:R.x+R.w-17,y:R.y+4,w:13,h:13},4,RANKC[J.r]);text(J.r,R.x+R.w-10.5,R.y+14,9,'#14100a');
+   const L=wrapL(ab.n,R.w-6,FNT(9,'bold'));fitT(L[0]||'',R.x+R.w/2,R.y+41,9,'#e8eef8',R.w-6,'bold',7,'center');if(L[1])fitT(L.slice(1).join(' '),R.x+R.w/2,R.y+51,9,'#e8eef8',R.w-6,'bold',7,'center');
+   if(h)hoverTip('cb'+s,()=>({t:`Case ${s+1} : ${ab.n}`,col:liftC(catCol(J.cat),.55),l:[[`${catName(J.cat)} · rang ${J.r} · ${jcostT(ab)} · ${fmtCd(ab.cd)}`,liftC(catCol(J.cat),.5)]],d:ab.d||' ',f:'Clic : choisir un autre jutsu · clic D : vider la case'}))}}
+ btn(crAutoBtn,'↻ Barre auto',false);btn(crFillBtn,'Compléter',false);
+ if(hv(crAutoBtn))hoverTip('autobar',()=>({t:'Barre automatique',d:'Refait les 6 cases avec tes jutsu appris, du rang S au rang D, en alternant les arbres.'}));
+ if(hv(crFillBtn))hoverTip('fillbar',()=>({t:'Compléter la barre',d:'Remplit seulement les cases vides avec tes jutsu appris qui ne sont pas encore dans la barre.'}));
  btn(rndBuildBtn,'🎲 Kit aléatoire',false);btn(presetBtn,'📜 Modèles de kit',false);
  if(hv(rndBuildBtn))hoverTip('rndK',()=>({t:'Kit aléatoire',d:'Tire au hasard clan, nature, style, familles, jutsu appris et barre. Ton apparence ne change pas.'}));
  if(hv(presetBtn))hoverTip('pre',()=>({t:'Modèles de kit',d:'Les persos de l\'anime en liste : leur kit et leur apparence comme point de départ à retoucher.'}));
- RANKO.split('').forEach((r,i)=>{const x=BX+408+i*35;rr({x,y:643,w:31,h:22},6,RANKC[r]);text(`${r}·${RKB[r].ck}`,x+15.5,659,10.5,'#14100a')});if(free&&inRect(mouse,{x:BX+408,y:640,w:175,h:28}))hoverTip('rk',()=>({t:'Rangs des jutsu',d:`Chakra par lancer : D = ${RKB.D.ck}, C = ${RKB.C.ck}, B = ${RKB.B.ck}, A = ${RKB.A.ck}, S = ${RKB.S.ck} ; recharge : D ${RKB.D.cd.join('-')} s … S ${RKB.S.cd.join('-')} s. Les jutsu de nature demandent aussi des mudras (D = 2 … S = 6). Dash et Kawarimi : sans chakra.`}));
+ // retour d'une action, sinon l'aide de la grille
+ if(performance.now()<CRMT)fitT(CRMSG,BX+4,662,12,CRMC,BW-8,'bold',9);else fitT('Clic sur une carte : apprendre / oublier · survol d\'une carte + 1-6 : la poser dans la barre · clic D sur une case : la vider',BX+4,662,11.5,'#a89070',BW-8,'normal',9);
  {const R=saveBtn,h=hv(R);g.save();g.shadowColor='#ff9a3a';g.shadowBlur=h?22:10;rr(R,R.h/2,h?'#ffb347':'#ff9a3a','#ffd38a',2);g.restore();
   text('✔ ENREGISTRER',R.x+R.w/2,R.y+R.h/2+6,18,'#1a1008');
   if(h)hoverTip('save',()=>({t:'Enregistrer',d:ED.k?'Garde ces changements et revient à la liste, ce perso sélectionné.':'Ajoute ce ninja à « Mes ninjas » et revient à la liste, prêt à jouer.'}))}
  // sort commun à tous les ninjas : soin (H)
- fitT(`${lbl.KeyH} · Soin (tous les ninjas) : l'allié visé (ou toi) récupère ${Math.round(HLS.pct*100)} % de ses PV + 8 % en 2 s · incantation 0,3 s · ${HLS.cd} s de recharge · sans chakra`,BX+4,690,11.5,'#9fdfaa',640,'normal',9);
+ fitT(`${lbl.KeyH} · Soin (tous les ninjas) : l'allié visé (ou toi) récupère ${Math.round(HLS.pct*100)} % de ses PV + 8 % en 2 s · incantation 0,3 s · ${HLS.cd} s de recharge · sans chakra`,BX+4,684,11.5,'#9fdfaa',640,'normal',9);
  if(picker!==null)drawPicker();
  else if(!CONF)text(HELPK(),W/2,714,11.5,'#e8cfa8','center','normal');
  drawConf();drawTip();drawCursor()}

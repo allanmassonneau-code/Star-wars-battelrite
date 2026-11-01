@@ -41,7 +41,7 @@ rep(" deflect:()=>{osc('square',2600,1700,.13,.03,{bp:2600,q:6,rev:1});","  defl
 # ---------- persos : les kits Star Wars deviennent la réserve de jutsu (SRC)
 rep("const CH={\n","const SRC={\n")
 rep("for(const k in BAL){const [hp,pw,spd]=BAL[k];Object.assign(CH[k],{hp,pw,spd})}","for(const k in BAL){const [hp,pw,spd]=BAL[k];Object.assign(SRC[k],{hp,pw,spd})}")
-rep("const HEROES=Object.keys(CH).filter(k=>!CH[k].trooper);",open(SP+'nr_ninja.js').read().replace('/*NR_PASS*/',open(SP+'nr_pass.js').read()).replace('/*NR_TREE*/',open(SP+'nr_tree.js').read()+open(SP+'nr_bar.js').read()).replace('/*NR_NATURE*/',open(SP+'nr_flow.js').read()+open(SP+'nr_nature.js').read()+open(SP+'nr_kits.js').read()+open(SP+'nr_pace.js').read()+KITS))
+rep("const HEROES=Object.keys(CH).filter(k=>!CH[k].trooper);",open(SP+'nr_ninja.js').read().replace('/*NR_PASS*/',open(SP+'nr_pass.js').read()).replace('/*NR_TREE*/',open(SP+'nr_tree.js').read()+open(SP+'nr_bar.js').read()+open(SP+'nr_bmenu.js').read()).replace('/*NR_NATURE*/',open(SP+'nr_flow.js').read()+open(SP+'nr_nature.js').read()+open(SP+'nr_kits.js').read()+open(SP+'nr_pace.js').read()+KITS))
 rep("playerChamp='luke',aiChamp='vader'","playerChamp='p0',aiChamp='b20'")
 # bots : jamais deux fois le même perso de l'anime (un bot ne prend pas le nom d'un joueur, ex. le joueur Naruto n'affronte pas un bot Naruto)
 rep("const pick=t=>{let o=HEROES.filter(h=>CH[h].side===sides[t]&&!used.has(h));","const nm=new Set(H.filter(h=>h.c&&CH[h.c]).map(h=>CH[h.c].name).concat(aiChamp==='o0'&&CH.o0?[CH.o0.name]:[])),pick=t=>{let o=HEROES.filter(h=>CH[h].side===sides[t]&&!used.has(h)&&!nm.has(CH[h].name));")
@@ -431,6 +431,7 @@ rep("function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;","func
 rep(" drawAmbient();drawHud();drawCutin();"," drawAmbient();drawHud();try{BMUI.draw()}catch(e){console.error(e)}drawCutin();")
 rep("if(e.code==='Escape'&&state!=='menu'&&!e.repeat)quitUI(!quitOn)","if(e.code==='Escape'&&state!=='menu'&&!e.repeat){if(!BMUI.esc())quitUI(!quitOn)}")
 rep("l:mouse.l,p:pressed","l:mouse.l&&!BMUI.mask(),p:pressed")
+rep("l:!!mouse.l,p:Object.keys(net.gp)","l:!!mouse.l&&!BMUI.mask(),p:Object.keys(net.gp)") # invité : clic maintenu sur le menu B = pas de coup
 rep("const w=230,h=w*MAP.h/MAP.w,x=W-w-20,","const w=230,h=w*MAP.h/MAP.w,x=BMUI.open?20:W-w-20,")
 # en ligne : l'invité demande ({t:'eq'}), l'hôte valide avec les mêmes règles et répond ({t:'eqr'}) ; la barre de l'invité vient de l'instantané (barS), son stash de ms
 rep("   if(d.t==='in'){","   if(d.t==='eq'){bmNet(P,d);return}\n   if(d.t==='in'){")

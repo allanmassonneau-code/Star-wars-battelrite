@@ -97,7 +97,7 @@ function rosAct(k,E){if(k==='play'||k==='fight')rosPick(E);else if(k==='rnd')ros
  else if(k==='del')CONF={t:`Supprimer « ${E.b.name} » ?`,d:'Ce ninja sera retiré de « Mes ninjas », avec son apparence et son kit. C\'est définitif.',ok:'Supprimer',col:'#ff6a5a',fn:()=>rosDel(E)};
  else if(k==='reset')CONF={t:`Rétablir ${E.P.full} ?`,d:'Ses retouches (apparence et kit) sont effacées : il redevient tel que dans l\'anime.',ok:'Rétablir l\'original',col:'#ffb347',fn:()=>rosReset(E)}}
 // ----- création / modification : EB est une copie de travail, rien n'est gardé ni envoyé avant « Enregistrer »
-function rosEdit(k){const E=k?rosGet(k):null;picker=null;presetI=E&&E.P?E.i:-1;if(RQI)RQI.blur();
+function rosEdit(k){const E=k?rosGet(k):null;picker=null;CRMT=0;CRH=-1;presetI=E&&E.P?E.i:-1;if(RQI)RQI.blur();
  if(coop()&&net.ready){net.ready=false;if(net.role==='host')sendLobby();else netSend({t:'ready',v:false})} // en ligne : on n'est plus PRÊT pendant la création (la partie ne part pas sans toi)
  EB=E?sanitizeBuild(E.b):randomBuild(srnd(Date.now()%2147483646+1),0,'Nouveau ninja');edRebuild();ED={k:E?k:null,o:JSON.stringify(EB)};scr='edit'}
 const edDirty=()=>!!ED&&!!EB&&JSON.stringify(EB)!==ED.o;
@@ -166,7 +166,7 @@ function rosCard(E,R,hov,t){const F=rosFake(E),u=F.u,ch=F.ch,S=SECS[E.sec],col=S
   ic.forEach(([k,c2],i)=>jIcon(x0+6+i*15,R.y+ph+31,6,c2,k));fitT(s,x0+ic.length*15+1,R.y+ph+35,z,'#d8c0a0',tw+1,'bold',8)}
  if(hov&&scr==='list'){for(const q of cardBtns(E,R)){const h=inRect(mouse,q.R);rr(q.R,6,h?'#ffb347':'rgba(20,13,8,.88)',h?'#ffe0a0':'#8a5a2a',1.2);uiIcon(q.k,q.R.x+q.R.w/2,q.R.y+q.R.h/2,8.5,h?'#1a1008':'#f3d9b0');if(h)hoverTip('cb'+q.k+E.k,()=>({t:q.t,d:BTIP[q.k]}))}}
  else if(scr==='opp'&&hov)tag(R.x+R.w-6,R.y+7,me?'TON DOUBLE':'AFFRONTER','#ff6a3a','#fff');
- else if(mark)tag(R.x+R.w-6,R.y+7,scr==='opp'?'TOI':'CHOISI','#ffd38a');else if(rosOver(E))tag(R.x+R.w-6,R.y+7,'TROP CHER','#d84a3a','#fff');else if(E.mod)tag(R.x+R.w-6,R.y+7,'RETOUCHÉ','rgba(255,179,71,.85)')}
+ else if(mark)tag(R.x+R.w-6,R.y+7,scr==='opp'?'TOI':'CHOISI','#ffd38a');else if(E.mod)tag(R.x+R.w-6,R.y+7,'RETOUCHÉ','rgba(255,179,71,.85)')}
 // dessin mis en cache : fn dessine (avec les fonctions de dessin habituelles, g pointant le temps de l'appel sur l'image) dans une image propre à id,
 // refaite seulement quand key change, puis recopiée à chaque image en tombant juste sur les pixels de l'écran (texte net)
 const DC=new Map(),OID=new WeakMap();let OIDN=0;const oid=o=>{if(!o||typeof o!=='object')return 0;let v=OID.get(o);if(!v){v=++OIDN;OID.set(o,v)}return v};
@@ -219,8 +219,8 @@ function ficheCell(R,s,ch,b,tip){const free=!CONF;let key,col,ic,nm,d,badge=null
 function ficheBtns(E){if(!E)return[];const L=[];
  // étape adversaire : sur ton propre perso (pas encore d'adversaire montré), le bouton mis en avant tire un adversaire ; le combat contre ton double reste possible, en second
  if(scr==='opp'){if(E.k===MEK)L.push({k:'rnd',t:'Adversaire au hasard',ic:'dice',p:1},{k:'back',t:'Changer mon perso',ic:'back'},{k:'fight',t:'Affronter ton double',ic:'play'});
-  else L.push({k:'fight',t:rosOver(E)?'Trop de points':'Affronter',ic:'play',p:1,warn:rosOver(E)},{k:'back',t:'Changer mon perso',ic:'back'})}
- else{L.push(rosOver(E)?{k:'play',t:'Trop de points',ic:'edit',p:1,warn:1}:coop()?{k:'play',t:E.k===MEK?'Choisi':'Choisir ce perso',ic:'check',p:1,off:E.k===MEK}:{k:'play',t:mode==='battle'?'Jouer (bataille)':'Jouer',ic:'play',p:1});
+  else L.push({k:'fight',t:'Affronter',ic:'play',p:1},{k:'back',t:'Changer mon perso',ic:'back'})}
+ else{L.push(coop()?{k:'play',t:E.k===MEK?'Choisi':'Choisir ce perso',ic:'check',p:1,off:E.k===MEK}:{k:'play',t:mode==='battle'?'Jouer (bataille)':'Jouer',ic:'play',p:1});
   L.push({k:'edit',t:'Modifier',ic:'edit'},{k:'dup',t:'Dupliquer',ic:'dup'});if(!E.P)L.push({k:'del',t:'Supprimer',ic:'del',danger:1});else if(E.mod)L.push({k:'reset',t:'Rétablir l\'original',ic:'reset'})}
  return L.map((q,i)=>Object.assign(q,{R:{x:FI.x+FI.w-172,y:FI.y+9+i*45,w:160,h:39}}))}
 const FTIP={rnd:()=>'Tire un adversaire au hasard dans la liste et lance le combat.',play:()=>coop()?'Ce perso devient le tien dans le salon ; clique ensuite PRÊT.':mode==='battle'?'Lance la bataille avec ce perso.':'Ce perso devient le tien ; tu choisis ensuite ton adversaire.',fight:()=>rosGet(FK)&&FK===MEK?'Lance un combat contre une copie de ton propre perso.':'Lance le combat contre ce ninja.',back:()=>'Revient à la liste pour choisir un autre perso (Échap).',edit:()=>BTIP.edit,dup:()=>BTIP.dup,del:()=>BTIP.del,reset:()=>BTIP.reset};
@@ -241,13 +241,13 @@ function drawFiche(E,t){const opp=scr==='opp',me=rosGet(MEK);if(!E)return;const 
  // identité, stats et les 8 cases : dessinés dans une image (cachedDraw), refaite si le perso, ses stats, la case survolée ou l'étape changent
  const cellR=s=>({x:FI.x+548+Math.floor(s/5)*252,y:FI.y+8+(s%5)*36,w:244,h:33});let hs=-1;if(free)for(let s=0;s<=ABN;s++)if(inRect(mouse,cellR(s)))hs=s;
  cachedDraw('fiche',{x:FI.x+212,y:FI.y+4,w:836,h:FI.h-8},[E.k,oid(b),oid(ch),F.v,opp?1:0,me?me.k+me.b.side:'',hs,E.mod?1:0,rosOver(E)?1:0].join(),()=>{
- // identité, stats, passif, jeu en une ligne
+ // identité, stats, camp et arbres, description
  {const x=FI.x+216,w=320;let y=FI.y+32;const nw=fitT(b.name,x,y,22,b.side?'#ff9a9a':'#ffd38a',w,'bold',13);
   if(E.mod)tag(Math.min(x+nw+76,x+w),y-14,'RETOUCHÉ','rgba(255,179,71,.85)');y+=20;
   fitT(E.P?[E.P.full!==b.name?E.P.full:'',S[0],GALG[E.P.g]!==S[0]?GALG[E.P.g]:''].filter(Boolean).join(' · '):`Mes ninjas · créé par toi`,x,y,12.5,liftC(col,.55),w,'bold',9);y+=22;
   {const ic=[b.clan>=0?['c'+b.clan,CLANS[b.clan][1]]:['u','#c8b89a']];if(b.nat>=0)ic.push(['n'+b.nat,NATURES[b.nat][2]]);ic.forEach(([k,c2],i)=>jIcon(x+8+i*19,y-4,8,c2,k));fitT(ch.desc,x+ic.length*19+2,y,12,'#e8cfa8',w-ic.length*19-2,'normal',9)}y+=21;
   fitT(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2)}`,x,y,13.5,'#ffd38a',w,'bold',10);y+=18;
-  {const ov=rosOver(E),cs=opp&&me&&E.k!==me.k&&b.side===me.b.side?`${CAMPS[1-b.side]} pour ce combat (camp d'en face)`:CAMPS[b.side];fitT(`Camp : ${cs} · ${b.k.length} jutsu appris`,x,y,11.5,ov?'#ff8a7a':'#b89a70',w,ov?'bold':'normal',9)}y+=20;
+  {const ov=rosOver(E),cs=opp&&me&&E.k!==me.k&&b.side===me.b.side?`${CAMPS[1-b.side]} pour ce combat (camp d'en face)`:CAMPS[b.side];fitT(`Camp : ${cs} · ${b.k.length} jutsu appris (${treesOf(b).map(catName).join(', ')})`,x,y,11.5,ov?'#ff8a7a':'#b89a70',w,ov?'bold':'normal',8)}y+=20;
   const d=E.P?(E.mod?'Version retouchée. ':'')+E.P.d:'Un de tes ninjas : « Modifier » pour retoucher son apparence et son kit, « Dupliquer » pour en tester une variante.';
   wrapL(d,w,FNT(12)).slice(0,3).forEach((l,i)=>text(l,x,y+i*16,12,'#cdb898','left','normal'))}
  // Clic G, la barre de départ (1-6), le dash, le Kawarimi et le trait : 2 colonnes de 5
@@ -282,7 +282,7 @@ function drawRoster(){const t=performance.now()/1000;if(scr==='opp'&&(coop()||mo
   rr({x:R.x+10,y:R.y+6,w:24,h:24},12,h?'#1a1008':'#ffb347');uiIcon('plus',R.x+22,R.y+18,7,h?'#ffb347':'#1a1008');text('Créer un perso',R.x+R.w/2+14,R.y+24,16,h?'#1a1008':'#ffd38a');
   if(h)hoverTip('new',()=>({t:'Créer un perso',d:'Ouvre la création sur un nouveau ninja (tiré au hasard) : apparence, camp, clan, nature, style de combat, jutsu appris et barre de 6 jutsu. « Enregistrer » le range dans « Mes ninjas ».'}))}
  if(coop()){if(isGuest()&&mode!=='arena'){const b=teamBtn,h=!CONF&&inRect(mouse,b);rr(b,b.h/2,h?'#5a3a1e':'#2a1c10',net.myTeam?'#ff6060':'#4db8ff',2);text(`ÉQUIPE ${net.myTeam?'B':'A'} (changer)`,b.x+b.w/2,b.y+b.h/2+5,13,'#f3d9b0','center')}
-  const b=readyBtn,ob=false,on=net.ready&&!ob;rr(b,b.h/2,ob?'rgba(120,50,40,.9)':on?'#7f7':!CONF&&inRect(mouse,b)?'#ffb347':'rgba(255,154,58,.88)',ob?'#a55':null,2);text(ob?'TROP DE POINTS':on?'PRÊT ✓':'PRÊT ?',b.x+b.w/2,b.y+b.h/2+6,ob?14:16,ob?'#ffd0c8':'#10131c','center');
+  const b=readyBtn,ob=false,on=net.ready&&!ob;rr(b,b.h/2,ob?'rgba(120,50,40,.9)':on?'#7f7':!CONF&&inRect(mouse,b)?'#ffb347':'rgba(255,154,58,.88)',ob?'#a55':null,2);text(on?'PRÊT ✓':'PRÊT ?',b.x+b.w/2,b.y+b.h/2+6,16,'#10131c','center');
   fitT(`Ton perso : ${MY.name}`,290,700,12.5,'#e8cfa8',(isGuest()&&mode!=='arena'?teamBtn.x:b.x)-305,'bold',9)}
  else fitT(HELPK(),690,700,11.5,'#c8b090',800,'normal',8.5,'center');
  drawConf();drawTip();drawCursor()}
