@@ -13,7 +13,7 @@ const HMD={
  filin:'Un fil t\'arrache jusqu\'au point visé (260 max) ; à l\'arrivée, ta chute frappe autour de toi (6 dégâts, ralentit) ; une petite toile reste à ton point de départ (1,5 s)',
  mue:'Tu laisses ta mue et fuis invisible 0,7 s (prochain coup +50 %) ; la mue explose en fils si un ennemi l\'approche : 10 dégâts, entravé 0,5 s, 1 fil',
  geante:'Une araignée géante s\'abat sur la zone (30 dégâts, étourdit 0,7 s), tisse une toile et crache 3 fois de la soie sur les ennemis (7 dégâts, 1 fil) ; en disparaissant, elle lâche un cocon qui éclate en 5 bébés araignées (4 dégâts, ralentit, ½ fil chacune)',
- arc:'Bande l\'arc d\'or jusqu\'à 1,2 s (relancer pour tirer plus tôt) : flèche guidée par ta visée, 34 à 64 dégâts, perce chargée à 60 %, 1 à 2 fils'};
+ arc:'Bande l\'arc d\'or jusqu\'à 1,2 s (relancer pour tirer plus tôt) : flèche guidée par ta visée, 30 à 54 dégâts, perce chargée à 60 %, 1 à 2 fils'};
 KIT('c13',[ // arbre de clan (v5) : 1 jutsu par rang
  ['D','x.hm_fil','Fil d\'araignée',HMD.fil,'silk'],
  ['C','x.hm_armure','Armure d\'or',HMD.armure,'silk'],
@@ -110,7 +110,7 @@ Object.assign(NATHERO,{hm:'kylo'});
 // tir de l'arc : la puissance suit le temps passé à bander
 function hm_loose(u){const bw=u.hm_bw;if(!bw)return;const c=clamp((bw.t-.1)/1.1,0,1),a=u.aim,full=c>=.6;u.hm_bw=null;u.hm_bow=0;if(u.jst&&u.jst.key==='hm_arc')u.jst=null;u.cds[bw.i]=bw.cd;
  const V=VFX;VFX='silk';S('blaster',u);S('wind',u);anim(u,'hm_loose',.4);
- proj(u,a,{spd:1150,r:8+c*5,dmg:34+30*c,life:(600+420*c)/1150,col:HMC.gold,kind:'hm_arrow',vfx:'silk',jn:'Arc d\'or : Kumo Senkyû',steer:1,pierce:full?1:0,noClash:full?1:0,o:{kb:60+100*c},
+ proj(u,a,{spd:1150,r:8+c*5,dmg:30+24*c,life:(600+420*c)/1150,col:HMC.gold,kind:'hm_arrow',vfx:'silk',jn:'Arc d\'or : Kumo Senkyû',steer:1,pierce:full?1:0,noClash:full?1:0,o:{kb:60+100*c},
   onHit:(p,t)=>{hm_fil(p.owner,t,c>=.99?2:1);jx({jfx:'hm_pierce',x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.45,m:.45,big:full?1:0});if(near(t.x,t.y)){sparks(t.x,t.y,HMC.gold,full?12:6);S('bone',t)}}});
  jx({jfx:'hm_snap',ui:hm_I(u),x:u.x,y:u.y,a,t:.35,m:.35,big:full?1:0});if(full&&near(u.x,u.y))shake=Math.max(shake,.15);VFX=V;if(c>=.99)say(u,'PLEINE CHARGE','#ffe08a')}
 

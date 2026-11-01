@@ -5,7 +5,7 @@ KIT('f3',[
  ['C','x.sub_dogs','Chiens ninja','La meute creuse sous l\'ennemi visé et jaillit du sol 0,6 s plus tard : morsures (16 dégâts) et entravé 1 s ; s\'éloigner à temps permet d\'y échapper','claws'],
  ['B','x.sub_katsu','Invocation : Katsuyu','Des limaces se posent sur toi et tes alliés proches : soin, régénération 2,5 s et chakra','heal'],
  ['A','x.sub_toad','Invocation : Crapaud','Gamabunta s\'écrase sur la zone (32 dégâts, étourdit), puis reste comme rempart sur un sol boueux','smoke'],
- ['S','x.sub_manda','Invocation : Manda','Un serpent géant charge tout droit à travers l\'arène et avale le 1er ennemi touché : caché et neutralisé 1,5 s, puis recraché (42 dégâts au total)','smoke'],
+ ['S','x.sub_manda','Invocation : Manda','Un serpent géant charge tout droit à travers l\'arène et avale le 1er ennemi touché : caché et neutralisé 1,2 s, puis recraché (42 dégâts au total)','smoke'],
 ]);
 DASHF[3]={src:'x.sub_d_kuc',n:'Monture : Ninken',d:'Un grand chien surgit et t\'emporte sur 260 ; le 1er ennemi bousculé est repoussé (6 dégâts)',vfx:'claws',cd:8};
 Object.assign(NAT,{

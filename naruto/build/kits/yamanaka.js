@@ -9,7 +9,7 @@ KIT('c7',[
  ['C','x.ya_pollen','Pollen hypnotique','Nuage de pollen 4 s qui ralentit ; l\'ennemi qui y reste 0,8 s s\'endort 1,8 s, mais un coup le réveille','flower'],
  ['B','x.ya_stormB','Tempête de pétales','3 vagues de pétales devant toi : blessent, ralentissent puis repoussent, et hachent les projectiles ennemis ; elles laissent un champ de fleurs 2 s où tes alliés régénèrent','flower'],
  ['A','x.ya_shinran','Shinranshin','Onde mentale imparable : la cible confuse titube au hasard et subit +25 % de dégâts 1,2 s (1,6 s si marquée)','mind'],
- ['S','x.ya_shinten','Shintenshin','Esprit imparable : possède la cible 1,5 s, qui marche vers ton curseur et se frappe. À la fin, son esprit est brisé : dégâts + 25 % des PV manquants. Corps inerte, sonné si raté','mind'],
+ ['S','x.ya_shinten','Shintenshin','Esprit imparable : possède la cible 1,2 s, qui marche vers ton curseur et se frappe. À la fin, son esprit est brisé : dégâts + 25 % des PV manquants. Corps inerte, sonné si raté','mind'],
 ]);
 // dash (Espace) : Transposition
 DASHC[7]={src:'x.ya_swap',n:'Transposition',d:'Échange ta place avec l\'allié visé (bouclier aux deux) ; sans allié, file au curseur en esprit, intangible',vfx:'mind',cd:7};
@@ -34,7 +34,7 @@ function yaConfuse(o,e,d){if(e.dead||e.unstop>0)return;
  let x=aux.find(q=>q.type==='ya_conf'&&q.tg===e);if(x){x.t=Math.max(x.t,d);x.m=Math.max(x.m,x.t)}else{x={type:'ya_conf',x:e.x,y:e.y,a:rnd()*7,r:0,t:d,m:d,team:o.team,owner:o,tg:e,ti:yaI(e),vfx:'mind',k:0,ph:rnd()*7};aux.push(x);if(near(e.x,e.y))jx({jfx:'ya_daze',ti:yaI(e),x:e.x,y:e.y,t:4,m:4})}
  e.ya_cf=d;say(e,'CONFUS','#d8a8ff');anim(e,'ya_dizzy',x.t)}
 // possession (Shintenshin)
-function yaPossess(o,e,mk){if(e.unstop>0){say(e,'RÉSISTE','#d8a8ff');yaBack(o,e.x,e.y,1);return}const d=1.5+(mk?.3:0);
+function yaPossess(o,e,mk){if(e.unstop>0){say(e,'RÉSISTE','#d8a8ff');yaBack(o,e.x,e.y,1);return}const d=1.2+(mk?.3:0);
  if(e.cast||e.spin||e.flame)say(e,'INTERROMPU','#fc6');e.cast=null;e.dash=null;e.spin=null;e.flame=null;e.block=false;e.stun=Math.max(e.stun,.1);e.ya_pz=d;e.ya_pa=ang(e,o);
  say(e,'POSSÉDÉ','#d8a8ff');anim(e,'ya_puppet',d);anim(o,'ya_limp',d+.15);yaS('genjutsu',e);yaS('shadow',e);
  aux.push({type:'ya_poss',x:e.x,y:e.y,a:0,r:0,t:d,m:d,team:o.team,owner:o,tg:e,ui:yaI(o),ti:yaI(e),vfx:'mind',k:.5});
@@ -64,7 +64,7 @@ Object.assign(NAT,{
   yaMind(u,a,{kind:'ran',sp:760,len:470,r:17,onHit:(x,e)=>{const mk=yaMkOn(e);const d=mk?1.6:1.2;if(yaHit(e,u,13,{})){e.vuln=Math.max(e.vuln,d);yaConfuse(u,e,d)};if(near(e.x,e.y))jx({jfx:'ya_ripple',x:e.x,y:e.y,t:.5,m:.5})},
    onMiss:x=>{if(near(x.x,x.y))jx({jfx:'ya_ripple',x:x.x,y:x.y,t:.4,m:.4,s:.6})}})}),
  // Shintenshin : l'esprit quitte le corps ; s'il touche, la cible est possédée
- ya_shinten:S_('Shintenshin','Esprit imparable : possède la cible 1,5 s, qui marche vers ton curseur et se frappe. Corps inerte, sonné si raté',14,{hero:'kylo',line:{len:540,w:30},ai:RG(500,.5)},(u,a)=>{a=yaAim(u,a,700);u.aim=a;
+ ya_shinten:S_('Shintenshin','Esprit imparable : possède la cible 1,2 s, qui marche vers ton curseur et se frappe. Corps inerte, sonné si raté',14,{hero:'kylo',line:{len:540,w:30},ai:RG(500,.5)},(u,a)=>{a=yaAim(u,a,700);u.aim=a;
   yaS('genjutsu',u);yaS('shadow',u);anim(u,'ya_sign',.95);jx({jfx:'ya_sigil',ui:yaI(u),x:u.x,y:u.y,a,t:.55,m:.55,big:1});
   yaMind(u,a,{kind:'ten',sp:700,len:540,r:16,lock:1,onHit:(x,e)=>{const mk=yaMkOn(e);if(yaHit(e,u,6,{}))yaPossess(u,e,mk);else yaBack(u,x.x,x.y,0)},onMiss:(x,cut)=>yaBack(u,x.x,x.y,!cut)})}),
  // Pollen hypnotique : bouquet lancé, nuage qui endort

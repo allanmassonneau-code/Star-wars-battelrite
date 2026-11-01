@@ -6,7 +6,7 @@ KIT('u',[
  [2,'C','x.sub_leurre','Kage Bunshin : leurre','Tu deviens invisible 0,8 s ; un clone continue ta course : les ennemis le prennent pour toi, il s\'efface au 1er coup','smoke'],
  [4,'A','x.sub_shishi','Barrière Shishienjin','Quatre flammes violettes dressent un dôme au curseur : 3 s, les ennemis pris dedans ne peuvent plus en sortir (8 dégâts, le mur brûle et repousse)','genjutsu'],
  [4,'S','x.sub_byakugo','Byakugô','Losange sur le front : 4 s, chaque dégât subi est régénéré 1 s plus tard, en brûlant ton chakra (1 chakra pour 4 PV ; sans chakra, plus rien)','heal'],
- [5,'S','x.sub_manda','Invocation : Manda','Un serpent géant charge tout droit à travers l\'arène et avale le 1er ennemi touché : caché et neutralisé 1,5 s, puis recraché (42 dégâts au total)','smoke'],
+ [5,'S','x.sub_manda','Invocation : Manda','Un serpent géant charge tout droit à travers l\'arène et avale le 1er ennemi touché : caché et neutralisé 1,2 s, puis recraché (42 dégâts au total)','smoke'],
  [5,'S','x.sub_rsk','Fûton : Rasenshuriken','Lancer longue portée : explose en sphère de lames de vent (jusqu\'à 40 dégâts) qui tranche le chakra : -30 chakra et plus aucun chakra récupéré 3 s','rasenshuriken'],
 ]);
 // ---------- aides ----------
@@ -103,7 +103,7 @@ AUXF.sub_byk=(x,dt)=>{const u=x.owner;if(!u||u.dead){if(u)u.sub_byk=0;x.t=0;retu
 // Manda : 0 = sort du nuage ; 1 = charge ; 2 = la proie est avalée (cachée, intangible, étourdie) ; 3 = disparaît en fumée
 function subBMandaBite(x,u,e){VFX='smoke';const ok=hit(e,u,12,{unblockable:1});VFX=null;if(near(e.x,e.y)){S('roar',u);S('heavy',u);shake=Math.max(shake,.3)}
  if(!ok||e.unstop>0||e.dead){x.n=3;x.t=Math.min(x.t,.55);if(ok&&!e.dead)say(e,'RÉSISTE','#fc6');return}
- x.n=2;x.tg=e;x.ti=subBI(e);x.sw=1.5;e.sub_eat=1.5;e.phase=Math.max(e.phase||0,.2);e.stun=Math.max(e.stun,1.5);e.cast=null;e.dash=null;e.spin=null;e.flame=null;e.block=false;e.kx=e.ky=0;
+ x.n=2;x.tg=e;x.ti=subBI(e);x.sw=1.2;e.sub_eat=1.2;e.phase=Math.max(e.phase||0,.2);e.stun=Math.max(e.stun,1.2);e.cast=null;e.dash=null;e.spin=null;e.flame=null;e.block=false;e.kx=e.ky=0;
  say(e,'AVALÉ !','#d8a8ff');jx({jfx:'sub_mgulp',x:e.x,y:e.y,t:.45,m:.45})}
 function subBMandaSpit(x,u,e){x.n=3;x.t=Math.min(x.t,.7);if(!e)return;e.sub_eat=0;if(e.dead)return;e.phase=0;const ca=Math.cos(x.a),sa=Math.sin(x.a),q=subFree({x:x.x+ca*(x.r+e.r+16),y:x.y+sa*(x.r+e.r+16)},e.r);e.x=q.x;e.y=q.y;collide(e);
  VFX='smoke';hit(e,u,30,{kb:520,stun:.45,unblockable:1,fx:x.x,fy:x.y});VFX=null;say(e,'RECRACHÉ !','#d8a8ff');jx({jfx:'sub_mspit',x:e.x,y:e.y,a:x.a,t:.6,m:.6});if(near(e.x,e.y)){S('water',e);S('heavy',e);shake=Math.max(shake,.3)}}
