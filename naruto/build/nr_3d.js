@@ -58,7 +58,7 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
   const a=gg.attributes.position,nn=gg.attributes.normal,cc=col3(c),bi=BI[bone];for(let i=0;i<a.count;i++){P.push(a.getX(i),a.getY(i),a.getZ(i));N.push(nn.getX(i),nn.getY(i),nn.getZ(i));C.push(cc.r,cc.g,cc.b);SI.push(bi,0,0,0);SW.push(1,0,0,0)}};
  const sph=(r,w=12,hh=9)=>new T.SphereGeometry(r,w,hh),sphp=(...a)=>new T.SphereGeometry(...a),cap=(r,l,s=8)=>new T.CapsuleGeometry(r,l,3,s),cyl=(a,b,hh,s=12,...o)=>new T.CylinderGeometry(a,b,hh,s,...o),box=(x,y,z)=>new T.BoxGeometry(x,y,z),cone=(r,hh,s=7)=>new T.ConeGeometry(r,hh,s),tor=(R,r,s=14)=>new T.TorusGeometry(R,r,6,s);
  const skin=h.skin,hair=h.hair,legs=L.legs||'#2a3550',torso=L.torso||'#f08a24',arm=L.arm||torso,boot=L.boot||'#222',band=h.band||'#1f3a6a',AA=L.armAcc||'';
- const fistC=AA==='gants'?'#1c1c24':AA==='gantelets'?'#7a828e':k==='fist'||k==='bigfist'?'#f0ebe0':skin,big=k==='bigfist';
+ const fistC=AA==='gants'?'#3a3f50':AA==='gantelets'?'#7a828e':k==='fist'||k==='bigfist'?'#f0ebe0':skin,big=k==='bigfist';
  const qv=(a,b)=>new T.Quaternion().setFromUnitVectors(new T.Vector3(...a).normalize(),new T.Vector3(...b).normalize());
  const dk=(c,f)=>typeof shade==='function'?shade(c,f):c;
  // jambes et sandales (orteils visibles)
@@ -71,21 +71,21 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  // bassin, ventre, torse, ceinture
  add(cap(7.6,3,10),'hips',legs,[0,1.5,0],[0,0,Math.PI/2],[1,1.15,.78]);
  add(cap(8.4,3.5,12),'spine',torso,[0,4,0],[0,0,0],[1,1,.76]);add(cap(9.6,5.5,12),'chest',torso,[0,1.5,0],[0,0,0],[1,1,.74]);
- if(L.belly){add(sph(10.6,16,12),'spine',torso,[0,2.6,1.4],[0,0,0],[1.12,1,1]);add(sph(8.6,14,10),'hips',legs,[0,.8,.4],[0,0,0],[1.2,.9,1.05])}
- if(L.belt)add(tor(L.belly?11.7:8.3,1.2),'spine',L.belt,[0,-.6,L.belly?1.5:0],[Math.PI/2,0,0],[1,L.belly?.9:.78,1]);
+ if(L.belly)add(sph(9,16,12),'spine',L.armor||torso,[0,2.6,1.1],[0,0,0],[1.1,1,1]);
+ if(L.belt)add(tor(L.belly?10.2:8.3,1.2),'spine',L.belt,[0,-.6,L.belly?1.1:0],[Math.PI/2,0,0],[1,L.belly?.86:.78,1]);
  if(torso==='#f08a24'){add(cap(9.9,1.6,12),'chest',L.belt||'#2a3550',[0,6.2,0],[0,0,0],[1,1,.76]);add(box(1.2,15,.6),'chest',L.belt||'#2a3550',[0,0,7.2])}
  if(L.vest){add(cap(10.4,5,12),'chest',L.vest,[0,1.2,.2],[0,0,0],[1,1,.8]);add(tor(5.6,1.8),'chest',L.vest,[0,8.2,0],[Math.PI/2,0,0]);for(const x of[-4.6,4.6])for(const y of[-1.5,3])add(box(4,3.2,1.6),'chest',L.vest,[x,y,7.6]);
   if(L.vband)for(const y of[-4,0,4])add(tor(10.5,.55,24),'chest',dk(L.vest,.7),[0,y,.2],[Math.PI/2,0,0],[1,.8,1]);
   if(L.spiral){add(cyl(3.4,3.4,.6,16),'chest','#c0302a',[0,1,-8.5],[Math.PI/2,0,0]);add(cyl(2.1,2.1,.7,16),'chest',L.vest,[0,1,-8.6],[Math.PI/2,0,0]);add(cyl(.9,.9,.8,10),'chest','#c0302a',[0,1,-8.7],[Math.PI/2,0,0])}}
  if(L.tunic){add(tor(5.2,2.1),'chest',L.tunic,[0,8.5,0],[Math.PI/2,0,0]);add(cyl(3.6,3.6,.8,14),'chest','#ffffff',[0,2,-7.6],[Math.PI/2,0,0]);add(cyl(3.6,3.6,.9,14),'chest','#d02a2a',[0,.4,-7.7],[Math.PI/2,0,0],[1,1,.5])}
  if(L.armor){add(cap(10.2,3.6,12),'chest',L.armor,[0,2.4,.6],[0,0,0],[1,.9,.8]);add(sph(4.2,10,7),'armL',L.armor,[1,-.5,0],[0,0,0],[1,.8,1])}
- if(L.samurai){const c=L.samurai;add(cap(10.6,4,12),'chest',c,[0,1.6,.4],[0,0,0],[1,.95,.84]);for(const s of['L','R'])add(sphp(4.6,12,8,0,Math.PI*2,0,Math.PI*.55),'arm'+s,c,[0,1,0],[0,0,(s==='L'?-1:1)*.25],[1.2,.9,1.15]);
+ if(L.samurai){const c=L.samurai;add(cap(10.6,4,12),'chest',c,[0,1.6,.4],[0,0,0],[1,.95,.84]);if(!(L.hov&&L.hsl))for(const s of['L','R'])add(sphp(4.6,12,8,0,Math.PI*2,0,Math.PI*.55),'arm'+s,c,[0,1,0],[0,0,(s==='L'?-1:1)*.25],[1.2,.9,1.15]);
   for(const a of[-.9,0,.9,Math.PI-.6,Math.PI+.6]){const R=10.6;add(box(6.6,7.2,1),'skirt',c,[Math.sin(a)*R,-2.6,Math.cos(a)*R],[.14,a,0]);add(box(6.8,.9,1.1),'skirt',L.belt||'#d8c060',[Math.sin(a)*(R+.3),.9,Math.cos(a)*(R+.3)],[.14,a,0])}}
  // robes et manteaux longs : jusqu'aux chevilles (la jupe suit la hanche)
  const robeR=y=>10.2+(6-y)/24*4.3; // rayon de la robe longue à la hauteur y (repère de la hanche)
  if(L.robe){if(L.rshort)add(cyl(10.2,12.8,11,16),'skirt',L.robe,[0,-.5,0]);else{add(cyl(10.2,14.5,24,16),'skirt',L.robe,[0,-6,0]);if(L.trim)add(cyl(14.3,14.8,3.2,16),'skirt',L.trim,[0,-16.5,0])}
   add(cap(10.6,5.5,12),'chest',L.robe,[0,1.2,0],[0,0,0],[1,1,.8]);add(cyl(6,7.2,5,14),'chest',L.robe,[0,9,0]);
-  if(L.dots&&!L.haori)for(const [a,y] of[[.6,.2],[-.7,-3.6],[2.2,-1.7],[-2.4,-7.4],[3.1,-4.8],[1.3,-11.1],[-1.5,-13.7]]){const R=(L.rshort?10.2+(5-y)/11*2.6:robeR(y))+.3;if(L.rshort&&y<-5)continue;add(sph(1.7,8,6),'skirt',L.dots,[Math.sin(a)*R,y,Math.cos(a)*R],[0,a,0],[1,1,.35])}
+  if(L.dots&&(!L.haori||L.hov))for(const [a,y] of[[.6,.2],[-.7,-3.6],[2.2,-1.7],[-2.4,-7.4],[3.1,-4.8],[1.3,-11.1],[-1.5,-13.7]]){const R=(L.rshort?10.2+(5-y)/11*2.6:robeR(y))+.3;if(L.rshort&&y<-5)continue;add(sph(1.7,8,6),'skirt',L.dots,[Math.sin(a)*R,y,Math.cos(a)*R],[0,a,0],[1,1,.35])}
   // nuages rouges de l'Akatsuki, posés sur la surface du manteau
   if(L.clouds&&!L.hov){const CC=L.cloudC||'#c0202a';for(const [x,y,z] of[[-5,-2,8.1],[4,4,8.3],[6,2,-7.4]]){const b=Math.atan2(x,z),ox=Math.sin(b)*.35,oz=Math.cos(b)*.35;add(sph(3.3,10,7),'chest','#ffffff',[x,y,z],[0,b,0],[1.25,.78,.3]);add(sph(2.6,10,7),'chest',CC,[x+ox,y,z+oz],[0,b,0],[1.2,.7,.3])}
    for(const [x,y,z] of[[5,-12,12.6],[-5,-15,-13.2],[-11,-9,4.6]]){const b=Math.atan2(x,z),ox=Math.sin(b)*.35,oz=Math.cos(b)*.35;add(sph(3.3,10,7),'skirt','#ffffff',[x,y,z],[0,b,0],[1.25,.78,.3]);add(sph(2.6,10,7),'skirt',CC,[x+ox,y,z+oz],[0,b,0],[1.2,.7,.3])}}}
@@ -93,8 +93,8 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  if(L.yoke){add(sphp(10.05,16,8,0,Math.PI*2,0,Math.PI*.36),'chest',L.yoke,[0,4.25,0],[0,0,0],[1.01,1,.77]);for(const s of['L','R'])add(sph(3.3,10,7),'arm'+s,L.yoke,[0,0,0])}
  if(L.open)add(box(4.4,4.4,.8),'chest',skin,[0,6.8,7],[-.35,0,Math.PI/4],[1,1.3,1]);
  if(L.kcol)for(const s of[-1,1])add(box(1.5,9.5,.9),'chest',L.kcol,[s*2,4.4,7.6],[-.3,0,s*.48]);
- if(L.obi){add(cyl(8.6,8.6,4.6,18),'spine',L.obi,[0,.2,0],[0,0,0],[1,1,.8],1);for(const s of[-1,1])add(sph(2.5,10,7),'spine',L.obi,[s*2.6,.6,-7.2],[0,0,s*.6],[1.4,.8,.7],1)}
- if(L.rope){add(tor(8.6,.95,16),'spine',L.rope,[0,-.6,0],[Math.PI/2,0,0],[1,.8,1]);for(const s of[-1,1])add(sph(2.6,8,6),'spine',L.rope,[s*2.9,-.6,-7.4],[0,0,s*.5],[1.3,.8,.6]);add(sph(1.4,8,6),'spine',L.rope,[0,-.6,-7.8])}
+ if(L.obi){add(cyl(8.6,8.6,4.6,18),'spine',L.obi,[0,.2,0],[0,0,0],[1,1,.8],1);if(!L.cape&&!L.hov)for(const s of[-1,1])add(sph(2.5,10,7),'spine',L.obi,[s*2.6,.6,-7.2],[0,0,s*.6],[1.4,.8,.7],1)}
+ if(L.rope){add(tor(8.6,.95,16),'spine',L.rope,[0,-.6,0],[Math.PI/2,0,0],[1,.8,1]);if(!L.cape&&!L.hov){for(const s of[-1,1])add(sph(2.6,8,6),'spine',L.rope,[s*2.9,-.6,-7.4],[0,0,s*.5],[1.3,.8,.6]);add(sph(1.4,8,6),'spine',L.rope,[0,-.6,-7.8])}}
  if(L.fan&&!L.tunic){add(cyl(3.6,3.6,.8,14),'chest','#ffffff',[0,2,-7.6],[Math.PI/2,0,0]);add(cyl(3.6,3.6,.9,14),'chest','#d02a2a',[0,.4,-7.7],[Math.PI/2,0,0],[1,1,.5])}
  if(L.disc)add(tor(3.4,.8,16),'chest',L.disc,[0,2,-8],[-.12,0,0]);
  if(L.haori){const H=L.haori,lg=L.hlong,HW=L.hov?(L.vest||L.armor||L.samurai||L.robe||L.belly?1.14:1.04):1,HT=L.hov?L.htrim:L.trim;add(cyl(10.6,11.1,15,16,1,true,.95,Math.PI*2-1.9),'chest',H,[0,.2,0],[0,0,0],[HW,1,.84*HW]);
@@ -102,31 +102,31 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
   if(L.hsl)for(const s of['L','R'])add(cyl(3.7,4.6,6.5,10),'arm'+s,H,[0,-2.6,0]);if(HT&&!lg&&L.hkan){const yb=-12.5,R0=13.4*HW;add(cyl(R0+.12,R0+.15,2.2,16,1,true,.85,Math.PI*2-1.7),'skirt',HT,[0,yb+1.1,0]);
    for(let i=0;i<9;i++){const a=.95+i*(Math.PI*2-1.9)/8,R=R0+.25;add(cone(1.8,3.6+(i%2)*1.6,4),'skirt',HT,[Math.sin(a)*R,yb+2.8+(i%2)*.8,Math.cos(a)*R],[0,a,0],[1,1,.35])}} // flammes du Hokage
   else if(HT)add(lg?cyl(14.3,14.65,2.8,16,1,true,.85,Math.PI*2-1.7):cyl(13.35,13.7,2.8,16,1,true,.85,Math.PI*2-1.7),'skirt',HT,[0,lg?-16.8:-11.3,0],[0,0,0],[HW,1,HW]);
-  if(L.dots)for(const [a,y] of[[1.5,-2],[2.3,-8],[3.14,-3],[3.9,-8],[4.7,-2],[2.8,-10.5],[3.5,1.5]]){const R=(11.4+(-y+5)/18*2.2)*HW;add(sph(1.7,8,6),'skirt',L.dots,[Math.sin(a)*R,y,Math.cos(a)*R],[0,a,0],[1,1,.35])}
-  if(L.clouds&&(!L.robe||L.hov)){const CC=L.cloudC||'#c0202a';for(const [x,y,z] of[[6,1,-8.3*HW],[-5,4.5,-8.8*HW]]){const b=Math.atan2(x,z),ox=Math.sin(b)*.35,oz=Math.cos(b)*.35;add(sph(3.3,10,7),'chest','#ffffff',[x,y,z],[0,b,0],[1.25,.78,.3]);add(sph(2.6,10,7),'chest',CC,[x+ox,y,z+oz],[0,b,0],[1.2,.7,.3])}
+  if(L.dots&&!L.hov)for(const [a,y] of[[1.5,-2],[2.3,-8],[3.14,-3],[3.9,-8],[4.7,-2],[2.8,-10.5],[3.5,1.5]]){const R=(11.4+(-y+5)/18*2.2)*HW;add(sph(1.7,8,6),'skirt',L.dots,[Math.sin(a)*R,y,Math.cos(a)*R],[0,a,0],[1,1,.35])}
+  if(L.clouds&&(!L.robe||L.hov)){const CC=L.cloudC||'#c0202a';for(const [x,y,z] of L.sym?[[5.6,-4.6,-8.1*HW],[-5.4,-3.8,-8.2*HW]]:[[6,1,-8.3*HW],[-5,4.5,-8.8*HW]]){const b=Math.atan2(x,z),ox=Math.sin(b)*.35,oz=Math.cos(b)*.35;add(sph(3.3,10,7),'chest','#ffffff',[x,y,z],[0,b,0],[1.25,.78,.3]);add(sph(2.6,10,7),'chest',CC,[x+ox,y,z+oz],[0,b,0],[1.2,.7,.3])}
    for(const [a,y] of[[1.3,-4],[3.5,-1],[-1.3,-12]]){const R=(11+(6-y)/24*3.6)*HW+.2;add(sph(3.3,10,7),'skirt','#ffffff',[Math.sin(a)*R,y,Math.cos(a)*R],[0,a,0],[1.25,.78,.3]);add(sph(2.6,10,7),'skirt',CC,[Math.sin(a)*(R+.35),y,Math.cos(a)*(R+.35)],[0,a,0],[1.2,.7,.3])}}}
  if(L.collar)add(cyl(11.8,8.4,9,16),'chest',L.collar,[0,11,0],[0,0,0],[1,1,.95]);
  if(L.fur)add(tor(7.8,3,16),'chest',L.fur,[0,8.6,0],[Math.PI/2,0,0],[1,1,.85]);
  if(L.hood==='down'){add(tor(7.6,2.7,14),'chest',L.hoodC||torso,[0,8.4,-1.4],[Math.PI/2+.35,0,0]);add(sph(5.5,10,8),'chest',L.hoodC||torso,[0,6.5,-8.4],[0,0,0],[1.35,.8,.7])}
  if(L.sash)add(tor(10.6,1.35,20),'chest',L.sash,[0,1,0],[-Math.PI/2,.62,0],[1,1,.8]);
  // cou : écharpes (sur les épaules, pans jusqu'à la taille), colliers et pendentifs (bien devant le torse, par-dessus un col montant)
- const NK=L.neck,CO=!!L.collar,nz=CO?9.4:7.6,ny=CO?4.2:2.6;
+ const NK=L.neck,CO=!!L.collar,dz=CO?0:L.samurai?1.5:L.vest||L.robe?1.2:L.armor?1:0,nz=(CO?9.4:7.6)+dz,ny=CO?4.2:2.6;
  if(NK==='echarpe'||NK==='echlong'||NK==='foulard'){const c=L.maskC||(NK==='echarpe'?'#c0282a':NK==='echlong'?'#3a6ac8':'#d8d0c0');add(tor(CO?8.4:6.8,2.3,18),'chest',c,[0,CO?9.2:7.4,.2],[Math.PI/2+.12,0,0],[1,1,.86],1);add(sph(3,10,8),'chest',c,[2.8,6.6,5.4],[0,0,0],[1,.8,.8],1);
   if(NK==='echarpe'){add(box(3.4,12,1.2),'chest',c,[3.4,.6,6.3],[-.12,0,.1],[1,1,1],1);add(box(3.2,9,1.2),'chest',c,[5.6,1.8,5.9],[-.1,0,.32],[1,1,1],1)}
-  else if(NK==='echlong'){add(box(3.6,16,1),'chest',c,[3.6,-1.6,6.4],[-.1,0,.06],[1,1,1],1);add(box(3.4,13,1),'cape',c,[3,-5,.4],[0,0,.1],[1,1,1],1);add(box(3.2,15,1),'cape2',c,[3.4,-6,.4],[0,0,.14],[1,1,1],1)}
-  else add(cone(5.2,8,4),'chest',c,[0,3.2,5.6],[Math.PI+.25,Math.PI/4,0],[1,1,.42],1)}
- if(NK==='tsunade'||NK==='jashin'||NK==='crocs'||NK==='anneaux'){add(tor(CO?8.6:6.4,.42,20),'chest',NK==='crocs'?'#5a3a22':'#3a3a44',[0,CO?7.4:5.6,1.4],[Math.PI/2+.35,0,0],[1,1,1],1);
+  else if(NK==='echlong'){add(box(3.6,16,1),'chest',c,[3.6,-1.6,6.4],[-.1,0,.06],[1,1,1],1);{const cz=L.cape?-1.4:.4;add(box(3.4,13,1),'cape',c,[3,-5,cz],[0,0,.1],[1,1,1],1);add(box(3.2,15,1),'cape2',c,[3.4,-6,cz],[0,0,.14],[1,1,1],1)}}
+  else add(cone(5.2,8,4),'chest',c,[0,3.2,5.6+dz],[Math.PI+.25,Math.PI/4,0],[1,1,.42],1)}
+ if(NK==='tsunade'||NK==='jashin'||NK==='crocs'||NK==='anneaux'){add(tor(CO?8.6:6.4,.42,20),'chest',NK==='crocs'?'#5a3a22':'#3a3a44',[0,CO?7.4:5.6,1.4+dz],[Math.PI/2+.35,0,0],[1,1,1],1);
   if(NK==='tsunade')add(sph(1.5,8,6),'chest','#4ae070',[0,ny,nz],[0,0,0],[1,1.9,.7],1);
   if(NK==='jashin'){add(tor(2.1,.42,14),'chest','#e0e4ec',[0,ny,nz],[0,0,0],[1,1,1],1);add(cone(1.4,3.2,3),'chest','#e0e4ec',[0,ny+.1,nz+.2],[0,0,0],[1,1,.4],1)}
   if(NK==='crocs')for(const x of[-2.6,-1.3,0,1.3,2.6])add(cone(.75,3.2,4),'chest','#f8f4ea',[x,ny+.6-Math.abs(x)*.35,nz-.4],[Math.PI,0,0],[1,1,1],1);
   if(NK==='anneaux')for(const x of[-2.4,0,2.4])add(tor(1.15,.36,12),'chest','#d8dce6',[x,ny+.4-Math.abs(x)*.2,nz],[0,0,0],[1,1,1],1)}
- if(NK==='chapelet')for(let i=0;i<12;i++){const a=i/12*Math.PI*2,R=CO?8.4:6.6;add(sph(i===6?1.6:1.05,8,6),'chest',i===6?'#c8a050':'#6a4a2a',[Math.sin(a)*R,(CO?7.6:5.6)-Math.cos(a)*3.4,Math.cos(a)*R*.86+1],[0,0,0],[1,1,1],1)}
+ if(NK==='chapelet')for(let i=0;i<12;i++){const a=i/12*Math.PI*2,R=CO?8.4:6.6;add(sph(i===6?1.6:1.05,8,6),'chest',i===6?'#c8a050':'#6a4a2a',[Math.sin(a)*R,(CO?7.6:5.6)-Math.cos(a)*3.4,Math.cos(a)*R*.86+1+dz],[0,0,0],[1,1,1],1)}
  // objets portés dans le dos
  const BK=L.back;
  if(BK==='parchemin'){add(cyl(3.4,3.4,26,14),'chest','#e8dcc0',[0,-9,-10],[0,0,Math.PI/2]);for(const x of[-13,13])add(cyl(3.8,3.8,2.6,14),'chest','#b83a2a',[x,-9,-10],[0,0,Math.PI/2])}
  if(BK==='samehada'){const ax=[.48,.88,0],c=[2,2,-11.5],at=t=>c.map((v,i)=>v+ax[i]*t),qa=qv([0,1,0],ax),qr=qv([0,0,1],ax);add(cap(4.4,24,10),'chest','#3a4a7a',c,qa);for(const t of[-9,-3,3,9])add(tor(4.4,.55,14),'chest','#7a8ab8',at(t),qr);add(cyl(1.5,1.5,8,8),'chest','#5a4a3a',at(19.5),qa)}
  if(BK==='faux'){const ax=[-.52,.85,0],c=[-1,4,-11],at=t=>c.map((v,i)=>v+ax[i]*t),pp=[ax[1],-ax[0],0];add(cyl(.75,.75,42,6),'chest','#4a3426',c,qv([0,1,0],ax));for(let k=0;k<3;k++){const b=at(19-k*4.5).map((v,i)=>v+pp[i]*7);add(cone(2.4,14,4),'chest','#c42a2a',b,qv([0,1,0],pp),[1,1,.35])}}
- if(BK==='eventail'){const ax=[.34,.94,0],c=[-2,3,-10.6],qa=qv([0,1,0],ax);add(box(5,40,3),'chest','#4a3a2a',c,qa);for(const t of[-12,0,12])add(cyl(2.3,2.3,.6,12),'chest','#8a5ab8',c.map((v,i)=>v+ax[i]*t+(i===2?-1.6:0)),[Math.PI/2,0,0])}
+ if(BK==='eventail'){const md=h.style==='madara',ax=md?[.62,.78,0]:[.34,.94,0],c=md?[7,1,-12.2]:[-2,3,-10.6],qa=qv([0,1,0],ax);add(box(5,40,3),'chest','#4a3a2a',c,qa);for(const t of[-12,0,12])add(cyl(2.3,2.3,.6,12),'chest','#8a5ab8',c.map((v,i)=>v+ax[i]*t+(i===2?-1.6:0)),[Math.PI/2,0,0])}
  if(BK==='fuma'){const c=[0,2,-10.6];for(let i=0;i<4;i++){const a=i*Math.PI/2+.4,d=[Math.cos(a),Math.sin(a),0];add(cone(2.8,13,4),'chest','#9aa2ae',c.map((v,j)=>v+d[j]*7.5),qv([0,1,0],d),[1,1,.3])}add(cyl(2.6,2.6,1.8,12),'chest','#5a5f6a',c,[Math.PI/2,0,0])}
  if(BK==='katana'){const ax=[-.87,.5,0],c=[0,-1.5,-9.6],qa=qv([0,1,0],ax);add(box(2.4,30,2.4),'spine','#24242c',c,qa);add(cyl(1.1,1.1,8,8),'spine','#d8d0c0',c.map((v,i)=>v+ax[i]*19),qa)}
  if(BK==='kubi'){const ax=[-.5,.87,0],c=[1,2,-10.6],qa=qv([0,1,0],ax),pp=[ax[1],-ax[0],0];add(box(12,38,1.2),'chest','#c8d0da',c,qa);add(cyl(2.6,2.6,1.4,14),'chest','#2a2e36',c.map((v,i)=>v+ax[i]*13+pp[i]*2),[Math.PI/2,0,0]);add(cyl(1.3,1.3,10,8),'chest','#4a3a2a',c.map((v,i)=>v-ax[i]*24),qa)}
@@ -136,7 +136,7 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  if(BK==='baton'){const ax=[.45,.89,0],qa=qv([0,1,0],ax);add(cyl(.9,.9,52,8),'chest','#6a4a2a',[0,2,-10],qa);for(const t of[-24,24])add(cyl(1.25,1.25,3,10),'chest','#e8c040',[ax[0]*t,2+ax[1]*t,-10],qa)}
  if(BK==='sac'){add(box(13,13,6),'chest','#6a5a3a',[0,-2,-10.6]);add(box(13.4,5,6.6),'chest','#5a4a2e',[0,4,-10.6]);for(const s of[-1,1])add(tor(4,.7,10),'chest','#4a3a22',[s*5,5,-3],[0,Math.PI/2,0],[1,1.4,1])}
  if(BK==='hirame'){const ax=[.42,.9,0],c=[0,2,-10.8],qa=qv([0,1,0],ax),qr=qv([0,0,1],ax);add(box(8,36,2),'chest','#4a5a7a',c,qa);for(const t of[-14,-7,0,7,14])add(box(8.6,1.1,2.4),'chest','#d8d0c0',c.map((v,i)=>v+ax[i]*t),qa);add(cyl(1.4,1.4,9,8),'chest','#3a2a2a',c.map((v,i)=>v+ax[i]*22),qa)}
- if(L.cape){add(box(18,13.5,1),'cape',L.cape,[0,-6.5,-.4]);add(box(17,15,1),'cape2',L.cape,[0,-7.2,-.4])}
+ if(L.cape){const rb=L.robe&&!L.rshort;add(box(18,13.5,1),'cape',L.cape,[0,-6.5,rb?-1.9:-.4]);add(box(17,15,1),'cape2',L.cape,[0,-7.2,rb?-4.4:-.4],rb?[-.12,0,0]:[0,0,0])}
  if(L.gourd){add(sph(6.5,12,9),'chest','#c8945a',[1,-2,-11],[0,0,0],[1,1.1,.95]);add(sph(4.4,12,9),'chest','#c8945a',[2.4,6.4,-11.5]);add(tor(9.5,.8,16),'chest','#8a3a2a',[0,1,-1],[.2,0,.75],[1,1.05,.95])}
  // bras, mains (bandages pour le taijutsu), cou, tête
  for(const s of['L','R']){add(cap(2.7,5.4),'arm'+s,arm,[0,-4.4,0]);add(sph(3.1,10,7),'arm'+s,arm,[0,0,0]);add(cap(2.45,5),'fore'+s,arm,[0,-4,0]);add(sph(big?3.9:2.9,10,8),'hand'+s,fistC,[0,-1.6,.3]);
@@ -144,10 +144,10 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
   if(AA==='bandages'||AA==='bandall')add(cyl(2.2,2.3,7.5,10),'fore'+s,'#f0ece0',[0,-6.4,0],[0,0,0],[1,1,1],1);
   if(AA==='protege'){add(cyl(2.45,2.6,6.6,10),'fore'+s,'#2a3050',[0,-6,0],[0,0,0],[1,1,1],1);add(cyl(2.7,2.7,.9,10),'fore'+s,'#c8ccd6',[0,-8.8,0],[0,0,0],[1,1,1],1)}
   if(AA==='gantelets')add(cyl(2.5,2.8,7,10),'fore'+s,'#9aa2ae',[0,-6.2,0],[0,0,0],[1,1,1],1);
-  if(AA==='gants'){add(cyl(2.3,2.35,2,10),'fore'+s,'#1c1c24',[0,-9.6,0],[0,0,0],[1,1,1],1);add(box(2.2,1.6,.5),'hand'+s,'#c8ccd6',[0,-1.6,2.5],[0,0,0],[1,1,1],1)}
+  if(AA==='gants'){add(cyl(2.3,2.35,2,10),'fore'+s,'#3a3f50',[0,-9.6,0],[0,0,0],[1,1,1],1);add(box(2.2,1.6,.5),'hand'+s,'#c8ccd6',[0,-1.6,2.5],[0,0,0],[1,1,1],1)}
   if(AA==='bracelets')for(const y of[-8.6,-9.8])add(tor(2.25,.42,12),'fore'+s,'#e8c040',[0,y,0],[Math.PI/2,0,0],[1,1,1],1);
   if(AA==='bague')add(tor(.95,.32,10),'hand'+s,'#f0c840',[s==='L'?1.4:-1.4,-2.4,2.2])} // un simple anneau (plus de vernis qui recouvre la main)
- if(AA==='tatouage'){add(tor(1.7,.42,14),'armL','#c02a2a',[2.6,-2.6,0],[0,Math.PI/2,0],[1,1,1],1);add(tor(.8,.38,10),'armL','#c02a2a',[2.75,-2.6,0],[0,Math.PI/2,0],[1,1,1],1);add(box(.5,3.2,.7),'armL','#c02a2a',[2.7,-4.9,1.2],[0,0,.1],[1,1,1],1)}
+ if(AA==='tatouage'){const tx=L.haori&&L.hsl?1.4:0;add(tor(1.7,.42,14),'armL','#c02a2a',[2.6+tx,-2.6,0],[0,Math.PI/2,0],[1,1,1],1);add(tor(.8,.38,10),'armL','#c02a2a',[2.75+tx,-2.6,0],[0,Math.PI/2,0],[1,1,1],1);add(box(.5,3.2,.7),'armL','#c02a2a',[2.7+tx,-4.9,1.2],[0,0,.1],[1,1,1],1)}
  if(L.samurai)for(const s of['L','R'])add(cyl(2.6,2.8,6,10),'fore'+s,L.samurai,[0,-6,0],[0,0,0],[1,1,1],1);
  add(cyl(3.2,3.6,4.5,10),'neck',skin,[0,1.4,0]);
  add(sph(12.6,20,15),'head',skin,[0,8,0],[0,0,0],[1.03,.97,.96]);for(const x of[-12,12])add(sph(2.3,8,6),'head',skin,[x,7.5,0],[0,0,0],[.6,1,1]);
@@ -167,7 +167,7 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  const spike=(el,az,len,rad,bone='head',col=hc)=>{if(hatF)return;const d=new T.Vector3(Math.sin(el)*Math.sin(az),Math.cos(el),Math.sin(el)*Math.cos(az)),q=new T.Quaternion().setFromUnitVectors(UPV,d);const base=HC.clone().addScaledVector(d,10.6+len*.45);add(cone(rad,len,6),bone,col,[base.x,base.y,base.z],q)};
  if(st!=='chauve'&&!(HS&&HS.cap===0&&!hoodUp))add(sphp(13.3,20,12,0,Math.PI*2,0,Math.PI*.5),'head',hc,[0,8.4,-.9],[-.42,0,0],[1.05,1.06,1.05]);
  if(hoodUp){add(sphp(15.2,20,11,Math.PI/2+1,Math.PI*2-2,0,Math.PI*.62),'head',L.hoodC||torso,[0,8.6,-.6],[0,0,0],[1.02,1,1]);if(L.hood==='chat')for(const s of[-1,1])add(cone(3.4,7,6),'head',L.hoodC||torso,[s*7.5,23.5,-1.5],[0,0,-s*.45])}
- else if(HS)for(const q of HS.p){const t=q[0],hb=String(t==='o'?q[4]:t==='c'?q[6]:t==='k'?q[5]:'').includes('h'),bn=hb?'hair':'head',ps=v=>hb?v.map((x,i)=>x-HAIRB[i]):v;
+ else if(HS)for(const q of HS.p){const t=q[0];if(hatF&&t==='o'&&q[1][1]>=17)continue;const hb=String(t==='o'?q[4]:t==='c'?q[6]:t==='k'?q[5]:'').includes('h'),bn=hb?'hair':'head',ps=v=>hb?v.map((x,i)=>x-HAIRB[i]):v;
   if(t==='s')spike(q[1],q[2],q[3],q[4]);else if(t==='c')add(cap(q[2],q[3],10),bn,hc,ps(q[1]),q[4],q[5]);else if(t==='k')add(cone(q[2],q[3],7),bn,hc,ps(q[1]),q[4]);
   else if(t==='o')add(sph(q[2],12,9),bn,q[5]||hc,ps(q[1]),[0,0,0],q[3]);else if(t==='sh')add(sphp(q[1],22,12,q[3]?Math.PI/2+q[3]:0,q[3]?Math.PI*2-2*q[3]:Math.PI*2,0,q[2]),'head',hc,[0,8,-.4],[0,0,0],[1.02,1,1])}
  if(!hoodUp&&st==='pics'){for(const [el,az,l,r] of[[.25,0,12,4.2],[.45,1.1,12,4],[.45,-1.1,12,4],[.62,2.2,11,4],[.62,-2.2,11,4],[.75,3.1,11,4],[.95,2.6,10,3.6],[.95,-2.6,10,3.6],[1.25,3.0,9,3.4],[1.2,1.75,9,3.2],[1.2,-1.75,9,3.2],[.55,.4,9,3.5],[.55,-.4,9,3.5]])spike(el,az,l,r);
@@ -238,11 +238,11 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  else if(h.acc==='kage'){sym.material.map=signTexture('k:'+(L.hatK||'火'));sym.position.set(0,24.6,8.4);sym.rotation.set(-1.02,0,0);sym.scale.set(1.25,2.2,1);bones[BI.head].add(sym)} // kanji du village sur le chapeau de Kage
  else{sym.visible=false;bones[BI.head].add(sym)}
  // symbole dans le dos (ou kanji du haori de Hokage) : sur la cape, le haori ou le haut
- let bsym=null;const bk=L.haori&&L.hkan?'h:'+L.hkan:L.sym?'s:'+L.sym:'';
+ let bsym=null;const bk=L.sym?'s:'+L.sym:L.haori&&L.hkan?'h:'+L.hkan:''; // un symbole choisi passe avant le kanji du Hokage
  if(bk){bsym=new T.Mesh(N3.signGeo||(N3.signGeo=new T.PlaneGeometry(1,1)),new T.MeshBasicMaterial({map:signTexture(bk),transparent:true,depthWrite:false}));const bw=L.bw||1;
-  if(L.cape&&!L.haori){bsym.position.set(0,-6.5,-.95);bsym.scale.set(9*bw,9,1);bones[BI.cape].add(bsym)}
+  if(L.cape&&!L.haori){bsym.position.set(0,-6.5,L.robe&&!L.rshort?-2.45:-.95);bsym.scale.set(9*bw,9,1);bones[BI.cape].add(bsym)}
   else{const HW=L.hov?(L.vest||L.armor||L.samurai||L.robe||L.belly?1.14:1.04):1,zb=L.haori?9.45*HW:L.samurai||L.robe?8.95:L.vest?8.55:L.armor?8.4:7.45,hk=bk[0]==='h';
-   bsym.position.set(0,hk?-.6:1.75,-zb*(hk?1:bw));bsym.scale.set((hk?7:9.25)*bw,hk?13.75:9.25,1);bones[BI.chest].add(bsym)}
+   bsym.position.set(0,hk?-.6:1.75,-zb*(1+bw)/2);bsym.scale.set((hk?7:9.25)*bw,hk?13.75:9.25,1);bones[BI.chest].add(bsym)}
   bsym.rotation.set(0,Math.PI,0)}
  N3.sc.add(grp);
  const cur={};for(const [n] of BONES)cur[n]=new T.Quaternion();
@@ -262,13 +262,13 @@ function faceTexture(L,mode='o'){const h=L.head,key=[h.eye,h.acc,h.kaguya,h.brow
   const eye=h.eye||'#2a2a38',ix=cx+s*.5*U;
   if(h.eye==='#e8e8f8'){x.fillStyle='#d6d6ec';x.beginPath();x.ellipse(ix,ey+.3*U,1.9*U,2.6*U,0,0,7);x.fill();x.strokeStyle='#a8aed0';x.lineWidth=2;x.stroke()}
   else{x.fillStyle=eye;x.beginPath();x.ellipse(ix,ey+.3*U,1.8*U,2.5*U,0,0,7);x.fill();
-   if(h.eye==='#e01a1a'){x.fillStyle='#111';x.beginPath();x.arc(ix,ey+.4*U,.65*U,0,7);x.fill();x.strokeStyle='#111';x.lineWidth=3;x.beginPath();x.arc(ix,ey+.4*U,1.25*U,0,7);x.stroke();for(let i=0;i<3;i++){const a=i*2.09+.5;x.beginPath();x.arc(ix+Math.cos(a)*1.25*U,ey+.4*U+Math.sin(a)*1.25*U,.55*U,0,7);x.fill()}}
+   if(h.eye==='#e01a1a'){x.fillStyle='#111';x.beginPath();x.arc(ix,ey+.4*U,.6*U,0,7);x.fill();x.strokeStyle='#111';x.lineWidth=1.5;x.beginPath();x.arc(ix,ey+.4*U,1.2*U,0,7);x.stroke();for(let i=0;i<3;i++){const a=i*2.09+.5;x.beginPath();x.arc(ix+Math.cos(a)*1.2*U,ey+.4*U+Math.sin(a)*1.2*U,.38*U,0,7);x.fill()}}
    else{x.fillStyle='#0a0a12';x.beginPath();x.ellipse(ix,ey+.6*U,.9*U,1.4*U,0,0,7);x.fill()}}
   x.fillStyle='#fff';x.beginPath();x.arc(ix-.7*U,ey-1*U,.75*U,0,7);x.fill();x.beginPath();x.arc(ix+.6*U,ey+1.2*U,.35*U,0,7);x.fill()}
  if(h.brows){x.fillStyle='#111';for(const s of[-1,1])x.fillRect(ex+s*4.5*U-3*U,hy-4.2*U,6*U,2.2*U)}
  else if(h.face!=='gaara'){x.strokeStyle='#3a2a20';x.lineWidth=4;x.lineCap='round';for(const s of[-1,1]){x.beginPath();x.moveTo(ex+s*2.4*U,hy-2.6*U);x.lineTo(ex+s*6.2*U,hy-3.1*U);x.stroke()}}
  if(h.kaguya){x.fillStyle='#c22';for(const s of[-1,1]){x.beginPath();x.arc(ex+s*3*U,hy-4.4*U,.8*U,0,7);x.fill()}}
- x.strokeStyle='#5a3020';x.lineWidth=4;x.lineCap='round';x.beginPath();x.moveTo(ex-1.6*U,hy+6.8*U);x.quadraticCurveTo(ex,hy+7.5*U,ex+1.6*U,hy+6.8*U);x.stroke();
+ x.strokeStyle='#5a3020';x.lineWidth=3.5;x.lineCap='round';x.beginPath();x.moveTo(ex-1.5*U,hy+6.8*U);x.quadraticCurveTo(ex,hy+7.4*U,ex+1.5*U,hy+6.8*U);x.stroke();
  faceMarks(x,h,ex,hy,ey,U,3.2,1);
  if(h.acc==='anbu'){x.fillStyle='#f2f0ea';x.strokeStyle='#1a1410';x.lineWidth=4;x.beginPath();x.ellipse(ex,hy+1.6*U,10.4*U,9.6*U,0,0,7);x.fill();x.stroke();x.fillStyle='#1a1414';for(const s of[-1,1]){x.beginPath();x.ellipse(ex+s*4*U,ey-.6*U,2*U,1.3*U,0,0,7);x.fill()}
   x.strokeStyle='#c02a2a';x.lineWidth=5;x.lineCap='round';for(const s of[-1,1]){x.beginPath();x.moveTo(ex+s*2*U,hy-5*U);x.lineTo(ex+s*3.6*U,hy-1.6*U);x.moveTo(ex+s*6.6*U,hy+4*U);x.lineTo(ex+s*4.6*U,hy+7*U);x.stroke()}}

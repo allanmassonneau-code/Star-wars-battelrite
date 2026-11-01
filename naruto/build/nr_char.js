@@ -231,7 +231,7 @@ function neck2D(L,back,col){const k=L.neck;if(!k)return;
 // bras (2D) : coude e, main h ; bandages, gants, protège-bras, bracelets, bague, tatouage, gantelets
 function arm2D(L,sx,sy,e,h,col,front){const k=L.armAcc;if(!k)return;const at=t=>[e[0]+(h[0]-e[0])*t,e[1]+(h[1]-e[1])*t];
  const seg=(a,b,w,c)=>{const p=at(a),q=at(b);limb(p[0],p[1],(p[0]+q[0])/2,(p[1]+q[1])/2,q[0],q[1],w,c)};
- if(k==='bandages'||k==='bandall')seg(.25,.92,4.4,col('#f0ece0'));if(k==='protege')seg(.2,.85,5.2,col('#2a3050'));if(k==='gantelets')seg(.15,.9,5.6,col('#9aa2ae'));if(k==='gants')seg(.8,.98,5,col('#1c1c24'));
+ if(k==='bandages'||k==='bandall')seg(.25,.92,4.4,col('#f0ece0'));if(k==='protege')seg(.2,.85,5.2,col('#2a3050'));if(k==='gantelets')seg(.15,.9,5.6,col('#9aa2ae'));if(k==='gants')seg(.8,.98,5,col('#3a3f50'));
  if(k==='bracelets')seg(.72,.86,5.2,col('#e8c040'));if(k==='bague'&&front)circ(h[0],h[1]+2.4,1.3,col('#f0c840'));
  if(k==='tatouage'&&front){const tx=sx+(e[0]-sx)*.35,ty=sy+(e[1]-sy)*.35;g.strokeStyle=col('#c02a2a');g.lineWidth=1.1;g.beginPath();g.arc(tx,ty,2.2,0,5.4);g.stroke();g.beginPath();g.arc(tx,ty,.9,0,7);g.stroke()}}
 // accessoires de tête (2D) : lunettes de protection, boucles, chapeau de paille, casque, bandana
@@ -279,7 +279,7 @@ function drawNinja(u,bx,by,s,ghost){
  if(L.neck==='echlong'&&!back)neck2D({neck:'echlong',maskC:L.maskC},true,col);
  // bras arrière
  const shoulder=side=>[side*9*bw,-37];const armB=()=>{const [sx,sy]=shoulder(-fx>=0?1:-1),e=[(sx+hb[0])/2-2,(sy+hb[1])/2+2];limb(sx,sy,e[0],e[1],hb[0],hb[1],4.4,AR);if(L.stripes)circ((sx+e[0])/2,(sy+e[1])/2,2.4,col(L.stripes));arm2D(L,sx,sy,e,hb,col,0);
-  blob(hb[0],hb[1],2.6,L.armAcc==='gants'?col('#1c1c24'):L.armAcc==='gantelets'?col('#7a828e'):k==='fist'||k==='bigfist'?col('#f0ebe0'):skin)};
+  blob(hb[0],hb[1],2.6,L.armAcc==='gants'?col('#3a3f50'):L.armAcc==='gantelets'?col('#7a828e'):k==='fist'||k==='bigfist'?col('#f0ebe0'):skin)};
  if(!back)armB();
  // torse et tenue
  if(L.robe){const rb=L.rshort?-17:SH2-7,rw=L.rshort?14.5:16;outlined(()=>{g.moveTo(-12,-41);g.lineTo(12,-41);g.lineTo(rw+step*2,rb);g.lineTo(-rw+step*2,rb)},col(L.robe));if(L.trim){g.fillStyle=col(L.trim);g.fillRect(-15.4+step*2,rb-4,30.8,3.2)}}
@@ -300,8 +300,8 @@ function drawNinja(u,bx,by,s,ghost){
  }
  if(L.belt){g.fillStyle=col(L.belt);g.fillRect(-10.5,-23,21,3.2)}
  outfit2D(L,back,step,col);neck2D(L,back,col);
- if(back){const sg=L.haori&&L.hkan?null:L.sym;if(sg&&!fl)drawSign(g,sg,0,L.cape&&!L.haori?-27:-31,L.cape&&!L.haori?7.5:6.5,.8);
-  if(L.haori&&L.hkan&&!fl){g.fillStyle='#c0201a';g.font='bold 7px serif';g.textAlign='center';g.textBaseline='middle';[...L.hkan].forEach((c,i)=>g.fillText(c,0,-34+i*8))}
+ if(back){const sg=L.sym;if(sg&&!fl)drawSign(g,sg,0,L.cape&&!L.haori?-27:-31,L.cape&&!L.haori?7.5:6.5,.8);
+  if(L.haori&&L.hkan&&!L.sym&&!fl){g.fillStyle='#c0201a';g.font='bold 7px serif';g.textAlign='center';g.textBaseline='middle';[...L.hkan].forEach((c,i)=>g.fillText(c,0,-34+i*8))}
   if(L.gear==='pouch'||L.gear==='both')outlined(()=>{g.roundRect(-4.5,-25,9,6,1.5)},col('#5a4a32'));
   if(L.gourd)gourd();if(L.back&&!L.gourd)backItem2D(L.back,0,col)} // vu de dos : symbole, pochette puis objet porté dans le dos, par-dessus le haori ou la cape
  if(h.bs==='taille'){g.fillStyle=h.band;g.fillRect(-10.5,-24,21,3.6);if(!back)bandPlate(h,0,-22.2,.7,0)}
@@ -395,7 +395,7 @@ function drawNinjaHead(u,h,fx,fy,back,fl,t,run){const hx=fx*1.5,hy=-53,ex=hx+fx*
  if(h.acc==='kage')kageHat(hx,hy,fl,L);
  g.restore()}
 function drawNinjaWeapon(u,L,W,k,hf,hb,fx,fy,back,fl,t){const [x,y]=hf,a=Math.atan2(Math.sin(u.aim)*K,Math.cos(u.aim)),act=u.swing>0||u.block||u.cast,c=W.col;
- const AA=L.armAcc,glv=AA==='gants'?'#1c1c24':AA==='gantelets'?'#7a828e':null,fist=(px,py,r,cc)=>{blob(px,py,r,glv&&!fl&&(cc==='#f0ebe0'||cc===L.head.skin)?glv:cc);if(AA==='bague'&&!fl)circ(px+r*.5,py-r*.2,r*.3,'#f0c840')}; // gants, gantelets, vernis et bague : aussi sur la main qui tient l'arme
+ const AA=L.armAcc,glv=AA==='gants'?'#3a3f50':AA==='gantelets'?'#7a828e':null,fist=(px,py,r,cc)=>{blob(px,py,r,glv&&!fl&&(cc==='#f0ebe0'||cc===L.head.skin)?glv:cc);if(AA==='bague'&&!fl)circ(px+r*.5,py-r*.2,r*.3,'#f0c840')}; // gants, gantelets, vernis et bague : aussi sur la main qui tient l'arme
  switch(k){
   case'fist':fist(x,y,3.2,fl?'#fff':'#f0ebe0');if(!glv){g.strokeStyle='#c8c0b0';g.lineWidth=.8;g.beginPath();g.moveTo(x-2.5,y);g.lineTo(x+2.5,y-1);g.stroke()}break;
   case'bigfist':{const r=u.swing>0?9:4.5;fist(x,y,r,fl?'#fff':u.ch.look.head.skin);if(u.swing>0){g.fillStyle=rgba('#ffcf7a',.35);g.beginPath();g.arc(x,y,r+4,0,7);g.fill()}break}
