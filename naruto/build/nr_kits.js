@@ -2,8 +2,63 @@
 // AUXF : logique (hôte) des objets spéciaux ; AUXD : leur dessin ; PROJD : dessin de projectiles propres ; JFXD / DETO : effets visuels en plus
 const AUXF={},AUXD={},PROJD={},JFXD={},DETO={};
 // catalogue des jutsu : chaque fichier kits/<catégorie>.js appelle KIT(catégorie, lignes)
+// ligne de catalogue (format v5) : [rang, mécanique, nom, description, vfx] ; l'ancien format [emplacement, rang, mécanique, nom, description, vfx] est encore accepté
+// (pendant la transition : une ancienne ligne d'emplacement 2 = déplacement va dans DASHPOOL, pas dans un arbre) ; KITROWS garde [cat, emplacement|0, rang, src, nom, desc, vfx]
 const KITROWS=[];
-function KIT(cat,rows){for(const r of rows)KITROWS.push([cat,...r])}
+function KIT(cat,rows){for(const r of rows)KITROWS.push(typeof r[0]==='number'?[cat,...r]:[cat,0,...r])}
+// ---------- Arbres de compétences (v5) : déclarations PAR DONNÉES (voir FONDATION.md) ----------
+// cases d'une unité : 0 Clic G (style) · 1-6 barre (touches 1-6) · 7 dash (Espace) · 8 Kawarimi (touche A = code KeyQ)
+const BAR0=1,BARN=6,DASHI=7,SHUNI=8,ABN=9,CDLOCK=2,RANKO='DCBAS';
+// clans martiaux : pas de nature ni de familles, arbre de style imposé (clan → n° d'arbre de style), 2 jutsu par rang, tous appris
+const KENJ=21,BUKI=22,MARTIAL={10:0,21:1,22:2};const isMartial=c=>MARTIAL[c]!=null;
+// arbres de style (Tai / Ken / Buki) : 9e champ de STYLES = arbre de l'attaque de base proposée aux sans-clan et aux clans martiaux sans style propre
+const STREE=['tai','ken','buki'],STNAME=['Taijutsu','Kenjutsu','Bukijutsu'],STCOL=['#e8a060','#b8c8d8','#c8a070'];
+// familles de sub (sans clan) : [nom, couleur]
+const FAMS=[['Iryô','#7fe07f'],['Fûinjutsu / Hiraishin','#ffd36a'],['Genjutsu','#b07ae0'],['Kuchiyose','#e0905a'],['Shurikenjutsu','#a8b4c8'],['Kage Bunshin','#8ab0ff'],['Senjutsu','#9ad05a'],['Jutsu interdits','#c0283a']];
+const FAMMAX=5; // familles au plus pour un sans-clan
+// TREES[id] = {id, type:'nature'|'style'|'clan'|'famille', name, col, take (nombre ou {D:…,S:…} = jutsu à apprendre au plus par rang), pool (limite partagée), force (tout apprendre)}
+// POOLS[nom] = {take} : limite par rang PARTAGÉE par tous les arbres du même pool (familles : 5 sub au total, 1 par rang toutes familles confondues)
+const TREES={},POOLS={fam:{take:1}};
+function defTree(id,o){return TREES[id]=Object.assign(TREES[id]||{id,take:1},o)}
+const tTake=(T,r)=>T?typeof T.take==='object'?(T.take[r]??0):T.take:0;
+NATURES.forEach((n,i)=>defTree('n'+i,{type:'nature',name:n[0],col:n[2],take:1}));
+STNAME.forEach((n,i)=>defTree('t'+i,{type:'style',name:n,col:STCOL[i],take:1}));
+CLANS.forEach((c,i)=>defTree('c'+i,{type:'clan',name:'Clan '+c[0],col:c[1],take:isMartial(i)?2:1,force:isMartial(i)}));
+FAMS.forEach((f,i)=>defTree('f'+i,{type:'famille',name:f[0],col:f[1],take:1,pool:'fam'}));
+// TREEMOVE (transition, catalogue actuel) : 'catégorie|nom' → [arbre, rang] (déplace une ligne dans un arbre, au besoin à un autre rang) ou null (retirée des arbres, code conservé)
+// les agents de contenu déplacent les lignes dans le bon fichier kits/… puis retirent l'entrée d'ici
+const TREEMOVE={
+ // Iryô (f0)
+ 'u|Pilule du soldat':['f0','D'],'u|Scalpel de chakra':['f0','C'],'u|Shôsen':['f0','B'],'u|Byakugô':['f0','S'],
+ // Fûinjutsu / Hiraishin (f1)
+ 'u|Hiraishin':['f1','D'],'u|Kunai explosifs':['f1','C'],'u|Parchemin explosif':['f1','C'],'u|Barrière Shishienjin':['f1','A'],
+ // Genjutsu (f2)
+ 'u|Genjutsu : Plumes':['f2','C'],
+ // Kuchiyose (f3)
+ 'u|Rashômon':['f3','D'],'u|Chiens ninja':['f3','C'],'u|Invocation : Katsuyu':['f3','B'],'u|Invocation : Crapaud':['f3','A'],'u|Invocation : Manda':['f3','S'],
+ // Shurikenjutsu (f4)
+ 'u|Piège ninja':['f4','D'],'u|Fûma Shuriken':['f4','C'],'u|Multiclonage de shuriken':['f4','B'],
+ // Kage Bunshin (f5)
+ 'u|Kage Bunshin : leurre':['f5','D'],'u|Contre du clone':['f5','C'],'u|Clone explosif':['f5','B'],'u|Multiclonage':['f5','A'],'u|Rasengan':['f5','S'],
+ // Senjutsu (f6)
+ 'u|Concentration du chakra':['f6','D'],'u|Mode Ermite':['f6','A'],'u|Fûton : Rasenshuriken':['f6','S'],
+ // Jutsu interdits (f7)
+ 'u|Serpents de l\'ombre':['f7','C'],'u|Argile explosive':['f7','B'],'u|Chakra de Kyûbi':['f7','A'],
+ // arbre Taijutsu (t0) ; Taijutsuka (c10) : Poids retirés devient un jutsu D
+ 'c10|Konoha Senpû':['t0','D'],'c10|Dynamic Entry':['t0','C'],'u|Ôkashô':['t0','B'],'u|Lotus primaire':['t0','A'],'c10|Lotus primaire':null,'c10|Tigre de midi':null,'c10|Poids retirés':['c10','D'],
+ // Bukijutsuka (c22)
+ 'u|Sôshôryû':['c22','S'],
+ // retirés (code conservé)
+ 'u|Bombe fumigène':null,'u|Raikiri':null,'u|Pluie de parchemins':null};
+// ---------- Dashs (Espace) et Kawarimi (touche A) : {src mécanique 'x.clé', n nom, d description, vfx, cd recharge (5-8 s ; défaut : celle de la mécanique bornée à 5-8)} ----------
+// DASHC[clan] · DASHN[nature] (sans-clan, dsh 'n') · DASHF[famille] (sans-clan, dsh 'f<k>') · DASHB dash normal (dsh 'b', et repli de tout dash absent)
+// une table vide est remplie après le chargement des kits (nr_tree.js) : 1er ancien déplacement du clan, déplacements de nature connus
+const DASHC={},DASHN={},DASHF={},DASHB={src:'x.sub_roll',n:'Roulade',d:'Roulade rapide : intouchable au début de la roulade',vfx:'smoke',cd:6};
+const SHUN={src:'x.sub_kawa',n:'Kawarimi',d:'Se substitue au curseur et laisse à sa place une bûche piégée qui explose et étourdit',vfx:'smoke',cd:12};
+// barre : objets aux d'un kit qui gardent un n° de case (champ i ou si) : remappés quand la barre change (setBar, nr_bar.js)
+const BARAUX=new Set(['sub_clay','su_jet','su_prison','uc_gk']);
+// BARCHG : fonctions (u, ancienne barre, nouvelle barre) appelées après chaque changement de barre (hôte / hors ligne)
+const BARCHG=[];
 // ---------- Registres partagés par les kits ----------
 // AFTER : fonctions lancées une fois tout le jeu chargé (ex. Object.assign(VP,{…}), UK.push('monChamp'))
 // ANIM : animations 3D nommées, ANIM.nom=(P,e,u,t)=>{…} modifie la pose P (e = avancement 0 → 1) ; lancer avec anim(u,'nom',durée)
@@ -53,8 +108,6 @@ JFXD.clash=(f,k,e)=>{const q=P(f.x,f.y,28),R=f.r*(.4+e*.9)*q.s;g.globalComposite
 STATD.push((u,p,S)=>{const t=performance.now()/1000;
  if(u.wet>0){g.save();g.globalAlpha=Math.min(1,u.wet);for(let i=0;i<5;i++){const k=((t*1.6+i*.21)%1),x=p.x+Math.sin(i*2.3)*12*S,y=p.y-(52-k*44)*S;g.fillStyle='#7fc8ff';g.beginPath();g.ellipse(x,y,1.6*S,2.6*S,0,0,7);g.fill()}g.restore()}
  if(u.dotT>0&&u.dotEl===0&&!u.mk){g.save();g.globalCompositeOperation='lighter';for(let i=0;i<4;i++){const a=i*1.6+t*3,x=p.x+Math.cos(a)*10*S,y=p.y-(14+((t*50+i*19)%40))*S;g.fillStyle=i%2?'rgba(255,170,60,.75)':'rgba(255,90,30,.7)';g.beginPath();g.moveTo(x-3*S,y);g.quadraticCurveTo(x,y-11*S,x+3*S,y);g.fill()}g.restore()}});
-// budget : les ninjas sans clan sont polyvalents (+2 points)
-const budgetOf=b=>BUDGET+(b&&b.clan<0?2:0);
 // effet différé (ne s'annule pas si le lanceur est étourdi) ; avec r > 0, un cercle d'alerte s'affiche au sol
 function later(u,t,f,o){aux.push(Object.assign({type:'tele',x:u.x,y:u.y,r:0,t,m:t,team:u.team,owner:u,vfx:VFX,f},o))}
 AUXF.tele=x=>{if(x.t<=0&&!x.done){x.done=1;const V=VFX;VFX=x.vfx;CUR=x.owner;x.f(x);CUR=null;VFX=V}};

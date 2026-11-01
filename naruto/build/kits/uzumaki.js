@@ -41,14 +41,14 @@ Object.assign(NAT,{
   proj(u,a,{spd:1000,r:10,dmg:16,life:.45,col:'#e8c860',hook:1,stun:.4,kind:'uz_chainp',onHit:(p,t)=>{const o=p.owner;uzMark(o,t,1);if(near(t.x,t.y))S('heavy',o);
    jx({jfx:'uz_wrap',ti:units.indexOf(t),ui:units.indexOf(o),x:t.x,y:t.y,t:.8,m:.8})}})}),
  uz_kai:SP('Sceaux : Détonation','Fait exploser les sceaux des ennemis à moins de 480 : 12 + 12 par sceau ; à 3 sceaux, étourdi 0,7 s',9,{tele:{self:1,r:UZ_KAIR},ai:null},(u)=>{const L=[];for(const e of enemies(u))if(uzMk(e)&&dist(u,e)<UZ_KAIR+e.r)L.push(e);
-  if(!L.length){const i=u.ch.abil.findIndex(x=>x.key==='uz_kai');if(i>=0){u.cds[i]=.6;u.energy=Math.min(100,u.energy+jcost(u.ch.abil[i]))}say(u,'AUCUN SCEAU','#e8c860');return}
+  if(!L.length){const i=u.ch.abil.findIndex(x=>x&&x.key==='uz_kai');if(i>=0){u.cds[i]=.6;u.energy=Math.min(100,u.energy+jcost(u.ch.abil[i]))}say(u,'AUCUN SCEAU','#e8c860');return}
   S('genjutsu',u);anim(u,'uz_kai',.55);jx({jfx:'uz_kaic',ui:units.indexOf(u),x:u.x,y:u.y,t:.55,m:.55});
   for(const e of L){const n=uzMk(e);e.uz_mk=0;e.uz_mkE=0;jx({jfx:'uz_kaib',ti:units.indexOf(e),x:e.x,y:e.y,n,t:.3,m:.3});
    later(u,.28,()=>{if(e.dead)return;VFX='tag';hit(e,u,12+12*n,{unblockable:1,stun:n>=3?.7:0,kb:n>=3?0:110,fx:u.x,fy:u.y});VFX=null;jx({jfx:'uz_kaiboom',x:e.x,y:e.y,n,t:.6,m:.6});
     if(near(e.x,e.y)){S('boom',u);shake=Math.max(shake,.1+.06*n);sparks(e.x,e.y,'#ff9a3a',6+4*n,'tag')}})}}),
  uz_cage:SP('Cage adamantine','Des chaînes jaillissent sous la zone : 20 dégâts, entrave 0,7 s et un sceau, puis enferment 2,5 s (ni ennemi ni tir ne passe)',13,{tele:{r:130,max:420},ai:RG(420,.55)},(u,a,td)=>{const p=atP(u,a,td,420);S('deflect',u);anim(u,'uz_slam',.45);u.root=Math.max(u.root,.3);
   aux.push({type:'uz_cage',x:p.x,y:p.y,r:130,t:2.95,m:2.95,team:u.team,owner:u,vfx:'chain',k:0,sd:{}})}),
- uz_store:SP('Parchemin de stockage','1,5 s : le parchemin scelle les tirs ennemis. Relance (5 s) : renvoie le plus fort (+25 %, 15 dégâts au moins), sinon 4 armes stockées (8 dégâts chacune)',11,{hero:'dooku',ai:UZ_ST_DEF},(u,a)=>{const i=u.ch.abil.findIndex(x=>x.key==='uz_store');if(i<0)return;const cd=u.ch.abil[i].cd;
+ uz_store:SP('Parchemin de stockage','1,5 s : le parchemin scelle les tirs ennemis. Relance (5 s) : renvoie le plus fort (+25 %, 15 dégâts au moins), sinon 4 armes stockées (8 dégâts chacune)',11,{hero:'dooku',ai:UZ_ST_DEF},(u,a)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='uz_store');if(i<0)return;const cd=u.ch.abil[i].cd;
   if(u.jst&&u.jst.key==='uz_store'){u.jst=null;u.cds[i]=cd;uzRelease(u,a);return}
   S('poof',u);S('jyuken',u);anim(u,'uz_absorb',1.5);const ui=units.indexOf(u);u.uz_st=null;u.uz_scE=SIMT+1.5;
   aux.push({type:'uz_scrl',x:u.x,y:u.y,r:54,t:1.5,m:1.5,team:u.team,owner:u,ui,a,n:0,k:0});jx({jfx:'uz_scrollS',ui,x:u.x,y:u.y,t:1.5,m:1.5});

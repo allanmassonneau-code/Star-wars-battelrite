@@ -61,7 +61,7 @@ Object.assign(NAT,{
    else if(Math.hypot((u.sg_ax??o.x)-o.x,(u.sg_ay??o.y)-o.y)>30)a=Math.atan2(u.sg_ay-o.y,u.sg_ax-o.x)}
   if(c===5){if(pup){u.sg_px+=Math.cos(a)*40;u.sg_py+=Math.sin(a)*40;o.x=u.sg_px;o.y=u.sg_py}else stLunge(u,a,40);S('dash',u)} // 5e coup : élan vers l'avant
   if(pup){u.x=o.x;u.y=o.y;u.sg_pa=a}let i,n;try{i=fx.length;n=melee(u,a,T[0],T[1],T[2],c===5?{dot:{dps:2,dur:3}}:{})}finally{if(pup){u.x=ox;u.y=oy}}if(fx[i]&&fx[i].swing)fx.splice(i,1);
-  if(pup)anim(u,'sg_pull',.25);jx({jfx:'sg_slash',x:o.x,y:o.y,a,c,R:T[0],t:.24,m:.24});u.cds[0]=T[3]*(u.rapid>0?.45:1)*(u.ch.pass==='speed'?PASSV.speedA:1);
+  if(pup)anim(u,'sg_pull',.25);jx({jfx:'sg_slash',x:o.x,y:o.y,a,c,R:T[0],t:.24,m:.24});u.cds[0]=T[3]*(u.rapid>0?.45:1);
   if(n&&c===5)for(const e of enemies(u))if(Math.hypot(e.x-o.x,e.y-o.y)<T[0]+e.r&&angDiff(Math.atan2(e.y-o.y,e.x-o.x),a)<T[1]/2)jx({jfx:'st_poison',ti:sgI(e),x:e.x,y:e.y,t:2,m:2})}),
  // Lames cachées : tourbillon de lames autour de la marionnette, qui la suit
  sg_blades:SP('Lames cachées',SGD.blades,6,{tele:{self:1,r:75},ai:{max:SG.L+60,p:.6,pr:85}},(u)=>{S('saber',u);S('blaster',u);
@@ -167,7 +167,7 @@ TRAITS[14]={nom:'Marionnette',desc:`Ta marionnette suit ton curseur (fils de ${S
 AFTER.push(()=>{UK.push('sg_px','sg_py','sg_hp','sg_dn','sg_pa','sg_ax','sg_ay');
  Object.assign(VP,{sg_pup:[SG.WOOD,SG.STR,'#7a5a3a'],sg_poison:['#a050d0','#c080ff','#5a2a80']});Object.assign(VSND,{sg_poison:{'*':'bugs',blaster:'blaster'},sg_pup:{dash:'dash'}});
  // origine de lancement : marionnette (sauf attaque de base, toujours au corps à corps, et déplacements et engagements, qui déplacent le ninja)
- const sgFrom=(u,ab)=>sgOk(u)&&!!ab&&ab.style==null&&ab!==u.ch.abil[2]&&!(ab.ai&&(ab.ai.mode==='esc'||ab.ai.mode==='gap'||ab.ai.mode==='heal'||ab.ai.mode==='ally'));
+ const sgFrom=(u,ab)=>sgOk(u)&&!!ab&&ab.style==null&&ab!==u.ch.abil[DASHI]&&!(ab.ai&&(ab.ai.mode==='esc'||ab.ai.mode==='gap'||ab.ai.mode==='heal'||ab.ai.mode==='ally'));
  const F0=fire;fire=function(u,ab,a,td,ex){
   if(!sgFrom(u,ab))return F0(u,ab,a,td,ex);
   const ox=u.x,oy=u.y,px=u.sg_px,py=u.sg_py,d0=u.dash,an0=u.anim,ax=u.sg_ax??(ox+Math.cos(a)*(td||200)),ay=u.sg_ay??(oy+Math.sin(a)*(td||200)),dc=Math.hypot(ax-px,ay-py),a2=dc>40?Math.atan2(ay-py,ax-px):a;

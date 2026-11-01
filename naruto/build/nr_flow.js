@@ -1,8 +1,10 @@
 // ---------- Rythme Naruto : chakra, mudras, combo, endurance ----------
 const GSPEED=.8; // tout le jeu tourne à 80 % : combats plus lisibles
-const CKCOST={D:10,C:16,B:21,A:28,S:36,U:14},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
-// coût en chakra d'un jutsu (les ultimes coûtent 14 de plus) : une jauge pleine = 5 jutsu environ
-const jcost=ab=>ab&&ab.rank?CKCOST[ab.rank]+(ab.ult?14:0):0;
+// barème par rang (DESIGN §3) : chakra par lancer et fourchette de recharge [min, max] en s ; la recharge d'un jutsu = JBAL.cd sinon celle de sa mécanique bornée à la fourchette
+// (une mécanique ULT() prend le haut de la fourchette) ; plus d'ultime : le cut-in, le cri et la bordure dorée du HUD passent aux jutsu de rang S
+const RKB={D:{ck:8,cd:[4,7]},C:{ck:14,cd:[6,10]},B:{ck:20,cd:[8,12]},A:{ck:28,cd:[11,16]},S:{ck:40,cd:[18,24]}},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
+// coût en chakra d'un jutsu (dash et Kawarimi : pas de rang = 0) : une jauge pleine ≈ 2 jutsu S ; ckO = coût propre au jutsu (JBAL / profil d'équilibrage)
+const jcost=ab=>ab&&ab.rank&&RKB[ab.rank]&&!ab.hpc?(ab.ckO!=null?ab.ckO:RKB[ab.rank].ck):0;
 let COMBO3=false; // vrai pendant le 5e coup du combo corps à corps (petit étourdissement)
 // attaque de base = toujours au corps à corps : combo de 5 coups (20 d'endurance chacun = un combo complet) ; toutes les armes des styles sont de mêlée
 // (le moteur garde le cas « distance » : 10 d'endurance par tir, sans combo, pour une arme hors de cette liste)

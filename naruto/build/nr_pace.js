@@ -12,7 +12,7 @@ const CK={spawn:100, // chakra au début d'une manche / à la réapparition
  vuln:1.2,brk:6,lock:.7, // en recharge : dégâts ×1,2 ; un coup de 6+ brise la concentration (pas de recharge pendant 0,7 s)
  exhIn:6,exhOut:25,exhSpd:.82,exhStam:.55,exhBlock:1.6, // épuisement : sous 6 de chakra (jusqu'à 25) : vitesse ×0,82, endurance ×0,55, garde ×1,6, pas de sprint
  aiLo:26,aiLoR:18,aiSafe:390,aiStop:250}; // IA : recharge sous 26-44 si aucun ennemi à moins de 390 (s'arrête s'il approche à 250)
-const ckPm=u=>u.ch.pass==='energy'?1.5:1; // passif « Contrôle du chakra »
+const ckPm=u=>1; // (ancien passif « Contrôle du chakra » supprimé)
 // au contact : marque le combat, brise la concentration (R) d'un ninja qui se recharge
 function ckHit(t,src,dmg,o){t.cbT=SIMT;if(src&&src!==t)src.cbT=SIMT;
  if(t.chk&&dmg>=CK.brk&&src&&src.team!==t.team){t.chk=false;t.chkT=0;t.ckLock=CK.lock;if(near(t.x,t.y)){say(t,'CONCENTRATION BRISÉE','#8fd0ff');sparks(t.x,t.y,'#8fd0ff',10)}}}
@@ -36,10 +36,10 @@ const aiLow=u=>u.energy<(u.aiCkLo||CK.aiLo)&&!(u.sub_sage>0);
 const aiPref=(u,e)=>aiLow(u)&&e.hp>e.max*.3?Math.max(u.ch.pref,CK.aiSafe+70):u.ch.pref;
 // IA au corps à corps : s'approche jusqu'à l'allonge de son attaque de base (sinon elle tourne autour d'une cible immobile, entre l'allonge et pref+40, sans jamais frapper)
 const aiIn=(u,p)=>{const l=u.ch.abil[0];return p<200&&l&&l.melee&&l.ai?Math.min(p+40,l.ai.max-8):p+40};
-// IA : ne se met pas à sec sans raison (sauf pour fuir, se défendre ou achever) et garde de quoi lancer l'ultime quand il est presque prêt
+// IA : ne se met pas à sec sans raison (sauf pour fuir, se défendre ou achever) et garde de quoi lancer son jutsu de plus haut rang quand il est presque prêt
 function aiSave(u,i,h){if(h.mode==='esc'||h.mode==='def'||h.mode==='heal')return false;const c=jcost(u.ch.abil[i]),e=u.tgt;
- if(u.energy-c<CK.exhIn&&!(e&&!e.dead&&e.hp<e.max*.3))return true;const U=u.ch.abil[5];if(i===5||!U||u.cds[5]>3)return false;
- if(U.ai&&U.ai.mode==='exec'&&!(e&&!e.dead&&e.hp<e.max*.55))return false; // ultime d'exécution : on ne garde pas le chakra tant que la cible n'est pas entamée
+ if(u.energy-c<CK.exhIn&&!(e&&!e.dead&&e.hp<e.max*.3))return true;const ui=bestRankI(u),U=ui>=0?u.ch.abil[ui]:null;if(i===ui||!U||u.cds[ui]>3||!c)return false;
+ if(U.ai&&U.ai.mode==='exec'&&!(e&&!e.dead&&e.hp<e.max*.55))return false; // jutsu d'exécution : on ne garde pas le chakra tant que la cible n'est pas entamée
  return u.energy-c<jcost(U)}
 // HUD : chiffre de chakra, avertissement d'épuisement
 function ckHud(p,x,y,w){const lo=p.energy<30,t=performance.now()/1000,cy=H-84;text(String(Math.floor(p.energy)),x+w+6,y+4,10,p.exh?'#ff8a8a':'#7fc4ff','left');if(p.dead)return;
@@ -47,6 +47,8 @@ function ckHud(p,x,y,w){const lo=p.energy<30,t=performance.now()/1000,cy=H-84;te
  else if(p.chk)text(`Concentration du chakra… ${Math.floor(p.energy)} / 100`,W/2,cy,13,'#8fd0ff','center');
  else if(lo)text(`Chakra bas · ${lbl.KeyR} maintenu = chakra (immobile, à l'abri)`,W/2,cy,12,rgba('#8fd0ff',.65+.35*Math.sin(t*6)),'center','normal')}
 // barre de jutsu : coût en chakra de chaque case, case grisée « CHAKRA » si la jauge ne suffit pas
+// HUD : case vide de la barre (grisée, avec sa touche)
+function hudEmpty(p,i,x,y,s,sh){g.fillStyle='rgba(13,19,32,.45)';g.fillRect(x,y,s,sh);g.strokeStyle='#1c2638';g.lineWidth=1.5;g.setLineDash([4,4]);g.strokeRect(x,y,s,sh);g.setLineDash([]);text(lbl[SLOTS[i]]||'',x+s/2,y+24,16,'#3a4660','center');text('vide',x+s/2,y+sh+13,9,'#4a5670','center','normal')}
 function hudCost(p,ab,i,x,y,s,sh){if(!i)return;const c=jcost(ab);if(!c)return;const lack=p.energy<c;
  if(lack){g.fillStyle='rgba(20,40,110,.55)';g.fillRect(x,y,s,sh);if(p.cds[i]<=0)text('CHAKRA',x+s/2,y+44,10,'#7fb8ff','center')}
  {const fl=(ckFl.t-performance.now())/450;if(ckFl.i===i&&fl>0){g.strokeStyle=rgba('#4ab0ff',fl);g.lineWidth=4;g.strokeRect(x-2,y-2,s+4,sh+4)}}

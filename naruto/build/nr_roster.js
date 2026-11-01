@@ -4,28 +4,27 @@
 // MEK : clé du perso joué (MY = sa build, CH.p0 = son ninja) ; FK : perso montré par la fiche (la carte où la souris s'arrête, voir rosHover) ; OPPK : adversaire choisi ('o0' le temps d'un startMatch)
 // OPPT : moment où l'étape adversaire s'ouvre (un double-clic sur la carte choisie ne lance pas un combat contre son double)
 let scr='list',ED=null,CONF=null,OPPK=null,MEK=null,FK=null,RQ='',rosScroll=0,rosTarget=0,RL=null,RLAY=null,RFL=null,OPPT=0;
-const RKEY='nrRoster1',RSIM=/[?&]sim=1(&|$)/.test(location.search);
+const RKEY='nrRoster2',RSIM=/[?&]sim=1(&|$)/.test(location.search);
 // sections de la liste : [nom, couleur, emblème] ; « Mes ninjas » toujours en tête, une section sans perso n'est pas affichée
-const SECS=[['Mes ninjas','#ffb347','star'],['Konoha','#6ac46a','leaf'],['Suna','#d8a860','sand'],['Kiri','#5ab8d8','mist'],['Kumo','#e8d860','cloud'],['Iwa','#b88a60','rock'],['Oto','#a87ae0','note'],['Ame','#8a9ac0','rain'],['Akatsuki','#e0383a','aka'],['Autres ninjas','#c86a8a','shur']];
+const SECS=[['Mes ninjas','#ffb347','star'],['Konoha','#6ac46a','leaf'],['Suna','#d8a860','sand'],['Kiri','#5ab8d8','mist'],['Kumo','#e8d860','cloud'],['Iwa','#b88a60','rock'],['Oto','#a87ae0','note'],['Ame','#8a9ac0','rain'],['Akatsuki','#e0383a','aka'],['Pays du Fer','#9aa8b8','sword'],['Autres ninjas','#c86a8a','shur']];
 // section d'un perso de l'anime : P.sec, sinon d'après son groupe g (Équipe 7, Sannin & Hokage → Konoha…)
 // village de chaque clan (index de CLANS) : un perso de l'anime avec clan est rangé dans le village de son clan (l'Akatsuki garde sa section)
-const CLANVIL=['Konoha','Konoha','Konoha','Konoha','Konoha','Konoha','Konoha','Konoha','Suna','Kiri','Konoha','Suna','Suna','Suna','Suna','Ame','Ame','Ame','Kiri','Kiri','Kiri'];
+const CLANVIL=['Konoha','Konoha','Konoha','Konoha','Konoha','Konoha','Konoha','Konoha','Suna','Kiri','Konoha','Suna','Suna','Suna','Suna','Ame','Ame','Ame','Kiri','Kiri','Kiri','Pays du Fer','Konoha'];
 const rosSec=P=>Math.max(1,SECS.findIndex(S=>S[0]===(P.sec||(P.g!==1&&P.clan>=0&&CLANVIL[P.clan])||['Konoha','Akatsuki','Konoha','Konoha','Suna','Oto','Kiri','Autres ninjas'][P.g])));
 // ----- sauvegarde : { v, nid, mine:[{id,build}], anime:{nom du perso: build retouchée}, last:{me,opp} } ; une build garde le nom de ses jutsu et de son style (juste si le catalogue évolue)
-const bOut=b=>Object.assign({},b,{l:Object.assign({},b.l),j:b.j.slice(),jn:b.j.slice(1).map(id=>JL[id]?JL[id].n:''),sn:STYLES[b.j[0]]?STYLES[b.j[0]][0]:''});
-function bIn(b){try{if(!b||typeof b!=='object')return null;b=legacyLook(JSON.parse(JSON.stringify(b)));const j=Array.isArray(b.j)?b.j.slice(0,6):[];
- if(typeof b.sn==='string'){const i=STYLES.findIndex(s=>s[0]===b.sn);if(i>=0)j[0]=i}if(Array.isArray(b.jn))for(let s=1;s<6;s++)j[s]=pickName(b,b.jn[s-1]);
- b.j=j;delete b.jn;delete b.sn;return sanitizeBuild(b)}catch(e){return null}}
-const kitSig=b=>JSON.stringify([b.voie,b.nat,b.clan,b.pass,b.j,b.l]),kitOnly=b=>JSON.stringify([b.voie,b.nat,b.clan,b.pass,b.j]);
+// une build garde aussi les NOMS de ses jutsu (« Nom|arbre ») et de son style : elle reste juste quand le catalogue évolue (ids renumérotés)
+const bOut=b=>Object.assign({},b,{l:Object.assign({},b.l),fam:(b.fam||[]).slice(),k:(b.k||[]).slice(),bar:(b.bar||[]).slice(),kn:(b.k||[]).map(jKey),bn:(b.bar||[]).map(id=>id>=0?jKey(id):''),sn:STYLES[b.w]?STYLES[b.w][0]:''});
+function bIn(b){try{if(!b||typeof b!=='object')return null;b=legacyLook(JSON.parse(JSON.stringify(b)));if(b.v!==5)return null;
+ if(typeof b.sn==='string'){const i=STYLES.findIndex(s=>s[0]===b.sn);if(i>=0)b.w=i}
+ const o=sanitizeBuild(Object.assign({},b,{k:[],bar:[]}));if(Array.isArray(b.kn)){o.k=[];for(const n of b.kn){const id=pickKey(o,n);if(id>=0&&!o.k.includes(id)&&canLearn(o.k,id))o.k.push(id)}b.k=o.k}
+ if(Array.isArray(b.bn))b.bar=b.bn.map(n=>n?pickKey(o,n):-1);delete b.kn;delete b.bn;delete b.sn;return sanitizeBuild(b)}catch(e){return null}}
+const kitOnly=b=>JSON.stringify([b.clan,b.nat,b.st,b.w,b.fam,b.dsh,b.k,b.bar]),kitSig=b=>JSON.stringify([b.clan,b.nat,b.st,b.w,b.fam,b.dsh,b.k,b.bar,b.l]);
 // champs d'apparence d'origine (une sauvegarde d'avant les ajouts n'a que ceux-là) : les autres sont repris du perso de l'anime d'origine
 const LOOK0=['v','t','c','h','p','k','a','f','b','d'];
 const PB=[],presetOf=i=>PB[i]||(PB[i]=presetBuild(i,PRESETS[i].n,PRESETS[i].side)); // build d'origine d'un perso de l'anime (ne jamais la modifier)
 let ROS={mine:[],anime:{},last:{},nid:1};
-// première fois : le ninja de l'ancien créateur ('nrBuild4') devient le premier de « Mes ninjas » (sauf si c'est un perso de l'anime tel quel)
-function rosMigrate(){const R={mine:[],anime:{},last:{me:'a:'+PRESETS[0].n},nid:1};let has=false;try{has=!!(localStorage.getItem('nrBuild4')||localStorage.getItem('nrBuild3'))}catch(e){}
- if(!has)return R;let b=null;try{b=loadMine()}catch(e){}if(!b)return R;
- const i=PRESETS.findIndex((P,k)=>(b.name===P.n||b.name==='Ninja')&&b.side===P.side&&kitOnly(b)===kitOnly(presetOf(k))&&(b.name===P.n||LOOK0.every(f=>b.l[f]===presetOf(k).l[f]))); // perso de l'anime tel quel = même nom (ou « Ninja » avec son apparence), même camp, même kit ; l'apparence a pu gagner des cosmétiques depuis // perso de l'anime tel quel = même nom, même camp, même kit
- if(i>=0)R.last.me='a:'+PRESETS[i].n;else{R.mine.push({id:1,build:bOut(b)});R.nid=2;R.last.me='m1'}return R}
+// première fois (format v5) : liste vide, on joue le premier perso de l'anime ; les anciennes sauvegardes (nrRoster1, nrBuild4/3) ne sont plus lues
+function rosMigrate(){return{mine:[],anime:{},last:{me:'a:'+PRESETS[0].n},nid:1}}
 // chargement : tout passe par sanitizeBuild ; JSON illisible = liste vide (sans planter)
 function rosLoad(){let raw=null,R=null;try{raw=localStorage.getItem(RKEY)}catch(e){}
  if(raw==null)R=rosMigrate();else try{R=JSON.parse(raw)}catch(e){R=null}
@@ -38,20 +37,19 @@ function rosLoad(){let raw=null,R=null;try{raw=localStorage.getItem(RKEY)}catch(
   const L=R.last&&typeof R.last==='object'?R.last:{};for(const k of['me','opp'])if(typeof L[k]==='string')o.last[k]=L[k];
   o.nid=Math.max(1,R.nid|0,...o.mine.map(m=>m.id+1))}
  ROS=o;RL=RLAY=null;if(raw==null)rosSave()}
-function rosSave(){if(RSIM)return;try{localStorage.setItem(RKEY,JSON.stringify({v:1,nid:ROS.nid,mine:ROS.mine.map(m=>({id:m.id,build:bOut(m.build)})),anime:Object.fromEntries(Object.entries(ROS.anime).map(([n,b])=>[n,bOut(b)])),last:ROS.last}))}catch(e){}}
+function rosSave(){if(RSIM)return;try{localStorage.setItem(RKEY,JSON.stringify({v:5,nid:ROS.nid,mine:ROS.mine.map(m=>({id:m.id,build:bOut(m.build)})),anime:Object.fromEntries(Object.entries(ROS.anime).map(([n,b])=>[n,bOut(b)])),last:ROS.last}))}catch(e){}}
 // ----- liste des persos : {k, b build, sec section, P perso de l'anime (+ i son indice, mod retouché) ou id (les tiens)}
 function rosEntries(){if(RL)return RL;RL=[];
  for(const m of ROS.mine)RL.push({k:'m'+m.id,id:m.id,b:m.build,sec:0});
  PRESETS.map((_,i)=>i).sort((a,b)=>PRESETS[a].g-PRESETS[b].g||a-b).forEach(i=>{const P=PRESETS[i],m=ROS.anime[P.n];RL.push({k:'a:'+P.n,i,P,b:m||presetOf(i),mod:!!m,sec:rosSec(P)})});
  return RL}
 const rosGet=k=>k&&rosEntries().find(e=>e.k===k)||null;
-// kit au-dessus du budget (ex. une sauvegarde faite avant qu'une passe d'équilibrage change un rang) : il ne se joue pas, la création propose de le corriger
-const rosOver=E=>!!E&&kitCost(E.b)>budgetOf(E.b);
-function rosOverWarn(E){if(!rosOver(E))return false;CONF={t:`${E.b.name} : trop de points (${kitCost(E.b)} / ${budgetOf(E.b)})`,d:'Son kit dépasse le budget de points (le coût d\'un jutsu a pu changer depuis qu\'il a été fait). Ouvre la création et baisse le rang d\'un jutsu pour pouvoir le jouer.',ok:'Modifier',no:'Annuler',col:'#ff8a5a',fn:()=>rosEdit(E.k)};return true}
+// (plus de budget de points : un kit est toujours jouable)
+const rosOver=E=>false,rosOverWarn=E=>false;
 function rosChanged(){RL=RLAY=null;rosSave()}
 // recherche par nom (sans accents ni majuscules) : nom, nom complet, village, clan, nature
 const fold=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
-const rosMatch=E=>!RQ||fold([E.b.name,E.P?E.P.full:'',SECS[E.sec][0],E.b.clan>=0?CLANS[E.b.clan][0]:'sans clan',E.b.clan===TAIJ?'':NATURES[E.b.nat][0]].join(' ')).includes(RQ);
+const rosMatch=E=>!RQ||fold([E.b.name,E.P?E.P.full:'',SECS[E.sec][0],E.b.clan>=0?CLANS[E.b.clan][0]:'sans clan',E.b.nat>=0?NATURES[E.b.nat][0]:''].join(' ')).includes(RQ);
 // ninjas d'aperçu : un par perso, refait quand sa build change (modèle 3D gardé tant qu'il s'affiche) ; stats recalculées si le profil d'équilibrage change
 const RF=new Map(),blVer=()=>{try{return BLC.sig||''}catch(e){return''}};
 function rosFake(E){let F=RF.get(E.k);const v=blVer();
@@ -144,12 +142,13 @@ function secMark(x,y,r,si){const S=SECS[si],c=S[1];g.save();g.fillStyle='rgba(20
   case'note':g.ellipse(-1.6,3,2.4,1.8,-.4,0,7);g.fill();g.beginPath();g.moveTo(.6,2.6);g.lineTo(.6,-5);g.lineTo(3.8,-3);g.stroke();break
   case'rain':for(let k=0;k<3;k++){g.moveTo(-3.5+k*3.5,-4+(k%2)*2);g.lineTo(-4.5+k*3.5,1+(k%2)*2)}g.stroke();break
   case'aka':g.fillStyle='#fff';g.beginPath();g.ellipse(0,0,5.4,3.6,0,0,7);g.fill();g.fillStyle='#c0202a';g.beginPath();g.ellipse(0,0,4.2,2.5,0,0,7);g.fill();break
+  case'sword':g.moveTo(-4.2,4.2);g.lineTo(4.4,-4.4);g.stroke();g.beginPath();g.moveTo(-4.6,1.4);g.lineTo(-1.4,4.6);g.stroke();g.beginPath();g.moveTo(-5.4,5.4);g.lineTo(-3.6,3.6);g.lineWidth=2.4;g.stroke();break // Pays du Fer : katana
   default:for(let i=0;i<8;i++){const a=i*Math.PI/4,q=i%2?1.6:5.2;g.lineTo(Math.cos(a)*q,Math.sin(a)*q)}g.closePath();g.fill()}
  g.restore()}
 function tag(xr,y,s,bg,fg='#1a1008'){g.font=FNT(10,'bold');const w=g.measureText(s).width+10;rr({x:xr-w,y,w,h:16},5,bg);text(s,xr-w/2,y+12,10,fg)}
 // boutons d'une carte survolée (liste) : modifier, dupliquer, supprimer (les tiens) ou rétablir (perso de l'anime retouché)
 const cardBtns=(E,R)=>{const L=[['edit','Modifier'],['dup','Dupliquer']];if(!E.P)L.push(['del','Supprimer']);else if(E.mod)L.push(['reset','Rétablir l\'original']);return L.map((q,i)=>({k:q[0],t:q[1],R:{x:R.x+R.w-26-(L.length-1-i)*24,y:R.y+6,w:21,h:21}}))};
-const BTIP={edit:'Ouvre la création sur ce perso : apparence, clan, nature, voie, passif et jutsu.',dup:'Fait une copie dans « Mes ninjas », à retoucher sans toucher à l\'original.',del:'Retire ce ninja de « Mes ninjas » (une confirmation est demandée).',reset:'Efface tes retouches : le perso redevient tel que dans l\'anime.'};
+const BTIP={edit:'Ouvre la création sur ce perso : apparence, clan, nature, style, jutsu appris et barre de départ.',dup:'Fait une copie dans « Mes ninjas », à retoucher sans toucher à l\'original.',del:'Retire ce ninja de « Mes ninjas » (une confirmation est demandée).',reset:'Efface tes retouches : le perso redevient tel que dans l\'anime.'};
 // ----- carte d'un perso : aperçu animé (halo du chakra, couleur de la section), emblème, nom, clan et nature
 function rosCard(E,R,hov,t){const F=rosFake(E),u=F.u,ch=F.ch,S=SECS[E.sec],col=S[1],me=E.k===MEK,mark=scr==='opp'?me:coop()&&me,fl=RFL&&RFL.k===E.k&&performance.now()-RFL.t<1600,b=E.b,fk=E.k===FK&&!hov;
  rr(R,10,hov?'rgba(72,48,24,.98)':mark?'rgba(84,54,24,.97)':fk?'rgba(52,34,18,.97)':'rgba(30,20,12,.95)',hov?'#ffb347':mark||fl?'#ffd38a':fk?'#e8a050':rgba(col,.5),hov||mark||fl||fk?2:1.2);
@@ -162,8 +161,8 @@ function rosCard(E,R,hov,t){const F=rosFake(E),u=F.u,ch=F.ch,S=SECS[E.sec],col=S
  {const sc=ch.look.scale>1?.88:.98;drawPrevN(u,px,fy,sc,0);cardChar(F,px,fy,sc,hov,t);drawPrevN(u,px,fy,sc,1)}g.restore();
  g.fillStyle=rgba(col,.8);g.fillRect(R.x+8,R.y+ph+4,R.w-16,1.5);secMark(R.x+14,R.y+14,8,E.sec);
  fitT(b.name,R.x+R.w/2,R.y+ph+20,14,b.side?'#ffb0a0':'#ffd38a',R.w-12,'bold',10,'center');
- {const ic=[];ic.push(b.clan>=0?['c'+b.clan,CLANS[b.clan][1]]:['u','#c8b89a']);if(b.clan!==TAIJ)ic.push(['n'+b.nat,NATURES[b.nat][2]]);
-  const s=(b.clan>=0?CLANS[b.clan][0]:'Sans clan')+(b.clan!==TAIJ?' · '+NATURES[b.nat][0]:''),z=10;g.font=FNT(z,'bold');const tw=Math.min(R.w-14-ic.length*15,g.measureText(s).width),x0=R.x+R.w/2-(ic.length*15+tw)/2;
+ {const ic=[];ic.push(b.clan>=0?['c'+b.clan,CLANS[b.clan][1]]:['u','#c8b89a']);if(b.nat>=0)ic.push(['n'+b.nat,NATURES[b.nat][2]]);
+  const s=(b.clan>=0?CLANS[b.clan][0]:'Sans clan')+(b.nat>=0?' · '+NATURES[b.nat][0]:''),z=10;g.font=FNT(z,'bold');const tw=Math.min(R.w-14-ic.length*15,g.measureText(s).width),x0=R.x+R.w/2-(ic.length*15+tw)/2;
   ic.forEach(([k,c2],i)=>jIcon(x0+6+i*15,R.y+ph+31,6,c2,k));fitT(s,x0+ic.length*15+1,R.y+ph+35,z,'#d8c0a0',tw+1,'bold',8)}
  if(hov&&scr==='list'){for(const q of cardBtns(E,R)){const h=inRect(mouse,q.R);rr(q.R,6,h?'#ffb347':'rgba(20,13,8,.88)',h?'#ffe0a0':'#8a5a2a',1.2);uiIcon(q.k,q.R.x+q.R.w/2,q.R.y+q.R.h/2,8.5,h?'#1a1008':'#f3d9b0');if(h)hoverTip('cb'+q.k+E.k,()=>({t:q.t,d:BTIP[q.k]}))}}
  else if(scr==='opp'&&hov)tag(R.x+R.w-6,R.y+7,me?'TON DOUBLE':'AFFRONTER','#ff6a3a','#fff');
@@ -191,7 +190,7 @@ function drawRosGrid(t){const Y=rosLayout(),mx=rosMax();rosTarget=clamp(rosTarge
  for(const h of Y.Hd){const y=RGY+h.y-rosScroll;if(y<RGY-30||y>RGY+RGH)continue;const S=SECS[h.si],x=RGX+h.x,s=S[0].toUpperCase();secMark(x+8,y+10,8,h.si);g.font=FNT(13,'bold');const w=g.measureText(s).width;text(s,x+22,y+15,13,S[1],'left','bold');
   g.fillStyle=rgba(S[1],.45);g.fillRect(x+30+w,y+9,Math.max(0,h.w-30-w),1.5);
   if(h.si===0&&!RQ&&Y.Hd.filter(q=>q.y===h.y).length===1){const x0=x+h.w+30,w0=Math.min(560,RGW-14-h.w-40);
-   if(w0>=150){const T=ROS.mine.length?['Tes ninjas, gardés dans ce navigateur : clique pour jouer, survole pour modifier, dupliquer ou supprimer. Le bouton « + Créer un perso » en ajoute un nouveau.','Tes ninjas : clique pour jouer, survole pour modifier, dupliquer ou supprimer.','Clique pour jouer, survole pour modifier.']:['Crée ton propre ninja : apparence, camp, clan, nature, voie, passif et un kit de 5 jutsu. Il apparaîtra ici, prêt à jouer. Tu peux aussi dupliquer un perso de l\'anime pour en faire ta version.','Crée ton propre ninja : il apparaîtra ici, prêt à jouer.'];
+   if(w0>=150){const T=ROS.mine.length?['Tes ninjas, gardés dans ce navigateur : clique pour jouer, survole pour modifier, dupliquer ou supprimer. Le bouton « + Créer un perso » en ajoute un nouveau.','Tes ninjas : clique pour jouer, survole pour modifier, dupliquer ou supprimer.','Clique pour jouer, survole pour modifier.']:['Crée ton propre ninja : apparence, camp, clan, nature, style de combat, jutsu appris et barre de 6 jutsu. Il apparaîtra ici, prêt à jouer. Tu peux aussi dupliquer un perso de l\'anime pour en faire ta version.','Crée ton propre ninja : il apparaîtra ici, prêt à jouer.'];
     let L=null;for(const q of T){const l=wrapL(q,w0,FNT(12.5));if(l.length<=4&&l.every(z=>g.measureText(z).width<=w0)){L=l;break}}
     if(L)L.forEach((l,i)=>text(l,x0,y+24+RCH/2-(L.length-1)*9+i*18+4,12.5,'#cdb898','left','normal'))}}}
  for(const it of Y.L){const R={x:it.x,y:RGY+it.y-rosScroll,w:it.w,h:it.h};if(R.y+R.h<RGY-4||R.y>RGY+RGH+4)continue;const hov=inG&&inRect(mouse,R);if(hov)hit=Object.assign({R},it);if(it.plus)plusCard(R,hov,t);else if(hov)rosCard(it.e,R,true,t);else rosCardC(it.e,R,t)}
@@ -205,17 +204,18 @@ function drawRosTabs(){const T=rosTabs(),mx=rosMax();let top=-1;for(const R of T
  for(const R of T){const on=R.top===top,h=!CONF&&inRect(mouse,R),c=SECS[R.si][1];rr(R,12,on?c:h?'rgba(90,60,30,.95)':'rgba(40,28,18,.92)',c,1.5);
   if(on){g.fillStyle='rgba(20,13,8,.85)';g.beginPath();g.arc(R.x+14,R.y+12,8.5,0,7);g.fill()}secMark(R.x+14,R.y+12,7,R.si);text(R.s,R.x+26+(R.w-26)/2-4,R.y+17,12.5,on?(lum(c)>.45?'#1a1008':'#fff'):'#f3d9b0')}
  uiIcon('search',RQR.x-13,RQR.y+13,8,RQ?'#ffb347':'#a88a68')}
-// ----- fiche du perso (en bas) : aperçu, identité, stats, passif, les 6 emplacements + passif + trait, boutons
+// ----- fiche du perso (en bas) : aperçu, identité, stats, Clic G, barre de départ, dash, Kawarimi, trait, boutons
 function ficheCell(R,s,ch,b,tip){const free=!CONF;let key,col,ic,nm,d,badge=null,gold=false,cat=null;
- if(s<6){const ab=ch.abil[s],J=s?JL[b.j[s]]:null;key=lbl[SLOTS[s]];col=J?catCol(J.cat):b.clan>=0?CLANS[b.clan][1]:'#e8cfa8';ic=J?J.cat:null;nm=ab.n;d=ab.d||'';gold=!!ab.ult;badge=J?J.r:'st';cat=J?catName(J.cat):'style de combat'}
- else if(s===6){const ps=PASS[ch.pass]||['—',''];key='PASSIF';col='#7fd87f';ic='p';nm=ps[0];d=ps[1]}
+ if(s<ABN){const ab=ch.abil[s],J=ab&&ab.jid!=null?JL[ab.jid]:null;key=lbl[SLOTS[s]];
+  if(!ab){col='#5a4a3a';ic=null;nm='(case vide)';d='Aucun jutsu dans cette case de la barre de départ.';cat='barre';badge=null}
+  else{col=J?catCol(J.cat):b.clan>=0?CLANS[b.clan][1]:'#e8cfa8';ic=J?J.cat:null;nm=ab.n;d=ab.d||'';gold=J&&J.r==='S';badge=J?J.r:s===0?'st':null;cat=J?catName(J.cat):s===0?'style de combat':s===DASHI?'dash (sans chakra)':'Kawarimi, commun à tous (sans chakra)'}}
  else{const T=TRAITS[b.clan];key='TRAIT';col=b.clan>=0?CLANS[b.clan][1]:'#c8b89a';ic=b.clan>=0?'c'+b.clan:'u';nm=T?T.nom||T.name||'Trait':b.clan>=0?CLANS[b.clan][0]:'Sans clan';d=T?T.desc||'':''}
- const h=free&&inRect(mouse,R);if(tip){if(h)hoverTip('fc'+s+':'+nm,()=>({t:nm,col:liftC(col,.55),l:[[s<6?`${key} · ${cat}${badge&&badge!=='st'?` · rang ${badge}`:''}${gold?' · ultime':''}`:s===6?'Passif : bonus permanent':'Trait du clan',liftC(col,.5)]],d:d||' '}));return}
+ const h=free&&inRect(mouse,R);if(tip){if(h)hoverTip('fc'+s+':'+nm,()=>({t:nm,col:liftC(col,.55),l:[[s<ABN?`${key} · ${cat}${badge&&badge!=='st'?` · rang ${badge}`:''}`:'Trait du clan',liftC(col,.5)]],d:d||' '}));return}
  rr(R,8,h?'rgba(70,46,24,.95)':'rgba(36,24,14,.82)',gold?'#ffb347':h?'#c08040':'#4a3220',gold?1.5:1);
- const kb={x:R.x+5,y:R.y+6,w:50,h:R.h-12};rr(kb,6,s===6?'rgba(30,50,26,.95)':'rgba(50,32,16,.95)',gold?'#ffe81f':s===6?'#5aa85a':'#8a5a2a',1.2);fitT(key,kb.x+kb.w/2,kb.y+kb.h/2+4.5,key.length>6?10:12,gold?'#ffe81f':s===6?'#9f9':'#fff',kb.w-6,'bold',8,'center');
- jIcon(R.x+73,R.y+R.h/2,12.5,col,ic,gold);const x=R.x+92;
- if(badge==='st')styleBadge(R.x+R.w-50,R.y+6,44);else if(badge)rankBadge(R.x+R.w-50,R.y+6,badge,44);
- fitT(nm,x,R.y+18,13,gold?'#ffe81f':s===6?'#cfe8c0':'#ffd38a',R.w-92-(badge?58:8),'bold',10);fitT(d,x,R.y+34,10.5,'#cdb898',R.w-98,'normal',9);}
+ const kb={x:R.x+5,y:R.y+5,w:50,h:R.h-10};rr(kb,6,'rgba(50,32,16,.95)',gold?'#ffe81f':'#8a5a2a',1.2);fitT(key,kb.x+kb.w/2,kb.y+kb.h/2+4.5,key.length>6?10:12,gold?'#ffe81f':'#fff',kb.w-6,'bold',8,'center');
+ jIcon(R.x+73,R.y+R.h/2,11.5,col,ic,gold);const x=R.x+90;
+ if(badge==='st')styleBadge(R.x+R.w-50,R.y+4,44);else if(badge)rankBadge(R.x+R.w-50,R.y+4,badge,44);
+ fitT(nm,x,R.y+15,12.5,gold?'#ffe81f':'#ffd38a',R.w-90-(badge?58:8),'bold',10);fitT(d,x,R.y+28,10,'#cdb898',R.w-96,'normal',8.5);}
 function ficheBtns(E){if(!E)return[];const L=[];
  // étape adversaire : sur ton propre perso (pas encore d'adversaire montré), le bouton mis en avant tire un adversaire ; le combat contre ton double reste possible, en second
  if(scr==='opp'){if(E.k===MEK)L.push({k:'rnd',t:'Adversaire au hasard',ic:'dice',p:1},{k:'back',t:'Changer mon perso',ic:'back'},{k:'fight',t:'Affronter ton double',ic:'play'});
@@ -223,7 +223,7 @@ function ficheBtns(E){if(!E)return[];const L=[];
  else{L.push(rosOver(E)?{k:'play',t:'Trop de points',ic:'edit',p:1,warn:1}:coop()?{k:'play',t:E.k===MEK?'Choisi':'Choisir ce perso',ic:'check',p:1,off:E.k===MEK}:{k:'play',t:mode==='battle'?'Jouer (bataille)':'Jouer',ic:'play',p:1});
   L.push({k:'edit',t:'Modifier',ic:'edit'},{k:'dup',t:'Dupliquer',ic:'dup'});if(!E.P)L.push({k:'del',t:'Supprimer',ic:'del',danger:1});else if(E.mod)L.push({k:'reset',t:'Rétablir l\'original',ic:'reset'})}
  return L.map((q,i)=>Object.assign(q,{R:{x:FI.x+FI.w-172,y:FI.y+9+i*45,w:160,h:39}}))}
-const FTIP={rnd:()=>'Tire un adversaire au hasard dans la liste et lance le combat.',play:()=>rosOver(rosGet(FK))?'Son kit dépasse le budget de points : clique pour ouvrir la création et le corriger.':coop()?'Ce perso devient le tien dans le salon ; clique ensuite PRÊT.':mode==='battle'?'Lance la bataille avec ce perso.':'Ce perso devient le tien ; tu choisis ensuite ton adversaire.',fight:()=>rosGet(FK)&&FK===MEK?'Lance un combat contre une copie de ton propre perso.':'Lance le combat contre ce ninja.',back:()=>'Revient à la liste pour choisir un autre perso (Échap).',edit:()=>BTIP.edit,dup:()=>BTIP.dup,del:()=>BTIP.del,reset:()=>BTIP.reset};
+const FTIP={rnd:()=>'Tire un adversaire au hasard dans la liste et lance le combat.',play:()=>coop()?'Ce perso devient le tien dans le salon ; clique ensuite PRÊT.':mode==='battle'?'Lance la bataille avec ce perso.':'Ce perso devient le tien ; tu choisis ensuite ton adversaire.',fight:()=>rosGet(FK)&&FK===MEK?'Lance un combat contre une copie de ton propre perso.':'Lance le combat contre ce ninja.',back:()=>'Revient à la liste pour choisir un autre perso (Échap).',edit:()=>BTIP.edit,dup:()=>BTIP.dup,del:()=>BTIP.del,reset:()=>BTIP.reset};
 function drawFiche(E,t){const opp=scr==='opp',me=rosGet(MEK);if(!E)return;const F=rosFake(E),ch=F.ch,b=E.b,S=SECS[E.sec],col=S[1],free=!CONF;
  g.save();g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=14;rr(FI,12,'rgba(20,14,10,.94)',rgba(col,.75),1.5);g.restore();
  // aperçu : le ninja (en arène, ton perso contre l'adversaire)
@@ -239,19 +239,19 @@ function drawFiche(E,t){const opp=scr==='opp',me=rosGet(MEK);if(!E)return;const 
   else{const u=fakeFor('fi',ch);u.moving=Math.sin(t*.5)>.35;u.walk=t*13;one(u,P0.x+P0.w/2,1.5,Math.PI/2+Math.sin(t*.8)*1.1,ch.look.weapon.col)}
   g.restore();secMark(P0.x+16,P0.y+16,10,E.sec)}
  // identité, stats et les 8 cases : dessinés dans une image (cachedDraw), refaite si le perso, ses stats, la case survolée ou l'étape changent
- const cellR=s=>({x:FI.x+548+(s>>2)*252,y:FI.y+8+(s&3)*45,w:244,h:41});let hs=-1;if(free)for(let s=0;s<8;s++)if(inRect(mouse,cellR(s)))hs=s;
+ const cellR=s=>({x:FI.x+548+Math.floor(s/5)*252,y:FI.y+8+(s%5)*36,w:244,h:33});let hs=-1;if(free)for(let s=0;s<=ABN;s++)if(inRect(mouse,cellR(s)))hs=s;
  cachedDraw('fiche',{x:FI.x+212,y:FI.y+4,w:836,h:FI.h-8},[E.k,oid(b),oid(ch),F.v,opp?1:0,me?me.k+me.b.side:'',hs,E.mod?1:0,rosOver(E)?1:0].join(),()=>{
  // identité, stats, passif, jeu en une ligne
  {const x=FI.x+216,w=320;let y=FI.y+32;const nw=fitT(b.name,x,y,22,b.side?'#ff9a9a':'#ffd38a',w,'bold',13);
   if(E.mod)tag(Math.min(x+nw+76,x+w),y-14,'RETOUCHÉ','rgba(255,179,71,.85)');y+=20;
   fitT(E.P?[E.P.full!==b.name?E.P.full:'',S[0],GALG[E.P.g]!==S[0]?GALG[E.P.g]:''].filter(Boolean).join(' · '):`Mes ninjas · créé par toi`,x,y,12.5,liftC(col,.55),w,'bold',9);y+=22;
-  {const ic=[b.clan>=0?['c'+b.clan,CLANS[b.clan][1]]:['u','#c8b89a']];if(b.clan!==TAIJ)ic.push(['n'+b.nat,NATURES[b.nat][2]]);ic.forEach(([k,c2],i)=>jIcon(x+8+i*19,y-4,8,c2,k));fitT(ch.desc,x+ic.length*19+2,y,12,'#e8cfa8',w-ic.length*19-2,'normal',9)}y+=21;
+  {const ic=[b.clan>=0?['c'+b.clan,CLANS[b.clan][1]]:['u','#c8b89a']];if(b.nat>=0)ic.push(['n'+b.nat,NATURES[b.nat][2]]);ic.forEach(([k,c2],i)=>jIcon(x+8+i*19,y-4,8,c2,k));fitT(ch.desc,x+ic.length*19+2,y,12,'#e8cfa8',w-ic.length*19-2,'normal',9)}y+=21;
   fitT(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2)}`,x,y,13.5,'#ffd38a',w,'bold',10);y+=18;
-  {const ov=rosOver(E),cs=opp&&me&&E.k!==me.k&&b.side===me.b.side?`${CAMPS[1-b.side]} pour ce combat (camp d'en face)`:CAMPS[b.side];fitT(`Camp : ${cs} · kit ${kitCost(b)} / ${budgetOf(b)} points${ov?' · trop de points !':''}`,x,y,11.5,ov?'#ff8a7a':'#b89a70',w,ov?'bold':'normal',9)}y+=20;
+  {const ov=rosOver(E),cs=opp&&me&&E.k!==me.k&&b.side===me.b.side?`${CAMPS[1-b.side]} pour ce combat (camp d'en face)`:CAMPS[b.side];fitT(`Camp : ${cs} · ${b.k.length} jutsu appris`,x,y,11.5,ov?'#ff8a7a':'#b89a70',w,ov?'bold':'normal',9)}y+=20;
   const d=E.P?(E.mod?'Version retouchée. ':'')+E.P.d:'Un de tes ninjas : « Modifier » pour retoucher son apparence et son kit, « Dupliquer » pour en tester une variante.';
   wrapL(d,w,FNT(12)).slice(0,3).forEach((l,i)=>text(l,x,y+i*16,12,'#cdb898','left','normal'))}
- // les 6 emplacements, le passif et le trait : 2 colonnes de 4
- for(let s=0;s<8;s++)ficheCell(cellR(s),s,ch,b)});
+ // Clic G, la barre de départ (1-6), le dash, le Kawarimi et le trait : 2 colonnes de 5
+ for(let s=0;s<=ABN;s++)ficheCell(cellR(s),s,ch,b)});
  if(hs>=0)ficheCell(cellR(hs),hs,ch,b,true)
  // boutons
  for(const q of ficheBtns(E)){const h=free&&!q.off&&inRect(mouse,q.R),c=q.danger||q.warn?'#ff6a5a':'#ff9a3a';g.save();if(q.p&&!q.off&&!q.warn){g.shadowColor='#ff9a3a';g.shadowBlur=h?18:8}
@@ -280,11 +280,11 @@ function drawRoster(){const t=performance.now()/1000;if(scr==='opp'&&(coop()||mo
  // barre du bas : créer un perso ; en ligne : équipe et PRÊT ; sinon les commandes
  {const R=newBtn,h=!CONF&&inRect(mouse,R);g.save();g.shadowColor='#ffb347';g.shadowBlur=h?20:9;rr(R,R.h/2,h?'#ffb347':'rgba(70,44,18,.96)','#ffb347',2);g.restore();
   rr({x:R.x+10,y:R.y+6,w:24,h:24},12,h?'#1a1008':'#ffb347');uiIcon('plus',R.x+22,R.y+18,7,h?'#ffb347':'#1a1008');text('Créer un perso',R.x+R.w/2+14,R.y+24,16,h?'#1a1008':'#ffd38a');
-  if(h)hoverTip('new',()=>({t:'Créer un perso',d:'Ouvre la création sur un nouveau ninja (tiré au hasard) : apparence, camp, clan, nature, voie, passif et kit de 5 jutsu. « Enregistrer » le range dans « Mes ninjas ».'}))}
+  if(h)hoverTip('new',()=>({t:'Créer un perso',d:'Ouvre la création sur un nouveau ninja (tiré au hasard) : apparence, camp, clan, nature, style de combat, jutsu appris et barre de 6 jutsu. « Enregistrer » le range dans « Mes ninjas ».'}))}
  if(coop()){if(isGuest()&&mode!=='arena'){const b=teamBtn,h=!CONF&&inRect(mouse,b);rr(b,b.h/2,h?'#5a3a1e':'#2a1c10',net.myTeam?'#ff6060':'#4db8ff',2);text(`ÉQUIPE ${net.myTeam?'B':'A'} (changer)`,b.x+b.w/2,b.y+b.h/2+5,13,'#f3d9b0','center')}
-  const b=readyBtn,ob=overBudget(),on=net.ready&&!ob;rr(b,b.h/2,ob?'rgba(120,50,40,.9)':on?'#7f7':!CONF&&inRect(mouse,b)?'#ffb347':'rgba(255,154,58,.88)',ob?'#a55':null,2);text(ob?'TROP DE POINTS':on?'PRÊT ✓':'PRÊT ?',b.x+b.w/2,b.y+b.h/2+6,ob?14:16,ob?'#ffd0c8':'#10131c','center');
+  const b=readyBtn,ob=false,on=net.ready&&!ob;rr(b,b.h/2,ob?'rgba(120,50,40,.9)':on?'#7f7':!CONF&&inRect(mouse,b)?'#ffb347':'rgba(255,154,58,.88)',ob?'#a55':null,2);text(ob?'TROP DE POINTS':on?'PRÊT ✓':'PRÊT ?',b.x+b.w/2,b.y+b.h/2+6,ob?14:16,ob?'#ffd0c8':'#10131c','center');
   fitT(`Ton perso : ${MY.name}`,290,700,12.5,'#e8cfa8',(isGuest()&&mode!=='arena'?teamBtn.x:b.x)-305,'bold',9)}
- else fitT(`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · souris viser · ${lbl.KeyF} maintenu = parade · ${lbl.KeyR} maintenu = chakra · ${lbl.KeyH} soin · Maj = sprint · Tab scores · ${lbl.KeyM} son · O options`,690,700,12,'#c8b090',780,'normal',9,'center');
+ else fitT(HELPK(),690,700,11.5,'#c8b090',800,'normal',8.5,'center');
  drawConf();drawTip();drawCursor()}
 function drawMenu(){TIP=null;{const now=performance.now();if(now-menuLast>1500){picker=null;CONF=null;if(scr==='opp')scr='list'}menuLast=now} // retour au menu après un match : panneau et étape adversaire fermés
  if(CONF&&(pressed.Escape||pressed.Enter)){const f=CONF.fn,ok=pressed.Enter;CONF=null;pressed.Escape=pressed.Enter=0;if(ok)f()}

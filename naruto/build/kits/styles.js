@@ -25,7 +25,7 @@ const STYLES=[
 
 // ---- aides communes des styles
 const stC=u=>u.cmbH||1,stI=u=>units.indexOf(u); // n° du coup dans l'enchaînement (1 à 5), index d'un ninja (effets suivis)
-const stCd=(u,cd)=>{u.cds[0]=cd*(u.rapid>0?.45:1)*(u.ch.pass==='speed'?PASSV.speedA:1)}; // rythme propre à chaque coup (passif Pieds légers : plus rapide)
+const stCd=(u,cd)=>{u.cds[0]=cd*(u.rapid>0?.45:1)}; // rythme propre à chaque coup
 // rythme réel d'un style (menu) : recharges des 5 coups lues dans sa table T=[0,[portée,arc,dégâts,recharge],…] ; null si le style n'en a pas
 const stCad=ab=>{const m=/T=\[0,((?:\[[^\[\]]*\],?){5})\]/.exec(String(ab&&ab.f)),L=m&&m[1].match(/\[[^\[\]]*\]/g);if(!L||L.length!==5)return null;const v=L.map(x=>+x.slice(1,-1).split(',')[3]);return v.every(x=>x>0)?v:null};
 // coup au corps à corps : melee() du moteur (combo, endurance, 5e coup, renvoi des tirs) ; l'arc générique au sol est remplacé par la traînée du style (tr),

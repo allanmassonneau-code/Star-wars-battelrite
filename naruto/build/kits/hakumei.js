@@ -87,7 +87,7 @@ Object.assign(NAT,{
   aux.push({type:'hm_giant',x:p.x,y:p.y,a:Math.atan2(p.y-u.y,p.x-u.x),r:60,t:6.75,m:6.75,team:u.team,owner:u,ui:hm_I(u),n:3,k:1.65,ti:-1});
   later(u,.75,()=>{if(state==='fight')hm_web(u,p.x,p.y,130,6)})}),
  // Kumo Senkyû : bander l'arc d'or (relancer pour tirer), sinon la flèche part seule à pleine charge
- hm_arc:ULT('Arc d\'or : Kumo Senkyû',HMD.arc,{hero:'boba',line:{len:900,w:24},ai:RG(680,.8,160)},(u,a)=>{const i=u.ch.abil.findIndex(x=>x.key==='hm_arc');if(i<0)return;
+ hm_arc:ULT('Arc d\'or : Kumo Senkyû',HMD.arc,{hero:'boba',line:{len:900,w:24},ai:RG(680,.8,160)},(u,a)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='hm_arc');if(i<0)return;
   if(u.hm_bw){if(!u.human&&u.hm_bw.t<1.1){u.cds[i]=.3;return} // les bots tirent à pleine charge (relance normalement interceptée par fire, voir AFTER)
    hm_loose(u);return}
   u.hm_bw={t:0,i,cd:u.ch.abil[i].cd};if(u.jst&&u.jst.key!=='hm_arc')u.cds[u.jst.i]=u.jst.cd;u.jst={key:'hm_arc',i,n:0,t:2.5,cd:u.ch.abil[i].cd,v:'silk'};u.cds[i]=u.human?.3:1.3;u.hm_bow=.01;anim(u,'hm_draw',1.6);S('deflect',u);

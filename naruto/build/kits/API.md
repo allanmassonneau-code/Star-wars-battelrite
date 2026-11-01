@@ -1,5 +1,7 @@
 # Écrire un kit (kits/<catégorie>.js)
 
+> **Format v5 (arbres de compétences)** : une ligne de catalogue s'écrit désormais `[rang, mécanique, nom, description, vfx]` (sans emplacement) et la catégorie est un **arbre** : `n0-n4` natures, `t0-t2` styles (Taijutsu, Kenjutsu, Bukijutsu), `c0-c22` clans (21 Kenjutsuka, 22 Bukijutsuka), `f0-f7` familles de sub. L'ancien format à emplacement est encore accepté pendant la transition (emplacement 2 = déplacement → réserve des dashs `DASHPOOL`). Arbres, limites par rang, dashs (`DASHC/DASHN/DASHF/DASHB`), Kawarimi (`SHUN`), objets aux à n° de case (`BARAUX`) : voir les déclarations commentées en tête de `nr_kits.js`, les règles dans `nr_tree.js` et la barre de combat dans `nr_bar.js`. Plus de budget de points, de passif, de voie ni d'ultime (le cut-in passe aux jutsu de rang S). Les passages ci-dessous qui parlent d'emplacements, de points ou d'ultime décrivent l'ancien format.
+
 Chaque fichier de `naruto/build/kits/` décrit **une catégorie** : `styles` (attaques de base), `sub` (subjutsu, sans clan),
 les 5 natures (`katon`, `suiton`, `futon`, `raiton`, `doton`) et les 21 clans (`uchiha` … `yuki`, voir la table ci-dessous).
 Le générateur `python3 naruto/build/mknaruto.py` assemble tout dans `naruto/index.html`.

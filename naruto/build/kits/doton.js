@@ -149,7 +149,7 @@ AUXF.do_moT=x=>{const u=x.owner;if(x.t<=0||u.dead||!u.dash){u.do_mo=0;x.t=0;retu
 AUXF.do_swamp=(x,dt)=>{const end=x.t<=0;for(const e of units){if(e.team===x.team)continue;const k=units.indexOf(e);
   if(end||e.dead){if(x.in[k])e.do_sw=0;x.in[k]=0;continue}
   const inn=Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r*.4&&(e.z||0)<10;
-  if(inn){if(e.unstop<=0)e.cds[2]=Math.max(e.cds[2],.15);x.in[k]=(x.in[k]||0)+dt;if(x.in[k]>=1.3&&!x.sunk[k]){x.sunk[k]=1;do_hit(e,x.owner,6,{root:.7,unblockable:1});do_puff(e.x,e.y,30,0)}}
+  if(inn){if(e.unstop<=0)e.cds[DASHI]=Math.max(e.cds[DASHI],.15);x.in[k]=(x.in[k]||0)+dt;if(x.in[k]>=1.3&&!x.sunk[k]){x.sunk[k]=1;do_hit(e,x.owner,6,{root:.7,unblockable:1});do_puff(e.x,e.y,30,0)}}
   else if(x.in[k])x.in[k]=Math.max(0,x.in[k]-dt*2);
   if(inn||x.in[k]>0)e.do_sw=Math.min(1,(x.in[k]||0)/1.3);else if(x.in[k]===0&&e.do_sw>0&&!inn){e.do_sw=0;x.in[k]=undefined}}};
 // carapace : compte les dégâts encaissés, éclate à la fin
@@ -158,7 +158,7 @@ AUXF.do_armor=x=>{const u=x.owner;if(u.dead){u.do_ar=0;x.t=0;return}x.x=u.x;x.y=
 // alourdi : ralenti, sans déplacement ; une carapace inarrêtable libère du poids
 AUXF.do_kj=x=>{const e=x.tg;if(!e||e.dead){if(e)e.do_kj=0;x.t=0;return}x.x=e.x;x.y=e.y;if(!(e.do_kj>0)){x.t=0;return}
  if(e.unstop>0){e.do_kj=0;x.t=0;if(e.anim&&e.anim.k==='do_heavy')e.anim=null;return}
- e.slow=Math.max(e.slow,.15);e.cds[2]=Math.max(e.cds[2],.15);if(x.t<=0)do_kjSlam(e);else e.do_kj=x.t};
+ e.slow=Math.max(e.slow,.15);e.cds[DASHI]=Math.max(e.cds[DASHI],.15);if(x.t<=0)do_kjSlam(e);else e.do_kj=x.t};
 // fleuve de boue : emporte vers l'aval, ralentit, petites morsures ; écrase contre un obstacle (une fois)
 AUXF.do_river=(x,dt)=>{const ca=Math.cos(x.a),sa=Math.sin(x.a),L=x.len*Math.min(1,(x.m-x.t)/.3),tick=x.k<=0;if(tick)x.k=.5;
  for(const e of enemies(x.owner)){const dx=e.x-x.x,dy=e.y-x.y,f=dx*ca+dy*sa,s=-dx*sa+dy*ca;if(f<-e.r||f>L+e.r||Math.abs(s)>x.w/2+e.r*.3||(e.z||0)>10)continue;

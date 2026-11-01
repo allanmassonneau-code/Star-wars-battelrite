@@ -156,8 +156,8 @@ TRAITS[0]={nom:'Sharingan',desc:'Chaque jutsu ennemi vu éveille un tomoe ; à 3
  update(u,dt){if(!u.uc_obs||u.uc_obs.size>64)u.uc_obs=new Map();if(u.uc_tmF>0)u.uc_tmF-=dt;const see=!(u.stun>0)&&!(u.sleepT<0);
   const rest=u.uc_rec>SIMT; // l'œil qui se repose n'éveille plus de tomoe, mais il voit toujours (copie possible)
   // (un même emplacement n'est compté qu'une fois en 2 s : les jutsu qui fixent leur recharge plus tard, relance ou charges, ne comptent pas double)
-  for(const e of units){if(e.team===u.team||e.dead)continue;const cd=e.cds||[],o=u.uc_obs.get(e);if(!o){u.uc_obs.set(e,{c:cd.slice(),t:[]});continue}const pv=o.c,vis=see&&dist(u,e)<ucTR.rng;
-   for(let i=1;i<6;i++){const c=cd[i]||0;if(vis&&c>(pv[i]||0)+.5&&!(SIMT-(o.t[i]??-9)<2)){o.t[i]=SIMT;const ab=e.ch.abil[i];if(ab){if(!rest&&(u.uc_tm|0)<3){u.uc_tm=(u.uc_tm|0)+1;u.uc_tmF=.6;if(u.uc_tm===3)say(u,'SHARINGAN','#ff5a6a')}if(!ab.ult&&ucCopyOk(ab))u.uc_cp={ab,t:SIMT}}}pv[i]=c}}
+  for(const e of units){if(e.team===u.team||e.dead)continue;const cd=e.cds||[],o=u.uc_obs.get(e);if(!o||o.bn!==(e.barN|0)){u.uc_obs.set(e,{c:cd.slice(),t:[],bn:e.barN|0});continue}/* barre de l'ennemi changée : rien de « vu » */const pv=o.c,vis=see&&dist(u,e)<ucTR.rng;
+   for(let i=1;i<ABN;i++){const c=cd[i]||0;if(vis&&c>(pv[i]||0)+.5&&!(SIMT-(o.t[i]??-9)<2)){o.t[i]=SIMT;const ab=e.ch.abil[i];if(ab){if(!rest&&(u.uc_tm|0)<3){u.uc_tm=(u.uc_tm|0)+1;u.uc_tmF=.6;if(u.uc_tm===3)say(u,'SHARINGAN','#ff5a6a')}if(!ab.ult&&ucCopyOk(ab))u.uc_cp={ab,t:SIMT}}}pv[i]=c}}
   const live=!!(u.uc_cp&&SIMT-u.uc_cp.t<10);u.uc_cpN=live?u.uc_cp.ab.n:'';u.uc_cpT=live?Math.ceil(10-(SIMT-u.uc_cp.t)):0;u.uc_rcT=u.uc_rec>SIMT?Math.ceil(u.uc_rec-SIMT):0;
   const i=ucSlot(u,'uc_shar');if(i>=0)u.ch.abil[i].ai=live?ucAI.cp:ucAI.wake;
   const j=ucSlot(u,'uc_iza');if(j>=0)u.ch.abil[j].ai=u.hp<u.max*.7?ucAI.izF:ucAI.izN; // Izanagi : avant d'encaisser (l'ancre se pose à la fin des mudras)

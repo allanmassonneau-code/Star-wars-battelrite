@@ -69,7 +69,7 @@ Object.assign(NAT,{
   // (croissance multiplicative : garde les bonus extérieurs ; un choc contre un petit tir ne lui retire que 15 % au plus, elle « balaie » vraiment)
   kaTrack(u,(p,x)=>{const e=1-p.life/p.life0;if(x.ld!=null){x.dm*=Math.max(.85,p.dmg/x.ld);x.rm*=p.r/x.lr}else{x.dm=1;x.rm=1}p.r=(16+13*e)*x.rm;p.dmg=(22+6*e)*x.dm;x.ld=p.dmg;x.lr=p.r},
    (x,p)=>kaFx({jfx:'ka_burst',x:p.x,y:p.y,r:p.r*2.6,t:.45,m:.45,big:1}))}),
- ka_stack:SP('Katon : Flammes chargées','5 flammes follettes à tirer une à une en relançant (5 s) ; la dernière explose',10,{ai:RG(500,.7)},(u,a)=>{const i=u.ch.abil.findIndex(x=>x.key==='ka_stack');if(i<0)return;kaNoMouth(u);
+ ka_stack:SP('Katon : Flammes chargées','5 flammes follettes à tirer une à une en relançant (5 s) ; la dernière explose',10,{ai:RG(500,.7)},(u,a)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='ka_stack');if(i<0)return;kaNoMouth(u);
   if(u.jst&&u.jst.key==='ka_stack'){const last=u.jst.n<=1;S('fire',u);anim(u,'ka_flick',.22);
    if(last){proj(u,a,{spd:820,r:9,dmg:14,life:.62,col:'#ff7a2a',kind:'ka_wisp',rocket:1,ar:62,kb:80,big:1});kaTrack(u,null,(x,p)=>{kaBurnAt(u,p.x,p.y,62,BURN(3,2));kaFx({jfx:'ka_burst',x:p.x,y:p.y,r:60,t:.4,m:.4,big:1})})}
    else proj(u,a,{spd:900,r:6,dmg:10,life:.58,col:'#ff7a2a',kind:'ka_wisp',o:{dot:BURN(3,2)},onHit:(p,t)=>kaFx({jfx:'ka_burst',x:t.x,y:t.y,r:22,t:.25,m:.25})});
@@ -81,7 +81,7 @@ Object.assign(NAT,{
   kaTrack(u,null,(x,p)=>kaFx({jfx:'ka_dboom',x:p.x,y:p.y,r:90,t:.7,m:.7}));kaFx({jfx:'ka_coil',ui:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6})}),
  ka_tornado:SP('Katon : Tornade de feu','Tornade de feu guidée par ta visée : aspire et brûle sans emporter ; tes tirs de feu et le vent l\'attisent',12,{ai:RG(470,.6),line:{len:520,w:150}},(u,a)=>{S('fire',u);kaS('wind',u);anim(u,'spin',.5);kaNoMouth(u);
   aux.push({type:'ka_torn',x:u.x+Math.cos(a)*55,y:u.y+Math.sin(a)*55,vx:Math.cos(a)*145,vy:Math.sin(a)*145,a,r:78,t:3.6,m:3.6,team:u.team,owner:u,vfx:'fire',k:0,dmg:7,n:0})}),
- ka_nuee:ULT('Katon : Nuée ardente','Nuée de cendres brûlantes (ralentit) ; immobile, relance pour l\'abattre : jusqu\'à ×2,5 en 2 s',{tele:{r:165,max:480},ai:{max:460,p:.8}},(u,a,td)=>{const i=u.ch.abil.findIndex(x=>x.key==='ka_nuee');if(i<0)return;
+ ka_nuee:ULT('Katon : Nuée ardente','Nuée de cendres brûlantes (ralentit) ; immobile, relance pour l\'abattre : jusqu\'à ×2,5 en 2 s',{tele:{r:165,max:480},ai:{max:460,p:.8}},(u,a,td)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='ka_nuee');if(i<0)return;
   if(u.chan&&u.chan.key==='ka_nuee'){kaNueeGo(u);aux.push({type:'ka_uncut',x:u.x,y:u.y,r:0,t:.1,m:.1,team:u.team,owner:u,vfx:'fire',k:0,nm:u.ch.abil[i].n});return}
   let p=atP(u,a,td,480);if(!u.ctrl){const e=pick(u,a,td||300,480);if(e)p={x:e.x+e.vx*.25,y:e.y+e.vy*.25}} // un bot centre la nuée sur sa cible
   u.chan={key:'ka_nuee',i,x:p.x,y:p.y,r:165,t:0,max:2.1,cd:u.ch.abil[i].cd};u.cds[i]=u.ctrl?.4:99; // un bot la laisse s'abattre au bon moment (AUXF)

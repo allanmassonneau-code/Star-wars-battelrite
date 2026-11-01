@@ -1,23 +1,22 @@
 // ===================== NINJAS : chacun crée son ninja et compose son kit =====================
-// Kit = style de combat (attaque de base, selon le clan) + jutsu de clan (ou Subjutsu si sans clan) + jutsu d'une nature.
-// Les jutsu réutilisent les mécaniques éprouvées du moteur (SRC) avec leurs propres effets visuels (vfx).
-// Rangs D C B A S = coût en points ; le kit (5 jutsu) a un budget maximum. Pas de versions EX dans ce jeu.
-const RANKS={D:1,C:2,B:3,A:4,S:5},RANKC={D:'#9aa3ad',C:'#6fcf6f',B:'#5ab4ff',A:'#c07aff',S:'#ffc53a'},BUDGET=17;
+// Build v5 (voir FONDATION.md) : clan, nature, arbre de style (Tai/Ken/Buki) + attaque de base, familles de sub (sans clan), dash, jutsu APPRIS par arbre et par rang, barre de 6 cases.
+// Les jutsu réutilisent les mécaniques éprouvées du moteur (SRC) avec leurs propres effets visuels (vfx). Plus de budget de points, de passif ni de voie. Pas de versions EX.
+const RANKC={D:'#9aa3ad',C:'#6fcf6f',B:'#5ab4ff',A:'#c07aff',S:'#ffc53a'};
 const NATURES=[['Katon','Feu','#ff7a2a'],['Suiton','Eau','#3aa8ff'],['Fûton','Vent','#9fe8c8'],['Raiton','Foudre','#ffe14a'],['Doton','Terre','#b08850']];
 const CLANS=[['Uchiha','#c0202a'],['Hyûga','#d8d0f0'],['Nara','#5a6a3a'],['Akimichi','#d87a3a'],['Aburame','#4a6a5a'],['Inuzuka','#a04a2a'],['Uzumaki','#e0503a'],['Yamanaka','#c8a0e0'],['Sabaku','#c8a060'],['Kaguya','#e8e8e0'],['Taijutsuka','#4aa83a'],
  // clans ajoutés (c11-c20) : 3e champ = sigle de l'icône (le 1er lettre ne suffit plus à les distinguer)
  ['Hoki','#8ab83a','Hk'],['Roran','#e0b84a','Ro'],['Hakumei','#6a4a8a','Hm'],['Shirogane','#a8b4c8','Sg'],['Chinoike','#9a1424','Ci'],
- ['Kami','#7a9ae0','Km'],['Fûma','#5a5a6e','Fm'],['Hoshigaki','#4a7a9a','Hs'],['Hôzuki','#4ac8d8','Hz'],['Yuki','#bfe6ff','Yu']];
+ ['Kami','#7a9ae0','Km'],['Fûma','#5a5a6e','Fm'],['Hoshigaki','#4a7a9a','Hs'],['Hôzuki','#4ac8d8','Hz'],['Yuki','#bfe6ff','Yu'],
+ // clans martiaux ajoutés (c21 Kenjutsuka, Pays du Fer ; c22 Bukijutsuka, Konoha) : sans nature, arbre de style imposé (MARTIAL, nr_kits.js)
+ ['Kenjutsuka','#9aa8b8','Kj'],['Bukijutsuka','#c8a070','Bk']];
 const clanTag=c=>CLANS[c]?CLANS[c][2]||CLANS[c][0][0]:'?'; // sigle d'un clan (icônes)
-const TAIJ=10; // le clan Taijutsuka n'a pas de nature : uniquement du taijutsu
-// styles de combat (attaque de base) : [nom, description, source, vfx, arme, clans autorisés (-1 = sans clan), modif. PV, modif. puissance]
-// styles de combat : voir kits/styles.js
-// un clan qui n'a (encore) aucun style propre peut prendre les styles « sans clan » (Taijutsu, Kunai au poing, Kenjutsu, Kubikiribôchô)
-const styleOk=(s,clan)=>STYLES[s][5].includes(clan)||(clan>=0&&STYLES[s][5].includes(-1)&&!STYLES.some(x=>x[5].includes(clan)));
+const TAIJ=10; // le clan Taijutsuka n'a pas de nature : uniquement du taijutsu (clan martial, voir isMartial)
+// styles de combat (attaque de base) : [nom, description, source, vfx, arme, clans autorisés (-1 = sans clan), modif. PV, modif. puissance, arbre 'tai'|'ken'|'buki']
+// styles de combat : voir kits/styles.js ; styles permis pour un build : stylesOf(b) (nr_tree.js)
+const styleOk=(s,b)=>stylesOf(typeof b==='object'&&b?b:{clan:b,st:0,nat:0,fam:[]}).includes(s);
 // style signature du clan (réservé au clan, pas aux sans-clan) : -1 s'il n'y en a pas ; c'est le style par défaut quand on choisit le clan
 const clanStyle=c=>c<0?-1:STYLES.findIndex(x=>x[5].includes(c)&&!x[5].includes(-1));
-// [catégorie, emplacement 1-5, rang, source perso.sort, nom, description, effet visuel]
-// catégorie : 'u' Subjutsu (sans clan), 'n0'..'n4' nature, 'c0'..'c20' clan (CLANS.length)
+// catalogue : KIT(arbre, [[rang, mécanique, nom, description, vfx], …]) ; arbres 'n0'..'n4' natures, 't0'..'t2' styles, 'c0'..'c22' clans, 'f0'..'f7' familles
 /*NR_NATURE*/
 const JD=KITROWS; // le catalogue est assemblé par les fichiers kits/*.js (un par catégorie)
 // réglages propres à certains jutsu (réglés par duels simulés)
@@ -32,6 +31,8 @@ const JCD={'Lotus primaire':10,'Lotus caché':9}; // temps de recharge propres �
 // puis, quand les bots ont enfin frappé au corps à corps (aiIn) : PV ×1,3 (HPK) et attaques de base ×0,4 (M1K), Shirogane refait (M1 au contact,
 // SG.BAL 1,15 / SG.TAKE 1), clans recalés sur bal21 (1v1 sans soin, 150 à 400 duels par catégorie) : 44-55 % pour chaque clan / nature, duel médian ≈ 50 s
 const CLANBAL={"0":[0.842,0.781],"1":[0.636,0.687],"2":[1.123,1.139],"3":[0.962,0.903],"4":[0.992,0.888],"5":[1.209,1.204],"6":[1.02,0.903],"7":[1.096,1.018],"8":[0.964,0.994],"9":[0.975,0.831],"10":[0.838,0.681],"11":[0.996,0.962],"12":[1.053,0.968],"13":[1.162,1.192],"14":[0.867,1.184],"15":[1.275,0.83],"16":[1.046,1.115],"17":[1.078,0.999],"18":[1.001,0.961],"19":[1.029,0.994],"20":[1.01,1.052],"-1":[0.974,0.955]},NATBAL={"0":[1.13,0.865],"1":[1.01,1.003],"2":[0.928,0.971],"3":[1.02,0.954],"4":[0.946,1.04]},STYLEBAL={"0":[1.003,1.017],"1":[0.945,1.054],"2":[0.876,0.859],"2:-1":[0.79,0.721],"3":[0.89,0.955],"7":[1.052,1.004],"8":[1.033,0.875],"10":[1.007,1.122],"12":[0.9,0.999],"15":[1.148,1.207],"18":[0.913,0.819],"19":[1.042,0.887],"23":[1.029,1.07],"24":[0.931,0.928],"25":[1.15,1.015],"26":[0.978,1.01]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
+// équilibrage par arbre de style (TREEBAL[st]) et par famille de sub (FAMBAL[f], moyenne géométrique des familles prises) : [PV, puissance], défaut [1, 1]
+const TREEBAL={},FAMBAL={};
 // équilibrage par jutsu (« catégorie|nom ») : d = dégâts ×, cd = recharge (s), ck = coût en chakra ; appliqué par nr_bal.js (les « N dégâts » des descriptions suivent d)
 const JBAL={
  "c0|Amaterasu":{"d":0.4,"ck":51},
@@ -335,23 +336,7 @@ const JBAL={
  "u|Sôshôryû":{"d":0.995},
  "u|Ôkashô":{"d":0.546}
 };
-const JL=JD.map(([cat,slot,r,src,n,d,vfx],id)=>({id,cat,slot,r,cost:RANKS[r],src,n,d,vfx,P:JPAR[n]}));
-const SLOTN=['Style de combat','Jutsu','Déplacement','Jutsu','Jutsu','Ultime'];
-const stype=s=>s===2?2:s===5?5:1; // 1 = jutsu (Clic D, Q, E), 2 = déplacement, 5 = ultime
-const catName=c=>c==='u'?'Subjutsu':c[0]==='n'?NATURES[+c.slice(1)][0]:'Clan '+CLANS[+c.slice(1)][0];
-const catCol=c=>c==='u'?'#c8b89a':c[0]==='n'?NATURES[+c.slice(1)][2]:CLANS[+c.slice(1)][1];
-// jutsu accessibles : jutsu de clan (ou Subjutsu sans clan) + jutsu de sa nature (les Taijutsuka n'ont pas de nature)
-const avail=(b,slot)=>JL.filter(j=>stype(j.slot)===stype(slot)&&((b.clan>=0?j.cat==='c'+b.clan:j.cat==='u')||(b.clan!==TAIJ&&j.cat==='n'+b.nat)));
-const kitCost=b=>b.j.slice(1).reduce((a,id)=>a+JL[id].cost,0);
-// passifs renommés
-// valeurs des passifs propres au jeu Naruto (mknaruto.py les branche dans le moteur), réglées par duels simulés ; les descriptions en découlent
-const PASSV={regen:1.2,crit:.33,slow:.8,slowD:1.2,rage:1.25,speed:1.25,speedA:.8,armor:.88,ls:.25};
-const pvF=v=>String(v).replace('.',',');
-Object.assign(PASS,{third:['Taijutsu',PASS.third[1]],crit:['Précision ninja',Math.round(PASSV.crit*100)+' % de coups critiques sur les attaques de base'],slow:['Fils de chakra','Les attaques de base ralentissent ; +'+Math.round((PASSV.slowD-1)*100)+' % de dégâts sur une cible ralentie'],lifesteal:['Vol de chakra','Récupère '+Math.round(PASSV.ls*100)+' % des dégâts infligés'],rage:['Volonté du feu','+'+Math.round((PASSV.rage-1)*100)+' % de dégâts sous 50 % de vie'],
- armor:['Corps endurci','Subit '+Math.round((1-PASSV.armor)*100)+' % de dégâts en moins'],regen:['Sang Uzumaki','Récupère '+pvF(PASSV.regen)+' PV par seconde'],speed:['Pieds légers','+'+Math.round((PASSV.speed-1)*100)+' % de vitesse de déplacement, attaques de base '+Math.round((1-PASSV.speedA)*100)+' % plus rapides'],energy:['Contrôle du chakra','Recharge (R) et régénération du chakra +50 %']});
-const PASSK=Object.keys(PASS);
-// voies : modifient PV, vitesse et puissance
-const VOIES=[['Taijutsu',1.09,6,.95],['Équilibré',1,0,1],['Ninjutsu',.9,-4,1.1]]; // réglées par duels simulés (Taijutsu PV ×1,12 et Ninjutsu puissance ×1,08 auparavant)
+/*NR_TREE*/
 const CAMPS=['Alliance Shinobi','Akatsuki'];
 const VILLAGES=[['Konoha','#1f3a6a'],['Suna','#7a5a2a'],['Kiri','#2a5a6a'],['Kumo','#3a3a4a'],['Iwa','#5a3a2a'],['Oto','#4a2a5a'],['Nukenin','#2a2a2a'],['Ame','#4a5a6a'],['Yu','#6a4a3a']];
 const TENUES=[['Tenue orange',{legs:'#2a3550',torso:'#f08a24',arm:'#f08a24',belt:'#2a3550',boot:'#1a2a48'}],['Gilet de chûnin',{legs:'#1f2c48',torso:'#26365a',vest:'#5a6e3a',arm:'#26365a',belt:'#1a2238',boot:'#1a2238'}],
@@ -422,17 +407,6 @@ const OVERL={hokage:{haori:'#f2f0ea',hsl:1,trim:'#d03a2a',hkan:'火影'},ermite:
 const SYMS=[['Aucun',''],['Éventail Uchiha','uchiha'],['Spirale Uzumaki','uzumaki'],['Symbole Senju','senju'],['Symbole Hyûga','hyuga'],['Symbole Nara','nara'],['Symbole Akimichi','akimichi'],['Kanji « Feu »','feu'],['Kanji « Amour »','amour'],['Nuage de l\'Akatsuki','nuage']];
 const BANDC=[['D\'origine',''],['Bleu marine','#1f3a6a'],['Noir','#1c1c24'],['Gris','#5a5a64'],['Rouge','#a82a2a'],['Violet','#5a3a8a'],['Vert','#2f5a32'],['Blanc','#e8e6e0'],['Rose','#d87aa0'],['Brun','#5a3a22'],['Bleu ciel','#5a9ad0']];
 const EYEF={pain:'rin',fard:'ser',branchies:'req',sourcils:'rond',sennin:'toad'}; // yeux propres à certaines marques (si le clan n'en impose pas)
-// build : {name, side, voie, nat, clan (-1 = sans clan), j:[style, 5 id de jutsu], pass, l:{v,t,c,h,p,k,a,f,b,d}} (f visage, b bandeau, d dos)
-// strict : ramène le kit sous le budget (pour les builds reçus en ligne et les bots)
-function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Math.max(0,Math.min(m-1,(a|0)));const l=b.l||{};
- const o={name:String(b.name||'Ninja').replace(/[<>]/g,'').slice(0,16)||'Ninja',side:b.side?1:0,voie:n(b.voie??1,VOIES.length),nat:n(b.nat,NATURES.length),clan:b.clan==null?-1:Math.max(-1,Math.min(CLANS.length-1,b.clan|0)),pass:n(b.pass,PASSK.length),
-  l:{v:n(l.v,VILLAGES.length),t:n(l.t,TENUES.length),c:n(l.c,COIFS.length),h:n(l.h,HAIRC.length),p:n(l.p,PEAUX.length),k:n(l.k,CHAKRAS.length),a:n(l.a,ACCS.length),f:n(l.f,FACES.length),b:n(l.b,BANDS.length),d:n(l.d,BACKS.length),
-   e:n(l.e,EYES.length),o:n(l.o,TENCOL.length),s:n(l.s,TENCOL.length),z:n(l.z,TAILLES.length),w:n(l.w,CARRURES.length),r:n(l.r,ARMS.length),n:n(l.n,NECKS.length),
-   g:n(l.g,GEARS.length),m:n(l.m,OVERS.length),y:n(l.y,SYMS.length),q:n(l.q,BANDC.length),x:n(l.x,TENCOL.length)}};
- const st=(b.j||[])[0];o.j=[STYLES[st]&&styleOk(st,o.clan)?st:clanStyle(o.clan)>=0?clanStyle(o.clan):STYLES.findIndex((_,i)=>styleOk(i,o.clan))];
- for(let s=1;s<6;s++){const A=avail(o,s).filter(j=>!o.j.slice(1).includes(j.id)),id=(b.j||[])[s];o.j.push(A.some(j=>j.id===id)?id:A.reduce((a,c)=>c.cost<a.cost?c:a).id)}
- if(strict)while(kitCost(o)>budgetOf(o)){let best=null;o.j.forEach((id,s)=>{if(!s)return;for(const c of avail(o,s))if(c.cost<JL[id].cost&&!o.j.slice(1).includes(c.id)){const gain=JL[id].cost-c.cost;if(!best||gain>best.g)best={s,id:c.id,g:gain}}});if(!best)break;o.j[best.s]=best.id}
- return o}
 // le clan se voit : Sharingan, Byakugan, carrure Akimichi, marques Kaguya, chien Inuzuka, gourde Sabaku (pas pour les marionnettistes) ; l'arme suit le style de combat
 function ninjaLook(l,clan,style){const v=VILLAGES[l.v],S=STYLES[style]||STYLES[0],T=TENUES[l.t][1],sk=PEAUX[l.p][1],f=FACES[l.f|0][1],bk=BACKS[l.d|0][1];
  const o=Object.assign({},T,T.arm==='skin'?{arm:sk}:{},clan===3?{scale:1.14,belly:1}:{},clan===5?{dog:1}:{},(clan===8&&S[0]!=='Marionnette')||bk==='gourde'?{gourd:1}:{},bk&&bk!=='gourde'?{back:bk}:{},
@@ -458,19 +432,39 @@ function tenueCols(o,T,l){const c1=(TENCOL[l.o|0]||TENCOL[0])[1],c2=(TENCOL[l.s|
 const srcAb=src=>{const [h,k]=src.split('.');return h==='x'?NAT[k]:SRC[h].abil[+k]};
 // personnage de référence pour les stats : option hero de la mécanique, sinon celui du préfixe (ka_, su_, sub_…)
 const srcHero=src=>{const [h,k]=src.split('.');return h==='x'?(NAT[k]&&NAT[k].hero)||NATHERO[k.split('_')[0]]||NATHERO[k.slice(0,2)]:h};
-// subjutsu, jutsu de clan et déplacements : pas de mudras (instantanés)
-function jutsu(id){const J=JL[id],b=srcAb(J.src),mud=J.cat==='u'||J.cat[0]==='c'||J.slot===2?0:MUDRAS[J.r];return Object.assign({},b,J.P?{P:Object.assign({},b.P,J.P)}:{},JCD[J.n]?{cd:JCD[J.n]}:{},b.ult?{cd:22}:{},{cast:mud?mud*MUDRA_T:b.cast,mud,noTele:!b.line&&!b.tele,n:J.n,d:J.d,ex:null,src:srcHero(J.src),vfx:J.vfx,rank:J.r,jid:id})}
+// mudras : seulement les jutsu de NATURE (style, clan, familles, dash, Kawarimi : instantanés) ; recharge = JCD sinon celle de la mécanique bornée au barème du rang (RKB)
+function jutsu(id){const J=JL[id],b=srcAb(J.src),T=TREES[J.cat],mud=T&&T.type==='nature'?MUDRAS[J.r]:0,R=RKB[J.r]||RKB.D;
+ const cd=JCD[J.n]!=null?JCD[J.n]:b.ult?R.cd[1]:Math.max(R.cd[0],Math.min(R.cd[1],b.cd||R.cd[0]));
+ return Object.assign({},b,J.P?{P:Object.assign({},b.P,J.P)}:{},{cd,ult:false,cast:mud?mud*MUDRA_T:b.cast,mud,noTele:!b.line&&!b.tele,n:J.n,d:J.d,ex:null,src:srcHero(J.src),vfx:J.vfx,rank:J.r,jid:id,tree:J.cat})}
 function styleAb(i){const S=STYLES[i],b=srcAb(S[2]);return Object.assign({},b,{n:S[0],d:S[1],ex:null,src:srcHero(S[2]),vfx:S[3],style:i})}
-// stats : moyenne des persos d'origine (le style de combat compte pour 5), puis la voie, puis les réglages CLANBAL / NATBAL / STYLEBAL
-function mkNinja(b,strict){b=sanitizeBuild(b,strict);const abil=[styleAb(b.j[0])].concat(b.j.slice(1).map(id=>jutsu(id))),w=[5,1,1,1,1,1];let hp=0,pw=0,sp=0,W=0;
- abil.forEach((a,s)=>{const o=SRC[a.src];hp+=o.hp*w[s];pw+=o.pw*w[s];sp+=o.spd*w[s];W+=w[s]});const v=VOIES[b.voie],S=STYLES[b.j[0]];hp*=S[6];pw*=S[7];if(b.clan===TAIJ){hp*=1.05;sp+=4*W}
- {const cb=CLANBAL[b.clan]||[1,1],nb=b.clan===TAIJ?[1,1]:NATBAL[b.nat]||[1,1],sb=STYLEBAL[b.j[0]+':'+b.clan]||STYLEBAL[b.j[0]]||[1,1];hp*=cb[0]*nb[0]*sb[0];pw*=cb[1]*nb[1]*sb[1]} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
- const lign=b.clan>=0?'Clan '+CLANS[b.clan][0]:'Sans clan';
- return{name:b.name,side:b.side,desc:`${lign}${b.clan===TAIJ?'':' · '+NATURES[b.nat][0]} · voie ${v[0].toLowerCase()}`,hp:Math.round(hp/W*v[1]*HPK),spd:Math.round(sp/W+v[2]),pw:Math.round(pw/W*v[3]*100)/100,clan:b.clan,nat:b.clan===TAIJ?-1:b.nat,pref:{bigfist:85,bone:90,sword:90,chain:90,fan:85,vine:85,puppet:95}[S[4]]||75,taij:b.clan===TAIJ,pass:PASSK[b.pass],look:ninjaLook(b.l,b.clan,b.j[0]),abil,build:b}}
+// dash (Espace) et Kawarimi (A) : sans rang = 0 chakra, 0 mudra ; recharge propre (D.cd) sinon celle de la mécanique bornée à 5-8 s ; dégâts × de l'ancienne ligne (JBAL) gardés
+function mkDashAb(D,shun){D=D||DASHB;let s=srcAb(D.src);if(!s){D=DASHB;s=srcAb(D.src)}const q=D.key0&&JBAL[D.key0]||{};
+ return Object.assign({},s,{n:D.n||s.n,d:D.d||s.d,rank:null,ult:false,cast:s.cast,mud:0,noTele:!s.line&&!s.tele,ex:null,src:srcHero(D.src),vfx:D.vfx||null,dash:shun?0:1,shun:shun?1:0,cd:D.cd||Math.max(5,Math.min(8,s.cd||6))},q.d&&q.d!==1?{bdm:q.d}:{})}
+const dashAbOf=b=>mkDashAb(dashOf(b)),shunAbOf=()=>mkDashAb(SHUN,1);
+const famBal=F=>{let h=1,p=1;for(const f of F){const v=FAMBAL[f]||[1,1];h*=v[0];p*=v[1]}const n=F.length||1;return[Math.pow(h,1/n),Math.pow(p,1/n)]};
+// stats : moyenne des persos de référence des mécaniques (le style compte pour 5, les jutsu APPRIS pour 5 en tout : la barre ne change rien),
+// puis CLANBAL / NATBAL / STYLEBAL / TREEBAL / FAMBAL. Le ninja « catalogue » porte tous ses jutsu appris (jab), sa barre de départ (bar0), son dash et son Kawarimi ;
+// chaque unité en combat reçoit sa propre copie avec SA barre (unitCh, nr_bar.js) : abil = [style, 6 cases (null = vide), dash, Kawarimi]
+function mkNinja(b,strict){b=sanitizeBuild(b,strict);const S=STYLES[b.w]||STYLES[0],a0=styleAb(b.w),jab={};for(const id of b.k)jab[id]=jutsu(id);
+ let hp=0,pw=0,sp=0,W=0;const add=(a,w)=>{const o=SRC[a.src]||SRC[a0.src];hp+=o.hp*w;pw+=o.pw*w;sp+=o.spd*w;W+=w};add(a0,5);const wk=b.k.length?5/b.k.length:0;for(const id of b.k)add(jab[id],wk);if(!b.k.length)add(a0,5);
+ hp*=S[6];pw*=S[7];if(isMartial(b.clan)){hp*=1.05;sp+=4*W} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
+ {const cb=CLANBAL[b.clan]||[1,1],nb=b.nat>=0?NATBAL[b.nat]||[1,1]:[1,1],sb=STYLEBAL[b.w+':'+b.clan]||STYLEBAL[b.w]||[1,1],tb=TREEBAL[b.st]||[1,1],fb=b.clan<0?famBal(b.fam):[1,1];hp*=cb[0]*nb[0]*sb[0]*tb[0]*fb[0];pw*=cb[1]*nb[1]*sb[1]*tb[1]*fb[1]}
+ const lign=b.clan>=0?'Clan '+CLANS[b.clan][0]:'Sans clan',dashAb=dashAbOf(b),shunAb=shunAbOf(),bar=b.bar.slice();
+ return{name:b.name,side:b.side,desc:`${lign}${b.nat>=0?' · '+NATURES[b.nat][0]:''} · ${STNAME[b.st]}`,hp:Math.round(hp/W*HPK),spd:Math.round(sp/W),pw:Math.round(pw/W*100)/100,clan:b.clan,nat:b.nat,st:b.st,fam:b.fam.slice(),
+  pref:{bigfist:85,bone:90,sword:90,chain:90,fan:85,vine:85,puppet:95}[S[4]]||75,taij:isMartial(b.clan),pass:null,look:ninjaLook(b.l,b.clan,b.w),
+  abil:[a0,...bar.map(id=>id>=0?jab[id]:null),dashAb,shunAb],jab,learn:b.k.slice(),bar0:bar,bar:bar.slice(),dashAb,shunAb,build:b}}
 // générateur pseudo-aléatoire déterministe (mêmes ninjas adverses chez tous les joueurs en ligne)
 const srnd=seed=>()=>(seed=seed*16807%2147483647)/2147483647;
-function randomKit(r,b){const k=a=>Math.floor(r()*a.length);b.nat=k(NATURES);b.clan=r()<.8?k(CLANS):-1;b.voie=k(VOIES);b.pass=k(PASSK);
- b=sanitizeBuild(b);const ST=STYLES.map((_,i)=>i).filter(i=>styleOk(i,b.clan));b.j=[ST[k(ST)]];for(let s=1;s<6;s++){const A=avail(b,s).filter(j=>!b.j.slice(1).includes(j.id));b.j.push(A[k(A)].id)}return sanitizeBuild(b,true)}
+// kit au hasard (bots) : clan 80 % (parmi les clans qui ont des jutsu), nature, arbre de style, attaque de base, 2 à 5 familles sans clan, jutsu appris tirés au hasard rang par rang, barre de 6 au hasard, dash au hasard
+const CLANRND=()=>CLANS.map((_,i)=>i).filter(i=>RANKO.split('').some(r=>TREE['c'+i]&&TREE['c'+i][r].length));
+function randomKit(r,b){const k=a=>Math.floor(r()*a.length),CR=CLANRND();b.nat=k(NATURES);b.clan=r()<.8?CR[k(CR)]:-1;b.st=k(STREE);b.fam=[];
+ if(b.clan<0){const F=FAMS.map((_,i)=>i),n=2+Math.floor(r()*4);while(b.fam.length<n&&F.length)b.fam.push(F.splice(k(F),1)[0])}
+ b.k=null;b.bar=null;b.w=-1;b.dsh='b';const o=sanitizeBuild(b);{const SW=stylesOf(o);o.w=SW[k(SW)]}
+ const ids=[];for(const t of treesOf(o))for(const R of RANKO)ids.push(...TREE[t][R]);for(let i=ids.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]]}
+ o.k=[];for(const id of ids)if(canLearn(o.k,id))o.k.push(id);
+ {const L=o.k.slice();o.bar=[];while(o.bar.length<BARN&&L.length)o.bar.push(L.splice(k(L),1)[0])}
+ {const D=dashOpts(o);o.dsh=D[k(D)]}
+ return sanitizeBuild(o,true)}
 // apparence au hasard : les pièces très typées (chapeau de Kage, robe de Kage, peau de requin, objets dans le dos) restent rares
 const RND_T=[0,1,3,4,5,6,7,8,9,10,11,13,14,15,16,17,18,19,20,21,22,23,24,25,26,27,28,29,30,31,32,37,38,39,40,41,42,43,44,45,46,47],RND_A=[0,0,0,0,0,0,1,2,3,5,6,7,9,10,15,16],RND_P=[0,0,1,1,2,3,4,7],RND_B=[0,0,0,0,0,0,0,1,3,4,5,6,8];
 // cosmétiques ajoutés : tirés avec leur propre générateur (même nom et même camp = même tirage), pour ne pas changer le kit des bots
@@ -490,16 +484,9 @@ const NPRE0=37; // nombre de persos de l'anime avant les ajouts : les bots copie
 const CH={};{const r=srnd(4242);for(let s=0;s<2;s++)BOTN[s].forEach((n,i)=>{let b=randomBuild(r,s,n);if(r()<.5){const q=presetBuild(Math.floor(r()*Math.min(PRESETS.length,NPRE0)),n,s);q.l=b.l;b=q}if(b.clan>=0)b.name=n+' '+CLANS[b.clan][0];if(s&&r()<.6){b.l.t=2;b.l.v=6}CH['b'+(s*20+i)]=mkNinja(b,true)});
  PRESETS.forEach((P,i)=>{CH['a'+i]=mkNinja(presetBuild(i,P.n,P.side),true)})}
 const HEROES=Object.keys(CH);
-// ton ninja (gardé dans le navigateur)
-// ton ninja : les jutsu sont gardés par leur nom (un ninja sauvegardé reste juste quand le catalogue évolue)
-const JLEG=["Rasengan", "Fûma Shuriken", "Coup de pied tornade", "Lotus primaire", "Shunshin", "Kawarimi", "Saut ninja", "Roulade", "Hiraishin", "Kunai à fil", "Multiclonage", "Parchemin explosif", "Bombe fumigène", "Piège ninja", "Genjutsu : Plumes", "Kunai explosifs", "Shôsen", "Zone de soin", "Contre du clone", "Pilule du soldat", "Concentration du chakra", "Invocation : Crapaud", "Pluie de parchemins", "Mode Ermite", "Invocation : Katsuyu", "Katon : Flamme", "Katon : Mur de feu", "Katon : Triple flamme", "Katon : Shuriken de feu aériens", "Katon : Fournaise", "Katon : Flammes chargées", "Katon : Dragon de feu", "Katon : Tornade de feu", "Katon : Nuée ardente", "Katon : Grand souffle de feu", "Suiton : Vague", "Suiton : Brume cachée", "Suiton : Prison aqueuse", "Suiton : Balles d'eau", "Suiton : Mur d'eau", "Suiton : Grand requin", "Suiton : Dragon aqueux", "Fûton : Mur de vent", "Fûton : Balle d'air", "Fûton : Triple balle d'air", "Fûton : Grande balle d'air", "Fûton : Rafale à bout portant", "Fûton : Balles chargées", "Fûton : Lame d'air", "Fûton : Souffle", "Fûton : Couloir de vent", "Fûton : Tornade", "Chidori", "Raiton : Chaîne", "Raiton : Pas de l'éclair", "Raiton : Orage", "Raiton : Piège électrique", "Raiton : Armure de foudre", "Raiton : Décharge", "Raiton : Kirin", "Doton : Rocher", "Doton : Taupe", "Doton : Mur de terre", "Doton : Corps de roche", "Doton : Montagne écrasante", "Doton : Séisme", "Lame de Kusanagi", "Shunshin Uchiha", "Sharingan : Genjutsu", "Sharingan", "Amaterasu", "Tsukuyomi", "Susanô : Totsuka", "Hakke : Paume", "Pas du Hakke", "Byakugan", "Kaiten", "Hakke : 64 points", "Kage Mane", "Course de l'ombre", "Kage Kubi Shibari", "Ombre protectrice", "Ombres liées", "Paume géante", "Boulet humain", "Décuplement partiel", "Pilule rouge", "Décuplement", "Insectes chercheurs", "Clone d'insectes", "Essaim d'insectes", "Insectes dévoreurs", "Nuée destructrice", "Gatsûga", "Instinct bestial", "Ninken", "Flair du chien", "Garôga", "Chaînes de chakra", "Rasengan", "Sceau d'échange", "Sceau", "Multiclonage", "Vitalité Uzumaki", "Rasen-shuriken", "Chakra de Kyûbi", "Shinranshin", "Transposition", "Shintenshin", "Champ de fleurs", "Esprit destructeur", "Cercueil de sable", "Sable volant", "Sable mouvant", "Armure de sable", "Tsunami de sable", "Doigts-balles", "Bond d'os", "Forêt naissante", "Armure d'os", "Forêt d'os", "Konoha Senpû", "Konoha Daisenpû", "Konoha Gôriki Senpû", "Lotus primaire", "Poids retirés", "Bond du fauve", "Vitesse du fauve", "Défi éternel", "Dynamic Entry", "Lotus caché", "Esquive du fauve", "Première Porte", "Porte de la Vie", "Corps de jade", "Éléphant de midi", "Huit Portes", "Paon du matin", "Tigre du soir", "Nuit de la mort"];
-const byName=n=>{const J=JL.find(j=>j.n===n);return J?J.id:-1};
-// même nom dans plusieurs catégories (ex. Rasengan) : on prend celui du clan ou de la nature du ninja
-const pickName=(b,n)=>{const c=JL.filter(j=>j.n===n);return(c.find(j=>j.cat===(b.clan>=0?'c'+b.clan:'u')||j.cat==='n'+b.nat)||c[0]||{id:-1}).id};
+// ton ninja : la liste « Mes ninjas » (nrRoster2, nr_roster.js) le remplace au chargement ; les anciennes sauvegardes (nrBuild4/3, nrRoster1) ne sont plus lues
 function legacyLook(b){const l=b&&b.l;if(l&&l.f==null){const a=l.a|0;l.f=a===2?1:a===3?2:0;l.a=a===4?2:a===1?1:0}return b}
-function loadMine(){let b=null;try{b=legacyLook(JSON.parse(localStorage.getItem('nrBuild4')||'null'));if(b&&b.jn)b.j=[b.j[0],...b.jn.map(n=>pickName(b,n))];if(!b){const o=JSON.parse(localStorage.getItem('nrBuild3')||'null');if(o&&o.j){o.j=[o.j[0],...o.j.slice(1).map(i=>pickName(o,JLEG[i]))];b=legacyLook(o)}}}catch(e){b=null}
- return sanitizeBuild(b||presetBuild(0,'Ninja',0))}
-let MY;try{MY=loadMine()}catch(e){MY=randomBuild(srnd(99),0,'Ninja')}
+let MY=presetBuild(0,'Ninja',0);
 CH.p0=mkNinja(MY);
 // ninja du créateur (toujours le sien) : en ligne, côté ami, CH.p0 est le ninja de l'hôte
 let MYCH=CH.p0;
