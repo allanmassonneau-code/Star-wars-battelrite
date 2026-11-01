@@ -2,24 +2,22 @@
 // Tous les ninjas visibles sont rendus en une passe dans un atlas (une case par ninja), puis chaque case est collée dans la scène 2D
 // au bon moment de l'ordre d'affichage. Sans WebGL (ou option coupée), le dessin 2D d'origine prend le relais.
 const N3={ok:false,tried:false,on:true,recs:new Map(),tile:new Map(),req:new Set(),frame:0,last:0};
-const TWU=120,THU=142,FOOT=17,TCOLS=8,TROWS=6,EL3=.36; // case : 120 × 142 unités (pieds à 17 unités du bas : roulades et chutes restent dans la case), caméra inclinée de 20°
+const TWU=120,THU=134,FOOT=12,TCOLS=8,TROWS=6,EL3=.36; // case : 120 × 134 unités (pieds à 12 unités du bas), caméra inclinée de 20°
 let PXU=1.9,TPW=228,TPH=255; // pixels par unité (selon la finesse de l'écran)
 // os du squelette : [nom, parent, position de repos relative au parent]
-// proportions (≈ 1 : 5) : 72 unités de haut, tête de 14,5 (HDSC = échelle de la tête), jambes ≈ la moitié de la hauteur (hanche à 36,4),
-// épaules à 54, coudes à la taille (41,6), poignets à 31, mains à mi-cuisse ; les pièces de la tête sont décrites dans l'ancien repère (crâne de rayon 12,6) puis réduites
-const HDSC=.68; // tête un peu plus grosse que le strict 1:5 : visages lisibles en combat (≈ 1:4,5)
-const BONES=[['root',null,[0,0,0]],['hips','root',[0,37.4,0]],['spine','hips',[0,4,0]],['chest','spine',[0,7.6,0]],['neck','chest',[0,8.4,0]],['head','neck',[0,2.4,0]],
- ['hair','head',[0,10*HDSC,-9*HDSC]],['band','head',[0,9*HDSC,-11.5*HDSC]],['armL','chest',[9,5,0]],['foreL','armL',[0,-12.4,0]],['handL','foreL',[0,-10.4,0]],['armR','chest',[-9,5,0]],['foreR','armR',[0,-12.4,0]],['handR','foreR',[0,-10.4,0]],
- ['cape','chest',[0,4.8,-6.1]],['cape2','cape',[0,-17,0]],['skirt','hips',[0,0,0]],['thighL','hips',[4,-1,0]],['shinL','thighL',[0,-16.8,0]],['footL','shinL',[0,-16.4,0]],['thighR','hips',[-4,-1,0]],['shinR','thighR',[0,-16.8,0]],['footR','shinR',[0,-16.4,0]]];
+const BONES=[['root',null,[0,0,0]],['hips','root',[0,20.5,0]],['spine','hips',[0,4,0]],['chest','spine',[0,9,0]],['neck','chest',[0,8,0]],['head','neck',[0,3.5,0]],
+ ['hair','head',[0,10,-9]],['band','head',[0,9,-11.5]],['armL','chest',[10,5.5,0]],['foreL','armL',[0,-8.5,0]],['handL','foreL',[0,-8,0]],['armR','chest',[-10,5.5,0]],['foreR','armR',[0,-8.5,0]],['handR','foreR',[0,-8,0]],
+ ['cape','chest',[0,6,-7.6]],['cape2','cape',[0,-13,0]],['skirt','hips',[0,0,0]],['thighL','hips',[4.4,-.5,0]],['shinL','thighL',[0,-9.5,0]],['footL','shinL',[0,-9,0]],['thighR','hips',[-4.4,-.5,0]],['shinR','thighR',[0,-9.5,0]],['footR','shinR',[0,-9,0]]];
 const BI=Object.fromEntries(BONES.map((b,i)=>[b[0],i]));
 // couvre-chefs qui cachent le bandeau de tête (et aplatissent les mèches dressées) ; façons de porter le bandeau sur la tête
 const HATS=new Set(['kage','paille','kabuto','bandana']),BAND_HEAD=new Set(['front','barre','cornes','oblique','tete']);
-const LEG0=18.5,LEG1=33.2; // longueur de jambe (hanche → cheville) de l'ancien et du nouveau squelette : les accroupissements des poses suivent
 // vitesse de mise en place de chaque os (plus haut = plus sec)
 const BRATE={root:20,hips:20,spine:20,chest:22,neck:22,head:20,hair:7,band:6,armL:26,foreL:26,handL:26,armR:26,foreR:26,handR:26,cape:6,cape2:5,skirt:12,thighL:24,shinL:24,footL:24,thighR:24,shinR:24,footR:24};
-// pièces décrites dans l'ancien repère : position (p) et taille (s) ramenées aux nouvelles proportions, os par os (le torse s'affine, les membres s'allongent)
-const PK3=(()=>{const o={},u=(p,s)=>({p:Array.isArray(p)?p:[p,p,p],s});for(const b of['head','hair','band'])o[b]=u(HDSC,HDSC);for(const b of['chest','spine','hips','cape','cape2','skirt'])o[b]=u(.8,.8);
- for(const s of['L','R']){o['arm'+s]=u([.82,1.46,.82],.82);o['fore'+s]=u([.82,1.3,.82],.82);o['thigh'+s]=u([.9,1.77,.9],.9);o['shin'+s]=u([.85,1.82,.85],.85)}return o})();
+// cosmétiques ajoutés plus tard, décrits sur un corps plus long et plus fin (marqués « raw » dans add) : ramenés sur ce corps, os par os
+// p : facteurs de position [x, y, z] ; s : facteurs de taille [épaisseur, longueur] ; un anneau ou un disque couché grandit d'un bloc (épaisseur)
+const R2O=(()=>{const o={},u=(p,s)=>({p:Array.isArray(p)?p:[p,p,p],s:Array.isArray(s)?s:[s,s]});o.chest=o.cape=u(1.25,1.25);o.cape2=u([1.25,.94,1.25],[1.25,.94]);o.spine=u([1.3,1.05,1.3],[1.3,1.1]);
+ o.hips=u([1.4,1,1.4],[1.4,1]);o.skirt=u([1.19,.63,1.19],[1.19,.63]);for(const s of['L','R']){o['thigh'+s]=u([1.02,.565,1.02],[1.02,.565]);o['shin'+s]=u([1.07,.55,1.07],[1.07,.55]);
+ o['arm'+s]=u([1.08,.685,1.08],[1.08,.685]);o['fore'+s]=u([1.09,.77,1.09],[1.09,.77]);o['hand'+s]=u(1.16,1.16)}return o})();
 // taille (bh) et carrure (bw) : longueurs des os et épaisseur des pièces (purement visuel : la zone de coups ne change pas)
 const BYS=new Set(['hips','spine','chest','neck','foreL','handL','foreR','handR','shinL','footL','shinR','footR','cape2']);
 function boneOffs(L){const bh=L.bh||1,bw=L.bw||1;return BONES.map(([n,p,o])=>{const v=o.slice();if(BYS.has(n))v[1]*=bh;if(n==='armL'||n==='armR'){v[0]*=bw;v[1]*=bh}
@@ -38,7 +36,7 @@ function init3D(){if(N3.tried)return N3.ok;N3.tried=true;try{
  const cam=new THREE.OrthographicCamera(0,2*TWU,THU,0,1,3000);cam.position.set(0,0,0);cam.up.set(0,1,0);cam.lookAt(0,-Math.sin(EL3),-Math.cos(EL3));cam.updateMatrixWorld();
  const right=new THREE.Vector3(1,0,0),up=new THREE.Vector3(0,Math.cos(EL3),-Math.sin(EL3)),fwd=new THREE.Vector3(0,-Math.sin(EL3),-Math.cos(EL3));
  const gm=new THREE.DataTexture(new Uint8Array([120,120,120,255,190,190,190,255,255,255,255,255]),3,1,THREE.RGBAFormat);gm.minFilter=gm.magFilter=THREE.NearestFilter;gm.needsUpdate=true;
- const outline=new THREE.ShaderMaterial({uniforms:{w:{value:.85},col:{value:new THREE.Color(0x140c08)}},side:THREE.BackSide,
+ const outline=new THREE.ShaderMaterial({uniforms:{w:{value:1.05},col:{value:new THREE.Color(0x140c08)}},side:THREE.BackSide,
   vertexShader:'#include <common>\n#include <skinning_pars_vertex>\nuniform float w;\nvoid main(){\n#include <skinbase_vertex>\n#include <beginnormal_vertex>\n#include <skinnormal_vertex>\n#include <begin_vertex>\n#include <skinning_vertex>\ntransformed+=normalize(objectNormal)*w;\n#include <project_vertex>\n}',
   fragmentShader:'uniform vec3 col;void main(){gl_FragColor=vec4(col,1.0);}'});
  Object.assign(N3,{ok:true,r,cv,sc,cam,right,up,fwd,gm,outline,faceTex:new Map(),symTex:new Map(),geo:new Map(),faceGeo:new THREE.SphereGeometry(12.75,20,14,Math.PI/2-1.05,2.1,Math.PI/2-.8,1.6),symGeo:new THREE.PlaneGeometry(7.4,4.2),cols:0,rows:0,small:0});atlasSize(2);
@@ -47,90 +45,88 @@ function init3D(){if(N3.tried)return N3.ok;N3.tried=true;try{
 // ----- fabrication du modèle (géométrie fusionnée, un os par pièce : pièces rigides, rendu en 2 appels par ninja)
 const col3=h=>new THREE.Color(h);
 function lookKey(u){const L=u.ch.look;return JSON.stringify([L,u.ch.look.weapon&&u.ch.look.weapon.k])}
-// position d'une pièce de l'ancien repère sur un os (décalques du visage et du symbole)
-const pk3=(b,v)=>{const k=PK3[b];return k?v.map((x,i)=>x*k.p[i]):v},pks=b=>PK3[b]?PK3[b].s:1;
 // géométrie fusionnée partagée par apparence (réapparition, retour à l'écran, clones : plus de reconstruction)
 function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist',T=THREE,key=lookKey(u),OFF=boneOffs(L);let G=N3.geo.get(key);
  if(!G){const P=[],N=[],C=[],SI=[],SW=[];const rest={},DS=boneScale(L),DM={};
  BONES.forEach(([n,p],i)=>{const v=new T.Vector3(...OFF[i]);if(p)v.add(rest[p]);rest[n]=v});
  if(DS)for(const b in DS){const r=rest[b];DM[b]=new T.Matrix4().makeTranslation(r.x,r.y,r.z).multiply(new T.Matrix4().makeScale(...DS[b])).multiply(new T.Matrix4().makeTranslation(-r.x,-r.y,-r.z))}
  const M=new T.Matrix4(),Q=new T.Quaternion(),E=new T.Euler(),S=new T.Vector3(),V=new T.Vector3();
- // ajoute une pièce : g géométrie, bone os, c couleur, [x,y,z] position relative à l'os au repos, [rx,ry,rz], [sx,sy,sz] ; raw : déjà dans le nouveau repère (sinon PK)
+ // ajoute une pièce : g géométrie, bone os, c couleur, [x,y,z] position relative à l'os au repos, [rx,ry,rz], [sx,sy,sz] ; raw : pièce décrite sur le corps long (ramenée par R2O)
  const add=(g,bone,c,pos=[0,0,0],rot=[0,0,0],scl=[1,1,1],raw)=>{const gg=g.index?g.toNonIndexed():g;if(rot.isQuaternion)Q.copy(rot);else{E.set(...rot);Q.setFromEuler(E)}
-  const kk=raw?null:PK3[bone],ks=kk?kk.s:1;V.set(...(kk?pos.map((x,i)=>x*kk.p[i]):pos)).add(rest[bone]);S.set(scl[0]*ks,scl[1]*ks,scl[2]*ks);M.compose(V,Q,S);if(DM[bone])M.premultiply(DM[bone]);gg.applyMatrix4(M);
+  const kk=raw&&R2O[bone];if(kk){const fl=rot.isQuaternion||Math.abs(rot[0])>.3||Math.abs(rot[2])>.3,a=kk.s[0],b=fl?a:kk.s[1];pos=pos.map((x,i)=>x*kk.p[i]);scl=[scl[0]*a,scl[1]*b,scl[2]*a]}
+  V.set(...pos).add(rest[bone]);S.set(...scl);M.compose(V,Q,S);if(DM[bone])M.premultiply(DM[bone]);gg.applyMatrix4(M);
   const a=gg.attributes.position,nn=gg.attributes.normal,cc=col3(c),bi=BI[bone];for(let i=0;i<a.count;i++){P.push(a.getX(i),a.getY(i),a.getZ(i));N.push(nn.getX(i),nn.getY(i),nn.getZ(i));C.push(cc.r,cc.g,cc.b);SI.push(bi,0,0,0);SW.push(1,0,0,0)}};
  const sph=(r,w=12,hh=9)=>new T.SphereGeometry(r,w,hh),sphp=(...a)=>new T.SphereGeometry(...a),cap=(r,l,s=8)=>new T.CapsuleGeometry(r,l,3,s),cyl=(a,b,hh,s=12,...o)=>new T.CylinderGeometry(a,b,hh,s,...o),box=(x,y,z)=>new T.BoxGeometry(x,y,z),cone=(r,hh,s=7)=>new T.ConeGeometry(r,hh,s),tor=(R,r,s=14)=>new T.TorusGeometry(R,r,6,s);
  const skin=h.skin,hair=h.hair,legs=L.legs||'#2a3550',torso=L.torso||'#f08a24',arm=L.arm||torso,boot=L.boot||'#222',band=h.band||'#1f3a6a',AA=L.armAcc||'';
- const fistC=AA==='gants'?'#1c1c24':AA==='gantelets'?'#7a828e':k==='fist'||k==='bigfist'?'#f0ebe0':skin,big=k==='bigfist';
+ const fistC=AA==='gants'?'#3a3f50':AA==='gantelets'?'#7a828e':k==='fist'||k==='bigfist'?'#f0ebe0':skin,big=k==='bigfist';
  const qv=(a,b)=>new T.Quaternion().setFromUnitVectors(new T.Vector3(...a).normalize(),new T.Vector3(...b).normalize());
  const dk=(c,f)=>typeof shade==='function'?shade(c,f):c;
- // jambes (cuisse, mollet, genou) et sandales (orteils visibles)
+ // jambes et sandales (orteils visibles)
  for(const s of['L','R']){
-  add(cap(3.25,11.2,10),'thigh'+s,legs,[0,-8.4,0],[0,0,0],[1,1,1],1);add(sph(3,10,8),'shin'+s,legs,[0,0,0],[0,0,0],[1,1,1],1);add(cap(2.8,11,10),'shin'+s,legs,[0,-8.4,0],[0,0,0],[1,1,1],1);
-  add(cyl(2.8,3,2.6,10),'shin'+s,'#e8e0d0',[0,-14.6,0],[0,0,0],[1,1,1],1);
-  add(box(4.4,2.6,9.4),'foot'+s,boot,[0,-1.9,1.9],[0,0,0],[1,1,1],1);add(sph(1.6,8,6),'foot'+s,skin,[0,-.9,6.3],[0,0,0],[1.3,.6,.7],1);
-  if(L.warm)add(cyl(2.9,3.15,8,10),'shin'+s,L.warm,[0,-10.4,0],[0,0,0],[1,1,1],1);
-  if(AA==='bandall'){add(cyl(2.75,2.95,8,10),'shin'+s,'#f0ece0',[0,-9.6,0],[0,0,0],[1,1,1],1);add(cyl(3.15,3.15,3,10),'thigh'+s,'#f0ece0',[0,-10,0],[0,0,0],[1,1,1],1)}
-  if(L.stripes)for(const [b,y,r] of[['thigh',-6,3.05],['thigh',-12,2.95],['shin',-5,2.65],['shin',-10,2.6]])add(cyl(r,r,1.6,10),b+s,L.stripes,[0,y,0],[0,0,0],[1,1,1],1)}
- // bassin, ventre, torse, ceinture (proportions du nouveau repère)
- add(cap(5.4,4,10),'hips',legs,[0,1.2,0],[0,0,Math.PI/2],[1,1,.8],1);
- add(cap(6.4,3,12),'spine',torso,[0,3.2,0],[0,0,0],[1,1,.74],1);add(cap(7.6,3.6,12),'chest',torso,[0,-.4,0],[0,0,0],[1,.86,.74],1);
- if(L.belly){add(sph(8.6,16,12),'spine',torso,[0,2.6,1.2],[0,0,0],[1.12,1,1],1);add(sph(6.4,14,10),'hips',legs,[0,.6,.4],[0,0,0],[1.2,.9,1.05],1)}
- if(L.belt)add(tor(L.belly?9.4:6.65,1),'spine',L.belt,[0,-.6,L.belly?1.2:0],[Math.PI/2,0,0],[1,L.belly?.9:.78,1],1);
- if(torso==='#f08a24'){add(cap(7.9,1.3,12),'chest',L.belt||'#2a3550',[0,5.2,0],[0,0,0],[1,.7,.76],1);add(box(1,12,.5),'chest',L.belt||'#2a3550',[0,0,5.7],[0,0,0],[1,1,1],1)}
- if(L.vest){add(cap(10.4,5,12),'chest',L.vest,[0,1.2,.2],[0,0,0],[1,.92,.8]);add(tor(5.6,1.8),'chest',L.vest,[0,8.2,0],[Math.PI/2,0,0]);for(const x of[-4.6,4.6])for(const y of[-1.5,3])add(box(4,3.2,1.6),'chest',L.vest,[x,y,7.6]);
+  add(cap(3.3,5.6),'thigh'+s,legs,[0,-4.6,0]);add(cap(3,5),'shin'+s,legs,[0,-4.4,0]);add(cyl(3.1,3.3,2.2,10),'shin'+s,'#e8e0d0',[0,-7.8,0]);
+  add(box(5.2,2.4,8.6),'foot'+s,boot,[0,-.6,1.4]);add(sph(1.9,8,6),'foot'+s,skin,[0,.4,4.6],[0,0,0],[1.25,.6,.7]);
+  if(L.warm)add(cyl(3.6,3.8,5,10),'shin'+s,L.warm,[0,-5.2,0]);
+  if(AA==='bandall')add(cyl(3.1,3.25,4.4,10),'shin'+s,'#f0ece0',[0,-5.2,0]); // bandages au mollet seulement (plus d'anneau à la cuisse)
+  if(L.stripes)for(const [b,y,r] of[['thigh',-4.6,3.4],['shin',-4.2,3.1]])add(cyl(r,r,1.6,10),b+s,L.stripes,[0,y,0])}
+ // bassin, ventre, torse, ceinture
+ add(cap(7.6,3,10),'hips',legs,[0,1.5,0],[0,0,Math.PI/2],[1,1.15,.78]);
+ add(cap(8.4,3.5,12),'spine',torso,[0,4,0],[0,0,0],[1,1,.76]);add(cap(9.6,5.5,12),'chest',torso,[0,1.5,0],[0,0,0],[1,1,.74]);
+ if(L.belly)add(sph(9,16,12),'spine',L.armor||torso,[0,2.6,1.1],[0,0,0],[1.1,1,1]);
+ if(L.belt)add(tor(L.belly?10.2:8.3,1.2),'spine',L.belt,[0,-.6,L.belly?1.1:0],[Math.PI/2,0,0],[1,L.belly?.86:.78,1]);
+ if(torso==='#f08a24'){add(cap(9.9,1.6,12),'chest',L.belt||'#2a3550',[0,6.2,0],[0,0,0],[1,1,.76]);add(box(1.2,15,.6),'chest',L.belt||'#2a3550',[0,0,7.2])}
+ if(L.vest){add(cap(10.4,5,12),'chest',L.vest,[0,1.2,.2],[0,0,0],[1,1,.8]);add(tor(5.6,1.8),'chest',L.vest,[0,8.2,0],[Math.PI/2,0,0]);for(const x of[-4.6,4.6])for(const y of[-1.5,3])add(box(4,3.2,1.6),'chest',L.vest,[x,y,7.6]);
   if(L.vband)for(const y of[-4,0,4])add(tor(10.5,.55,24),'chest',dk(L.vest,.7),[0,y,.2],[Math.PI/2,0,0],[1,.8,1]);
   if(L.spiral){add(cyl(3.4,3.4,.6,16),'chest','#c0302a',[0,1,-8.5],[Math.PI/2,0,0]);add(cyl(2.1,2.1,.7,16),'chest',L.vest,[0,1,-8.6],[Math.PI/2,0,0]);add(cyl(.9,.9,.8,10),'chest','#c0302a',[0,1,-8.7],[Math.PI/2,0,0])}}
  if(L.tunic){add(tor(5.2,2.1),'chest',L.tunic,[0,8.5,0],[Math.PI/2,0,0]);add(cyl(3.6,3.6,.8,14),'chest','#ffffff',[0,2,-7.6],[Math.PI/2,0,0]);add(cyl(3.6,3.6,.9,14),'chest','#d02a2a',[0,.4,-7.7],[Math.PI/2,0,0],[1,1,.5])}
  if(L.armor){add(cap(10.2,3.6,12),'chest',L.armor,[0,2.4,.6],[0,0,0],[1,.9,.8]);add(sph(4.2,10,7),'armL',L.armor,[1,-.5,0],[0,0,0],[1,.8,1])}
- if(L.samurai){const c=L.samurai;add(cap(10.6,4,12),'chest',c,[0,1.6,.4],[0,0,0],[1,.95,.84]);for(const s of['L','R'])add(sphp(4.6,12,8,0,Math.PI*2,0,Math.PI*.55),'arm'+s,c,[0,1,0],[0,0,(s==='L'?-1:1)*.25],[1.2,.9,1.15]);
-  for(const a of[-.9,0,.9,Math.PI-.6,Math.PI+.6]){const R=8.2;add(box(5.6,9,.9),'skirt',c,[Math.sin(a)*R,-5,Math.cos(a)*R],[.12,a,0],[1,1,1],1);add(box(5.8,.8,1),'skirt',L.belt||'#d8c060',[Math.sin(a)*(R+.5),-1.2,Math.cos(a)*(R+.5)],[.12,a,0],[1,1,1],1)}}
+ if(L.samurai){const c=L.samurai;add(cap(10.6,4,12),'chest',c,[0,1.6,.4],[0,0,0],[1,.95,.84]);if(!(L.hov&&L.hsl))for(const s of['L','R'])add(sphp(4.6,12,8,0,Math.PI*2,0,Math.PI*.55),'arm'+s,c,[0,1,0],[0,0,(s==='L'?-1:1)*.25],[1.2,.9,1.15]);
+  for(const a of[-.9,0,.9,Math.PI-.6,Math.PI+.6]){const R=10.6;add(box(6.6,7.2,1),'skirt',c,[Math.sin(a)*R,-2.6,Math.cos(a)*R],[.14,a,0]);add(box(6.8,.9,1.1),'skirt',L.belt||'#d8c060',[Math.sin(a)*(R+.3),.9,Math.cos(a)*(R+.3)],[.14,a,0])}}
  // robes et manteaux longs : jusqu'aux chevilles (la jupe suit la hanche)
- const robeR=y=>8.6+(3.2-y)/38*3.8; // rayon de la robe longue à la hauteur y (repère de la hanche)
- if(L.robe){if(L.rshort)add(cyl(8.4,10.6,15,16),'skirt',L.robe,[0,-4.4,0],[0,0,0],[1,1,1],1);else{add(cyl(8.6,12.4,38,16),'skirt',L.robe,[0,-15.8,0],[0,0,0],[1,1,1],1);if(L.trim)add(cyl(12.25,12.65,3,16),'skirt',L.trim,[0,-32.8,0],[0,0,0],[1,1,1],1)}
-  add(cap(10.6,5.5,12),'chest',L.robe,[0,1.2,0],[0,0,0],[1,.92,.8]);add(cyl(6,7.2,5,14),'chest',L.robe,[0,9,0]);
-  if(L.dots&&!L.haori)for(const [a,y] of[[.6,-6],[-.7,-12],[2.2,-9],[-2.4,-18],[3.1,-14],[1.3,-24],[-1.5,-28]]){const R=(L.rshort?9.6:robeR(y))+.3;if(L.rshort&&y<-10)continue;add(sph(1.5,8,6),'skirt',L.dots,[Math.sin(a)*R,y,Math.cos(a)*R],[0,a,0],[1,1,.35],1)}
+ const robeR=y=>10.2+(6-y)/24*4.3; // rayon de la robe longue à la hauteur y (repère de la hanche)
+ if(L.robe){if(L.rshort)add(cyl(10.2,12.8,11,16),'skirt',L.robe,[0,-.5,0]);else{add(cyl(10.2,14.5,24,16),'skirt',L.robe,[0,-6,0]);if(L.trim)add(cyl(14.3,14.8,3.2,16),'skirt',L.trim,[0,-16.5,0])}
+  add(cap(10.6,5.5,12),'chest',L.robe,[0,1.2,0],[0,0,0],[1,1,.8]);add(cyl(6,7.2,5,14),'chest',L.robe,[0,9,0]);
+  if(L.dots&&(!L.haori||L.hov))for(const [a,y] of[[.6,.2],[-.7,-3.6],[2.2,-1.7],[-2.4,-7.4],[3.1,-4.8],[1.3,-11.1],[-1.5,-13.7]]){const R=(L.rshort?10.2+(5-y)/11*2.6:robeR(y))+.3;if(L.rshort&&y<-5)continue;add(sph(1.7,8,6),'skirt',L.dots,[Math.sin(a)*R,y,Math.cos(a)*R],[0,a,0],[1,1,.35])}
   // nuages rouges de l'Akatsuki, posés sur la surface du manteau
   if(L.clouds&&!L.hov){const CC=L.cloudC||'#c0202a';for(const [x,y,z] of[[-5,-2,8.1],[4,4,8.3],[6,2,-7.4]]){const b=Math.atan2(x,z),ox=Math.sin(b)*.35,oz=Math.cos(b)*.35;add(sph(3.3,10,7),'chest','#ffffff',[x,y,z],[0,b,0],[1.25,.78,.3]);add(sph(2.6,10,7),'chest',CC,[x+ox,y,z+oz],[0,b,0],[1.2,.7,.3])}
-   for(const [a,y] of[[.38,-9],[3.5,-14],[-1.2,-6],[-.4,-26],[2.4,-22],[-2.6,-30]]){const R=robeR(y)+.15;add(sph(2.8,10,7),'skirt','#ffffff',[Math.sin(a)*R,y,Math.cos(a)*R],[0,a,0],[1.25,.78,.3],1);add(sph(2.2,10,7),'skirt',CC,[Math.sin(a)*(R+.3),y,Math.cos(a)*(R+.3)],[0,a,0],[1.2,.7,.3],1)}}}
- if(L.jupe)add(cyl(7.4,10.2,8.6,16),'skirt',L.jupe,[0,-2.6,0],[0,0,0],[1,1,1],1);
+   for(const [x,y,z] of[[5,-12,12.6],[-5,-15,-13.2],[-11,-9,4.6]]){const b=Math.atan2(x,z),ox=Math.sin(b)*.35,oz=Math.cos(b)*.35;add(sph(3.3,10,7),'skirt','#ffffff',[x,y,z],[0,b,0],[1.25,.78,.3]);add(sph(2.6,10,7),'skirt',CC,[x+ox,y,z+oz],[0,b,0],[1.2,.7,.3])}}}
+ if(L.jupe)add(cyl(10.4,12.6,8.4,16),'skirt',L.jupe,[0,-1.6,0]);
  if(L.yoke){add(sphp(10.05,16,8,0,Math.PI*2,0,Math.PI*.36),'chest',L.yoke,[0,4.25,0],[0,0,0],[1.01,1,.77]);for(const s of['L','R'])add(sph(3.3,10,7),'arm'+s,L.yoke,[0,0,0])}
  if(L.open)add(box(4.4,4.4,.8),'chest',skin,[0,6.8,7],[-.35,0,Math.PI/4],[1,1.3,1]);
  if(L.kcol)for(const s of[-1,1])add(box(1.5,9.5,.9),'chest',L.kcol,[s*2,4.4,7.6],[-.3,0,s*.48]);
- if(L.obi){add(cyl(8.6,8.6,4.6,18),'spine',L.obi,[0,.2,0],[0,0,0],[1,1,.8],1);for(const s of[-1,1])add(sph(2.5,10,7),'spine',L.obi,[s*2.6,.6,-7.2],[0,0,s*.6],[1.4,.8,.7],1)}
- if(L.rope){add(tor(8.6,.95,16),'spine',L.rope,[0,-.6,0],[Math.PI/2,0,0],[1,.8,1]);for(const s of[-1,1])add(sph(2.6,8,6),'spine',L.rope,[s*2.9,-.6,-7.4],[0,0,s*.5],[1.3,.8,.6]);add(sph(1.4,8,6),'spine',L.rope,[0,-.6,-7.8])}
+ if(L.obi){add(cyl(8.6,8.6,4.6,18),'spine',L.obi,[0,.2,0],[0,0,0],[1,1,.8],1);if(!L.cape&&!L.hov)for(const s of[-1,1])add(sph(2.5,10,7),'spine',L.obi,[s*2.6,.6,-7.2],[0,0,s*.6],[1.4,.8,.7],1)}
+ if(L.rope){add(tor(8.6,.95,16),'spine',L.rope,[0,-.6,0],[Math.PI/2,0,0],[1,.8,1]);if(!L.cape&&!L.hov){for(const s of[-1,1])add(sph(2.6,8,6),'spine',L.rope,[s*2.9,-.6,-7.4],[0,0,s*.5],[1.3,.8,.6]);add(sph(1.4,8,6),'spine',L.rope,[0,-.6,-7.8])}}
  if(L.fan&&!L.tunic){add(cyl(3.6,3.6,.8,14),'chest','#ffffff',[0,2,-7.6],[Math.PI/2,0,0]);add(cyl(3.6,3.6,.9,14),'chest','#d02a2a',[0,.4,-7.7],[Math.PI/2,0,0],[1,1,.5])}
  if(L.disc)add(tor(3.4,.8,16),'chest',L.disc,[0,2,-8],[-.12,0,0]);
- if(L.haori){const H=L.haori,lg=L.hlong,HW=L.hov?(L.vest||L.armor||L.samurai||L.robe||L.belly?1.14:1.04):1,HT=L.hov?L.htrim:L.trim;add(cyl(10.6,11,13,16,1,true,.95,Math.PI*2-1.9),'chest',H,[0,1.2,0],[0,0,0],[HW,1,.84*HW]);
-  if(lg)add(cyl(9,12.4,38,16,1,true,.85,Math.PI*2-1.7),'skirt',H,[0,-15.8,0],[0,0,0],[HW,1,HW],1);else add(cyl(9,11.2,24,16,1,true,.85,Math.PI*2-1.7),'skirt',H,[0,-9,0],[0,0,0],[HW,1,HW],1);
-  if(L.hsl)for(const s of['L','R'])add(cyl(3.7,4.6,6.5,10),'arm'+s,H,[0,-2.6,0]);if(HT&&!lg&&L.hkan){const yb=-21,R0=11.2*HW;add(cyl(R0+.12,R0+.15,2.2,16,1,true,.85,Math.PI*2-1.7),'skirt',HT,[0,yb+1.1,0],[0,0,0],[1,1,1],1);
-   for(let i=0;i<13;i++){const a=.95+i*(Math.PI*2-1.9)/12,R=R0+.25;add(cone(1.5,5.5+(i%2)*2.6,4),'skirt',HT,[Math.sin(a)*R,yb+4.4+(i%2)*1.2,Math.cos(a)*R],[0,a,0],[1,1,.35],1)}} // flammes du Hokage
-  else if(HT)add(cyl(11.15,11.5,2.8,16,1,true,.85,Math.PI*2-1.7),'skirt',HT,[0,lg?-33:-19.6,0],[0,0,0],[HW,1,HW],1);
-  if(L.dots)for(const [a,y] of[[1.5,-4],[2.3,-12],[3.14,-6],[3.9,-12],[4.7,-4],[2.8,-17],[3.5,0]]){const R=9.3+(3-y)/24*2.2;add(sph(1.5,8,6),'skirt',L.dots,[Math.sin(a)*R,y,Math.cos(a)*R],[0,a,0],[1,1,.35],1)}
-  if(L.clouds&&(!L.robe||L.hov)){const CC=L.cloudC||'#c0202a';for(const [x,y,z] of[[6,2,-7.4*HW],[-5,5,-7.6*HW]]){const b=Math.atan2(x,z),ox=Math.sin(b)*.35,oz=Math.cos(b)*.35;add(sph(3.3,10,7),'chest','#ffffff',[x,y,z],[0,b,0],[1.25,.78,.3]);add(sph(2.6,10,7),'chest',CC,[x+ox,y,z+oz],[0,b,0],[1.2,.7,.3])}
-   for(const [a,y] of[[1.3,-9],[3.5,-14],[-1.3,-6],[2.2,-26],[4.4,-22]]){const R=(9.2+(3.2-y)/38*3.4)*HW+.2;add(sph(2.8,10,7),'skirt','#ffffff',[Math.sin(a)*R,y,Math.cos(a)*R],[0,a,0],[1.25,.78,.3],1);add(sph(2.2,10,7),'skirt',CC,[Math.sin(a)*(R+.3),y,Math.cos(a)*(R+.3)],[0,a,0],[1.2,.7,.3],1)}}}
+ if(L.haori){const H=L.haori,lg=L.hlong,HW=L.hov?(L.vest||L.armor||L.samurai||L.robe||L.belly?1.14:1.04):1,HT=L.hov?L.htrim:L.trim;add(cyl(10.6,11.1,15,16,1,true,.95,Math.PI*2-1.9),'chest',H,[0,.2,0],[0,0,0],[HW,1,.84*HW]);
+  if(lg)add(cyl(11,14.6,24,16,1,true,.85,Math.PI*2-1.7),'skirt',H,[0,-6,0],[0,0,0],[HW,1,HW]);else add(cyl(11,13.4,18,16,1,true,.85,Math.PI*2-1.7),'skirt',H,[0,-3.5,0],[0,0,0],[HW,1,HW]);
+  if(L.hsl)for(const s of['L','R'])add(cyl(3.7,4.6,6.5,10),'arm'+s,H,[0,-2.6,0]);if(HT&&!lg&&L.hkan){const yb=-12.5,R0=13.4*HW;add(cyl(R0+.12,R0+.15,2.2,16,1,true,.85,Math.PI*2-1.7),'skirt',HT,[0,yb+1.1,0]);
+   for(let i=0;i<9;i++){const a=.95+i*(Math.PI*2-1.9)/8,R=R0+.25;add(cone(1.8,3.6+(i%2)*1.6,4),'skirt',HT,[Math.sin(a)*R,yb+2.8+(i%2)*.8,Math.cos(a)*R],[0,a,0],[1,1,.35])}} // flammes du Hokage
+  else if(HT)add(lg?cyl(14.3,14.65,2.8,16,1,true,.85,Math.PI*2-1.7):cyl(13.35,13.7,2.8,16,1,true,.85,Math.PI*2-1.7),'skirt',HT,[0,lg?-16.8:-11.3,0],[0,0,0],[HW,1,HW]);
+  if(L.dots&&!L.hov)for(const [a,y] of[[1.5,-2],[2.3,-8],[3.14,-3],[3.9,-8],[4.7,-2],[2.8,-10.5],[3.5,1.5]]){const R=(11.4+(-y+5)/18*2.2)*HW;add(sph(1.7,8,6),'skirt',L.dots,[Math.sin(a)*R,y,Math.cos(a)*R],[0,a,0],[1,1,.35])}
+  if(L.clouds&&(!L.robe||L.hov)){const CC=L.cloudC||'#c0202a';for(const [x,y,z] of L.sym?[[5.6,-4.6,-8.1*HW],[-5.4,-3.8,-8.2*HW]]:[[6,1,-8.3*HW],[-5,4.5,-8.8*HW]]){const b=Math.atan2(x,z),ox=Math.sin(b)*.35,oz=Math.cos(b)*.35;add(sph(3.3,10,7),'chest','#ffffff',[x,y,z],[0,b,0],[1.25,.78,.3]);add(sph(2.6,10,7),'chest',CC,[x+ox,y,z+oz],[0,b,0],[1.2,.7,.3])}
+   for(const [a,y] of[[1.3,-4],[3.5,-1],[-1.3,-12]]){const R=(11+(6-y)/24*3.6)*HW+.2;add(sph(3.3,10,7),'skirt','#ffffff',[Math.sin(a)*R,y,Math.cos(a)*R],[0,a,0],[1.25,.78,.3]);add(sph(2.6,10,7),'skirt',CC,[Math.sin(a)*(R+.35),y,Math.cos(a)*(R+.35)],[0,a,0],[1.2,.7,.3])}}}
  if(L.collar)add(cyl(11.8,8.4,9,16),'chest',L.collar,[0,11,0],[0,0,0],[1,1,.95]);
  if(L.fur)add(tor(7.8,3,16),'chest',L.fur,[0,8.6,0],[Math.PI/2,0,0],[1,1,.85]);
  if(L.hood==='down'){add(tor(7.6,2.7,14),'chest',L.hoodC||torso,[0,8.4,-1.4],[Math.PI/2+.35,0,0]);add(sph(5.5,10,8),'chest',L.hoodC||torso,[0,6.5,-8.4],[0,0,0],[1.35,.8,.7])}
  if(L.sash)add(tor(10.6,1.35,20),'chest',L.sash,[0,1,0],[-Math.PI/2,.62,0],[1,1,.8]);
  // cou : écharpes (sur les épaules, pans jusqu'à la taille), colliers et pendentifs (bien devant le torse, par-dessus un col montant)
- const NK=L.neck,CO=!!L.collar,nz=CO?9.4:7.6,ny=CO?4.2:2.6;
+ const NK=L.neck,CO=!!L.collar,dz=CO?0:L.samurai?1.5:L.vest||L.robe?1.2:L.armor?1:0,nz=(CO?9.4:7.6)+dz,ny=CO?4.2:2.6;
  if(NK==='echarpe'||NK==='echlong'||NK==='foulard'){const c=L.maskC||(NK==='echarpe'?'#c0282a':NK==='echlong'?'#3a6ac8':'#d8d0c0');add(tor(CO?8.4:6.8,2.3,18),'chest',c,[0,CO?9.2:7.4,.2],[Math.PI/2+.12,0,0],[1,1,.86],1);add(sph(3,10,8),'chest',c,[2.8,6.6,5.4],[0,0,0],[1,.8,.8],1);
   if(NK==='echarpe'){add(box(3.4,12,1.2),'chest',c,[3.4,.6,6.3],[-.12,0,.1],[1,1,1],1);add(box(3.2,9,1.2),'chest',c,[5.6,1.8,5.9],[-.1,0,.32],[1,1,1],1)}
-  else if(NK==='echlong'){add(box(3.6,16,1),'chest',c,[3.6,-1.6,6.4],[-.1,0,.06],[1,1,1],1);add(box(3.4,13,1),'cape',c,[3,-5,.4],[0,0,.1],[1,1,1],1);add(box(3.2,15,1),'cape2',c,[3.4,-6,.4],[0,0,.14],[1,1,1],1)}
-  else add(cone(5.2,8,4),'chest',c,[0,3.2,5.6],[Math.PI+.25,Math.PI/4,0],[1,1,.42],1)}
- if(NK==='tsunade'||NK==='jashin'||NK==='crocs'||NK==='anneaux'){add(tor(CO?8.6:6.4,.42,20),'chest',NK==='crocs'?'#5a3a22':'#3a3a44',[0,CO?7.4:5.6,1.4],[Math.PI/2+.35,0,0],[1,1,1],1);
+  else if(NK==='echlong'){add(box(3.6,16,1),'chest',c,[3.6,-1.6,6.4],[-.1,0,.06],[1,1,1],1);{const cz=L.cape?-1.4:.4;add(box(3.4,13,1),'cape',c,[3,-5,cz],[0,0,.1],[1,1,1],1);add(box(3.2,15,1),'cape2',c,[3.4,-6,cz],[0,0,.14],[1,1,1],1)}}
+  else add(cone(5.2,8,4),'chest',c,[0,3.2,5.6+dz],[Math.PI+.25,Math.PI/4,0],[1,1,.42],1)}
+ if(NK==='tsunade'||NK==='jashin'||NK==='crocs'||NK==='anneaux'){add(tor(CO?8.6:6.4,.42,20),'chest',NK==='crocs'?'#5a3a22':'#3a3a44',[0,CO?7.4:5.6,1.4+dz],[Math.PI/2+.35,0,0],[1,1,1],1);
   if(NK==='tsunade')add(sph(1.5,8,6),'chest','#4ae070',[0,ny,nz],[0,0,0],[1,1.9,.7],1);
   if(NK==='jashin'){add(tor(2.1,.42,14),'chest','#e0e4ec',[0,ny,nz],[0,0,0],[1,1,1],1);add(cone(1.4,3.2,3),'chest','#e0e4ec',[0,ny+.1,nz+.2],[0,0,0],[1,1,.4],1)}
   if(NK==='crocs')for(const x of[-2.6,-1.3,0,1.3,2.6])add(cone(.75,3.2,4),'chest','#f8f4ea',[x,ny+.6-Math.abs(x)*.35,nz-.4],[Math.PI,0,0],[1,1,1],1);
   if(NK==='anneaux')for(const x of[-2.4,0,2.4])add(tor(1.15,.36,12),'chest','#d8dce6',[x,ny+.4-Math.abs(x)*.2,nz],[0,0,0],[1,1,1],1)}
- if(NK==='chapelet')for(let i=0;i<16;i++){const a=i/16*Math.PI*2,R=CO?8.4:6.6;add(sph(i===8?1.6:1.05,8,6),'chest',i===8?'#c8a050':'#6a4a2a',[Math.sin(a)*R,(CO?7.6:5.6)-Math.cos(a)*3.4,Math.cos(a)*R*.86+1],[0,0,0],[1,1,1],1)}
+ if(NK==='chapelet')for(let i=0;i<12;i++){const a=i/12*Math.PI*2,R=CO?8.4:6.6;add(sph(i===6?1.6:1.05,8,6),'chest',i===6?'#c8a050':'#6a4a2a',[Math.sin(a)*R,(CO?7.6:5.6)-Math.cos(a)*3.4,Math.cos(a)*R*.86+1+dz],[0,0,0],[1,1,1],1)}
  // objets portés dans le dos
  const BK=L.back;
  if(BK==='parchemin'){add(cyl(3.4,3.4,26,14),'chest','#e8dcc0',[0,-9,-10],[0,0,Math.PI/2]);for(const x of[-13,13])add(cyl(3.8,3.8,2.6,14),'chest','#b83a2a',[x,-9,-10],[0,0,Math.PI/2])}
  if(BK==='samehada'){const ax=[.48,.88,0],c=[2,2,-11.5],at=t=>c.map((v,i)=>v+ax[i]*t),qa=qv([0,1,0],ax),qr=qv([0,0,1],ax);add(cap(4.4,24,10),'chest','#3a4a7a',c,qa);for(const t of[-9,-3,3,9])add(tor(4.4,.55,14),'chest','#7a8ab8',at(t),qr);add(cyl(1.5,1.5,8,8),'chest','#5a4a3a',at(19.5),qa)}
  if(BK==='faux'){const ax=[-.52,.85,0],c=[-1,4,-11],at=t=>c.map((v,i)=>v+ax[i]*t),pp=[ax[1],-ax[0],0];add(cyl(.75,.75,42,6),'chest','#4a3426',c,qv([0,1,0],ax));for(let k=0;k<3;k++){const b=at(19-k*4.5).map((v,i)=>v+pp[i]*7);add(cone(2.4,14,4),'chest','#c42a2a',b,qv([0,1,0],pp),[1,1,.35])}}
- if(BK==='eventail'){const ax=[.34,.94,0],c=[-2,3,-10.6],qa=qv([0,1,0],ax);add(box(5,40,3),'chest','#4a3a2a',c,qa);for(const t of[-12,0,12])add(cyl(2.3,2.3,.6,12),'chest','#8a5ab8',c.map((v,i)=>v+ax[i]*t+(i===2?-1.6:0)),[Math.PI/2,0,0])}
+ if(BK==='eventail'){const md=h.style==='madara',ax=md?[.62,.78,0]:[.34,.94,0],c=md?[7,1,-12.2]:[-2,3,-10.6],qa=qv([0,1,0],ax);add(box(5,40,3),'chest','#4a3a2a',c,qa);for(const t of[-12,0,12])add(cyl(2.3,2.3,.6,12),'chest','#8a5ab8',c.map((v,i)=>v+ax[i]*t+(i===2?-1.6:0)),[Math.PI/2,0,0])}
  if(BK==='fuma'){const c=[0,2,-10.6];for(let i=0;i<4;i++){const a=i*Math.PI/2+.4,d=[Math.cos(a),Math.sin(a),0];add(cone(2.8,13,4),'chest','#9aa2ae',c.map((v,j)=>v+d[j]*7.5),qv([0,1,0],d),[1,1,.3])}add(cyl(2.6,2.6,1.8,12),'chest','#5a5f6a',c,[Math.PI/2,0,0])}
  if(BK==='katana'){const ax=[-.87,.5,0],c=[0,-1.5,-9.6],qa=qv([0,1,0],ax);add(box(2.4,30,2.4),'spine','#24242c',c,qa);add(cyl(1.1,1.1,8,8),'spine','#d8d0c0',c.map((v,i)=>v+ax[i]*19),qa)}
  if(BK==='kubi'){const ax=[-.5,.87,0],c=[1,2,-10.6],qa=qv([0,1,0],ax),pp=[ax[1],-ax[0],0];add(box(12,38,1.2),'chest','#c8d0da',c,qa);add(cyl(2.6,2.6,1.4,14),'chest','#2a2e36',c.map((v,i)=>v+ax[i]*13+pp[i]*2),[Math.PI/2,0,0]);add(cyl(1.3,1.3,10,8),'chest','#4a3a2a',c.map((v,i)=>v-ax[i]*24),qa)}
@@ -140,21 +136,20 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  if(BK==='baton'){const ax=[.45,.89,0],qa=qv([0,1,0],ax);add(cyl(.9,.9,52,8),'chest','#6a4a2a',[0,2,-10],qa);for(const t of[-24,24])add(cyl(1.25,1.25,3,10),'chest','#e8c040',[ax[0]*t,2+ax[1]*t,-10],qa)}
  if(BK==='sac'){add(box(13,13,6),'chest','#6a5a3a',[0,-2,-10.6]);add(box(13.4,5,6.6),'chest','#5a4a2e',[0,4,-10.6]);for(const s of[-1,1])add(tor(4,.7,10),'chest','#4a3a22',[s*5,5,-3],[0,Math.PI/2,0],[1,1.4,1])}
  if(BK==='hirame'){const ax=[.42,.9,0],c=[0,2,-10.8],qa=qv([0,1,0],ax),qr=qv([0,0,1],ax);add(box(8,36,2),'chest','#4a5a7a',c,qa);for(const t of[-14,-7,0,7,14])add(box(8.6,1.1,2.4),'chest','#d8d0c0',c.map((v,i)=>v+ax[i]*t),qa);add(cyl(1.4,1.4,9,8),'chest','#3a2a2a',c.map((v,i)=>v+ax[i]*22),qa)}
- if(L.cape){add(box(14.4,18.5,.9),'cape',L.cape,[0,-9,-.4],[0,0,0],[1,1,1],1);add(box(13.8,16,.9),'cape2',L.cape,[0,-8,-.4],[0,0,0],[1,1,1],1)}
+ if(L.cape){const rb=L.robe&&!L.rshort;add(box(18,13.5,1),'cape',L.cape,[0,-6.5,rb?-1.9:-.4]);add(box(17,15,1),'cape2',L.cape,[0,-7.2,rb?-4.4:-.4],rb?[-.12,0,0]:[0,0,0])}
  if(L.gourd){add(sph(6.5,12,9),'chest','#c8945a',[1,-2,-11],[0,0,0],[1,1.1,.95]);add(sph(4.4,12,9),'chest','#c8945a',[2.4,6.4,-11.5]);add(tor(9.5,.8,16),'chest','#8a3a2a',[0,1,-1],[.2,0,.75],[1,1.05,.95])}
- // bras (épaule, bras, avant-bras), mains (bandages pour le taijutsu), cou, tête
- for(const s of['L','R']){add(sph(2.85,10,8),'arm'+s,arm,[0,0,0],[0,0,0],[1,1,1],1);add(cap(2.5,8.8,8),'arm'+s,arm,[0,-6.4,0],[0,0,0],[1,1,1],1);add(sph(2.4,8,6),'fore'+s,arm,[0,0,0],[0,0,0],[1,1,1],1);add(cap(2.25,7.6,8),'fore'+s,arm,[0,-5.2,0],[0,0,0],[1,1,1],1);
-  add(sph(big?3.4:2.5,10,8),'hand'+s,fistC,[0,-2,.3],[0,0,0],[1,1.22,.95],1);
-  if(L.stripes)for(const [b,y,r] of[['arm',-5,2.35],['arm',-9.5,2.3],['fore',-4,2.15],['fore',-7.5,2.1]])add(cyl(r,r,1.4,10),b+s,L.stripes,[0,y,0],[0,0,0],[1,1,1],1);
+ // bras, mains (bandages pour le taijutsu), cou, tête
+ for(const s of['L','R']){add(cap(2.7,5.4),'arm'+s,arm,[0,-4.4,0]);add(sph(3.1,10,7),'arm'+s,arm,[0,0,0]);add(cap(2.45,5),'fore'+s,arm,[0,-4,0]);add(sph(big?3.9:2.9,10,8),'hand'+s,fistC,[0,-1.6,.3]);
+  if(L.stripes)for(const [b,y,r] of[['arm',-4.6,2.85],['fore',-4,2.6]])add(cyl(r,r,1.4,10),b+s,L.stripes,[0,y,0]);
   if(AA==='bandages'||AA==='bandall')add(cyl(2.2,2.3,7.5,10),'fore'+s,'#f0ece0',[0,-6.4,0],[0,0,0],[1,1,1],1);
   if(AA==='protege'){add(cyl(2.45,2.6,6.6,10),'fore'+s,'#2a3050',[0,-6,0],[0,0,0],[1,1,1],1);add(cyl(2.7,2.7,.9,10),'fore'+s,'#c8ccd6',[0,-8.8,0],[0,0,0],[1,1,1],1)}
   if(AA==='gantelets')add(cyl(2.5,2.8,7,10),'fore'+s,'#9aa2ae',[0,-6.2,0],[0,0,0],[1,1,1],1);
-  if(AA==='gants'){add(cyl(2.3,2.35,2,10),'fore'+s,'#1c1c24',[0,-9.6,0],[0,0,0],[1,1,1],1);add(box(2.2,1.6,.5),'hand'+s,'#c8ccd6',[0,-1.6,2.5],[0,0,0],[1,1,1],1)}
+  if(AA==='gants'){add(cyl(2.3,2.35,2,10),'fore'+s,'#3a3f50',[0,-9.6,0],[0,0,0],[1,1,1],1);add(box(2.2,1.6,.5),'hand'+s,'#c8ccd6',[0,-1.6,2.5],[0,0,0],[1,1,1],1)}
   if(AA==='bracelets')for(const y of[-8.6,-9.8])add(tor(2.25,.42,12),'fore'+s,'#e8c040',[0,y,0],[Math.PI/2,0,0],[1,1,1],1);
-  if(AA==='bague'){add(sph(big?3.5:2.6,10,8),'hand'+s,'#7a3aaa',[0,-3.1,.5],[0,0,0],[1,.55,.98],1);add(tor(1.15,.45,10),'hand'+s,'#f0c840',[s==='L'?1.2:-1.2,-2.4,1.6],[0,0,0],[1,1,1],1)}}
- if(AA==='tatouage'){add(tor(1.7,.42,14),'armL','#c02a2a',[2.6,-2.6,0],[0,Math.PI/2,0],[1,1,1],1);add(tor(.8,.38,10),'armL','#c02a2a',[2.75,-2.6,0],[0,Math.PI/2,0],[1,1,1],1);add(box(.5,3.2,.7),'armL','#c02a2a',[2.7,-4.9,1.2],[0,0,.1],[1,1,1],1)}
+  if(AA==='bague')add(tor(.95,.32,10),'hand'+s,'#f0c840',[s==='L'?1.4:-1.4,-2.4,2.2])} // un simple anneau (plus de vernis qui recouvre la main)
+ if(AA==='tatouage'){const tx=L.haori&&L.hsl?1.4:0;add(tor(1.7,.42,14),'armL','#c02a2a',[2.6+tx,-2.6,0],[0,Math.PI/2,0],[1,1,1],1);add(tor(.8,.38,10),'armL','#c02a2a',[2.75+tx,-2.6,0],[0,Math.PI/2,0],[1,1,1],1);add(box(.5,3.2,.7),'armL','#c02a2a',[2.7+tx,-4.9,1.2],[0,0,.1],[1,1,1],1)}
  if(L.samurai)for(const s of['L','R'])add(cyl(2.6,2.8,6,10),'fore'+s,L.samurai,[0,-6,0],[0,0,0],[1,1,1],1);
- add(cyl(2.3,2.6,5.2,10),'neck',skin,[0,.8,0],[0,0,0],[1,1,1],1);
+ add(cyl(3.2,3.6,4.5,10),'neck',skin,[0,1.4,0]);
  add(sph(12.6,20,15),'head',skin,[0,8,0],[0,0,0],[1.03,.97,.96]);for(const x of[-12,12])add(sph(2.3,8,6),'head',skin,[x,7.5,0],[0,0,0],[.6,1,1]);
  // bandeau frontal et plaque
  const ac=h.acc,hatF=HATS.has(ac),bs=hatF&&BAND_HEAD.has(h.bs==null?'front':h.bs)?'':h.bs==null?'front':h.bs,hoodUp=L.hood==='up'||L.hood==='chat',HS=HAIRS[h.style]; // couvre-chef : le bandeau de tête est caché, les mèches dressées aplaties
@@ -172,7 +167,7 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  const spike=(el,az,len,rad,bone='head',col=hc)=>{if(hatF)return;const d=new T.Vector3(Math.sin(el)*Math.sin(az),Math.cos(el),Math.sin(el)*Math.cos(az)),q=new T.Quaternion().setFromUnitVectors(UPV,d);const base=HC.clone().addScaledVector(d,10.6+len*.45);add(cone(rad,len,6),bone,col,[base.x,base.y,base.z],q)};
  if(st!=='chauve'&&!(HS&&HS.cap===0&&!hoodUp))add(sphp(13.3,20,12,0,Math.PI*2,0,Math.PI*.5),'head',hc,[0,8.4,-.9],[-.42,0,0],[1.05,1.06,1.05]);
  if(hoodUp){add(sphp(15.2,20,11,Math.PI/2+1,Math.PI*2-2,0,Math.PI*.62),'head',L.hoodC||torso,[0,8.6,-.6],[0,0,0],[1.02,1,1]);if(L.hood==='chat')for(const s of[-1,1])add(cone(3.4,7,6),'head',L.hoodC||torso,[s*7.5,23.5,-1.5],[0,0,-s*.45])}
- else if(HS)for(const q of HS.p){const t=q[0],hb=String(t==='o'?q[4]:t==='c'?q[6]:t==='k'?q[5]:'').includes('h'),bn=hb?'hair':'head',ps=v=>hb?v.map((x,i)=>x-HAIRB[i]):v;
+ else if(HS)for(const q of HS.p){const t=q[0];if(hatF&&t==='o'&&q[1][1]>=17)continue;const hb=String(t==='o'?q[4]:t==='c'?q[6]:t==='k'?q[5]:'').includes('h'),bn=hb?'hair':'head',ps=v=>hb?v.map((x,i)=>x-HAIRB[i]):v;
   if(t==='s')spike(q[1],q[2],q[3],q[4]);else if(t==='c')add(cap(q[2],q[3],10),bn,hc,ps(q[1]),q[4],q[5]);else if(t==='k')add(cone(q[2],q[3],7),bn,hc,ps(q[1]),q[4]);
   else if(t==='o')add(sph(q[2],12,9),bn,q[5]||hc,ps(q[1]),[0,0,0],q[3]);else if(t==='sh')add(sphp(q[1],22,12,q[3]?Math.PI/2+q[3]:0,q[3]?Math.PI*2-2*q[3]:Math.PI*2,0,q[2]),'head',hc,[0,8,-.4],[0,0,0],[1.02,1,1])}
  if(!hoodUp&&st==='pics'){for(const [el,az,l,r] of[[.25,0,12,4.2],[.45,1.1,12,4],[.45,-1.1,12,4],[.62,2.2,11,4],[.62,-2.2,11,4],[.75,3.1,11,4],[.95,2.6,10,3.6],[.95,-2.6,10,3.6],[1.25,3.0,9,3.4],[1.2,1.75,9,3.2],[1.2,-1.75,9,3.2],[.55,.4,9,3.5],[.55,-.4,9,3.5]])spike(el,az,l,r);
@@ -194,12 +189,12 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  // ceinture et équipement : porte-kunai à la cuisse (bandé), pochette au bas du dos, parchemins, clochettes
  const GR=L.gear;
  if(GR==='holster'||GR==='both'){add(cyl(3.6,3.6,1.3,12),'thighR','#f0ece0',[0,-5,0],[0,0,0],[1,1,1],1);add(cyl(3.6,3.6,1.3,12),'thighR','#f0ece0',[0,-9.4,0],[0,0,0],[1,1,1],1);add(box(2.6,6.4,4.2),'thighR','#3a3a44',[-3.6,-7.2,.6],[0,0,-.06],[1,1,1],1);add(cyl(.5,.5,2.6,6),'thighR','#24242c',[-3.6,-3.2,1.4],[0,0,0],[1,1,1],1)}
- if(GR==='pouch'||GR==='both'){add(box(7,4.6,3.6),'hips','#5a4a32',[0,1.6,-6.4],[0,0,0],[1,1,1],1);add(box(7.4,1.4,3.9),'hips','#4a3a24',[0,3.6,-6.4],[0,0,0],[1,1,1],1)}
+ if(GR==='pouch'||GR==='both'){add(box(7,4.6,3.6),'hips','#5a4a32',[0,1.6,-5.5],[0,0,0],[1,1,1],1);add(box(7.4,1.4,3.9),'hips','#4a3a24',[0,3.6,-5.5],[0,0,0],[1,1,1],1)}
  if(GR==='scrolls')for(const sd of[-1,1]){add(cyl(1.7,1.7,7,10),'hips','#e8dcc0',[sd*6.8,1.4,-2],[Math.PI/2,0,0],[1,1,1],1);add(cyl(1.85,1.85,1.2,10),'hips','#b83a2a',[sd*6.8,1.4,1.5],[Math.PI/2,0,0],[1,1,1],1)}
  if(GR==='bells')for(const sd of[-1,1]){add(cyl(.3,.3,3,5),'hips','#c02a2a',[sd*5,.6,5],[0,0,0],[1,1,1],1);add(sph(1.7,10,8),'hips','#f0c840',[sd*5,-1.6,5.2],[0,0,0],[1,1,1],1)}
  // armes selon le style
  const wpn=W.col||'#3af';
- if(k==='kunai'){add(box(2.6,4.2,3),'thighR','#3a3a44',[-2.9,-6,1.4],[0,0,0],[1,1,1],1);add(cyl(.7,.7,4,6),'handR','#3a3a44',[0,-3.2,1.2],[0,0,0]);add(cone(1.6,6,4),'handR','#d3d8e2',[0,-7.8,1.2],[Math.PI,0,0]);add(tor(1.1,.35,8),'handR','#3a3a44',[0,-.6,1.2])}
+ if(k==='kunai'){add(box(2.6,4.2,3),'thighR','#3a3a44',[-3,-3,1.6]);add(cyl(.7,.7,4,6),'handR','#3a3a44',[0,-3.2,1.2],[0,0,0]);add(cone(1.6,6,4),'handR','#d3d8e2',[0,-7.8,1.2],[Math.PI,0,0]);add(tor(1.1,.35,8),'handR','#3a3a44',[0,-.6,1.2])}
  // clan Hoshigaki : Samehada en main (style « Samehada ») : grosse lame bandée, écailles
  if(k==='sword'&&W.same){add(cyl(1,1,8,6),'handR','#5a4a3a',[0,-1,2.6],[Math.PI/2,0,0]);add(cap(3.6,26,10),'handR','#3a4a7a',[0,-1,22],[Math.PI/2,0,0],[1,.75,1]);for(const z of[12,18,24,30])add(tor(3.5,.55,12),'handR','#7a8ab8',[0,-1,z],[0,0,0],[1,.78,1]);
   for(const z of[14,21,28])for(const sd of[-1,1])add(cone(1.1,3.2,4),'handR','#9ab8cc',[sd*3.6,-1,z],[0,0,-sd*Math.PI/2])}
@@ -218,9 +213,9 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  if(k==='paper')for(const s of['L','R']){const x=s==='L'?2.8:-2.8;add(box(.5,15,4.2),'fore'+s,'#f6f3ea',[x,-8,0]);add(box(.6,2,4.4),'fore'+s,'#7a9ae0',[x,-2,0])}
  if(k==='shuriken'){add(cyl(1.6,1.6,.8,10),'handR','#3a3a44',[0,-3.6,1.6],[Math.PI/2,0,0]);for(let i=0;i<4;i++){const a=i*Math.PI/2;add(cone(1.4,6,4),'handR','#cfd3dd',[Math.cos(a)*3.6,-3.6+Math.sin(a)*3.6,1.6],[0,0,a-Math.PI/2])}}
  // armes des arbres Bukijutsu / Kenjutsu : bô (bâton long tenu au milieu), kusarigama (faucille + chaîne), tonfa (un par main, le long de l'avant-bras), ninjatô (lame courte tenue à l'envers)
- if(k==='staff'){add(cyl(1.1,1.1,74,8),'handR','#6a4a2a',[0,-1,10],[Math.PI/2,0,0]);for(const z of[46.5,-26.5])add(cyl(1.45,1.45,3,8),'handR','#e8c040',[0,-1,z],[Math.PI/2,0,0])}
+ if(k==='staff'){add(cyl(1.1,1.1,64,8),'handR','#6a4a2a',[0,-1,8],[Math.PI/2,0,0]);for(const z of[39,-23])add(cyl(1.45,1.45,3,8),'handR','#e8c040',[0,-1,z],[Math.PI/2,0,0])}
  if(k==='kama'){add(cyl(.9,.9,12,6),'handR','#5a3a22',[0,-1,5],[Math.PI/2,0,0]);add(box(.5,6.5,1.6),'handR','#e4e8ee',[0,-4,11],[.35,0,0]);add(box(.5,4,1.3),'handR','#e4e8ee',[0,-7.4,9.4],[1.1,0,0]);for(let i=0;i<5;i++)add(tor(.9,.3,6),'handR','#9aa4b4',[0,-2-i*1.7,-1.5-i*1.2],[0,i*1.2,0])}
- if(k==='tonfa')for(const s of['L','R']){add(cyl(.8,.8,4.4,6),'hand'+s,'#3a2a1e',[0,-3,1.2]);add(box(2.3,19,2.3),'fore'+s,'#c8a070',[0,-5,3.6]);add(box(2.5,2,2.5),'fore'+s,'#3a2414',[0,-14.2,3.6])}
+ if(k==='tonfa')for(const s of['L','R']){add(cyl(.8,.8,4.4,6),'hand'+s,'#3a2a1e',[0,-3,1.2]);add(box(2.3,15,2.3),'fore'+s,'#c8a070',[0,-4.5,3.6]);add(box(2.5,2,2.5),'fore'+s,'#3a2414',[0,-11.6,3.6])}
  if(k==='ninjato'){add(cyl(.8,.8,6,6),'handR','#2a2a33',[0,-1,1.5],[Math.PI/2,0,0]);add(box(2.4,2.4,.6),'handR','#3a3a44',[0,-1,-1.6]);add(box(1.4,.5,19),'handR','#e8ecf2',[0,-1,-11.5]);add(box(1,4,15),'chest','#2a2a33',[-6,-2,-8],[0,0,-.7])}
  if(k==='ice')for(const s of['L','R']){for(const [x,z,h] of[[-1.5,0,7],[1.3,.6,6],[0,-1.2,5.5]])add(cone(1.2,h,5),'fore'+s,'#7fc8f0',[x,-3-h*.2,z],[Math.PI-.5,0,x*.3]);add(sph(2.5,8,6),'hand'+s,'#bfe6ff',[0,-2,.6]);add(cone(1.5,11,5),'hand'+s,'#5ab4ec',[0,-8.5,1.2],[Math.PI,0,0])} // lame de glace bien bleue (lisible sur une tenue claire)
  // géométrie fusionnée + squelette
@@ -235,23 +230,23 @@ function buildNinja3D(u){const L=u.ch.look,h=L.head,W=L.weapon||{},k=W.k||'fist'
  const grp=new T.Group();grp.add(mesh);grp.add(out);
  // visage (yeux, bouche, marques, masque) et symbole du village : décalques sur la tête
  const face=new T.Mesh(N3.faceGeo,new T.MeshBasicMaterial({map:faceTexture(L),transparent:true,depthWrite:false}));
- face.position.set(0,8*HDSC,0);face.rotation.x=-.28;face.scale.set(1.03*HDSC,.97*HDSC,.96*HDSC);bones[BI.head].add(face); // décalque un peu remonté : yeux et bouche dans la partie visible d'en haut
+ face.position.set(0,8,0);face.scale.set(1.03,.97,.96);bones[BI.head].add(face);
  const bs0=h.bs==null?'front':h.bs,bs=HATS.has(h.acc)&&BAND_HEAD.has(bs0)?'':bs0,sym=new T.Mesh(N3.symGeo,new T.MeshBasicMaterial({map:symTexture(h.vil,bs0),transparent:true,depthWrite:false}));
  const SP={front:['head',[0,15.3,12.05],[-.32,0,0],1],barre:['head',[0,15.3,12.05],[-.32,0,0],1],cornes:['head',[0,15.3,12.05],[-.32,0,0],1],oblique:['head',[4.7,8.5,11.85],[-.05,.36,-.42],1.02],
   tete:['head',[0,20.95,10.75],[-.85,0,0],.86],cou:['chest',[0,5.75,8.45],[.3,0,0],.6],taille:['spine',[0,-.4,7.9],[0,0,0],.68],bras:['armL',[4.45,-3,0],[0,Math.PI/2,0],.36]}[bs];
- if(SP){sym.position.set(...pk3(SP[0],SP[1]));sym.rotation.set(...SP[2]);sym.scale.setScalar(SP[3]*pks(SP[0]));bones[BI[SP[0]]].add(sym)}
- else if(h.acc==='kage'){sym.material.map=signTexture('k:'+(L.hatK||'火'));sym.position.set(...pk3('head',[0,24.6,8.4]));sym.rotation.set(-1.02,0,0);sym.scale.set(1.25*pks('head'),2.2*pks('head'),1);bones[BI.head].add(sym)} // kanji du village sur le chapeau de Kage
+ if(SP){sym.position.set(...SP[1]);sym.rotation.set(...SP[2]);sym.scale.setScalar(SP[3]);bones[BI[SP[0]]].add(sym)}
+ else if(h.acc==='kage'){sym.material.map=signTexture('k:'+(L.hatK||'火'));sym.position.set(0,24.6,8.4);sym.rotation.set(-1.02,0,0);sym.scale.set(1.25,2.2,1);bones[BI.head].add(sym)} // kanji du village sur le chapeau de Kage
  else{sym.visible=false;bones[BI.head].add(sym)}
  // symbole dans le dos (ou kanji du haori de Hokage) : sur la cape, le haori ou le haut
- let bsym=null;const bk=L.haori&&L.hkan?'h:'+L.hkan:L.sym?'s:'+L.sym:'';
+ let bsym=null;const bk=L.sym?'s:'+L.sym:L.haori&&L.hkan?'h:'+L.hkan:''; // un symbole choisi passe avant le kanji du Hokage
  if(bk){bsym=new T.Mesh(N3.signGeo||(N3.signGeo=new T.PlaneGeometry(1,1)),new T.MeshBasicMaterial({map:signTexture(bk),transparent:true,depthWrite:false}));const bw=L.bw||1;
-  if(L.cape&&!L.haori){bsym.position.set(0,-7.5,-1.05);bsym.scale.set(8.5*bw,8.5,1);bones[BI.cape].add(bsym)}
-  else{const HW=L.hov?(L.vest||L.armor||L.samurai||L.robe||L.belly?1.14:1.04):1,zb=L.haori?7.55*HW:L.samurai||L.robe?7.15:L.vest?6.85:L.armor?6.4:5.95,hk=bk[0]==='h';
-   bsym.position.set(0,hk?-.5:1.4,-zb*(hk?1:bw));bsym.scale.set((hk?5.6:7.4)*bw,hk?11:7.4,1);bones[BI.chest].add(bsym)}
+  if(L.cape&&!L.haori){bsym.position.set(0,-6.5,L.robe&&!L.rshort?-2.45:-.95);bsym.scale.set(9*bw,9,1);bones[BI.cape].add(bsym)}
+  else{const HW=L.hov?(L.vest||L.armor||L.samurai||L.robe||L.belly?1.14:1.04):1,zb=L.haori?9.45*HW:L.samurai||L.robe?8.95:L.vest?8.55:L.armor?8.4:7.45,hk=bk[0]==='h';
+   bsym.position.set(0,hk?-.6:1.75,-zb*(1+bw)/2);bsym.scale.set((hk?7:9.25)*bw,hk?13.75:9.25,1);bones[BI.chest].add(bsym)}
   bsym.rotation.set(0,Math.PI,0)}
  N3.sc.add(grp);
  const cur={};for(const [n] of BONES)cur[n]=new T.Quaternion();
- return{grp,mesh,out,mat,bones,skel,key,look:L,G,cur,rootP:new T.Vector3(),rootR:new T.Euler(),yaw:Math.PI/2-(u.aim||0),used:0,face,sym,bsym,k,lk:LEG1*(L.bh||1)/LEG0}}
+ return{grp,mesh,out,mat,bones,skel,key,look:L,G,cur,rootP:new T.Vector3(),rootR:new T.Euler(),yaw:Math.PI/2-(u.aim||0),used:0,face,sym,bsym,k}}
 
 // visage dessiné sur une petite toile (même style que le 2D : grands yeux à reflet, Sharingan, Byakugan…)
 function faceTexture(L,mode='o'){const h=L.head,key=[h.eye,h.acc,h.kaguya,h.brows,h.skin,mode,h.face,h.eyeT,h.bs==='oblique',h.face==='rides'||h.face==='barbe'?h.hair:''].join('|');if(N3.faceTex.has(key))return N3.faceTex.get(key);
@@ -262,21 +257,19 @@ function faceTexture(L,mode='o'){const h=L.head,key=[h.eye,h.acc,h.kaguya,h.brow
   if(mode==='c'){x.strokeStyle='#1a1410';x.lineWidth=5;x.lineCap='round';x.beginPath();x.moveTo(cx-2.4*U,ey+.4*U);x.quadraticCurveTo(cx,ey-1*U,cx+2.4*U,ey+.4*U);x.stroke();continue}
   if(mode==='s'){x.strokeStyle='#1a1410';x.lineWidth=3.5;x.beginPath();for(let k=0;k<26;k++){const a=k*.55,r=(k/26)*2.6*U;x.lineTo(cx+Math.cos(a*s)*r,ey+Math.sin(a*s)*r)}x.stroke();continue}
   if(mode==='x'){x.strokeStyle='#1a1410';x.lineWidth=5;x.lineCap='round';x.beginPath();x.moveTo(cx-2*U,ey-2*U);x.lineTo(cx+2*U,ey+2*U);x.moveTo(cx+2*U,ey-2*U);x.lineTo(cx-2*U,ey+2*U);x.stroke();continue}
-  if(eyeSpecial(x,h,cx+s*.3*U,ey,U*1.04,4.6))continue; // traits épaissis : dôjutsu lisibles en petit
+  if(eyeSpecial(x,h,cx+s*.3*U,ey,U,3.2))continue;
   x.fillStyle='#fff';x.strokeStyle='#1a1410';x.lineWidth=4;x.beginPath();x.ellipse(cx,ey,2.7*U,3.3*U,0,0,7);x.fill();x.stroke();
   const eye=h.eye||'#2a2a38',ix=cx+s*.5*U;
   if(h.eye==='#e8e8f8'){x.fillStyle='#d6d6ec';x.beginPath();x.ellipse(ix,ey+.3*U,1.9*U,2.6*U,0,0,7);x.fill();x.strokeStyle='#a8aed0';x.lineWidth=2;x.stroke()}
   else{x.fillStyle=eye;x.beginPath();x.ellipse(ix,ey+.3*U,1.8*U,2.5*U,0,0,7);x.fill();
-   if(h.eye==='#e01a1a'){x.fillStyle='#111';x.beginPath();x.arc(ix,ey+.4*U,.65*U,0,7);x.fill();x.strokeStyle='#111';x.lineWidth=3;x.beginPath();x.arc(ix,ey+.4*U,1.25*U,0,7);x.stroke();for(let i=0;i<3;i++){const a=i*2.09+.5;x.beginPath();x.arc(ix+Math.cos(a)*1.25*U,ey+.4*U+Math.sin(a)*1.25*U,.55*U,0,7);x.fill()}}
+   if(h.eye==='#e01a1a'){x.fillStyle='#111';x.beginPath();x.arc(ix,ey+.4*U,.6*U,0,7);x.fill();x.strokeStyle='#111';x.lineWidth=1.5;x.beginPath();x.arc(ix,ey+.4*U,1.2*U,0,7);x.stroke();for(let i=0;i<3;i++){const a=i*2.09+.5;x.beginPath();x.arc(ix+Math.cos(a)*1.2*U,ey+.4*U+Math.sin(a)*1.2*U,.38*U,0,7);x.fill()}}
    else{x.fillStyle='#0a0a12';x.beginPath();x.ellipse(ix,ey+.6*U,.9*U,1.4*U,0,0,7);x.fill()}}
   x.fillStyle='#fff';x.beginPath();x.arc(ix-.7*U,ey-1*U,.75*U,0,7);x.fill();x.beginPath();x.arc(ix+.6*U,ey+1.2*U,.35*U,0,7);x.fill()}
  if(h.brows){x.fillStyle='#111';for(const s of[-1,1])x.fillRect(ex+s*4.5*U-3*U,hy-4.2*U,6*U,2.2*U)}
  else if(h.face!=='gaara'){x.strokeStyle='#3a2a20';x.lineWidth=4;x.lineCap='round';for(const s of[-1,1]){x.beginPath();x.moveTo(ex+s*2.4*U,hy-2.6*U);x.lineTo(ex+s*6.2*U,hy-3.1*U);x.stroke()}}
  if(h.kaguya){x.fillStyle='#c22';for(const s of[-1,1]){x.beginPath();x.arc(ex+s*3*U,hy-4.4*U,.8*U,0,7);x.fill()}}
- x.strokeStyle='#5a3020';x.lineWidth=4;x.lineCap='round';x.beginPath();x.moveTo(ex-1.6*U,hy+6.8*U);x.quadraticCurveTo(ex,hy+7.5*U,ex+1.6*U,hy+6.8*U);x.stroke();
+ x.strokeStyle='#5a3020';x.lineWidth=3.5;x.lineCap='round';x.beginPath();x.moveTo(ex-1.5*U,hy+6.8*U);x.quadraticCurveTo(ex,hy+7.4*U,ex+1.5*U,hy+6.8*U);x.stroke();
  faceMarks(x,h,ex,hy,ey,U,3.2,1);
- // bas du visage resserré sous les yeux : bouche et marques des joues remontent sur la partie visible de la tête (vue plongeante)
- {const c2=document.createElement('canvas');c2.width=256;c2.height=200;const y2=c2.getContext('2d'),e0=Math.round(hy+5*U);y2.drawImage(c,0,0);x.clearRect(0,e0,256,200-e0);x.drawImage(c2,0,e0,256,200-e0,0,e0,256,(200-e0)*.62)}
  if(h.acc==='anbu'){x.fillStyle='#f2f0ea';x.strokeStyle='#1a1410';x.lineWidth=4;x.beginPath();x.ellipse(ex,hy+1.6*U,10.4*U,9.6*U,0,0,7);x.fill();x.stroke();x.fillStyle='#1a1414';for(const s of[-1,1]){x.beginPath();x.ellipse(ex+s*4*U,ey-.6*U,2*U,1.3*U,0,0,7);x.fill()}
   x.strokeStyle='#c02a2a';x.lineWidth=5;x.lineCap='round';for(const s of[-1,1]){x.beginPath();x.moveTo(ex+s*2*U,hy-5*U);x.lineTo(ex+s*3.6*U,hy-1.6*U);x.moveTo(ex+s*6.6*U,hy+4*U);x.lineTo(ex+s*4.6*U,hy+7*U);x.stroke()}}
  accFace(x,h,ex,hy,ey,U,4);
@@ -306,16 +299,16 @@ const ezo=x=>1-(1-x)*(1-x),ezio=x=>x<.5?2*x*x:1-(-2*x+2)**2/2,bump=x=>Math.sin(M
 // petites aides de pose pour les animations nommées
 const pz=(P,b,x=0,y=0,z=0)=>{const o=E3(P,b);o.x=x;o.y=y;o.z=z;return o},padd=(P,b,x=0,y=0,z=0)=>{const o=E3(P,b);o.x+=x;o.y+=y;o.z+=z;return o};
 // mains jointes pour les mudras : 12 signes (bras et avant-bras gauche/droit), comme les signes du 2D
-const MUDP=[[-.36,-1.17,-2.03,-.36,1.17,-2.03],[-.5,-.77,-1.8,-.43,.58,-2.02],[-.48,-.56,-1.44,-.48,.56,-1.44],[-.64,-.72,-1.75,-.64,.72,-1.75],[-.79,-.41,-2.4,-.5,.45,-1.35],[-.62,-.9,-1.98,-.62,.9,-1.98],
- [-.46,-.66,-1.63,-.51,.8,-1.94],[-.56,-.43,-1.07,-.56,.43,-1.07],[-.88,-.42,-2.49,-.88,.42,-2.49],[-.29,-1.23,-1.95,-.29,1.23,-1.95],[-.52,-.51,-1.58,-.71,.42,-2.27],[-.47,-.54,-1.5,-.5,.79,-1.93]];
+const MUDP=[[-1.25,-.62,-1.75,-1.25,.62,-1.75],[-1.2,-.5,-1.55,-1.05,.7,-1.9],[-.95,-.6,-1.35,-.95,.6,-1.35],[-1.35,-.45,-1.4,-1.35,.45,-1.4],[-1.5,-.7,-1.9,-.9,.4,-1.4],[-1.45,-.25,-1.6,-1.45,.25,-1.6],
+ [-1,-.65,-1.5,-1.25,.4,-1.7],[-.9,-.55,-1.1,-.9,.55,-1.1],[-1.6,-.6,-1.95,-1.6,.6,-1.95],[-1.2,-.8,-1.6,-1.2,.8,-1.6],[-1.05,-.3,-1.5,-1.4,.7,-1.85],[-.95,-.5,-1.45,-1.2,.65,-1.7]];
 function basePose(u,t,rec,P){const run=u.moving?(u.dash||u.haste>0||u.sprint?2:1):0,w=u.walk||0,air=(u.z||0)>4||u.airT>0;
  P.root={x:0,y:0,z:0};P.rootR={x:0,y:0,z:0};
- if(u.dead){const d=Math.min(1,(u.deadT||0)*4),Lk=u.ch.look;P.rootR.x=-1.45*ezo(d);P.root.y=2*d;P.root.z=22*(Lk.bh||1)*ezo(d);pz(P,'armL',-.4*d,0,1.1*d);pz(P,'armR',-.4*d,0,-1.1*d);pz(P,'head',-.3*d);return P}
+ if(u.dead){const d=Math.min(1,(u.deadT||0)*4);P.rootR.x=-1.45*ezo(d);P.root.y=2*d;pz(P,'armL',-.4*d,0,1.1*d);pz(P,'armR',-.4*d,0,-1.1*d);pz(P,'head',-.3*d);return P}
  // repos : respiration, bras un peu écartés
  const br=Math.sin(t*2.1);pz(P,'chest',.03*br);pz(P,'head',-.04*br,Math.sin(t*.7)*.08);pz(P,'armL',.05*br,0,.14);pz(P,'armR',.05*br,0,-.14);pz(P,'foreL',-.25);pz(P,'foreR',-.25);P.root.y=.35*br;
- if(run){const a=run>1?.6:.45,s=Math.sin(w),c=Math.cos(w);
+ if(run){const a=run>1?1.05:.78,s=Math.sin(w),c=Math.cos(w);
   pz(P,'thighL',-s*a,0,0);pz(P,'thighR',s*a,0,0);pz(P,'shinL',.25+Math.max(0,Math.sin(w-1.1))*1.25);pz(P,'shinR',.25+Math.max(0,Math.sin(w+Math.PI-1.1))*1.25);
-  pz(P,'footL',-.12*s);pz(P,'footR',.12*s);P.root.y=0;pz(P,'hips',0,s*.12);
+  pz(P,'footL',-.2*s);pz(P,'footR',.2*s);P.root.y=Math.abs(c)*1.6-.6;pz(P,'hips',0,s*.16);
   if(run>1){pz(P,'chest',.5,-s*.12);pz(P,'spine',.18);pz(P,'head',-.42);pz(P,'armL',.95,0,.32);pz(P,'armR',.95,0,-.32);pz(P,'foreL',-.15);pz(P,'foreR',-.15);pz(P,'cape',-.9);pz(P,'cape2',-.35)}
   else{pz(P,'chest',.14,-s*.14);pz(P,'armL',s*.65,0,.12);pz(P,'armR',-s*.65,0,-.12);pz(P,'foreL',-.7-.25*Math.max(0,-s));pz(P,'foreR',-.7-.25*Math.max(0,s));pz(P,'cape',-.35-Math.abs(s)*.1);pz(P,'cape2',-.2)}
   pz(P,'hair',.3+Math.sin(w*2)*.1);pz(P,'band',.5+Math.sin(w*2)*.15)}
@@ -346,15 +339,15 @@ function comboPose(u,P,cs,ph,k){const pl=ph,fs=1;
  else{P.root.y=11*bump(pl);pz(P,'thighL',-1.6*pl);pz(P,'shinL',.15);pz(P,'thighR',-.6);pz(P,'shinR',1.6);pz(P,'chest',-.45*pl);pz(P,'armL',.8,0,.6);pz(P,'armR',.8,0,-.6);P.rootR.x=-.25*pl}}
 function actionPose(u,t,rec,P){const k=u.ch.look.weapon.k;
  if(u.dead)return P;
- if(u.block){P.root.y=-2;pz(P,'armL',-1.33,0,-.51);pz(P,'foreL',-1.4);pz(P,'armR',-1.33,0,.51);pz(P,'foreR',-1.4);pz(P,'chest',.15);pz(P,'thighL',-.3);pz(P,'shinL',.5);pz(P,'shinR',.4)}
+ if(u.block){P.root.y=-2;pz(P,'armL',-1.35,0,-.55);pz(P,'foreL',-1.25);pz(P,'armR',-1.35,0,.55);pz(P,'foreR',-1.25);pz(P,'chest',.15);pz(P,'thighL',-.3);pz(P,'shinL',.5);pz(P,'shinR',.4)}
  if(u.chk){P.root.y=-3.5+Math.sin(t*40)*.25;pz(P,'thighL',-.1,0,.42);pz(P,'thighR',-.1,0,-.42);pz(P,'shinL',.55);pz(P,'shinR',.55);pz(P,'armL',.15,0,.55);pz(P,'armR',.15,0,-.55);pz(P,'foreL',-.5);pz(P,'foreR',-.5);pz(P,'chest',-.12);pz(P,'head',-.18)}
  // épuisé (chakra à sec) : dos voûté, tête basse, bras ballants, souffle court
  if(u.exh&&!u.chk&&!u.cast&&!u.block&&!(u.swing>0)&&!u.dash){const b=Math.sin(t*7);padd(P,'chest',.28+b*.05);padd(P,'head',.22+b*.06);pz(P,'armL',.2,0,.22);pz(P,'armR',.2,0,-.22);pz(P,'foreL',-.35);pz(P,'foreR',-.35);P.root.y=(P.root.y||0)-2+b*.6}
  const md=typeof mudraOf==='function'?mudraOf(u):null;
  if(md){const m=MUDP[(MUDP.length+((md.sg&&SIGNS.indexOf(md.sg))||0))%MUDP.length],snap=md.q<.25?Math.sin(md.q/.25*Math.PI)*.18:0;
   pz(P,'armL',m[0]-snap,0,m[1]);pz(P,'foreL',m[2]);pz(P,'armR',m[3]-snap,0,m[4]);pz(P,'foreR',m[5]);pz(P,'head',.22);pz(P,'chest',.08);P.root.y=-1.2}
- else if(u.cast){pz(P,'armL',-.47,0,-.78);pz(P,'foreL',-1.92);pz(P,'armR',-.47,0,.78);pz(P,'foreR',-1.92)}
- if(u.flame){pz(P,'armL',-1.3,0,-.6);pz(P,'foreL',-2.25);pz(P,'armR',-1.3,0,.6);pz(P,'foreR',-2.25);pz(P,'chest',.25+Math.sin(t*20)*.03);pz(P,'head',.1);P.root.y=-1.5}
+ else if(u.cast){pz(P,'armL',-1.2,0,-.5);pz(P,'foreL',-1.6);pz(P,'armR',-1.2,0,.5);pz(P,'foreR',-1.6)}
+ if(u.flame){pz(P,'armL',-1.3,0,-.35);pz(P,'foreL',-2.3);pz(P,'armR',-1.3,0,.35);pz(P,'foreR',-2.3);pz(P,'chest',.25+Math.sin(t*20)*.03);pz(P,'head',.1);P.root.y=-1.5}
  if(u.chan){pz(P,'armL',-2.9,0,.35);pz(P,'armR',-2.9,0,-.35);pz(P,'foreL',-.3);pz(P,'foreR',-.3);pz(P,'head',-.4);pz(P,'chest',-.2)}
  if(u.spin){P.rootR.y=t*22;pz(P,'armL',-1.45,0,1.3);pz(P,'armR',-1.45,0,-1.3);pz(P,'foreL',-.1);pz(P,'foreR',-.1)}
  if(u.thrT>0){const e=1-u.thrT/.2,a=e<.35?e/.35:1-(e-.35)/.65*.5;pz(P,'armR',-3.3+2*a,0,-.15);pz(P,'foreR',-1.4+1.3*a);pz(P,'chest',.1,.45*a-.2);pz(P,'armL',-.5,0,.4)}
@@ -368,22 +361,10 @@ function actionPose(u,t,rec,P){const k=u.ch.look.weapon.k;
  return P}
 // ----- mise à jour du modèle (pose lissée, orientation, éclat blanc) puis rendu de l'atlas
 const _Q=typeof THREE!=='undefined'?new THREE.Quaternion():null,_E=typeof THREE!=='undefined'?new THREE.Euler():null;
-// semelle (talon, pointe) dans le repère du pied : sert au calage au sol
-const SOLE=[[0,-3.2,-2.6],[0,-3.2,6.4]];let _M1=null,_M2=null,_V3=null;
-// hauteur du point le plus bas des semelles (repère du ninja), le bassin étant posé en y = 0
-function soleLow(rec){if(!_M1){_M1=new THREE.Matrix4();_M2=new THREE.Matrix4();_V3=new THREE.Vector3()}const B=rec.bones,rb=B[0];let lo=1e9;
- for(const sd of['L','R']){_M1.compose(_V3.set(rec.rootP.x,0,rec.rootP.z),rb.quaternion,_ONE);for(const n of['hips','thigh'+sd,'shin'+sd,'foot'+sd]){const b=B[BI[n]];_M2.compose(b.position,b.quaternion,_ONE);_M1.multiply(_M2)}
-  for(const p of SOLE){_V3.set(p[0],p[1],p[2]).applyMatrix4(_M1);if(_V3.y<lo)lo=_V3.y}}return lo}
-const _ONE=typeof THREE!=='undefined'?new THREE.Vector3(1,1,1):null,GSINK=/melt|sink|dive|burrow|_hide|_under/;
-function poseModel(u,rec,dt,t){const P={};basePose(u,t,rec,P);actionPose(u,t,rec,P);const y0=P.root.y||0;{const y=y0,rot=Math.abs(P.rootR.x||0)>.3||Math.abs(P.rootR.z||0)>.3;const HR=1.18*(rec.look&&rec.look.bh||1);if(rot&&!u.dead){P.root.y=y*HR;P.root.z=(P.root.z||0)*HR}else P.root.y=y<0?y*(rec.lk||1):y*1.1} // corps qui bascule (roulade, vrille) : décalages pensés pour l'ancien corps, agrandis comme le corps
- // robe longue : les jambes balancent moins et la jupe suit la jambe avancée (plus de jambe qui traverse la robe)
- const L=rec.look;if(L&&L.robe&&!L.rshort){const tl=P.thighL?P.thighL.x:0,tr=P.thighR?P.thighR.x:0;if(P.thighL)P.thighL.x*=.55;if(P.thighR)P.thighR.x*=.55;pz(P,'skirt',Math.max(-.85,Math.min(.3,Math.min(tl,tr)*.5+Math.max(tl,tr)*.1)))}
+function poseModel(u,rec,dt,t){const P={};basePose(u,t,rec,P);actionPose(u,t,rec,P);
  for(const [n] of BONES){if(n==='root')continue;const o=P[n],b=rec.bones[BI[n]],q=rec.cur[n];_E.set(o?o.x:0,o?o.y:0,o?o.z:0);_Q.setFromEuler(_E);q.slerp(_Q,1-Math.exp(-(BRATE[n]||16)*dt));b.quaternion.copy(q)}
- const rb=rec.bones[0],k=1-Math.exp(-24*dt);rec.rootP.x+=((P.root.x||0)-rec.rootP.x)*k;rec.rootP.z+=((P.root.z||0)-rec.rootP.z)*k;
+ const rb=rec.bones[0],k=1-Math.exp(-24*dt);rec.rootP.x+=((P.root.x||0)-rec.rootP.x)*k;rec.rootP.y+=((P.root.y||0)-rec.rootP.y)*k;rec.rootP.z+=((P.root.z||0)-rec.rootP.z)*k;rb.position.copy(rec.rootP);
  const R=P.rootR;rec.rootR.x+=(R.x-rec.rootR.x)*k;rec.rootR.z+=(R.z-rec.rootR.z)*k;rec.rootR.y=R.y?R.y:rec.rootR.y*(1-k);rb.rotation.set(rec.rootR.x,rec.rootR.y,rec.rootR.z);
- // calage au sol : au sol (pas en l'air, pas de saut ni de bascule, pas de fonte dans le sol voulue), le pied le plus bas touche le sol (ni pieds qui s'enfoncent, ni course qui flotte)
- const ak=u.anim&&u.anim.t>0?String(u.anim.k):'',air=(u.z||0)>4||u.airT>0,gm=!u.dead&&!air&&!GSINK.test(ak)&&Math.abs(rec.rootR.x)<.3&&Math.abs(rec.rootR.z)<.3&&y0<=.5;
- if(gm){const ty=-soleLow(rec),kg=1-Math.exp(-40*dt);rec.rootP.y+=(ty-rec.rootP.y)*kg}else rec.rootP.y+=((P.root.y||0)-rec.rootP.y)*k;rb.position.copy(rec.rootP);
  // orientation : le ninja se tourne vers sa visée (au plus court), un peu en douceur
  const a=u.aim||0,want=Math.PI/2-Math.atan2(Math.sin(a)*.7+.42,Math.cos(a));let d=want-rec.yaw;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;rec.yaw+=d*(1-Math.exp(-30*dt));
  const f=u.flash>0&&!u.dead?Math.min(1,u.flash/.12):0;rec.mat.emissive.setRGB(f,f,f);rec.mat.emissiveIntensity=f?1:0;
@@ -426,13 +407,13 @@ Object.assign(ANIM,{
  hammer:(P,e)=>ANIM.slam(P,e),
  stomp:(P,e)=>{const up=e<.45,k=up?e/.45:(e-.45)/.55;pz(P,'thighR',up?-1.5*ezo(k):-1.5+1.5*ezo(k));pz(P,'shinR',up?1.2*k:1.2-1.2*k);pz(P,'armL',-.4,0,.9);pz(P,'armR',-.4,0,-.9);pz(P,'chest',up?-.2:.3);P.root.y=up?0:-3*ezo(k)},
  spin:(P,e)=>{P.rootR.y=Math.PI*2*ezio(e);pz(P,'armL',-1.4,0,1.25);pz(P,'armR',-1.4,0,-1.25);pz(P,'foreL',-.1);pz(P,'foreR',-.1);P.root.y=1.5},
- breath:(P,e)=>{const inh=e<.3,k=inh?e/.3:1;pz(P,'armL',-1.3,0,-.6);pz(P,'foreL',-2.25);pz(P,'armR',-1.3,0,.6);pz(P,'foreR',-2.25);pz(P,'chest',inh?-.35*k:.35);pz(P,'head',inh?-.3*k:.15);P.root.y=inh?1:-2;P.root.z=inh?-3*k:3},
+ breath:(P,e)=>{const inh=e<.3,k=inh?e/.3:1;pz(P,'armL',-1.35,0,-.35);pz(P,'foreL',-2.3);pz(P,'armR',-1.35,0,.35);pz(P,'foreR',-2.3);pz(P,'chest',inh?-.35*k:.35);pz(P,'head',inh?-.3*k:.15);P.root.y=inh?1:-2;P.root.z=inh?-3*k:3},
  summon:(P,e)=>{const k=Math.min(1,e/.35);P.root.y=-9*k;pz(P,'thighL',-1.2*k);pz(P,'shinL',2*k);pz(P,'thighR',.3*k);pz(P,'shinR',1.8*k);pz(P,'chest',.7*k);pz(P,'armR',-1.1*k,0,.1);pz(P,'foreR',-.2);pz(P,'armL',.2,0,.5);pz(P,'head',-.2)},
  leap:(P,e)=>{P.root.y=26*bump(e);pz(P,'thighL',-1.1*bump(e));pz(P,'shinL',1.6*bump(e));pz(P,'thighR',-.6*bump(e));pz(P,'shinR',1.3*bump(e));pz(P,'armL',-2.4*bump(e),0,.5);pz(P,'armR',-2.4*bump(e),0,-.5)},
  point:(P,e)=>{const k=Math.min(1,e/.25);pz(P,'armR',-1.62*k,0,.08);pz(P,'foreR',0);pz(P,'chest',.05,.3*k);pz(P,'armL',-.2,0,.3)},
  raise:(P,e)=>{const k=Math.min(1,e/.3);pz(P,'armR',-3.05*k,0,.15);pz(P,'foreR',-.1);pz(P,'armL',-.3,0,.4);pz(P,'head',-.35*k);pz(P,'chest',-.15*k)},
  clap:(P,e)=>{const k=e<.5?e/.5:1;pz(P,'armL',-1.45,0,-.55*k+.6*(1-k));pz(P,'armR',-1.45,0,.55*k-.6*(1-k));pz(P,'foreL',-.4);pz(P,'foreR',-.4)},
- pray:(P,e)=>{pz(P,'armL',-.75,0,-1.23);pz(P,'armR',-.75,0,1.23);pz(P,'foreL',-2.11);pz(P,'foreR',-2.11);pz(P,'head',.3);P.root.y=-1},
+ pray:(P,e)=>{pz(P,'armL',-1.2,0,-.6);pz(P,'armR',-1.2,0,.6);pz(P,'foreL',-1.9);pz(P,'foreR',-1.9);pz(P,'head',.3);P.root.y=-1},
  kickup:(P,e)=>{const k=bump(e);pz(P,'thighR',-2.3*k);pz(P,'shinR',.1);pz(P,'chest',-.45*k);pz(P,'armL',-.3,0,.8);pz(P,'armR',-.3,0,-.8);P.root.y=4*k},
  uppercut:(P,e)=>{const k=ezo(Math.min(1,e/.45));pz(P,'armR',-.4-2.4*k,0,.1);pz(P,'foreR',-.9+.7*k);P.root.y=-4+9*k;pz(P,'chest',-.2*k,.2)},
  throw2:(P,e)=>{const up=e<.35,k=up?e/.35:(e-.35)/.65;const a=up?-3.4*k:-3.4+2*ezo(k);pz(P,'armL',a,0,-.15);pz(P,'armR',a,0,.15);pz(P,'foreL',-.4);pz(P,'foreR',-.4);pz(P,'chest',up?-.3:.35)},
@@ -445,7 +426,7 @@ Object.assign(ANIM,{
  seal:(P,e)=>{const k=Math.min(1,e/.25);pz(P,'armR',-1.6*k,0,.1);pz(P,'foreR',-.05);pz(P,'armL',-1.1*k,0,-.45);pz(P,'foreL',-1.7);pz(P,'chest',.2*k,.25*k);P.root.z=5*k},
  channel:(P,e,u,t)=>{pz(P,'armL',-2.9,0,.4);pz(P,'armR',-2.9,0,-.4);pz(P,'foreL',-.3);pz(P,'foreR',-.3);pz(P,'head',-.4);P.root.y=Math.sin(t*20)*.4},
  dance:(P,e)=>{P.rootR.y=Math.PI*4*ezio(e);pz(P,'armL',-1.7,0,1);pz(P,'armR',-.9,0,-1.2);pz(P,'thighL',-.5);pz(P,'shinL',.6);P.root.y=2*bump(e*2%1)},
- guard:(P,e)=>{P.root.y=-2;pz(P,'armL',-1.33,0,-.51);pz(P,'foreL',-1.4);pz(P,'armR',-1.33,0,.51);pz(P,'foreR',-1.4)},
+ guard:(P,e)=>{P.root.y=-2;pz(P,'armL',-1.35,0,-.55);pz(P,'foreL',-1.25);pz(P,'armR',-1.35,0,.55);pz(P,'foreR',-1.25)},
  swirl:(P,e,u,t)=>{const a=t*10;pz(P,'armL',-1.5+Math.sin(a)*.6,0,.6+Math.cos(a)*.4);pz(P,'armR',-1.5+Math.sin(a+Math.PI)*.6,0,-.6-Math.cos(a)*.4)},
  kneel:(P,e)=>ANIM.summon(P,1),
 });
