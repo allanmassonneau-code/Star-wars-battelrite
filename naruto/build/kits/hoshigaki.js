@@ -2,30 +2,27 @@
 // Identité : le tank qui affame. Samehada, le sabre vivant, arrache le chakra ; le chakra volé soigne (trait) ;
 // un ennemi à sec devient une PROIE (+12 % de tes dégâts, les requins le traquent partout).
 // Combo signature : Prison aqueuse ou Requins voraces vident la jauge → la proie ne peut plus rien lancer → Samehada la dévore.
-// [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
+// [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel] (format v5)
 const HS_D={
  bite:'Samehada s\'abat devant toi (petit élan) : 12 dégâts et arrache 3 de chakra',
  sharks:'3 requins d\'eau en éventail traquent l\'ennemi devant eux (une proie, partout) : 7 dégâts et 2 de chakra volés chacun',
  prison:'Bulle d\'eau : le 1er ennemi touché (8 dégâts) est emprisonné 0,9 s, Samehada lui arrache 9 de chakra, puis la bulle éclate (6 dégâts)',
  scales:'Les écailles de Samehada te couvrent 3 s : −25 % de dégâts subis ; qui te frappe au corps à corps se blesse (6) et perd 4 de chakra',
- fuse:'Fusion avec Samehada 6 s : −20 % de dégâts subis, +15 % de dégâts, insensible aux ralentissements ; tes coups de base volent 3 de chakra',
+ fuse:'Fusion avec Samehada 6 s : écailles (−25 % de dégâts subis), +15 % de dégâts, insensible aux ralentissements ; tes coups de base volent 3 de chakra. Une mer t\'entoure et te suit (rayon 150) : ennemis trempés et attirés ; toutes les 0,75 s, un requin mord (proie d\'abord) : 7 dégâts et 3 de chakra',
  throw:'Samehada tournoie en ligne et revient : elle traverse les ennemis (16 dégâts et 5 de chakra volés à chaque passage)',
- swim:'Tu plonges et nages jusqu\'au curseur (intouchable 0,3 s) ; tu jaillis : 10 dégâts, ralentit et vole 4 de chakra autour',
+ swim:'Tu plonges et nages jusqu\'au curseur (260 max, intouchable 0,3 s) ; en jaillissant, tu ralentis les ennemis proches et leur voles 2 de chakra',
  wave:'Tu files sur une vague vers le curseur ; le reflux part derrière toi : 8 dégâts, repousse et trempe',
  dai:'Requin géant en ligne : il avale le 1er ennemi (10 dégâts ; étourdi 0,8 s, 12 de chakra volés) puis le recrache (34 dégâts, repousse ; 12 dégâts autour)',
  sea:'Une mer t\'entoure 5 s et te suit : ennemis trempés et attirés ; toutes les 0,5 s, un requin mord (proie d\'abord) : 7 dégâts et 3 de chakra'};
-KIT('c18',[
- [1,'D','x.hs_bite','Samehada : Morsure',HS_D.bite,'steel'],
- [2,'C','x.hs_swim','Nage du requin',HS_D.swim,'water'],
- [3,'B','x.hs_prison','Suiton : Prison aqueuse',HS_D.prison,'water'],
- [4,'C','x.hs_scales','Écailles de Samehada',HS_D.scales,'steel'],
- [5,'A','x.hs_dai','Suiton : Daikôdan',HS_D.dai,'water'],
- [1,'C','x.hs_sharks','Suiton : Requins voraces',HS_D.sharks,'water'],
- [4,'A','x.hs_fuse','Fusion avec Samehada',HS_D.fuse,'water'],
- [1,'A','x.hs_throw','Samehada déchaînée',HS_D.throw,'steel'],
- [2,'B','x.hs_wave','Suiton : Bakusui',HS_D.wave,'water'],
- [5,'S','x.hs_sea','Suiton : Mer des requins',HS_D.sea,'water'],
+KIT('c18',[ // arbre de clan (v5) : 1 jutsu par rang
+ ['D','x.hs_bite','Samehada : Morsure',HS_D.bite,'steel'],
+ ['C','x.hs_sharks','Suiton : Requins voraces',HS_D.sharks,'water'],
+ ['B','x.hs_prison','Suiton : Prison aqueuse',HS_D.prison,'water'],
+ ['A','x.hs_dai','Suiton : Daikôdan',HS_D.dai,'water'],
+ ['S','x.hs_fuse','Fusion avec Samehada',HS_D.fuse,'water'],
 ]);
+// dash (Espace) : Nage du requin (jaillissement sans dégâts)
+DASHC[18]={src:'x.hs_swim',n:'Nage du requin',d:HS_D.swim,vfx:'water',cd:7};
 // style de combat propre : le sabre vivant (et le Taijutsu, comme Kisame à mains nues)
 STYLES.push(['Samehada','Sabre vivant, lent et large ; chaque coup qui touche arrache 1 de chakra ; 3e coup : balayage très large ; 5e : Samehada mord (4 de chakra)','x.hs_style','steel','sword',[18],1.2,1.06]);
 STYLES.find(s=>s[0]==='Taijutsu')[5].push(18);
@@ -77,16 +74,17 @@ Object.assign(NAT,{
  // ---------- Écailles de Samehada (C) : armure d'écailles (gérée par le trait) ----------
  hs_scales:SP('Écailles de Samehada',HS_D.scales,12,{ai:DEF},(u)=>{hs_S('saber',u);hs_S('deflect',u);u.hs_scl=3;anim(u,'hs_guard',.55);jx({jfx:'hs_scaleUp',ui:hs_i(u),x:u.x,y:u.y,t:.5,m:.5});sparks(u.x,u.y,HSC.lt,10)}),
  // ---------- Fusion avec Samehada (A) : forme d'homme-requin (gérée par le trait) ----------
- hs_fuse:SP('Fusion avec Samehada',HS_D.fuse,18,{ai:SELF(200,.7)},(u)=>{S('water',u);hs_S('roar',u);u.hs_fus=6;u.slowImm=Math.max(u.slowImm||0,6);u.slow=0;anim(u,'hs_fuse',.8);
+ hs_fuse:SP('Fusion avec Samehada',HS_D.fuse,20,{ai:SELF(200,.75)},(u)=>{S('water',u);hs_S('roar',u);hs_S('heavy',u);u.hs_fus=6;u.slowImm=Math.max(u.slowImm||0,6);u.slow=0;anim(u,'hs_fuse',.8);
+  for(const x of aux)if(x.type==='hs_sea'&&x.owner===u)x.t=Math.min(x.t,.25);aux.push({type:'hs_sea',x:u.x,y:u.y,r:150,t:6,m:6,team:u.team,owner:u,ui:hs_i(u),vfx:'water',k:.6,n:0,iv:.75,fu:1});jx({jfx:'hs_rise',x:u.x,y:u.y,r:150,t:.9,m:.9});jx({jfx:'hs_scaleUp',ui:hs_i(u),x:u.x,y:u.y,t:.5,m:.5});
   jx({jfx:'hs_fuseFx',ui:hs_i(u),x:u.x,y:u.y,t:.8,m:.8});if(near(u.x,u.y))shake=Math.max(shake,.15);say(u,'FUSION !','#9fe0ff')}),
  // ---------- Samehada déchaînée (A) : le sabre tournoie, traverse et revient ----------
  hs_throw:SP('Samehada déchaînée',HS_D.throw,12,{hero:'dooku',ai:RG(400,.6),line:{len:400,w:40}},(u,a)=>{hs_S('saber',u);hs_S('roar',u);anim(u,'hs_fling',.45);
   proj(u,a,{spd:640,r:18,dmg:16,life:1.7,ret:380,pierce:1,col:HSC.same,kind:'hs_same',onHit:(p,t)=>{hs_drain(p.owner,t,5);if(near(t.x,t.y)){sparks(t.x,t.y,HSC.lt,6);hs_S('bone',t)}}})}),
  // ---------- Nage du requin (C, déplacement) : plongée, aileron qui file, puis on jaillit en mordant ----------
- hs_swim:SP('Nage du requin',HS_D.swim,10,{ai:{mode:'gap',min:150,max:300,p:.55}},(u,a,td)=>{const d=clamp(td||260,110,280),D=.42;S('water',u);u.phase=Math.max(u.phase||0,.3);u.root=0;u.rootV=null;
+ hs_swim:SP('Nage du requin',HS_D.swim,7,{ai:{mode:'gap',min:150,max:260,p:.55}},(u,a,td)=>{const d=clamp(td||260,110,260),D=.42;S('water',u);u.phase=Math.max(u.phase||0,.3);u.root=0;u.rootV=null;
   anim(u,'hs_dive',D+.12);jx({jfx:'hs_splash',x:u.x,y:u.y,r:34,t:.4,m:.4});jx({jfx:'hs_fin',ui:hs_i(u),x:u.x,y:u.y,a,t:D+.05,m:D+.05});
   dash(u,a,d,D,{end:()=>{if(u.dead)return;jx({jfx:'hs_burst',x:u.x,y:u.y,r:80,a,t:.6,m:.6});S('water',u);
-   for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<80+e.r&&hs_hit(e,u,10,{slow:.8,fx:u.x,fy:u.y}))hs_drain(u,e,4)}})}),
+   for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<80+e.r&&hs_hit(e,u,0,{slow:.8,fx:u.x,fy:u.y,silent:1}))hs_drain(u,e,2)}})}),
  // ---------- Bakusui (B, déplacement) : on file sur une vague, le reflux repousse derrière soi ----------
  hs_wave:SP('Suiton : Bakusui',HS_D.wave,13,{ai:ESC},(u,a,td)=>{const d=clamp(td||230,120,240),b=a+Math.PI;S('water',u);hs_S('wind',u);anim(u,'hs_surf',.48);
   proj(u,b,{spd:640,r:36,dmg:8,life:.42,col:'#5ac8e8',kind:'hs_wave',pierce:1,noClash:1,o:{kb:240}});
@@ -118,11 +116,11 @@ AUXF.hs_maw=(x,dt)=>{const e=x.tg,o=x.owner;if(x.done)return;if(!e||e.dead){x.t=
   jx({jfx:'hs_spit',x:e.x,y:e.y,a:x.a,r:90,t:.7,m:.7});if(near(e.x,e.y)){S('water',e);hs_S('boom',e);shake=Math.max(shake,.3)}}};
 AUXD.hs_maw=()=>{};
 // mer des requins : suit le lanceur ; trempe et attire les ennemis ; un requin mord toutes les 0,5 s (proie d'abord, sinon le plus proche du centre)
-AUXF.hs_sea=(x,dt)=>{const o=x.owner;if(!o||o.dead){x.t=Math.min(x.t,.25);return}x.x=o.x;x.y=o.y;if(x.t<=0)return;o.slowImm=Math.max(o.slowImm||0,.2);
+AUXF.hs_sea=(x,dt)=>{const o=x.owner;if(!o||o.dead||(x.fu&&!(o.hs_fus>0)&&x.t>.25)){x.t=Math.min(x.t,.25);return}x.x=o.x;x.y=o.y;if(x.t<=0)return;o.slowImm=Math.max(o.slowImm||0,.2);
  let tg=null,bs=1e9;for(const e of enemies(o)){const dx=x.x-e.x,dy=x.y-e.y,d=Math.hypot(dx,dy);if(d>x.r+e.r)continue;e.wet=Math.max(e.wet||0,1);
   if(d>12&&e.unstop<=0&&!e.dash){const v=Math.min(d-12,40*dt);e.x+=dx/d*v;e.y+=dy/d*v}
   const sc=d-((e.energy||0)<HS_PREY?1000:0);if(sc<bs&&!(e.stealth>0&&d>120)){bs=sc;tg=e}}
- if(x.k<=0){x.k+=.5;if(tg){const a=Math.atan2(tg.y-x.y,tg.x-x.x);jx({jfx:'hs_leap',ti:hs_i(tg),x:tg.x,y:tg.y,a,t:.42,m:.42});
+ if(x.k<=0){x.k+=x.iv||.5;if(tg){const a=Math.atan2(tg.y-x.y,tg.x-x.x);jx({jfx:'hs_leap',ti:hs_i(tg),x:tg.x,y:tg.y,a,t:.42,m:.42});
   later(o,.18,()=>{if(tg.dead||o.dead||Math.hypot(tg.x-x.x,tg.y-x.y)>x.r+tg.r+30)return;if(hs_hit(tg,o,7,{}))hs_drain(o,tg,3)})}}};
 
 // ---- trait de clan : Samehada (le chakra volé soigne ; un ennemi à sec est une proie)
@@ -135,7 +133,7 @@ TRAITS[18]={nom:'Samehada',desc:'Le chakra que tu voles te soigne (1 PV pour 2 p
  deal(src,t,dmg,o){if(!t||t===src||t.team===src.team)return dmg;if((t.energy||0)<HS_PREY)dmg*=1.12;
   if(src.hs_fus>0)dmg*=1.15;return dmg},
  landed(src,t,dmg,o){if(t&&t!==src&&t.team!==src.team&&src.hs_fus>0&&o.basic&&o.melee&&!o.hs_x)later(src,0,()=>hs_drain(src,t,3))}, // vol de chakra : seulement si le coup passe
- take(t,src,dmg,o){if(!src||src===t||dmg<=0)return dmg;if(t.hs_fus>0)dmg*=.8;
+ take(t,src,dmg,o){if(!src||src===t||dmg<=0)return dmg;if(t.hs_fus>0)dmg*=.75;
   if(t.hs_scl>0){dmg*=.75;if(o.melee&&!o.thorn&&!src.dead&&!(SIMT<(src.hs_thT||0))){src.hs_thT=SIMT+.5;
    later(t,0,()=>{if(src.dead||t.dead)return;const V=VFX;VFX='steel';hit(src,t,6,{thorn:1,silent:1});VFX=V;hs_drain(t,src,4);if(near(src.x,src.y)){sparks(src.x,src.y,HSC.lt,8);say(src,'ÉCAILLES','#bcd4e4')}})}}
   return dmg},

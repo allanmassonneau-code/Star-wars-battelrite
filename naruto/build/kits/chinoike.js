@@ -6,29 +6,26 @@
 // Combo signature : ouvrir des entailles (aiguilles, fouet, lame) → Ketsuryûgan : Paralysie ou Sang bouillant (qui consume les entailles).
 const ciD={
  ndl:'3 aiguilles de sang en éventail ; chaque aiguille qui touche ouvre une entaille (2 max par lancer)',
- whip:'Prix du sang (6 % des PV max) : le fouet de sang frappe toute la ligne, ouvre 2 entailles et ramène les ennemis vers toi',
+ whip:'Prix du sang (6 % des PV max) : le fouet de sang frappe toute la ligne (20 dégâts), ouvre 2 entailles et ramène les ennemis vers toi ; sur une cible qui saigne déjà, son bout se cristallise : +30 % de dégâts et entravée 0,4 s',
  spear:'Prix du sang (8 % des PV max) : lance de sang perçante ; dans une cible qui saigne déjà, elle éclate (+45 % de dégâts) et l\'entrave 0,5 s',
  gaze:'Regard droit devant : qui saigne est paralysé 0,9 s, les autres sont ralentis 1,2 s',
  boil:'Fait bouillir le sang de l\'ennemi visé : silence 0,8 s, puis 3 brûlures en 1,5 s qui ralentissent, plus fortes par entaille ; ses entailles sont ensuite consumées. Rompu si tu es étourdi',
  mir:'Tu disparais 1,6 s (plus rapide) et laisses un double de sang ; les ennemis proches qui te regardaient fuient, terrifiés 0,7 s',
  step:'Fonce au travers des ennemis jusqu\'au point visé (240 max) : chaque ennemi traversé est entaillé',
- tide:'Prix du sang (5 % des PV max) : tu fonds en une flaque intouchable qui glisse au point visé (300 max), puis jaillis : dégâts, entaille, ralentit',
+ tide:'Tu fonds en une flaque de sang intouchable qui glisse au point visé (240 max) en traversant les ennemis : chacun est entaillé',
  moon:'Lune de sang sur la zone 4 s : les ennemis dedans sont ralentis, gagnent une entaille par seconde et leur sang te soigne 2 fois plus ; à la fin, les entailles explosent et étourdissent 0,5 s',
  stk:'Prix du sang (12 % des PV max) : 3 vagues de pieux de sang jaillissent en ligne devant toi : gros dégâts, entrave 0,7 s, 2 entailles',
 };
-// [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
-KIT('c15',[
- [1,'D','x.ci_ndl','Aiguilles de sang',ciD.ndl,'ci_blood'],
- [1,'C','x.ci_whip','Fouet de sang',ciD.whip,'ci_blood'],
- [3,'B','x.ci_spear','Lance de sang cristallisé',ciD.spear,'ci_blood'],
- [3,'B','x.ci_gaze','Ketsuryûgan : Paralysie',ciD.gaze,'genjutsu'],
- [4,'A','x.ci_boil','Ketsuryûgan : Sang bouillant',ciD.boil,'genjutsu'],
- [4,'C','x.ci_mir','Ketsuryûgan : Mirage',ciD.mir,'genjutsu'],
- [2,'C','x.ci_step','Pas sanglant',ciD.step,'ci_blood'],
- [2,'B','x.ci_tide','Marée de sang',ciD.tide,'ci_blood'],
- [5,'S','x.ci_moon','Ketsuryûgan : Lune de sang',ciD.moon,'genjutsu'],
- [5,'A','x.ci_stk','Forêt de pieux de sang',ciD.stk,'ci_blood'],
+// [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel] (format v5)
+KIT('c15',[ // arbre de clan (v5) : 1 jutsu par rang
+ ['D','x.ci_ndl','Aiguilles de sang',ciD.ndl,'ci_blood'],
+ ['C','x.ci_whip','Fouet de sang',ciD.whip,'ci_blood'],
+ ['B','x.ci_gaze','Ketsuryûgan : Paralysie',ciD.gaze,'genjutsu'],
+ ['A','x.ci_boil','Ketsuryûgan : Sang bouillant',ciD.boil,'genjutsu'],
+ ['S','x.ci_moon','Ketsuryûgan : Lune de sang',ciD.moon,'genjutsu'],
 ]);
+// dash (Espace) : Marée de sang (avec le Pas sanglant), gratuit : pas de prix du sang
+DASHC[15]={src:'x.ci_tide',n:'Marée de sang',d:ciD.tide,vfx:'ci_blood',cd:7};
 // style de combat propre (lame de sang cristallisé, corps à corps) : seul style du clan
 STYLES.push(['Lame de sang','Sabre de sang cristallisé à longue allonge ; 5e coup : grande entaille en arc qui ouvre 2 entailles','x.ci_style','ci_blood','sword',[15],1.24,1.18]);
 
@@ -90,7 +87,9 @@ Object.assign(NAT,{
  // Fouet de sang (prix du sang) : coup de fouet instantané sur toute la ligne, ramène vers le lanceur
  ci_whip:SP('Fouet de sang',ciD.whip,7,{hpc:.06,line:{len:ciK.whip.L,w:ciK.whip.w},ai:RG(250,.6)},(u,a)=>{const W=ciK.whip;ciS('saber',u);ciS('water',u);anim(u,'ci_lash',.45);
   jx({jfx:'ci_whip',ui:ciI(u),x:u.x,y:u.y,a,L:W.L,t:.45,m:.45});
-  for(const e of ciLine(u,a,W.L,W.w))if(hit(e,u,W.d,{pull:W.pull,fx:u.x,fy:u.y,el:-1})){ciBleed(u,e,2);jx({jfx:'ci_splash',x:e.x,y:e.y,a,t:.5,m:.5,n:8})}}),
+  for(const e of ciLine(u,a,W.L,W.w)){const bl=(e.ci_bl|0)>0; // cible qui saigne déjà : le bout du fouet se cristallise
+   if(hit(e,u,W.d*(bl?1.3:1),bl?{pull:W.pull,fx:u.x,fy:u.y,el:-1,root:.4}:{pull:W.pull,fx:u.x,fy:u.y,el:-1})){ciBleed(u,e,2);jx({jfx:'ci_splash',x:e.x,y:e.y,a,t:.5,m:.5,n:8});
+    if(bl){jx({jfx:'ci_shatter',ti:ciI(e),x:e.x,y:e.y,a,t:.6,m:.6});ciSay(e,'CRISTALLISÉ !','#ff4a5a',24);ciS('rock',e)}}}}),
  // Lance de sang cristallisé (prix du sang) : perçante ; éclate dans une cible qui saignait déjà
  ci_spear:SP('Lance de sang cristallisé',ciD.spear,9,{hpc:.08,line:{len:540,w:24},ai:ciAI.spOff},(u,a)=>{const K=ciK.spr;ciS('bone',u);ciS('blaster',u);anim(u,'ci_throw',.45);
   jx({jfx:'ci_forge',ui:ciI(u),x:u.x,y:u.y,a,t:.35,m:.35,big:1});
@@ -118,10 +117,10 @@ Object.assign(NAT,{
   const x={type:'ci_stp',x:u.x,y:u.y,r:0,t:.4,m:.4,team:u.team,owner:u,hs:new Set()};aux.push(x);
   dash(u,a,D,.22,{through:1,end:()=>{x.t=Math.min(x.t,.04);jx({jfx:'ci_trail',x:x0,y:y0,x2:u.x,y2:u.y,t:.9,m:.9})}})}),
  // Marée de sang (prix du sang) : flaque intouchable qui glisse, puis jaillit
- ci_tide:SP('Marée de sang',ciD.tide,11,{hpc:.05,tele:{r:ciK.tide.r,max:ciK.tide.D},ai:ESC},(u,a,td)=>{const K=ciK.tide,d=clamp(td||K.D,90,K.D),T=.42;ciS('water',u);anim(u,'ci_melt',T+.1);
+ ci_tide:SP('Marée de sang',ciD.tide,7,{tele:{r:40,max:ciK.step.D},ai:ESC},(u,a,td)=>{const d=clamp(td||ciK.step.D,90,ciK.step.D),T=.36,x0=u.x,y0=u.y;ciS('water',u);anim(u,'ci_melt',T+.1);
   u.phase=Math.max(u.phase||0,T+.04);u.stealth=Math.max(u.stealth||0,T);jx({jfx:'ci_pool',ui:ciI(u),x:u.x,y:u.y,t:T+.1,m:T+.1});
-  dash(u,a,d,T,{end:()=>{ciS('water',u);ciS('heavy',u);anim(u,'ci_rise',.4);jx({jfx:'ci_splash',x:u.x,y:u.y,a:-1,t:.7,m:.7,n:16,big:1});
-   for(const e of enemies(u))if(ciIn(u.x,u.y,e,K.r)&&hit(e,u,K.d,{slow:1,el:-1,fx:u.x,fy:u.y}))ciBleed(u,e,1);if(near(u.x,u.y))shake=Math.max(shake,.15)}})}),
+  const x={type:'ci_stp',x:u.x,y:u.y,r:0,t:T+.1,m:T+.1,team:u.team,owner:u,hs:new Set()};aux.push(x); // chaque ennemi traversé est entaillé (Pas sanglant)
+  dash(u,a,d,T,{through:1,end:()=>{x.t=Math.min(x.t,.04);ciS('water',u);anim(u,'ci_rise',.35);jx({jfx:'ci_trail',x:x0,y:y0,x2:u.x,y2:u.y,t:.9,m:.9});jx({jfx:'ci_splash',x:u.x,y:u.y,a:-1,t:.5,m:.5,n:8})}})}),
  // Ketsuryûgan : Lune de sang : zone de genjutsu (logique : AUXF.ci_moon)
  ci_moon:ULT('Ketsuryûgan : Lune de sang',ciD.moon,{tele:{r:ciK.moon.r,max:460},ai:{max:440,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460),K=ciK.moon;ciS('genjutsu',u);ciS('roar',u);anim(u,'ci_moon',1.1);
   jx({jfx:'ci_eye',ui:ciI(u),x:u.x,y:u.y,t:1.2,m:1.2,big:1});aux.push({type:'ci_moon',x:p.x,y:p.y,r:K.r,t:K.t,m:K.t,team:u.team,owner:u,k:.5,danger:1});if(near(p.x,p.y))shake=Math.max(shake,.25)}),

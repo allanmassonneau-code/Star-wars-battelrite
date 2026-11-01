@@ -2,30 +2,27 @@
 // Identité : la soie. Fils et toiles collent, entravent et tirent (Fil, Toile, Filet, Étreinte) ; l'Arc d'or tire de très loin (façon Kidômaru) ;
 // les araignées invoquées traquent (Nuée, Araignée géante) ; l'assassin frappe puis disparaît (Filin, Mue, Armure d'or).
 // Trait : chaque jutsu pose des fils sur l'ennemi ; au 4e fil il est englué (entravé, puis il subit +20 % des Hakumei).
-// Combo signature : Toile ou Filet (2 fils) → Fil (3e) → Étreinte de soie (elle consomme les fils : jusqu'à 54 dégâts).
+// Combo signature : Filet (2 fils, puis toile) → Fil (3e) → 4e fil : englué (trait) → Arc d'or.
 const HMD={
  fil:'Fil collant (12 dégâts, 1 fil) ; la cible reste liée 2 s, ralentie, puis le fil se rétracte et la tire vers toi',
  toile:'Boule de soie (8 dégâts) qui tisse une toile 5 s : ralentit ; 1 s dessus = entravé 0,5 s et 1 fil. Sur ta toile, tu cours plus vite',
- filet:'Grand filet qui arrête les tirs ennemis ; la 1re cible est emmaillotée : 16 dégâts, entravée 1 s, 2 fils',
+ filet:'Grand filet qui arrête les tirs ennemis ; la 1re cible est emmaillotée : 16 dégâts, entravée 1 s, 2 fils. Là où il retombe, il laisse une toile collante 3 s (ralentit ; 1 s dessus = entravé 0,5 s et 1 fil ; tu cours plus vite dessus)',
  nuee:'Un cocon (5 dégâts) éclate en 5 bébés araignées qui traquent les ennemis : chaque morsure fait 4 dégâts, ralentit et pose ½ fil',
  armure:'Armure d\'or (Kumo Nenkin) : bouclier de 26 pendant 3,5 s ; qui te frappe au corps à corps prend 1 fil et est ralenti',
  etreinte:'Des fils s\'ancrent autour de la cible ; 0,6 s après, ceux restés dans le cercle sont étranglés : 22 dégâts +8 dégâts par fil (consommés), silence 0,9 s',
- filin:'Un fil t\'arrache jusqu\'au point visé ; à l\'arrivée, ta chute frappe autour de toi (8 dégâts, ralentit) ; une petite toile reste à ton point de départ (3 s)',
+ filin:'Un fil t\'arrache jusqu\'au point visé (260 max) ; à l\'arrivée, ta chute frappe autour de toi (6 dégâts, ralentit) ; une petite toile reste à ton point de départ (1,5 s)',
  mue:'Tu laisses ta mue et fuis invisible 0,7 s (prochain coup +50 %) ; la mue explose en fils si un ennemi l\'approche : 10 dégâts, entravé 0,5 s, 1 fil',
- geante:'Une araignée géante s\'abat sur la zone (30 dégâts, étourdit 0,7 s), tisse une toile et crache 3 fois de la soie sur les ennemis (7 dégâts, 1 fil)',
+ geante:'Une araignée géante s\'abat sur la zone (30 dégâts, étourdit 0,7 s), tisse une toile et crache 3 fois de la soie sur les ennemis (7 dégâts, 1 fil) ; en disparaissant, elle lâche un cocon qui éclate en 5 bébés araignées (4 dégâts, ralentit, ½ fil chacune)',
  arc:'Bande l\'arc d\'or jusqu\'à 1,2 s (relancer pour tirer plus tôt) : flèche guidée par ta visée, 34 à 64 dégâts, perce chargée à 60 %, 1 à 2 fils'};
-KIT('c13',[
- [1,'D','x.hm_fil','Fil d\'araignée',HMD.fil,'silk'],
- [3,'C','x.hm_toile','Toile collante',HMD.toile,'silk'],
- [1,'B','x.hm_filet','Filet d\'araignée',HMD.filet,'silk'],
- [4,'B','x.hm_nuee','Nuée d\'araignées',HMD.nuee,'silk'],
- [4,'C','x.hm_armure','Armure d\'or',HMD.armure,'silk'],
- [3,'A','x.hm_etreinte','Étreinte de soie',HMD.etreinte,'silk'],
- [2,'C','x.hm_filin','Filin d\'araignée',HMD.filin,'silk'],
- [2,'B','x.hm_mue','Mue de l\'araignée',HMD.mue,'silk'],
- [5,'S','x.hm_geante','Invocation : Araignée géante',HMD.geante,'silk'],
- [5,'A','x.hm_arc','Arc d\'or : Kumo Senkyû',HMD.arc,'silk'],
+KIT('c13',[ // arbre de clan (v5) : 1 jutsu par rang
+ ['D','x.hm_fil','Fil d\'araignée',HMD.fil,'silk'],
+ ['C','x.hm_armure','Armure d\'or',HMD.armure,'silk'],
+ ['B','x.hm_filet','Filet d\'araignée',HMD.filet,'silk'],
+ ['A','x.hm_arc','Arc d\'or : Kumo Senkyû',HMD.arc,'silk'],
+ ['S','x.hm_geante','Invocation : Araignée géante',HMD.geante,'silk'],
 ]);
+// dash (Espace) : Filin d'araignée (version courte)
+DASHC[13]={src:'x.hm_filin',n:'Filin d\'araignée',d:HMD.filin,vfx:'silk',cd:6};
 // styles de combat propres au clan (ajoutés à la fin de STYLES)
 STYLES.push(['Lames d\'or','Kunai d\'or dans les mains et pattes d\'araignée ; 3e coup : taille en croix ; 4e : tourbillon des six bras ; 3e et 5e coups posent ½ fil (le 5e ralentit)','x.hm_st_or','silk','gold',[13],1.16,1.11],
  ['Crocs d\'araignée','Griffures rapides ; le 5e coup est une morsure venimeuse : poison, ralentit et pose 1 fil','x.hm_st_croc','silk','claws',[13],1.24,1.2]);
@@ -47,6 +44,8 @@ AFTER.push(()=>{const A=auxUpdate;auxUpdate=function(dt){A(dt);hm_tick()};
  const F=fire;fire=function(u,ab,a,td,ex){if(ab&&ab.key==='hm_arc'&&u.hm_bw){if(u.human||u.hm_bw.t>=1.1){const C=CUR;CUR=u;hm_loose(u);CUR=C}else u.cds[u.hm_bw.i]=.3;return}return F(u,ab,a,td,ex)};UK.push('hm_fil','hm_glu','hm_bow','hm_arm');Object.assign(VP,{silk:[HMC.silk,HMC.vio,HMC.gold]})});
 const hm_free=e=>e.unstop<=0&&!(e.slowImm>0)&&!e.dead; // un ninja qu'on peut freiner
 // toile au sol (Toile collante, Filin, Araignée géante) : n = graine de la forme
+function hm_brood(u,tx,ty){jx({jfx:'hm_hatch',x:tx,y:ty,r:60,t:.6,m:.6});S('bugs',u);for(let i=0;i<5;i++){const b=i*1.2566+rnd()*.4;
+  aux.push({type:'hm_spid',x:tx+Math.cos(b)*14,y:ty+Math.sin(b)*14,a:b,r:6,t:4.5,m:4.5,team:u.team,owner:u,ui:hm_I(u),ti:-1,n:0,w:i,k:.15+i*.06,tg:null})}}
 function hm_web(u,x,y,r,t){aux.push({type:'hm_web',x,y,r,t,m:t,team:u.team,owner:u,ui:hm_I(u),n:(rnd()*6.28*100|0)/100,k:0,in:new Map(),done:new Set(),danger:1})}
 
 Object.assign(NAT,{
@@ -75,8 +74,8 @@ Object.assign(NAT,{
  hm_etreinte:SP('Étreinte de soie',HMD.etreinte,12,{hero:'kylo',tele:{r:80,max:420},ai:RG(400,.55)},(u,a,td)=>{const e=pick(u,a,td||300,420),p=e&&dist(u,e)<460?{x:e.x,y:e.y}:atP(u,a,td,420);
   S('shadow',u);anim(u,'hm_pull',.85);aux.push({type:'hm_strg',x:p.x,y:p.y,r:80,t:.6,m:.6,team:u.team,owner:u,ui:hm_I(u),k:0,danger:1});jx({jfx:'hm_cast',ui:hm_I(u),x:u.x,y:u.y,a:Math.atan2(p.y-u.y,p.x-u.x),len:Math.hypot(p.x-u.x,p.y-u.y),t:.6,m:.6})}),
  // Filin : le fil s'accroche au point visé et arrache le ninja ; une petite toile reste au départ
- hm_filin:SP('Filin d\'araignée',HMD.filin,8,{hero:'boba',ai:{mode:'gap',min:130,max:300,p:.5}},(u,a,td)=>{const d=clamp(td||280,100,300),p=fwd(u,a,d),sx=u.x,sy=u.y;S('dash',u);S('blaster',u);anim(u,'hm_swing',.42);
-  jx({jfx:'hm_zip',ui:hm_I(u),x:p.x,y:p.y,sx,sy,t:.45,m:.45});hm_web(u,sx,sy,70,3);dash(u,Math.atan2(p.y-u.y,p.x-u.x),Math.hypot(p.x-u.x,p.y-u.y),.3,{jump:46,end:()=>{for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<70+e.r)hit(e,u,8,{slow:.8});sparks(u.x,u.y,HMC.silk,6)}})}),
+ hm_filin:SP('Filin d\'araignée',HMD.filin,6,{hero:'boba',ai:{mode:'gap',min:130,max:260,p:.5}},(u,a,td)=>{const d=clamp(td||260,100,260),p=fwd(u,a,d),sx=u.x,sy=u.y;S('dash',u);S('blaster',u);anim(u,'hm_swing',.42);
+  jx({jfx:'hm_zip',ui:hm_I(u),x:p.x,y:p.y,sx,sy,t:.45,m:.45});hm_web(u,sx,sy,70,1.5);dash(u,Math.atan2(p.y-u.y,p.x-u.x),Math.hypot(p.x-u.x,p.y-u.y),.3,{jump:46,end:()=>{for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<70+e.r)hit(e,u,6,{slow:.8});sparks(u.x,u.y,HMC.silk,6)}})}),
  // Mue : la mue reste (piège), le ninja fuit invisible
  hm_mue:SP('Mue de l\'araignée',HMD.mue,15,{hero:'ahsoka',ai:ESC},(u,a,td)=>{const d=clamp(td||220,120,240);S('poof',u);S('dash',u);
   aux.push({type:'hm_husk',x:u.x,y:u.y,a:u.aim,r:55,t:3,m:3,team:u.team,owner:u,ui:hm_I(u),k:.35,danger:1});jx({jfx:'hm_shed',x:u.x,y:u.y,t:.5,m:.5});
@@ -129,7 +128,7 @@ AUXF.hm_web=(x,dt)=>{const o=x.owner;if(x.t<=0)return;
   if(hm_free(e))e.slow=Math.max(e.slow,.15);if(x.done.has(e))continue;const v=(x.in.get(e)||0)+dt;x.in.set(e,v);
   if(v>=1){x.done.add(e);VFX='silk';hit(e,o,0,{root:.5,silent:1});VFX=null;hm_fil(o,e,1);say(e,'COLLÉ','#e8d8ff');jx({jfx:'hm_wrap',ti:hm_I(e),x:e.x,y:e.y,t:.5,m:.5,low:1})}}};
 // filet : avale les tirs ennemis qu'il croise
-AUXF.hm_netc=x=>{const p=x.p;if(!p||p.dead||p.life<=0||projs.indexOf(p)<0){x.t=0;return}x.x=p.x;x.y=p.y;
+AUXF.hm_netc=x=>{const p=x.p;if(!p||p.dead||p.life<=0||projs.indexOf(p)<0){x.t=0;if(p&&!x.done&&state==='fight'&&x.owner&&!x.owner.dead){x.done=1;hm_web(x.owner,clamp(p.x,B.x+20,B.x+B.w-20),clamp(p.y,B.y+20,B.y+B.h-20),95,3)}return}x.x=p.x;x.y=p.y;
  for(const q of projs)if(q!==p&&q.owner&&q.owner.team!==x.team&&!q.grenade&&!q.dead&&q.life>0&&Math.hypot(q.x-p.x,q.y-p.y)<p.r+q.r+4){q.life=0;if(q.rocket)q.boom=1;if(near(q.x,q.y))sparks(q.x,q.y,HMC.silk,5)}};
 // bébé araignée : traque l'ennemi le plus proche, mord une fois
 AUXF.hm_spid=(x,dt)=>{const o=x.owner;if(!o||o.dead||state!=='fight'){x.t=0;return}if(x.n===1)return;
@@ -149,7 +148,8 @@ AUXF.hm_husk=x=>{const o=x.owner;if(!o||x.done)return;if(x.t<=0){jx({jfx:'hm_she
  VFX='silk';for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<90+e.r&&hit(e,o,10,{root:.5,unblockable:1})){hm_fil(o,e,1);jx({jfx:'hm_wrap',ti:hm_I(e),x:e.x,y:e.y,t:.7,m:.7})}VFX=null;
  jx({jfx:'hm_burst',x:x.x,y:x.y,r:90,t:.55,m:.55});if(near(x.x,x.y)){S('bugs',o);S('bone',o)}};
 // araignée géante : après la chute, crache 3 fois de la soie sur l'ennemi le plus proche
-AUXF.hm_giant=(x,dt)=>{const o=x.owner;if(!o||o.dead||state!=='fight'){x.t=Math.min(x.t,.3);return}const e=nearE(o,x.x,x.y,460);x.ti=e?hm_I(e):-1;
+AUXF.hm_giant=(x,dt)=>{const o=x.owner;if(!o||o.dead||state!=='fight'){x.t=Math.min(x.t,.3);x.sp=1;return}
+ if(!x.sp&&x.t<=.32){x.sp=1;hm_brood(o,x.x,x.y);return}const e=nearE(o,x.x,x.y,460);x.ti=e?hm_I(e):-1;
  if(e){const b=Math.atan2(e.y-x.y,e.x-x.x);let df=b-x.a;while(df>Math.PI)df-=2*Math.PI;while(df<-Math.PI)df+=2*Math.PI;x.a+=clamp(df,-3*dt,3*dt)}
  if(x.k>0||x.n<=0||x.t<.3)return;if(!e){x.k=.3;return}x.k=1.25;x.n--;const a=Math.atan2(e.y-x.y,e.x-x.x),V=VFX;VFX='silk';
  // la bouche est à 40 px du centre ; une cible sous l'araignée est crachée à bout portant (sinon le crachat partirait derrière elle)

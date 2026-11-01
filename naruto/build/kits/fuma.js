@@ -1,8 +1,8 @@
 // ===== Clan Fûma (c17, préfixe fm_) : assassins aux shuriken =====
 // Identité : les shuriken MARQUENT (trait) ; un jutsu sur une cible marquée, ou un coup porté dans son dos, est CRITIQUE.
-// Combos : Traceur / Fûma / Fil / Kage marquent → Assassinat de l'ombre ou Danse des mille ombres frappent dans le dos d'une cible marquée (critique mortel).
+// Combos : Traceur / Croissant / Kage marquent → Shunshin de l'ombre (dash) surgit dans le dos d'une cible marquée, Danse des mille ombres frappe dans son dos (critique mortel).
 // Shunshin de l'ombre rend invisible : l'embuscade qui suit compte comme un critique.
-// [emplacement, rang, mécanique, nom, description, élément visuel]
+// [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel] (format v5)
 const FM_D={
  trace:'Shuriken rapide et précis : 10 dégâts, marque la cible 6 s et la révèle',
  fuma:'Fûma géant lancé en courbe, qui revient : 12 dégâts à l\'aller (ralentit, marque), 12 dégâts au retour (critique si marquée)',
@@ -11,23 +11,19 @@ const FM_D={
  orbit:'3 s : 4 shuriken tournent autour de toi, chacun détruit un tir ennemi ; au contact, 5 dégâts toutes les 0,5 s (marque) ; à la fin, les restants filent vers l\'ennemi (6 dégâts)',
  ansatsu:'Tu te fonds dans l\'ombre (intouchable 0,4 s) et surgis dans le dos de l\'ennemi visé (380) : coup de lame de 22 dégâts, toujours critique, ralentit',
  maki:'Sème des chausse-trapes au curseur (zone de 75, 4 s) : les ennemis dessus sont ralentis et subissent 3 dégâts/s',
- shun:'Disparaît dans une fumée noire et réapparaît au curseur (260 max), invisible 1,2 s : ta prochaine attaque est critique',
+ shun:'Disparaît dans une fumée noire et réapparaît au curseur (240 max), invisible 0,6 s : ta prochaine attaque est critique ; un ennemi marqué sous le curseur (300 max) : tu surgis dans son dos',
  repli:'Salto arrière (190) en lançant 3 shuriken en éventail vers l\'avant (5 dégâts, marquent)',
  rain:'Une pluie de shuriken s\'abat sur la zone (140) : 5 vagues de 7 dégâts (marquent, ralentissent), puis la dernière (10 dégâts, critique si marqué) étourdit 0,5 s',
  dance:'Disparaît (intouchable) et frappe 3 fois dans le dos des ennemis proches (400), les marqués d\'abord : 9 dégâts par coup, toujours critique'};
-KIT('c17',[
- [1,'D','x.fm_trace','Shuriken traceur',FM_D.trace,'shuriken'],
- [1,'C','x.fm_fuma','Shuriken du croissant',FM_D.fuma,'shuriken'],
- [3,'C','x.fm_wire','Shuriken à fil',FM_D.wire,'shuriken'],
- [3,'B','x.fm_kage','Kage shuriken',FM_D.kage,'shuriken'],
- [4,'B','x.fm_orbit','Shuriken tournoyants',FM_D.orbit,'shuriken'],
- [4,'A','x.fm_ansatsu','Assassinat de l\'ombre',FM_D.ansatsu,'shuriken'],
- [4,'D','x.fm_maki','Makibishi',FM_D.maki,'shuriken'],
- [2,'C','x.fm_shun','Shunshin de l\'ombre',FM_D.shun,'shuriken'],
- [2,'D','x.fm_repli','Repli du Fûma',FM_D.repli,'shuriken'],
- [5,'A','x.fm_rain','Pluie de shuriken',FM_D.rain,'shuriken'],
- [5,'S','x.fm_dance','Danse des mille ombres',FM_D.dance,'shuriken'],
+KIT('c17',[ // arbre de clan (v5) : 1 jutsu par rang
+ ['D','x.fm_trace','Shuriken traceur',FM_D.trace,'shuriken'],
+ ['C','x.fm_fuma','Shuriken du croissant',FM_D.fuma,'shuriken'],
+ ['B','x.fm_kage','Kage shuriken',FM_D.kage,'shuriken'],
+ ['A','x.fm_rain','Pluie de shuriken',FM_D.rain,'shuriken'],
+ ['S','x.fm_dance','Danse des mille ombres',FM_D.dance,'shuriken'],
 ]);
+// dash (Espace) : Shunshin de l'ombre (avec l'Assassinat de l'ombre : dans le dos d'un ennemi marqué)
+DASHC[17]={src:'x.fm_shun',n:'Shunshin de l\'ombre',d:FM_D.shun,vfx:'shuriken',cd:7};
 // ---------- réglages ----------
 // FM_BAL : facteur sur tous les dégâts d'un Fûma (équilibrage du clan, à côté de CLANBAL[17] dans nr_ninja.js)
 const FM_BAL=.95,FM_CRIT=1.4,FM_CRIT2=1.6,FM_BCD=2.5,FM_MK=4,FM_BACK=2.0; // critique ×1,4 (×1,6 marque + dos) ; coup dans le dos au plus toutes les 2,5 s ; marque 4 s ; dos = arc de 130° derrière la cible
@@ -88,8 +84,12 @@ Object.assign(NAT,{
   later(u,.38,()=>{u.phase=0;u.stealth=0;if(u.dead||e.dead||u.stun>0||dist(u,e)>560)return;fmStrike(u,e,22,{slow:.8})})}),
  fm_maki:SP('Makibishi',FM_D.maki,7,{tele:{r:75,max:380},ai:RG(300,.4)},(u,a,td)=>{const p=atP(u,a,td,380);anim(u,'fm_flickl',.3);fmS('saber',u);
   field(u,p.x,p.y,{r:75,t:4,dps:3,slow:1,col:'#8a8e9a',vfx:'fm_maki'});aux.push({type:'fm_maki',x:p.x,y:p.y,r:75,t:4,m:4,team:u.team,owner:u,a:Math.atan2(u.y-p.y,u.x-p.x),len:Math.hypot(u.x-p.x,u.y-p.y),k:0})}),
- fm_shun:SP('Shunshin de l\'ombre',FM_D.shun,9,{ai:{mode:'esc',max:150,p:.5}},(u,a,td)=>{const p=fwd(u,a,clamp(td||260,80,260)),p0={x:u.x,y:u.y};fmS('poof',u);anim(u,'fm_seal',.3);
-  jx({jfx:'fm_vanish',x:u.x,y:u.y,r:40,t:.55,m:.55});u.dash=null;u.kx=u.ky=0;u.x=p.x;u.y=p.y;collide(u);u.stealth=Math.max(u.stealth,1.2);u.haste=Math.max(u.haste,.6);
+ fm_shun:SP('Shunshin de l\'ombre',FM_D.shun,7,{ai:{mode:'esc',max:150,p:.5}},(u,a,td)=>{const c=fwd(u,a,td||240),p0={x:u.x,y:u.y};let p=fwd(u,a,clamp(td||240,80,240)),tg=null,bd=130;
+  for(const e of enemies(u)){if(!fmMarkOf(e,u)||dist(u,e)>300+e.r)continue;const d=Math.hypot(e.x-c.x,e.y-c.y);if(d<bd){bd=d;tg=e}} // ennemi marqué sous le curseur : dans son dos (ancien Assassinat de l'ombre)
+  if(!tg&&!u.ctrl&&u.hp>u.max*.5){const e=u.tgt&&!u.tgt.dead?u.tgt:null;if(e&&fmMarkOf(e,u)&&dist(u,e)<300+e.r)tg=e}
+  if(tg){const b=(tg.aim??ang(u,tg))+Math.PI,R0=tg.r+u.r+8;p={x:clamp(tg.x+Math.cos(b)*R0,B.x+u.r,B.x+B.w-u.r),y:clamp(tg.y+Math.sin(b)*R0,B.y+u.r,B.y+B.h-u.r)};jx({jfx:'fm_shade',x:tg.x,y:tg.y,ti:fmI(tg),t:.4,m:.4});say(tg,'!','#ff6a7a')}
+  fmS('poof',u);anim(u,'fm_seal',.3);
+  jx({jfx:'fm_vanish',x:u.x,y:u.y,r:40,t:.55,m:.55});u.dash=null;u.kx=u.ky=0;u.x=p.x;u.y=p.y;collide(u);if(tg)u.aim=ang(u,tg);u.stealth=Math.max(u.stealth,.6);u.haste=Math.max(u.haste,.5);
   jx({jfx:'fm_streak',x:p0.x,y:p0.y,x2:u.x,y2:u.y,t:.3,m:.3});jx({jfx:'fm_vanish',x:u.x,y:u.y,r:30,t:.45,m:.45,inv:1})}),
  fm_repli:SP('Repli du Fûma',FM_D.repli,7,{ai:{max:170,p:.55}},(u,a)=>{S('dash',u);S('blaster',u);anim(u,'backflip',.36);dash(u,a+Math.PI,190,.32,{jump:46});
   for(const o of[-.22,0,.22])fmShu(u,a+o,{spd:880,r:5,dmg:5,life:.5,o:{fm_sh:1,fm_nc:1}});jx({jfx:'fm_glint',x:u.x,y:u.y,a,t:.25,m:.25,fan:1})}),

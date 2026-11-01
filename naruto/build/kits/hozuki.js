@@ -5,26 +5,24 @@
 // Contrepartie : le Raiton frappe +25 % et coupe l'hydrification 3 s.
 // Combos : Contre-courant étourdit → Gôwan ; Bond fendant ralentit → Fauche ; Suirendan trempe (un allié Raiton en profite).
 // Équilibre (duels simulés contre kits quelconques) : kits mixtes 46-52 %, kits 100 % Hôzuki ≈ 70 % (Kaguya 68 %, Sabaku 61 %) ; réglé par les jutsu et les modificateurs des 2 styles.
-const HZD={gun:'Deux balles d\'eau tirées du doigt, très rapides : 8 dégâts chacune, trempent la cible',
+const HZD={gun:'Deux balles d\'eau tirées du doigt, très rapides : 8 dégâts chacune, trempent la cible. Avec 60 d\'eau ou plus, en dépense 25 pour tirer le Grand jet : jet d\'eau qui traverse la ligne, 18 dégâts, repousse, trempe',
  ctr:'1 s : le prochain coup subi traverse le corps sans dégâts et une balle d\'eau riposte : 14 dégâts, étourdit 0,4 s (le Raiton passe)',
  arm:'Le bras gonfle d\'eau puis s\'abat devant soi : 28 dégâts, repousse. Avec 50 d\'eau ou plus, en dépense 30 : 36 dégâts, zone plus large',
  jet:'Le doigt se charge 0,3 s puis tire un jet d\'eau qui traverse la ligne : 26 dégâts, repousse, trempe',
  cleave:'Moulinet géant devant soi : 32 dégâts, ralentit ; le sang reforge la lame : rend 30 % des dégâts infligés en PV',
- pud:'Fond en flaque 1 s : intouchable et plus rapide (attaquer reforme le corps) ; se reforme en jaillissant : 14 dégâts autour, ralentit',
+ pud:'Fond en flaque 0,6 s : intouchable et plus rapide (attaquer reforme le corps) ; en se reformant, ralentit les ennemis au contact',
  leap:'Bondit au point visé (280 max) et abat le sabre à l\'arrivée : 20 dégâts dans la zone, ralentit',
- behead:'Fonce sur 300 et fend tout sur la ligne : 38 dégâts + 10 % des PV manquants ; la lame boit le sang : rend 30 % des dégâts',
+ behead:'Fonce sur 300 et fend tout sur la ligne : 38 dégâts + 10 % des PV manquants ; la lame boit le sang : rend 30 % des dégâts. En fin de course, moulinet : 16 dégâts autour, ralentit',
  giant:'4 s : géant d\'eau (dégâts subis −20 %, infligés +20 %) ; inonde autour : 5 dégâts / 0,5 s, ralentit 0,35 s chaque seconde ; remplit la réserve d\'eau. Puis vague : 24 dégâts, repousse'};
-KIT('c19',[
- [1,'D','x.hz_gun','Suirendan',HZD.gun,'water'],
- [3,'C','x.hz_ctr','Suika : Contre-courant',HZD.ctr,'water'],
- [4,'B','x.hz_arm','Suika : Gôwan',HZD.arm,'water'],
- [1,'B','x.hz_jet','Mizudeppô : Grand jet',HZD.jet,'water'],
- [3,'A','x.hz_cleave','Kubikiribôchô : Fauche',HZD.cleave,'steel'],
- [2,'C','x.hz_pud','Liquéfaction',HZD.pud,'water'],
- [2,'B','x.hz_leap','Kubikiribôchô : Bond fendant',HZD.leap,'steel'],
- [5,'S','x.hz_behead','Kubikiribôchô : Décapitation',HZD.behead,'steel'],
- [5,'A','x.hz_giant','Suika : Corps-déluge',HZD.giant,'water'],
+KIT('c19',[ // arbre de clan (v5) : 1 jutsu par rang
+ ['D','x.hz_gun','Suirendan',HZD.gun,'water'],
+ ['C','x.hz_ctr','Suika : Contre-courant',HZD.ctr,'water'],
+ ['B','x.hz_arm','Suika : Gôwan',HZD.arm,'water'],
+ ['A','x.hz_giant','Suika : Corps-déluge',HZD.giant,'water'],
+ ['S','x.hz_behead','Kubikiribôchô : Décapitation',HZD.behead,'steel'],
 ]);
+// dash (Espace) : Liquéfaction (version courte, se reforme sans dégâts)
+DASHC[19]={src:'x.hz_pud',n:'Liquéfaction',d:HZD.pud,vfx:'water',cd:6};
 // ---- styles de combat propres au clan (ajoutés à la fin de STYLES)
 STYLES.push(['Kubikiribôchô','Sabre géant aux coups très larges ; 3e coup : ralentit ; 5e : abattu d\'en haut, repousse. Le sang reforge la lame : chaque coup rend 10 % de ses dégâts en PV','x.hz_st_kubi','steel','sword',[19,-1],.97,.94],
  ['Taijutsu liquide','Les bras s\'allongent en eau : longue allonge ; 3e coup : trempe ; 5e : fouet d\'eau qui ramène la cible et ralentit','x.hz_st_liq','tai','fist',[19],1.06,1.02]);
@@ -42,7 +40,8 @@ function hzReforge(u,tot,k,e){if(tot<=0||u.dead)return;const v=tot*k;gain(u,v/HE
 // ---- mécaniques des jutsu
 Object.assign(NAT,{
  // Suirendan : deux balles d'eau sous pression tirées du doigt (pistolet à eau)
- hz_gun:SP('Suirendan',HZD.gun,5,{line:{len:550,w:14},ai:RG(540,.7)},(u,a)=>{anim(u,'hz_point',.5);
+ hz_gun:SP('Suirendan',HZD.gun,5,{line:{len:550,w:14},ai:RG(540,.7)},(u,a)=>{if((u.hz_w||0)>=60){u.hz_w-=25;say(u,'GRAND JET !',HZC.l);anim(u,'hz_jet',.65);S('water',u);aux.push({type:'hz_jet',x:u.x,y:u.y,a,len:560,w:30,t:.6,m:.6,team:u.team,owner:u,ui:hzI(u),vfx:'water',k:0,n:0,d:18});return}
+  anim(u,'hz_point',.5);
   const f=o=>{const b=o.aim,h=fwd(o,b,26);hzS('blaster',o);S('water',o);proj(o,b,{spd:1150,r:6,dmg:8,life:.48,col:HZC.w,kind:'hz_drop',vfx:'water'});jx({jfx:'hz_muzzle',x:h.x,y:h.y,a:b,t:.2,m:.2})};
   f(u);seqs.push({owner:u,n:1,t:.14,iv:.14,vfx:'water',f})}),
  // Contre-courant : le prochain coup traverse le corps liquide ; une balle d'eau riposte (voir le trait)
@@ -60,8 +59,8 @@ Object.assign(NAT,{
   const L=enemies(u).filter(e=>dist(u,e)<150+e.r&&angDiff(ang(u,e),a)<1.35),V=VFX;VFX='steel';const tot=hzDrain(L,()=>{for(const e of L)hit(e,u,32,{slow:1,fx:u.x,fy:u.y})});VFX=V;
   hzReforge(u,tot,.3,L[0]);jx({jfx:'hz_cleave',ui:hzI(u),x:u.x,y:u.y,a,R:150,w:2.7,d:1,bl:tot>0?1:0,big:1,t:.5,m:.5});if(L.length&&near(u.x,u.y))shake=Math.max(shake,.18)}),
  // Liquéfaction : fond en flaque dirigée au clavier, puis se reforme en geyser
- hz_pud:SP('Liquéfaction',HZD.pud,9,{ai:ESC},(u)=>{S('water',u);anim(u,'hz_melt',1);u.hz_pud=1;u.phase=Math.max(u.phase||0,1);u.haste=Math.max(u.haste||0,1);
-  aux.push({type:'hz_pud',x:u.x,y:u.y,r:30,t:1,m:1,team:u.team,owner:u,ui:hzI(u),vfx:'water',k:0});jx({jfx:'hz_geyser',x:u.x,y:u.y,r:40,s:.5,t:.45,m:.45})}),
+ hz_pud:SP('Liquéfaction',HZD.pud,6,{ai:ESC},(u)=>{S('water',u);anim(u,'hz_melt',.6);u.hz_pud=1;u.phase=Math.max(u.phase||0,.6);u.haste=Math.max(u.haste||0,.6);
+  aux.push({type:'hz_pud',soft:1,x:u.x,y:u.y,r:30,t:.6,m:.6,team:u.team,owner:u,ui:hzI(u),vfx:'water',k:0});jx({jfx:'hz_geyser',x:u.x,y:u.y,r:40,s:.5,t:.45,m:.45})}),
  // Bond fendant : saut, le sabre levé, abattu à l'arrivée
  hz_leap:SP('Kubikiribôchô : Bond fendant',HZD.leap,11,{tele:{r:85,max:280},ai:{mode:'gap',min:120,max:300,p:.5}},(u,a,td)=>{const d=clamp(td||250,60,280),p=fwd(u,a,d);anim(u,'hz_leap',.62);hzS('dash',u);
   later(u,.45,()=>{},{x:p.x,y:p.y,r:85});sparks(u.x,u.y,HZC.l,6,'water');dash(u,a,d,.45,{jump:95,end:()=>hzLand(u,a)})}),
@@ -93,20 +92,23 @@ Object.assign(NATHERO,{hz:'kylo'});
 function hzLand(u,a){if(u.dead)return;const x=u.x,y=u.y,V=VFX;VFX='steel';for(const e of enemies(u))if(Math.hypot(e.x-x,e.y-y)<85+e.r)hit(e,u,20,{slow:1,fx:x,fy:y});VFX=V;
  jx({jfx:'hz_slam',x:x+Math.cos(a)*30,y:y+Math.sin(a)*30,a,r:85,t:.8,m:.8});jx({jfx:'shock',x,y,r:100,t:.4,m:.4,col:HZC.l});sparks(x,y,HZC.l,12,'water');if(near(x,y)){hzS('heavy',u);hzS('rock',u);shake=Math.max(shake,.22)}}
 // Liquéfaction : le corps se reforme en jaillissant
-function hzReform(o){const V=VFX;VFX='water';for(const e of enemies(o))if(Math.hypot(e.x-o.x,e.y-o.y)<80+e.r)hit(e,o,14,{slow:1,fx:o.x,fy:o.y});VFX=V;
+function hzReform(o,soft){const V=VFX;VFX='water';for(const e of enemies(o))if(Math.hypot(e.x-o.x,e.y-o.y)<80+e.r)hit(e,o,soft?0:14,soft?{slow:.8,silent:1,fx:o.x,fy:o.y}:{slow:1,fx:o.x,fy:o.y});VFX=V;
  jx({jfx:'hz_geyser',x:o.x,y:o.y,r:80,s:1,t:.6,m:.6});jx({jfx:'shock',x:o.x,y:o.y,r:90,t:.35,m:.35,col:HZC.l});sparks(o.x,o.y,HZC.l,12,'water');if(near(o.x,o.y))S('water',o)}
 
+// moulinet de fin de Décapitation (ancienne Fauche, réduite) : 16 dégâts autour, ralentit, la lame boit 30 %
+function hzSpin(u,a){anim(u,'hz_cleave',.5);hzS('saber',u);const L=enemies(u).filter(e=>dist(u,e)<150+e.r),V=VFX;VFX='steel';const tot=hzDrain(L,()=>{for(const e of L)hit(e,u,16,{slow:1,fx:u.x,fy:u.y})});VFX=V;
+ hzReforge(u,tot,.3,L[0]);jx({jfx:'hz_cleave',ui:hzI(u),x:u.x,y:u.y,a:a+Math.PI,R:150,w:6.2,d:1,bl:tot>0?1:0,big:1,t:.5,m:.5});if(L.length&&near(u.x,u.y))shake=Math.max(shake,.18)}
 // ---- objets (logique hôte)
 // Grand jet : 0,3 s de charge (le lanceur étourdi l'annule), puis le jet frappe toute la ligne une fois
 AUXF.hz_jet=x=>{const o=x.owner;if(!o||o.dead){x.t=0;return}if(x.n)return;x.x=o.x;x.y=o.y;if(o.stun>0){x.t=0;x.n=2;return}
  if(x.m-x.t<.3)return;x.n=1;const ca=Math.cos(x.a),sa=Math.sin(x.a),V=VFX;VFX='water';
- for(const e of enemies(o)){const dx=e.x-x.x,dy=e.y-x.y,f=dx*ca+dy*sa,s=Math.abs(-dx*sa+dy*ca);if(f>0&&f<x.len+e.r&&s<x.w/2+e.r)hit(e,o,26,{kb:150,fx:x.x,fy:x.y})}VFX=V;
+ for(const e of enemies(o)){const dx=e.x-x.x,dy=e.y-x.y,f=dx*ca+dy*sa,s=Math.abs(-dx*sa+dy*ca);if(f>0&&f<x.len+e.r&&s<x.w/2+e.r)hit(e,o,x.d||26,{kb:150,fx:x.x,fy:x.y})}VFX=V;
  o.kx-=ca*120;o.ky-=sa*120;if(near(x.x,x.y)){hzS('boom',o);S('water',o);shake=Math.max(shake,.16)}sparks(x.x+ca*x.len,x.y+sa*x.len,HZC.l,10,'water')};
 // Liquéfaction : la flaque suit le ninja ; à la fin (ou s'il attaque), le corps se reforme
 AUXF.hz_pud=x=>{const o=x.owner;if(!o||o.dead){x.t=0;x.done=1;if(o)o.hz_pud=0;return}x.x=o.x;x.y=o.y;if(x.done)return;
- if(x.t<=0||o.swing>0||(o.relT>0&&x.m-x.t>.32)){const r=Math.max(0,x.t)+.05;x.done=1;x.t=0;o.hz_pud=0;if(o.phase<=r)o.phase=0;if(o.haste<=r)o.haste=0;hzReform(o)}};
+ if(x.t<=0||o.swing>0||(o.relT>0&&x.m-x.t>.32)){const r=Math.max(0,x.t)+.05;x.done=1;x.t=0;o.hz_pud=0;if(o.phase<=r)o.phase=0;if(o.haste<=r)o.haste=0;hzReform(o,x.soft)}};
 // Décapitation : la lame frappe une fois chaque ennemi sur la ligne de la ruée
-AUXF.hz_behead=x=>{const o=x.owner;if(!o||o.dead||!o.dash){if(!x.done){x.done=1;x.t=0}return}x.x=o.x;x.y=o.y;const ca=Math.cos(x.a),sa=Math.sin(x.a),tx=o.x+ca*28,ty=o.y+sa*28;
+AUXF.hz_behead=x=>{const o=x.owner;if(!o||o.dead||!o.dash){if(!x.done){x.done=1;x.t=0;if(o&&!o.dead&&state==='fight')hzSpin(o,x.a)}return}x.x=o.x;x.y=o.y;const ca=Math.cos(x.a),sa=Math.sin(x.a),tx=o.x+ca*28,ty=o.y+sa*28;
  for(const e of enemies(o))if(!x.hs.has(e)&&Math.hypot(e.x-tx,e.y-ty)<x.r+e.r){x.hs.add(e);const V=VFX;VFX='steel';const tot=hzDrain([e],()=>hit(e,o,38,{exec:.1,kb:140,melee:1,fx:o.x-ca*40,fy:o.y-sa*40}));VFX=V;
   hzReforge(o,tot,.3,e);jx({jfx:'hz_spray',x:e.x,y:e.y,a:x.a,t:.6,m:.6});if(near(e.x,e.y)){hzS('boom',o);shake=Math.max(shake,.3)}}};
 AUXD.hz_behead=()=>{};
