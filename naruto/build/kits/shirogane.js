@@ -7,27 +7,24 @@
 const SGD={
  style:'Corps à corps : ta marionnette frappe de ses lames là où elle se trouve (au bout de tes fils) ; 4e coup : tourbillon tout autour ; 5e : elle s\'élance, estoc empoisonné (2 dégâts/s pendant 3 s)',
  blades:'Lames cachées : la marionnette tournoie 0,6 s (rayon 75) ; 3 coups de 6, le dernier ralentit',
- needle:'La gueule de la marionnette crache 5 senbon en éventail (portée 380) : 4 dégâts chacun et poison 3 dégâts/s pendant 3 s',
+ needle:'La gueule de la marionnette crache 4 senbon en éventail (portée 380) : 4 dégâts chacun et poison 3 dégâts/s pendant 3 s',
  strings:'Fils de chakra 3 s sur l\'ennemi le plus proche de la marionnette (220) : ralenti, attiré vers elle (2 dégâts/s), +15 % de tes dégâts sur lui ; rompus au-delà de 340',
  mist:'La marionnette souffle une brume toxique qui la suit 4 s (rayon 95) : 5 dégâts/s et ralentit ; 2 s dedans : poison 3/s pendant 4 s',
  shell:'Sanshôuo : la salamandre-bouclier surgit à la place de ta marionnette 3 s (rayon 90) : arrête les tirs ennemis venus du dehors ; bouclier de 20 à toi et tes alliés dedans',
- kuroari:'Kuroari : la fourmi noire fond sur l\'ennemi le plus proche de ta marionnette (260) (6 dégâts) et l\'enferme 1 s (étourdi), puis ses lames le transpercent : 26 dégâts',
+ kuroari:'Kuroari : la fourmi noire fond sur l\'ennemi le plus proche de ta marionnette (260) (6 dégâts) et l\'enferme 1 s (étourdi), puis ses lames le transpercent : 26 dégâts. Sur un ennemi pris dans tes Fils de chakra : portée 340',
  leap:'Bond en arrière (230) ; ta marionnette lâche une bombe fumigène (rayon 100) : ennemis ralentis 1,2 s',
- swap:'Kawarimi : tu échanges ta place avec ta marionnette (intangible 0,3 s) ; marionnette brisée : petit bond vers le curseur',
+ swap:'Kawarimi : tu échanges ta place avec ta marionnette (intangible 0,3 s) ; marionnette brisée : bond en arrière (200) et bombe fumigène (ennemis ralentis 0,8 s)',
  parents:'Mère et Père surgissent de part et d\'autre de ta marionnette et se referment après 0,6 s : 38 dégâts et étourdit 1 s au centre (rayon 85), 12 et repousse autour (150)',
- army:'Armée de marionnettes 5 s autour de la tienne (rayon 220) : toutes les 0,5 s, chaque ennemi dedans reçoit un coup de lame (4 dégâts) ; à la fin, toutes transpercent le centre : 22 dégâts et étourdit 0,5 s (rayon 130)'};
-KIT('c14',[
- [1,'D','x.sg_blades','Lames cachées',SGD.blades,'sg_pup'],
- [1,'C','x.sg_needle','Senbon empoisonnés',SGD.needle,'sg_poison'],
- [4,'C','x.sg_strings','Fils de chakra',SGD.strings,'sg_pup'],
- [3,'B','x.sg_mist','Brume toxique',SGD.mist,'sg_poison'],
- [4,'B','x.sg_shell','Sanshôuo',SGD.shell,'sg_pup'],
- [3,'A','x.sg_kuroari','Kuroari',SGD.kuroari,'sg_pup'],
- [2,'D','x.sg_leap','Repli du marionnettiste',SGD.leap,'smoke'],
- [2,'C','x.sg_swap','Kawarimi de marionnette',SGD.swap,'sg_pup'],
- [5,'A','x.sg_parents','Mère et Père',SGD.parents,'sg_pup'],
- [5,'S','x.sg_army','Armée de marionnettes',SGD.army,'sg_pup'],
+ army:'Armée de marionnettes 5 s autour de la tienne (rayon 220) : toutes les 0,5 s, chaque ennemi dedans reçoit un coup de lame (4 dégâts) ; à la fin, Mère et Père se referment au centre : 38 dégâts et étourdit 1 s (rayon 85), 12 dégâts et repousse autour (150)'};
+KIT('c14',[ // arbre de clan (v5) : 1 jutsu par rang
+ ['D','x.sg_needle','Senbon empoisonnés',SGD.needle,'sg_poison'],
+ ['C','x.sg_strings','Fils de chakra',SGD.strings,'sg_pup'],
+ ['B','x.sg_mist','Brume toxique',SGD.mist,'sg_poison'],
+ ['A','x.sg_kuroari','Kuroari',SGD.kuroari,'sg_pup'],
+ ['S','x.sg_army','Armée de marionnettes',SGD.army,'sg_pup'],
 ]);
+// dash (Espace) : Kawarimi de marionnette (marionnette brisée : repli du marionnettiste)
+DASHC[14]={src:'x.sg_swap',n:'Kawarimi de marionnette',d:SGD.swap,vfx:'sg_pup',cd:7};
 // style propre : les lames de la marionnette (seul style du clan), au corps à corps : les coups partent de la marionnette
 STYLES.push(['Lames de marionnette',SGD.style,'x.sg_style','steel','fist',[14],.82,.74]);
 
@@ -68,7 +65,7 @@ Object.assign(NAT,{
   aux.push({type:'sg_spin',x:u.x,y:u.y,r:75,t:.62,m:.62,team:u.team,owner:u,ui:sgI(u),n:0,k:0});anim(u,'sg_pull',.6)}),
  // Senbon empoisonnés : éventail de 5 aiguilles depuis la gueule de la marionnette
  sg_needle:SP('Senbon empoisonnés',SGD.needle,7,{line:{len:380,w:60},ai:{max:SG.L+330,p:.6,pr:360}},(u,a)=>{S('blaster',u);
-  for(let i=0;i<5;i++){const b=a+(i-2)*.12;proj(u,b,{spd:820,r:5,dmg:4,life:.46,col:'#d8b8ff',kind:'sg_needle',o:{dot:{dps:3,dur:3}},noClash:1})}
+  for(let i=0;i<4;i++){const b=a+(i-1.5)*.12;proj(u,b,{spd:820,r:5,dmg:4,life:.46,col:'#d8b8ff',kind:'sg_needle',o:{dot:{dps:3,dur:3}},noClash:1})}
   jx({jfx:'sg_puff',x:u.x,y:u.y,a,t:.35,m:.35});anim(u,'sg_pull',.35)}),
  // Fils de chakra : relie l'ennemi le plus proche de la marionnette
  sg_strings:SP('Fils de chakra',SGD.strings,9,{tele:{self:1,r:220},ai:{max:SG.L+200,p:.55,pr:210}},(u)=>{const e=nearE(u,u.x,u.y,220);anim(u,'sg_pull',.5);
@@ -82,8 +79,9 @@ Object.assign(NAT,{
  sg_shell:SP('Sanshôuo',SGD.shell,12,{tele:{self:1,r:90},ai:DEF},(u)=>{S('poof',u);S('rock',u);const c=!sgHum(u)&&u.sg_ox!=null?{x:u.sg_ox,y:u.sg_oy}:{x:u.x,y:u.y};
   aux.push({type:'sg_shell',x:c.x,y:c.y,r:90,t:3,m:3,team:u.team,owner:u,ui:sgI(u),k:0,sh:[]});jx({jfx:'sg_poof',x:c.x,y:c.y,r:70,t:.5,m:.5});anim(u,'sg_summon',.5)}),
  // Kuroari : la fourmi noire (projectile visible, esquivable) enferme sa proie
- sg_kuroari:SP('Kuroari',SGD.kuroari,13,{line:{len:260,w:40},ai:{max:SG.L+240,p:.6,pr:250}},(u,a)=>{const e=nearE(u,u.x,u.y,260),b=e?ang(u,e):a;S('poof',u);S('dash',u);anim(u,'sg_summon',.45);
-  proj(u,b,{x:u.x,y:u.y,spd:640,r:15,dmg:6,life:.55,col:'#2a2230',kind:'sg_ant',home:1,noClash:1,stun:1,onHit:(p,t)=>{if(t.dead||t.unstop>0)return;
+ sg_kuroari:SP('Kuroari',SGD.kuroari,13,{line:{len:260,w:40},ai:{max:SG.L+240,p:.6,pr:250}},(u,a)=>{let e=nearE(u,u.x,u.y,260),L=.45;for(const x of aux)if(x.type==='sg_str'&&x.owner===u&&x.t>0&&x.tg&&!x.tg.dead&&dist(u,x.tg)<340){e=x.tg;L=.6;break} // combo : Fils de chakra → portée 340
+  const b=e?ang(u,e):a;S('poof',u);S('dash',u);anim(u,'sg_summon',.45);if(L>.45)say(e,'FILS : KUROARI','#9fe0ff');
+  proj(u,b,{x:u.x,y:u.y,spd:640,r:15,dmg:6,life:L,col:'#2a2230',kind:'sg_ant',home:1,noClash:1,stun:1,onHit:(p,t)=>{if(t.dead||t.unstop>0)return;
    aux.push({type:'sg_ant',x:t.x,y:t.y,t:1,m:1,team:p.owner.team,owner:p.owner,ui:sgI(p.owner),ti:sgI(t),tg:t,n:0});say(t,'CAPTURÉ !','#c8b0e0');S('heavy',p.owner)}});
   jx({jfx:'sg_poof',x:u.x,y:u.y,r:40,t:.4,m:.4})}),
  // Repli : bond en arrière, fumée sous la marionnette
@@ -91,7 +89,7 @@ Object.assign(NAT,{
   const o=sgPos(u);for(const e of enemies(u))if(Math.hypot(e.x-o.x,e.y-o.y)<100+e.r)hit(e,u,0,{slow:1.2,silent:1,unblockable:1});jx({jfx:'sg_smoke',x:o.x,y:o.y,r:100,t:1.4,m:1.4})}),
  // Kawarimi : échange de place avec la marionnette
  sg_swap:SP('Kawarimi de marionnette',SGD.swap,10,{ai:{mode:'esc',max:200,p:.55,sgOk:u=>{if(!sgOk(u))return true;const e=nearE(u,u.x,u.y,200);return!!e&&Math.hypot(e.x-u.sg_px,e.y-u.sg_py)>dist(u,e)+140}}},(u,a,td)=>{S('poof',u);
-  if(!sgOk(u)){dash(u,a,clamp(td||150,60,150),.2,{jump:24});return}
+  if(!sgOk(u)){const b=sgHum(u)?a+Math.PI:a;S('dash',u);anim(u,'backflip',.4);for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<100+e.r)hit(e,u,0,{slow:.8,silent:1,unblockable:1});jx({jfx:'sg_smoke',x:u.x,y:u.y,r:100,t:1.2,m:1.2});dash(u,b,200,.3,{jump:40});return}
   const ox=u.x,oy=u.y;jx({jfx:'sg_poof',x:ox,y:oy,r:44,t:.45,m:.45});jx({jfx:'sg_poof',x:u.sg_px,y:u.sg_py,r:44,t:.45,m:.45});
   u.x=u.sg_px;u.y=u.sg_py;collide(u);u.sg_px=ox;u.sg_py=oy;u.phase=Math.max(u.phase||0,.3);u.kx=u.ky=0;anim(u,'sg_pull',.35)}),
  // Mère et Père : étreinte des deux marionnettes
@@ -127,8 +125,8 @@ const sgArmyP=(x,i)=>{const el=x.m-x.t,b=i*.6283+el*.55,r=x.r*(.86+.06*Math.sin(
 AUXF.sg_army=x=>{const o=x.owner;if(!o||o.dead){x.t=0;return}
  if(x.t>0){if(x.k>0)return;x.k=.5;if(x.t<.45)return;let j=Math.floor(rnd()*10);VFX='steel';
   for(const e of enemies(o)){if(Math.hypot(e.x-x.x,e.y-x.y)>=x.r+e.r)continue;j=(j+3)%10;const p=sgArmyP(x,j);hit(e,o,4,{unblockable:1,silent:1});jx({jfx:'sg_lunge',x:p.x,y:p.y,ex:e.x,ey:e.y,ti:sgI(e),t:.32,m:.32})}VFX=null;if(near(x.x,x.y))S('saber',o);return}
- if(x.n)return;x.n=1;VFX='steel';for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<130+e.r)hit(e,o,22,{stun:.5,unblockable:1,fx:x.x,fy:x.y});VFX=null;
- jx({jfx:'sg_finale',x:x.x,y:x.y,t:.7,m:.7});if(near(x.x,x.y)){S('heavy',o);S('boom',o);shake=Math.max(shake,.4)}};
+ if(x.n)return;x.n=1;VFX='steel';for(const e of enemies(o)){const d=Math.hypot(e.x-x.x,e.y-x.y);if(d<85+e.r)hit(e,o,38,{stun:1,unblockable:1,fx:x.x,fy:x.y});else if(d<150+e.r)hit(e,o,12,{kb:420,fx:x.x,fy:x.y,unblockable:1})}VFX=null;
+ jx({jfx:'sg_finale',x:x.x,y:x.y,t:.7,m:.7});jx({jfx:'sg_clasp',x:x.x,y:x.y,a:o.aim||0,t:.6,m:.6});if(near(x.x,x.y)){S('heavy',o);S('boom',o);shake=Math.max(shake,.4)}};
 
 // ---------- trait : la marionnette ----------
 function sgReset(u){const s=sgSide(u);u.sg_px=s.x;u.sg_py=s.y;u.sg_hp=SG.HP;u.sg_dn=0;u.sg_hT=0;u.sg_pa=u.aim||0}

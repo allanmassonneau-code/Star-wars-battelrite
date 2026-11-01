@@ -2,7 +2,7 @@
 // Identité : l'éventail tranche (Kamaitachi, Grande Kamaitachi, Tempête tranchante), repousse (Rafale, Contre-vent, Tempête de l'éventail),
 // protège (Barrière : renvoie les tirs), porte (Vol sur l'éventail) et invoque Kamatari, la belette à la faux.
 // Trait « Trois lunes » : chaque jutsu qui touche ouvre une lune de l'éventail ; à 3 lunes, le jutsu suivant part éventail grand ouvert.
-// Combo signature : Vent ascendant (ou l'aller de Kamatari) projette en l'air → Kamaitachi frappe +30 % la cible en l'air.
+// Combo signature : Tempête tranchante (colonne finale) ou l'aller de Kamatari projette en l'air → Kamaitachi frappe +30 % la cible en l'air.
 // Style propre : Éventail fermé (coups d'éventail au contact). Apparence : l'éventail géant dans le dos.
 const RRD={
  st:'Coups d\'éventail fermé au contact ; 3e coup : estoc qui souffle et repousse ; 5e : l\'éventail s\'abat, la bourrasque repousse fort et balaie les tirs ennemis devant toi',
@@ -10,27 +10,24 @@ const RRD={
  gale:'Grand coup d\'éventail devant toi : 18 dégâts, repousse loin, interrompt les mudras et balaie les tirs ennemis',
  up:'Une colonne de vent jaillit au point visé après 0,6 s : 12 dégâts, projette en l\'air (étourdit 0,5 s)',
  wall:'Plante l\'éventail ouvert devant toi 2 s : il renvoie les tirs ennemis et repousse les ennemis qui approchent (4 dégâts)',
- storm:'Tempête de lames au point visé (2,5 s) : aspire, ralentit et coupe 6 fois (3 dégâts), puis explose : 6 dégâts, repousse',
+ storm:'Tempête de lames au point visé (2,5 s) : aspire, ralentit et coupe 6 fois (3 dégâts), puis une colonne de vent jaillit : 6 dégâts, projette en l\'air (étourdit 0,5 s)',
  dai:'Éventail grand ouvert (0,3 s) : une vague de faux traverse tout sur 560 : 28 dégâts, repousse, saigne (8 dégâts en 3 s), avale les tirs',
- glide:'Plane 0,8 s sur l\'éventail (dirigé à la souris) : insensible aux ralentissements, les coups au corps à corps te ratent ; l\'atterrissage repousse (6 dégâts)',
+ glide:'Plane 0,6 s sur l\'éventail (dirigé à la souris) : insensible aux ralentissements, les coups au corps à corps te ratent ; l\'atterrissage repousse les ennemis proches',
  back:'L\'éventail frappe le sol : 14 dégâts autour de toi, repousse et ralentit ; le contrecoup te projette de 260 vers le point visé',
  kamatari:'Kamatari, la belette à la faux, traverse la ligne (640) à l\'aller puis au retour : 28 dégâts et projette en l\'air, puis 14 dégâts ; avale les tirs',
  typh:'Immobile 1 s, l\'éventail bat 3 fois devant toi : 12, 12 puis 16 dégâts, repousse ; le 3e ralentit 2 s ; chaque battement balaie les tirs',
  trait:'Chaque jutsu Roran (hors déplacements) qui touche ouvre une lune de l\'éventail (3 max ; sans toucher, elles se referment une à une après 6 s). Chaque lune : +4 % de dégâts Roran. À 3 lunes, ton prochain jutsu Roran part éventail grand ouvert : +20 % de dégâts et +20 % de taille',
 };
-// [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
-KIT('c12',[
- [1,'D','x.rr_kama','Kamaitachi',RRD.kama,'wind'],
- [1,'C','x.rr_gale','Rafale de l\'éventail',RRD.gale,'wind'],
- [3,'C','x.rr_up','Vent ascendant',RRD.up,'wind'],
- [3,'B','x.rr_wall','Barrière de l\'éventail',RRD.wall,'wind'],
- [4,'B','x.rr_storm','Tempête tranchante',RRD.storm,'wind'],
- [4,'A','x.rr_dai','Grande Kamaitachi',RRD.dai,'wind'],
- [2,'C','x.rr_glide','Vol sur l\'éventail',RRD.glide,'wind'],
- [2,'B','x.rr_back','Contre-vent',RRD.back,'wind'],
- [5,'S','x.rr_kamatari','Invocation : Kamatari',RRD.kamatari,'wind'],
- [5,'A','x.rr_typh','Tempête de l\'éventail',RRD.typh,'wind'],
+// [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel] (format v5)
+KIT('c12',[ // arbre de clan (v5) : 1 jutsu par rang
+ ['D','x.rr_kama','Kamaitachi',RRD.kama,'wind'],
+ ['C','x.rr_gale','Rafale de l\'éventail',RRD.gale,'wind'],
+ ['B','x.rr_storm','Tempête tranchante',RRD.storm,'wind'],
+ ['A','x.rr_dai','Grande Kamaitachi',RRD.dai,'wind'],
+ ['S','x.rr_kamatari','Invocation : Kamatari',RRD.kamatari,'wind'],
 ]);
+// dash (Espace) : Vol sur l'éventail (version courte, sans dégâts à l'atterrissage)
+DASHC[12]={src:'x.rr_glide',n:'Vol sur l\'éventail',d:RRD.glide,vfx:'wind',cd:7};
 // style de combat propre (toujours ajouté à la fin de STYLES)
 STYLES.push(['Éventail fermé',RRD.st,'x.rr_st','wind','fan',[12],1.12,1.07]);
 
@@ -85,7 +82,7 @@ Object.assign(NAT,{
     onHit:(p,t)=>{if(t.dead)return;if(t.unstop<=0){const b=Math.atan2(p.vy,p.vx);t.kx+=Math.cos(b)*650;t.ky+=Math.sin(b)*650}if(near(t.x,t.y))jx({jfx:'rr_cut',ti:rrI(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),big:1,t:.5,m:.5})}});
    aux.push({type:'rr_wavec',x:u.x,y:u.y,r:0,t:1,m:1,team:u.team,owner:u,p:projs[projs.length-1]})})}),
  // ---- Vol sur l'éventail : planer, dirigé à la souris (logique : AUXF.rr_glide ; esquive au corps à corps : trait)
- rr_glide:SP('Vol sur l\'éventail',RRD.glide,12,{ai:{mode:'gap',min:140,max:330,p:.5}},(u,a)=>{const D=.8;u.dash=null;u.rr_gl=D;u.rr_gh=a;u.slowImm=Math.max(u.slowImm,D);anim(u,'rr_ride',D);rrS('dash',u);S('wind',u);
+ rr_glide:SP('Vol sur l\'éventail',RRD.glide,7,{ai:{mode:'gap',min:140,max:280,p:.5}},(u,a)=>{const D=.6;u.dash=null;u.rr_gl=D;u.rr_gh=a;u.slowImm=Math.max(u.slowImm,D);anim(u,'rr_ride',D);rrS('dash',u);S('wind',u);
   for(const x of aux)if(x.type==='rr_glide'&&x.owner===u)x.t=0;
   aux.push({type:'rr_glide',x:u.x,y:u.y,r:0,t:D,m:D,team:u.team,owner:u,a,k:0});jx({jfx:'rr_ride',ui:rrI(u),x:u.x,y:u.y,a,t:D+.05,m:D+.05});sparks(u.x,u.y,RRC.wind,8,'wind')}),
  // ---- Contre-vent : l'éventail frappe le sol, rafale autour, puis le contrecoup projette le lanceur
@@ -121,8 +118,8 @@ AUXF.rr_storm=(x,dt)=>{const o=x.owner;
  for(const e of units){if(e.dead||e.team===x.team)continue;const d=Math.hypot(e.x-x.x,e.y-x.y);if(d>x.r+e.r)continue;
   if(!(e.unstop>0)&&!e.dash&&!(e.slowImm>0)){if(d>8){const v=Math.min(d,28*dt);e.x+=(x.x-e.x)/d*v;e.y+=(x.y-e.y)/d*v}e.slow=Math.max(e.slow,.3)}}
  if(x.k<=0&&x.n<6){x.k=.4;x.n++;VFX='wind';for(const e of units){if(e.dead||e.team===x.team||Math.hypot(e.x-x.x,e.y-x.y)>x.r+e.r)continue;if(hit(e,o,3*x.F,{rr:x.id,unblockable:1})&&near(e.x,e.y))jx({jfx:'rr_cut',ti:rrI(e),x:e.x,y:e.y,a:rnd()*7,t:.3,m:.3})}VFX=null;if(near(x.x,x.y))rrS('saber',o)}
- if(x.t<=0&&!x.done){x.done=1;VFX='wind';for(const e of units)if(!e.dead&&e.team!==x.team&&Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r+20)hit(e,o,6*x.F,{kb:520,fx:x.x,fy:x.y,rr:x.id,unblockable:1});VFX=null;
-  jx({jfx:'rr_burst',x:x.x,y:x.y,r:x.r+20,t:.5,m:.5});if(near(x.x,x.y)){rrS('boom',o);shake=Math.max(shake,.18)}}};
+ if(x.t<=0&&!x.done){x.done=1;VFX='wind';for(const e of units)if(!e.dead&&e.team!==x.team&&Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r+20)hit(e,o,6*x.F,{air:.5,fx:x.x,fy:x.y,rr:x.id,unblockable:1});VFX=null;
+  jx({jfx:'rr_column',x:x.x,y:x.y,r:x.r+20,t:.75,m:.75});jx({jfx:'rr_burst',x:x.x,y:x.y,r:x.r+20,t:.4,m:.4});if(near(x.x,x.y)){rrS('boom',o);S('wind',o);shake=Math.max(shake,.18)}}};
 // vague de la Grande Kamaitachi : elle avale les tirs ennemis qu'elle croise
 AUXF.rr_wavec=x=>{const p=x.p;if(!p||p.dead||p.life<=0||projs.indexOf(p)<0){x.t=0;return}x.x=p.x;x.y=p.y;const sp=Math.hypot(p.vx,p.vy)||1,cx=p.vx/sp,cy=p.vy/sp;
  for(const q of projs){if(q===p||q.dead||q.life<=0||q.grenade||!q.owner||q.owner.team===x.team)continue;const dx=q.x-p.x,dy=q.y-p.y;if(Math.abs(dx*cx+dy*cy)<30+q.r&&Math.abs(-dx*cy+dy*cx)<p.r+12+q.r){q.life=0;if(q.rocket)q.boom=1;if(near(q.x,q.y))sparks(q.x,q.y,RRC.wind,6,'wind')}}};
@@ -132,7 +129,7 @@ AUXF.rr_glide=(x,dt)=>{const u=x.owner;if(!u||u.dead){x.t=0;if(u)u.rr_gl=0;retur
  if(u.ctrl==='local'||u.ctrl==='remote'){let d=u.aim-x.a;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;x.a+=clamp(d,-3.6*dt,3.6*dt)}
  u.x-=u.vx*dt;u.y-=u.vy*dt;const v=430;u.x=clamp(u.x+Math.cos(x.a)*v*dt,B.x+u.r,B.x+B.w-u.r);u.y=clamp(u.y+Math.sin(x.a)*v*dt,B.y+u.r,B.y+B.h-u.r);collide(u);x.x=u.x;x.y=u.y;
  const el=x.m-x.t;u.z=30*Math.min(1,el/.15,Math.max(0,x.t)/.15);u.moving=0;u.rr_gl=Math.max(0,x.t);u.rr_gh=x.a;
- if(x.t<=0){u.rr_gl=0;u.z=0;jx({jfx:'rr_dust',x:u.x,y:u.y,r:90,t:.4,m:.4});rrS('dash',u);VFX='wind';for(const e of units)if(!e.dead&&e.team!==u.team&&dist(u,e)<90+e.r)hit(e,u,6,{kb:420,fx:u.x,fy:u.y,unblockable:1});VFX=null}};
+ if(x.t<=0){u.rr_gl=0;u.z=0;jx({jfx:'rr_dust',x:u.x,y:u.y,r:90,t:.4,m:.4});rrS('dash',u);VFX='wind';for(const e of units)if(!e.dead&&e.team!==u.team&&dist(u,e)<90+e.r)hit(e,u,0,{kb:420,fx:u.x,fy:u.y,unblockable:1,silent:1});VFX=null}};
 // Kamatari : n = 0 apparition, 1 aller, 2 demi-tour, 3 retour, 4 disparition
 AUXF.rr_weasel=(x,dt)=>{const o=x.owner;
  if(x.n===0){if(x.k<=0){x.n=1;rrS('dash',o);rrS('saber',o)}return}

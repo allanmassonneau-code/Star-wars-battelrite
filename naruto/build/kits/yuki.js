@@ -9,24 +9,21 @@ const YU_D={
  lance:'Lance de glace perçante : 24 dégâts, 1 givre, ralentit 1 s ; une cible qui avait déjà 2 givres est clouée 0,5 s',
  spikes:'Des pics de glace jaillissent du sol en ligne : 20 dégâts, 1 givre, ralentit 1,2 s ; les pics restent 1,5 s et ralentissent',
  mirror:'Un miroir de glace se dresse devant toi 2,5 s : il renvoie les projectiles ennemis vers leur lanceur, puis éclate (10 dégâts et 1 givre devant lui)',
- dragon:'Dragon de glace en ligne : 30 dégâts et 2 givres au premier touché, puis il éclate (12 dégâts, 1 givre et ralentit autour)',
+ dragon:'Dragon de glace en ligne : 30 dégâts et 2 givres au premier touché (cloué 0,5 s s\'il avait déjà 2 givres), puis il éclate (12 dégâts, 1 givre et ralentit autour)',
  slide:'Tu glisses vers le curseur à travers les ennemis (8 dégâts, ralentit) ; ta piste de glace (3 s) ralentit les ennemis (1 givre au premier passage) et t\'accélère',
- step:'Tu traverses un miroir jusqu\'au curseur (260 max), ou jusqu\'à ton Miroir de glace (560 max) s\'il est près du curseur ; intangible 0,2 s ; un petit miroir (1,5 s) reste derrière toi',
+ step:'Tu traverses un miroir jusqu\'au curseur (240 max), ou jusqu\'à ton Miroir de glace (560 max) s\'il est près du curseur ; intangible 0,2 s ; tu laisses une courte piste de glace (1,5 s) qui ralentit les ennemis',
  bliz:'Un blizzard t\'entoure 4 s et te porte (plus rapide) : ennemis ralentis, 8 dégâts et 1 givre toutes les 0,8 s ; à la fin, tout gèle (18 dégâts, 1 givre)',
  makyo:'Dôme de 8 miroirs (3,6 s) qui enferme les ennemis (un déplacement en sort) : tu sautes de miroir en miroir et cribles de senbon (2 × 3 dégâts par saut, 1 givre), −40 % de dégâts subis ; à la fin, les miroirs éclatent (10 dégâts)'};
-// [emplacement, rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel]
-KIT('c20',[
- [1,'D','x.yu_swallow','Hyôton : Tsubame Fubuki',YU_D.swallow,'yu_ice'],
- [2,'C','x.yu_slide','Glissade de glace',YU_D.slide,'yu_ice'],
- [3,'C','x.yu_needles','Hyôton : Sensatsu Suishô',YU_D.needles,'yu_ice'],
- [4,'B','x.yu_mirror','Miroir de glace',YU_D.mirror,'yu_ice'],
- [5,'S','x.yu_makyo','Makyô Hyôshô',YU_D.makyo,'yu_ice'],
- [1,'B','x.yu_lance','Hyôton : Lance de glace',YU_D.lance,'yu_ice'],
- [3,'B','x.yu_spikes','Hyôton : Pics de glace',YU_D.spikes,'yu_ice'],
- [4,'A','x.yu_dragon','Hyôton : Dragon de glace',YU_D.dragon,'yu_ice'],
- [2,'B','x.yu_step','Pas du miroir',YU_D.step,'yu_ice'],
- [5,'A','x.yu_blizzard','Hyôton : Blizzard',YU_D.bliz,'yu_ice'],
+// [rang, mécanique (x.clé = NAT[clé]), nom, description, élément visuel] (format v5)
+KIT('c20',[ // arbre de clan (v5) : 1 jutsu par rang
+ ['D','x.yu_swallow','Hyôton : Tsubame Fubuki',YU_D.swallow,'yu_ice'],
+ ['C','x.yu_needles','Hyôton : Sensatsu Suishô',YU_D.needles,'yu_ice'],
+ ['B','x.yu_mirror','Miroir de glace',YU_D.mirror,'yu_ice'],
+ ['A','x.yu_dragon','Hyôton : Dragon de glace',YU_D.dragon,'yu_ice'],
+ ['S','x.yu_makyo','Makyô Hyôshô',YU_D.makyo,'yu_ice'],
 ]);
+// dash (Espace) : Pas du miroir (avec la Glissade : piste de glace)
+DASHC[20]={src:'x.yu_step',n:'Pas du miroir',d:YU_D.step,vfx:'yu_ice',cd:7};
 // style de combat propre : frappes de glace de Haku (seul style du clan, corps à corps)
 STYLES.push(['Frappes de glace','Paumes et lames de glace ; 3e coup : taille gelée qui ralentit ; 5e : la glace éclate devant toi et pose 1 givre (en plus du givre du trait, 1 tous les 3 coups)','x.yu_style','senbon','ice',[20],1.12,1.07]);
 
@@ -92,7 +89,9 @@ Object.assign(NAT,{
   aux.push({type:'yu_mir',x:p.x,y:p.y,a,len:86,w:74,r:0,t:2.5,m:2.5,team:u.team,owner:u,vfx:'yu_ice',k:0,big:1});jx({jfx:'yu_flash',x:p.x,y:p.y,a,t:.4,m:.4})}),
  // ---------- Dragon de glace (A) : gros projectile, éclate au premier touché ou en bout de course ----------
  yu_dragon:SP('Hyôton : Dragon de glace',YU_D.dragon,13,{ai:RG(500,.6),line:{len:520,w:48}},(u,a)=>{yu_S('roar',u);yu_S('wind',u);anim(u,'yu_thrust',.6);jx({jfx:'yu_gust',ui:yu_i(u),x:u.x,y:u.y,a,big:1,t:.55,m:.55});
-  proj(u,a,{spd:500,r:20,dmg:30,life:1.04,col:YUC.ice,kind:'yu_dragon',vfx:'yu_ice',onHit:(p,t)=>{p.yu_b=1;yu_frost(p.owner,t,2);yu_burst(p.owner,p.x,p.y,t,90,12)}});
+  proj(u,a,{spd:500,r:20,dmg:30,life:1.04,col:YUC.ice,kind:'yu_dragon',vfx:'yu_ice',onHit:(p,t)=>{p.yu_b=1;const pre=t.yu_gv|0;yu_frost(p.owner,t,2);
+   if(pre>=2&&!t.dead&&t.unstop<=0){t.root=Math.max(t.root,.5);t.rootV=null;say(t,'CLOUÉ','#bfe6ff');jx({jfx:'yu_pin',ti:yu_i(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.55,m:.55})}
+   yu_burst(p.owner,p.x,p.y,t,90,12)}});
   yu_pilot(u,(x,p,dt,end)=>{if(end&&!p.yu_b)yu_burst(p.owner,p.x,p.y,null,90,12)})}),
  // ---------- Glissade de glace (C, déplacement) : glisse et laisse une piste qui ralentit et givre ----------
  yu_slide:SP('Glissade de glace',YU_D.slide,8,{ai:ESC},(u,a,td)=>{const d=clamp(td||240,110,250),D=.3;yu_S('dash',u);yu_S('water',u);anim(u,'yu_skate',D+.12);
@@ -100,12 +99,12 @@ Object.assign(NAT,{
   aux.push({type:'yu_trail',x:x0,y:y0,a:Math.atan2(ty-y0,tx-x0),len:Math.max(30,L),w:52,r:0,t:3,m:3,team:u.team,owner:u,vfx:'yu_ice',k:0,hs:new Set()});
   dash(u,a,d,D,{dmg:8,through:1,end:()=>{if(!u.dead&&near(u.x,u.y))sparks(u.x,u.y,YUC.lt,10,'yu_ice')}})}),
  // ---------- Pas du miroir (B, déplacement) : on traverse un miroir ; un petit miroir reste derrière ----------
- yu_step:SP('Pas du miroir',YU_D.step,12,{ai:ESC},(u,a,td)=>{const R=260,c=fwd(u,a,Math.min(td||R,560));let p=fwd(u,a,clamp(td||R,80,R)),via=null;
+ yu_step:SP('Pas du miroir',YU_D.step,7,{ai:ESC},(u,a,td)=>{const R=240,c=fwd(u,a,Math.min(td||R,560));let p=fwd(u,a,clamp(td||R,80,R)),via=null;
   for(const x of yu_mirs(u))if(Math.hypot(x.x-c.x,x.y-c.y)<130&&Math.hypot(x.x-u.x,x.y-u.y)<560){via=x;break}
   if(via)p={x:via.x-Math.cos(via.a)*30,y:via.y-Math.sin(via.a)*30}; // on ressort du miroir, côté lanceur
   const x0=u.x,y0=u.y;yu_S('deflect',u);yu_S('poof',u);anim(u,'yu_seal',.35);
-  aux.push({type:'yu_mir',x:x0-Math.cos(a)*12,y:y0-Math.sin(a)*12,a:a+Math.PI,len:56,w:60,r:0,t:1.5,m:1.5,team:u.team,owner:u,vfx:'yu_ice',k:0});
   u.dash=null;u.kx=u.ky=0;u.phase=Math.max(u.phase||0,.2);u.x=clamp(p.x,B.x+u.r,B.x+B.w-u.r);u.y=clamp(p.y,B.y+u.r,B.y+B.h-u.r);collide(u);
+  {const L=Math.hypot(u.x-x0,u.y-y0);if(L>20)aux.push({type:'yu_trail',x:x0,y:y0,a:Math.atan2(u.y-y0,u.x-x0),len:L,w:44,r:0,t:1.5,m:1.5,team:u.team,owner:u,vfx:'yu_ice',k:0,hs:new Set(),nf:1})} // piste de glace (souvenir de la Glissade), sans givre
   jx({jfx:'yu_hop',x:x0,y:y0,x2:u.x,y2:u.y,t:.4,m:.4});jx({jfx:'yu_flash',x:u.x,y:u.y,a,t:.4,m:.4});if(near(u.x,u.y))sparks(u.x,u.y,YUC.lt,10,'yu_ice')}),
  // ---------- Blizzard (A, ultime) : la tempête suit le lanceur (logique : AUXF.yu_bliz) ----------
  yu_blizzard:ULT('Hyôton : Blizzard',YU_D.bliz,{tele:{self:1,r:170},ai:SELF(220,.8)},(u)=>{yu_S('wind',u);yu_S('heavy',u);anim(u,'yu_storm',.8);u.slowImm=Math.max(u.slowImm||0,4);u.slow=0;u.haste=Math.max(u.haste||0,4);
@@ -145,7 +144,7 @@ AUXF.yu_mir=(x,dt)=>{if(x.t<=0){if(x.big&&!x.done){x.done=1;const o=x.owner;if(o
 AUXF.yu_trail=(x,dt)=>{const o=x.owner;if(x.t<=0||!o)return;const ca=Math.cos(x.a),sa=Math.sin(x.a);
  {const dx=o.x-x.x,dy=o.y-x.y,f=dx*ca+dy*sa;if(!o.dead&&f>-o.r&&f<x.len+o.r&&Math.abs(-dx*sa+dy*ca)<x.w/2+o.r)o.haste=Math.max(o.haste||0,.2)} // le lanceur file sur sa glace
  for(const e of enemies(o)){if(e.dash&&e.dash.jump)continue;const dx=e.x-x.x,dy=e.y-x.y,f=dx*ca+dy*sa,s=Math.abs(-dx*sa+dy*ca);if(f<-e.r*.5||f>x.len+e.r*.5||s>x.w/2+e.r*.5)continue;
-  if(e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.3);if(!x.hs.has(e)){x.hs.add(e);if(yu_frost(o,e,1)&&near(e.x,e.y))sparks(e.x,e.y,YUC.lt,6,'yu_ice')}}};
+  if(e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.3);if(!x.nf&&!x.hs.has(e)){x.hs.add(e);if(yu_frost(o,e,1)&&near(e.x,e.y))sparks(e.x,e.y,YUC.lt,6,'yu_ice')}}};
 // blizzard : suit le lanceur ; ralentit ; toutes les 0,8 s : 8 dégâts et 1 givre ; à la fin, tout gèle (18 dégâts, 1 givre)
 AUXF.yu_bliz=(x,dt)=>{const o=x.owner;if(x.done)return;if(!o||o.dead){x.done=1;x.t=0;return}x.x=o.x;x.y=o.y;const ins=e=>Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r;
  if(x.t<=0){x.done=1;let n=0;for(const e of enemies(o))if(ins(e)&&yu_hit(e,o,18,{slow:1,unblockable:1})){n++;yu_frost(o,e,1)}
