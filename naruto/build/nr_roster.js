@@ -36,29 +36,40 @@ function rosMigrate(){return{mine:[],anime:{},last:{me:'a:'+PRESETS[0].n},nid:1}
 // chargement : tout passe par sanitizeBuild ; JSON illisible = liste vide (sans planter)
 function rosLoad(){let raw=null,R=null;try{raw=localStorage.getItem(RKEY)}catch(e){}
  if(raw==null)R=rosMigrate();else try{R=JSON.parse(raw)}catch(e){R=null}
- const o={mine:[],anime:{},last:{},nid:1};
+ const o={mine:[],anime:{},last:{},nid:1,v5:new Set()};
  if(R&&typeof R==='object'){
-  if(Array.isArray(R.mine))for(const m of R.mine){const id=m&&m.id|0,b=m&&bIn(m.build);if(b&&id>0&&!o.mine.some(x=>x.id===id))o.mine.push({id,build:b})}
+  if(Array.isArray(R.mine))for(const m of R.mine){const id=m&&m.id|0,b=m&&bIn(m.build);if(b&&id>0&&!o.mine.some(x=>x.id===id)){o.mine.push({id,build:b});if(m.build.v===5)o.v5.add('m'+id)}}
   if(R.anime&&typeof R.anime==='object')PRESETS.forEach((P,pi)=>{const raw=R.anime[P.n];if(!raw)return;const b=bIn(raw);if(!b)return;
    // retouche sauvegardée avant l'ajout de cosmétiques : les nouveaux champs viennent du perso d'origine (bague de l'Akatsuki, collier de Tsunade…)
    const rl=raw.l&&typeof raw.l==='object'?raw.l:{},P0=presetOf(pi).l;for(const f in P0)if(!LOOK0.includes(f)&&rl[f]==null)b.l[f]=P0[f];
-   // retouche v5 (avant les barres favorites) : sa barre devient « Barre 1 », suivie des barres préfaites du perso dont les jutsu sont tous appris
-   if(raw.v===5){barsAdd(b,presetOf(pi).bars.filter(q=>q.b.every(j=>j<0||b.k.includes(j))).map(q=>({n:q.n,b:q.b.slice()})));b.bar=b.bars[0].b.slice()}
+   // retouche v5 (avant les barres favorites) : sa barre devient « Barre 1 » ; la suite (anciens presets, barres préfaites, barres qui couvrent le reste) dans rosMigBars
+   if(raw.v===5)o.v5.add('a:'+P.n);
    o.anime[P.n]=b})
   const L=R.last&&typeof R.last==='object'?R.last:{};for(const k of['me','opp'])if(typeof L[k]==='string')o.last[k]=L[k];
   o.nid=Math.max(1,R.nid|0,...o.mine.map(m=>m.id+1))}
  ROS=o;RL=RLAY=null;if(raw==null)rosSave()}
 function rosSave(){if(RSIM)return;try{localStorage.setItem(RKEY,JSON.stringify({v:6,nid:ROS.nid,mine:ROS.mine.map(m=>({id:m.id,build:bOut(m.build)})),anime:Object.fromEntries(Object.entries(ROS.anime).map(([n,b])=>[n,bOut(b)])),last:ROS.last}))}catch(e){}}
-// ----- anciens presets de barre (onglet ★ Favoris de l'ancien menu B : nrBar1 {clé du perso: [{n, b:['Nom|arbre' ×6]}]}, et avant eux nrFav1 {clé: ['Nom|arbre', …]}) :
-// repris UNE fois dans les barres favorites du perso (au plus BARSMAX, sans doublon), puis nrBarMig = 1 ; un perso de l'anime qui en reçoit devient « retouché »
-function rosMigBars(){if(RSIM)return;let done=null,P={},F={};try{done=localStorage.getItem('nrBarMig')}catch(e){}if(done)return;
- try{P=JSON.parse(localStorage.getItem('nrBar1')||'{}')||{}}catch(e){P={}}try{F=JSON.parse(localStorage.getItem('nrFav1')||'{}')||{}}catch(e){F={}}
- let n=0;for(const k of new Set([...Object.keys(P),...Object.keys(F)])){const E=rosGet(k);if(!E)continue;
+// ----- passage aux barres favorites (build v6), fait au chargement :
+// · perso ou retouche v5 (ROS.v5) : « Barre 1 » (son ancienne barre), puis ses anciens presets, puis (perso de l'anime) ses barres préfaites dont tous les jutsu sont appris,
+//   puis des barres qui couvrent ses autres jutsu appris (barsCover : avant, le menu B donnait accès à tous) ; au plus BARSMAX barres, sans doublon
+// · anciens presets de barre (onglet ★ Favoris de l'ancien menu B : nrBar1 {clé du perso: [{n, b:['Nom|arbre' ×6]}]}, et avant eux nrFav1 {clé: ['Nom|arbre', …]}),
+//   repris UNE fois (puis nrBarMig = 1), AVANT les barres préfaites : un perso de l'anime non retouché garde sa barre de départ, puis ses presets, puis ses autres barres préfaites
+//   (il devient alors « retouché ») ; les presets qui ne trouvent pas de place sont signalés une fois
+function rosMigBars(){if(RSIM)return;let done=null,P={},F={};try{done=localStorage.getItem('nrBarMig')}catch(e){}
+ if(!done){try{P=JSON.parse(localStorage.getItem('nrBar1')||'{}')||{}}catch(e){P={}}try{F=JSON.parse(localStorage.getItem('nrFav1')||'{}')||{}}catch(e){F={}}}
+ if(!P||typeof P!=='object')P={};if(!F||typeof F!=='object')F={};
+ const V5=ROS.v5||new Set();let n=0,lost=0;
+ for(const k of new Set([...V5,...Object.keys(P),...Object.keys(F)])){const E=rosGet(k);if(!E)continue;
   let L=Array.isArray(P[k])?P[k].filter(p=>p&&Array.isArray(p.b)).map(p=>({n:p.n,b:p.b})):[];
   if(!Array.isArray(P[k])&&Array.isArray(F[k])){const v=F[k].filter(x=>typeof x==='string'&&x).slice(0,BARN);if(v.length)L=[{n:'Favoris',b:v}]}
-  if(!L.length)continue;const b=sanitizeBuild(JSON.parse(JSON.stringify(E.b)));if(!barsAdd(b,L.map(p=>({n:p.n,b:barFromNames(b,p.b)}))))continue;
-  const nb=sanitizeBuild(b);if(E.P)ROS.anime[E.P.n]=nb;else{const m=ROS.mine.find(m=>m.id===E.id);if(m)m.build=nb}RL=RLAY=null;n++}
- try{localStorage.setItem('nrBarMig','1')}catch(e){}if(n)rosChanged()}
+  const b=sanitizeBuild(JSON.parse(JSON.stringify(E.b))),L2=L.map(p=>({n:p.n,b:barFromNames(b,p.b)})).filter(q=>q.b.some(j=>j>=0)),cp=q=>({n:q.n,b:q.b.slice()});
+  if(V5.has(k)){b.bars=b.bars.slice(0,1);barsAdd(b,L2);if(E.P)barsAdd(b,presetOf(E.i).bars.filter(q=>q.b.every(j=>j<0||b.k.includes(j))).map(cp));barsCover(b,b.bars)}
+  else if(L2.length){if(E.P&&!E.mod){const rest=b.bars.slice(1);b.bars=b.bars.slice(0,1);barsAdd(b,L2);barsAdd(b,rest)}else barsAdd(b,L2)}
+  else continue;
+  lost+=L2.filter(q=>!b.bars.some(x=>barEq(x.b,q.b))).length;
+  b.bar=b.bars[0].b.slice();const nb=sanitizeBuild(b);if(E.P)ROS.anime[E.P.n]=nb;else{const m=ROS.mine.find(m=>m.id===E.id);if(m)m.build=nb}RL=RLAY=null;n++}
+ ROS.v5=new Set();if(!done)try{localStorage.setItem('nrBarMig','1')}catch(e){}if(n)rosChanged();
+ if(lost)CONF={t:'Barres favorites',d:`${lost} ancien${lost>1?'s':''} preset${lost>1?'s':''} de barre n'${lost>1?'ont':'a'} pas trouvé de place (${BARSMAX} barres au plus par perso) : refais-les dans la création du perso si besoin.`,ok:'Compris',no:'Fermer',col:'#ffb347',fn:()=>{}}}
 // ----- liste des persos : {k, b build, sec section, P perso de l'anime (+ i son indice, mod retouché) ou id (les tiens)}
 function rosEntries(){if(RL)return RL;RL=[];
  for(const m of ROS.mine)RL.push({k:'m'+m.id,id:m.id,b:m.build,sec:0});

@@ -73,10 +73,11 @@ rep("if(state==='menu'){if(pressed.lmb){if(inRect(mouse,coopBtn))","if(state==='
 rep("cards.forEach(c=>{if(inRect(mouse,c)){if(takenBy(c.c))return;if(isGuest()){net.mate=c.c;net.ready=false;netSend({t:'hero',c:c.c})}else if(coop()){net.myPick=c.c;net.ready=false;sendLobby()}else startMatch(c.c)}});",
     "if(menuClick()){pressed.lmb=0}")
 # ---------- en ligne : chacun envoie son build, l'hôte le diffuse dans le salon
+# un build reçu pendant un match n'y change rien (sinon une réapparition prendrait d'autres jutsu et d'autres barres) : gardé dans P.bq, appliqué au retour au menu (netBuildQ, nr_bar.js)
 rep("function lobbyList(){return net.role==='host'?[{id:0,c:net.myPick||null,ready:!!net.ready,team:0}].concat(livePeers().map(p=>({id:p.id,c:p.c,ready:!!p.ready,team:p.team}))):net.role==='guest'?net.lobby:[]}",
     "function lobbyList(){return net.role==='host'?[{id:0,c:'p0',ready:!!net.ready,team:0,b:MY}].concat(livePeers().map(p=>({id:p.id,c:p.c,ready:!!p.ready,team:p.team,b:p.b}))):net.role==='guest'?net.lobby:[]}")
 rep("   if(d.t==='hero'&&CH[d.c]&&!CH[d.c].trooper&&!lobbyList().some(x=>x.id!==P.id&&x.c===d.c)){P.c=d.c;P.ready=false;sendLobby()}\n   else if(d.t==='hero')sendLobby();",
-    "   if(d.t==='build'){if(d.pv!==NPV){netVerHost(P);return}P.b=sanitizeBuild(d.b,true);P.c='p'+P.id;CH[P.c]=mkNinja(P.b,true);P.ready=false;sendLobby()}")
+    "   if(d.t==='build'){if(d.pv!==NPV){netVerHost(P);return}if(state!=='menu'){P.bq=sanitizeBuild(d.b,true);return}P.bq=null;P.b=sanitizeBuild(d.b,true);P.c='p'+P.id;CH[P.c]=mkNinja(P.b,true);P.ready=false;sendLobby()}")
 rep("net.lobby=d.P||[];const me=net.lobby.find(x=>x.id===net.myId);",
     "net.lobby=d.P||[];for(const x of net.lobby)if(x.b&&x.c)CH[x.c]=mkNinja(x.b,true);const me=net.lobby.find(x=>x.id===net.myId);")
 rep("if(d.id)net.myId=d.id}","if(d.id){if(d.pv!==NPV){netVerGuest();return}net.myId=d.id;netSend({t:'build',b:MY,pv:NPV})}}")
@@ -438,8 +439,6 @@ rep(" drawAmbient();drawHud();drawCutin();"," drawAmbient();drawHud();drawCutin(
 # la roue est dessinée en dernier (avant le curseur) : bandeaux plein écran (COMBATTEZ !, mort, jutsu S) et compte à rebours passent dessous
 rep("text('Clic ou Entrée pour revenir au menu',W/2,H-16,15,'#9fb3d9','center','normal')}\n drawCursor();","text('Clic ou Entrée pour revenir au menu',W/2,H-16,15,'#9fb3d9','center','normal')}\n try{BMUI.draw()}catch(e){console.error(e)}drawCursor();")
 rep("if(e.code==='Escape'&&state!=='menu'&&!e.repeat)quitUI(!quitOn)","if(e.code==='Escape'&&state!=='menu'&&!e.repeat){if(!BMUI.esc())quitUI(!quitOn)}")
-rep("l:mouse.l,p:pressed","l:mouse.l&&!BMUI.mask(),p:pressed")
-rep("l:!!mouse.l,p:Object.keys(net.gp)","l:!!mouse.l&&!BMUI.mask(),p:Object.keys(net.gp)") # invité : même règle que l'hôte (BMUI.mask)
 # en ligne : l'invité demande ({t:'eq'}), l'hôte valide avec les mêmes règles et répond ({t:'eqr'}) ; la barre de l'invité vient de l'instantané (barS), son stash de ms
 rep("   if(d.t==='in'){","   if(d.t==='eq'){bmNet(P,d);return}\n   if(d.t==='in'){")
 rep("   else if(d.t==='bal')blRecv(d);","   else if(d.t==='bal')blRecv(d);\n   else if(d.t==='eqr')bmAck(d);\n   else if(d.t==='nver')netVerGuest();")

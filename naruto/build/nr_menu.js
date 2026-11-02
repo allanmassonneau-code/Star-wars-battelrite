@@ -50,6 +50,15 @@ function crBarDel(i){if(EB.bars.length<2){crSay('Il faut au moins une barre','#f
   fn:()=>{EB.bars.splice(i,1);EB.bar=EB.bars[0].b.slice();if(EBI>=i)EBI=Math.max(0,EBI-1);edRebuild();crSay(`Barre « ${n} » supprimée`,'#ffb347')}}}
 function crBarStart(){if(EBI===0){crSay(`« ${crBN(0)} » est déjà la barre de départ`,'#c8b89a');return}const q=EB.bars.splice(EBI,1)[0];EB.bars.unshift(q);EB.bar=q.b.slice();EBI=0;edRebuild();
  crSay(`« ${q.n} » est maintenant la barre de départ (★, barre 1)`,'#8fe38f')}
+// barre identique à une barre précédente : n° de celle-ci (sinon -1) ; jutsu appris dans aucune barre
+const crDupOf=i=>{const B=crBars();return B.slice(0,i).findIndex(x=>barSame(x,B[i]))};
+const crOut=()=>{const U=new Set(crBars().flat());return EB.k.filter(id=>!U.has(id))};
+// avertissement au 1er clic sur « Enregistrer » (le 2e enregistre) : cases vides, barre en double (retirée à l'enregistrement), jutsu appris dans aucune barre (inutilisables en combat)
+function crSaveWarn(){const n=crHoles();if(n)return`${n} case${n>1?'s':''} vide${n>1?'s':''} dans tes barres alors que des jutsu appris n'y sont pas : « Compléter » remplit la barre affichée · clique encore « Enregistrer » pour garder ainsi`;
+ const d=EB.bars.findIndex((_,i)=>crDupOf(i)>=0);if(d>0)return`La barre ${d+1} « ${crBN(d)} » est identique à la barre ${crDupOf(d)+1} : clique encore « Enregistrer » pour la retirer, ou change une de ses cases`;
+ const o=crOut().length;if(o)return`${o} jutsu appris ${o>1?'ne sont':'n\'est'} dans aucune barre (inutilisable${o>1?'s':''} en combat) : `+(EB.bars.length<BARSMAX?'« + » crée une barre avec eux':'place-les dans une de tes barres')+' · clique encore « Enregistrer » pour garder ainsi';
+ return''}
+function crDedupe(){const B=crBars(),keep=EB.bars.map((_,i)=>i===0||!B.slice(0,i).some(x=>barSame(x,B[i])));if(keep.every(Boolean))return;EB.bars=EB.bars.filter((_,i)=>keep[i]);crFixI()}
 // rangée des onglets de barres (sous les 6 cases) : un onglet par barre (★ = départ) puis « + »
 const crTabW=()=>{const n=(EB&&EB.bars||[]).length||1;return Math.min(150,(478-(n<BARSMAX?40:0)-6*(n-1))/n)},crTabR=i=>({x:BX+98+i*(crTabW()+6),y:606,w:crTabW(),h:30}),crPlusR=()=>crTabR((EB.bars||[]).length),crDelR=R=>({x:R.x+R.w-22,y:R.y+5,w:18,h:20}),crStartBtn={x:430,y:574,w:90,h:24}; // (BX+2 : BX est défini plus bas)
 let EDW=0;
@@ -198,7 +207,7 @@ function creatorClick(){
  for(const c of crCols())if(c.t==='+fam'&&inRect(mouse,{x:c.x,y:CRG.y,w:c.w,h:4*CRG.rh+CRG.ch})){openPicker('fam');return true}
  if(inRect(mouse,crAutoBtn)){crSetB(crAutoB());edRebuild();crSay(EBI===0?'Barre refaite : du rang S au rang D, en alternant les arbres':'Barre refaite : d\'abord les jutsu absents des autres barres, du rang S au rang D','#8fe38f');return true}
  if(inRect(mouse,crFillBtn)){const n=crFill();crSay(n?n+' case'+(n>1?'s':'')+' remplie'+(n>1?'s':''):'Aucune case vide à remplir (ou plus de jutsu appris hors de la barre)',n?'#8fe38f':'#c8b89a');return true}
- if(inRect(mouse,saveBtn)){if(edOver())return true;const n=crHoles();if(n&&!(EDW&&performance.now()-EDW<6000)){EDW=performance.now();crSay(`${n} case${n>1?'s':''} vide${n>1?'s':''} dans tes barres alors que des jutsu appris n'y sont pas : « Compléter » remplit la barre affichée · clique encore « Enregistrer » pour garder ainsi`,'#ffb347');return true}EDW=0;edSave();return true}
+ if(inRect(mouse,saveBtn)){if(edOver())return true;const w=crSaveWarn();if(w&&!(EDW&&performance.now()-EDW<6000)){EDW=performance.now();crSay(w,'#ffb347');return true}EDW=0;crDedupe();edSave();return true}
  return false}
 // --- dessin d'une carte du panneau de choix
 function drawCard(D,it,R,hov){const j=D.kind==='j',a=D.kind==='a';
@@ -380,11 +389,11 @@ function drawCreator(){
  // onglets des barres favorites : clic = modifier cette barre · clic sur la barre affichée = renommer · ✕ (ou clic D) = supprimer · + = nouvelle barre
  {g.font=FNT(10,'bold');EB.bars.forEach((q,i)=>{const R=crTabR(i),on=i===EBI,h=hv(R),hd=on&&EB.bars.length>1&&hv(crDelR(R));
    rr(R,9,on?'#ff9a3a':h?'rgba(90,60,30,.95)':'rgba(40,28,18,.92)',on?'#ffd38a':i===0?'#7fd87f':'#8a5a2a',on?2:1.2);
-   const pre=(i===0?'★ ':'')+(i+1)+'. ',fg=on?'#1a1008':i===0?'#bff0b0':'#f3d9b0';fitT(pre+q.n+(on&&!hd?' ✎':''),R.x+8,R.y+19.5,12,fg,R.w-(on&&EB.bars.length>1?32:14),'bold',8.5);
+   const dup=crDupOf(i),pre=(i===0?'★ ':'')+(i+1)+'. ',fg=dup>=0?(on?'#7a0e00':'#ff8a7a'):on?'#1a1008':i===0?'#bff0b0':'#f3d9b0';fitT(pre+q.n+(dup>=0?' (double)':'')+(on&&!hd?' ✎':''),R.x+8,R.y+19.5,12,fg,R.w-(on&&EB.bars.length>1?32:14),'bold',8.5);
    if(on&&EB.bars.length>1){const D=crDelR(R);rr(D,5,hd?'#c0392b':'rgba(26,16,8,.35)');text('✕',D.x+D.w/2,D.y+14.5,11,hd?'#fff':'#3a2208','center')}
    if(h)hoverTip('crtab'+i+(hd?'d':''),()=>hd?{t:`Supprimer « ${q.n} »`,col:'#ff7a6a',d:'Une confirmation est demandée. Les jutsu restent appris.'}
     :{t:`Barre ${i+1} : ${q.n}${i===0?' (départ)':''}`,col:i===0?'#8fe38f':'#ffd38a',l:crBars()[i].map((id,s)=>[`${s+1}. ${id>=0?crN(id)+' · rang '+JL[id].r:'vide'}`,id>=0?liftC(catCol(JL[id].cat),.5):'#7a8aa8']),
-     d:i===0?'Barre de départ : celle que tu as en début de combat. En combat, B maintenu + molette passe d\'une barre à l\'autre (relâcher B : équiper).':'En combat : B maintenu + molette pour la surligner, relâcher B pour l\'équiper. Les recharges suivent les jutsu.',
+     d:(dup>=0?`Identique à la barre ${dup+1} : change au moins une case (à l'enregistrement, une barre en double est retirée). `:'')+(i===0?`Barre de départ : celle que tu as en début de combat. En combat, ${lbl.KeyB} maintenu + molette passe d'une barre à l'autre (relâcher ${lbl.KeyB} : équiper).`:`En combat : ${lbl.KeyB} maintenu + molette pour la surligner, relâcher ${lbl.KeyB} pour l'équiper. Les recharges suivent les jutsu.`),
      f:on?'Clic : renommer · ✕ ou clic D : supprimer':'Clic : modifier cette barre · clic D : supprimer'})});
   if(EB.bars.length<BARSMAX){const R=crPlusR(),h=hv(R);g.save();g.setLineDash([5,4]);rr({x:R.x,y:R.y,w:34,h:R.h},9,h?'rgba(74,48,24,.95)':'rgba(24,17,11,.6)',h?'#ffc53a':'rgba(255,197,58,.55)',1.3);g.restore();text('+',R.x+17,R.y+21,18,h?'#fff':'#ffc53a','center');
    if(h)hoverTip('crplus',()=>({t:'Nouvelle barre favorite',col:'#ffc53a',d:`Ajoute une barre (${EB.bars.length}/${BARSMAX}) remplie d'abord avec tes jutsu appris absents des autres barres. Tu la retouches ensuite case par case.`}))}}

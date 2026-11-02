@@ -5,7 +5,7 @@
 // MBAR : barre de chaque combattant pour tout le match (clé c|team) : gardée après une mort et entre les manches ; une nouvelle manche remet recharges et stash à zéro (mkUnit neuf),
 // une réapparition (mode bataille) les GARDE, elles ont continué de décompter pendant la mort (cdKeep / cdPut plus bas : sinon mourir remettrait à neuf des jutsu de 80-100 s).
 let MBAR={};
-const BARERR={nolearn:'Jutsu non appris',slot:'Case invalide',same:'Déjà dans cette case',empty:'Case déjà vide',jid:'Jutsu inconnu',state:'Pas en combat',unit:'Ninja introuvable',rate:'Trop de demandes',net:'En attente de l\'hôte…',bar:'Barre invalide',nobar:'Aucun jutsu appris dans cette barre',samebar:'Cette barre est déjà équipée'};
+const BARERR={nolearn:'Jutsu non appris',jid:'Jutsu inconnu',state:'Pas en combat',unit:'Ninja introuvable',rate:'Trop de demandes',net:'En attente de l\'hôte…',bar:'Barre invalide',nobar:'Aucun jutsu appris dans cette barre',samebar:'Cette barre est déjà équipée'};
 // copie du ninja d'une unité avec SA barre (copie superficielle : les objets jutsu restent partagés, comme avant)
 function unitCh(c,bar){const C=CH[c];if(!C||!C.jab)return C;const b=Array.isArray(bar)&&bar.length===BARN?bar:C.bar0||C.bar;
  return Object.assign({},C,{abil:[C.abil[0],...b.map(j=>j>=0&&C.jab[j]||null),C.dashAb,C.shunAb],bar:b.map(j=>j>=0&&C.jab[j]?j:-1)})}
@@ -87,18 +87,20 @@ const NPV=8,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez
 const netVerT=()=>performance.now()-NVT<4000;
 function netVerHost(P){P.nver=1;net.peers=net.peers.filter(x=>x!==P);try{P.conn.send({t:'nver'})}catch(e){}setTimeout(()=>{try{P.conn.close()}catch(e){}},300);setStat('Un ami a une autre version du jeu : il doit recharger la page.');try{sendLobby()}catch(e){}}
 function netVerGuest(){NVT=performance.now();netReset();state='menu';setStat(VERMSG);try{netUI(true)}catch(e){}}
-// demande d'un joueur (roue de B) : hors ligne / hôte → appliquée tout de suite ; invité → envoyée à l'hôte ({t:'eq',a:'fav',s:i}), réponse dans BARNET.last (bmAck)
-const BARNET={seq:0,wait:null,last:null};
+// demande d'un joueur (roue de B) : hors ligne / hôte → appliquée tout de suite ; invité → envoyée à l'hôte ({t:'eq',a:'fav',s:i}), réponse par bmAck
+const BARNET={seq:0,wait:null};
 function barReq(i){if(isGuest()&&net.live){const q=++BARNET.seq;BARNET.wait={q,i,t:performance.now()};netSend({t:'eq',a:'fav',s:i,q});return{ok:true,pend:true,net:true,q}}
- if(!player)return{ok:false,e:'unit'};const r=barFav(player,i);BARNET.last=Object.assign({q:0},r);return r}
+ if(!player)return{ok:false,e:'unit'};return barFav(player,i)}
 // hôte : valide la demande d'un invité (n° de barre entier, dans SA liste de barres reçue avec son build, contenu revérifié), au plus 12 par seconde et par invité, puis répond
 function bmNet(P,d){const rep=o=>{try{P.conn.send(Object.assign({t:'eqr',q:d&&Number.isInteger(d.q)?d.q:0},o))}catch(e){}return o};
  const now=performance.now();P.eqT=(P.eqT||[]).filter(t=>now-t<1000);if(P.eqT.length>=12)return rep({ok:false,e:'rate'});P.eqT.push(now);
  if(state==='menu')return rep({ok:false,e:'state'});const u=units.find(x=>x.ctrl==='remote'&&x.rid===P.id);if(!u)return rep({ok:false,e:'unit'});
  if(!d||d.a!=='fav')return rep({ok:false,e:'bar'});const r=barFav(u,d.s);rep(r);return r}
 // invité : réponse de l'hôte (la barre elle-même arrive par l'instantané)
-function bmAck(d){if(!d)return;BARNET.last={q:d.q|0,ok:!!d.ok,e:typeof d.e==='string'?d.e:'',pend:!!d.pend};const w=BARNET.wait;if(w&&w.q===(d.q|0)){BARNET.wait=null;if(d.ok&&player){if(d.pend)player.favQ=w.i;else{player.favI=w.i;player.favQ=null}}}try{BMUI.ack(BARNET.last,w)}catch(e){}}
+function bmAck(d){if(!d)return;const r={q:d.q|0,ok:!!d.ok,e:typeof d.e==='string'?d.e:'',pend:!!d.pend},w=BARNET.wait;if(w&&w.q===(d.q|0)){BARNET.wait=null;if(d.ok&&player){if(d.pend)player.favQ=w.i;else{player.favI=w.i;player.favQ=null}}}try{BMUI.ack(r,w)}catch(e){}}
 AFTER.push(()=>{if(!UK.includes('barS'))UK.push('barS')});
+// hôte : build d'un invité reçu pendant un match (P.bq, voir mknaruto.py) : appliqué au retour au menu
+function netBuildQ(){if(state!=='menu'||!net||net.role!=='host')return;let ch=false;for(const P of net.peers)if(P.bq){P.b=P.bq;P.bq=null;P.c='p'+P.id;CH[P.c]=mkNinja(P.b,true);P.ready=false;ch=true}if(ch)try{sendLobby()}catch(e){}}
 // ---------- bots ----------
 // ordre d'essai des cases : barre du rang S au rang D, puis dash et Kawarimi
 function aiOrder(u){const o=[];for(let i=BAR0;i<BAR0+BARN;i++)if(u.ch.abil[i])o.push(i);const rk=i=>RANKO.indexOf(u.ch.abil[i].rank);o.sort((a,b)=>rk(b)-rk(a)||a-b);o.push(DASHI,SHUNI);return o}
@@ -113,13 +115,10 @@ function aiBar(u){if(!u.ch||!u.ch.jab||u.ctrl||u.dead||u.barQ)return false;const
  const [n0,f0]=rdy(u.ch.bar);if(f0&&n0>f0*AIBAR.low)return false;
  const cur=favCur(u);let best=-1,bn=n0+AIBAR.gain-1;L.forEach((q,i)=>{if(i===cur||barEq(q.b,u.ch.bar))return;const [n]=rdy(q.b);if(n>bn){bn=n;best=i}});
  if(best<0)return false;const r=barFav(u,best);if(r.ok){u.aiBarT=SIMT+AIBAR.gap;u.aiBarN=(u.aiBarN|0)+1}return r.ok}
-// ---------- barres d'un bot au kit tiré au hasard : 1 à 3 barres (nombre tiré du kit lui-même : le générateur des autres bots n'avance pas) ----------
-// la 1re = sa barre ; les suivantes prennent d'abord les jutsu appris absents des barres précédentes (rang S → D en alternant les arbres), complétées par les autres
-function autoBars(o){let h=7;for(const id of o.k||[])h=(h*31+id+1)%1000003;const n=1+h%3,B=[{n:'Barre 1',b:(o.bar||autoBar(o)).slice()}];
- for(let i=1;i<n;i++){const used=new Set(B.flatMap(q=>q.b)),fresh=(o.k||[]).filter(id=>!used.has(id));if(fresh.length<3)break;
-  const a=autoBar(Object.assign({},o,{k:fresh})).filter(id=>id>=0);for(const id of autoBar(o))if(a.length<BARN&&id>=0&&!a.includes(id))a.push(id);while(a.length<BARN)a.push(-1);B.push({n:'Barre '+(i+1),b:a})}
- return B}
+// ---------- barres d'un kit tiré au hasard (bots, nouveau perso, « Kit aléatoire ») : sa barre puis des barres qui couvrent TOUS ses jutsu appris (barsCover, nr_tree.js) ----------
+// sans tirage (les autres bots ne changent pas) ; 15 jutsu appris = 3 barres, comme les persos de l'anime (une seule barre laissait 9 jutsu inutilisés : 94 % de défaites contre eux)
+function autoBars(o){const b=(o.bar||autoBar(o)).slice();return barsCover(o,[{n:barTheme(o,b,[]),b}])}
 // ---------- branchement de l'interface (roue des barres : nr_radial.js) ----------
 // mknaruto.py appelle : BMUI.frame(dt) au début de chaque image (avant la simulation et l'envoi des touches de l'invité), BMUI.draw() après le HUD,
-// BMUI.mask() (vrai = le clic gauche ne frappe pas ; la roue ne bloque rien), BMUI.esc() sur Échap en combat (vrai = la roue s'est fermée, pas de menu Quitter), BMUI.ack(r) à la réponse de l'hôte.
-const BMUI={open:false,frame(dt){},draw(){},mask(){return false},esc(){return false},ack(r){}};
+// BMUI.esc() sur Échap en combat (vrai = la roue s'est fermée, pas de menu Quitter), BMUI.ack(r) à la réponse de l'hôte. La roue ne bloque aucune autre entrée.
+const BMUI={open:false,frame(dt){},draw(){},esc(){return false},ack(r){}};

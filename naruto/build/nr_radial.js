@@ -21,28 +21,32 @@ function rbClose(apply){if(!RB.open)return;RB.open=false;if(!apply||!RB.moved)re
  if(r.net){rbSay('Demande envoyée à l\'hôte…','#c8b89a',3.2);return}
  if(r.pend){rbSay(`${n} en attente : équipée à la fin du jutsu en cours`,'#ffb347',3.4);return}
  rbSay(`${n} équipée`,'#8fe38f')}
-// molette : un cran = une barre (pavé tactile : ≈ 60 px cumulés = une barre) ; jamais de défilement de la page pendant la roue
-try{cv.addEventListener('wheel',e=>{if(!RB.open||state==='menu')return;e.preventDefault();const n=barsOf(player).length;if(n<2)return;
- const dy=e.deltaY;let d=0;if(e.deltaMode||Math.abs(dy)>=40){d=Math.sign(dy);RB.acc=0}else{RB.acc+=dy;if(Math.abs(RB.acc)>=60){d=Math.sign(RB.acc);RB.acc=0}}if(d){RB.hi=(RB.hi+d+n)%n;RB.moved=true}},{passive:false})}catch(e){}
+// molette : un cran = une barre (pavé tactile : ≈ 60 px cumulés = une barre), au plus un cran toutes les RBW ms : un geste avec inertie ou une molette libre
+// (des dizaines d'événements rapprochés) n'avance que d'une barre par geste court. Écoutée sur la fenêtre : marche aussi sur les bandes noires autour du canvas.
+const RBW=140;
+try{addEventListener('wheel',e=>{if(!RB.open||state==='menu')return;e.preventDefault();const n=barsOf(player).length;if(n<2)return;const now=performance.now();
+ if(now-(RB.wT||0)>200)RB.acc=0;RB.wT=now;if(now-(RB.wS||0)<RBW){RB.acc=0;return}
+ const dy=e.deltaMode?Math.sign(e.deltaY)*60:e.deltaY;RB.acc+=Math.abs(dy)>=40?Math.sign(dy)*60:dy;if(Math.abs(RB.acc)<60)return;
+ const d=Math.sign(RB.acc);RB.acc=0;RB.wS=now;RB.hi=(RB.hi+d+n)%n;RB.moved=true},{passive:false})}catch(e){}
 try{addEventListener('blur',()=>{if(RB.open)rbClose(false)})}catch(e){}
 Object.assign(BMUI,{
  frame(dt){if(RB.msgT>0)RB.msgT-=dt;
   if(BARNET.wait&&performance.now()-BARNET.wait.t>3000){BARNET.wait=null;rbSay('L\'hôte ne répond pas','#ff7a6a')} // invité : pas de réponse en 3 s
-  if(!rbOk()){RB.open=false;BMUI.open=false;return}
+  try{netBuildQ()}catch(e){}
+  if(!rbOk()){if(RB.open&&RB.moved&&state!=='menu')rbSay('Manche terminée : barre non changée','#c8b89a');RB.open=false;BMUI.open=false;return}
   if(pressed.KeyB){delete pressed.KeyB;if(!quitOn&&!RB.open)rbOpen()}
   if(RB.open&&(quitOn||!keys.KeyB))rbClose(!quitOn); // B relâché : on équipe la barre surlignée
   if(RB.open){const n=barsOf(player).length;if(RB.hi>=n)RB.hi=0}
   BMUI.open=RB.open},
- mask(){return false},
  esc(){if(RB.open){rbClose(false);BMUI.open=false;return true}return false},
  ack(r,w){if(!r)return;const n=w&&barsOf(player)[w.i]?`« ${barsOf(player)[w.i].n} »`:'La barre';
   if(!r.ok)rbSay(BARERR[r.e]||'Refusé par l\'hôte','#ff7a6a');else if(r.pend)rbSay(`${n} en attente : équipée à la fin du jutsu en cours`,'#ffb347',3.4);else rbSay(`${n} équipée`,'#8fe38f')},
- draw(){if(!rbOk())return;rbHud();if(RB.open)rbDraw()}});
+ draw(){if(!rbOk()){if(state!=='menu'&&player)rbMsg();return}rbHud();if(RB.open)rbDraw()}});
 // ---------- dessin ----------
 // rappel au-dessus du HUD (barre à l'écran, n° / total, touche) + message bref du dernier changement + barre en attente
+function rbMsg(){if(!(RB.msgT>0))return;const y=H-82;g.save();g.globalAlpha=Math.min(1,RB.msgT*2);const w=Math.min(560,(g.font=FNT(13,'bold'),g.measureText(RB.msg).width+34));rr({x:W/2-w/2,y:y-34,w,h:24},12,'rgba(14,10,8,.78)',RB.msgC,1.2);fitT(RB.msg,W/2,y-17,13,RB.msgC,w-20,'bold',9,'center');g.restore()}
 function rbHud(){const L=barsOf(player),c=favCur(player),p=rbPend(),y=H-82;
- if(RB.msgT>0){g.save();g.globalAlpha=Math.min(1,RB.msgT*2);const w=Math.min(560,(g.font=FNT(13,'bold'),g.measureText(RB.msg).width+34));rr({x:W/2-w/2,y:y-34,w,h:24},12,'rgba(14,10,8,.78)',RB.msgC,1.2);fitT(RB.msg,W/2,y-17,13,RB.msgC,w-20,'bold',9,'center');g.restore()}
- if(RB.open)return;
+ rbMsg();if(RB.open)return;
  const pn=p>=0?` · « ${L[p].n} » en attente…`:'';
  const s=L.length>1?`Barre « ${c>=0?L[c].n:'perso'} » ${c>=0?c+1:'–'}/${L.length}${pn} · ${lbl.KeyB} maintenu + molette : changer de barre`:`Barre « ${L[0].n} » · ajoute d'autres barres dans la création du perso (roue : ${lbl.KeyB})`;
  if(state==='fight'||state==='countdown')fitT(s,W/2,y,10.5,p>=0?'rgba(255,179,71,.9)':'rgba(159,179,217,.6)',760,'normal',8.5,'center')}

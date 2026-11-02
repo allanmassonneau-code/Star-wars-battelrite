@@ -58,8 +58,19 @@ const dashOf=b=>b.clan>=0?DASHC[b.clan]||DASHB:b.dsh==='n'?DASHN[b.nat]||DASHB:b
 // {v:6, name, side, clan (-1 sans clan), nat (-1 pour un clan martial), st (arbre de style 0-2), w (indice STYLES de l'attaque de base), fam:[familles], dsh, k:[jid appris],
 //  bar:[6 jid | -1] (= bars[0].b, la barre de départ), bars:[{n:nom, b:[6 jid | -1]}, …] (1 à BARSMAX barres favorites, changées en combat avec la roue de B), l:{apparence}}
 // v5 → v6 : un build sans bars reçoit une seule barre « Barre 1 » = sa barre. `bar` fait foi pour la 1re barre (le code qui ne connaît que bar reste juste).
-// Chaque barre : jutsu APPRIS seulement, sans doublon, 6 cases ; une barre toute vide est refaite automatiquement (autoBar).
+// Chaque barre : jutsu APPRIS seulement, sans doublon, 6 cases ; une barre toute vide est refaite automatiquement (la 1re par autoBar, une autre par barFresh :
+// d'abord les jutsu absents des autres barres, pour ne pas recréer une barre déjà là). strict (bots, builds reçus) : une barre identique à une précédente est retirée.
 const BARSMAX=4,BARNM=16;
+const barSame=(a,b)=>!!a&&!!b&&a.length===b.length&&a.every((j,s)=>j===b[s]);
+// une barre de 6 qui prend d'abord les jutsu appris absents de U (Set de jid), rang S → D en alternant les arbres, complétée par la barre auto
+function barFresh(o,U){const fresh=(o.k||[]).filter(id=>!U.has(id)),a=fresh.length?autoBar(Object.assign({},o,{k:fresh})).filter(id=>id>=0):[];
+ for(const id of autoBar(o))if(a.length<BARN&&id>=0&&!a.includes(id))a.push(id);while(a.length<BARN)a.push(-1);return a}
+// nom de barre d'après l'arbre le plus présent (« Fûton », « Uchiha »…), sans doublon de nom dans L
+function barTheme(o,B,L){const c={};for(const id of B)if(id>=0&&JL[id])c[JL[id].cat]=(c[JL[id].cat]||0)+1;const t=Object.keys(c).sort((x,y)=>c[y]-c[x]||(o.k||[]).indexOf(+x)-(o.k||[]).indexOf(+y))[0];
+ let n=String(t!=null?catName(t):'Barre').replace(/^Clan /,'').split(' / ')[0].slice(0,BARNM-2);const used=new Set((L||[]).map(q=>q.n));if(!used.has(n))return n;for(let i=2;;i++)if(!used.has(n+' '+i))return n+' '+i}
+// barres qui COUVRENT les jutsu appris : ajoute à L (liste {n,b}) des barres faites d'abord des jutsu absents des barres déjà là, jusqu'à ce que chaque jutsu appris soit
+// dans une barre (ou BARSMAX barres) ; avec 15 jutsu appris et une barre de départ, cela fait 3 barres (6 + 6 + 3 nouveaux complétés). Renvoie L.
+function barsCover(o,L){L=L||[];while(L.length<BARSMAX){const U=new Set(L.flatMap(q=>q.b));if(!(o.k||[]).some(id=>!U.has(id)))break;const a=barFresh(o,U);if(L.some(q=>barSame(q.b,a)))break;L.push({n:barTheme(o,a,L),b:a})}return L}
 const barName=(n,i)=>String(n==null?'':n).replace(/[<>\u0000-\u001f]/g,'').trim().slice(0,BARNM)||'Barre '+(i+1);
 function barSan(B,K){const o=[];B=Array.isArray(B)?B:[];for(let s=0;s<BARN;s++){const v=B[s];const id=typeof v==='number'?v|0:-1;o.push(id===v&&K.includes(id)&&!o.includes(id)?id:-1)}return o}
 // bornes → arbres → appris → barre → dash ; idempotent : sanitizeBuild(sanitizeBuild(b)) ≡ sanitizeBuild(b). strict : jamais d'appris vides (bots, builds reçus)
@@ -79,8 +90,11 @@ function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Ma
  for(const t of tr)if(TREES[t].force)for(const r of RANKO)for(const id of TREE[t][r])if(!K.includes(id)&&canLearn(K,id))K.push(id); // clans martiaux : tout appris
  o.k=K;
  {const src=Array.isArray(b.bars)&&b.bars.length?b.bars.slice(0,BARSMAX):[{n:'Barre 1',b:b.bar}];o.bars=[];
-  src.forEach((q,i)=>{if(!q||typeof q!=='object')return;let bb=barSan(i===0&&Array.isArray(b.bar)&&b.bar.length?b.bar:q.b,K);if(bb.every(id=>id<0))bb=autoBar(o);o.bars.push({n:barName(q.n,o.bars.length),b:bb})});
-  if(!o.bars.length)o.bars.push({n:'Barre 1',b:barSan(b.bar,K)});if(o.bars[0].b.every(id=>id<0))o.bars[0].b=autoBar(o);o.bar=o.bars[0].b.slice()}
+  src.forEach((q,i)=>{if(!q||typeof q!=='object')return;o.bars.push({n:barName(q.n,o.bars.length),b:barSan(i===0&&Array.isArray(b.bar)&&b.bar.length?b.bar:q.b,K)})});
+  if(!o.bars.length)o.bars.push({n:'Barre 1',b:barSan(b.bar,K)});
+  o.bars.forEach((q,i)=>{if(!q.b.every(id=>id<0))return;q.b=i===0?autoBar(o):barFresh(o,new Set(o.bars.filter(x=>x!==q).flatMap(x=>x.b)))}); // barre vidée : refaite sans recopier les autres
+  if(strict)o.bars=o.bars.filter((q,i)=>!o.bars.slice(0,i).some(x=>barSame(x.b,q.b)));
+  o.bar=o.bars[0].b.slice()}
  // al (facultatif) : noms affichés propres au perso, {'Nom|arbre': 'Alias'} pour des jutsu appris (ex. Kakashi : Chidori → « Raikiri »)
  if(b.al&&typeof b.al==='object'){const A={};let n=0;for(const k in b.al){const id=pickKey(o,k),v=String(b.al[k]||'').replace(/[<>]/g,'').slice(0,24);if(n<BARN&&id>=0&&K.includes(id)&&jKey(id)===k&&v){A[k]=v;n++}}if(n)o.al=A}
  if(o.clan>=0)o.dsh='c';else{const d=String(b.dsh||'b');o.dsh=dashOpts(o).includes(d)?d:'b'}
