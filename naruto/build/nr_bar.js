@@ -5,7 +5,7 @@
 // MBAR : barre de chaque combattant pour tout le match (clé c|team) : gardée après une mort et entre les manches ; une nouvelle manche remet recharges et stash à zéro (mkUnit neuf),
 // une réapparition (mode bataille) les GARDE, elles ont continué de décompter pendant la mort (cdKeep / cdPut plus bas : sinon mourir remettrait à neuf des jutsu de 80-100 s).
 let MBAR={};
-const BARERR={nolearn:'Jutsu non appris',slot:'Case invalide',same:'Déjà dans cette case',empty:'Case déjà vide',jid:'Jutsu inconnu',state:'Pas en combat',unit:'Ninja introuvable',rate:'Trop de demandes',net:'En attente de l\'hôte…',bar:'Barre invalide',nobar:'Aucun jutsu appris dans cette barre',samebar:'Cette barre est déjà équipée'};
+const BARERR={nolearn:'Jutsu non appris',jid:'Jutsu inconnu',state:'Pas en combat',unit:'Ninja introuvable',rate:'Trop de demandes',net:'En attente de l\'hôte…',bar:'Barre invalide',nobar:'Aucun jutsu appris dans cette barre',samebar:'Cette barre est déjà équipée'};
 // copie du ninja d'une unité avec SA barre (copie superficielle : les objets jutsu restent partagés, comme avant)
 function unitCh(c,bar){const C=CH[c];if(!C||!C.jab)return C;const b=Array.isArray(bar)&&bar.length===BARN?bar:C.bar0||C.bar;
  return Object.assign({},C,{abil:[C.abil[0],...b.map(j=>j>=0&&C.jab[j]||null),C.dashAb,C.shunAb],bar:b.map(j=>j>=0&&C.jab[j]?j:-1)})}
@@ -51,22 +51,26 @@ function stashTick(u,dt){const T=u.cst;if(!T)return;for(const k in T){if((T[k]-=
  if(g&&ab&&ab.charges){g.n++;if(g.n<ab.charges){T[k]+=ab.cd;continue}delete u.csg[k]}delete T[k]}}
 // blocage d'entrée d'un jutsu à charges (ses charges reviennent avec lui, mais il attend 2 s comme les autres)
 const barLocked=(u,ab)=>!!(ab&&ab.charges&&ab.jid!=null&&u.lkj&&u.lkj[ab.jid]>SIMT);
-// changement en attente (cast/canalisation en cours) : appliqué dès que possible
-function barTry(u){if(u.barQ&&!u.dead)setBar(u,u.barQ)}
+// changement en attente (cast/canalisation en cours) : appliqué dès que possible ; la barre favorite demandée (u.favQ) devient alors la barre équipée (u.favI)
+function barTry(u){if(u.barQ&&!u.dead){setBar(u,u.barQ);if(!u.barQ&&u.favQ!=null){u.favI=u.favQ;u.favQ=null}}}
 // barre de référence pour composer une demande : celle en attente si elle existe
 const barCur=u=>(u.barQ||u.ch.bar).slice();
-// règles Zenkai : refus si non appris / case hors 0-5 / déjà dans cette case ; déjà dans une autre case → échange ; case occupée → remplace (le sortant part au stash) ; sinon ajout
-function equipAt(u,jid,s){if(!u||!u.ch||!u.ch.jab)return{ok:false,e:'unit'};if(typeof jid!=='number'||!Number.isInteger(jid))return{ok:false,e:'jid'};
- if(!u.ch.learn.includes(jid))return{ok:false,e:'nolearn'};if(typeof s!=='number'||!Number.isInteger(s)||s<0||s>=BARN)return{ok:false,e:'slot'};
- const b=barCur(u);if(b[s]===jid)return{ok:false,e:'same'};const t=b.indexOf(jid);if(t>=0){b[t]=b[s];b[s]=jid}else b[s]=jid;return setBar(u,b)}
-// retire la case s puis COMPACTE (les cases suivantes glissent à gauche, leurs recharges les suivent)
-function unequipAt(u,s){if(!u||!u.ch||!u.ch.jab)return{ok:false,e:'unit'};if(typeof s!=='number'||!Number.isInteger(s)||s<0||s>=BARN)return{ok:false,e:'slot'};
- const b=barCur(u);if(b[s]<0)return{ok:false,e:'empty'};b.splice(s,1);b.push(-1);return setBar(u,b)}
-// barre complète d'un coup (preset du menu B) : 6 jid (-1 = vide), tous appris, sans doublon, pas toute vide ; mêmes règles que les changements unitaires (setBar)
+// barre complète d'un coup : 6 jid (-1 = vide), tous appris, sans doublon, pas toute vide ; mêmes règles que tout changement (setBar)
 function barSetAll(u,nb){if(!u||!u.ch||!u.ch.jab)return{ok:false,e:'unit'};if(!Array.isArray(nb)||nb.length!==BARN)return{ok:false,e:'bar'};
  const o=[];for(const j of nb){if(j===-1||j===null){o.push(-1);continue}if(typeof j!=='number'||!Number.isInteger(j)||j<0)return{ok:false,e:'jid'};
   if(!u.ch.learn.includes(j)||!u.ch.jab[j])return{ok:false,e:'nolearn'};if(o.includes(j))return{ok:false,e:'bar'};o.push(j)}
  if(o.every(j=>j<0))return{ok:false,e:'nobar'};if(barCur(u).every((j,s)=>j===o[s]))return{ok:false,e:'samebar'};return setBar(u,o)}
+// ---------- barres favorites (build v6 : ch.build.bars, 1 à BARSMAX barres de 6, faites dans la création du perso) ----------
+const barsOf=u=>u&&u.ch&&u.ch.build&&Array.isArray(u.ch.build.bars)?u.ch.build.bars:[];
+const barEq=(a,b)=>!!a&&!!b&&a.length===BARN&&a.every((j,s)=>j===(b[s]??-1));
+// barre favorite équipée : celle qu'on a choisie (u.favI) si elle est bien à l'écran, sinon la 1re dont le contenu est celui de la barre ; -1 si aucune
+function favCur(u){const L=barsOf(u),b=u&&u.ch&&u.ch.bar;if(!b)return-1;if(Number.isInteger(u.favI)&&L[u.favI]&&barEq(L[u.favI].b,b))return u.favI;return L.findIndex(q=>barEq(q.b,b))}
+// barre favorite en attente (cast en cours) : -1 si aucune
+const favPend=u=>u&&u.barQ&&Number.isInteger(u.favQ)?u.favQ:-1;
+// équipe la barre favorite i (HÔTE ou hors ligne) : n° de barre validé, contenu revalidé par barSetAll (appris, sans doublon), règles de setBar
+function barFav(u,i){if(!u||!u.ch||!u.ch.jab)return{ok:false,e:'unit'};const L=barsOf(u);if(typeof i!=='number'||!Number.isInteger(i)||i<0||i>=L.length)return{ok:false,e:'bar'};
+ if(favPend(u)===i)return{ok:true,pend:true};const r=barSetAll(u,L[i].b.slice(0,BARN));
+ if(r.ok){if(r.pend)u.favQ=i;else{u.favI=i;u.favQ=null}}else if(r.e==='samebar'){if(u.barQ){u.favQ=i;return{ok:true,pend:true}}u.favI=i;u.favQ=null;return{ok:true,same:true}}return r}
 // ---------- réapparition (mode bataille) : les recharges en cours survivent à la mort ----------
 // cdKeep : toutes les recharges des jutsu appris (barre + stash) au format stash {cst, csg} (elles ont décompté pendant la mort : updUnit les fait avancer avant le test u.dead) ;
 // cdPut : après le mkUnit neuf, les jutsu de la barre reprennent la leur (charges comprises), le reste repart au stash
@@ -75,59 +79,46 @@ function cdKeep(u){if(!u||!u.ch||!u.ch.jab||!u.ch.bar)return null;const T=Object
  return{cst:T,csg:G}}
 function cdPut(u,o){if(!o||!u||!u.ch||!u.ch.bar)return;u.cst=o.cst;u.csg=o.csg;
  u.ch.bar.forEach((j,s)=>{if(j<0||!(j in u.cst))return;const i=BAR0+s,ab=u.ch.jab[j];u.cds[i]=u.cst[j];if(ab&&ab.charges&&u.chg)u.chg[i]=u.csg[j]?u.csg[j].n:ab.charges;delete u.cst[j];delete u.csg[j]})}
-AFTER.push(()=>{const R0=respawn;respawn=function(u){const k=cdKeep(u);R0(u);try{cdPut(u,k)}catch(e){console.error(e)}}});
+AFTER.push(()=>{const R0=respawn;respawn=function(u){const k=cdKeep(u),fi=u.favI;R0(u);u.favI=fi;try{cdPut(u,k)}catch(e){console.error(e)}}});
 // ---------- en ligne ----------
-// version du protocole (format v6 : barre de 6, menu B, presets 'bar', arbres martiaux sans chakra ; v7 : recharges longues D 20-30 s … S 80-100 s, recharges gardées à la réapparition ; v8 : recharges en temps réel, ×0,8 en temps de jeu ; v9 : Kawarimi commun en ancre de 10 s) : hôte et invité doivent l'avoir tous les deux, sinon la connexion est coupée avec un message
-const NPV=9,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez toi et chez ton ami.';let NVT=0;
+// version du protocole (v6 : barre de 6, arbres martiaux sans chakra ; v7 : recharges longues, gardées à la réapparition ; v8 : recharges en temps réel (×0,8 en temps de jeu) ; v9 : Kawarimi commun en ancre de 10 s ;
+// v10 : barres favorites (build v6, bars), roue de B, demande {t:'eq',a:'fav',s:n° de barre}) : hôte et invité doivent l'avoir tous les deux, sinon la connexion est coupée avec un message
+const NPV=10,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez toi et chez ton ami.';let NVT=0;
 const netVerT=()=>performance.now()-NVT<4000;
 function netVerHost(P){P.nver=1;net.peers=net.peers.filter(x=>x!==P);try{P.conn.send({t:'nver'})}catch(e){}setTimeout(()=>{try{P.conn.close()}catch(e){}},300);setStat('Un ami a une autre version du jeu : il doit recharger la page.');try{sendLobby()}catch(e){}}
 function netVerGuest(){NVT=performance.now();netReset();state='menu';setStat(VERMSG);try{netUI(true)}catch(e){}}
-// demande d'un joueur (menu B, raccourcis) : hors ligne / hôte → appliquée tout de suite ; invité → envoyée à l'hôte, réponse dans BARNET.last (bmAck)
-const BARNET={seq:0,wait:null,last:null};
-// a : 'set' (jutsu j en case s), 'del' (vider la case s), 'bar' (j = barre complète de 6 jid, preset)
-function barReq(a,j,s){if(isGuest()&&net.live){const q=++BARNET.seq;BARNET.wait={q,a,j,s,t:performance.now()};netSend({t:'eq',a,j,s,q});return{ok:true,pend:true,net:true,q}}
- if(!player)return{ok:false,e:'unit'};const r=a==='del'?unequipAt(player,s):a==='bar'?barSetAll(player,j):equipAt(player,j,s);BARNET.last=Object.assign({q:0},r);return r}
-// hôte : valide la demande d'un invité avec les MÊMES règles, au plus 12 par seconde et par invité, puis répond
+// demande d'un joueur (roue de B) : hors ligne / hôte → appliquée tout de suite ; invité → envoyée à l'hôte ({t:'eq',a:'fav',s:i}), réponse par bmAck
+const BARNET={seq:0,wait:null};
+function barReq(i){if(isGuest()&&net.live){const q=++BARNET.seq;BARNET.wait={q,i,t:performance.now()};netSend({t:'eq',a:'fav',s:i,q});return{ok:true,pend:true,net:true,q}}
+ if(!player)return{ok:false,e:'unit'};return barFav(player,i)}
+// hôte : valide la demande d'un invité (n° de barre entier, dans SA liste de barres reçue avec son build, contenu revérifié), au plus 12 par seconde et par invité, puis répond
 function bmNet(P,d){const rep=o=>{try{P.conn.send(Object.assign({t:'eqr',q:d&&Number.isInteger(d.q)?d.q:0},o))}catch(e){}return o};
  const now=performance.now();P.eqT=(P.eqT||[]).filter(t=>now-t<1000);if(P.eqT.length>=12)return rep({ok:false,e:'rate'});P.eqT.push(now);
  if(state==='menu')return rep({ok:false,e:'state'});const u=units.find(x=>x.ctrl==='remote'&&x.rid===P.id);if(!u)return rep({ok:false,e:'unit'});
- const a=d&&(d.a==='del'||d.a==='bar')?d.a:'set',j=d&&(typeof d.j==='number'||a==='bar'&&Array.isArray(d.j))?d.j:NaN,s=d&&typeof d.s==='number'?d.s:NaN;
- const r=a==='del'?unequipAt(u,s):a==='bar'?barSetAll(u,Array.isArray(j)?j:null):equipAt(u,j,s);rep(r);return r}
+ if(!d||d.a!=='fav')return rep({ok:false,e:'bar'});const r=barFav(u,d.s);rep(r);return r}
 // invité : réponse de l'hôte (la barre elle-même arrive par l'instantané)
-function bmAck(d){if(!d)return;BARNET.last={q:d.q|0,ok:!!d.ok,e:typeof d.e==='string'?d.e:'',pend:!!d.pend};if(BARNET.wait&&BARNET.wait.q===(d.q|0))BARNET.wait=null;try{BMUI.ack(BARNET.last)}catch(e){}}
+function bmAck(d){if(!d)return;const r={q:d.q|0,ok:!!d.ok,e:typeof d.e==='string'?d.e:'',pend:!!d.pend},w=BARNET.wait;if(w&&w.q===(d.q|0)){BARNET.wait=null;if(d.ok&&player){if(d.pend)player.favQ=w.i;else{player.favI=w.i;player.favQ=null}}}try{BMUI.ack(r,w)}catch(e){}}
 AFTER.push(()=>{if(!UK.includes('barS'))UK.push('barS')});
+// hôte : build d'un invité reçu pendant un match (P.bq, voir mknaruto.py) : appliqué au retour au menu
+function netBuildQ(){if(state!=='menu'||!net||net.role!=='host')return;let ch=false;for(const P of net.peers)if(P.bq){P.b=P.bq;P.bq=null;P.c='p'+P.id;CH[P.c]=mkNinja(P.b,true);P.ready=false;ch=true}if(ch)try{sendLobby()}catch(e){}}
 // ---------- bots ----------
 // ordre d'essai des cases : barre du rang S au rang D, puis dash et Kawarimi
 function aiOrder(u){const o=[];for(let i=BAR0;i<BAR0+BARN;i++)if(u.ch.abil[i])o.push(i);const rk=i=>RANKO.indexOf(u.ch.abil[i].rank);o.sort((a,b)=>rk(b)-rk(a)||a-b);o.push(DASHI,SHUNI);return o}
 // case de la barre au rang le plus haut (jutsu à garder du chakra pour), -1 si aucune
 function bestRankI(u){let b=-1,r=-1;for(let i=BAR0;i<BAR0+BARN;i++){const ab=u.ch.abil[i];if(!ab||!ab.rank)continue;const k=RANKO.indexOf(ab.rank);if(k>r){r=k;b=i}}return b}
-// bot : quand toute sa barre recharge, pose un jutsu appris prêt (au plus 1 changement toutes les 1,5 s), à la place du plus long à recharger
-function aiSwap(u){if(!u.ch||!u.ch.jab||u.ctrl||u.dead||u.barQ)return false;if((u.aiSwT||0)>SIMT)return false;u.aiSwT=SIMT+1.5;
- const b=u.ch.bar;let empty=-1,worst=-1,wc=-1;for(let s=0;s<BARN;s++){const i=BAR0+s;if(b[s]<0){if(empty<0)empty=s;continue}if(u.cds[i]<=1)return false;if(u.cds[i]>wc){wc=u.cds[i];worst=s}}
- let best=-1,br=-1;for(const j of u.ch.learn){if(b.includes(j)||((u.cst&&u.cst[j])||0)>0)continue;const ab=u.ch.jab[j];if(!ab||u.energy<jcost(ab))continue;const r=RANKO.indexOf(ab.rank);if(r>br){br=r;best=j}}
- if(best<0)return false;const s=empty>=0?empty:worst;if(s<0)return false;return equipAt(u,best,s).ok}
-// ---------- presets de barre (onglet ★ Favoris du menu B) : par perso, gardés dans ce navigateur ----------
-// nrBar1 = {clé du perso (MEK): [{n:'Barre 1', b:['Nom|arbre' ou '' ×6]}, …]} ; les jutsu sont rangés par nom (pas par n°), un jutsu oublié depuis est ignoré à l'application.
-// (pas dans nrRoster2 : un preset n'est qu'un raccourci de combat, il ne doit ni marquer un perso de l'anime « retouché » ni partir dans le build envoyé en ligne)
-const PREMAX=8,PRENM=16;
-function preLoad(){try{if(SIMQ)return{};const o=JSON.parse(localStorage.getItem('nrBar1')||'{}');return o&&typeof o==='object'&&!Array.isArray(o)?o:{}}catch(e){return{}}}
-function preSave(o){try{if(SIMQ)return;localStorage.setItem('nrBar1',JSON.stringify(o))}catch(e){}}
-const preKey=()=>typeof MEK!=='undefined'&&MEK||'p0';
-const preName=n=>String(n==null?'':n).replace(/[<>\u0000-\u001f]/g,'').trim().slice(0,PRENM);
-function preList(k){k=k||preKey();let L=preLoad()[k];if(!Array.isArray(L)){L=preMig(k);if(!L)return[]}
- return L.filter(p=>p&&Array.isArray(p.b)).slice(0,PREMAX).map((p,i)=>({n:preName(p.n)||'Barre '+(i+1),b:Array.from({length:BARN},(_,s)=>typeof p.b[s]==='string'?p.b[s].slice(0,80):'')}))}
-// anciens favoris par jutsu (nrFav1 {perso: ['Nom|arbre', …]}) : repris une fois en une barre « Favoris » (6 premiers), puis nrBar1 fait foi
-function preMig(k){try{if(SIMQ)return null;const F=JSON.parse(localStorage.getItem('nrFav1')||'{}'),f=F&&F[k];if(!Array.isArray(f))return null;const v=f.filter(x=>typeof x==='string'&&x).slice(0,BARN);if(!v.length)return null;
- const L=[{n:'Favoris',b:Array.from({length:BARN},(_,s)=>v[s]||'')}];prePut(L,k);return L}catch(e){return null}}
-function prePut(L,k){const o=preLoad();o[k||preKey()]=L.slice(0,PREMAX);preSave(o)}
-// barre (6 jid) → preset (6 noms) ; preset → 6 jid parmi les jutsu appris de l'unité (-1 si oublié)
-const preOf=bar=>Array.from({length:BARN},(_,s)=>bar&&bar[s]>=0?jKey(bar[s]):'');
-function preJ(u,s){if(!s||!u||!u.ch||!u.ch.learn)return-1;const L=u.ch.learn;let j=L.find(x=>jKey(x)===s);if(j==null&&u.ch.build)try{const p=pickKey(u.ch.build,s);if(L.includes(p))j=p}catch(e){}return j==null?-1:j}
-function preBar(u,p){const o=[];for(const s of p.b){const j=preJ(u,s);o.push(j>=0&&!o.includes(j)?j:-1)}return o}
-// nom libre suivant : « Barre N »
-function preNew(L){let n=L.length+1;while(L.some(p=>p.n==='Barre '+n))n++;return'Barre '+n}
-// ---------- branchement de l'interface (menu B : nr_bm.js à écrire) ----------
-// mknaruto.py appelle déjà : BMUI.frame(dt) au début de chaque image (avant la simulation et l'envoi des touches de l'invité), BMUI.draw() après le HUD,
-// BMUI.mask() (vrai = la souris est sur le panneau : le clic gauche ne frappe pas), BMUI.esc() sur Échap en combat (vrai = le menu s'est fermé, pas de menu Quitter),
-// BMUI.ack(r) à la réponse de l'hôte. Le menu retire de `pressed` les touches qu'il consomme (lmb, rmb, Digit1-6…).
-const BMUI={open:false,frame(dt){},draw(){},mask(){return false},esc(){return false},ack(r){}};
+// bot : il change seulement entre SES barres favorites (comme un joueur avec la roue de B) : contrôle toutes les AIBAR.dt s, au plus un changement toutes les AIBAR.gap s ;
+// quand sa barre est presque toute en recharge (au plus AIBAR.low de ses jutsu prêts), il passe à la barre qui a le plus de jutsu prêts (au moins AIBAR.gain de plus)
+const AIBAR={dt:.5,gap:6,low:.34,soon:1.5,gain:2};
+function aiBar(u){if(!u.ch||!u.ch.jab||u.ctrl||u.dead||u.barQ)return false;const L=barsOf(u);if(L.length<2)return false;
+ if((u.aiSwT||0)>SIMT)return false;u.aiSwT=SIMT+AIBAR.dt;if((u.aiBarT||0)>SIMT||barBusy(u).size)return false;
+ const rdy=b=>{let n=0,f=0;for(const j of b){const ab=j>=0&&u.ch.jab[j];if(!ab)continue;f++;if(remCd(u,j)<=AIBAR.soon)n++}return[n,f]};
+ const [n0,f0]=rdy(u.ch.bar);if(f0&&n0>f0*AIBAR.low)return false;
+ const cur=favCur(u);let best=-1,bn=n0+AIBAR.gain-1;L.forEach((q,i)=>{if(i===cur||barEq(q.b,u.ch.bar))return;const [n]=rdy(q.b);if(n>bn){bn=n;best=i}});
+ if(best<0)return false;const r=barFav(u,best);if(r.ok){u.aiBarT=SIMT+AIBAR.gap;u.aiBarN=(u.aiBarN|0)+1}return r.ok}
+// ---------- barres d'un kit tiré au hasard (bots, nouveau perso, « Kit aléatoire ») : sa barre puis des barres qui couvrent TOUS ses jutsu appris (barsCover, nr_tree.js) ----------
+// sans tirage (les autres bots ne changent pas) ; 15 jutsu appris = 3 barres, comme les persos de l'anime (une seule barre laissait 9 jutsu inutilisés : 94 % de défaites contre eux)
+function autoBars(o){const b=(o.bar||autoBar(o)).slice();return barsCover(o,[{n:barTheme(o,b,[]),b}])}
+// ---------- branchement de l'interface (roue des barres : nr_radial.js) ----------
+// mknaruto.py appelle : BMUI.frame(dt) au début de chaque image (avant la simulation et l'envoi des touches de l'invité), BMUI.draw() après le HUD,
+// BMUI.esc() sur Échap en combat (vrai = la roue s'est fermée, pas de menu Quitter), BMUI.ack(r) à la réponse de l'hôte. La roue ne bloque aucune autre entrée.
+const BMUI={open:false,frame(dt){},draw(){},esc(){return false},ack(r){}};
