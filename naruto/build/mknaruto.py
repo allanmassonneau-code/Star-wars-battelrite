@@ -4,7 +4,7 @@ SP=os.path.dirname(os.path.abspath(__file__))+'/'
 ROOT=os.path.abspath(SP+'../..')+'/'
 src=open(ROOT+'starwars/index.html').read()
 # kits : un fichier par catégorie (ordre fixe = ordre du catalogue)
-KIT_ORDER=['styles','sub','sub_nrp1','sub_nrp2','sub_naruto','fam_common','fam_iryo','fam_fuin','fam_gen','fam_kuchi','fam_shuri','fam_kage','fam_sen','fam_kin','katon','suiton','futon','raiton','doton','uchiha','hyuga','nara','akimichi','aburame','inuzuka','uzumaki','yamanaka','sabaku','kaguya','taijutsuka','hoki','roran','hakumei','shirogane','chinoike','kami','fuma','hoshigaki','hozuki','yuki','kenjutsuka','bukijutsuka']
+KIT_ORDER=['styles','sub','kawarimi','sub_nrp1','sub_nrp2','sub_naruto','fam_common','fam_iryo','fam_fuin','fam_gen','fam_kuchi','fam_shuri','fam_kage','fam_sen','fam_kin','katon','suiton','futon','raiton','doton','uchiha','hyuga','nara','akimichi','aburame','inuzuka','uzumaki','yamanaka','sabaku','kaguya','taijutsuka','hoki','roran','hakumei','shirogane','chinoike','kami','fuma','hoshigaki','hozuki','yuki','kenjutsuka','bukijutsuka']
 KITS=''.join('\n'+open(SP+'kits/'+k+'.js').read() for k in KIT_ORDER)+'\nfor(const k in NAT)NAT[k].key=k;\n'
 s=src
 def rep(a,b,n=1):
@@ -297,6 +297,10 @@ rep("if(mode==='battle'&&player){const c=Math.min(1,dt*6);cam.x+=(clamp(player.x
 # kits sur mesure : effets à l'impact, intangibilité, Izanagi, explosions propres, synchro réseau
 rep("function onProjHit(p,t){const o=p.owner;p.hitAny=1;","function onProjHit(p,t){const o=p.owner;p.hitAny=1;if(p.onHit)p.onHit(p,t);")
 rep("function hit(t,src,dmg,o={}){\n if(t.dead||state!=='fight')return false;","function hit(t,src,dmg,o={}){\n if(t.dead||state!=='fight')return false;if(t.phase>0&&src&&src!==t)return false;")
+# Kawarimi : APRÈS les défenses (esquive, contre, riposte, parade parfaite, garde, renvoi), avant combo/traitDmg : seul un coup qui aurait porté est annulé
+rep("'#7df',14);S('deflect',t);return false}\n if(o.melee&&src&&src.cmbT>0","'#7df',14);S('deflect',t);return false}\n if(t.kwE>0&&kwHit(t,src,dmg,o))return false;\n if(o.melee&&src&&src.cmbT>0")
+# Kawarimi commun (kits/kawarimi.js) : bots, seulement face à un vrai danger
+rep("case'exec':ok=d<=h.max&&e.hp<e.max*.45;break}","case'exec':ok=d<=h.max&&e.hp<e.max*.45;break;\n   case'kw':ok=kwAI(u,e,d,th);break}")
 rep(" if(t.hp<=0)die(t,src);\n return true;"," if(t.hp<=0&&!(t.izT>0&&t.izS&&izRevive(t)))die(t,src);\n return true;")
 rep("detoFx(z.x,z.y,z.r,z.vfx)","detoFx(z.x,z.y,z.r,z.deto||z.vfx)")
 rep("const UK=['chk',","const UK=['phase','izT','chk',")
@@ -420,6 +424,7 @@ rep("function startMatch(c){playerChamp=c;STATS={};","function startMatch(c){pla
 rep(" for(let i=0;i<6;i++){const ab=u.ch.abil[i];if(ab&&ab.charges){if(u.chg[i]<ab.charges){u.cds[i]-=dt;if(u.cds[i]<=0){u.chg[i]++;u.cds[i]=u.chg[i]<ab.charges?ab.cd:0}}}else u.cds[i]=Math.max(0,u.cds[i]-dt)}",
     " for(let i=0;i<u.cds.length;i++){const ab=u.ch.abil[i];if(ab&&ab.charges){if(u.chg[i]<ab.charges){u.cds[i]-=dt;if(u.cds[i]<=0){u.chg[i]++;u.cds[i]=u.chg[i]<ab.charges?ab.cd:0}}}else u.cds[i]=Math.max(0,u.cds[i]-dt)}\n stashTick(u,dt);")
 rep("function updUnit(u,dt,active){hlTick(u,dt,active);","function updUnit(u,dt,active){hlTick(u,dt,active);if(u.barQ)barTry(u);")
+rep("function updUnit(u,dt,active){hlTick(u,dt,active);if(u.barQ)barTry(u);","function updUnit(u,dt,active){hlTick(u,dt,active);if(u.barQ)barTry(u);if(u.kwE>0||u.kwT>0)kwTick(u);") # Kawarimi : minuterie tenue par l'unité (hôte), pas par l'ancre
 # changement de barre en attente : réessayé aussi juste après la mise à jour des unités (le jutsu qui bloquait vient de partir dans cette image : pas d'image de retard)
 rep(" for(const u of units)updUnit(u,dt,active);\n"," for(const u of units)updUnit(u,dt,active);\n for(const u of units)if(u.barQ)barTry(u);\n")
 # incantation : le jutsu est gardé dans u.cast (ab) : changer la barre ne l'interrompt pas ; l'invité reçoit son jid (j)
@@ -430,7 +435,7 @@ rep("aimOv:u.cast.aimOv??null,ex:u.cast.ex}:null","aimOv:u.cast.aimOv??null,ex:u
 rep("const n=6,s=92,gap=8,x0=W/2-(n*s+(n-1)*gap)/2,","const n=p.ch.abil.length,s=72,gap=6,x0=W/2-(n*s+(n-1)*gap+20)/2,")
 rep("p.ch.abil.forEach((ab,i)=>{if(!ab)return;const x=x0+i*(s+gap),","p.ch.abil.forEach((ab,i)=>{const x=x0+i*(s+gap)+(i>0?10:0)+(i>BARN?10:0);if(!ab){hudEmpty(p,i,x,y,s,sh);return}const ")
 rep("g.strokeStyle=ab.ult?(ready?'#ffe81f':'#5a5020'):","g.strokeStyle=ab.rank==='S'?(ready?'#ffe81f':'#5a5020'):")
-rep("drawHealHud(p,x0+n*(s+gap)+6,y,sh);","drawHealHud(p,x0+n*(s+gap)+26,y,sh);")
+rep("drawHealHud(p,x0+n*(s+gap)+6,y,sh);","kwHud(p,x0,y,s,sh,gap);drawHealHud(p,x0+n*(s+gap)+26,y,sh);") # kwHud : case A pendant la protection du Kawarimi
 # menu B (interface à brancher : BMUI, nr_bar.js) : une entrée par image avant la simulation et l'envoi des touches de l'invité, dessin après le HUD,
 # clic sur le panneau = pas de coup, Échap ferme le menu sans ouvrir « Quitter », mini-carte à gauche quand le menu est ouvert
 rep("function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;","function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;try{BMUI.frame(dt)}catch(e){console.error(e)}")

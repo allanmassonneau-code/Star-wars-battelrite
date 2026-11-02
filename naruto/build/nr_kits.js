@@ -42,7 +42,8 @@ const TREEMOVE={
 // DASHC[clan] · DASHN[nature] (sans-clan, dsh 'n') · DASHF[famille] (sans-clan, dsh 'f<k>') · DASHB dash normal (dsh 'b', et repli de tout dash absent)
 // une table vide est remplie après le chargement des kits (nr_tree.js) : 1er ancien déplacement du clan, déplacements de nature connus
 const DASHC={},DASHN={},DASHF={},DASHB={src:'x.sub_roll',n:'Roulade',d:'Roulade rapide : intouchable au début de la roulade',vfx:'smoke',cd:6};
-const SHUN={src:'x.sub_kawa',n:'Kawarimi',d:'Se substitue au curseur et laisse à sa place une bûche piégée qui explose et étourdit',vfx:'smoke',cd:12};
+// Kawarimi commun : permutation ancrée (kits/kawarimi.js, mécanique x.kw_anchor ; recharge lancée seulement à la fin des 10 s de protection)
+const SHUN={src:'x.kw_anchor',n:'Kawarimi',d:'Marque ta position : pendant 10 s, où que tu sois, le prochain coup ennemi est annulé (ni dégâts ni étourdissement) et tu es ramené au point marqué, une bûche restant à ta place. Recharge ensuite (15 s), touché ou non',vfx:'smoke',cd:12};
 // barre : objets aux d'un kit qui gardent un n° de case (champ i ou si) : remappés quand la barre change (setBar, nr_bar.js)
 const BARAUX=new Set(['sub_clay','su_jet','su_prison','uc_gk']);
 // BARCHG : fonctions (u, ancienne barre, nouvelle barre) appelées après chaque changement de barre (hôte / hors ligne)
