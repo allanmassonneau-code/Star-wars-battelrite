@@ -58,7 +58,7 @@ KIT('n0',[ // catégorie : 'u' subjutsu, 'n0'…'n4' natures, 'c0'…'c20' clans
 ```
 - **Emplacement** : `1` = jutsu (va dans Clic D, Q ou E), `2` = déplacement (Espace), `5` = ultime (T). (3 et 4 = jutsu aussi.)
 - **Rang** D C B A S = 1 à 5 points (budget 17 par kit, 19 sans clan). Le rang fixe les **mudras** (D 2 … S 6, sauf subjutsu et déplacements)
-  et le **coût en chakra** (D 10, C 16, B 21, A 28, S 36, ultime +14 : une jauge pleine ≈ 5 jutsu). Recharge par rang (`RKB`, nr_flow.js) : D 20-30 s, C 30-40 s, B 40-60 s, A 60-80 s, S 80-100 s ; une mécanique ULT() prend le haut de la fourchette.
+  et le **coût en chakra** (D 10, C 16, B 21, A 28, S 36, ultime +14 : une jauge pleine ≈ 5 jutsu). Recharge par rang (`RKB`, nr_flow.js) : D 20-30 s, C 30-40 s, B 40-60 s, A 60-80 s, S 80-100 s, en secondes RÉELLES (recharge interne `ab.cd` / `u.cds` = réel × GSPEED, voir `rtIn` / `rtOut`) ; une mécanique ULT() prend le haut de la fourchette.
 - **Mécanique** : `'x.cle'` = `NAT.cle` (toujours préférer des mécaniques sur mesure). Les anciennes sources `perso.n` (moteur Star Wars) sont à remplacer.
 - **Élément visuel** (`vfx`) : couleur/style des effets génériques et du son (`fire water wind lightning earth sand shadow bugs bone tag smoke genjutsu jyuken black fox heal leaf gate chain kunai shuriken senbon steel tai flower mind seal chidori kirin rasengan rasenshuriken hiraishin sandcoffin tsukuyomi susano gatsuga peacock sage byakugan kaiten hakke64 claws chakra`).
 - Statistiques : chaque mécanique a un personnage de référence (PV/vitesse/puissance du ninja). Par défaut celui du préfixe (`NATHERO.ka='boba'`, déjà réglé).

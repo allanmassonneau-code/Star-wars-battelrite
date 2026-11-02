@@ -53,9 +53,13 @@ const JCD={}; // (Lotus primaire / Lotus caché : recharge du barème de leur ra
 // de l'IA relatif (12 % de la recharge) : dégâts des jutsu des barres de Gaï (Gôriki Senpû, Éléphant, Paon, Huit Portes ×1,1 ; Dynamic Entry, Portes célestes ×1,05)
 // et de Mifune (×1,1), CLANBAL / NATBAL / STYLEBAL / TREEBAL / FAMBAL recalés sur la moyenne de deux graines (bande morte ±3 points), PREBAL sur trois tirages ;
 // validé sur des graines jamais utilisées pour régler (voir le message de commit)
-const CLANBAL={"0":[0.818,0.78],"1":[0.756,0.76],"2":[1.06,1.102],"3":[0.904,0.813],"4":[0.931,0.931],"5":[1.113,1.118],"6":[1.093,0.925],"7":[0.974,1.015],"8":[0.864,0.978],"9":[0.975,0.824],"10":[0.878,0.518],"11":[1.087,0.946],"12":[1.044,0.982],"13":[1.148,1.13],"14":[0.972,1.317],"15":[1.084,0.98],"16":[0.964,1.102],"17":[0.989,1.05],"18":[0.939,0.928],"19":[0.829,1.024],"20":[0.958,1.132],"21":[1.031,0.703],"22":[0.91,0.716],"-1":[1.008,0.966]},NATBAL={"0":[1.161,0.958],"1":[1.038,1.114],"2":[1.003,1.011],"3":[1.066,1.0],"4":[1.037,1.049]},STYLEBAL={"0":[1.029,1.033],"1":[1.0,0.987],"2":[0.9,0.865],"2:-1":[0.807,0.724],"3":[0.886,0.927],"7":[1.03,1.061],"8":[1.001,0.919],"10":[1.025,1.113],"12":[0.904,1.039],"15":[1.134,1.329],"16":[0.985,0.985],"18":[0.933,0.853],"19":[1.035,0.855],"20":[1.01,1.01],"23":[1.005,1.027],"24":[0.994,1.0],"25":[1.244,1.103],"26":[1.081,1.084],"29":[1.027,1.015],"31":[0.997,1.0],"32":[1.013,1.054],"33":[1.037,1.005]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
+// puis RECHARGES EN TEMPS RÉEL (rtIn, nr_flow.js : un « 100 s » dure 100 s à la montre, soit 80 s de jeu ; toutes les recharges des jutsu −20 % en temps de jeu) :
+// duel médian 51,8 → 50,3 s de jeu ; Taijutsuka monté à 57 % (jutsu gratuits relancés plus souvent) → CLANBAL 10 ×0,97, Kenjutsuka (Mifune 58 %) ×0,97,
+// Éléphant du soir et Huit Portes de Gaï ×1,06 ; CLANBAL / FAMBAL / STYLEBAL / PREBAL recalés sur deux graines (tune2, K=10), validé sur deux graines neuves :
+// 69 catégories sur 74 à 45-55 % (les autres à 44-56,5 %), 42 persos de l'anime à 41-58 % entre eux, Rock Lee / Gaï / Tenten / Mifune 51 / 50 / 55 / 49 %
+const CLANBAL={"0":[0.818,0.78],"1":[0.756,0.76],"2":[1.06,1.102],"3":[0.904,0.813],"4":[0.941,0.941],"5":[1.113,1.118],"6":[1.109,0.939],"7":[0.974,1.015],"8":[0.864,0.978],"9":[0.975,0.824],"10":[0.865,0.511],"11":[1.087,0.946],"12":[1.044,0.982],"13":[1.148,1.13],"14":[0.972,1.317],"15":[1.073,0.97],"16":[0.964,1.102],"17":[0.989,1.05],"18":[0.939,0.928],"19":[0.838,1.035],"20":[0.958,1.132],"21":[1.016,0.692],"22":[0.91,0.716],"-1":[1.008,0.966]},NATBAL={"0":[1.161,0.958],"1":[1.038,1.114],"2":[1.003,1.011],"3":[1.066,1.0],"4":[1.037,1.049]},STYLEBAL={"0":[1.029,1.033],"1":[1.0,0.987],"2":[0.9,0.865],"2:-1":[0.807,0.724],"3":[0.886,0.927],"7":[1.03,1.061],"8":[1.001,0.919],"10":[1.025,1.113],"12":[0.904,1.039],"15":[1.134,1.329],"16":[0.985,0.985],"18":[0.933,0.853],"19":[1.035,0.855],"20":[1.01,1.01],"23":[1.005,1.027],"24":[0.994,1.0],"25":[1.244,1.103],"26":[1.081,1.084],"29":[1.027,1.015],"31":[1.011,1.014],"32":[1.013,1.054],"33":[1.037,1.005]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
 // équilibrage par arbre de style (TREEBAL[st]) et par famille de sub (FAMBAL[f], moyenne géométrique des familles prises) : [PV, puissance], défaut [1, 1]
-const TREEBAL={"1":[1.097,1.09],"0":[1.016,1.068],"2":[1.029,1.057]},FAMBAL={"0":[0.791,1.2],"1":[1.046,1.028],"2":[1.037,1.134],"3":[0.951,1.078],"4":[1.048,1.027],"5":[0.946,1.096],"6":[0.937,1.016],"7":[0.959,1.021]};
+const TREEBAL={"1":[1.097,1.09],"0":[1.016,1.068],"2":[1.029,1.057]},FAMBAL={"0":[0.791,1.2],"1":[1.046,1.028],"2":[1.037,1.134],"3":[0.961,1.089],"4":[1.048,1.027],"5":[0.946,1.096],"6":[0.937,1.016],"7":[0.959,1.021]};
 // équilibrage par jutsu (« catégorie|nom ») : d = dégâts ×, cd = recharge (s), ck = coût en chakra ; appliqué par nr_bal.js (les « N dégâts » des descriptions suivent d)
 const JBAL={
  "c0|Amaterasu":{"d":0.4,"cd":17.6},
@@ -65,14 +69,14 @@ const JBAL={
  "c0|Susanô : Totsuka":{"d":1.32},
  "c10|Défi éternel":{"cd":7.7,"d":1.725},
  "c10|Esquive du fauve":{"cd":9.0,"d":1.62},
- "c10|Huit Portes":{"d":0.773,"cd":26.4},
+ "c10|Huit Portes":{"d":0.819,"cd":26.4},
  "c10|Konoha Daisenpû":{"d":1.201,"cd":11.0},
  "c10|Konoha Gôriki Senpû":{"cd":13.2,"d":1.313},
  "c10|Lotus caché":{"d":0.809,"cd":26.4},
  "c10|Paon du matin":{"d":1.219,"cd":17.6},
  "c10|Poids retirés":{"d":2.431,"cd":6.0},
  "c10|Portes célestes":{"cd":13.2,"d":1.365},
- "c10|Éléphant du soir":{"d":0.903,"cd":17.6},
+ "c10|Éléphant du soir":{"d":0.957,"cd":17.6},
  "c11|Arbre millénaire":{"d":0.329,"cd":17.6},
  "c11|Fleur carnivore":{"d":0.465},
  "c11|Floraison mortelle":{"d":0.886},

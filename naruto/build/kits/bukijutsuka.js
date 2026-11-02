@@ -21,7 +21,7 @@ const BK_W=['kunai','tonfa','staff','kama','mace'],BK_TREES=new Set(['c22','t2']
 function bkDrop(u,x,y,k){if(!u||u.dead||u.ch.clan!==BUKI)return;x=clamp(x,B.x+16,B.x+B.w-16);y=clamp(y,B.y+16,B.y+B.h-16);const L=aux.filter(o=>o.type==='bk_wpn'&&o.owner===u&&o.t>0);if(L.length>=4)L[0].t=0;
  aux.push({type:'bk_wpn',x,y,r:14,t:6,m:6,team:u.team,owner:u,ui:stI(u),k:(k==null?Math.floor(rnd()*5):k)%5,a:rnd()*6.28})}
 // ramasser : chaque arme réduit de 4 s la recharge des jutsu d'armes (barre et réserve ; 0,8 s avant les recharges longues, ×5 comme elles)
-function bkPick(u){for(let i=BAR0;i<BAR0+BARN;i++){const ab=u.ch.abil[i];if(ab&&BK_TREES.has(ab.tree))u.cds[i]=Math.max(0,u.cds[i]-4)}
+function bkPick(u){for(let i=BAR0;i<BAR0+BARN;i++){const ab=u.ch.abil[i];if(ab&&BK_TREES.has(ab.tree))u.cds[i]=Math.max(0,u.cds[i]-rtIn(4))} // 4 s réelles (temps réel, nr_flow.js)
  if(u.cst)for(const j in u.cst){const J=JL[j];if(J&&BK_TREES.has(J.cat))u.cst[j]=Math.max(0,u.cst[j]-4)}say(u,'+1 ARME','#ffd36a');S('saber',u)}
 AUXF.bk_wpn=x=>{const u=x.owner;if(!u||u.dead){x.t=0;return}if(x.m-x.t<.35)return;if(Math.hypot(u.x-x.x,u.y-x.y)<u.r+20){x.t=0;bkPick(u);sparks(x.x,x.y,'#ffd36a',8)}};
 AUXD.bk_wpn=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,al=Math.min(1,x.t/.8),dz=Math.max(0,1-(x.m-x.t)/.15)*60;g.save();g.globalAlpha=al;g.fillStyle='rgba(0,0,0,.25)';g.beginPath();g.ellipse(q.x,q.y,10*s,4*s,0,0,7);g.fill();

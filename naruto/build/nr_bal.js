@@ -27,12 +27,12 @@ const BLG=[['hp','PV des ninjas','Multiplie les PV de tous les ninjas (après cl
  ['ckB','Coût d\'un jutsu B','Chakra dépensé par un jutsu de rang B.',0,50,1,'','Coût en chakra par rang'],['ckA','Coût d\'un jutsu A','Chakra dépensé par un jutsu de rang A.',0,60,1,'','Coût en chakra par rang'],
  ['ckS','Coût d\'un jutsu S','Chakra dépensé par un jutsu de rang S.',0,60,1,'','Coût en chakra par rang'],
  ['heal','Soin (H) disponible','Le soin commun à tous les ninjas (touche H).',0,1,1,'b','Soin (H)'],
- ['hlCd','Recharge du soin','Temps de recharge du soin (H).',15,120,1,'s','Soin (H)'],
+ ['hlCd','Recharge du soin','Temps de recharge du soin (H), en secondes réelles.',15,150,1,'s','Soin (H)'],
  ['hlPct','Soin immédiat','Part des PV max rendue tout de suite (puis 8 % en 2 s).',5,50,1,'%','Soin (H)']];
 // (la durée visée d'un duel n'est pas un réglage du jeu : c'est un repère du simulateur, gardé à part dans ce navigateur, BLS.opt.dur)
 const BLGK={};for(const r of BLG)BLGK[r[0]]=r;
 function blGDef(k){const D=BLC.D;if(k==='m1')return M1K;if(!D)return 1;if(k==='ckSp')return D.CK.spawn;if(/^ck[DCBAS]$/.test(k))return D.ck[k[2]];
- if(k==='heal')return D.hl.on?1:0;if(k==='hlCd')return D.hl.cd;if(k==='hlPct')return Math.round(D.hl.pct*100);return 1}
+ if(k==='heal')return D.hl.on?1:0;if(k==='hlCd')return rtOut(D.hl.cd);if(k==='hlPct')return Math.round(D.hl.pct*100);return 1}
 const blG=(p,k)=>p&&p.g&&p.g[k]!=null?p.g[k]:blGDef(k);
 const blJK=J=>J.cat+'|'+J.n; // clé d'un jutsu dans un profil (un même nom peut exister dans plusieurs catégories)
 const blCount=p=>p?Object.keys(p.g).length+Object.keys(p.c).length+Object.keys(p.n).length+Object.keys(p.s).length+Object.keys(p.j).length:0;
@@ -60,7 +60,8 @@ let BLJ0=null; // jutsu(id) d'origine (avant le profil) : recharge et rang de ch
 const BLCD=.1,BLCK=.25,blRk=(r,cd,ck)=>{const R=RKB[r],R0=RKB_CD0[r];if(!R||!R0)return[cd,ck];return[cd==null?cd:rkCd(r,clamp(cd,R0[0]*(1-BLCD),R0[1]*(1+BLCD))),ck==null?ck:clamp(Math.round(ck),Math.ceil(R.ck*(1-BLCK)),Math.floor(R.ck*(1+BLCK)))]};
 const blJD0=id=>JBAL[blJK(JL[id])]||JBAL[JL[id].ocat+'|'+JL[id].n]||{};
 const blJD=id=>{const q=blJD0(id);if(q.cd==null&&q.ck==null)return q;const [cd,ck]=blRk(JL[id].r,q.cd,q.ck);return Object.assign({},q,cd!=null?{cd}:{},ck!=null?{ck}:{})}; // (transition : clé d'origine d'un jutsu déplacé dans un autre arbre) // réglage par défaut du jutsu (JBAL, nr_ninja.js) : d dégâts ×, cd recharge, ck coût
-const blJBase=(p,id)=>{const o=BLJ0[id],J=blJD(id);return{cd:Math.round((J.cd??o.cd)*blG(p,'jcd')*10)/10,ck:o.hpc||o.fr?null:J.ck??blG(p,'ck'+o.rank),d:J.d??1}};
+// (recharge d'un profil F8 : en secondes RÉELLES, comme tout l'affichage ; le moteur la convertit en temps de jeu, rtIn)
+const blJBase=(p,id)=>{const o=BLJ0[id],J=blJD(id);return{cd:Math.round(rtOut(J.cd??o.cd)*blG(p,'jcd')*10)/10,ck:o.hpc||o.fr?null:J.ck??blG(p,'ck'+o.rank),d:J.d??1}};
 // chiffres des descriptions : les « N dégâts » (et les listes « 12, 12 puis 16 dégâts ») suivent le multiplicateur ; un réglage propre au jutsu est signalé
 const blDescScale=(d,m)=>m===1?d:d.replace(/(\d+(?:,\d+)?)(?=(?:\s*(?:,|puis|et)\s*\d+(?:,\d+)?)*\s*(?:de\s+|d'\s*)?dégâts)/g,s=>{const v=parseFloat(s.replace(',','.'))*m;return v<10&&!Number.isInteger(v)?blF(v,1):String(Math.round(v))});
 function blApply(p,force){p=p||blNorm({});const sig=JSON.stringify(blData(p));if(!force&&sig===BLC.sig)return;BLC.sig=sig;const D=BLC.D,G=k=>blG(p,k);
@@ -71,7 +72,7 @@ function blApply(p,force){p=p||blNorm({});const sig=JSON.stringify(blData(p));if
   if(!STYLEBAL[i])STYLEBAL[i]=[1,1];for(const q in STYLEBAL)if(q===String(i)||q.startsWith(i+':'))STYLEBAL[q]=[STYLEBAL[q][0]*f[0],STYLEBAL[q][1]*f[1]];if(f[2]!=null&&f[2]!==1)BLC.sd[i]=f[2]}
  for(const r of'DCBAS')RKB[r].ck=G('ck'+r);
  CK.spawn=G('ckSp');CK.regen=D.CK.regen*G('ckReg');CK.regenOut=D.CK.regenOut*G('ckOut');CK.rate0=D.CK.rate0*G('ckR');CK.rate1=D.CK.rate1*G('ckR');
- HLS.on=!!G('heal');HLS.cd=G('hlCd');HLS.pct=G('hlPct')/100;
+ HLS.on=!!G('heal');HLS.cd=rtIn(G('hlCd'));HLS.pct=G('hlPct')/100;
  Object.assign(BLC,{gm:G('dmg'),jm:G('jdmg'),m1:G('m1'),jcd:G('jcd'),hp:G('hp'),spd:G('spd'),pj:p.j});
  JL.forEach((J,i)=>{const q=p.j[blJK(J)],b=blJBase(p,i),m=BLC.gm*BLC.jm*(q&&q.d!=null?q.d:b.d);let d=blDescScale(BLC.D.jd[i],m);
   if(q){const t=[];if(q.d!=null&&q.d!==b.d)t.push('dégâts ×'+blF(q.d)+(BLPART.has(J.src)?' (en partie seulement)':''));if(q.cd!=null&&q.cd!==b.cd)t.push('recharge '+blFmt(q.cd,'s'));if(q.ck!=null&&q.ck!==b.ck)t.push('chakra '+q.ck);if(t.length)d+=' · ⚖ valeurs modifiées : '+t.join(', ')}J.d=d});
@@ -94,7 +95,7 @@ function blHook(){
  const MK=mkNinja;mkNinja=function(b,s){const o=MK(b,s);if(BLC.hp!==1)o.hp=Math.round(o.hp*BLC.hp);if(BLC.spd!==1)o.spd=Math.round(o.spd*BLC.spd);return o};
  const JU=jutsu;BLJ0=JL.map((_,i)=>{const o=JU(i);return{cd:o.cd,hpc:!!o.hpc,rank:o.rank,fr:ckFreeT(o.tree)}});
  jutsu=function(id){const o=JU(id),q=BLC.pj&&BLC.pj[blJK(JL[id])],J=blJD(id),m=BLC.jm*(q&&q.d!=null?q.d:J.d??1);if(m!==1)o.bdm=m;
-  if(q&&q.cd!=null)o.cd=q.cd;else{const c=J.cd??o.cd;if(BLC.jcd!==1||c!==o.cd)o.cd=Math.round(c*BLC.jcd*10)/10}const ck=q&&q.ck!=null?q.ck:J.ck;if(ck!=null&&!o.hpc)o.ckO=ck;return o};
+  if(q&&q.cd!=null)o.cd=rtIn(q.cd);else{const c=J.cd??o.cd;if(BLC.jcd!==1||c!==o.cd)o.cd=Math.round(c*BLC.jcd*10)/10}const ck=q&&q.ck!=null?q.ck:J.ck;if(ck!=null&&!o.hpc)o.ckO=ck;return o};
  const SA=styleAb;styleAb=function(i){const o=SA(i),m=BLC.m1*(BLC.sd&&BLC.sd[i]||1);if(m!==1){o.bdm=m;o.d=blDescScale(o.d,m*BLC.gm)+(BLC.sd&&BLC.sd[i]?' · ⚖ dégâts ×'+blF(BLC.sd[i]):'')}else if(BLC.gm!==1)o.d=blDescScale(o.d,BLC.gm);return o};
  const FI=fire;fire=function(u,ab,a,td,ex){if(u&&ab&&ab.jid!=null)(u.usedJ||(u.usedJ=new Set)).add(ab.jid);const m=ab&&ab.bdm||1;return m===1&&BLJ===1?FI(u,ab,a,td,ex):blRun(m,u,()=>FI(u,ab,a,td,ex))};
  const HI=hit;hit=function(t,src,dmg,o){if(src&&src!==t&&typeof dmg==='number'){let m=BLC.gm;if(BLJ!==1&&src===BLU)m*=BLJ;if(m!==1){dmg*=m;if(o&&o.dot&&o.dot.dps)o=Object.assign({},o,{dot:Object.assign({},o.dot,{dps:o.dot.dps*m})})}}return HI(t,src,dmg,o)};
@@ -148,9 +149,10 @@ function blRecv(d){if(net.role!=='guest')return;const p=blNorm(d.p||{});p.name=S
 
 // ---------- profils (navigateur) ----------
 const blLS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
-// profil enregistré avant les recharges longues (gv absent ou < 6) : ses recharges par jutsu (j[k].cd) sont sur l'ancien barème → converties (rkCd, sans borne : outil de test)
+// profil enregistré avant les recharges longues (gv absent ou < 6) : ses recharges par jutsu (j[k].cd) sont sur l'ancien barème → converties (rkCdR, sans borne : outil de test) ;
+// un profil v6 garde ses chiffres : ses « 100 s » sont lus comme 100 s RÉELLES depuis la v7 (temps réel), comme les libellés du jeu
 function blCdMig(p){if(!p||typeof p!=='object'||(typeof p.gv==='number'&&p.gv>=6)||!p.j||typeof p.j!=='object')return p;const q=Object.assign({},p,{j:{}});
- for(const k in p.j){const x=p.j[k];const J=x&&typeof x.cd==='number'&&JL.find(J=>blJK(J)===k||J.ocat+'|'+J.n===k);q.j[k]=J?Object.assign({},x,{cd:rkCd(J.r,x.cd,true)}):x}return q}
+ for(const k in p.j){const x=p.j[k];const J=x&&typeof x.cd==='number'&&JL.find(J=>blJK(J)===k||J.ocat+'|'+J.n===k);q.j[k]=J?Object.assign({},x,{cd:rkCdR(J.r,x.cd,true)}):x}return q}
 function blLoad(){const s=blLS('nrBalProfiles');BLC.saved={};if(s&&typeof s==='object')for(const n in s){const p=blNorm(blCdMig(s[n]));p.name=n.slice(0,40);BLC.saved[p.name]=p}
  let c=blLS('nrBalCur');
  // profil actif enregistré par une version d'avant les arbres de compétences (sans gv) : ses valeurs absolues de clan remplaceraient les nouvelles en silence.
@@ -158,7 +160,7 @@ function blLoad(){const s=blLS('nrBalProfiles');BLC.saved={};if(s&&typeof s==='o
  if(c&&typeof c==='object'&&c.mod&&c.gv!==BLGV){const n=(String(c.name||'Personnalisé').slice(0,24)+' (ancienne version)');const p=blNorm(blCdMig(c));p.name=n;BLC.saved[n]=p;try{blSaveAll()}catch(e){}c=null;
   try{localStorage.removeItem('nrBalCur')}catch(e){}if(!BLSIM)setTimeout(()=>{try{blToast('Ton profil d\'équilibrage venait d\'une ancienne version du jeu : il est gardé sous « '+n+' », le profil Standard est actif.')}catch(e){}},1500)}
  BLC.cur=c?Object.assign(blNorm(c),{mod:!!c.mod}):Object.assign(blNorm({}),{name:'Standard',mod:false});if(c&&c.name)BLC.cur.name=String(c.name).slice(0,40)}
-const BLGV=6; // version du jeu des profils (5 = arbres de compétences, 6 = recharges longues : D 20-30 s … S 80-100 s)
+const BLGV=7; // version du jeu des profils (5 = arbres de compétences, 6 = recharges longues : D 20-30 s … S 80-100 s, 7 = recharges en temps réel : secondes à la montre)
 const blSaveCur=()=>blLS('nrBalCur',Object.assign(blData(BLC.cur),{name:BLC.cur.name,mod:!!BLC.cur.mod,gv:BLGV})),blSaveAll=()=>{const o={};for(const n in BLC.saved)o[n]=Object.assign(blData(BLC.saved[n]),{gv:BLGV});blLS('nrBalProfiles',o)};
 const blView=()=>BLC.ro&&BLC.host?BLC.host.p:BLC.cur;
 // une modification : profil courant marqué « modifié », appliqué tout de suite au menu (sinon à la prochaine partie), envoyé aux invités

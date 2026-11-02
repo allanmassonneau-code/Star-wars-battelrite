@@ -47,7 +47,7 @@ let presetI=-1,EB=null,EBCH=null; // EB : build en cours de création ou de modi
 const rndBuildBtn={x:BX,y:606,w:180,h:32},presetBtn={x:BX+188,y:606,w:190,h:32};
 const nameBtn={x:40,y:150,w:300,h:30},rndBtn={x:348,y:150,w:52,h:30},cancelBtn={x:44,y:662,w:352,h:32},saveBtn={x:1030,y:540,w:210,h:56};
 const itN=it=>Array.isArray(it)?String(it[0]):String(it),swCol=it=>Array.isArray(it)&&typeof it[1]==='string'&&it[1][0]==='#'?it[1]:null;
-const fmtCd=cd=>String(Math.round((+cd||0)*100)/100).replace('.',',')+' s'; // virgule décimale (« 86,7 s »)
+const fmtCd=cd=>String(Math.round(rtOut(+cd||0)*100)/100).replace('.',',')+' s'; // recharge NOMINALE en secondes RÉELLES (interne / GSPEED, nr_flow.js), virgule décimale (« 86,7 s »)
 // recharge affichée : pour un style, le rythme réel de ses 5 coups (de … à …, ou la moyenne avec avg)
 const abCd=(ab,avg)=>{const c=ab&&ab.style!=null&&typeof stCad==='function'?stCad(ab):null;if(!c)return fmtCd(ab.cd);const a=Math.min(...c),b=Math.max(...c);return avg?fmtCd(c.reduce((x,y)=>x+y,0)/5):a===b?fmtCd(a):fmtCd(a).slice(0,-2)+' à '+fmtCd(b)};
 const FNT=(z,w='normal')=>`${w} ${z}px "Trebuchet MS",system-ui,sans-serif`;
@@ -324,7 +324,7 @@ function drawCreator(){
  {const cols=crCols(),cards=crCards();CRH=-1;
   const trs=treesOf(EB),frT=trs.filter(ckFreeT),allF=trs.length>0&&frT.length===trs.length;
   [...RANKO].forEach((r,ri)=>{const y=CRG.y+ri*CRG.rh;rr({x:BX,y:y+4,w:28,h:CRG.ch-8},7,RANKC[r]);text(r,BX+14,y+CRG.ch/2+2,15,'#14100a');text(allF?'0':String(RKB[r].ck),BX+14,y+CRG.ch/2+14,8.5,'#14100a','center','normal');
-   if(free&&inRect(mouse,{x:BX,y,w:30,h:CRG.ch}))hoverTip('rk'+r,()=>({t:'Rang '+r,col:RANKC[r],l:frT.length?[[allF?'Tous tes arbres sont martiaux : 0 chakra':`${frT.map(catName).join(', ')} : 0 chakra`,'#8fe38f']]:[],d:`${allF?'0 chakra par lancer':`Chakra ${RKB[r].ck} par lancer`} · recharge ${RKB[r].cd.join(' à ')} s${r==='S'?' · cut-in au lancer':''}. Les jutsu de nature demandent aussi des mudras (${'DCBAS'.indexOf(r)+2}). Arbres martiaux (${ckFreeNm()}) : 0 chakra. Dash et Kawarimi : sans chakra.`}))});
+   if(free&&inRect(mouse,{x:BX,y,w:30,h:CRG.ch}))hoverTip('rk'+r,()=>({t:'Rang '+r,col:RANKC[r],l:frT.length?[[allF?'Tous tes arbres sont martiaux : 0 chakra':`${frT.map(catName).join(', ')} : 0 chakra`,'#8fe38f']]:[],d:`${allF?'0 chakra par lancer':`Chakra ${RKB[r].ck} par lancer`} · recharge ${RKB[r].cd.join(' à ')} s réelles (le compteur décompte en temps de jeu : ${RKB[r].cd.map(v=>String(rtIn(v)).replace('.',',')).join(' à ')})${r==='S'?' · cut-in au lancer':''}. Les jutsu de nature demandent aussi des mudras (${'DCBAS'.indexOf(r)+2}). Arbres martiaux (${ckFreeNm()}) : 0 chakra. Dash et Kawarimi : sans chakra.`}))});
   for(const c of cols){const k=crHead(c,false);if(c.t==='+fam'){const R={x:c.x,y:CRG.y,w:c.w,h:4*CRG.rh+CRG.ch},h=hv(R);g.save();g.setLineDash([6,5]);rr(R,9,h?'rgba(50,62,36,.6)':'rgba(20,30,16,.35)',h?'#9f9':'#3a6a3a',1.4);g.restore();
     wrapL('Sans clan : choisis jusqu\'à '+FAMMAX+' familles de sub (Iryô, Fûinjutsu, Genjutsu…) ; tu apprends 1 sub par rang, toutes familles confondues.',c.w-30,FNT(12)).forEach((l,i)=>text(l,c.x+c.w/2,CRG.y+90+i*17,12,'#a8c898','center','normal'));
     text('+ Choisir des familles',c.x+c.w/2,CRG.y+200,14,h?'#fff':'#9f9');if(h)hoverTip('addfam',()=>({t:'Familles de sub',col:'#7fd87f',d:'Clique pour choisir tes familles (jusqu\'à '+FAMMAX+').'}));continue}
@@ -355,7 +355,7 @@ function drawCreator(){
   text('✔ ENREGISTRER',R.x+R.w/2,R.y+R.h/2+6,18,'#1a1008');
   if(h)hoverTip('save',()=>({t:'Enregistrer',d:ED.k?'Garde ces changements et revient à la liste, ce perso sélectionné.':'Ajoute ce ninja à « Mes ninjas » et revient à la liste, prêt à jouer.'}))}
  // sort commun à tous les ninjas : soin (H)
- fitT(`${lbl.KeyH} · Soin (tous les ninjas) : l'allié visé (ou toi) récupère ${Math.round(HLS.pct*100)} % de ses PV + 8 % en 2 s · incantation 0,3 s · ${HLS.cd} s de recharge · sans chakra`,BX+4,684,11.5,'#9fdfaa',640,'normal',9);
+ fitT(`${lbl.KeyH} · Soin (tous les ninjas) : l'allié visé (ou toi) récupère ${Math.round(HLS.pct*100)} % de ses PV + 8 % en 2 s · incantation 0,3 s · ${fmtCd(HLS.cd)} de recharge · sans chakra`,BX+4,684,11.5,'#9fdfaa',640,'normal',9);
  if(picker!==null)drawPicker();
  else if(!CONF)text(HELPK(),W/2,714,11.5,'#e8cfa8','center','normal');
  drawConf();drawTip();drawCursor()}

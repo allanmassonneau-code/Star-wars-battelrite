@@ -42,7 +42,7 @@ const aiPref=(u,e)=>aiLow(u)&&e.hp>e.max*.3?Math.max(u.ch.pref,CK.aiSafe+70):u.c
 const aiIn=(u,p)=>{const l=u.ch.abil[0];return p<200&&l&&l.melee&&l.ai?Math.min(p+40,l.ai.max-8):p+40};
 // IA : ne se met pas à sec sans raison (sauf pour fuir, se défendre ou achever) et garde de quoi lancer son jutsu de plus haut rang quand il est presque prêt (moins de 12 % de sa recharge)
 function aiSave(u,i,h){if(h.mode==='esc'||h.mode==='def'||h.mode==='heal')return false;const c=jcost(u.ch.abil[i]),e=u.tgt;if(!c)return false; // jutsu gratuit (arbres martiaux) : rien à garder
- if(u.energy-c<CK.exhIn&&!(e&&!e.dead&&e.hp<e.max*.3))return true;const ui=bestRankI(u),U=ui>=0?u.ch.abil[ui]:null;if(i===ui||!U||u.cds[ui]>Math.max(3,.12*(U.cd||0))||!c)return false; // « presque prêt » : 12 % de sa recharge (≈ 11 s pour un S de 90 s), au moins 3 s
+ if(u.energy-c<CK.exhIn&&!(e&&!e.dead&&e.hp<e.max*.3))return true;const ui=bestRankI(u),U=ui>=0?u.ch.abil[ui]:null;if(i===ui||!U||u.cds[ui]>Math.max(3,.12*(U.cd||0))||!c)return false; // « presque prêt » : 12 % de sa recharge (≈ 9 s de jeu pour un S de 90 s réelles = 72 s de jeu), au moins 3 s
  if(U.ai&&U.ai.mode==='exec'&&!(e&&!e.dead&&e.hp<e.max*.55))return false; // jutsu d'exécution : on ne garde pas le chakra tant que la cible n'est pas entamée
  return u.energy-c<jcost(U)}
 // HUD : chiffre de chakra, avertissement d'épuisement
@@ -67,7 +67,7 @@ STATD.push((u,p,S,sk)=>{if(!u.exh||u.dead)return;const t=performance.now()/1000;
 
 // ---------- Soin (H) : sort commun à tous les ninjas (comme un sort d'invocateur) ----------
 // soigne l'allié le plus proche du curseur à moins de 600 (toi-même si tu te vises ou si personne n'est à portée) :
-// 25 % des PV max tout de suite + 8 % en 2 s ; 0,3 s d'incantation (un étourdissement l'interrompt), 60 s de recharge, sans chakra
+// 25 % des PV max tout de suite + 8 % en 2 s ; 0,3 s d'incantation (un étourdissement l'interrompt), 60 s de recharge en temps de jeu (75 s réelles, affichées), sans chakra
 const HLS={on:true,cd:60,cast:.3,pct:.25,reg:.08,regT:2,range:600};
 function hlTarget(u,ax,ay){let b=u,bd=Math.hypot(ax-u.x,ay-u.y);for(const x of units)if(x!==u&&x.team===u.team&&!x.dead&&dist(u,x)<=HLS.range){const d=Math.hypot(ax-x.x,ay-x.y);if(d<bd){bd=d;b=x}}return b}
 const hlCan=u=>HLS.on&&state==='fight'&&!u.dead&&!(u.hlCd>0)&&!(u.hlC>0)&&u.stun<=0&&!u.dash&&!u.cast&&!u.chan&&!u.spin&&!u.flame&&!(u.sleepT<0);

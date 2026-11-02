@@ -1,15 +1,22 @@
 // ---------- Rythme Naruto : chakra, mudras, combo, endurance ----------
 const GSPEED=.8; // tout le jeu tourne à 80 % : combats plus lisibles
-// barème par rang (DESIGN §3) : chakra par lancer et fourchette de recharge [min, max] en s ; la recharge d'un jutsu = JBAL.cd sinon celle de sa mécanique bornée à la fourchette
+// barème par rang (DESIGN §3) : chakra par lancer et fourchette de recharge [min, max] en secondes RÉELLES (voir rtIn ci-dessous) ; la recharge d'un jutsu = JBAL.cd sinon celle de sa mécanique bornée à la fourchette
 // (une mécanique ULT() prend le haut de la fourchette) ; plus d'ultime : le cut-in, le cri et la bordure dorée du HUD passent aux jutsu de rang S
 // Recharges longues (D 20-30 s … S 80-100 s) : les mécaniques (S_/SP, JCD) et les réglages JBAL.cd restent écrits sur l'ANCIEN barème (RKB_CD0, 4-24 s) ;
 // rkCd les convertit proportionnellement (position dans l'ancienne fourchette → même position dans la nouvelle), bornées STRICTEMENT à la nouvelle fourchette
 // (un réglage JBAL au-delà de l'ancienne fourchette donne le bord : un S ne dépasse jamais 100 s) ; libre=true (profils F8 d'avant la v6) : dépassement proportionnel, sans borne
 const RKB={D:{ck:8,cd:[20,30]},C:{ck:14,cd:[30,40]},B:{ck:20,cd:[40,60]},A:{ck:28,cd:[60,80]},S:{ck:40,cd:[80,100]}},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
 const RKB_CD0={D:[4,7],C:[6,10],B:[8,12],A:[11,16],S:[18,24]};
-const cdTxt=v=>v>=10?String(Math.ceil(v)):v.toFixed(1).replace('.',','); // recharge restante affichée (HUD, menu B) : secondes entières au-dessus de 10 s, virgule décimale
-const rkCd=(r,cd,libre)=>{const o=RKB_CD0[r],R=RKB[r];if(!o||!R||typeof cd!=='number'||!isFinite(cd))return cd;const [a,b]=o,[c,d]=R.cd;
+// TEMPS RÉEL : les fourchettes RKB.cd sont des secondes À LA MONTRE (un S « 100 s » dure 100 s réelles). Le jeu tournant à GSPEED (80 %), la recharge
+// INTERNE (ab.cd, u.cds, stash : secondes de jeu) = réel × GSPEED (rtIn) : 100 s réelles = 80 s de jeu. Toutes les recharges AFFICHÉES comme valeur nominale
+// (menus, infobulles, F8, soin : fmtCd, nr_menu.js) sont en secondes réelles (rtOut) ; les COMPTEURS en direct (HUD, menu B : cdTxt) décomptent le temps de jeu
+// (un « 100 s » part de 80 et atteint 0 au bout de 100 s réelles) ; CDLIVE_REEL=true les passerait en secondes réelles. Dash, Kawarimi, soin, attaque de base :
+// durées internes inchangées, seul leur affichage nominal passe en secondes réelles (même règle pour tous).
+const rtIn=v=>Math.round(v*GSPEED*1000)/1000,rtOut=v=>Math.round(v/GSPEED*1000)/1000,CDLIVE_REEL=false;
+const cdTxt=v=>(v=CDLIVE_REEL?v/GSPEED:v)>=10?String(Math.ceil(v)):v.toFixed(1).replace('.',','); // recharge restante affichée en direct (HUD, menu B) : secondes de jeu (voir CDLIVE_REEL), entières au-dessus de 10 s, virgule décimale
+const rkCdR=(r,cd,libre)=>{const o=RKB_CD0[r],R=RKB[r];if(!o||!R||typeof cd!=='number'||!isFinite(cd))return cd;const [a,b]=o,[c,d]=R.cd;
  const v=cd<a?(libre?c*cd/a:c):cd>b?(libre?d*cd/b:d):c+(cd-a)/(b-a)*(d-c);return Math.round(v*10)/10};
+const rkCd=(r,cd,libre)=>{const v=rkCdR(r,cd,libre);return typeof v==='number'&&isFinite(v)?rtIn(v):v}; // recharge INTERNE (secondes de jeu) d'une valeur de l'ancien barème
 // coût en chakra d'un jutsu (dash et Kawarimi : pas de rang = 0) : une jauge pleine ≈ 2 jutsu S ; ckO = coût propre au jutsu (JBAL / profil d'équilibrage)
 const jcost=ab=>ab&&ab.rank&&RKB[ab.rank]&&!ab.hpc&&!ckFreeT(ab.tree)?(ab.ckO!=null?ab.ckO:RKB[ab.rank].ck):0; // arbres martiaux (TREES[…].ckFree, nr_kits.js) : 0 chakra
 let COMBO3=false; // vrai pendant le 5e coup du combo corps à corps (petit étourdissement)
