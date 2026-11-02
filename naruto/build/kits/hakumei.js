@@ -169,7 +169,7 @@ TRAITS[13]={nom:'Soie d\'araignée',desc:'Tes jutsu posent des fils sur l\'ennem
  init(u){u.hm_cd0=u.cds},
  update(u,dt){if(u.hm_cd0!==u.cds){u.hm_cd0=u.cds;u.hm_bw=null;u.hm_bow=0;u.hm_armE=0;u.hm_arm=0} // nouveau ninja ou réapparition
   if(u.hm_arm>0)u.hm_arm=Math.max(0,(u.hm_armE||0)-SIMT);
-  const bw=u.hm_bw;if(bw){if(u.stun>0||u.silence>0||(u.jst&&u.jst.key!=='hm_arc')){u.hm_bw=null;u.hm_bow=0;if(u.jst&&u.jst.key==='hm_arc')u.jst=null;u.cds[bw.i]=Math.max(u.cds[bw.i],8);say(u,'ARC INTERROMPU','#fc6');return}
+  const bw=u.hm_bw;if(bw){if(u.stun>0||u.silence>0||(u.jst&&u.jst.key!=='hm_arc')){u.hm_bw=null;u.hm_bow=0;if(u.jst&&u.jst.key==='hm_arc')u.jst=null;u.cds[bw.i]=Math.max(u.cds[bw.i],bw.cd*.45);say(u,'ARC INTERROMPU','#fc6');return}
    bw.t+=dt;u.hm_bow=Math.min(1,.01+bw.t/1.2);u.slow=Math.max(u.slow,.1);if(u.jst&&u.jst.key==='hm_arc')u.jst.t=2.5;
    if(bw.t>=1.2){CUR=u;hm_loose(u);CUR=null}}},
  // englué : +20 % des Hakumei

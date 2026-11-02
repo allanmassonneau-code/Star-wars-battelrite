@@ -31,7 +31,7 @@ Même moteur que l'arène Star Wars (vue 3/4 façon Battlerite, arène, bataille
   - Raiton : éclair, décharge, chaîne d'éclairs, Chidori Nagashi, Chidori Eisô, panthère noire, Chidori, orage, pas de l'éclair, Kirin, armure de foudre
   - Doton : rocher, Doryûheki, pics de terre, marécage, corps de roche, main de terre, dragon de terre, Kajûgan, taupe, chute de montagne, grand séisme
 - **Clans** : chacun a ses techniques de D à S (ex. Uchiha : Kamui, Izanagi, Amaterasu, Tsukuyomi, Susanô ; Hyûga : 128 points ; Nara : Kage Nui ; Akimichi : Mode Papillon ; Sabaku : Bouclier absolu, Funérailles du désert ; Kaguya : danses du saule, du mélèze et de la clématite…)
-- **Rangs D, C, B, A, S** : chakra par lancer 8 / 14 / 20 / 28 / 40, recharge de 4-7 s (D) à 18-24 s (S). Plus de budget de points, de passif ni de voie ; le trait de clan reste. Pas de versions EX.
+- **Rangs D, C, B, A, S** : chakra par lancer 8 / 14 / 20 / 28 / 40, recharge longue : D 20-30 s, C 30-40 s, B 40-60 s, A 60-80 s, S 80-100 s (un jutsu ne sert que quelques fois par combat ; l'attaque de base, le dash, le Kawarimi et le soin gardent leur rythme). Plus de budget de points, de passif ni de voie ; le trait de clan reste. Pas de versions EX.
 - Apparence complète (village, tenue, coiffure, cheveux, peau, couleur du chakra, accessoire).
 - **Modèles de kit** : le kit et l'apparence d'un perso de l'anime comme point de départ, à retoucher.
 

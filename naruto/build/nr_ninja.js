@@ -43,9 +43,15 @@ const JCD={}; // (Lotus primaire / Lotus caché : recharge du barème de leur ra
 // les autres montés (Défi éternel, Esquive du fauve, Tonfa, Fundo, Makimono, Ôtsuchi, Konoha Senpû / Ôkashô / Tsûtenkyaku), CLANBAL 10 ×1,083 et 22 ×1,015,
 // PREBAL ×1,025 (les persos de l'anime perdaient 54-46 contre des ninjas au hasard). Mesure finale (8400 duels entre persos de l'anime, 1400 par catégorie) :
 // Rock Lee 62 %, Gaï 63 %, Tenten 57 %, Mifune 50 % ; Taijutsuka 47 %, Kenjutsuka 50 %, Bukijutsuka 45 %, arbres Taijutsu / Kenjutsu / Bukijutsu 49 / 48 / 50 %
-const CLANBAL={"0":[0.823,0.785],"1":[0.759,0.763],"2":[1.041,1.082],"3":[0.954,0.858],"4":[0.949,0.949],"5":[1.122,1.127],"6":[1.072,0.907],"7":[1.01,1.052],"8":[0.891,1.008],"9":[1.018,0.86],"10":[0.9,0.531],"11":[1.086,0.945],"12":[1.037,0.975],"13":[1.141,1.123],"14":[0.973,1.318],"15":[1.068,0.965],"16":[0.961,1.098],"17":[0.992,1.053],"18":[0.963,0.952],"19":[0.861,1.063],"20":[0.975,1.152],"21":[1.026,0.7],"22":[0.909,0.716],"-1":[1.003,0.961]},NATBAL={"0":[1.147,0.947],"1":[1.019,1.094],"2":[0.993,1.001],"3":[1.031,0.967],"4":[1.001,1.012]},STYLEBAL={"0":[1.027,1.031],"1":[1.006,0.993],"2":[0.905,0.87],"2:-1":[0.812,0.728],"3":[0.886,0.927],"7":[0.998,1.028],"8":[1.012,0.929],"10":[1.051,1.142],"12":[0.919,1.056],"15":[1.105,1.294],"16":[0.985,0.985],"18":[0.943,0.861],"19":[1.024,0.846],"20":[1.01,1.01],"23":[0.997,1.019],"24":[0.982,0.988],"25":[1.278,1.133],"26":[1.081,1.084],"29":[1.028,1.016],"31":[1.009,1.012],"32":[0.996,1.036],"33":[1.026,0.995]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
+// puis RECHARGES LONGUES (D 20-30 s, C 30-40 s, B 40-60 s, A 60-80 s, S 80-100 s ; RKB / rkCd, nr_flow.js : les cd de JBAL ci-dessous restent sur l'ancien barème) :
+// sans retouche, les clans martiaux s'effondraient (Taijutsuka 23 %, Kenjutsuka 22 %, Rock Lee 6 %, Gaï 4 %) : leur puissance avait été baissée pour des jutsu
+// gratuits lancés en boucle. Dégâts (d) de leurs jutsu de rang haut remontés (racine carrée de l'ancien réglage, puis ×1,3 pour ceux des barres de Lee, Gaï
+// et Mifune, ×1,2 de plus pour ceux de Gaï), CLANBAL / NATBAL / STYLEBAL / TREEBAL / FAMBAL recalés en 12 passes (400 duels par catégorie), PREBAL aussi
+// (les persos de l'anime contre des ninjas au hasard : 53 % comme avant). Mesure finale : 67 catégories sur 74 à 45-55 % (les autres à 42-59 %),
+// 42 persos de l'anime à 42-58 % entre eux, duel médian 52 s (44 s avant ; 52,6 s entre persos de l'anime), HPK inchangé
+const CLANBAL={"0":[0.822,0.784],"1":[0.756,0.76],"2":[1.066,1.108],"3":[0.904,0.813],"4":[0.931,0.931],"5":[1.113,1.118],"6":[1.093,0.925],"7":[0.974,1.015],"8":[0.864,0.978],"9":[0.975,0.824],"10":[0.887,0.523],"11":[1.087,0.946],"12":[1.044,0.982],"13":[1.148,1.13],"14":[0.972,1.317],"15":[1.084,0.98],"16":[0.971,1.11],"17":[0.989,1.05],"18":[0.939,0.928],"19":[0.833,1.029],"20":[0.952,1.125],"21":[1.04,0.709],"22":[0.927,0.73],"-1":[1.008,0.966]},NATBAL={"0":[1.161,0.958],"1":[1.038,1.114],"2":[1.003,1.011],"3":[1.066,1.0],"4":[1.044,1.056]},STYLEBAL={"0":[1.022,1.026],"1":[1.0,0.987],"2":[0.904,0.869],"2:-1":[0.811,0.727],"3":[0.886,0.927],"7":[1.03,1.061],"8":[1.001,0.919],"10":[1.025,1.113],"12":[0.917,1.054],"15":[1.127,1.32],"16":[0.985,0.985],"18":[0.929,0.849],"19":[1.035,0.855],"20":[1.01,1.01],"23":[1.005,1.027],"24":[0.994,1.0],"25":[1.244,1.103],"26":[1.081,1.084],"29":[1.027,1.015],"31":[1.005,1.008],"32":[1.013,1.054],"33":[1.037,1.005]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
 // équilibrage par arbre de style (TREEBAL[st]) et par famille de sub (FAMBAL[f], moyenne géométrique des familles prises) : [PV, puissance], défaut [1, 1]
-const TREEBAL={"1":[1.07,1.063],"0":[1.0,1.05],"2":[1.009,1.037]},FAMBAL={"0":[0.819,1.242],"1":[1.03,1.013],"2":[1.046,1.144],"3":[0.953,1.08],"4":[1.06,1.039],"5":[0.947,1.097],"6":[0.981,1.064],"7":[0.961,1.023]};
+const TREEBAL={"1":[1.088,1.081],"0":[1.021,1.073],"2":[1.036,1.065]},FAMBAL={"0":[0.791,1.2],"1":[1.046,1.028],"2":[1.037,1.134],"3":[0.951,1.078],"4":[1.048,1.027],"5":[0.952,1.103],"6":[0.937,1.016],"7":[0.953,1.015]};
 // équilibrage par jutsu (« catégorie|nom ») : d = dégâts ×, cd = recharge (s), ck = coût en chakra ; appliqué par nr_bal.js (les « N dégâts » des descriptions suivent d)
 const JBAL={
  "c0|Amaterasu":{"d":0.4,"cd":17.6},
@@ -55,14 +61,14 @@ const JBAL={
  "c0|Susanô : Totsuka":{"d":1.32},
  "c10|Défi éternel":{"cd":7.7,"d":1.725},
  "c10|Esquive du fauve":{"cd":9.0,"d":1.62},
- "c10|Huit Portes":{"d":0.203,"cd":26.4},
- "c10|Konoha Daisenpû":{"d":0.924,"cd":11.0},
- "c10|Konoha Gôriki Senpû":{"cd":13.2,"d":0.585},
- "c10|Lotus caché":{"d":0.387,"cd":26.4},
- "c10|Paon du matin":{"d":0.504,"cd":17.6},
- "c10|Poids retirés":{"d":1.87,"cd":6.0},
- "c10|Portes célestes":{"cd":13.2},
- "c10|Éléphant du soir":{"d":0.277,"cd":17.6},
+ "c10|Huit Portes":{"d":0.703,"cd":26.4},
+ "c10|Konoha Daisenpû":{"d":1.201,"cd":11.0},
+ "c10|Konoha Gôriki Senpû":{"cd":13.2,"d":1.194},
+ "c10|Lotus caché":{"d":0.809,"cd":26.4},
+ "c10|Paon du matin":{"d":1.108,"cd":17.6},
+ "c10|Poids retirés":{"d":2.431,"cd":6.0},
+ "c10|Portes célestes":{"cd":13.2,"d":1.3},
+ "c10|Éléphant du soir":{"d":0.821,"cd":17.6},
  "c11|Arbre millénaire":{"d":0.329,"cd":17.6},
  "c11|Fleur carnivore":{"d":0.465},
  "c11|Floraison mortelle":{"d":0.886},
@@ -118,24 +124,24 @@ const JBAL={
  "c20|Hyôton : Tsubame Fubuki":{"d":0.399},
  "c20|Makyô Hyôshô":{"d":0.464},
  "c20|Miroir de glace":{"d":2.2,"cd":11.0},
- "c21|Battô : Coupe du fourreau":{"cd":6.0,"d":1.265},
- "c21|Iai : Passage du vent":{"d":0.561,"cd":17.6},
- "c21|Iai : Tranche-ciel":{"d":0.541,"cd":26.4},
- "c21|Jûmonji : Coupe en croix":{"d":0.78,"cd":13.2},
- "c21|Kamae : Posture du roc":{"cd":4.5,"d":1.15},
+ "c21|Battô : Coupe du fourreau":{"cd":6.0,"d":1.644},
+ "c21|Iai : Passage du vent":{"d":0.974,"cd":17.6},
+ "c21|Iai : Tranche-ciel":{"d":0.957,"cd":26.4},
+ "c21|Jûmonji : Coupe en croix":{"d":1.148,"cd":13.2},
+ "c21|Kamae : Posture du roc":{"cd":4.5,"d":1.495},
  "c21|Kengeki : Croissant de chakra":{"d":0.888,"cd":11.0},
  "c21|Kiai : Cri de guerre":{"cd":9.0,"d":1.08},
- "c21|Nanabana : Sept fleurs de l'aube":{"d":0.336,"cd":26.4},
+ "c21|Nanabana : Sept fleurs de l'aube":{"d":0.58,"cd":26.4},
  "c21|Tetsu no Yoroi : Armure du Pays du Fer":{"cd":17.6,"d":0.82},
- "c21|Ukenagashi : Lame qui détourne":{"cd":10.5},
- "c22|Buki Shôkan : Arsenal volant":{"d":0.609,"cd":17.6},
+ "c21|Ukenagashi : Lame qui détourne":{"cd":10.5,"d":1.3},
+ "c22|Buki Shôkan : Arsenal volant":{"d":0.78,"cd":17.6},
  "c22|Fundo : Masse à chaîne":{"d":1.751,"cd":11.0},
- "c22|Kunai Ori : Cage de kunai":{"cd":13.2,"d":0.65},
- "c22|Kunai Rendan : Volée de kunai":{"d":0.579,"cd":7.7},
+ "c22|Kunai Ori : Cage de kunai":{"cd":13.2,"d":0.806},
+ "c22|Kunai Rendan : Volée de kunai":{"d":0.761,"cd":7.7},
  "c22|Kusarigama : Tourbillon":{"d":1.173,"cd":17.6},
- "c22|Kôkinjô : Corde d'or":{"d":0.289,"cd":26.4},
+ "c22|Kôkinjô : Corde d'or":{"d":0.538,"cd":26.4},
  "c22|Makimono : Arme lourde":{"cd":11.0,"d":1.512},
- "c22|Sôshôryû":{"d":0.202,"cd":26.4},
+ "c22|Sôshôryû":{"d":0.449,"cd":26.4},
  "c22|Tonfa : Contre":{"cd":4.5,"d":1.61},
  "c22|Ôtsuchi : Marteau écraseur":{"d":0.961,"cd":13.2},
  "c2|Kage Kubi Shibari":{"d":0.533},
@@ -262,19 +268,19 @@ const JBAL={
  "n4|Doton : Main de terre":{"d":1.461},
  "n4|Doton : Rocher":{"d":0.832},
  "n4|Doton : Yomi Numa":{"d":0.455},
- "t0|Dynamic Entry":{"d":0.761},
+ "t0|Dynamic Entry":{"d":1.134},
  "t0|Konoha Senpû":{"d":1.242},
- "t0|Lotus primaire":{"d":0.301,"cd":13.5},
+ "t0|Lotus primaire":{"d":0.714,"cd":13.5},
  "t0|Tsûtenkyaku : Talon céleste":{"d":0.871},
- "t0|Ôkashô":{"d":0.697},
+ "t0|Ôkashô":{"d":0.835},
  "t1|Ashigiri : Coupe aux jarrets":{"cd":8.5,"d":1.04},
  "t1|Iai : Dégainé éclair":{"cd":6.0,"d":1.08},
  "t1|Kaiten-giri : Tourbillon d'acier":{"d":1.156},
- "t1|Mikazuki no Mai : Danse du croissant":{"d":0.523},
+ "t1|Mikazuki no Mai : Danse du croissant":{"d":0.723},
  "t1|Ranbu : Tempête de lames":{"d":1.067},
  "t2|Ashibarai : Balayage":{"d":1.08},
  "t2|Hyaku Buki : Ruée des cent armes":{"cd":15.0,"d":0.94},
- "t2|Kongô Nyoi : Bâton infini":{"d":0.752},
+ "t2|Kongô Nyoi : Bâton infini":{"d":0.867},
  "t2|Kusarigama : Harpon":{"d":1.04},
  "u|Hiraishin":{"cd":16.0},
  "u|Kage Bunshin : leurre":{"cd":22.5},
@@ -382,7 +388,7 @@ const srcAb=src=>{const [h,k]=src.split('.');return h==='x'?NAT[k]:SRC[h].abil[+
 const srcHero=src=>{const [h,k]=src.split('.');return h==='x'?(NAT[k]&&NAT[k].hero)||NATHERO[k.split('_')[0]]||NATHERO[k.slice(0,2)]:h};
 // mudras : seulement les jutsu de NATURE (style, clan, familles, dash, Kawarimi : instantanés) ; recharge = JCD sinon celle de la mécanique bornée au barème du rang (RKB)
 function jutsu(id){const J=JL[id],b=srcAb(J.src),T=TREES[J.cat],mud=T&&T.type==='nature'?MUDRAS[J.r]:0,R=RKB[J.r]||RKB.D;
- const cd=JCD[J.n]!=null?JCD[J.n]:b.ult?R.cd[1]:Math.max(R.cd[0],Math.min(R.cd[1],b.cd||R.cd[0]));
+ const rk=RKB[J.r]?J.r:'D',R0=RKB_CD0[rk],cd=rkCd(rk,JCD[J.n]!=null?JCD[J.n]:b.ult?R0[1]:Math.max(R0[0],Math.min(R0[1],b.cd||R0[0]))); // ancien barème → nouveau (rkCd, nr_flow.js)
  return Object.assign({},b,J.P?{P:Object.assign({},b.P,J.P)}:{},{cd,ult:false,cast:mud?mud*MUDRA_T:b.cast,mud,noTele:!b.line&&!b.tele,n:J.n,d:J.d,ex:null,src:srcHero(J.src),vfx:J.vfx,rank:J.r,jid:id,tree:J.cat})}
 function styleAb(i){const S=STYLES[i],b=srcAb(S[2]);return Object.assign({},b,{n:S[0],d:S[1],ex:null,src:srcHero(S[2]),vfx:S[3],style:i})}
 // dash (Espace) et Kawarimi (A) : sans rang = 0 chakra, 0 mudra ; recharge propre (D.cd) sinon celle de la mécanique bornée à 5-8 s ; dégâts × de l'ancienne ligne (JBAL) gardés

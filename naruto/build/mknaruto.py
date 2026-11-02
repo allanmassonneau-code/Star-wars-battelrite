@@ -396,6 +396,7 @@ rep("if(ab.cast)text(`${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');","i
 rep("if(ab.ult&&!ready){g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-p.energy/100),s,sh*p.energy/100)}","if(ab.ult&&!ready&&p.cds[i]<=0){const f=Math.min(1,p.energy/Math.max(1,jcost(ab)));g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-f),s,sh*f)}")
 rep("text(muted?`${lbl.KeyM} : son coupé`","drawHealHud(p,x0+n*(s+gap)+6,y,sh);text(muted?`${lbl.KeyM} : son coupé`")
 rep("eBar(30,59,360,p.energy/100);{const T=trait(p);","eBar(30,59,360,p.energy/100);ckHud(p,30,59,360);{const T=trait(p);")
+rep("text(p.cds[i].toFixed(1),x+s/2,y+42,13,'#ffe81f')","text(cdTxt(p.cds[i]),x+s/2,y+42,13,'#ffe81f')") # recharges longues : secondes entières au-dessus de 10 s
 # liste des alliés décalée sous la ligne du trait de clan (sinon les deux textes se chevauchent en équipe)
 rep("let ay=0;for(const m of units)if(m!==player&&m.team===player.team","let ay=(T=>T&&T.hud?22:0)(trait(p));for(const m of units)if(m!==player&&m.team===player.team")
 # clan Chinoike : « prix du sang », jutsu payés en PV au lieu du chakra (option ab.hpc = part des PV max, ex. hpc:.06) ; générique, sans effet sur les jutsu sans hpc

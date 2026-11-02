@@ -58,7 +58,7 @@ KIT('n0',[ // catégorie : 'u' subjutsu, 'n0'…'n4' natures, 'c0'…'c20' clans
 ```
 - **Emplacement** : `1` = jutsu (va dans Clic D, Q ou E), `2` = déplacement (Espace), `5` = ultime (T). (3 et 4 = jutsu aussi.)
 - **Rang** D C B A S = 1 à 5 points (budget 17 par kit, 19 sans clan). Le rang fixe les **mudras** (D 2 … S 6, sauf subjutsu et déplacements)
-  et le **coût en chakra** (D 10, C 16, B 21, A 28, S 36, ultime +14 : une jauge pleine ≈ 5 jutsu). Les ultimes ont 22 s de recharge.
+  et le **coût en chakra** (D 10, C 16, B 21, A 28, S 36, ultime +14 : une jauge pleine ≈ 5 jutsu). Recharge par rang (`RKB`, nr_flow.js) : D 20-30 s, C 30-40 s, B 40-60 s, A 60-80 s, S 80-100 s ; une mécanique ULT() prend le haut de la fourchette.
 - **Mécanique** : `'x.cle'` = `NAT.cle` (toujours préférer des mécaniques sur mesure). Les anciennes sources `perso.n` (moteur Star Wars) sont à remplacer.
 - **Élément visuel** (`vfx`) : couleur/style des effets génériques et du son (`fire water wind lightning earth sand shadow bugs bone tag smoke genjutsu jyuken black fox heal leaf gate chain kunai shuriken senbon steel tai flower mind seal chidori kirin rasengan rasenshuriken hiraishin sandcoffin tsukuyomi susano gatsuga peacock sage byakugan kaiten hakke64 claws chakra`).
 - Statistiques : chaque mécanique a un personnage de référence (PV/vitesse/puissance du ninja). Par défaut celui du préfixe (`NATHERO.ka='boba'`, déjà réglé).
@@ -72,7 +72,7 @@ Object.assign(NAT,{
  ka_nuee:ULT('Katon : Nuée ardente','desc',{ai:{max:480,p:.8}},(u,a,td)=>{…}),
 });
 ```
-- `SP(nom, desc, recharge_s, options, f)` ; `ULT(nom, desc, options, f)`. `f(u, a, td)` : `u` lanceur, `a` angle visé, `td` distance au curseur.
+- `SP(nom, desc, recharge_s, options, f)` (`recharge_s` et `JBAL.cd` restent écrits sur l'**ancien** barème, `RKB_CD0` : D 4-7, C 6-10, B 8-12, A 11-16, S 18-24 ; `rkCd` les convertit proportionnellement dans la nouvelle fourchette du rang) ; `ULT(nom, desc, options, f)`. `f(u, a, td)` : `u` lanceur, `a` angle visé, `td` distance au curseur.
 - Options : `ai` (indice pour les bots) : `RG(portéeMax, proba, portéeMin)`, `SELF(portée)`, `DEF`, `ESC` (fuite), `{mode:'gap',min,max,p}` (engagement),
   `HEALM` (si PV < 60 %), `ALLY`, `{mode:'exec',max}` ; télégraphes : `line:{len,w}` (rectangle) ou `tele:{r,max}` (cercle au sol) / `tele:{self:1,r}`.
   `charges:n` (plusieurs charges), `cast` (ignoré : les mudras fixent l'incantation).
@@ -145,7 +145,7 @@ Pour synchroniser un nouveau champ de ninja : `AFTER.push(()=>UK.push('ka_monCha
 
 ## Équilibre (repères)
 PV des ninjas ≈ 250-350 avant le multiplicateur commun `HPK` (×1,3, nr_pace.js ; avec `M1K` ×0,4 sur les attaques de base, réglé pour un duel 1v1 médian de ≈ 50 s sans soin) ; coup de base ≈ 10-15.
-Le chakra ne revient plus en frappant : un jutsu qui **vole ou brûle du chakra** pèse donc lourd (il peut pousser la cible à l'épuisement). Par rang (recharge entre parenthèses) :
+Le chakra ne revient plus en frappant : un jutsu qui **vole ou brûle du chakra** pèse donc lourd (il peut pousser la cible à l'épuisement). Par rang (recharge entre parenthèses, ancien barème des mécaniques ; en jeu ×≈5, voir plus haut) :
 D (4-8 s) ≈ 10-18 dégâts ou petite utilité · C (6-10 s) ≈ 16-26 ou contrôle modéré (étourdir ≤ 0,6 s, entraver ≤ 1,2 s) ·
 B (8-12 s) ≈ 22-34 ou contrôle fort (≤ 1 s) / bonne défense · A (10-14 s) ≈ 30-45 + effet · S (ultime, 22 s) ≈ 45-70 ou effet décisif.
 Tout contrôle doit être **lisible** (télégraphe, projectile visible, délai) et **contrable** (esquivable, bloquable, interrompable).

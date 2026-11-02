@@ -44,7 +44,7 @@ function blNorm(p){p=p&&typeof p==='object'?p:{};const o={v:1,name:String(p.name
  pair(p.c,o.c,k=>BLC.D&&BLC.D.c[k]?BLC.D.c[k]:(+k>=-1&&+k<CLANS.length&&String(+k)===k?[1,1]:null),2);
  pair(p.n,o.n,k=>BLC.D&&BLC.D.n[k]?BLC.D.n[k]:(+k>=0&&+k<NATURES.length&&String(+k)===k?[1,1]:null),2);
  pair(p.s,o.s,k=>typeof k==='string'&&k.length<60?[1,1,1]:null,3);
- for(const k in p.j||{}){const q=p.j[k];if(!q||typeof q!=='object'||k.length>90)continue;const x={},d=num(q.d,.15,3),cd=num(q.cd,.3,60),ck=num(q.ck,0,100),d0=(JBAL[k]&&JBAL[k].d)??1;if(d!=null&&Math.abs(d-d0)>1e-9)x.d=d;if(cd!=null)x.cd=cd;if(ck!=null)x.ck=Math.round(ck);if(Object.keys(x).length)o.j[k]=x}
+ for(const k in p.j||{}){const q=p.j[k];if(!q||typeof q!=='object'||k.length>90)continue;const x={},d=num(q.d,.15,3),cd=num(q.cd,.3,150),ck=num(q.ck,0,100),d0=(JBAL[k]&&JBAL[k].d)??1;if(d!=null&&Math.abs(d-d0)>1e-9)x.d=d;if(cd!=null)x.cd=cd;if(ck!=null)x.ck=Math.round(ck);if(Object.keys(x).length)o.j[k]=x}
  return o}
 const blCopy=p=>JSON.parse(JSON.stringify(p));
 const blData=p=>({g:p.g,c:p.c,n:p.n,s:p.s,j:p.j});
@@ -56,7 +56,8 @@ const BLPART=new Set(['x.su_ball','x.hm_arc','x.km_angel','x.ka_goka','x.ka_drag
 let BLJ0=null; // jutsu(id) d'origine (avant le profil) : recharge et rang de chaque jutsu
 // barème par rang (DESIGN §3) : le réglage JBAL d'un jutsu reste dans la fourchette de son rang, à 10 % près pour la recharge et 25 % près pour le chakra
 // (le reste de l'équilibrage passe par les dégâts, d) ; un profil F8 (BLC.pj) n'est pas borné (outil de test)
-const BLCD=.1,BLCK=.25,blRk=(r,cd,ck)=>{const R=RKB[r];if(!R)return[cd,ck];return[cd==null?cd:Math.round(clamp(cd,R.cd[0]*(1-BLCD),R.cd[1]*(1+BLCD))*10)/10,ck==null?ck:clamp(Math.round(ck),Math.ceil(R.ck*(1-BLCK)),Math.floor(R.ck*(1+BLCK)))]};
+// JBAL.cd est écrit sur l'ancien barème (RKB_CD0) : borné à 10 % près dans l'ancienne fourchette, puis converti dans la nouvelle (rkCd, nr_flow.js)
+const BLCD=.1,BLCK=.25,blRk=(r,cd,ck)=>{const R=RKB[r],R0=RKB_CD0[r];if(!R||!R0)return[cd,ck];return[cd==null?cd:rkCd(r,clamp(cd,R0[0]*(1-BLCD),R0[1]*(1+BLCD))),ck==null?ck:clamp(Math.round(ck),Math.ceil(R.ck*(1-BLCK)),Math.floor(R.ck*(1+BLCK)))]};
 const blJD0=id=>JBAL[blJK(JL[id])]||JBAL[JL[id].ocat+'|'+JL[id].n]||{};
 const blJD=id=>{const q=blJD0(id);if(q.cd==null&&q.ck==null)return q;const [cd,ck]=blRk(JL[id].r,q.cd,q.ck);return Object.assign({},q,cd!=null?{cd}:{},ck!=null?{ck}:{})}; // (transition : clé d'origine d'un jutsu déplacé dans un autre arbre) // réglage par défaut du jutsu (JBAL, nr_ninja.js) : d dégâts ×, cd recharge, ck coût
 const blJBase=(p,id)=>{const o=BLJ0[id],J=blJD(id);return{cd:Math.round((J.cd??o.cd)*blG(p,'jcd')*10)/10,ck:o.hpc||o.fr?null:J.ck??blG(p,'ck'+o.rank),d:J.d??1}};
@@ -154,7 +155,7 @@ function blLoad(){const s=blLS('nrBalProfiles');BLC.saved={};if(s&&typeof s==='o
  if(c&&typeof c==='object'&&c.mod&&c.gv!==BLGV){const n=(String(c.name||'Personnalisé').slice(0,24)+' (ancienne version)');const p=blNorm(c);p.name=n;BLC.saved[n]=p;try{blSaveAll()}catch(e){}c=null;
   try{localStorage.removeItem('nrBalCur')}catch(e){}if(!BLSIM)setTimeout(()=>{try{blToast('Ton profil d\'équilibrage venait d\'une ancienne version du jeu : il est gardé sous « '+n+' », le profil Standard est actif.')}catch(e){}},1500)}
  BLC.cur=c?Object.assign(blNorm(c),{mod:!!c.mod}):Object.assign(blNorm({}),{name:'Standard',mod:false});if(c&&c.name)BLC.cur.name=String(c.name).slice(0,40)}
-const BLGV=5; // version du jeu des profils (5 = arbres de compétences)
+const BLGV=6; // version du jeu des profils (5 = arbres de compétences, 6 = recharges longues : D 20-30 s … S 80-100 s)
 const blSaveCur=()=>blLS('nrBalCur',Object.assign(blData(BLC.cur),{name:BLC.cur.name,mod:!!BLC.cur.mod,gv:BLGV})),blSaveAll=()=>{const o={};for(const n in BLC.saved)o[n]=blData(BLC.saved[n]);blLS('nrBalProfiles',o)};
 const blView=()=>BLC.ro&&BLC.host?BLC.host.p:BLC.cur;
 // une modification : profil courant marqué « modifié », appliqué tout de suite au menu (sinon à la prochaine partie), envoyé aux invités
@@ -353,7 +354,7 @@ function blTabJ(){const p=blView(),f=BLC.jf,wrap=blH('div'),cols='minmax(220px,1
 function blJRow(J,cols){const i=J.id,k=blJK(J),b0=BLJ0[i],base=blJBase(blView(),i),get=f=>{const q=blView().j[k];return q&&q[f]!=null?q[f]:base[f]};let row;
  const set=(f,v)=>{const P=BLC.cur.j,q=Object.assign({},P[k]);if(v==null)delete q[f];else q[f]=v;if(Object.keys(q).length)P[k]=q;else delete P[k]};
  const ch=f=>v=>{set(f,v);row.sync();blTouch()};
- const cd=blNumIn(()=>get('cd'),ch('cd'),base.cd,.5,60,.5,'s',{noSl:1,lab:J.n+' : recharge',tip:'Défaut : '+blFmt(base.cd,'s')});
+ const cd=blNumIn(()=>get('cd'),ch('cd'),base.cd,.5,150,.5,'s',{noSl:1,lab:J.n+' : recharge',tip:'Défaut : '+blFmt(base.cd,'s')});
  const ck=b0.fr?Object.assign(blH('div',{class:'bl-ctl','data-tip':'Arbre martial (Taijutsu, Kenjutsu, Bukijutsu et leurs clans) : ce jutsu ne coûte pas de chakra'},blH('span',{class:'bl-unit',style:{width:'auto',color:'#8fe38f'}},'0 chakra')),{upd(){}}):b0.hpc?Object.assign(blH('div',{class:'bl-ctl','data-tip':'Ce jutsu coûte des PV (prix du sang), pas de chakra'},blH('span',{class:'bl-unit',style:{width:'auto',color:'#ff8a96'}},'PV max')),{upd(){}}):blNumIn(()=>get('ck'),ch('ck'),base.ck,0,100,1,'',{noSl:1,lab:J.n+' : chakra',tip:'Défaut : '+base.ck});
  const dm=blNumIn(()=>get('d'),ch('d'),base.d,.15,3,.01,'x',{lab:J.n+' : dégâts',tip:BLPART.has(J.src)?'⚠ Une partie des dégâts de ce jutsu est calculée à part : le multiplicateur ne s\'applique qu\'en partie.':null});
  const lab=blH('div',{class:'bl-lab','data-tip':BLC.D.jd[i]},J.cat==='u'?blChip('SJ','#c8b89a'):J.cat[0]==='n'?blChip(NATURES[+J.cat.slice(1)][0].slice(0,2),catCol(J.cat)):blChip(clanTag(+J.cat.slice(1)),catCol(J.cat)),

@@ -2,7 +2,13 @@
 const GSPEED=.8; // tout le jeu tourne à 80 % : combats plus lisibles
 // barème par rang (DESIGN §3) : chakra par lancer et fourchette de recharge [min, max] en s ; la recharge d'un jutsu = JBAL.cd sinon celle de sa mécanique bornée à la fourchette
 // (une mécanique ULT() prend le haut de la fourchette) ; plus d'ultime : le cut-in, le cri et la bordure dorée du HUD passent aux jutsu de rang S
-const RKB={D:{ck:8,cd:[4,7]},C:{ck:14,cd:[6,10]},B:{ck:20,cd:[8,12]},A:{ck:28,cd:[11,16]},S:{ck:40,cd:[18,24]}},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
+// Recharges longues (D 20-30 s … S 80-100 s) : les mécaniques (S_/SP, JCD) et les réglages JBAL.cd restent écrits sur l'ANCIEN barème (RKB_CD0, 4-24 s) ;
+// rkCd les convertit proportionnellement (position dans l'ancienne fourchette → même position dans la nouvelle ; les 10 % de dépassement JBAL suivent en proportion)
+const RKB={D:{ck:8,cd:[20,30]},C:{ck:14,cd:[30,40]},B:{ck:20,cd:[40,60]},A:{ck:28,cd:[60,80]},S:{ck:40,cd:[80,100]}},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
+const RKB_CD0={D:[4,7],C:[6,10],B:[8,12],A:[11,16],S:[18,24]};
+const cdTxt=v=>v>=10?String(Math.ceil(v)):v.toFixed(1); // recharge restante affichée (HUD, menu B) : secondes entières au-dessus de 10 s
+const rkCd=(r,cd)=>{const o=RKB_CD0[r],R=RKB[r];if(!o||!R||typeof cd!=='number'||!isFinite(cd))return cd;const [a,b]=o,[c,d]=R.cd;
+ const v=cd<a?c*Math.max(.9,cd/a):cd>b?d*Math.min(1.1,cd/b):c+(cd-a)/(b-a)*(d-c);return Math.round(v*10)/10};
 // coût en chakra d'un jutsu (dash et Kawarimi : pas de rang = 0) : une jauge pleine ≈ 2 jutsu S ; ckO = coût propre au jutsu (JBAL / profil d'équilibrage)
 const jcost=ab=>ab&&ab.rank&&RKB[ab.rank]&&!ab.hpc&&!ckFreeT(ab.tree)?(ab.ckO!=null?ab.ckO:RKB[ab.rank].ck):0; // arbres martiaux (TREES[…].ckFree, nr_kits.js) : 0 chakra
 let COMBO3=false; // vrai pendant le 5e coup du combo corps à corps (petit étourdissement)

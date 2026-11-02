@@ -17,7 +17,7 @@ KIT('u',[
  [4,'C','x.sub_mesu','Scalpel de chakra','Bond et entaille les muscles devant toi : ralentit fortement et empêche d\'attaquer 0,8 s','chakra'],
  [4,'B','x.sub_counter','Contre du clone','0,7 s : le prochain coup ne frappe qu\'un clone ; tu surgis derrière l\'attaquant proche, le frappes et l\'étourdis','smoke'],
  [4,'C','x.sub_pill','Pilule du soldat','Croque une pilule : +40 chakra, soin, endurance pleine ; se libère des entraves et ralentissements','heal'],
- [4,'D','x.sub_focus','Concentration du chakra','Réduit de 3 s la recharge de tes autres jutsu (hors ultime), rend 15 chakra et te rend plus rapide 1 s','chakra'],
+ [4,'D','x.sub_focus','Concentration du chakra','Réduit de 14 s la recharge de tes autres jutsu (hors ultime), rend 15 chakra et te rend plus rapide 1 s','chakra'],
  [2,'C','x.sub_shunshin','Shunshin','Disparaît dans un tourbillon de feuilles et réapparaît au curseur : les feuilles tranchent autour de toi (8 dégâts) et tu cours plus vite 1,5 s','leaf'],
  [2,'C','x.sub_kawa','Kawarimi','Se substitue au curseur et laisse à sa place une bûche piégée qui explose et étourdit','smoke'],
  [2,'C','x.sub_jump','Saut ninja','Bondit au curseur ; l\'atterrissage repousse les ennemis proches','leaf'],
@@ -106,7 +106,7 @@ Object.assign(NAT,{
  sub_pill:S_('Pilule du soldat','Chakra, soin, endurance et se libère',7,{hero:'bossk',ai:HEALM},(u)=>{anim(u,'sub_pill',.6);S('orb',u);const r=gain(u,16,u);u.energy=Math.min(100,u.energy+20);u.stam=100;cleanse(u);u.dotT=0;
   say(u,'+20 CHAKRA','#4ab0ff');if(r>=1)say(u,'+'+Math.round(r),'#6f9');jx({jfx:'sub_pill',ui:units.indexOf(u),x:u.x,y:u.y,t:.9,m:.9})}),
  // --- Concentration du chakra : réduit les recharges des autres jutsu (hors ultime)
- sub_focus:S_('Concentration du chakra','Réduit les recharges des autres jutsu',11,{hero:'luke',ai:SELF(400,.35)},(u)=>{const me=subIdx(u,'sub_focus');for(let i=BAR0;i<BAR0+BARN;i++)if(i!==me)u.cds[i]=Math.max(0,u.cds[i]-3);if(u.cst)for(const k in u.cst)u.cst[k]=Math.max(0,u.cst[k]-3);u.energy=Math.min(100,u.energy+15);
+ sub_focus:S_('Concentration du chakra','Réduit les recharges des autres jutsu',11,{hero:'luke',ai:SELF(400,.35)},(u)=>{const me=subIdx(u,'sub_focus');for(let i=BAR0;i<BAR0+BARN;i++)if(i!==me)u.cds[i]=Math.max(0,u.cds[i]-14);if(u.cst)for(const k in u.cst)u.cst[k]=Math.max(0,u.cst[k]-14);u.energy=Math.min(100,u.energy+15);
   later(u,.01,()=>{u.haste=Math.max(u.haste,1.2)});anim(u,'pray',.55);S('ignite',u);jx({jfx:'sub_focus',ui:units.indexOf(u),x:u.x,y:u.y,col:u.ch.look.weapon.col||'#3af',t:.8,m:.8})}),
  // --- Déplacements
  sub_shunshin:S_('Shunshin','Téléportation dans un tourbillon de feuilles',8,{hero:'palpatine',ai:{mode:'gap',min:120,max:270,p:.5}},(u,a,td)=>{const p=subFree(atP(u,a,clamp(td||260,80,270),270),20);jx({jfx:'sub_leaves',x:u.x,y:u.y,t:.65,m:.65});
