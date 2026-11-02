@@ -26,19 +26,21 @@ function ckTick(u,dt){if(u.dead)return;const pm=ckPm(u);if(u.ckLock>0)u.ckLock-=
 function ckLack(u,i){if(u.ckMsg>SIMT)return;u.ckMsg=SIMT+.7;if(u===player||u.human)say(u,'CHAKRA INSUFFISANT ('+lbl.KeyR+')','#4ab0ff');if(u===player){ckFl.i=i;ckFl.t=performance.now()+450}}
 const ckFl={i:-1,t:0};
 // IA : se recharger quand c'est sûr (personne autour, ou l'adversaire est neutralisé / se recharge aussi)
-function aiChk(u,dt){if(u.sub_sage>0)return false;const lo=u.aiCkLo||(u.aiCkLo=CK.aiLo+rnd()*CK.aiLoR),e=nearE(u,u.x,u.y,CK.aiSafe+250),d=e?dist(u,e):1e9,
+function aiChk(u,dt){if(u.sub_sage>0||!aiNeedCk(u))return false;const lo=u.aiCkLo||(u.aiCkLo=CK.aiLo+rnd()*CK.aiLoR),e=nearE(u,u.x,u.y,CK.aiSafe+250),d=e?dist(u,e):1e9,
   busy=e&&(e.stun>.5||e.sleepT<0||e.chk||e.root>.8||e.dead);
  if(u.chk)return u.energy<(u.aiCkTo||95)&&!(e&&d<(u.aiCkSt||CK.aiStop)&&!busy);
  if(u.energy>=lo){u.aiLowT=0;return false}u.aiLowT=(u.aiLowT||0)+dt; // à sec depuis longtemps sans fenêtre sûre : prend le risque plus près
  const safe=u.aiLowT>6?CK.aiStop-30:u.exh?CK.aiSafe-80:CK.aiSafe;
  if(!e||d>safe||(busy&&d>150)){if(threat(u))return false;u.aiCkSt=Math.min(CK.aiStop,safe-50);u.aiCkTo=(u.aiLowT>6?55:72)+rnd()*28;u.aiLowT=0;return true}return false}
 // IA à court de chakra : prend ses distances pour pouvoir se recharger (sauf pour achever un adversaire)
-const aiLow=u=>u.energy<(u.aiCkLo||CK.aiLo)&&!(u.sub_sage>0);
+const aiLow=u=>u.energy<(u.aiCkLo||CK.aiLo)&&!(u.sub_sage>0)&&aiNeedCk(u);
+// IA : a-t-elle besoin de chakra ? non si aucun jutsu appris n'en coûte (Taijutsuka, Kenjutsuka, Bukijutsuka : arbres martiaux à 0 chakra) → ni recharge (R) ni recul pour se recharger
+function aiNeedCk(u){const c=u.ch;if(c._ckN==null){let n=0;for(const j of c.learn||[]){const a=c.jab&&c.jab[j];if(a&&jcost(a)>0){n=1;break}}if(!c.learn)n=1;c._ckN=n}return!!c._ckN}
 const aiPref=(u,e)=>aiLow(u)&&e.hp>e.max*.3?Math.max(u.ch.pref,CK.aiSafe+70):u.ch.pref;
 // IA au corps à corps : s'approche jusqu'à l'allonge de son attaque de base (sinon elle tourne autour d'une cible immobile, entre l'allonge et pref+40, sans jamais frapper)
 const aiIn=(u,p)=>{const l=u.ch.abil[0];return p<200&&l&&l.melee&&l.ai?Math.min(p+40,l.ai.max-8):p+40};
 // IA : ne se met pas à sec sans raison (sauf pour fuir, se défendre ou achever) et garde de quoi lancer son jutsu de plus haut rang quand il est presque prêt
-function aiSave(u,i,h){if(h.mode==='esc'||h.mode==='def'||h.mode==='heal')return false;const c=jcost(u.ch.abil[i]),e=u.tgt;
+function aiSave(u,i,h){if(h.mode==='esc'||h.mode==='def'||h.mode==='heal')return false;const c=jcost(u.ch.abil[i]),e=u.tgt;if(!c)return false; // jutsu gratuit (arbres martiaux) : rien à garder
  if(u.energy-c<CK.exhIn&&!(e&&!e.dead&&e.hp<e.max*.3))return true;const ui=bestRankI(u),U=ui>=0?u.ch.abil[ui]:null;if(i===ui||!U||u.cds[ui]>3||!c)return false;
  if(U.ai&&U.ai.mode==='exec'&&!(e&&!e.dead&&e.hp<e.max*.55))return false; // jutsu d'exécution : on ne garde pas le chakra tant que la cible n'est pas entamée
  return u.energy-c<jcost(U)}
@@ -50,7 +52,8 @@ function ckHud(p,x,y,w){const lo=p.energy<30,t=performance.now()/1000,cy=H-84;te
 // barre de jutsu : coût en chakra de chaque case, case grisée « CHAKRA » si la jauge ne suffit pas
 // HUD : case vide de la barre (grisée, avec sa touche)
 function hudEmpty(p,i,x,y,s,sh){g.fillStyle='rgba(13,19,32,.45)';g.fillRect(x,y,s,sh);g.strokeStyle='#1c2638';g.lineWidth=1.5;g.setLineDash([4,4]);g.strokeRect(x,y,s,sh);g.setLineDash([]);text(lbl[SLOTS[i]]||'',x+s/2,y+24,16,'#3a4660','center');text('vide',x+s/2,y+sh+13,9,'#4a5670','center','normal')}
-function hudCost(p,ab,i,x,y,s,sh){if(!i)return;const c=jcost(ab);if(!c)return;const lack=p.energy<c;
+function hudCost(p,ab,i,x,y,s,sh){if(!i)return;const c=jcost(ab);if(!c){if(ab&&ab.rank&&ckFreeT(ab.tree)){g.fillStyle='#1d4a24';g.beginPath();g.roundRect(x+3,y+3,26,13,4);g.fill();text('0',x+16,y+13,10,'#b8f0b8','center')}return} // arbre martial : « 0 » (sans chakra)
+ const lack=p.energy<c;
  if(lack){g.fillStyle='rgba(20,40,110,.55)';g.fillRect(x,y,s,sh);if(p.cds[i]<=0)text('CHAKRA',x+s/2,y+44,10,'#7fb8ff','center')}
  {const fl=(ckFl.t-performance.now())/450;if(ckFl.i===i&&fl>0){g.strokeStyle=rgba('#4ab0ff',fl);g.lineWidth=4;g.strokeRect(x-2,y-2,s+4,sh+4)}}
  g.fillStyle=lack?'#5a1c1c':'#123a6a';g.beginPath();g.roundRect(x+3,y+3,26,13,4);g.fill();text(String(c),x+16,y+13,10,lack?'#ff8a8a':'#bfe4ff','center')}
