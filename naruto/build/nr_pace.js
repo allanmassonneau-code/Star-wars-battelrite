@@ -40,9 +40,9 @@ function aiNeedCk(u){const c=u.ch;if(c._ckN==null){let n=0;for(const j of c.lear
 const aiPref=(u,e)=>aiLow(u)&&e.hp>e.max*.3?Math.max(u.ch.pref,CK.aiSafe+70):u.ch.pref;
 // IA au corps à corps : s'approche jusqu'à l'allonge de son attaque de base (sinon elle tourne autour d'une cible immobile, entre l'allonge et pref+40, sans jamais frapper)
 const aiIn=(u,p)=>{const l=u.ch.abil[0];return p<200&&l&&l.melee&&l.ai?Math.min(p+40,l.ai.max-8):p+40};
-// IA : ne se met pas à sec sans raison (sauf pour fuir, se défendre ou achever) et garde de quoi lancer son jutsu de plus haut rang quand il est presque prêt
+// IA : ne se met pas à sec sans raison (sauf pour fuir, se défendre ou achever) et garde de quoi lancer son jutsu de plus haut rang quand il est presque prêt (moins de 12 % de sa recharge)
 function aiSave(u,i,h){if(h.mode==='esc'||h.mode==='def'||h.mode==='heal')return false;const c=jcost(u.ch.abil[i]),e=u.tgt;if(!c)return false; // jutsu gratuit (arbres martiaux) : rien à garder
- if(u.energy-c<CK.exhIn&&!(e&&!e.dead&&e.hp<e.max*.3))return true;const ui=bestRankI(u),U=ui>=0?u.ch.abil[ui]:null;if(i===ui||!U||u.cds[ui]>3||!c)return false;
+ if(u.energy-c<CK.exhIn&&!(e&&!e.dead&&e.hp<e.max*.3))return true;const ui=bestRankI(u),U=ui>=0?u.ch.abil[ui]:null;if(i===ui||!U||u.cds[ui]>Math.max(3,.12*(U.cd||0))||!c)return false; // « presque prêt » : 12 % de sa recharge (≈ 11 s pour un S de 90 s), au moins 3 s
  if(U.ai&&U.ai.mode==='exec'&&!(e&&!e.dead&&e.hp<e.max*.55))return false; // jutsu d'exécution : on ne garde pas le chakra tant que la cible n'est pas entamée
  return u.energy-c<jcost(U)}
 // HUD : chiffre de chakra, avertissement d'épuisement

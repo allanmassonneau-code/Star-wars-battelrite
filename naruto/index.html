@@ -563,12 +563,13 @@ const GSPEED=.8; // tout le jeu tourne à 80 % : combats plus lisibles
 // barème par rang (DESIGN §3) : chakra par lancer et fourchette de recharge [min, max] en s ; la recharge d'un jutsu = JBAL.cd sinon celle de sa mécanique bornée à la fourchette
 // (une mécanique ULT() prend le haut de la fourchette) ; plus d'ultime : le cut-in, le cri et la bordure dorée du HUD passent aux jutsu de rang S
 // Recharges longues (D 20-30 s … S 80-100 s) : les mécaniques (S_/SP, JCD) et les réglages JBAL.cd restent écrits sur l'ANCIEN barème (RKB_CD0, 4-24 s) ;
-// rkCd les convertit proportionnellement (position dans l'ancienne fourchette → même position dans la nouvelle ; les 10 % de dépassement JBAL suivent en proportion)
+// rkCd les convertit proportionnellement (position dans l'ancienne fourchette → même position dans la nouvelle), bornées STRICTEMENT à la nouvelle fourchette
+// (un réglage JBAL au-delà de l'ancienne fourchette donne le bord : un S ne dépasse jamais 100 s) ; libre=true (profils F8 d'avant la v6) : dépassement proportionnel, sans borne
 const RKB={D:{ck:8,cd:[20,30]},C:{ck:14,cd:[30,40]},B:{ck:20,cd:[40,60]},A:{ck:28,cd:[60,80]},S:{ck:40,cd:[80,100]}},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
 const RKB_CD0={D:[4,7],C:[6,10],B:[8,12],A:[11,16],S:[18,24]};
-const cdTxt=v=>v>=10?String(Math.ceil(v)):v.toFixed(1); // recharge restante affichée (HUD, menu B) : secondes entières au-dessus de 10 s
-const rkCd=(r,cd)=>{const o=RKB_CD0[r],R=RKB[r];if(!o||!R||typeof cd!=='number'||!isFinite(cd))return cd;const [a,b]=o,[c,d]=R.cd;
- const v=cd<a?c*Math.max(.9,cd/a):cd>b?d*Math.min(1.1,cd/b):c+(cd-a)/(b-a)*(d-c);return Math.round(v*10)/10};
+const cdTxt=v=>v>=10?String(Math.ceil(v)):v.toFixed(1).replace('.',','); // recharge restante affichée (HUD, menu B) : secondes entières au-dessus de 10 s, virgule décimale
+const rkCd=(r,cd,libre)=>{const o=RKB_CD0[r],R=RKB[r];if(!o||!R||typeof cd!=='number'||!isFinite(cd))return cd;const [a,b]=o,[c,d]=R.cd;
+ const v=cd<a?(libre?c*cd/a:c):cd>b?(libre?d*cd/b:d):c+(cd-a)/(b-a)*(d-c);return Math.round(v*10)/10};
 // coût en chakra d'un jutsu (dash et Kawarimi : pas de rang = 0) : une jauge pleine ≈ 2 jutsu S ; ckO = coût propre au jutsu (JBAL / profil d'équilibrage)
 const jcost=ab=>ab&&ab.rank&&RKB[ab.rank]&&!ab.hpc&&!ckFreeT(ab.tree)?(ab.ckO!=null?ab.ckO:RKB[ab.rank].ck):0; // arbres martiaux (TREES[…].ckFree, nr_kits.js) : 0 chakra // ckO : coût propre au jutsu (profil d'équilibrage)
 const hpcost=(u,ab)=>ab&&ab.hpc?Math.max(1,Math.round(u.max*ab.hpc)):0,jcostT=ab=>ab&&ab.hpc?Math.round(ab.hpc*100)+' % des PV max':jcost(ab)+' chakra';
@@ -823,9 +824,9 @@ function aiNeedCk(u){const c=u.ch;if(c._ckN==null){let n=0;for(const j of c.lear
 const aiPref=(u,e)=>aiLow(u)&&e.hp>e.max*.3?Math.max(u.ch.pref,CK.aiSafe+70):u.ch.pref;
 // IA au corps à corps : s'approche jusqu'à l'allonge de son attaque de base (sinon elle tourne autour d'une cible immobile, entre l'allonge et pref+40, sans jamais frapper)
 const aiIn=(u,p)=>{const l=u.ch.abil[0];return p<200&&l&&l.melee&&l.ai?Math.min(p+40,l.ai.max-8):p+40};
-// IA : ne se met pas à sec sans raison (sauf pour fuir, se défendre ou achever) et garde de quoi lancer son jutsu de plus haut rang quand il est presque prêt
+// IA : ne se met pas à sec sans raison (sauf pour fuir, se défendre ou achever) et garde de quoi lancer son jutsu de plus haut rang quand il est presque prêt (moins de 12 % de sa recharge)
 function aiSave(u,i,h){if(h.mode==='esc'||h.mode==='def'||h.mode==='heal')return false;const c=jcost(u.ch.abil[i]),e=u.tgt;if(!c)return false; // jutsu gratuit (arbres martiaux) : rien à garder
- if(u.energy-c<CK.exhIn&&!(e&&!e.dead&&e.hp<e.max*.3))return true;const ui=bestRankI(u),U=ui>=0?u.ch.abil[ui]:null;if(i===ui||!U||u.cds[ui]>3||!c)return false;
+ if(u.energy-c<CK.exhIn&&!(e&&!e.dead&&e.hp<e.max*.3))return true;const ui=bestRankI(u),U=ui>=0?u.ch.abil[ui]:null;if(i===ui||!U||u.cds[ui]>Math.max(3,.12*(U.cd||0))||!c)return false; // « presque prêt » : 12 % de sa recharge (≈ 11 s pour un S de 90 s), au moins 3 s
  if(U.ai&&U.ai.mode==='exec'&&!(e&&!e.dead&&e.hp<e.max*.55))return false; // jutsu d'exécution : on ne garde pas le chakra tant que la cible n'est pas entamée
  return u.energy-c<jcost(U)}
 // HUD : chiffre de chakra, avertissement d'épuisement
@@ -1619,8 +1620,8 @@ Object.assign(NAT,{
  // --- Pilule du soldat (Hyôrôgan)
  sub_pill:S_('Pilule du soldat','Chakra, soin, endurance et se libère',7,{hero:'bossk',ai:HEALM},(u)=>{anim(u,'sub_pill',.6);S('orb',u);const r=gain(u,16,u);u.energy=Math.min(100,u.energy+20);u.stam=100;cleanse(u);u.dotT=0;
   say(u,'+20 CHAKRA','#4ab0ff');if(r>=1)say(u,'+'+Math.round(r),'#6f9');jx({jfx:'sub_pill',ui:units.indexOf(u),x:u.x,y:u.y,t:.9,m:.9})}),
- // --- Concentration du chakra : réduit les recharges des autres jutsu (hors ultime)
- sub_focus:S_('Concentration du chakra','Réduit les recharges des autres jutsu',11,{hero:'luke',ai:SELF(400,.35)},(u)=>{const me=subIdx(u,'sub_focus');for(let i=BAR0;i<BAR0+BARN;i++)if(i!==me)u.cds[i]=Math.max(0,u.cds[i]-14);if(u.cst)for(const k in u.cst)u.cst[k]=Math.max(0,u.cst[k]-14);u.energy=Math.min(100,u.energy+15);
+ // --- Concentration du chakra : réduit de 14 s les recharges des autres jutsu de la BARRE (pas ceux rangés hors barre : avec la rotation de barre, c'était trop fort)
+ sub_focus:S_('Concentration du chakra','Réduit les recharges des autres jutsu',11,{hero:'luke',ai:SELF(400,.35)},(u)=>{const me=subIdx(u,'sub_focus');for(let i=BAR0;i<BAR0+BARN;i++)if(i!==me)u.cds[i]=Math.max(0,u.cds[i]-14);u.energy=Math.min(100,u.energy+15);
   later(u,.01,()=>{u.haste=Math.max(u.haste,1.2)});anim(u,'pray',.55);S('ignite',u);jx({jfx:'sub_focus',ui:units.indexOf(u),x:u.x,y:u.y,col:u.ch.look.weapon.col||'#3af',t:.8,m:.8})}),
  // --- Déplacements
  sub_shunshin:S_('Shunshin','Téléportation dans un tourbillon de feuilles',8,{hero:'palpatine',ai:{mode:'gap',min:120,max:270,p:.5}},(u,a,td)=>{const p=subFree(atP(u,a,clamp(td||260,80,270),270),20);jx({jfx:'sub_leaves',x:u.x,y:u.y,t:.65,m:.65});
@@ -3043,7 +3044,7 @@ JFXD.sub_kbpush=(f,k,e)=>{const q=P(f.x,f.y,30),s=q.s;g.globalCompositeOperation
 // Concentration du chakra (sub.js) · Senpô : Kawazu Kumite (NOUVEAU) · Senpô : Kebari Senbon (NOUVEAU) · Mode Ermite (sub.js, passé en A : +25 %) · Fûton : Rasenshuriken (sub_nrp2.js) ;
 // dash : Saut ninja (sub.js, choc ×1,5 en Mode Ermite). En Mode Ermite, Kawazu Kumite et Kebari Senbon ne coûtent rien.
 KIT('f6',[
- ['D','x.sub_focus','Concentration du chakra','Réduit de 14 s la recharge de tes autres jutsu (barre et réserve), rend 15 chakra et te rend plus rapide 1 s','chakra'],
+ ['D','x.sub_focus','Concentration du chakra','Réduit de 14 s la recharge des autres jutsu de ta barre, rend 15 chakra et te rend plus rapide 1 s','chakra'],
  ['C','x.sub_skum','Senpô : Kawazu Kumite','5 s : tes 4 prochains coups de base portent 40 plus loin (aura de l\'énergie naturelle) et infligent 6 dégâts de plus. Gratuit en Mode Ermite','sage'],
  ['B','x.sub_skeb','Senpô : Kebari Senbon','Tu t\'enroules dans ta crinière 0,6 s (−50 % de dégâts subis), puis 12 aiguilles de cheveux jaillissent en anneau (7 dégâts chacune). Gratuit en Mode Ermite','sage'],
  ['A','x.sub_sage','Mode Ermite','Se concentre 0,6 s (interruptible) puis 4 s : +25 % de dégâts, plus rapide, un peu de soin ; Kawazu Kumite et Kebari Senbon gratuits','sage'],
@@ -11877,9 +11878,13 @@ const JCD={}; // (Lotus primaire / Lotus caché : recharge du barème de leur ra
 // et Mifune, ×1,2 de plus pour ceux de Gaï), CLANBAL / NATBAL / STYLEBAL / TREEBAL / FAMBAL recalés en 12 passes (400 duels par catégorie), PREBAL aussi
 // (les persos de l'anime contre des ninjas au hasard : 53 % comme avant). Mesure finale : 67 catégories sur 74 à 45-55 % (les autres à 42-59 %),
 // 42 persos de l'anime à 42-58 % entre eux, duel médian 52 s (44 s avant ; 52,6 s entre persos de l'anime), HPK inchangé
-const CLANBAL={"0":[0.822,0.784],"1":[0.756,0.76],"2":[1.066,1.108],"3":[0.904,0.813],"4":[0.931,0.931],"5":[1.113,1.118],"6":[1.093,0.925],"7":[0.974,1.015],"8":[0.864,0.978],"9":[0.975,0.824],"10":[0.887,0.523],"11":[1.087,0.946],"12":[1.044,0.982],"13":[1.148,1.13],"14":[0.972,1.317],"15":[1.084,0.98],"16":[0.971,1.11],"17":[0.989,1.05],"18":[0.939,0.928],"19":[0.833,1.029],"20":[0.952,1.125],"21":[1.04,0.709],"22":[0.927,0.73],"-1":[1.008,0.966]},NATBAL={"0":[1.161,0.958],"1":[1.038,1.114],"2":[1.003,1.011],"3":[1.066,1.0],"4":[1.044,1.056]},STYLEBAL={"0":[1.022,1.026],"1":[1.0,0.987],"2":[0.904,0.869],"2:-1":[0.811,0.727],"3":[0.886,0.927],"7":[1.03,1.061],"8":[1.001,0.919],"10":[1.025,1.113],"12":[0.917,1.054],"15":[1.127,1.32],"16":[0.985,0.985],"18":[0.929,0.849],"19":[1.035,0.855],"20":[1.01,1.01],"23":[1.005,1.027],"24":[0.994,1.0],"25":[1.244,1.103],"26":[1.081,1.084],"29":[1.027,1.015],"31":[1.005,1.008],"32":[1.013,1.054],"33":[1.037,1.005]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
+// puis recharges bornées STRICTEMENT à la fourchette du rang (plus de S à 110 s), Concentration du chakra limitée à la barre (61 % → 55 %), seuil « presque prêt »
+// de l'IA relatif (12 % de la recharge) : dégâts des jutsu des barres de Gaï (Gôriki Senpû, Éléphant, Paon, Huit Portes ×1,1 ; Dynamic Entry, Portes célestes ×1,05)
+// et de Mifune (×1,1), CLANBAL / NATBAL / STYLEBAL / TREEBAL / FAMBAL recalés sur la moyenne de deux graines (bande morte ±3 points), PREBAL sur trois tirages ;
+// validé sur des graines jamais utilisées pour régler (voir le message de commit)
+const CLANBAL={"0":[0.818,0.78],"1":[0.756,0.76],"2":[1.06,1.102],"3":[0.904,0.813],"4":[0.931,0.931],"5":[1.113,1.118],"6":[1.093,0.925],"7":[0.974,1.015],"8":[0.864,0.978],"9":[0.975,0.824],"10":[0.878,0.518],"11":[1.087,0.946],"12":[1.044,0.982],"13":[1.148,1.13],"14":[0.972,1.317],"15":[1.084,0.98],"16":[0.964,1.102],"17":[0.989,1.05],"18":[0.939,0.928],"19":[0.829,1.024],"20":[0.958,1.132],"21":[1.031,0.703],"22":[0.91,0.716],"-1":[1.008,0.966]},NATBAL={"0":[1.161,0.958],"1":[1.038,1.114],"2":[1.003,1.011],"3":[1.066,1.0],"4":[1.037,1.049]},STYLEBAL={"0":[1.029,1.033],"1":[1.0,0.987],"2":[0.9,0.865],"2:-1":[0.807,0.724],"3":[0.886,0.927],"7":[1.03,1.061],"8":[1.001,0.919],"10":[1.025,1.113],"12":[0.904,1.039],"15":[1.134,1.329],"16":[0.985,0.985],"18":[0.933,0.853],"19":[1.035,0.855],"20":[1.01,1.01],"23":[1.005,1.027],"24":[0.994,1.0],"25":[1.244,1.103],"26":[1.081,1.084],"29":[1.027,1.015],"31":[0.997,1.0],"32":[1.013,1.054],"33":[1.037,1.005]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
 // équilibrage par arbre de style (TREEBAL[st]) et par famille de sub (FAMBAL[f], moyenne géométrique des familles prises) : [PV, puissance], défaut [1, 1]
-const TREEBAL={"1":[1.088,1.081],"0":[1.021,1.073],"2":[1.036,1.065]},FAMBAL={"0":[0.791,1.2],"1":[1.046,1.028],"2":[1.037,1.134],"3":[0.951,1.078],"4":[1.048,1.027],"5":[0.952,1.103],"6":[0.937,1.016],"7":[0.953,1.015]};
+const TREEBAL={"1":[1.097,1.09],"0":[1.016,1.068],"2":[1.029,1.057]},FAMBAL={"0":[0.791,1.2],"1":[1.046,1.028],"2":[1.037,1.134],"3":[0.951,1.078],"4":[1.048,1.027],"5":[0.946,1.096],"6":[0.937,1.016],"7":[0.959,1.021]};
 // équilibrage par jutsu (« catégorie|nom ») : d = dégâts ×, cd = recharge (s), ck = coût en chakra ; appliqué par nr_bal.js (les « N dégâts » des descriptions suivent d)
 const JBAL={
  "c0|Amaterasu":{"d":0.4,"cd":17.6},
@@ -11889,14 +11894,14 @@ const JBAL={
  "c0|Susanô : Totsuka":{"d":1.32},
  "c10|Défi éternel":{"cd":7.7,"d":1.725},
  "c10|Esquive du fauve":{"cd":9.0,"d":1.62},
- "c10|Huit Portes":{"d":0.703,"cd":26.4},
+ "c10|Huit Portes":{"d":0.773,"cd":26.4},
  "c10|Konoha Daisenpû":{"d":1.201,"cd":11.0},
- "c10|Konoha Gôriki Senpû":{"cd":13.2,"d":1.194},
+ "c10|Konoha Gôriki Senpû":{"cd":13.2,"d":1.313},
  "c10|Lotus caché":{"d":0.809,"cd":26.4},
- "c10|Paon du matin":{"d":1.108,"cd":17.6},
+ "c10|Paon du matin":{"d":1.219,"cd":17.6},
  "c10|Poids retirés":{"d":2.431,"cd":6.0},
- "c10|Portes célestes":{"cd":13.2,"d":1.3},
- "c10|Éléphant du soir":{"d":0.821,"cd":17.6},
+ "c10|Portes célestes":{"cd":13.2,"d":1.365},
+ "c10|Éléphant du soir":{"d":0.903,"cd":17.6},
  "c11|Arbre millénaire":{"d":0.329,"cd":17.6},
  "c11|Fleur carnivore":{"d":0.465},
  "c11|Floraison mortelle":{"d":0.886},
@@ -11952,16 +11957,16 @@ const JBAL={
  "c20|Hyôton : Tsubame Fubuki":{"d":0.399},
  "c20|Makyô Hyôshô":{"d":0.464},
  "c20|Miroir de glace":{"d":2.2,"cd":11.0},
- "c21|Battô : Coupe du fourreau":{"cd":6.0,"d":1.644},
- "c21|Iai : Passage du vent":{"d":0.974,"cd":17.6},
- "c21|Iai : Tranche-ciel":{"d":0.957,"cd":26.4},
- "c21|Jûmonji : Coupe en croix":{"d":1.148,"cd":13.2},
- "c21|Kamae : Posture du roc":{"cd":4.5,"d":1.495},
+ "c21|Battô : Coupe du fourreau":{"cd":6.0,"d":1.808},
+ "c21|Iai : Passage du vent":{"d":1.071,"cd":17.6},
+ "c21|Iai : Tranche-ciel":{"d":1.053,"cd":26.4},
+ "c21|Jûmonji : Coupe en croix":{"d":1.263,"cd":13.2},
+ "c21|Kamae : Posture du roc":{"cd":4.5,"d":1.645},
  "c21|Kengeki : Croissant de chakra":{"d":0.888,"cd":11.0},
  "c21|Kiai : Cri de guerre":{"cd":9.0,"d":1.08},
  "c21|Nanabana : Sept fleurs de l'aube":{"d":0.58,"cd":26.4},
  "c21|Tetsu no Yoroi : Armure du Pays du Fer":{"cd":17.6,"d":0.82},
- "c21|Ukenagashi : Lame qui détourne":{"cd":10.5,"d":1.3},
+ "c21|Ukenagashi : Lame qui détourne":{"cd":10.5,"d":1.43},
  "c22|Buki Shôkan : Arsenal volant":{"d":0.78,"cd":17.6},
  "c22|Fundo : Masse à chaîne":{"d":1.751,"cd":11.0},
  "c22|Kunai Ori : Cage de kunai":{"cd":13.2,"d":0.806},
@@ -12096,7 +12101,7 @@ const JBAL={
  "n4|Doton : Main de terre":{"d":1.461},
  "n4|Doton : Rocher":{"d":0.832},
  "n4|Doton : Yomi Numa":{"d":0.455},
- "t0|Dynamic Entry":{"d":1.134},
+ "t0|Dynamic Entry":{"d":1.191},
  "t0|Konoha Senpû":{"d":1.242},
  "t0|Lotus primaire":{"d":0.714,"cd":13.5},
  "t0|Tsûtenkyaku : Talon céleste":{"d":0.871},
@@ -12209,7 +12214,8 @@ const jKey=id=>JL[id]?JL[id].n+'|'+JL[id].cat:'';
 // Chaque unité a sa propre copie du ninja (unitCh) : u.ch.abil = [style, case 1 … case 6 (null = vide), dash, Kawarimi], u.ch.bar = 6 jid (-1 = vide).
 // Toute modification de barre passe par setBar (HÔTE ou hors ligne seulement) ; en ligne, l'invité DEMANDE (barReq → {t:'eq'}), l'hôte valide et répond ({t:'eqr'}),
 // la barre de l'invité ne change que par l'instantané (champ synchronisé barS).
-// MBAR : barre de chaque combattant pour tout le match (clé c|team) : gardée après une mort et entre les manches ; recharges et stash remis à zéro (mkUnit neuf).
+// MBAR : barre de chaque combattant pour tout le match (clé c|team) : gardée après une mort et entre les manches ; une nouvelle manche remet recharges et stash à zéro (mkUnit neuf),
+// une réapparition (mode bataille) les GARDE, elles ont continué de décompter pendant la mort (cdKeep / cdPut plus bas : sinon mourir remettrait à neuf des jutsu de 80-100 s).
 let MBAR={};
 const BARERR={nolearn:'Jutsu non appris',slot:'Case invalide',same:'Déjà dans cette case',empty:'Case déjà vide',jid:'Jutsu inconnu',state:'Pas en combat',unit:'Ninja introuvable',rate:'Trop de demandes',net:'En attente de l\'hôte…',bar:'Barre invalide',nobar:'Aucun jutsu appris dans cette barre',samebar:'Cette barre est déjà équipée'};
 // copie du ninja d'une unité avec SA barre (copie superficielle : les objets jutsu restent partagés, comme avant)
@@ -12273,9 +12279,18 @@ function barSetAll(u,nb){if(!u||!u.ch||!u.ch.jab)return{ok:false,e:'unit'};if(!A
  const o=[];for(const j of nb){if(j===-1||j===null){o.push(-1);continue}if(typeof j!=='number'||!Number.isInteger(j)||j<0)return{ok:false,e:'jid'};
   if(!u.ch.learn.includes(j)||!u.ch.jab[j])return{ok:false,e:'nolearn'};if(o.includes(j))return{ok:false,e:'bar'};o.push(j)}
  if(o.every(j=>j<0))return{ok:false,e:'nobar'};if(barCur(u).every((j,s)=>j===o[s]))return{ok:false,e:'samebar'};return setBar(u,o)}
+// ---------- réapparition (mode bataille) : les recharges en cours survivent à la mort ----------
+// cdKeep : toutes les recharges des jutsu appris (barre + stash) au format stash {cst, csg} (elles ont décompté pendant la mort : updUnit les fait avancer avant le test u.dead) ;
+// cdPut : après le mkUnit neuf, les jutsu de la barre reprennent la leur (charges comprises), le reste repart au stash
+function cdKeep(u){if(!u||!u.ch||!u.ch.jab||!u.ch.bar)return null;const T=Object.assign({},u.cst||{}),G={};for(const k in u.csg||{})G[k]={n:u.csg[k].n};
+ u.ch.bar.forEach((j,s)=>{if(j<0)return;const i=BAR0+s,ab=u.ch.jab[j],cd=u.cds[i]||0;if(ab&&ab.charges){const n=u.chg?u.chg[i]|0:ab.charges;if(n<ab.charges){G[j]={n};T[j]=Math.max(.05,cd||ab.cd)}}else if(cd>0)T[j]=cd});
+ return{cst:T,csg:G}}
+function cdPut(u,o){if(!o||!u||!u.ch||!u.ch.bar)return;u.cst=o.cst;u.csg=o.csg;
+ u.ch.bar.forEach((j,s)=>{if(j<0||!(j in u.cst))return;const i=BAR0+s,ab=u.ch.jab[j];u.cds[i]=u.cst[j];if(ab&&ab.charges&&u.chg)u.chg[i]=u.csg[j]?u.csg[j].n:ab.charges;delete u.cst[j];delete u.csg[j]})}
+AFTER.push(()=>{const R0=respawn;respawn=function(u){const k=cdKeep(u);R0(u);try{cdPut(u,k)}catch(e){console.error(e)}}});
 // ---------- en ligne ----------
-// version du protocole (format v6 : barre de 6, menu B, presets 'bar', arbres martiaux sans chakra) : hôte et invité doivent l'avoir tous les deux, sinon la connexion est coupée avec un message
-const NPV=6,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez toi et chez ton ami.';let NVT=0;
+// version du protocole (format v6 : barre de 6, menu B, presets 'bar', arbres martiaux sans chakra ; v7 : recharges longues D 20-30 s … S 80-100 s, recharges gardées à la réapparition) : hôte et invité doivent l'avoir tous les deux, sinon la connexion est coupée avec un message
+const NPV=7,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez toi et chez ton ami.';let NVT=0;
 const netVerT=()=>performance.now()-NVT<4000;
 function netVerHost(P){P.nver=1;net.peers=net.peers.filter(x=>x!==P);try{P.conn.send({t:'nver'})}catch(e){}setTimeout(()=>{try{P.conn.close()}catch(e){}},300);setStat('Un ami a une autre version du jeu : il doit recharger la page.');try{sendLobby()}catch(e){}}
 function netVerGuest(){NVT=performance.now();netReset();state='menu';setStat(VERMSG);try{netUI(true)}catch(e){}}
@@ -12720,7 +12735,7 @@ if(cutin.t<=0){cutin=null;return}const k=cutin.t,in_=Math.min(1,(1.4-k)*6),out=M
 // n nom court (aussi le nom du bot), full nom complet, g groupe (GALG : groupe affiché sur la ligne d'identité de la fiche), sec section de la liste (sinon d'après le clan ou g, voir rosSec),
 // side camp du bot (0 Alliance, 1 Akatsuki), nat nature, clan (-1 sans), sty style de combat (Clic G), st arbre de style, fam familles de sub, dsh dash, k jutsu appris (noms), bar barre de départ (6 noms), al alias, l apparence {v village,t tenue,c coiffure,h cheveux,p peau,k chakra,a accessoire,f visage,b bandeau,d dos, e yeux,o/s couleurs de tenue,z taille,w carrure,r bras,n cou}, d jeu en une ligne
 // équilibrage par perso (simulateur, mode « persos » : chaque perso contre les autres, 40-60 % visés) : [PV, puissance] ; voir preBal (nr_ninja.js)
-const PREBAL={"Chino":[0.998,0.998],"Chôji":[1.009,1.009],"Danzô":[1.009,1.009],"Deidara":[1.108,1.108],"Gaara":[1.005,1.005],"Haku":[1.038,1.038],"Hidan":[1.055,1.055],"Hinata":[1.008,1.008],"Hiruzen":[1.075,1.075],"Ino":[0.999,0.999],"Itachi":[1.01,1.01],"Jiraiya":[0.999,0.999],"Kabuto":[1.031,1.031],"Kakashi":[1.001,1.001],"Kankurô":[1.004,1.004],"Kiba":[1.007,1.007],"Kidômaru":[1.02,1.02],"Kimimaro":[0.969,0.969],"Kisame":[1.075,1.075],"Konan":[0.99,0.99],"Kushina":[0.952,0.952],"Madara":[1.058,1.058],"Minato":[0.986,0.986],"Naruto":[1.049,1.049],"Neji":[1.028,1.028],"Obito":[1.036,1.036],"Orochimaru":[1.008,1.008],"Pain":[1.044,1.044],"Sakura":[1.021,1.021],"Sasame":[1.005,1.005],"Sasori":[1.027,1.027],"Sasuke":[1.014,1.014],"Shikamaru":[0.985,0.985],"Shino":[1.05,1.05],"Suigetsu":[1.006,1.006],"Temari":[0.992,0.992],"Tsunade":[1.0,1.0],"Zabuza":[1.014,1.014]};
+const PREBAL={"Chino":[0.998,0.998],"Chôji":[1.009,1.009],"Danzô":[1.009,1.009],"Deidara":[1.108,1.108],"Gaara":[1.005,1.005],"Haku":[1.038,1.038],"Hidan":[1.055,1.055],"Hinata":[1.008,1.008],"Hiruzen":[1.067,1.067],"Ino":[1.009,1.009],"Itachi":[1.01,1.01],"Jiraiya":[0.999,0.999],"Kabuto":[1.031,1.031],"Kakashi":[1.009,1.009],"Kankurô":[1.004,1.004],"Kiba":[0.995,0.995],"Kidômaru":[1.02,1.02],"Kimimaro":[0.969,0.969],"Kisame":[1.075,1.075],"Konan":[0.99,0.99],"Kushina":[0.952,0.952],"Madara":[1.042,1.042],"Minato":[0.999,0.999],"Naruto":[1.049,1.049],"Neji":[1.028,1.028],"Obito":[1.028,1.028],"Orochimaru":[1.0,1.0],"Pain":[1.03,1.03],"Sakura":[1.021,1.021],"Sasame":[1.005,1.005],"Sasori":[1.015,1.015],"Sasuke":[1.014,1.014],"Shikamaru":[0.985,0.985],"Shino":[1.05,1.05],"Suigetsu":[1.006,1.006],"Temari":[0.992,0.992],"Tsunade":[1.0,1.0],"Zabuza":[1.023,1.023]};
 const GALG=['Équipe 7','Akatsuki','Sannin & Hokage','Konoha','Suna','Oto','Kiri','Autres clans'];
 const PRESETS=[
  {n:'Naruto',full:'Naruto Uzumaki',g:0,side:0,nat:2,clan:-1,sty:'Taijutsu',st:0,fam:[5,7],dsh:'f5',k:['Fûton : Balle d\'air','Fûton : Grande balle d\'air','Fûton : Rafale à bout portant','Fûton : Lame d\'air','Fûton : Couloir de vent','Kage Bunshin : leurre','Contre du clone','Clone explosif','Chakra de Kyûbi','Rasengan'],bar:['Rasengan','Contre du clone','Kage Bunshin : leurre','Chakra de Kyûbi','Fûton : Lame d\'air','Fûton : Couloir de vent'],l:{v:0,t:8,c:0,h:0,p:0,k:4,a:0,f:1,b:0,d:0,e:2,y:2},d:'Fonceur increvable : clones, Rasengan au contact, chakra de Kyûbi et couloir de vent'},
@@ -13098,6 +13113,7 @@ function update(dt){SIMT+=dt;
  if(active&&mode==='battle')timer+=dt;
  if(banner&&(banner.t-=dt)<=0)banner=null;
  for(const u of units)updUnit(u,dt,active);
+ for(const u of units)if(u.barQ)barTry(u);
  // séparation des unités
  for(let i=0;i<units.length;i++){const a=units[i];if(a.dead)continue;for(let j=i+1;j<units.length;j++){const b=units[j];if(b.dead)continue;const dx=b.x-a.x,dy=b.y-a.y;if(Math.abs(dx)>50||Math.abs(dy)>50)continue;const d=Math.hypot(dx,dy),m=a.r+b.r;if(d<m&&d>0){const px=dx/d*(m-d)/2,py=dy/d*(m-d)/2;a.x-=px;a.y-=py;b.x+=px;b.y+=py}}}
  if(orb&&active)for(const u of units)if(!u.dead&&dist(u,orb)<u.r+16){u.hp=Math.min(u.max,u.hp+30);u.energy=Math.min(100,u.energy+35);say(u,'+30 PILULE','#6f9');sparks(orb.x,orb.y,'#6f9',30);fx.push({light:1,x:orb.x,y:orb.y,r:200,t:.5,m:.5,col:'#6f9'});SFX.orb();orb=null;orbUsed=true;break}
@@ -15056,7 +15072,7 @@ let presetI=-1,EB=null,EBCH=null; // EB : build en cours de création ou de modi
 const rndBuildBtn={x:BX,y:606,w:180,h:32},presetBtn={x:BX+188,y:606,w:190,h:32};
 const nameBtn={x:40,y:150,w:300,h:30},rndBtn={x:348,y:150,w:52,h:30},cancelBtn={x:44,y:662,w:352,h:32},saveBtn={x:1030,y:540,w:210,h:56};
 const itN=it=>Array.isArray(it)?String(it[0]):String(it),swCol=it=>Array.isArray(it)&&typeof it[1]==='string'&&it[1][0]==='#'?it[1]:null;
-const fmtCd=cd=>(Math.round((+cd||0)*100)/100)+' s';
+const fmtCd=cd=>String(Math.round((+cd||0)*100)/100).replace('.',',')+' s'; // virgule décimale (« 86,7 s »)
 // recharge affichée : pour un style, le rythme réel de ses 5 coups (de … à …, ou la moyenne avec avg)
 const abCd=(ab,avg)=>{const c=ab&&ab.style!=null&&typeof stCad==='function'?stCad(ab):null;if(!c)return fmtCd(ab.cd);const a=Math.min(...c),b=Math.max(...c);return avg?fmtCd(c.reduce((x,y)=>x+y,0)/5):a===b?fmtCd(a):fmtCd(a).slice(0,-2)+' à '+fmtCd(b)};
 const FNT=(z,w='normal')=>`${w} ${z}px "Trebuchet MS",system-ui,sans-serif`;
@@ -15975,7 +15991,7 @@ const BLPART=new Set(['x.su_ball','x.hm_arc','x.km_angel','x.ka_goka','x.ka_drag
 let BLJ0=null; // jutsu(id) d'origine (avant le profil) : recharge et rang de chaque jutsu
 // barème par rang (DESIGN §3) : le réglage JBAL d'un jutsu reste dans la fourchette de son rang, à 10 % près pour la recharge et 25 % près pour le chakra
 // (le reste de l'équilibrage passe par les dégâts, d) ; un profil F8 (BLC.pj) n'est pas borné (outil de test)
-// JBAL.cd est écrit sur l'ancien barème (RKB_CD0) : borné à 10 % près dans l'ancienne fourchette, puis converti dans la nouvelle (rkCd, nr_flow.js)
+// JBAL.cd est écrit sur l'ancien barème (RKB_CD0) : converti dans la nouvelle fourchette (rkCd, nr_flow.js), bornée strictement (la marge de 10 % ne joue plus sur la recharge)
 const BLCD=.1,BLCK=.25,blRk=(r,cd,ck)=>{const R=RKB[r],R0=RKB_CD0[r];if(!R||!R0)return[cd,ck];return[cd==null?cd:rkCd(r,clamp(cd,R0[0]*(1-BLCD),R0[1]*(1+BLCD))),ck==null?ck:clamp(Math.round(ck),Math.ceil(R.ck*(1-BLCK)),Math.floor(R.ck*(1+BLCK)))]};
 const blJD0=id=>JBAL[blJK(JL[id])]||JBAL[JL[id].ocat+'|'+JL[id].n]||{};
 const blJD=id=>{const q=blJD0(id);if(q.cd==null&&q.ck==null)return q;const [cd,ck]=blRk(JL[id].r,q.cd,q.ck);return Object.assign({},q,cd!=null?{cd}:{},ck!=null?{ck}:{})}; // (transition : clé d'origine d'un jutsu déplacé dans un autre arbre) // réglage par défaut du jutsu (JBAL, nr_ninja.js) : d dégâts ×, cd recharge, ck coût
@@ -16067,15 +16083,18 @@ function blRecv(d){if(net.role!=='guest')return;const p=blNorm(d.p||{});p.name=S
 
 // ---------- profils (navigateur) ----------
 const blLS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
-function blLoad(){const s=blLS('nrBalProfiles');BLC.saved={};if(s&&typeof s==='object')for(const n in s){const p=blNorm(s[n]);p.name=n.slice(0,40);BLC.saved[p.name]=p}
+// profil enregistré avant les recharges longues (gv absent ou < 6) : ses recharges par jutsu (j[k].cd) sont sur l'ancien barème → converties (rkCd, sans borne : outil de test)
+function blCdMig(p){if(!p||typeof p!=='object'||(typeof p.gv==='number'&&p.gv>=6)||!p.j||typeof p.j!=='object')return p;const q=Object.assign({},p,{j:{}});
+ for(const k in p.j){const x=p.j[k];const J=x&&typeof x.cd==='number'&&JL.find(J=>blJK(J)===k||J.ocat+'|'+J.n===k);q.j[k]=J?Object.assign({},x,{cd:rkCd(J.r,x.cd,true)}):x}return q}
+function blLoad(){const s=blLS('nrBalProfiles');BLC.saved={};if(s&&typeof s==='object')for(const n in s){const p=blNorm(blCdMig(s[n]));p.name=n.slice(0,40);BLC.saved[p.name]=p}
  let c=blLS('nrBalCur');
  // profil actif enregistré par une version d'avant les arbres de compétences (sans gv) : ses valeurs absolues de clan remplaceraient les nouvelles en silence.
  // Il est rangé dans les profils sous « … (ancienne version) » et le profil Standard reprend la main, avec un message.
- if(c&&typeof c==='object'&&c.mod&&c.gv!==BLGV){const n=(String(c.name||'Personnalisé').slice(0,24)+' (ancienne version)');const p=blNorm(c);p.name=n;BLC.saved[n]=p;try{blSaveAll()}catch(e){}c=null;
+ if(c&&typeof c==='object'&&c.mod&&c.gv!==BLGV){const n=(String(c.name||'Personnalisé').slice(0,24)+' (ancienne version)');const p=blNorm(blCdMig(c));p.name=n;BLC.saved[n]=p;try{blSaveAll()}catch(e){}c=null;
   try{localStorage.removeItem('nrBalCur')}catch(e){}if(!BLSIM)setTimeout(()=>{try{blToast('Ton profil d\'équilibrage venait d\'une ancienne version du jeu : il est gardé sous « '+n+' », le profil Standard est actif.')}catch(e){}},1500)}
  BLC.cur=c?Object.assign(blNorm(c),{mod:!!c.mod}):Object.assign(blNorm({}),{name:'Standard',mod:false});if(c&&c.name)BLC.cur.name=String(c.name).slice(0,40)}
 const BLGV=6; // version du jeu des profils (5 = arbres de compétences, 6 = recharges longues : D 20-30 s … S 80-100 s)
-const blSaveCur=()=>blLS('nrBalCur',Object.assign(blData(BLC.cur),{name:BLC.cur.name,mod:!!BLC.cur.mod,gv:BLGV})),blSaveAll=()=>{const o={};for(const n in BLC.saved)o[n]=blData(BLC.saved[n]);blLS('nrBalProfiles',o)};
+const blSaveCur=()=>blLS('nrBalCur',Object.assign(blData(BLC.cur),{name:BLC.cur.name,mod:!!BLC.cur.mod,gv:BLGV})),blSaveAll=()=>{const o={};for(const n in BLC.saved)o[n]=Object.assign(blData(BLC.saved[n]),{gv:BLGV});blLS('nrBalProfiles',o)};
 const blView=()=>BLC.ro&&BLC.host?BLC.host.p:BLC.cur;
 // une modification : profil courant marqué « modifié », appliqué tout de suite au menu (sinon à la prochaine partie), envoyé aux invités
 function blTouch(){const c=BLC.cur;if(!c.mod&&c.name==='Standard')c.name='Personnalisé';c.mod=true;blSaveCur();blBadge();blCounts();clearTimeout(BLC.tm);BLC.tm=setTimeout(blSync,140)}

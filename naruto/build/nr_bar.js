@@ -2,7 +2,8 @@
 // Chaque unité a sa propre copie du ninja (unitCh) : u.ch.abil = [style, case 1 … case 6 (null = vide), dash, Kawarimi], u.ch.bar = 6 jid (-1 = vide).
 // Toute modification de barre passe par setBar (HÔTE ou hors ligne seulement) ; en ligne, l'invité DEMANDE (barReq → {t:'eq'}), l'hôte valide et répond ({t:'eqr'}),
 // la barre de l'invité ne change que par l'instantané (champ synchronisé barS).
-// MBAR : barre de chaque combattant pour tout le match (clé c|team) : gardée après une mort et entre les manches ; recharges et stash remis à zéro (mkUnit neuf).
+// MBAR : barre de chaque combattant pour tout le match (clé c|team) : gardée après une mort et entre les manches ; une nouvelle manche remet recharges et stash à zéro (mkUnit neuf),
+// une réapparition (mode bataille) les GARDE, elles ont continué de décompter pendant la mort (cdKeep / cdPut plus bas : sinon mourir remettrait à neuf des jutsu de 80-100 s).
 let MBAR={};
 const BARERR={nolearn:'Jutsu non appris',slot:'Case invalide',same:'Déjà dans cette case',empty:'Case déjà vide',jid:'Jutsu inconnu',state:'Pas en combat',unit:'Ninja introuvable',rate:'Trop de demandes',net:'En attente de l\'hôte…',bar:'Barre invalide',nobar:'Aucun jutsu appris dans cette barre',samebar:'Cette barre est déjà équipée'};
 // copie du ninja d'une unité avec SA barre (copie superficielle : les objets jutsu restent partagés, comme avant)
@@ -66,9 +67,18 @@ function barSetAll(u,nb){if(!u||!u.ch||!u.ch.jab)return{ok:false,e:'unit'};if(!A
  const o=[];for(const j of nb){if(j===-1||j===null){o.push(-1);continue}if(typeof j!=='number'||!Number.isInteger(j)||j<0)return{ok:false,e:'jid'};
   if(!u.ch.learn.includes(j)||!u.ch.jab[j])return{ok:false,e:'nolearn'};if(o.includes(j))return{ok:false,e:'bar'};o.push(j)}
  if(o.every(j=>j<0))return{ok:false,e:'nobar'};if(barCur(u).every((j,s)=>j===o[s]))return{ok:false,e:'samebar'};return setBar(u,o)}
+// ---------- réapparition (mode bataille) : les recharges en cours survivent à la mort ----------
+// cdKeep : toutes les recharges des jutsu appris (barre + stash) au format stash {cst, csg} (elles ont décompté pendant la mort : updUnit les fait avancer avant le test u.dead) ;
+// cdPut : après le mkUnit neuf, les jutsu de la barre reprennent la leur (charges comprises), le reste repart au stash
+function cdKeep(u){if(!u||!u.ch||!u.ch.jab||!u.ch.bar)return null;const T=Object.assign({},u.cst||{}),G={};for(const k in u.csg||{})G[k]={n:u.csg[k].n};
+ u.ch.bar.forEach((j,s)=>{if(j<0)return;const i=BAR0+s,ab=u.ch.jab[j],cd=u.cds[i]||0;if(ab&&ab.charges){const n=u.chg?u.chg[i]|0:ab.charges;if(n<ab.charges){G[j]={n};T[j]=Math.max(.05,cd||ab.cd)}}else if(cd>0)T[j]=cd});
+ return{cst:T,csg:G}}
+function cdPut(u,o){if(!o||!u||!u.ch||!u.ch.bar)return;u.cst=o.cst;u.csg=o.csg;
+ u.ch.bar.forEach((j,s)=>{if(j<0||!(j in u.cst))return;const i=BAR0+s,ab=u.ch.jab[j];u.cds[i]=u.cst[j];if(ab&&ab.charges&&u.chg)u.chg[i]=u.csg[j]?u.csg[j].n:ab.charges;delete u.cst[j];delete u.csg[j]})}
+AFTER.push(()=>{const R0=respawn;respawn=function(u){const k=cdKeep(u);R0(u);try{cdPut(u,k)}catch(e){console.error(e)}}});
 // ---------- en ligne ----------
-// version du protocole (format v6 : barre de 6, menu B, presets 'bar', arbres martiaux sans chakra) : hôte et invité doivent l'avoir tous les deux, sinon la connexion est coupée avec un message
-const NPV=6,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez toi et chez ton ami.';let NVT=0;
+// version du protocole (format v6 : barre de 6, menu B, presets 'bar', arbres martiaux sans chakra ; v7 : recharges longues D 20-30 s … S 80-100 s, recharges gardées à la réapparition) : hôte et invité doivent l'avoir tous les deux, sinon la connexion est coupée avec un message
+const NPV=7,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez toi et chez ton ami.';let NVT=0;
 const netVerT=()=>performance.now()-NVT<4000;
 function netVerHost(P){P.nver=1;net.peers=net.peers.filter(x=>x!==P);try{P.conn.send({t:'nver'})}catch(e){}setTimeout(()=>{try{P.conn.close()}catch(e){}},300);setStat('Un ami a une autre version du jeu : il doit recharger la page.');try{sendLobby()}catch(e){}}
 function netVerGuest(){NVT=performance.now();netReset();state='menu';setStat(VERMSG);try{netUI(true)}catch(e){}}

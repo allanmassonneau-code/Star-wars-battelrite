@@ -420,6 +420,8 @@ rep("function startMatch(c){playerChamp=c;STATS={};","function startMatch(c){pla
 rep(" for(let i=0;i<6;i++){const ab=u.ch.abil[i];if(ab&&ab.charges){if(u.chg[i]<ab.charges){u.cds[i]-=dt;if(u.cds[i]<=0){u.chg[i]++;u.cds[i]=u.chg[i]<ab.charges?ab.cd:0}}}else u.cds[i]=Math.max(0,u.cds[i]-dt)}",
     " for(let i=0;i<u.cds.length;i++){const ab=u.ch.abil[i];if(ab&&ab.charges){if(u.chg[i]<ab.charges){u.cds[i]-=dt;if(u.cds[i]<=0){u.chg[i]++;u.cds[i]=u.chg[i]<ab.charges?ab.cd:0}}}else u.cds[i]=Math.max(0,u.cds[i]-dt)}\n stashTick(u,dt);")
 rep("function updUnit(u,dt,active){hlTick(u,dt,active);","function updUnit(u,dt,active){hlTick(u,dt,active);if(u.barQ)barTry(u);")
+# changement de barre en attente : réessayé aussi juste après la mise à jour des unités (le jutsu qui bloquait vient de partir dans cette image : pas d'image de retard)
+rep(" for(const u of units)updUnit(u,dt,active);\n"," for(const u of units)updUnit(u,dt,active);\n for(const u of units)if(u.barQ)barTry(u);\n")
 # incantation : le jutsu est gardé dans u.cast (ab) : changer la barre ne l'interrompt pas ; l'invité reçoit son jid (j)
 rep("if(ab.cast&&!rec){u.cast={i,t:0,dur:ab.cast,td:td??200,aimOv,ex};return true}","if(ab.cast&&!rec){u.cast={i,t:0,dur:ab.cast,td:td??200,aimOv,ex,ab};return true}")
 rep("const castAb=(u,c)=>{const b=u.ch.abil[c.i];","const castAb=(u,c)=>{const b=c.ab||(c.j!=null&&u.ch.jab&&u.ch.jab[c.j])||u.ch.abil[c.i]||u.ch.abil[0];")

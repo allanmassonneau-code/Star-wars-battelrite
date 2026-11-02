@@ -72,7 +72,7 @@ Object.assign(NAT,{
  ka_nuee:ULT('Katon : Nuée ardente','desc',{ai:{max:480,p:.8}},(u,a,td)=>{…}),
 });
 ```
-- `SP(nom, desc, recharge_s, options, f)` (`recharge_s` et `JBAL.cd` restent écrits sur l'**ancien** barème, `RKB_CD0` : D 4-7, C 6-10, B 8-12, A 11-16, S 18-24 ; `rkCd` les convertit proportionnellement dans la nouvelle fourchette du rang) ; `ULT(nom, desc, options, f)`. `f(u, a, td)` : `u` lanceur, `a` angle visé, `td` distance au curseur.
+- `SP(nom, desc, recharge_s, options, f)` (`recharge_s` et `JBAL.cd` restent écrits sur l'**ancien** barème, `RKB_CD0` : D 4-7, C 6-10, B 8-12, A 11-16, S 18-24 ; `rkCd` les convertit proportionnellement dans la nouvelle fourchette du rang, bornée strictement : un réglage au-delà de l'ancienne fourchette donne le bord) ; `ULT(nom, desc, options, f)`. `f(u, a, td)` : `u` lanceur, `a` angle visé, `td` distance au curseur.
 - Options : `ai` (indice pour les bots) : `RG(portéeMax, proba, portéeMin)`, `SELF(portée)`, `DEF`, `ESC` (fuite), `{mode:'gap',min,max,p}` (engagement),
   `HEALM` (si PV < 60 %), `ALLY`, `{mode:'exec',max}` ; télégraphes : `line:{len,w}` (rectangle) ou `tele:{r,max}` (cercle au sol) / `tele:{self:1,r}`.
   `charges:n` (plusieurs charges), `cast` (ignoré : les mudras fixent l'incantation).

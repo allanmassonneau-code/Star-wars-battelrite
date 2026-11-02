@@ -2,7 +2,7 @@
 // Concentration du chakra (sub.js) · Senpô : Kawazu Kumite (NOUVEAU) · Senpô : Kebari Senbon (NOUVEAU) · Mode Ermite (sub.js, passé en A : +25 %) · Fûton : Rasenshuriken (sub_nrp2.js) ;
 // dash : Saut ninja (sub.js, choc ×1,5 en Mode Ermite). En Mode Ermite, Kawazu Kumite et Kebari Senbon ne coûtent rien.
 KIT('f6',[
- ['D','x.sub_focus','Concentration du chakra','Réduit de 14 s la recharge de tes autres jutsu (barre et réserve), rend 15 chakra et te rend plus rapide 1 s','chakra'],
+ ['D','x.sub_focus','Concentration du chakra','Réduit de 14 s la recharge des autres jutsu de ta barre, rend 15 chakra et te rend plus rapide 1 s','chakra'],
  ['C','x.sub_skum','Senpô : Kawazu Kumite','5 s : tes 4 prochains coups de base portent 40 plus loin (aura de l\'énergie naturelle) et infligent 6 dégâts de plus. Gratuit en Mode Ermite','sage'],
  ['B','x.sub_skeb','Senpô : Kebari Senbon','Tu t\'enroules dans ta crinière 0,6 s (−50 % de dégâts subis), puis 12 aiguilles de cheveux jaillissent en anneau (7 dégâts chacune). Gratuit en Mode Ermite','sage'],
  ['A','x.sub_sage','Mode Ermite','Se concentre 0,6 s (interruptible) puis 4 s : +25 % de dégâts, plus rapide, un peu de soin ; Kawazu Kumite et Kebari Senbon gratuits','sage'],

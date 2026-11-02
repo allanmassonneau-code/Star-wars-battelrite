@@ -56,7 +56,7 @@ const BLPART=new Set(['x.su_ball','x.hm_arc','x.km_angel','x.ka_goka','x.ka_drag
 let BLJ0=null; // jutsu(id) d'origine (avant le profil) : recharge et rang de chaque jutsu
 // barème par rang (DESIGN §3) : le réglage JBAL d'un jutsu reste dans la fourchette de son rang, à 10 % près pour la recharge et 25 % près pour le chakra
 // (le reste de l'équilibrage passe par les dégâts, d) ; un profil F8 (BLC.pj) n'est pas borné (outil de test)
-// JBAL.cd est écrit sur l'ancien barème (RKB_CD0) : borné à 10 % près dans l'ancienne fourchette, puis converti dans la nouvelle (rkCd, nr_flow.js)
+// JBAL.cd est écrit sur l'ancien barème (RKB_CD0) : converti dans la nouvelle fourchette (rkCd, nr_flow.js), bornée strictement (la marge de 10 % ne joue plus sur la recharge)
 const BLCD=.1,BLCK=.25,blRk=(r,cd,ck)=>{const R=RKB[r],R0=RKB_CD0[r];if(!R||!R0)return[cd,ck];return[cd==null?cd:rkCd(r,clamp(cd,R0[0]*(1-BLCD),R0[1]*(1+BLCD))),ck==null?ck:clamp(Math.round(ck),Math.ceil(R.ck*(1-BLCK)),Math.floor(R.ck*(1+BLCK)))]};
 const blJD0=id=>JBAL[blJK(JL[id])]||JBAL[JL[id].ocat+'|'+JL[id].n]||{};
 const blJD=id=>{const q=blJD0(id);if(q.cd==null&&q.ck==null)return q;const [cd,ck]=blRk(JL[id].r,q.cd,q.ck);return Object.assign({},q,cd!=null?{cd}:{},ck!=null?{ck}:{})}; // (transition : clé d'origine d'un jutsu déplacé dans un autre arbre) // réglage par défaut du jutsu (JBAL, nr_ninja.js) : d dégâts ×, cd recharge, ck coût
@@ -148,15 +148,18 @@ function blRecv(d){if(net.role!=='guest')return;const p=blNorm(d.p||{});p.name=S
 
 // ---------- profils (navigateur) ----------
 const blLS=(k,v)=>{try{if(v===undefined)return JSON.parse(localStorage.getItem(k)||'null');localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}};
-function blLoad(){const s=blLS('nrBalProfiles');BLC.saved={};if(s&&typeof s==='object')for(const n in s){const p=blNorm(s[n]);p.name=n.slice(0,40);BLC.saved[p.name]=p}
+// profil enregistré avant les recharges longues (gv absent ou < 6) : ses recharges par jutsu (j[k].cd) sont sur l'ancien barème → converties (rkCd, sans borne : outil de test)
+function blCdMig(p){if(!p||typeof p!=='object'||(typeof p.gv==='number'&&p.gv>=6)||!p.j||typeof p.j!=='object')return p;const q=Object.assign({},p,{j:{}});
+ for(const k in p.j){const x=p.j[k];const J=x&&typeof x.cd==='number'&&JL.find(J=>blJK(J)===k||J.ocat+'|'+J.n===k);q.j[k]=J?Object.assign({},x,{cd:rkCd(J.r,x.cd,true)}):x}return q}
+function blLoad(){const s=blLS('nrBalProfiles');BLC.saved={};if(s&&typeof s==='object')for(const n in s){const p=blNorm(blCdMig(s[n]));p.name=n.slice(0,40);BLC.saved[p.name]=p}
  let c=blLS('nrBalCur');
  // profil actif enregistré par une version d'avant les arbres de compétences (sans gv) : ses valeurs absolues de clan remplaceraient les nouvelles en silence.
  // Il est rangé dans les profils sous « … (ancienne version) » et le profil Standard reprend la main, avec un message.
- if(c&&typeof c==='object'&&c.mod&&c.gv!==BLGV){const n=(String(c.name||'Personnalisé').slice(0,24)+' (ancienne version)');const p=blNorm(c);p.name=n;BLC.saved[n]=p;try{blSaveAll()}catch(e){}c=null;
+ if(c&&typeof c==='object'&&c.mod&&c.gv!==BLGV){const n=(String(c.name||'Personnalisé').slice(0,24)+' (ancienne version)');const p=blNorm(blCdMig(c));p.name=n;BLC.saved[n]=p;try{blSaveAll()}catch(e){}c=null;
   try{localStorage.removeItem('nrBalCur')}catch(e){}if(!BLSIM)setTimeout(()=>{try{blToast('Ton profil d\'équilibrage venait d\'une ancienne version du jeu : il est gardé sous « '+n+' », le profil Standard est actif.')}catch(e){}},1500)}
  BLC.cur=c?Object.assign(blNorm(c),{mod:!!c.mod}):Object.assign(blNorm({}),{name:'Standard',mod:false});if(c&&c.name)BLC.cur.name=String(c.name).slice(0,40)}
 const BLGV=6; // version du jeu des profils (5 = arbres de compétences, 6 = recharges longues : D 20-30 s … S 80-100 s)
-const blSaveCur=()=>blLS('nrBalCur',Object.assign(blData(BLC.cur),{name:BLC.cur.name,mod:!!BLC.cur.mod,gv:BLGV})),blSaveAll=()=>{const o={};for(const n in BLC.saved)o[n]=blData(BLC.saved[n]);blLS('nrBalProfiles',o)};
+const blSaveCur=()=>blLS('nrBalCur',Object.assign(blData(BLC.cur),{name:BLC.cur.name,mod:!!BLC.cur.mod,gv:BLGV})),blSaveAll=()=>{const o={};for(const n in BLC.saved)o[n]=Object.assign(blData(BLC.saved[n]),{gv:BLGV});blLS('nrBalProfiles',o)};
 const blView=()=>BLC.ro&&BLC.host?BLC.host.p:BLC.cur;
 // une modification : profil courant marqué « modifié », appliqué tout de suite au menu (sinon à la prochaine partie), envoyé aux invités
 function blTouch(){const c=BLC.cur;if(!c.mod&&c.name==='Standard')c.name='Personnalisé';c.mod=true;blSaveCur();blBadge();blCounts();clearTimeout(BLC.tm);BLC.tm=setTimeout(blSync,140)}

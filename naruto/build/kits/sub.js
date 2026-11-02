@@ -105,8 +105,8 @@ Object.assign(NAT,{
  // --- Pilule du soldat (Hyôrôgan)
  sub_pill:S_('Pilule du soldat','Chakra, soin, endurance et se libère',7,{hero:'bossk',ai:HEALM},(u)=>{anim(u,'sub_pill',.6);S('orb',u);const r=gain(u,16,u);u.energy=Math.min(100,u.energy+20);u.stam=100;cleanse(u);u.dotT=0;
   say(u,'+20 CHAKRA','#4ab0ff');if(r>=1)say(u,'+'+Math.round(r),'#6f9');jx({jfx:'sub_pill',ui:units.indexOf(u),x:u.x,y:u.y,t:.9,m:.9})}),
- // --- Concentration du chakra : réduit les recharges des autres jutsu (hors ultime)
- sub_focus:S_('Concentration du chakra','Réduit les recharges des autres jutsu',11,{hero:'luke',ai:SELF(400,.35)},(u)=>{const me=subIdx(u,'sub_focus');for(let i=BAR0;i<BAR0+BARN;i++)if(i!==me)u.cds[i]=Math.max(0,u.cds[i]-14);if(u.cst)for(const k in u.cst)u.cst[k]=Math.max(0,u.cst[k]-14);u.energy=Math.min(100,u.energy+15);
+ // --- Concentration du chakra : réduit de 14 s les recharges des autres jutsu de la BARRE (pas ceux rangés hors barre : avec la rotation de barre, c'était trop fort)
+ sub_focus:S_('Concentration du chakra','Réduit les recharges des autres jutsu',11,{hero:'luke',ai:SELF(400,.35)},(u)=>{const me=subIdx(u,'sub_focus');for(let i=BAR0;i<BAR0+BARN;i++)if(i!==me)u.cds[i]=Math.max(0,u.cds[i]-14);u.energy=Math.min(100,u.energy+15);
   later(u,.01,()=>{u.haste=Math.max(u.haste,1.2)});anim(u,'pray',.55);S('ignite',u);jx({jfx:'sub_focus',ui:units.indexOf(u),x:u.x,y:u.y,col:u.ch.look.weapon.col||'#3af',t:.8,m:.8})}),
  // --- Déplacements
  sub_shunshin:S_('Shunshin','Téléportation dans un tourbillon de feuilles',8,{hero:'palpatine',ai:{mode:'gap',min:120,max:270,p:.5}},(u,a,td)=>{const p=subFree(atP(u,a,clamp(td||260,80,270),270),20);jx({jfx:'sub_leaves',x:u.x,y:u.y,t:.65,m:.65});

@@ -47,7 +47,7 @@ let presetI=-1,EB=null,EBCH=null; // EB : build en cours de création ou de modi
 const rndBuildBtn={x:BX,y:606,w:180,h:32},presetBtn={x:BX+188,y:606,w:190,h:32};
 const nameBtn={x:40,y:150,w:300,h:30},rndBtn={x:348,y:150,w:52,h:30},cancelBtn={x:44,y:662,w:352,h:32},saveBtn={x:1030,y:540,w:210,h:56};
 const itN=it=>Array.isArray(it)?String(it[0]):String(it),swCol=it=>Array.isArray(it)&&typeof it[1]==='string'&&it[1][0]==='#'?it[1]:null;
-const fmtCd=cd=>(Math.round((+cd||0)*100)/100)+' s';
+const fmtCd=cd=>String(Math.round((+cd||0)*100)/100).replace('.',',')+' s'; // virgule décimale (« 86,7 s »)
 // recharge affichée : pour un style, le rythme réel de ses 5 coups (de … à …, ou la moyenne avec avg)
 const abCd=(ab,avg)=>{const c=ab&&ab.style!=null&&typeof stCad==='function'?stCad(ab):null;if(!c)return fmtCd(ab.cd);const a=Math.min(...c),b=Math.max(...c);return avg?fmtCd(c.reduce((x,y)=>x+y,0)/5):a===b?fmtCd(a):fmtCd(a).slice(0,-2)+' à '+fmtCd(b)};
 const FNT=(z,w='normal')=>`${w} ${z}px "Trebuchet MS",system-ui,sans-serif`;
