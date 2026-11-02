@@ -117,7 +117,7 @@ function blKit(R,cat){const k=x=>Math.floor(R()*x.length);let a=randomBuild(R,0,
  const o=sanitizeBuild(b);if(T!=='s'){const SW=stylesOf(o);o.w=SW[k(SW)]}
  const ids=[];for(const t of treesOf(o))for(const r of RANKO)ids.push(...TREE[t][r]);for(let i=ids.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]]}
  if(T==='f')ids.sort((x,y)=>(JL[y].cat==='f'+v)-(JL[x].cat==='f'+v)); // la famille testée d'abord : ses jutsu sont appris
- o.k=[];for(const id of ids)if(canLearn(o.k,id))o.k.push(id);const L=o.k.slice();o.bar=[];while(o.bar.length<BARN&&L.length)o.bar.push(L.splice(k(L),1)[0]);
+ o.k=[];for(const id of ids)if(canLearn(o.k,id))o.k.push(id);const L=o.k.slice();o.bar=[];while(o.bar.length<BARN&&L.length)o.bar.push(L.splice(k(L),1)[0]);o.bars=autoBars(o);
  const D=dashOpts(o);o.dsh=D[k(D)];return sanitizeBuild(o,true)}
 const blInCat=(b,cat)=>{if(cat==='free')return true;const T=cat[0],v=+cat.slice(1);return cat==='u'?b.clan===-1:T==='c'?b.clan===v:T==='n'?b.nat===v:T==='t'?b.st===v:T==='f'?b.clan<0&&b.fam.includes(v):T==='s'?b.w===v:false};
 function blDuelSetup(cat,i){const X=BLX,R=X.R;let a,b;
@@ -128,7 +128,7 @@ function blDuelSetup(cat,i){const X=BLX,R=X.R;let a,b;
 function blDuelEnd(){const X=BLX,c=X.cur,to=state==='fight',w=to?(units[0].hp/units[0].max>units[1].hp/units[1].max?0:1):winner,won=w===c.me,t=c.k/30,r=X.res.cats[c.cat];
  r.n++;if(won)r.w++;if(to)r.to++;r.ts.push(Math.round(t*10)/10);X.res.ts.push(Math.round(t*10)/10);X.res.done++;
  for(const [u,v] of[[units[c.me],won],[units[1-c.me],!won]])for(const id of(u&&u.usedJ)||[]){const J=JL[id];if(!J)continue;const q=X.res.j[blJK(J)]||(X.res.j[blJK(J)]=[0,0]);if(v)q[0]++;q[1]++}
- X.res.sw=(X.res.sw||0)+units.reduce((a,u)=>a+(u.barN|0),0);
+ X.res.sw=(X.res.sw||0)+units.reduce((a,u)=>a+(u.barN|0),0);X.res.fs=(X.res.fs||0)+units.reduce((a,u)=>a+(u.aiBarN|0),0);
  X.cur=null}
 function blSimStep(ms){const X=BLX;if(!X)return true;const t0=performance.now();
  while(performance.now()-t0<ms){if(!X.cur){if(X.i>=X.q.length)return true;const [c,i]=X.q[X.i++];blDuelSetup(c,i)}

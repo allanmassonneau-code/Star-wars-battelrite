@@ -13,12 +13,20 @@ const CLANVIL=['Konoha','Konoha','Konoha','Konoha','Konoha','Konoha','Konoha','K
 const rosSec=P=>Math.max(1,SECS.findIndex(S=>S[0]===(P.sec||(P.g!==1&&P.clan>=0&&CLANVIL[P.clan])||['Konoha','Akatsuki','Konoha','Konoha','Suna','Oto','Kiri','Autres ninjas'][P.g])));
 // ----- sauvegarde : { v, nid, mine:[{id,build}], anime:{nom du perso: build retouchée}, last:{me,opp} } ; une build garde le nom de ses jutsu et de son style (juste si le catalogue évolue)
 // une build garde aussi les NOMS de ses jutsu (« Nom|arbre ») et de son style : elle reste juste quand le catalogue évolue (ids renumérotés)
-const bOut=b=>Object.assign({},b,{l:Object.assign({},b.l),fam:(b.fam||[]).slice(),k:(b.k||[]).slice(),bar:(b.bar||[]).slice(),kn:(b.k||[]).map(jKey),bn:(b.bar||[]).map(id=>id>=0?jKey(id):''),sn:STYLES[b.w]?STYLES[b.w][0]:''});
-function bIn(b){try{if(!b||typeof b!=='object')return null;b=legacyLook(JSON.parse(JSON.stringify(b)));if(b.v!==5)return null;
+// v6 : les barres favorites aussi (bsn : [{n, b:['Nom|arbre' ou '' ×6]}]) ; une build v5 (sans barres) reçoit une seule barre « Barre 1 » = sa barre (sanitizeBuild)
+const bNames=B=>(B||[]).map(id=>id>=0?jKey(id):'');
+const bOut=b=>Object.assign({},b,{l:Object.assign({},b.l),fam:(b.fam||[]).slice(),k:(b.k||[]).slice(),bar:(b.bar||[]).slice(),bars:(b.bars||[]).map(q=>({n:q.n,b:q.b.slice()})),kn:(b.k||[]).map(jKey),bn:bNames(b.bar),bsn:(b.bars||[]).map(q=>({n:q.n,b:bNames(q.b)})),sn:STYLES[b.w]?STYLES[b.w][0]:''});
+function bIn(b){try{if(!b||typeof b!=='object')return null;b=legacyLook(JSON.parse(JSON.stringify(b)));if(b.v!==5&&b.v!==6)return null;
  if(typeof b.sn==='string'){const i=STYLES.findIndex(s=>s[0]===b.sn);if(i>=0)b.w=i}
  const o=sanitizeBuild(Object.assign({},b,{k:[],bar:[]}));if(Array.isArray(b.kn)){o.k=[];for(const n of b.kn){const id=pickKey(o,n);if(id>=0&&!o.k.includes(id)&&canLearn(o.k,id))o.k.push(id)}b.k=o.k}
- if(Array.isArray(b.bn))b.bar=b.bn.map(n=>n?pickKey(o,n):-1);delete b.kn;delete b.bn;delete b.sn;return sanitizeBuild(b)}catch(e){return null}}
-const kitOnly=b=>JSON.stringify([b.clan,b.nat,b.st,b.w,b.fam,b.dsh,b.k,b.bar]),kitSig=b=>JSON.stringify([b.clan,b.nat,b.st,b.w,b.fam,b.dsh,b.k,b.bar,b.l]);
+ if(Array.isArray(b.bn))b.bar=b.bn.map(n=>n?pickKey(o,n):-1);
+ if(Array.isArray(b.bsn))b.bars=b.bsn.filter(q=>q&&typeof q==='object').map(q=>({n:q.n,b:(Array.isArray(q.b)?q.b:[]).map(n=>typeof n==='string'&&n?pickKey(o,n):-1)}));else if(b.v===5)delete b.bars;
+ delete b.kn;delete b.bn;delete b.bsn;delete b.sn;return sanitizeBuild(b)}catch(e){return null}}
+// une barre de noms ('Nom|arbre' ou '') → 6 jid appris de la build b (un jutsu oublié depuis : case vide)
+function barFromNames(b,L){const o=[];for(const s of(L||[]).slice(0,BARN)){let j=-1;if(typeof s==='string'&&s){const id=pickKey(b,s);if(id>=0&&b.k.includes(id))j=id}o.push(j>=0&&!o.includes(j)?j:-1)}while(o.length<BARN)o.push(-1);return o}
+// ajoute des barres à une build (au plus BARSMAX, sans doublon de contenu ; une barre sans aucun jutsu appris est ignorée) ; renvoie le nombre ajouté
+function barsAdd(b,L){let n=0;for(const q of L){if(b.bars.length>=BARSMAX)break;const B=q.b;if(B.every(j=>j<0)||b.bars.some(x=>barEq(x.b,B)))continue;b.bars.push({n:barName(q.n,b.bars.length),b:B});n++}return n}
+const kitOnly=b=>JSON.stringify([b.clan,b.nat,b.st,b.w,b.fam,b.dsh,b.k,b.bar,b.bars]),kitSig=b=>JSON.stringify([b.clan,b.nat,b.st,b.w,b.fam,b.dsh,b.k,b.bar,b.bars,b.l]);
 // champs d'apparence d'origine (une sauvegarde d'avant les ajouts n'a que ceux-là) : les autres sont repris du perso de l'anime d'origine
 const LOOK0=['v','t','c','h','p','k','a','f','b','d'];
 const PB=[],presetOf=i=>PB[i]||(PB[i]=presetBuild(i,PRESETS[i].n,PRESETS[i].side)); // build d'origine d'un perso de l'anime (ne jamais la modifier)
@@ -33,11 +41,24 @@ function rosLoad(){let raw=null,R=null;try{raw=localStorage.getItem(RKEY)}catch(
   if(Array.isArray(R.mine))for(const m of R.mine){const id=m&&m.id|0,b=m&&bIn(m.build);if(b&&id>0&&!o.mine.some(x=>x.id===id))o.mine.push({id,build:b})}
   if(R.anime&&typeof R.anime==='object')PRESETS.forEach((P,pi)=>{const raw=R.anime[P.n];if(!raw)return;const b=bIn(raw);if(!b)return;
    // retouche sauvegardée avant l'ajout de cosmétiques : les nouveaux champs viennent du perso d'origine (bague de l'Akatsuki, collier de Tsunade…)
-   const rl=raw.l&&typeof raw.l==='object'?raw.l:{},P0=presetOf(pi).l;for(const f in P0)if(!LOOK0.includes(f)&&rl[f]==null)b.l[f]=P0[f];o.anime[P.n]=b})
+   const rl=raw.l&&typeof raw.l==='object'?raw.l:{},P0=presetOf(pi).l;for(const f in P0)if(!LOOK0.includes(f)&&rl[f]==null)b.l[f]=P0[f];
+   // retouche v5 (avant les barres favorites) : sa barre devient « Barre 1 », suivie des barres préfaites du perso dont les jutsu sont tous appris
+   if(raw.v===5){barsAdd(b,presetOf(pi).bars.filter(q=>q.b.every(j=>j<0||b.k.includes(j))).map(q=>({n:q.n,b:q.b.slice()})));b.bar=b.bars[0].b.slice()}
+   o.anime[P.n]=b})
   const L=R.last&&typeof R.last==='object'?R.last:{};for(const k of['me','opp'])if(typeof L[k]==='string')o.last[k]=L[k];
   o.nid=Math.max(1,R.nid|0,...o.mine.map(m=>m.id+1))}
  ROS=o;RL=RLAY=null;if(raw==null)rosSave()}
-function rosSave(){if(RSIM)return;try{localStorage.setItem(RKEY,JSON.stringify({v:5,nid:ROS.nid,mine:ROS.mine.map(m=>({id:m.id,build:bOut(m.build)})),anime:Object.fromEntries(Object.entries(ROS.anime).map(([n,b])=>[n,bOut(b)])),last:ROS.last}))}catch(e){}}
+function rosSave(){if(RSIM)return;try{localStorage.setItem(RKEY,JSON.stringify({v:6,nid:ROS.nid,mine:ROS.mine.map(m=>({id:m.id,build:bOut(m.build)})),anime:Object.fromEntries(Object.entries(ROS.anime).map(([n,b])=>[n,bOut(b)])),last:ROS.last}))}catch(e){}}
+// ----- anciens presets de barre (onglet ★ Favoris de l'ancien menu B : nrBar1 {clé du perso: [{n, b:['Nom|arbre' ×6]}]}, et avant eux nrFav1 {clé: ['Nom|arbre', …]}) :
+// repris UNE fois dans les barres favorites du perso (au plus BARSMAX, sans doublon), puis nrBarMig = 1 ; un perso de l'anime qui en reçoit devient « retouché »
+function rosMigBars(){if(RSIM)return;let done=null,P={},F={};try{done=localStorage.getItem('nrBarMig')}catch(e){}if(done)return;
+ try{P=JSON.parse(localStorage.getItem('nrBar1')||'{}')||{}}catch(e){P={}}try{F=JSON.parse(localStorage.getItem('nrFav1')||'{}')||{}}catch(e){F={}}
+ let n=0;for(const k of new Set([...Object.keys(P),...Object.keys(F)])){const E=rosGet(k);if(!E)continue;
+  let L=Array.isArray(P[k])?P[k].filter(p=>p&&Array.isArray(p.b)).map(p=>({n:p.n,b:p.b})):[];
+  if(!Array.isArray(P[k])&&Array.isArray(F[k])){const v=F[k].filter(x=>typeof x==='string'&&x).slice(0,BARN);if(v.length)L=[{n:'Favoris',b:v}]}
+  if(!L.length)continue;const b=sanitizeBuild(JSON.parse(JSON.stringify(E.b)));if(!barsAdd(b,L.map(p=>({n:p.n,b:barFromNames(b,p.b)}))))continue;
+  const nb=sanitizeBuild(b);if(E.P)ROS.anime[E.P.n]=nb;else{const m=ROS.mine.find(m=>m.id===E.id);if(m)m.build=nb}RL=RLAY=null;n++}
+ try{localStorage.setItem('nrBarMig','1')}catch(e){}if(n)rosChanged()}
 // ----- liste des persos : {k, b build, sec section, P perso de l'anime (+ i son indice, mod retouché) ou id (les tiens)}
 function rosEntries(){if(RL)return RL;RL=[];
  for(const m of ROS.mine)RL.push({k:'m'+m.id,id:m.id,b:m.build,sec:0});
@@ -99,7 +120,7 @@ function rosAct(k,E){if(k==='play'||k==='fight')rosPick(E);else if(k==='rnd')ros
 // ----- création / modification : EB est une copie de travail, rien n'est gardé ni envoyé avant « Enregistrer »
 function rosEdit(k){const E=k?rosGet(k):null;picker=null;CRMT=0;CRH=-1;presetI=E&&E.P?E.i:-1;if(RQI)RQI.blur();
  if(coop()&&net.ready){net.ready=false;if(net.role==='host')sendLobby();else netSend({t:'ready',v:false})} // en ligne : on n'est plus PRÊT pendant la création (la partie ne part pas sans toi)
- EB=E?sanitizeBuild(E.b):randomBuild(srnd(Date.now()%2147483646+1),0,'Nouveau ninja');edRebuild();ED={k:E?k:null,o:JSON.stringify(EB)};scr='edit'}
+ EBI=0;EB=E?sanitizeBuild(E.b):randomBuild(srnd(Date.now()%2147483646+1),0,'Nouveau ninja');edRebuild();ED={k:E?k:null,o:JSON.stringify(EB)};scr='edit'}
 const edDirty=()=>!!ED&&!!EB&&JSON.stringify(EB)!==ED.o;
 function edSave(){EB=sanitizeBuild(EB);let k=ED.k;const E=k?rosGet(k):null;
  if(!E){const id=ROS.nid++;ROS.mine.push({id,build:EB});k='m'+id}
@@ -257,8 +278,8 @@ function drawFiche(E,t){const opp=scr==='opp',me=rosGet(MEK);if(!E)return;const 
  if(hs>=0)ficheCell(cellR(hs),hs,ch,b,true)
  // ligne « N jutsu appris » : infobulle avec la liste par arbre (★ = dans la barre de départ)
  if(free&&ch.jab&&inRect(mouse,{x:FI.x+216,y:FI.y+100,w:320,h:18}))hoverTip('flearn'+E.k,()=>({t:`${b.k.length} jutsu appris`,col:liftC(col,.55),
-  l:treesOf(b).flatMap(t=>{const L=b.k.filter(j=>JL[j]&&JL[j].cat===t).sort((x,y)=>RANKO.indexOf(JL[x].r)-RANKO.indexOf(JL[y].r));return wrapL(`${catName(t)} : `+(L.map(j=>`${JL[j].r} ${(b.bar.includes(j)?'★ ':'')+jName(j,{ch})}`).join(' · ')||'—'),352,FNT(11.5)).map(x=>[x,liftC(catCol(t),.5)])}),
-  d:'★ = dans la barre de départ. Les autres se posent en combat avec le menu B (sans pause).'}))
+  l:treesOf(b).flatMap(t=>{const L=b.k.filter(j=>JL[j]&&JL[j].cat===t).sort((x,y)=>RANKO.indexOf(JL[x].r)-RANKO.indexOf(JL[y].r));return wrapL(`${catName(t)} : `+(L.map(j=>`${JL[j].r} ${(b.bar.includes(j)?'★ ':'')+jName(j,{ch})}`).join(' · ')||'—'),352,FNT(11.5)).map(x=>[x,liftC(catCol(t),.5)])}).concat((b.bars||[]).map((q,i)=>[`${i===0?'★ ':''}Barre ${i+1} « ${q.n} » : `+q.b.filter(j=>j>=0).map(j=>jName(j,{ch})).join(', '),i===0?'#8fe38f':'#d8b888'])),
+  d:`★ = dans la barre de départ. ${(b.bars||[]).length} barre${(b.bars||[]).length>1?'s':''} favorite${(b.bars||[]).length>1?'s':''} : en combat, ${lbl.KeyB} maintenu + molette pour en changer (sans pause).`}))
  // boutons
  for(const q of ficheBtns(E)){const h=free&&!q.off&&inRect(mouse,q.R),c=q.danger||q.warn?'#ff6a5a':'#ff9a3a';g.save();if(q.p&&!q.off&&!q.warn){g.shadowColor='#ff9a3a';g.shadowBlur=h?18:8}
   rr(q.R,q.R.h/2,q.off?'rgba(60,90,50,.9)':q.warn?(h?'rgba(170,60,45,.98)':'rgba(130,45,35,.95)'):q.p?(h?'#ffb347':'#ff9a3a'):h?(q.danger?'rgba(120,40,30,.95)':'rgba(90,60,30,.95)'):'rgba(40,28,18,.92)',q.off?'#7f7':c,1.5);g.restore();
@@ -323,4 +344,5 @@ function rosQSync(){if(!RQI)return;let bl=false;try{bl=BLC.open}catch(e){}const 
  Object.assign(RQI.style,{left:r.left+RQR.x*k+'px',top:r.top+RQR.y*k+'px',width:RQR.w*k+'px',height:RQR.h*k+'px',fontSize:13*k+'px',borderRadius:13*k+'px'})}
 // ----- au chargement : la liste, puis le perso joué la dernière fois (MY)
 try{rosLoad()}catch(e){ROS={mine:[],anime:{},last:{},nid:1};RL=RLAY=null}
+try{rosMigBars()}catch(e){console.error(e)}
 {const E=rosGet(ROS.last.me)||rosGet('a:'+PRESETS[0].n);MEK=FK=E.k;MY=sanitizeBuild(E.b);MYCH=mkNinja(MY);CH.p0=MYCH}

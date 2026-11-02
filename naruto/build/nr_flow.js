@@ -7,7 +7,7 @@ const GSPEED=.8; // tout le jeu tourne à 80 % : combats plus lisibles
 // (un réglage JBAL au-delà de l'ancienne fourchette donne le bord : un S ne dépasse jamais 100 s) ; libre=true (profils F8 d'avant la v6) : dépassement proportionnel, sans borne
 const RKB={D:{ck:8,cd:[20,30]},C:{ck:14,cd:[30,40]},B:{ck:20,cd:[40,60]},A:{ck:28,cd:[60,80]},S:{ck:40,cd:[80,100]}},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
 const RKB_CD0={D:[4,7],C:[6,10],B:[8,12],A:[11,16],S:[18,24]};
-const cdTxt=v=>v>=10?String(Math.ceil(v)):v.toFixed(1).replace('.',','); // recharge restante affichée (HUD, menu B) : secondes entières au-dessus de 10 s, virgule décimale
+const cdTxt=v=>v>=10?String(Math.ceil(v)):v.toFixed(1).replace('.',','); // recharge restante affichée (HUD, roue de B) : secondes entières au-dessus de 10 s, virgule décimale
 const rkCd=(r,cd,libre)=>{const o=RKB_CD0[r],R=RKB[r];if(!o||!R||typeof cd!=='number'||!isFinite(cd))return cd;const [a,b]=o,[c,d]=R.cd;
  const v=cd<a?(libre?c*cd/a:c):cd>b?(libre?d*cd/b:d):c+(cd-a)/(b-a)*(d-c);return Math.round(v*10)/10};
 // coût en chakra d'un jutsu (dash et Kawarimi : pas de rang = 0) : une jauge pleine ≈ 2 jutsu S ; ckO = coût propre au jutsu (JBAL / profil d'équilibrage)

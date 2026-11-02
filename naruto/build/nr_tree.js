@@ -39,7 +39,7 @@ function autoLearn(o,K){K=K?K.slice():[];for(const t of treesOf(o))for(const r o
 function learnJ(o,jid){const J=JL[jid];if(!J||!treesOf(o).includes(J.cat))return false;if(o.k.includes(jid))return true;
  for(let n=0;n<20;n++){const b=learnBlock(o.k,jid);if(!b)break;const T=TREES[J.cat],v=o.k.find(id=>JL[id].r===J.r&&(b==='tree'?JL[id].cat===J.cat:TREES[JL[id].cat].pool===T.pool));if(v==null)return false;unlearnJ(o,v)}
  o.k.push(jid);return true}
-function unlearnJ(o,jid){o.k=o.k.filter(id=>id!==jid);if(o.bar)o.bar=o.bar.map(id=>id===jid?-1:id)}
+function unlearnJ(o,jid){o.k=o.k.filter(id=>id!==jid);if(o.bar)o.bar=o.bar.map(id=>id===jid?-1:id);if(Array.isArray(o.bars))for(const q of o.bars)if(q&&Array.isArray(q.b))q.b=q.b.map(id=>id===jid?-1:id)}
 // barre de départ automatique (déterministe) : un jutsu par rang en partant du S, en alternant les arbres, jusqu'à 6 cases
 function autoBar(o){const K=o.k||[],tr=treesOf(o),out=[];let rot=0;const ti=id=>{const i=tr.indexOf(JL[id].cat);return((i-rot)%tr.length+tr.length)%tr.length};
  for(let pass=0;pass<4&&out.length<6;pass++)for(const r of'SABCD'){if(out.length>=6)break;const C=K.filter(id=>JL[id].r===r&&!out.includes(id));if(!C.length)continue;C.sort((a,b)=>ti(a)-ti(b)||a-b);out.push(C[0]);rot++}
@@ -54,11 +54,17 @@ function stylesOf(o){const all=STYLES.map((_,i)=>i),c=o.clan;
 // dashs permis d'un sans-clan : 'b' normal, 'n' celui de sa nature, 'f<k>' celui d'une de ses familles
 const dashOpts=o=>o.clan>=0?['c']:['b'].concat(o.nat>=0?['n']:[]).concat((o.fam||[]).map(f=>'f'+f));
 const dashOf=b=>b.clan>=0?DASHC[b.clan]||DASHB:b.dsh==='n'?DASHN[b.nat]||DASHB:b.dsh&&b.dsh[0]==='f'?DASHF[+b.dsh.slice(1)]||DASHB:DASHB;
-// ---------- build v5 ----------
-// {v:5, name, side, clan (-1 sans clan), nat (-1 pour un clan martial), st (arbre de style 0-2), w (indice STYLES de l'attaque de base), fam:[familles], dsh, k:[jid appris], bar:[6 jid | -1], l:{apparence}}
+// ---------- build v6 ----------
+// {v:6, name, side, clan (-1 sans clan), nat (-1 pour un clan martial), st (arbre de style 0-2), w (indice STYLES de l'attaque de base), fam:[familles], dsh, k:[jid appris],
+//  bar:[6 jid | -1] (= bars[0].b, la barre de départ), bars:[{n:nom, b:[6 jid | -1]}, …] (1 à BARSMAX barres favorites, changées en combat avec la roue de B), l:{apparence}}
+// v5 → v6 : un build sans bars reçoit une seule barre « Barre 1 » = sa barre. `bar` fait foi pour la 1re barre (le code qui ne connaît que bar reste juste).
+// Chaque barre : jutsu APPRIS seulement, sans doublon, 6 cases ; une barre toute vide est refaite automatiquement (autoBar).
+const BARSMAX=4,BARNM=16;
+const barName=(n,i)=>String(n==null?'':n).replace(/[<>\u0000-\u001f]/g,'').trim().slice(0,BARNM)||'Barre '+(i+1);
+function barSan(B,K){const o=[];B=Array.isArray(B)?B:[];for(let s=0;s<BARN;s++){const v=B[s];const id=typeof v==='number'?v|0:-1;o.push(id===v&&K.includes(id)&&!o.includes(id)?id:-1)}return o}
 // bornes → arbres → appris → barre → dash ; idempotent : sanitizeBuild(sanitizeBuild(b)) ≡ sanitizeBuild(b). strict : jamais d'appris vides (bots, builds reçus)
 function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Math.max(0,Math.min(m-1,(a|0)));const l=b.l||{};
- const o={v:5,name:String(b.name||'Ninja').replace(/[<>]/g,'').slice(0,16)||'Ninja',side:b.side?1:0,clan:b.clan==null?-1:Math.max(-1,Math.min(CLANS.length-1,b.clan|0)),nat:0,st:0,w:0,fam:[],dsh:'b',k:[],bar:[],
+ const o={v:6,name:String(b.name||'Ninja').replace(/[<>]/g,'').slice(0,16)||'Ninja',side:b.side?1:0,clan:b.clan==null?-1:Math.max(-1,Math.min(CLANS.length-1,b.clan|0)),nat:0,st:0,w:0,fam:[],dsh:'b',k:[],bar:[],
   l:{v:n(l.v,VILLAGES.length),t:n(l.t,TENUES.length),c:n(l.c,COIFS.length),h:n(l.h,HAIRC.length),p:n(l.p,PEAUX.length),k:n(l.k,CHAKRAS.length),a:n(l.a,ACCS.length),f:n(l.f,FACES.length),b:n(l.b,BANDS.length),d:n(l.d,BACKS.length),
    e:n(l.e,EYES.length),o:n(l.o,TENCOL.length),s:n(l.s,TENCOL.length),z:n(l.z,TAILLES.length),w:n(l.w,CARRURES.length),r:n(l.r,ARMS.length),n:n(l.n,NECKS.length),
    g:n(l.g,GEARS.length),m:n(l.m,OVERS.length),y:n(l.y,SYMS.length),q:n(l.q,BANDC.length),x:n(l.x,TENCOL.length)}};
@@ -72,8 +78,9 @@ function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Ma
  if(strict&&!K.length)K=autoLearn(o);
  for(const t of tr)if(TREES[t].force)for(const r of RANKO)for(const id of TREE[t][r])if(!K.includes(id)&&canLearn(K,id))K.push(id); // clans martiaux : tout appris
  o.k=K;
- const B=Array.isArray(b.bar)?b.bar:[];for(let s=0;s<BARN;s++){const v=B[s];const id=typeof v==='number'?v|0:-1;o.bar.push(id===v&&K.includes(id)&&!o.bar.includes(id)?id:-1)}
- if(o.bar.every(id=>id<0))o.bar=autoBar(o);
+ {const src=Array.isArray(b.bars)&&b.bars.length?b.bars.slice(0,BARSMAX):[{n:'Barre 1',b:b.bar}];o.bars=[];
+  src.forEach((q,i)=>{if(!q||typeof q!=='object')return;let bb=barSan(i===0&&Array.isArray(b.bar)&&b.bar.length?b.bar:q.b,K);if(bb.every(id=>id<0))bb=autoBar(o);o.bars.push({n:barName(q.n,o.bars.length),b:bb})});
+  if(!o.bars.length)o.bars.push({n:'Barre 1',b:barSan(b.bar,K)});if(o.bars[0].b.every(id=>id<0))o.bars[0].b=autoBar(o);o.bar=o.bars[0].b.slice()}
  // al (facultatif) : noms affichés propres au perso, {'Nom|arbre': 'Alias'} pour des jutsu appris (ex. Kakashi : Chidori → « Raikiri »)
  if(b.al&&typeof b.al==='object'){const A={};let n=0;for(const k in b.al){const id=pickKey(o,k),v=String(b.al[k]||'').replace(/[<>]/g,'').slice(0,24);if(n<BARN&&id>=0&&K.includes(id)&&jKey(id)===k&&v){A[k]=v;n++}}if(n)o.al=A}
  if(o.clan>=0)o.dsh='c';else{const d=String(b.dsh||'b');o.dsh=dashOpts(o).includes(d)?d:'b'}
