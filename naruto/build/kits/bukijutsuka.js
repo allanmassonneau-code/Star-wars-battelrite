@@ -20,7 +20,7 @@ const BK_W=['kunai','tonfa','staff','kama','mace'],BK_TREES=new Set(['c22','t2']
 // pose une arme au sol (Bukijutsuka seulement), 4 au plus par ninja : la plus ancienne disparaît
 function bkDrop(u,x,y,k){if(!u||u.dead||u.ch.clan!==BUKI)return;x=clamp(x,B.x+16,B.x+B.w-16);y=clamp(y,B.y+16,B.y+B.h-16);const L=aux.filter(o=>o.type==='bk_wpn'&&o.owner===u&&o.t>0);if(L.length>=4)L[0].t=0;
  aux.push({type:'bk_wpn',x,y,r:14,t:6,m:6,team:u.team,owner:u,ui:stI(u),k:(k==null?Math.floor(rnd()*5):k)%5,a:rnd()*6.28})}
-// ramasser : chaque arme réduit de 4 s réelles (3,2 s au compteur) la recharge des jutsu d'armes (barre et réserve ; 0,8 s avant les recharges longues, ×5 comme elles)
+// ramasser : chaque arme réduit de 4 s réelles la recharge des jutsu d'armes (barre et réserve ; 0,8 s avant les recharges longues, ×5 comme elles)
 function bkPick(u){for(let i=BAR0;i<BAR0+BARN;i++){const ab=u.ch.abil[i];if(ab&&BK_TREES.has(ab.tree))u.cds[i]=Math.max(0,u.cds[i]-rtIn(4))} // 4 s réelles (temps réel, nr_flow.js)
  if(u.cst)for(const j in u.cst){const J=JL[j];if(J&&BK_TREES.has(J.cat))u.cst[j]=Math.max(0,u.cst[j]-rtIn(4))}say(u,'+1 ARME','#ffd36a');S('saber',u)}
 AUXF.bk_wpn=x=>{const u=x.owner;if(!u||u.dead){x.t=0;return}if(x.m-x.t<.35)return;if(Math.hypot(u.x-x.x,u.y-x.y)<u.r+20){x.t=0;bkPick(u);sparks(x.x,x.y,'#ffd36a',8)}};
@@ -30,7 +30,7 @@ AUXD.bk_wpn=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,al=Math.min(1,x.t/.8),dz=Math.m
 // suit un projectile ; à sa fin, l'arme se plante là où il s'est arrêté
 function bkTrack(u,k){const p=projs[projs.length-1];if(p&&u.ch.clan===BUKI)aux.push({type:'bk_trk',x:p.x,y:p.y,r:0,t:3,m:3,team:u.team,owner:u,p,k})}
 AUXF.bk_trk=x=>{const p=x.p;if(!p){x.t=0;return}if(!p.dead&&p.life>0){x.x=p.x;x.y=p.y;return}x.t=0;bkDrop(x.owner,x.x,x.y,x.k)};
-TRAITS[BUKI]={nom:'Arsenal',desc:'Tes jutsu d\'armes laissent des armes plantées au sol (6 s, 4 au plus). Passer dessus les ramasse : chaque arme réduit de 4 s réelles (3,2 s au compteur) la recharge de tes jutsu d\'armes (barre et réserve).',
+TRAITS[BUKI]={nom:'Arsenal',desc:'Tes jutsu d\'armes laissent des armes plantées au sol (6 s, 4 au plus). Passer dessus les ramasse : chaque arme réduit de 4 s réelles la recharge de tes jutsu d\'armes (barre et réserve).',
  init(u){u.bk_w=1;u.bk_axe=0;u.bk_ton=0},
  update(u,dt){if(u.bk_cds!==u.cds){if(u.bk_cds){u.bk_axe=0;u.bk_ton=0}u.bk_cds=u.cds}if(u.bk_axe>0)u.bk_axe=Math.max(0,u.bk_axe-dt);if(u.bk_ton>0)u.bk_ton=Math.max(0,u.bk_ton-dt)},
  take(t,src,dmg,o){if(!src||src===t||src.team===t.team||!o.melee||o.silent)return dmg;

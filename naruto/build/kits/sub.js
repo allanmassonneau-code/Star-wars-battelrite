@@ -17,7 +17,7 @@ KIT('u',[
  [4,'C','x.sub_mesu','Scalpel de chakra','Bond et entaille les muscles devant toi : ralentit fortement et empêche d\'attaquer 0,8 s','chakra'],
  [4,'B','x.sub_counter','Contre du clone','0,7 s : le prochain coup ne frappe qu\'un clone ; tu surgis derrière l\'attaquant proche, le frappes et l\'étourdis','smoke'],
  [4,'C','x.sub_pill','Pilule du soldat','Croque une pilule : +40 chakra, soin, endurance pleine ; se libère des entraves et ralentissements','heal'],
- [4,'D','x.sub_focus','Concentration du chakra','Réduit de 14 s réelles (11 s au compteur) la recharge de tes autres jutsu (hors ultime), rend 15 chakra et te rend plus rapide 1 s','chakra'],
+ [4,'D','x.sub_focus','Concentration du chakra','Réduit de 14 s réelles la recharge de tes autres jutsu (hors ultime), rend 15 chakra et te rend plus rapide 1 s','chakra'],
  [2,'C','x.sub_shunshin','Shunshin','Disparaît dans un tourbillon de feuilles et réapparaît au curseur : les feuilles tranchent autour de toi (8 dégâts) et tu cours plus vite 1,5 s','leaf'],
  [2,'C','x.sub_kawa','Kawarimi','Se substitue au curseur et laisse à sa place une bûche piégée qui explose et étourdit','smoke'],
  [2,'C','x.sub_jump','Saut ninja','Bondit au curseur ; l\'atterrissage repousse les ennemis proches','leaf'],

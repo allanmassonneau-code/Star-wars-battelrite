@@ -569,11 +569,11 @@ const RKB={D:{ck:8,cd:[20,30]},C:{ck:14,cd:[30,40]},B:{ck:20,cd:[40,60]},A:{ck:2
 const RKB_CD0={D:[4,7],C:[6,10],B:[8,12],A:[11,16],S:[18,24]};
 // TEMPS RÉEL : les fourchettes RKB.cd sont des secondes À LA MONTRE (un S « 100 s » dure 100 s réelles). Le jeu tournant à GSPEED (80 %), la recharge
 // INTERNE (ab.cd, u.cds, stash : secondes de jeu) = réel × GSPEED (rtIn) : 100 s réelles = 80 s de jeu. Toutes les recharges AFFICHÉES comme valeur nominale
-// (menus, infobulles, F8, soin : fmtCd, nr_menu.js) sont en secondes réelles (rtOut) ; les COMPTEURS en direct (HUD, menu B : cdTxt) décomptent le temps de jeu
-// (un « 100 s » part de 80 et atteint 0 au bout de 100 s réelles) ; CDLIVE_REEL=true les passerait en secondes réelles. Dash, Kawarimi, soin, attaque de base :
+// (menus, infobulles, F8, soin : fmtCd, nr_menu.js) sont en secondes réelles (rtOut), comme les compteurs en direct (HUD, menu B : cdTxt)
+// Compteurs en direct affichés en secondes réelles (CDLIVE_REEL) : un « 100 s » part de 100 et atteint 0 au bout de 100 s réelles. Dash, Kawarimi, soin, attaque de base :
 // durées internes inchangées, seul leur affichage nominal passe en secondes réelles (même règle pour tous).
-const rtIn=v=>Math.round(v*GSPEED*1000)/1000,rtOut=v=>Math.round(v/GSPEED*1000)/1000,CDLIVE_REEL=false;
-const cdTxt=v=>(v=CDLIVE_REEL?v/GSPEED:v)>=10?String(Math.ceil(v)):v.toFixed(1).replace('.',','); // recharge restante affichée en direct (HUD, menu B) : secondes de jeu (voir CDLIVE_REEL), entières au-dessus de 10 s, virgule décimale
+const rtIn=v=>Math.round(v*GSPEED*1000)/1000,rtOut=v=>Math.round(v/GSPEED*1000)/1000,CDLIVE_REEL=true;
+const cdTxt=v=>(v=CDLIVE_REEL?v/GSPEED:v)>=10?String(Math.ceil(v)):v.toFixed(1).replace('.',','); // recharge restante affichée en direct (HUD, menu B) : secondes réelles (CDLIVE_REEL), entières au-dessus de 10 s, virgule décimale
 const rkCdR=(r,cd,libre)=>{const o=RKB_CD0[r],R=RKB[r];if(!o||!R||typeof cd!=='number'||!isFinite(cd))return cd;const [a,b]=o,[c,d]=R.cd;
  const v=cd<a?(libre?c*cd/a:c):cd>b?(libre?d*cd/b:d):c+(cd-a)/(b-a)*(d-c);return Math.round(v*10)/10};
 const rkCd=(r,cd,libre)=>{const v=rkCdR(r,cd,libre);return typeof v==='number'&&isFinite(v)?rtIn(v):v}; // recharge INTERNE (secondes de jeu) d'une valeur de l'ancien barème
@@ -1539,7 +1539,7 @@ KIT('u',[
  [4,'C','x.sub_mesu','Scalpel de chakra','Bond et entaille les muscles devant toi : ralentit fortement et empêche d\'attaquer 0,8 s','chakra'],
  [4,'B','x.sub_counter','Contre du clone','0,7 s : le prochain coup ne frappe qu\'un clone ; tu surgis derrière l\'attaquant proche, le frappes et l\'étourdis','smoke'],
  [4,'C','x.sub_pill','Pilule du soldat','Croque une pilule : +40 chakra, soin, endurance pleine ; se libère des entraves et ralentissements','heal'],
- [4,'D','x.sub_focus','Concentration du chakra','Réduit de 14 s réelles (11 s au compteur) la recharge de tes autres jutsu (hors ultime), rend 15 chakra et te rend plus rapide 1 s','chakra'],
+ [4,'D','x.sub_focus','Concentration du chakra','Réduit de 14 s réelles la recharge de tes autres jutsu (hors ultime), rend 15 chakra et te rend plus rapide 1 s','chakra'],
  [2,'C','x.sub_shunshin','Shunshin','Disparaît dans un tourbillon de feuilles et réapparaît au curseur : les feuilles tranchent autour de toi (8 dégâts) et tu cours plus vite 1,5 s','leaf'],
  [2,'C','x.sub_kawa','Kawarimi','Se substitue au curseur et laisse à sa place une bûche piégée qui explose et étourdit','smoke'],
  [2,'C','x.sub_jump','Saut ninja','Bondit au curseur ; l\'atterrissage repousse les ennemis proches','leaf'],
@@ -3051,7 +3051,7 @@ JFXD.sub_kbpush=(f,k,e)=>{const q=P(f.x,f.y,30),s=q.s;g.globalCompositeOperation
 // Concentration du chakra (sub.js) · Senpô : Kawazu Kumite (NOUVEAU) · Senpô : Kebari Senbon (NOUVEAU) · Mode Ermite (sub.js, passé en A : +25 %) · Fûton : Rasenshuriken (sub_nrp2.js) ;
 // dash : Saut ninja (sub.js, choc ×1,5 en Mode Ermite). En Mode Ermite, Kawazu Kumite et Kebari Senbon ne coûtent rien.
 KIT('f6',[
- ['D','x.sub_focus','Concentration du chakra','Réduit de 14 s réelles (11 s au compteur) la recharge des autres jutsu de ta barre, rend 15 chakra et te rend plus rapide 1 s','chakra'],
+ ['D','x.sub_focus','Concentration du chakra','Réduit de 14 s réelles la recharge des autres jutsu de ta barre, rend 15 chakra et te rend plus rapide 1 s','chakra'],
  ['C','x.sub_skum','Senpô : Kawazu Kumite','5 s : tes 4 prochains coups de base portent 40 plus loin (aura de l\'énergie naturelle) et infligent 6 dégâts de plus. Gratuit en Mode Ermite','sage'],
  ['B','x.sub_skeb','Senpô : Kebari Senbon','Tu t\'enroules dans ta crinière 0,6 s (−50 % de dégâts subis), puis 12 aiguilles de cheveux jaillissent en anneau (7 dégâts chacune). Gratuit en Mode Ermite','sage'],
  ['A','x.sub_sage','Mode Ermite','Se concentre 0,6 s (interruptible) puis 4 s : +25 % de dégâts, plus rapide, un peu de soin ; Kawazu Kumite et Kebari Senbon gratuits','sage'],
@@ -11706,7 +11706,7 @@ const BK_W=['kunai','tonfa','staff','kama','mace'],BK_TREES=new Set(['c22','t2']
 // pose une arme au sol (Bukijutsuka seulement), 4 au plus par ninja : la plus ancienne disparaît
 function bkDrop(u,x,y,k){if(!u||u.dead||u.ch.clan!==BUKI)return;x=clamp(x,B.x+16,B.x+B.w-16);y=clamp(y,B.y+16,B.y+B.h-16);const L=aux.filter(o=>o.type==='bk_wpn'&&o.owner===u&&o.t>0);if(L.length>=4)L[0].t=0;
  aux.push({type:'bk_wpn',x,y,r:14,t:6,m:6,team:u.team,owner:u,ui:stI(u),k:(k==null?Math.floor(rnd()*5):k)%5,a:rnd()*6.28})}
-// ramasser : chaque arme réduit de 4 s réelles (3,2 s au compteur) la recharge des jutsu d'armes (barre et réserve ; 0,8 s avant les recharges longues, ×5 comme elles)
+// ramasser : chaque arme réduit de 4 s réelles la recharge des jutsu d'armes (barre et réserve ; 0,8 s avant les recharges longues, ×5 comme elles)
 function bkPick(u){for(let i=BAR0;i<BAR0+BARN;i++){const ab=u.ch.abil[i];if(ab&&BK_TREES.has(ab.tree))u.cds[i]=Math.max(0,u.cds[i]-rtIn(4))} // 4 s réelles (temps réel, nr_flow.js)
  if(u.cst)for(const j in u.cst){const J=JL[j];if(J&&BK_TREES.has(J.cat))u.cst[j]=Math.max(0,u.cst[j]-rtIn(4))}say(u,'+1 ARME','#ffd36a');S('saber',u)}
 AUXF.bk_wpn=x=>{const u=x.owner;if(!u||u.dead){x.t=0;return}if(x.m-x.t<.35)return;if(Math.hypot(u.x-x.x,u.y-x.y)<u.r+20){x.t=0;bkPick(u);sparks(x.x,x.y,'#ffd36a',8)}};
@@ -11716,7 +11716,7 @@ AUXD.bk_wpn=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,al=Math.min(1,x.t/.8),dz=Math.m
 // suit un projectile ; à sa fin, l'arme se plante là où il s'est arrêté
 function bkTrack(u,k){const p=projs[projs.length-1];if(p&&u.ch.clan===BUKI)aux.push({type:'bk_trk',x:p.x,y:p.y,r:0,t:3,m:3,team:u.team,owner:u,p,k})}
 AUXF.bk_trk=x=>{const p=x.p;if(!p){x.t=0;return}if(!p.dead&&p.life>0){x.x=p.x;x.y=p.y;return}x.t=0;bkDrop(x.owner,x.x,x.y,x.k)};
-TRAITS[BUKI]={nom:'Arsenal',desc:'Tes jutsu d\'armes laissent des armes plantées au sol (6 s, 4 au plus). Passer dessus les ramasse : chaque arme réduit de 4 s réelles (3,2 s au compteur) la recharge de tes jutsu d\'armes (barre et réserve).',
+TRAITS[BUKI]={nom:'Arsenal',desc:'Tes jutsu d\'armes laissent des armes plantées au sol (6 s, 4 au plus). Passer dessus les ramasse : chaque arme réduit de 4 s réelles la recharge de tes jutsu d\'armes (barre et réserve).',
  init(u){u.bk_w=1;u.bk_axe=0;u.bk_ton=0},
  update(u,dt){if(u.bk_cds!==u.cds){if(u.bk_cds){u.bk_axe=0;u.bk_ton=0}u.bk_cds=u.cds}if(u.bk_axe>0)u.bk_axe=Math.max(0,u.bk_axe-dt);if(u.bk_ton>0)u.bk_ton=Math.max(0,u.bk_ton-dt)},
  take(t,src,dmg,o){if(!src||src===t||src.team===t.team||!o.melee||o.silent)return dmg;
@@ -12520,11 +12520,11 @@ function bmDraw(){const P=BMP,b=player.ch.bar||[],fv=bmFavT(),tg=fv?-1:bmTgt(BM.
   rankBadge(x,R.y+25,J.r,40);text(`${jcost(ab)}`,x+56,R.y+39,11.5,jcost(ab)?'#7fc8ff':'#8fe38f','left');g.font=FNT(11.5,'bold');const cw=g.measureText(String(jcost(ab))).width;
   text('ck',x+58+cw,R.y+39,9.5,jcost(ab)?'#5a90c0':'#5fa05f','left','normal');text(`⟳ ${fmtCd(ab.cd)}`,x+78+cw,R.y+39,11,'#d8b888','left','normal');
   // recharge restante en direct (barre ou stash)
-  const rx=R.x+R.w-64;if(rem>0){text(cdTxt(rem)+' s',rx,R.y+21,13,'#ffb347','center');text('recharge (jeu)',rx,R.y+34,8.5,'#9a8060','center','normal')}else{text('prêt',rx,R.y+25,12,'#8fe38f','center');if(ab.mud)text(`${ab.mud} mudras`,rx,R.y+37,8.5,'#9a8060','center','normal')}
+  const rx=R.x+R.w-64;if(rem>0){text(cdTxt(rem)+' s',rx,R.y+21,13,'#ffb347','center');text('recharge',rx,R.y+34,8.5,'#9a8060','center','normal')}else{text('prêt',rx,R.y+25,12,'#8fe38f','center');if(ab.mud)text(`${ab.mud} mudras`,rx,R.y+37,8.5,'#9a8060','center','normal')}
   // n° de case
   const sb={x:R.x+R.w-34,y:R.y+7,w:28,h:R.h-14};if(eq){rr(sb,6,'#3aa83a','#9fffa0',1);text(String(s+1),sb.x+sb.w/2,sb.y+21,16,'#0c1a0c')}else rr(sb,6,'rgba(0,0,0,.25)','rgba(90,60,30,.6)',1);
   if(!eq&&h)text('+',sb.x+sb.w/2,sb.y+21,16,'#ffb347');
-  if(h)hoverTip('bmr'+j,()=>({ax:BMP.x,t:ab.n,col:liftC(col,.55),l:[[`${catName(J.cat)} · rang ${J.r} · ${jcostT(ab)} · recharge ${fmtCd(ab.cd)}${ab.mud?' · '+ab.mud+' mudras':''}`,liftC(col,.5)],[eq?`Équipé en case ${s+1}`:rem>0?`Recharge restante : ${cdTxt(rem)} s de jeu au compteur (elle continue hors de la barre)`:'Prêt',eq?'#8fe38f':'#d8b888']],
+  if(h)hoverTip('bmr'+j,()=>({ax:BMP.x,t:ab.n,col:liftC(col,.55),l:[[`${catName(J.cat)} · rang ${J.r} · ${jcostT(ab)} · recharge ${fmtCd(ab.cd)}${ab.mud?' · '+ab.mud+' mudras':''}`,liftC(col,.5)],[eq?`Équipé en case ${s+1}`:rem>0?`Recharge restante : ${cdTxt(rem)} s (elle continue hors de la barre)`:'Prêt',eq?'#8fe38f':'#d8b888']],
    d:ab.d||' ',f:`Clic : poser en case ${bmTgt(j)+1} · 1-6 : poser dans cette case${eq?' · clic D : retirer':''}`}))});
  g.restore();
  if(mx>0){const tr={x:P.x+P.w-14,y:BML.y,w:5,h:lh},k=lh/(lh+mx);rr(tr,2.5,'rgba(255,255,255,.08)');rr({x:tr.x,y:tr.y+(lh-lh*k)*BM.scroll/mx,w:5,h:lh*k},2.5,'#c08040')}
@@ -15363,7 +15363,7 @@ function drawCreator(){
  {const cols=crCols(),cards=crCards();CRH=-1;
   const trs=treesOf(EB),frT=trs.filter(ckFreeT),allF=trs.length>0&&frT.length===trs.length;
   [...RANKO].forEach((r,ri)=>{const y=CRG.y+ri*CRG.rh;rr({x:BX,y:y+4,w:28,h:CRG.ch-8},7,RANKC[r]);text(r,BX+14,y+CRG.ch/2+2,15,'#14100a');text(allF?'0':String(RKB[r].ck),BX+14,y+CRG.ch/2+14,8.5,'#14100a','center','normal');
-   if(free&&inRect(mouse,{x:BX,y,w:30,h:CRG.ch}))hoverTip('rk'+r,()=>({t:'Rang '+r,col:RANKC[r],l:frT.length?[[allF?'Tous tes arbres sont martiaux : 0 chakra':`${frT.map(catName).join(', ')} : 0 chakra`,'#8fe38f']]:[],d:`${allF?'0 chakra par lancer':`Chakra ${RKB[r].ck} par lancer`} · recharge ${RKB[r].cd.join(' à ')} s réelles (le compteur décompte en temps de jeu : ${RKB[r].cd.map(v=>String(rtIn(v)).replace('.',',')).join(' à ')} s)${r==='S'?' · cut-in au lancer':''}. Les jutsu de nature demandent aussi des mudras (${'DCBAS'.indexOf(r)+2}). Arbres martiaux (${ckFreeNm()}) : 0 chakra. Dash et Kawarimi : sans chakra.`}))});
+   if(free&&inRect(mouse,{x:BX,y,w:30,h:CRG.ch}))hoverTip('rk'+r,()=>({t:'Rang '+r,col:RANKC[r],l:frT.length?[[allF?'Tous tes arbres sont martiaux : 0 chakra':`${frT.map(catName).join(', ')} : 0 chakra`,'#8fe38f']]:[],d:`${allF?'0 chakra par lancer':`Chakra ${RKB[r].ck} par lancer`} · recharge ${RKB[r].cd.join(' à ')} s${r==='S'?' · cut-in au lancer':''}. Les jutsu de nature demandent aussi des mudras (${'DCBAS'.indexOf(r)+2}). Arbres martiaux (${ckFreeNm()}) : 0 chakra. Dash et Kawarimi : sans chakra.`}))});
   for(const c of cols){const k=crHead(c,false);if(c.t==='+fam'){const R={x:c.x,y:CRG.y,w:c.w,h:4*CRG.rh+CRG.ch},h=hv(R);g.save();g.setLineDash([6,5]);rr(R,9,h?'rgba(50,62,36,.6)':'rgba(20,30,16,.35)',h?'#9f9':'#3a6a3a',1.4);g.restore();
     wrapL('Sans clan : choisis jusqu\'à '+FAMMAX+' familles de sub (Iryô, Fûinjutsu, Genjutsu…) ; tu apprends 1 sub par rang, toutes familles confondues.',c.w-30,FNT(12)).forEach((l,i)=>text(l,c.x+c.w/2,CRG.y+90+i*17,12,'#a8c898','center','normal'));
     text('+ Choisir des familles',c.x+c.w/2,CRG.y+200,14,h?'#fff':'#9f9');if(h)hoverTip('addfam',()=>({t:'Familles de sub',col:'#7fd87f',d:'Clique pour choisir tes familles (jusqu\'à '+FAMMAX+').'}));continue}
