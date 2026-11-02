@@ -4,8 +4,8 @@
 // et une simple bûche (sans dégâts ni explosion) tombe là où tu étais, dans un nuage de fumée.
 // Pas touché en 10 s : la protection s'éteint. Dans les deux cas, la recharge (KW_CD) ne démarre qu'à la fin de la protection.
 // Ce qui compte comme un coup (kwHit) : tout coup d'un ennemi (attaque de base, jutsu, projectile, explosion, contre-attaque…),
-// sauf les coups « silencieux » sans contrôle (ticks de zones, brûlures et poisons déjà posés, épines) ; un coup silencieux qui étourdit,
-// entrave ou projette compte (sinon il traverserait la protection). Les coûts en PV et les dégâts qu'on s'inflige ne comptent pas.
+// sauf les ticks « silencieux » à dégâts sans contrôle (zones, brûlures et poisons déjà posés) et les épines ; un coup silencieux qui porte
+// un contrôle (étourdit, entrave, projette, attire, réduit au silence, effraie…) ou qui ne fait que poser un effet (0 dégât) compte. Les coûts en PV et les dégâts qu'on s'inflige ne comptent pas.
 // La mécanique sub_kawa (jutsu de rang C « Kawarimi » de l'arbre des sans-clan, kits/sub.js) est distincte et inchangée.
 const KW_T=10,KW_CD=12,KW_R=34;
 const kwSlot=u=>{const A=u.ch&&u.ch.abil;if(!A)return -1;if(A[SHUNI]&&A[SHUNI].key==='kw_anchor')return SHUNI;return A.findIndex(a=>a&&a.key==='kw_anchor')};
@@ -16,26 +16,32 @@ Object.assign(NAT,{
   u.kwE=SIMT+KW_T;u.kwT=KW_T;u.kwX=u.x;u.kwY=u.y;if(i>=0)u.cds[i]=KW_T+cd; // recharge = protection restante + recharge pleine (raccourcie si le coup tombe avant)
   aux.push({type:'kw_mark',x:u.x,y:u.y,r:0,t:KW_T,m:KW_T,team:u.team,owner:u,ui:units.indexOf(u)});
   anim(u,'seal',.3);S('poof',u);say(u,'KAWARIMI','#e8cfa8');jx({jfx:'sub_poof',x:u.x,y:u.y,r:26,t:.4,m:.4})})});
-// le coup annulé : vrai si hit() doit s'arrêter là (appelé tout en haut de hit, après l'intangibilité)
-function kwHit(u,src,dmg,o){if(!kwOn(u)||!src||src===u||src.team===u.team||o.thorn||o.el===-1)return false;
- if(o.silent&&!(o.stun>0||o.root>0||o.air>0||o.kb>0))return false;
+// contrôle porté par un coup : un coup silencieux qui en porte un compte toujours (sinon il traverserait la protection)
+const kwCC=o=>o.stun>0||o.root>0||o.air>0||o.kb>0||o.pull>0||o.silence>0||o.fear>0||o.taunt>0||o.disarm>0;
+// le coup annulé : vrai si hit() doit s'arrêter là. Appelé dans hit() APRÈS l'intangibilité et les défenses (esquive, contre, riposte,
+// parade parfaite, garde, renvoi) : seul un coup qui aurait porté est annulé. Un coup silencieux à 0 dégât est une « porte » d'effet
+// (genjutsu qui endort, sceau, ralentissement, brûlure posée) : il compte. L'étiquette el:-1 (« sans élément ») ne veut pas dire tick.
+function kwHit(u,src,dmg,o){if(!kwOn(u)||!src||src===u||src.team===u.team||o.thorn)return false;
+ if(o.silent&&dmg>0&&!kwCC(o))return false; // tick silencieux qui fait des dégâts sans contrôle (zone, brûlure/poison déjà posés) : ne déclenche pas
  const i=kwSlot(u),cd=i>=0?u.ch.abil[i].cd:KW_CD,ox=u.x,oy=u.y;u.kwE=0;u.kwT=0;if(i>=0)u.cds[i]=Math.min(u.cds[i],cd);
  for(const x of aux)if(x.type==='kw_mark'&&x.owner===u)x.t=0;
  const p=subFree({x:(u.kwX??ox)+.01,y:u.kwY??oy},u.r);/* point libre : bornes de l'arène et obstacles (+0,01 : jamais pile au centre d'un obstacle) */aux.push({type:'kw_log',x:ox,y:oy,a:ang(u,src),r:0,t:1.4,m:1.4,team:u.team});
  subPoof(ox,oy,44,u);u.x=p.x;u.y=p.y;u.z=0;u.kx=u.ky=0;u.dash=null;u.spin=null;u.airT=0;collide(u);u.phase=Math.max(u.phase||0,.25); // bref intangible : la suite de la rafale ne rattrape pas l'ancre
  u.flash=0;say(u,'KAWARIMI !','#e8cfa8');subPoof(u.x,u.y,30,u);anim(u,'crouch',.3);return true}
 // ancre : suit la protection (hôte) ; disparaît au coup, à l'expiration ou à la mort
-AUXF.kw_mark=x=>{const u=x.owner;if(!u||u.dead||!kwOn(u)){if(u){u.kwT=0;if(u.dead)u.kwE=0}x.t=0;return}u.kwT=Math.max(0,u.kwE-SIMT);x.t=Math.max(.02,u.kwT)};
+function kwTick(u){if(u.dead||!(u.kwE>SIMT)){u.kwE=0;u.kwT=0;return}u.kwT=Math.max(0,u.kwE-SIMT)} // hôte (updUnit) : jamais figée, même sans ancre
+AUXF.kw_mark=x=>{const u=x.owner;if(!u||u.dead||!kwOn(u)){x.t=0;return}x.t=Math.max(.02,u.kwE-SIMT)};
 AUXF.kw_log=()=>{};
 AFTER.push(()=>UK.push('kwT'));
-// bots : seulement face à un vrai danger (tir qui arrive, gros jutsu en incantation, corps à corps menaçant, zone qui va partir)
-// L'ancre ne sert que si elle est posée À L'ÉCART du danger (activée au contact, elle ramènerait au même endroit) : donc avant l'engagement
-// (ennemi qui arrive à mi-distance), ou face à un gros coup annoncé ; au contact seulement en danger (PV bas). Jamais « dès que c'est rechargé ».
-function kwAI(u,e,d,th){if(th&&((th.dmg||0)>=10||th.big||th.rocket))return true;
- if(e.cast&&d<520){const ab=castAb(e,e.cast);if(ab&&'BAS'.includes(ab.rank||'-'))return true}
+// bots : seulement face à un VRAI danger, jamais « dès que c'est rechargé » ni sur une simple approche (sinon l'ancre part sur une attaque de base à 4 dégâts) :
+// tir lourd qui arrive (18+ dégâts, explosif, étourdissant), jutsu de rang B ou plus dont l'incantation se termine (< 0,5 s) et qui vise le bot,
+// zone ennemie sur le point d'exploser sous ses pieds, ennemi qui fonce sur lui (dash / gap-closer en cours), ou toupie au contact. Posée à l'écart du danger (tir, dash qui arrive), l'ancre ramène loin du coup.
+function kwAI(u,e,d,th){if(th&&((th.dmg||0)>=18||th.big||th.rocket||th.stun>0||th.grab))return true;
+ if(e.cast&&d<560){const c=e.cast,ab=castAb(e,c);if(ab&&'BAS'.includes(ab.rank||'-')&&(c.dur||0)-(c.t||0)<.5){const t=teleTarget(e);if(!t||Math.hypot(t.x-u.x,t.y-u.y)<t.r+u.r+30)return true}}
  for(const z of zones)if(z.owner&&z.owner.team!==u.team&&(z.dmg===0||z.t<.45)&&z.t<.6&&Math.hypot(z.x-u.x,z.y-u.y)<z.r+u.r)return true; // zone d'alerte sur le point d'exploser
- if(d>190&&d<430){const vx=e.vx||0,vy=e.vy||0,v=Math.hypot(vx,vy),cl=v>40?((u.x-e.x)*vx+(u.y-e.y)*vy)/(d*v):0;if(cl>.5||meleeU(e)&&d<330)return true} // il arrive (ou un corps-à-corps est tout proche)
- if(d<u.r+e.r+75&&(e.swing>0||e.spin||e.dash))return u.hp<u.max*.45;
+ if(e.dash&&d<430){const D=e.dash;if(Math.hypot(D.tx-u.x,D.ty-u.y)<Math.max(90,d*.5)&&(D.dmg||D.kb||D.air||meleeU(e)))return true} // il fonce sur toi (dash qui finit sur toi)
+ if(d<u.r+e.r+90&&e.spin)return true; // toupie au contact
+ // au contact sinon, jamais : le prochain coup serait une attaque de base (4-5 dégâts) et l'ancre ramènerait au même endroit
  return false}
 // ---------- visuels ----------
 // ancre au sol : cercle de craie, sceau et bûche fantôme ; anneau qui se vide avec la protection (visible de tous : contre-jeu, attendre 10 s)

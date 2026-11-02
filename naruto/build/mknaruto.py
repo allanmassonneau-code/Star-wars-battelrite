@@ -296,7 +296,9 @@ rep("if(mode==='battle'&&player){const c=Math.min(1,dt*6);cam.x+=(clamp(player.x
     "if(player){const c=Math.min(1,dt*6);cam.x+=(clamp(player.x,B.x+420,B.x+B.w-420)-cam.x)*c;cam.y+=(clamp(player.y,B.y+240,B.y+B.h-170)-cam.y)*c}")
 # kits sur mesure : effets à l'impact, intangibilité, Izanagi, explosions propres, synchro réseau
 rep("function onProjHit(p,t){const o=p.owner;p.hitAny=1;","function onProjHit(p,t){const o=p.owner;p.hitAny=1;if(p.onHit)p.onHit(p,t);")
-rep("function hit(t,src,dmg,o={}){\n if(t.dead||state!=='fight')return false;","function hit(t,src,dmg,o={}){\n if(t.dead||state!=='fight')return false;if(t.phase>0&&src&&src!==t)return false;if(t.kwE>0&&kwHit(t,src,dmg,o))return false;")
+rep("function hit(t,src,dmg,o={}){\n if(t.dead||state!=='fight')return false;","function hit(t,src,dmg,o={}){\n if(t.dead||state!=='fight')return false;if(t.phase>0&&src&&src!==t)return false;")
+# Kawarimi : APRÈS les défenses (esquive, contre, riposte, parade parfaite, garde, renvoi), avant combo/traitDmg : seul un coup qui aurait porté est annulé
+rep("'#7df',14);S('deflect',t);return false}\n if(o.melee&&src&&src.cmbT>0","'#7df',14);S('deflect',t);return false}\n if(t.kwE>0&&kwHit(t,src,dmg,o))return false;\n if(o.melee&&src&&src.cmbT>0")
 # Kawarimi commun (kits/kawarimi.js) : bots, seulement face à un vrai danger
 rep("case'exec':ok=d<=h.max&&e.hp<e.max*.45;break}","case'exec':ok=d<=h.max&&e.hp<e.max*.45;break;\n   case'kw':ok=kwAI(u,e,d,th);break}")
 rep(" if(t.hp<=0)die(t,src);\n return true;"," if(t.hp<=0&&!(t.izT>0&&t.izS&&izRevive(t)))die(t,src);\n return true;")
@@ -422,6 +424,7 @@ rep("function startMatch(c){playerChamp=c;STATS={};","function startMatch(c){pla
 rep(" for(let i=0;i<6;i++){const ab=u.ch.abil[i];if(ab&&ab.charges){if(u.chg[i]<ab.charges){u.cds[i]-=dt;if(u.cds[i]<=0){u.chg[i]++;u.cds[i]=u.chg[i]<ab.charges?ab.cd:0}}}else u.cds[i]=Math.max(0,u.cds[i]-dt)}",
     " for(let i=0;i<u.cds.length;i++){const ab=u.ch.abil[i];if(ab&&ab.charges){if(u.chg[i]<ab.charges){u.cds[i]-=dt;if(u.cds[i]<=0){u.chg[i]++;u.cds[i]=u.chg[i]<ab.charges?ab.cd:0}}}else u.cds[i]=Math.max(0,u.cds[i]-dt)}\n stashTick(u,dt);")
 rep("function updUnit(u,dt,active){hlTick(u,dt,active);","function updUnit(u,dt,active){hlTick(u,dt,active);if(u.barQ)barTry(u);")
+rep("function updUnit(u,dt,active){hlTick(u,dt,active);if(u.barQ)barTry(u);","function updUnit(u,dt,active){hlTick(u,dt,active);if(u.barQ)barTry(u);if(u.kwE>0||u.kwT>0)kwTick(u);") # Kawarimi : minuterie tenue par l'unité (hôte), pas par l'ancre
 # changement de barre en attente : réessayé aussi juste après la mise à jour des unités (le jutsu qui bloquait vient de partir dans cette image : pas d'image de retard)
 rep(" for(const u of units)updUnit(u,dt,active);\n"," for(const u of units)updUnit(u,dt,active);\n for(const u of units)if(u.barQ)barTry(u);\n")
 # incantation : le jutsu est gardé dans u.cast (ab) : changer la barre ne l'interrompt pas ; l'invité reçoit son jid (j)

@@ -53,9 +53,12 @@ const JCD={}; // (Lotus primaire / Lotus caché : recharge du barème de leur ra
 // de l'IA relatif (12 % de la recharge) : dégâts des jutsu des barres de Gaï (Gôriki Senpû, Éléphant, Paon, Huit Portes ×1,1 ; Dynamic Entry, Portes célestes ×1,05)
 // et de Mifune (×1,1), CLANBAL / NATBAL / STYLEBAL / TREEBAL / FAMBAL recalés sur la moyenne de deux graines (bande morte ±3 points), PREBAL sur trois tirages ;
 // validé sur des graines jamais utilisées pour régler (voir le message de commit)
-const CLANBAL={"0":[0.818,0.78],"1":[0.776,0.78],"2":[1.106,1.15],"3":[0.904,0.813],"4":[0.922,0.922],"5":[1.147,1.152],"6":[1.116,0.945],"7":[0.974,1.015],"8":[0.854,0.967],"9":[0.964,0.814],"10":[0.837,0.494],"11":[1.087,0.946],"12":[1.032,0.971],"13":[1.151,1.134],"14":[0.972,1.317],"15":[1.075,0.972],"16":[0.985,1.127],"17":[0.986,1.046],"18":[0.908,0.897],"19":[0.832,1.027],"20":[0.958,1.132],"21":[0.96,0.654],"22":[0.867,0.682],"-1":[0.992,0.951]},NATBAL={"0":[1.148,0.948],"1":[1.038,1.114],"2":[1.003,1.011],"3":[1.068,1.001],"4":[1.05,1.062]},STYLEBAL={"0":[1.029,1.033],"1":[1.021,1.008],"2":[0.888,0.854],"2:-1":[0.797,0.715],"3":[0.9,0.942],"7":[1.041,1.072],"8":[0.99,0.908],"10":[1.037,1.126],"12":[0.91,1.046],"15":[1.134,1.329],"16":[0.985,0.985],"18":[0.938,0.858],"19":[1.067,0.882],"20":[1.01,1.01],"23":[1.027,1.05],"24":[0.965,0.971],"25":[1.216,1.078],"26":[1.095,1.098],"29":[1.027,1.015],"31":[0.997,1.0],"32":[1.028,1.07],"33":[1.041,1.009]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
+// puis KAWARIMI COMMUN (A) devenu une ancre de 10 s (kits/kawarimi.js) : l'ancienne bûche piégée (18 dégâts, 0,5 s d'étourdissement) freinait le corps à corps,
+// tables recalées au simulateur (Kenjutsuka, Bukijutsuka, Taijutsuka en baisse ; Nara, Inuzuka en hausse) ; puis IA du Kawarimi resserrée (plus d'ancre sur une
+// simple approche ni au contact) : nouvelle passe sur la moyenne de deux graines, Konoha Daisenpû / Lotus caché ×1,24 (barre de Rock Lee : ses engagements en dash sont la cible favorite de l'ancre), Gôriki Senpû / Éléphant / Paon / Huit Portes ×0,91 (Gaï)
+const CLANBAL={"0":[0.818,0.78],"1":[0.77,0.774],"2":[1.083,1.126],"3":[0.904,0.813],"4":[0.922,0.922],"5":[1.147,1.152],"6":[1.116,0.945],"7":[0.974,1.015],"8":[0.854,0.967],"9":[0.964,0.814],"10":[0.837,0.494],"11":[1.087,0.946],"12":[1.032,0.971],"13":[1.141,1.124],"14":[0.982,1.33],"15":[1.075,0.972],"16":[0.985,1.127],"17":[0.986,1.046],"18":[0.908,0.897],"19":[0.823,1.016],"20":[0.958,1.132],"21":[0.947,0.645],"22":[0.867,0.682],"-1":[0.992,0.951]},NATBAL={"0":[1.148,0.948],"1":[1.038,1.114],"2":[1.003,1.011],"3":[1.068,1.001],"4":[1.05,1.062]},STYLEBAL={"0":[1.029,1.033],"1":[1.021,1.008],"2":[0.888,0.854],"2:-1":[0.797,0.715],"3":[0.9,0.942],"7":[1.041,1.072],"8":[0.99,0.908],"10":[1.037,1.126],"12":[0.91,1.046],"15":[1.143,1.339],"16":[0.985,0.985],"18":[0.945,0.864],"19":[1.067,0.882],"20":[1.01,1.01],"23":[1.027,1.05],"24":[0.965,0.971],"25":[1.225,1.086],"26":[1.095,1.098],"29":[1.027,1.015],"31":[0.997,1.0],"32":[1.037,1.08],"33":[1.041,1.009]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
 // équilibrage par arbre de style (TREEBAL[st]) et par famille de sub (FAMBAL[f], moyenne géométrique des familles prises) : [PV, puissance], défaut [1, 1]
-const TREEBAL={"1":[1.097,1.09],"0":[1.04,1.093],"2":[1.029,1.057]},FAMBAL={"0":[0.782,1.186],"1":[1.075,1.056],"2":[1.058,1.157],"3":[0.979,1.11],"4":[1.048,1.027],"5":[0.96,1.111],"6":[0.937,1.016],"7":[0.959,1.021]};
+const TREEBAL={"1":[1.088,1.081],"0":[1.04,1.093],"2":[1.029,1.057]},FAMBAL={"0":[0.795,1.207],"1":[1.075,1.056],"2":[1.058,1.157],"3":[0.979,1.11],"4":[1.056,1.035],"5":[0.96,1.111],"6":[0.937,1.016],"7":[0.974,1.037]};
 // équilibrage par jutsu (« catégorie|nom ») : d = dégâts ×, cd = recharge (s), ck = coût en chakra ; appliqué par nr_bal.js (les « N dégâts » des descriptions suivent d)
 const JBAL={
  "c0|Amaterasu":{"d":0.4,"cd":17.6},
@@ -65,14 +68,14 @@ const JBAL={
  "c0|Susanô : Totsuka":{"d":1.32},
  "c10|Défi éternel":{"cd":7.7,"d":1.725},
  "c10|Esquive du fauve":{"cd":9.0,"d":1.62},
- "c10|Huit Portes":{"d":0.773,"cd":26.4},
- "c10|Konoha Daisenpû":{"d":1.201,"cd":11.0},
- "c10|Konoha Gôriki Senpû":{"cd":13.2,"d":1.313},
- "c10|Lotus caché":{"d":0.809,"cd":26.4},
- "c10|Paon du matin":{"d":1.219,"cd":17.6},
+ "c10|Huit Portes":{"d":0.705,"cd":26.4},
+ "c10|Konoha Daisenpû":{"d":1.484,"cd":11.0},
+ "c10|Konoha Gôriki Senpû":{"cd":13.2,"d":1.197},
+ "c10|Lotus caché":{"d":1.0,"cd":26.4},
+ "c10|Paon du matin":{"d":1.111,"cd":17.6},
  "c10|Poids retirés":{"d":2.431,"cd":6.0},
  "c10|Portes célestes":{"cd":13.2,"d":1.365},
- "c10|Éléphant du soir":{"d":0.903,"cd":17.6},
+ "c10|Éléphant du soir":{"d":0.824,"cd":17.6},
  "c11|Arbre millénaire":{"d":0.329,"cd":17.6},
  "c11|Fleur carnivore":{"d":0.465},
  "c11|Floraison mortelle":{"d":0.886},

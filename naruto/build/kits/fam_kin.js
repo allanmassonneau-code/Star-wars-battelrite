@@ -26,7 +26,7 @@ Object.assign(NAT,{
   dash(u,a,190,.2,{});aux.push({type:'sub_mue',x:ox,y:oy,a:u.aim,r:26,t:1.5,m:1.5,team:u.team,owner:u,n:0});subPoof(ox,oy,26,u)}),
 });
 // âme scellée : silence (ni jutsu), plus de chakra (ckLock), ralenti, 6 dégâts toutes les 0,5 s
-function subSoul(o,t){if(!o||!t||t.dead)return;const V=VFX;VFX='chakra';hit(t,o,0,{unblockable:1,silent:1,silence:3,slow:3});VFX=V;if(t.unstop>0)return;t.sub_soul=3;t.chk=false;t.ckLock=Math.max(t.ckLock||0,3);
+function subSoul(o,t){if(!o||!t||t.dead)return;const V=VFX;VFX='chakra';const h=hit(t,o,0,{unblockable:1,silent:1,silence:3,slow:3});VFX=V;if(!h||t.unstop>0)return; // coup annulé (Kawarimi, intangible…) : pas de sceaut.sub_soul=3;t.chk=false;t.ckLock=Math.max(t.ckLock||0,3);
  for(const x of aux)if(x.type==='sub_soul'&&x.tg===t)x.t=0;aux.push({type:'sub_soul',x:t.x,y:t.y,r:0,t:3,m:3,team:o.team,owner:o,tg:t,ti:units.indexOf(t),ui:units.indexOf(o),k:.5});say(t,'ÂME SCELLÉE',SUB_SH);
  if(near(t.x,t.y)){S('genjutsu',o);shake=Math.max(shake,.3)}}
 // ---------- logique (hôte) ----------
