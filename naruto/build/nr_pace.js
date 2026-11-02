@@ -81,7 +81,7 @@ function hlTick(u,dt,active){if(u.hlCd>0)u.hlCd=Math.max(0,u.hlCd-dt);if(u.dead)
  if(u.hlC>0){if(u.stun>0||u.sleepT<0||!active){u.hlC=0;u.hlTg=null;u.hlCd=Math.max(u.hlCd,3);if(u.anim&&u.anim.k==='hl_heal')u.anim=null;if(near(u.x,u.y))say(u,'SOIN INTERROMPU','#fc6')}
   else if((u.hlC-=dt)<=0){u.hlC=0;hlFire(u)}}}
 // joueur (local ou ami en ligne : la touche H voyage dans la liste des touches pressées) : mémorisée 0,35 s
-function hlInput(u,dt,I){if(I.p&&I.p.KeyH){if(u.hlCd>0&&(u===player||u.human)&&!(u.hlMsg>SIMT)){u.hlMsg=SIMT+.6;say(u,'SOIN : '+Math.ceil(u.hlCd)+' s','#9fdfaa')}else u.hlQ=.35}
+function hlInput(u,dt,I){if(I.p&&I.p.KeyH){if(u.hlCd>0&&(u===player||u.human)&&!(u.hlMsg>SIMT)){u.hlMsg=SIMT+.6;say(u,'SOIN : '+cdTxt(u.hlCd)+' s','#9fdfaa')}else u.hlQ=.35}
  if(u.hlQ>0){u.hlQ-=dt;if(hlTry(u,I.ax,I.ay))u.hlQ=0}}
 // IA : soigne un allié (ou soi) sous 35 % à portée, le plus mal en point d'abord
 function hlAI(u){if(!hlCan(u)||rnd()>.65)return false;let b=null,bk=.35;for(const x of units)if(x.team===u.team&&!x.dead&&(x===u||dist(u,x)<=HLS.range)){const k=x.hp/x.max;if(k<bk){bk=k;b=x}}
@@ -89,7 +89,7 @@ function hlAI(u){if(!hlCan(u)||rnd()>.65)return false;let b=null,bk=.35;for(cons
 // HUD : case du soin à droite de la barre de jutsu (touche, recharge en cercle, incantation)
 function drawHealHud(p,x,y,sh){const s=60,rd=!(p.hlCd>0)&&HLS.on,cx=x+s/2,cy=y+sh/2-2;g.fillStyle='rgba(13,26,20,.92)';g.fillRect(x,y,s,sh);g.strokeStyle=rd?'#5fe08a':'#24402e';g.lineWidth=2;g.strokeRect(x,y,s,sh);
  g.save();if(rd){g.shadowColor='#7dff9a';g.shadowBlur=10}g.fillStyle=rd?'#7dff9a':'#3d6a4a';g.fillRect(cx-4,cy-12,8,24);g.fillRect(cx-12,cy-4,24,8);g.fillStyle=rd?'#ffffff':'#6a8a72';g.fillRect(cx-2,cy-10,4,20);g.fillRect(cx-10,cy-2,20,4);g.restore();
- if(p.hlCd>0){const k=Math.min(1,p.hlCd/HLS.cd);g.save();g.beginPath();g.rect(x,y,s,sh);g.clip();g.fillStyle='rgba(0,0,0,.62)';g.beginPath();g.moveTo(cx,cy);g.arc(cx,cy,48,-Math.PI/2,-Math.PI/2+k*Math.PI*2);g.closePath();g.fill();g.restore();text(String(Math.ceil(p.hlCd)),cx,cy+6,15,'#ffe81f')}
+ if(p.hlCd>0){const k=Math.min(1,p.hlCd/HLS.cd);g.save();g.beginPath();g.rect(x,y,s,sh);g.clip();g.fillStyle='rgba(0,0,0,.62)';g.beginPath();g.moveTo(cx,cy);g.arc(cx,cy,48,-Math.PI/2,-Math.PI/2+k*Math.PI*2);g.closePath();g.fill();g.restore();text(cdTxt(p.hlCd),cx,cy+6,15,'#ffe81f')}
  if(p.hlC>0){g.fillStyle='#bfffd0';g.fillRect(x,y+sh-4,s*(1-p.hlC/HLS.cast),4)}
  text(lbl.KeyH||'H',x+6,y+14,12,rd?'#fff':'#889','left');text('Soin',x+s/2,y+sh+13,10,'#9fdfaa','center','normal')}
 // effets : lueur dans les mains pendant l'incantation, puis rayon du lanceur vers la cible et colonne verte et blanche

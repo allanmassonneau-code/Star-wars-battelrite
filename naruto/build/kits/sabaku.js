@@ -90,7 +90,7 @@ const SA_SHCD=22,SA_SHCK=20,SA_SHFAR=260; // recharge, chakra par blocage, dista
 const sa_inc=(u,p,dt,m)=>p.owner&&p.owner.team!==u.team&&!p.grenade&&!p.dead&&p.life>0&&(Math.hypot(p.x+p.vx*dt-u.x,p.y+p.vy*dt-u.y)<u.r+p.r+m||Math.hypot(p.x-u.x,p.y-u.y)<u.r+p.r+m);
 // le sable se dresse entre le ninja et le tir, qui s'y écrase
 function sa_stop(u,p,big){p.life=0;if(p.rocket)p.boom=1;if(near(u.x,u.y)){jx({jfx:'sa_block',ui:units.indexOf(u),x:u.x,y:u.y,a:Math.atan2(p.y-u.y,p.x-u.x),t:.55,m:.55,big:big?1:0});sparks(p.x,p.y,'#d8b878',big?10:5,'sand');S('sand',u)}}
-TRAITS[8]={nom:'Bouclier de sable',desc:'Le sable de la gourde arrête tout seul un projectile tiré de loin (20 chakra, recharge 22 s) ; de près, il n\'a pas le temps de réagir. Un croissant de sable flotte devant toi quand il est prêt',
+TRAITS[8]={nom:'Bouclier de sable',desc:'Le sable de la gourde arrête tout seul un projectile tiré de loin (20 chakra, recharge '+String(rtOut(SA_SHCD)).replace('.',',')+' s) ; de près, il n\'a pas le temps de réagir. Un croissant de sable flotte devant toi quand il est prêt',
  init(u){u.sa_shT=SA_SHCD},
  update(u,dt){if(u.sa_cds!==u.cds){u.sa_cds=u.cds;u.sa_shT=SA_SHCD;u.sa_arm=0;u.sa_armT=0;u.sa_sph=0;u.sa_fly=0;u.sa_brk=0} // nouveau ninja ou réapparition
   if(u.sa_shT>0)u.sa_shT=Math.max(0,u.sa_shT-dt);if(u.sa_fly>0)u.sa_fly-=dt;if(u.sa_sph>0)u.sa_sph=Math.max(0,u.sa_sph-dt);

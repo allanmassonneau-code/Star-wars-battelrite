@@ -61,6 +61,7 @@ const BLCD=.1,BLCK=.25,blRk=(r,cd,ck)=>{const R=RKB[r],R0=RKB_CD0[r];if(!R||!R0)
 const blJD0=id=>JBAL[blJK(JL[id])]||JBAL[JL[id].ocat+'|'+JL[id].n]||{};
 const blJD=id=>{const q=blJD0(id);if(q.cd==null&&q.ck==null)return q;const [cd,ck]=blRk(JL[id].r,q.cd,q.ck);return Object.assign({},q,cd!=null?{cd}:{},ck!=null?{ck}:{})}; // (transition : clé d'origine d'un jutsu déplacé dans un autre arbre) // réglage par défaut du jutsu (JBAL, nr_ninja.js) : d dégâts ×, cd recharge, ck coût
 // (recharge d'un profil F8 : en secondes RÉELLES, comme tout l'affichage ; le moteur la convertit en temps de jeu, rtIn)
+// (réglage JBAL × jcd, blHook : arrondi au 0,1 s RÉEL, comme blJBase et les menus)
 const blJBase=(p,id)=>{const o=BLJ0[id],J=blJD(id);return{cd:Math.round(rtOut(J.cd??o.cd)*blG(p,'jcd')*10)/10,ck:o.hpc||o.fr?null:J.ck??blG(p,'ck'+o.rank),d:J.d??1}};
 // chiffres des descriptions : les « N dégâts » (et les listes « 12, 12 puis 16 dégâts ») suivent le multiplicateur ; un réglage propre au jutsu est signalé
 const blDescScale=(d,m)=>m===1?d:d.replace(/(\d+(?:,\d+)?)(?=(?:\s*(?:,|puis|et)\s*\d+(?:,\d+)?)*\s*(?:de\s+|d'\s*)?dégâts)/g,s=>{const v=parseFloat(s.replace(',','.'))*m;return v<10&&!Number.isInteger(v)?blF(v,1):String(Math.round(v))});
@@ -95,7 +96,7 @@ function blHook(){
  const MK=mkNinja;mkNinja=function(b,s){const o=MK(b,s);if(BLC.hp!==1)o.hp=Math.round(o.hp*BLC.hp);if(BLC.spd!==1)o.spd=Math.round(o.spd*BLC.spd);return o};
  const JU=jutsu;BLJ0=JL.map((_,i)=>{const o=JU(i);return{cd:o.cd,hpc:!!o.hpc,rank:o.rank,fr:ckFreeT(o.tree)}});
  jutsu=function(id){const o=JU(id),q=BLC.pj&&BLC.pj[blJK(JL[id])],J=blJD(id),m=BLC.jm*(q&&q.d!=null?q.d:J.d??1);if(m!==1)o.bdm=m;
-  if(q&&q.cd!=null)o.cd=rtIn(q.cd);else{const c=J.cd??o.cd;if(BLC.jcd!==1||c!==o.cd)o.cd=Math.round(c*BLC.jcd*10)/10}const ck=q&&q.ck!=null?q.ck:J.ck;if(ck!=null&&!o.hpc)o.ckO=ck;return o};
+  if(q&&q.cd!=null)o.cd=rtIn(q.cd);else{const c=J.cd??o.cd;if(BLC.jcd!==1||c!==o.cd)o.cd=rtIn(Math.round(rtOut(c)*BLC.jcd*10)/10)}const ck=q&&q.ck!=null?q.ck:J.ck;if(ck!=null&&!o.hpc)o.ckO=ck;return o};
  const SA=styleAb;styleAb=function(i){const o=SA(i),m=BLC.m1*(BLC.sd&&BLC.sd[i]||1);if(m!==1){o.bdm=m;o.d=blDescScale(o.d,m*BLC.gm)+(BLC.sd&&BLC.sd[i]?' · ⚖ dégâts ×'+blF(BLC.sd[i]):'')}else if(BLC.gm!==1)o.d=blDescScale(o.d,BLC.gm);return o};
  const FI=fire;fire=function(u,ab,a,td,ex){if(u&&ab&&ab.jid!=null)(u.usedJ||(u.usedJ=new Set)).add(ab.jid);const m=ab&&ab.bdm||1;return m===1&&BLJ===1?FI(u,ab,a,td,ex):blRun(m,u,()=>FI(u,ab,a,td,ex))};
  const HI=hit;hit=function(t,src,dmg,o){if(src&&src!==t&&typeof dmg==='number'){let m=BLC.gm;if(BLJ!==1&&src===BLU)m*=BLJ;if(m!==1){dmg*=m;if(o&&o.dot&&o.dot.dps)o=Object.assign({},o,{dot:Object.assign({},o.dot,{dps:o.dot.dps*m})})}}return HI(t,src,dmg,o)};

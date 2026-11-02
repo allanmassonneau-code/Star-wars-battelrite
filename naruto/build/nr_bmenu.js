@@ -161,11 +161,11 @@ function bmDraw(){const P=BMP,b=player.ch.bar||[],fv=bmFavT(),tg=fv?-1:bmTgt(BM.
   rankBadge(x,R.y+25,J.r,40);text(`${jcost(ab)}`,x+56,R.y+39,11.5,jcost(ab)?'#7fc8ff':'#8fe38f','left');g.font=FNT(11.5,'bold');const cw=g.measureText(String(jcost(ab))).width;
   text('ck',x+58+cw,R.y+39,9.5,jcost(ab)?'#5a90c0':'#5fa05f','left','normal');text(`⟳ ${fmtCd(ab.cd)}`,x+78+cw,R.y+39,11,'#d8b888','left','normal');
   // recharge restante en direct (barre ou stash)
-  const rx=R.x+R.w-64;if(rem>0){text(cdTxt(rem)+' s',rx,R.y+21,13,'#ffb347','center');text('recharge',rx,R.y+34,8.5,'#9a8060','center','normal')}else{text('prêt',rx,R.y+25,12,'#8fe38f','center');if(ab.mud)text(`${ab.mud} mudras`,rx,R.y+37,8.5,'#9a8060','center','normal')}
+  const rx=R.x+R.w-64;if(rem>0){text(cdTxt(rem)+' s',rx,R.y+21,13,'#ffb347','center');text('recharge (jeu)',rx,R.y+34,8.5,'#9a8060','center','normal')}else{text('prêt',rx,R.y+25,12,'#8fe38f','center');if(ab.mud)text(`${ab.mud} mudras`,rx,R.y+37,8.5,'#9a8060','center','normal')}
   // n° de case
   const sb={x:R.x+R.w-34,y:R.y+7,w:28,h:R.h-14};if(eq){rr(sb,6,'#3aa83a','#9fffa0',1);text(String(s+1),sb.x+sb.w/2,sb.y+21,16,'#0c1a0c')}else rr(sb,6,'rgba(0,0,0,.25)','rgba(90,60,30,.6)',1);
   if(!eq&&h)text('+',sb.x+sb.w/2,sb.y+21,16,'#ffb347');
-  if(h)hoverTip('bmr'+j,()=>({ax:BMP.x,t:ab.n,col:liftC(col,.55),l:[[`${catName(J.cat)} · rang ${J.r} · ${jcostT(ab)} · recharge ${fmtCd(ab.cd)}${ab.mud?' · '+ab.mud+' mudras':''}`,liftC(col,.5)],[eq?`Équipé en case ${s+1}`:rem>0?`Recharge restante : ${cdTxt(rem)} s (elle continue hors de la barre)`:'Prêt',eq?'#8fe38f':'#d8b888']],
+  if(h)hoverTip('bmr'+j,()=>({ax:BMP.x,t:ab.n,col:liftC(col,.55),l:[[`${catName(J.cat)} · rang ${J.r} · ${jcostT(ab)} · recharge ${fmtCd(ab.cd)}${ab.mud?' · '+ab.mud+' mudras':''}`,liftC(col,.5)],[eq?`Équipé en case ${s+1}`:rem>0?`Recharge restante : ${cdTxt(rem)} s de jeu au compteur (elle continue hors de la barre)`:'Prêt',eq?'#8fe38f':'#d8b888']],
    d:ab.d||' ',f:`Clic : poser en case ${bmTgt(j)+1} · 1-6 : poser dans cette case${eq?' · clic D : retirer':''}`}))});
  g.restore();
  if(mx>0){const tr={x:P.x+P.w-14,y:BML.y,w:5,h:lh},k=lh/(lh+mx);rr(tr,2.5,'rgba(255,255,255,.08)');rr({x:tr.x,y:tr.y+(lh-lh*k)*BM.scroll/mx,w:5,h:lh*k},2.5,'#c08040')}
@@ -201,4 +201,4 @@ function bmDrawPre(lh,t){const L=bmPre(),n=L.length;
    :hD?{ax:BMP.x,t:'Supprimer « '+p.n+' »',col:'#ff7a6a',d:'Deux clics : le premier demande confirmation.'}
    :hN?{ax:BMP.x,t:'Renommer « '+p.n+' »',col:'#ffc53a',d:`Clic puis tape le nom (${PRENM} caractères max) · Entrée : valider · Échap : annuler.`}
    :{ax:BMP.x,t:p.n+(on?' (équipée)':''),col:'#ffc53a',l:p.b.map((k,s)=>{const j=nb[s];return[`${s+1}. `+(j>=0?`${jName(j)} · rang ${JL[j].r} · ${jcostT(player.ch.jab[j])}`:k?`${k.split('|')[0]} (non appris : ignoré)`:'vide'),j>=0?liftC(catCol(JL[j].cat),.5):k?'#ff7a6a':'#7a8aa8']}),
-    d:'Clic : équiper ces 6 jutsu d\'un coup. Les recharges suivent les jutsu ; ceux qui entrent attendent 2 s ; un jutsu en cours n\'est jamais coupé.'})}}
+    d:'Clic : équiper ces 6 jutsu d\'un coup. Les recharges suivent les jutsu ; ceux qui entrent attendent '+fmtCd(CDLOCK)+' ; un jutsu en cours n\'est jamais coupé.'})}}

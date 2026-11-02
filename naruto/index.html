@@ -872,7 +872,7 @@ function hlTick(u,dt,active){if(u.hlCd>0)u.hlCd=Math.max(0,u.hlCd-dt);if(u.dead)
  if(u.hlC>0){if(u.stun>0||u.sleepT<0||!active){u.hlC=0;u.hlTg=null;u.hlCd=Math.max(u.hlCd,3);if(u.anim&&u.anim.k==='hl_heal')u.anim=null;if(near(u.x,u.y))say(u,'SOIN INTERROMPU','#fc6')}
   else if((u.hlC-=dt)<=0){u.hlC=0;hlFire(u)}}}
 // joueur (local ou ami en ligne : la touche H voyage dans la liste des touches pressées) : mémorisée 0,35 s
-function hlInput(u,dt,I){if(I.p&&I.p.KeyH){if(u.hlCd>0&&(u===player||u.human)&&!(u.hlMsg>SIMT)){u.hlMsg=SIMT+.6;say(u,'SOIN : '+Math.ceil(u.hlCd)+' s','#9fdfaa')}else u.hlQ=.35}
+function hlInput(u,dt,I){if(I.p&&I.p.KeyH){if(u.hlCd>0&&(u===player||u.human)&&!(u.hlMsg>SIMT)){u.hlMsg=SIMT+.6;say(u,'SOIN : '+cdTxt(u.hlCd)+' s','#9fdfaa')}else u.hlQ=.35}
  if(u.hlQ>0){u.hlQ-=dt;if(hlTry(u,I.ax,I.ay))u.hlQ=0}}
 // IA : soigne un allié (ou soi) sous 35 % à portée, le plus mal en point d'abord
 function hlAI(u){if(!hlCan(u)||rnd()>.65)return false;let b=null,bk=.35;for(const x of units)if(x.team===u.team&&!x.dead&&(x===u||dist(u,x)<=HLS.range)){const k=x.hp/x.max;if(k<bk){bk=k;b=x}}
@@ -880,7 +880,7 @@ function hlAI(u){if(!hlCan(u)||rnd()>.65)return false;let b=null,bk=.35;for(cons
 // HUD : case du soin à droite de la barre de jutsu (touche, recharge en cercle, incantation)
 function drawHealHud(p,x,y,sh){const s=60,rd=!(p.hlCd>0)&&HLS.on,cx=x+s/2,cy=y+sh/2-2;g.fillStyle='rgba(13,26,20,.92)';g.fillRect(x,y,s,sh);g.strokeStyle=rd?'#5fe08a':'#24402e';g.lineWidth=2;g.strokeRect(x,y,s,sh);
  g.save();if(rd){g.shadowColor='#7dff9a';g.shadowBlur=10}g.fillStyle=rd?'#7dff9a':'#3d6a4a';g.fillRect(cx-4,cy-12,8,24);g.fillRect(cx-12,cy-4,24,8);g.fillStyle=rd?'#ffffff':'#6a8a72';g.fillRect(cx-2,cy-10,4,20);g.fillRect(cx-10,cy-2,20,4);g.restore();
- if(p.hlCd>0){const k=Math.min(1,p.hlCd/HLS.cd);g.save();g.beginPath();g.rect(x,y,s,sh);g.clip();g.fillStyle='rgba(0,0,0,.62)';g.beginPath();g.moveTo(cx,cy);g.arc(cx,cy,48,-Math.PI/2,-Math.PI/2+k*Math.PI*2);g.closePath();g.fill();g.restore();text(String(Math.ceil(p.hlCd)),cx,cy+6,15,'#ffe81f')}
+ if(p.hlCd>0){const k=Math.min(1,p.hlCd/HLS.cd);g.save();g.beginPath();g.rect(x,y,s,sh);g.clip();g.fillStyle='rgba(0,0,0,.62)';g.beginPath();g.moveTo(cx,cy);g.arc(cx,cy,48,-Math.PI/2,-Math.PI/2+k*Math.PI*2);g.closePath();g.fill();g.restore();text(cdTxt(p.hlCd),cx,cy+6,15,'#ffe81f')}
  if(p.hlC>0){g.fillStyle='#bfffd0';g.fillRect(x,y+sh-4,s*(1-p.hlC/HLS.cast),4)}
  text(lbl.KeyH||'H',x+6,y+14,12,rd?'#fff':'#889','left');text('Soin',x+s/2,y+sh+13,10,'#9fdfaa','center','normal')}
 // effets : lueur dans les mains pendant l'incantation, puis rayon du lanceur vers la cible et colonne verte et blanche
@@ -1539,7 +1539,7 @@ KIT('u',[
  [4,'C','x.sub_mesu','Scalpel de chakra','Bond et entaille les muscles devant toi : ralentit fortement et empêche d\'attaquer 0,8 s','chakra'],
  [4,'B','x.sub_counter','Contre du clone','0,7 s : le prochain coup ne frappe qu\'un clone ; tu surgis derrière l\'attaquant proche, le frappes et l\'étourdis','smoke'],
  [4,'C','x.sub_pill','Pilule du soldat','Croque une pilule : +40 chakra, soin, endurance pleine ; se libère des entraves et ralentissements','heal'],
- [4,'D','x.sub_focus','Concentration du chakra','Réduit de 14 s la recharge de tes autres jutsu (hors ultime), rend 15 chakra et te rend plus rapide 1 s','chakra'],
+ [4,'D','x.sub_focus','Concentration du chakra','Réduit de 14 s réelles (11 s au compteur) la recharge de tes autres jutsu (hors ultime), rend 15 chakra et te rend plus rapide 1 s','chakra'],
  [2,'C','x.sub_shunshin','Shunshin','Disparaît dans un tourbillon de feuilles et réapparaît au curseur : les feuilles tranchent autour de toi (8 dégâts) et tu cours plus vite 1,5 s','leaf'],
  [2,'C','x.sub_kawa','Kawarimi','Se substitue au curseur et laisse à sa place une bûche piégée qui explose et étourdit','smoke'],
  [2,'C','x.sub_jump','Saut ninja','Bondit au curseur ; l\'atterrissage repousse les ennemis proches','leaf'],
@@ -1628,7 +1628,7 @@ Object.assign(NAT,{
  sub_pill:S_('Pilule du soldat','Chakra, soin, endurance et se libère',7,{hero:'bossk',ai:HEALM},(u)=>{anim(u,'sub_pill',.6);S('orb',u);const r=gain(u,16,u);u.energy=Math.min(100,u.energy+20);u.stam=100;cleanse(u);u.dotT=0;
   say(u,'+20 CHAKRA','#4ab0ff');if(r>=1)say(u,'+'+Math.round(r),'#6f9');jx({jfx:'sub_pill',ui:units.indexOf(u),x:u.x,y:u.y,t:.9,m:.9})}),
  // --- Concentration du chakra : réduit de 14 s les recharges des autres jutsu de la BARRE (pas ceux rangés hors barre : avec la rotation de barre, c'était trop fort)
- sub_focus:S_('Concentration du chakra','Réduit les recharges des autres jutsu',11,{hero:'luke',ai:SELF(400,.35)},(u)=>{const me=subIdx(u,'sub_focus');for(let i=BAR0;i<BAR0+BARN;i++)if(i!==me)u.cds[i]=Math.max(0,u.cds[i]-rtIn(14)); // 14 s RÉELLES (temps réel, nr_flow.js)u.energy=Math.min(100,u.energy+15);
+ sub_focus:S_('Concentration du chakra','Réduit les recharges des autres jutsu',11,{hero:'luke',ai:SELF(400,.35)},(u)=>{const me=subIdx(u,'sub_focus');for(let i=BAR0;i<BAR0+BARN;i++)if(i!==me)u.cds[i]=Math.max(0,u.cds[i]-rtIn(14));u.energy=Math.min(100,u.energy+15); // 14 s RÉELLES (temps réel, nr_flow.js)
   later(u,.01,()=>{u.haste=Math.max(u.haste,1.2)});anim(u,'pray',.55);S('ignite',u);jx({jfx:'sub_focus',ui:units.indexOf(u),x:u.x,y:u.y,col:u.ch.look.weapon.col||'#3af',t:.8,m:.8})}),
  // --- Déplacements
  sub_shunshin:S_('Shunshin','Téléportation dans un tourbillon de feuilles',8,{hero:'palpatine',ai:{mode:'gap',min:120,max:270,p:.5}},(u,a,td)=>{const p=subFree(atP(u,a,clamp(td||260,80,270),270),20);jx({jfx:'sub_leaves',x:u.x,y:u.y,t:.65,m:.65});
@@ -3051,7 +3051,7 @@ JFXD.sub_kbpush=(f,k,e)=>{const q=P(f.x,f.y,30),s=q.s;g.globalCompositeOperation
 // Concentration du chakra (sub.js) · Senpô : Kawazu Kumite (NOUVEAU) · Senpô : Kebari Senbon (NOUVEAU) · Mode Ermite (sub.js, passé en A : +25 %) · Fûton : Rasenshuriken (sub_nrp2.js) ;
 // dash : Saut ninja (sub.js, choc ×1,5 en Mode Ermite). En Mode Ermite, Kawazu Kumite et Kebari Senbon ne coûtent rien.
 KIT('f6',[
- ['D','x.sub_focus','Concentration du chakra','Réduit de 14 s la recharge des autres jutsu de ta barre, rend 15 chakra et te rend plus rapide 1 s','chakra'],
+ ['D','x.sub_focus','Concentration du chakra','Réduit de 14 s réelles (11 s au compteur) la recharge des autres jutsu de ta barre, rend 15 chakra et te rend plus rapide 1 s','chakra'],
  ['C','x.sub_skum','Senpô : Kawazu Kumite','5 s : tes 4 prochains coups de base portent 40 plus loin (aura de l\'énergie naturelle) et infligent 6 dégâts de plus. Gratuit en Mode Ermite','sage'],
  ['B','x.sub_skeb','Senpô : Kebari Senbon','Tu t\'enroules dans ta crinière 0,6 s (−50 % de dégâts subis), puis 12 aiguilles de cheveux jaillissent en anneau (7 dégâts chacune). Gratuit en Mode Ermite','sage'],
  ['A','x.sub_sage','Mode Ermite','Se concentre 0,6 s (interruptible) puis 4 s : +25 % de dégâts, plus rapide, un peu de soin ; Kawazu Kumite et Kebari Senbon gratuits','sage'],
@@ -7427,7 +7427,7 @@ const SA_SHCD=22,SA_SHCK=20,SA_SHFAR=260; // recharge, chakra par blocage, dista
 const sa_inc=(u,p,dt,m)=>p.owner&&p.owner.team!==u.team&&!p.grenade&&!p.dead&&p.life>0&&(Math.hypot(p.x+p.vx*dt-u.x,p.y+p.vy*dt-u.y)<u.r+p.r+m||Math.hypot(p.x-u.x,p.y-u.y)<u.r+p.r+m);
 // le sable se dresse entre le ninja et le tir, qui s'y écrase
 function sa_stop(u,p,big){p.life=0;if(p.rocket)p.boom=1;if(near(u.x,u.y)){jx({jfx:'sa_block',ui:units.indexOf(u),x:u.x,y:u.y,a:Math.atan2(p.y-u.y,p.x-u.x),t:.55,m:.55,big:big?1:0});sparks(p.x,p.y,'#d8b878',big?10:5,'sand');S('sand',u)}}
-TRAITS[8]={nom:'Bouclier de sable',desc:'Le sable de la gourde arrête tout seul un projectile tiré de loin (20 chakra, recharge 22 s) ; de près, il n\'a pas le temps de réagir. Un croissant de sable flotte devant toi quand il est prêt',
+TRAITS[8]={nom:'Bouclier de sable',desc:'Le sable de la gourde arrête tout seul un projectile tiré de loin (20 chakra, recharge '+String(rtOut(SA_SHCD)).replace('.',',')+' s) ; de près, il n\'a pas le temps de réagir. Un croissant de sable flotte devant toi quand il est prêt',
  init(u){u.sa_shT=SA_SHCD},
  update(u,dt){if(u.sa_cds!==u.cds){u.sa_cds=u.cds;u.sa_shT=SA_SHCD;u.sa_arm=0;u.sa_armT=0;u.sa_sph=0;u.sa_fly=0;u.sa_brk=0} // nouveau ninja ou réapparition
   if(u.sa_shT>0)u.sa_shT=Math.max(0,u.sa_shT-dt);if(u.sa_fly>0)u.sa_fly-=dt;if(u.sa_sph>0)u.sa_sph=Math.max(0,u.sa_sph-dt);
@@ -11706,9 +11706,9 @@ const BK_W=['kunai','tonfa','staff','kama','mace'],BK_TREES=new Set(['c22','t2']
 // pose une arme au sol (Bukijutsuka seulement), 4 au plus par ninja : la plus ancienne disparaît
 function bkDrop(u,x,y,k){if(!u||u.dead||u.ch.clan!==BUKI)return;x=clamp(x,B.x+16,B.x+B.w-16);y=clamp(y,B.y+16,B.y+B.h-16);const L=aux.filter(o=>o.type==='bk_wpn'&&o.owner===u&&o.t>0);if(L.length>=4)L[0].t=0;
  aux.push({type:'bk_wpn',x,y,r:14,t:6,m:6,team:u.team,owner:u,ui:stI(u),k:(k==null?Math.floor(rnd()*5):k)%5,a:rnd()*6.28})}
-// ramasser : chaque arme réduit de 4 s la recharge des jutsu d'armes (barre et réserve ; 0,8 s avant les recharges longues, ×5 comme elles)
+// ramasser : chaque arme réduit de 4 s réelles (3,2 s au compteur) la recharge des jutsu d'armes (barre et réserve ; 0,8 s avant les recharges longues, ×5 comme elles)
 function bkPick(u){for(let i=BAR0;i<BAR0+BARN;i++){const ab=u.ch.abil[i];if(ab&&BK_TREES.has(ab.tree))u.cds[i]=Math.max(0,u.cds[i]-rtIn(4))} // 4 s réelles (temps réel, nr_flow.js)
- if(u.cst)for(const j in u.cst){const J=JL[j];if(J&&BK_TREES.has(J.cat))u.cst[j]=Math.max(0,u.cst[j]-4)}say(u,'+1 ARME','#ffd36a');S('saber',u)}
+ if(u.cst)for(const j in u.cst){const J=JL[j];if(J&&BK_TREES.has(J.cat))u.cst[j]=Math.max(0,u.cst[j]-rtIn(4))}say(u,'+1 ARME','#ffd36a');S('saber',u)}
 AUXF.bk_wpn=x=>{const u=x.owner;if(!u||u.dead){x.t=0;return}if(x.m-x.t<.35)return;if(Math.hypot(u.x-x.x,u.y-x.y)<u.r+20){x.t=0;bkPick(u);sparks(x.x,x.y,'#ffd36a',8)}};
 AUXD.bk_wpn=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,al=Math.min(1,x.t/.8),dz=Math.max(0,1-(x.m-x.t)/.15)*60;g.save();g.globalAlpha=al;g.fillStyle='rgba(0,0,0,.25)';g.beginPath();g.ellipse(q.x,q.y,10*s,4*s,0,0,7);g.fill();
  const p=P(x.x,x.y,10+dz);g.translate(p.x,p.y);g.rotate(-1.57+Math.sin(x.a)*.35);bukWeapon(BK_W[x.k|0],s*.75);g.restore();
@@ -11716,7 +11716,7 @@ AUXD.bk_wpn=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,al=Math.min(1,x.t/.8),dz=Math.m
 // suit un projectile ; à sa fin, l'arme se plante là où il s'est arrêté
 function bkTrack(u,k){const p=projs[projs.length-1];if(p&&u.ch.clan===BUKI)aux.push({type:'bk_trk',x:p.x,y:p.y,r:0,t:3,m:3,team:u.team,owner:u,p,k})}
 AUXF.bk_trk=x=>{const p=x.p;if(!p){x.t=0;return}if(!p.dead&&p.life>0){x.x=p.x;x.y=p.y;return}x.t=0;bkDrop(x.owner,x.x,x.y,x.k)};
-TRAITS[BUKI]={nom:'Arsenal',desc:'Tes jutsu d\'armes laissent des armes plantées au sol (6 s, 4 au plus). Passer dessus les ramasse : chaque arme réduit de 4 s la recharge de tes jutsu d\'armes (barre et réserve).',
+TRAITS[BUKI]={nom:'Arsenal',desc:'Tes jutsu d\'armes laissent des armes plantées au sol (6 s, 4 au plus). Passer dessus les ramasse : chaque arme réduit de 4 s réelles (3,2 s au compteur) la recharge de tes jutsu d\'armes (barre et réserve).',
  init(u){u.bk_w=1;u.bk_axe=0;u.bk_ton=0},
  update(u,dt){if(u.bk_cds!==u.cds){if(u.bk_cds){u.bk_axe=0;u.bk_ton=0}u.bk_cds=u.cds}if(u.bk_axe>0)u.bk_axe=Math.max(0,u.bk_axe-dt);if(u.bk_ton>0)u.bk_ton=Math.max(0,u.bk_ton-dt)},
  take(t,src,dmg,o){if(!src||src===t||src.team===t.team||!o.melee||o.silent)return dmg;
@@ -11893,9 +11893,12 @@ const JCD={}; // (Lotus primaire / Lotus caché : recharge du barème de leur ra
 // duel médian 51,8 → 50,3 s de jeu ; Taijutsuka monté à 57 % (jutsu gratuits relancés plus souvent) → CLANBAL 10 ×0,97, Kenjutsuka (Mifune 58 %) ×0,97,
 // Éléphant du soir et Huit Portes de Gaï ×1,06 ; CLANBAL / FAMBAL / STYLEBAL / PREBAL recalés sur deux graines (tune2, K=10), validé sur deux graines neuves :
 // 69 catégories sur 74 à 45-55 % (les autres à 44-56,5 %), 42 persos de l'anime à 41-58 % entre eux, Rock Lee / Gaï / Tenten / Mifune 51 / 50 / 55 / 49 %
-const CLANBAL={"0":[0.818,0.78],"1":[0.756,0.76],"2":[1.06,1.102],"3":[0.904,0.813],"4":[0.941,0.941],"5":[1.113,1.118],"6":[1.109,0.939],"7":[0.974,1.015],"8":[0.864,0.978],"9":[0.975,0.824],"10":[0.865,0.511],"11":[1.087,0.946],"12":[1.044,0.982],"13":[1.148,1.13],"14":[0.972,1.317],"15":[1.073,0.97],"16":[0.964,1.102],"17":[0.989,1.05],"18":[0.939,0.928],"19":[0.838,1.035],"20":[0.958,1.132],"21":[1.016,0.692],"22":[0.91,0.716],"-1":[1.008,0.966]},NATBAL={"0":[1.161,0.958],"1":[1.038,1.114],"2":[1.003,1.011],"3":[1.066,1.0],"4":[1.037,1.049]},STYLEBAL={"0":[1.029,1.033],"1":[1.0,0.987],"2":[0.9,0.865],"2:-1":[0.807,0.724],"3":[0.886,0.927],"7":[1.03,1.061],"8":[1.001,0.919],"10":[1.025,1.113],"12":[0.904,1.039],"15":[1.134,1.329],"16":[0.985,0.985],"18":[0.933,0.853],"19":[1.035,0.855],"20":[1.01,1.01],"23":[1.005,1.027],"24":[0.994,1.0],"25":[1.244,1.103],"26":[1.081,1.084],"29":[1.027,1.015],"31":[1.011,1.014],"32":[1.013,1.054],"33":[1.037,1.005]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
+// relectures : Concentration du chakra rend de nouveau ses 15 chakra ; Taijutsuka trop forts (c10 56 %, Taijutsu du fauve 57 %) → Huit Portes et Éléphant du soir ×1,03 seulement
+// (0,796 / 0,93), STYLEBAL 14 ×0,99 ; recalage tune2 (K=10) de CLANBAL 3/4/12/22, TREEBAL Kenjutsu, STYLEBAL 8 et PREBAL (4 persos), validé sur deux graines neuves :
+// 74 catégories sur 74 à 45-55 % (45,2-55,0), persos de l'anime 41,9-56,0 %, Rock Lee / Gaï / Tenten / Mifune 42 / 48 / 56,5 / 51 %, duel médian 50,1 s de jeu
+const CLANBAL={"0":[0.818,0.78],"1":[0.756,0.76],"2":[1.06,1.102],"3":[0.914,0.822],"4":[0.933,0.933],"5":[1.113,1.118],"6":[1.109,0.939],"7":[0.974,1.015],"8":[0.864,0.978],"9":[0.975,0.824],"10":[0.865,0.511],"11":[1.087,0.946],"12":[1.035,0.973],"13":[1.148,1.13],"14":[0.972,1.317],"15":[1.073,0.97],"16":[0.964,1.102],"17":[0.989,1.05],"18":[0.939,0.928],"19":[0.838,1.035],"20":[0.958,1.132],"21":[1.016,0.692],"22":[0.922,0.726],"-1":[1.008,0.966]},NATBAL={"0":[1.161,0.958],"1":[1.038,1.114],"2":[1.003,1.011],"3":[1.066,1.0],"4":[1.037,1.049]},STYLEBAL={"0":[1.029,1.033],"1":[1.0,0.987],"2":[0.9,0.865],"2:-1":[0.807,0.724],"3":[0.886,0.927],"7":[1.03,1.061],"8":[0.983,0.902],"10":[1.025,1.113],"12":[0.904,1.039],"14":[0.99,0.99],"15":[1.134,1.329],"16":[0.985,0.985],"18":[0.933,0.853],"19":[1.035,0.855],"20":[1.01,1.01],"23":[1.005,1.027],"24":[0.994,1.0],"25":[1.244,1.103],"26":[1.081,1.084],"29":[1.027,1.015],"31":[1.011,1.014],"32":[1.013,1.054],"33":[1.037,1.005]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
 // équilibrage par arbre de style (TREEBAL[st]) et par famille de sub (FAMBAL[f], moyenne géométrique des familles prises) : [PV, puissance], défaut [1, 1]
-const TREEBAL={"1":[1.097,1.09],"0":[1.016,1.068],"2":[1.029,1.057]},FAMBAL={"0":[0.791,1.2],"1":[1.046,1.028],"2":[1.037,1.134],"3":[0.961,1.089],"4":[1.048,1.027],"5":[0.946,1.096],"6":[0.937,1.016],"7":[0.959,1.021]};
+const TREEBAL={"1":[1.083,1.076],"0":[1.016,1.068],"2":[1.029,1.057]},FAMBAL={"0":[0.791,1.2],"1":[1.046,1.028],"2":[1.037,1.134],"3":[0.961,1.089],"4":[1.048,1.027],"5":[0.946,1.096],"6":[0.937,1.016],"7":[0.959,1.021]};
 // équilibrage par jutsu (« catégorie|nom ») : d = dégâts ×, cd = recharge (s), ck = coût en chakra ; appliqué par nr_bal.js (les « N dégâts » des descriptions suivent d)
 const JBAL={
  "c0|Amaterasu":{"d":0.4,"cd":17.6},
@@ -11905,14 +11908,14 @@ const JBAL={
  "c0|Susanô : Totsuka":{"d":1.32},
  "c10|Défi éternel":{"cd":7.7,"d":1.725},
  "c10|Esquive du fauve":{"cd":9.0,"d":1.62},
- "c10|Huit Portes":{"d":0.819,"cd":26.4},
+ "c10|Huit Portes":{"d":0.796,"cd":26.4},
  "c10|Konoha Daisenpû":{"d":1.201,"cd":11.0},
  "c10|Konoha Gôriki Senpû":{"cd":13.2,"d":1.313},
  "c10|Lotus caché":{"d":0.809,"cd":26.4},
  "c10|Paon du matin":{"d":1.219,"cd":17.6},
  "c10|Poids retirés":{"d":2.431,"cd":6.0},
  "c10|Portes célestes":{"cd":13.2,"d":1.365},
- "c10|Éléphant du soir":{"d":0.957,"cd":17.6},
+ "c10|Éléphant du soir":{"d":0.93,"cd":17.6},
  "c11|Arbre millénaire":{"d":0.329,"cd":17.6},
  "c11|Fleur carnivore":{"d":0.465},
  "c11|Floraison mortelle":{"d":0.886},
@@ -12517,11 +12520,11 @@ function bmDraw(){const P=BMP,b=player.ch.bar||[],fv=bmFavT(),tg=fv?-1:bmTgt(BM.
   rankBadge(x,R.y+25,J.r,40);text(`${jcost(ab)}`,x+56,R.y+39,11.5,jcost(ab)?'#7fc8ff':'#8fe38f','left');g.font=FNT(11.5,'bold');const cw=g.measureText(String(jcost(ab))).width;
   text('ck',x+58+cw,R.y+39,9.5,jcost(ab)?'#5a90c0':'#5fa05f','left','normal');text(`⟳ ${fmtCd(ab.cd)}`,x+78+cw,R.y+39,11,'#d8b888','left','normal');
   // recharge restante en direct (barre ou stash)
-  const rx=R.x+R.w-64;if(rem>0){text(cdTxt(rem)+' s',rx,R.y+21,13,'#ffb347','center');text('recharge',rx,R.y+34,8.5,'#9a8060','center','normal')}else{text('prêt',rx,R.y+25,12,'#8fe38f','center');if(ab.mud)text(`${ab.mud} mudras`,rx,R.y+37,8.5,'#9a8060','center','normal')}
+  const rx=R.x+R.w-64;if(rem>0){text(cdTxt(rem)+' s',rx,R.y+21,13,'#ffb347','center');text('recharge (jeu)',rx,R.y+34,8.5,'#9a8060','center','normal')}else{text('prêt',rx,R.y+25,12,'#8fe38f','center');if(ab.mud)text(`${ab.mud} mudras`,rx,R.y+37,8.5,'#9a8060','center','normal')}
   // n° de case
   const sb={x:R.x+R.w-34,y:R.y+7,w:28,h:R.h-14};if(eq){rr(sb,6,'#3aa83a','#9fffa0',1);text(String(s+1),sb.x+sb.w/2,sb.y+21,16,'#0c1a0c')}else rr(sb,6,'rgba(0,0,0,.25)','rgba(90,60,30,.6)',1);
   if(!eq&&h)text('+',sb.x+sb.w/2,sb.y+21,16,'#ffb347');
-  if(h)hoverTip('bmr'+j,()=>({ax:BMP.x,t:ab.n,col:liftC(col,.55),l:[[`${catName(J.cat)} · rang ${J.r} · ${jcostT(ab)} · recharge ${fmtCd(ab.cd)}${ab.mud?' · '+ab.mud+' mudras':''}`,liftC(col,.5)],[eq?`Équipé en case ${s+1}`:rem>0?`Recharge restante : ${cdTxt(rem)} s (elle continue hors de la barre)`:'Prêt',eq?'#8fe38f':'#d8b888']],
+  if(h)hoverTip('bmr'+j,()=>({ax:BMP.x,t:ab.n,col:liftC(col,.55),l:[[`${catName(J.cat)} · rang ${J.r} · ${jcostT(ab)} · recharge ${fmtCd(ab.cd)}${ab.mud?' · '+ab.mud+' mudras':''}`,liftC(col,.5)],[eq?`Équipé en case ${s+1}`:rem>0?`Recharge restante : ${cdTxt(rem)} s de jeu au compteur (elle continue hors de la barre)`:'Prêt',eq?'#8fe38f':'#d8b888']],
    d:ab.d||' ',f:`Clic : poser en case ${bmTgt(j)+1} · 1-6 : poser dans cette case${eq?' · clic D : retirer':''}`}))});
  g.restore();
  if(mx>0){const tr={x:P.x+P.w-14,y:BML.y,w:5,h:lh},k=lh/(lh+mx);rr(tr,2.5,'rgba(255,255,255,.08)');rr({x:tr.x,y:tr.y+(lh-lh*k)*BM.scroll/mx,w:5,h:lh*k},2.5,'#c08040')}
@@ -12557,7 +12560,7 @@ function bmDrawPre(lh,t){const L=bmPre(),n=L.length;
    :hD?{ax:BMP.x,t:'Supprimer « '+p.n+' »',col:'#ff7a6a',d:'Deux clics : le premier demande confirmation.'}
    :hN?{ax:BMP.x,t:'Renommer « '+p.n+' »',col:'#ffc53a',d:`Clic puis tape le nom (${PRENM} caractères max) · Entrée : valider · Échap : annuler.`}
    :{ax:BMP.x,t:p.n+(on?' (équipée)':''),col:'#ffc53a',l:p.b.map((k,s)=>{const j=nb[s];return[`${s+1}. `+(j>=0?`${jName(j)} · rang ${JL[j].r} · ${jcostT(player.ch.jab[j])}`:k?`${k.split('|')[0]} (non appris : ignoré)`:'vide'),j>=0?liftC(catCol(JL[j].cat),.5):k?'#ff7a6a':'#7a8aa8']}),
-    d:'Clic : équiper ces 6 jutsu d\'un coup. Les recharges suivent les jutsu ; ceux qui entrent attendent 2 s ; un jutsu en cours n\'est jamais coupé.'})}}
+    d:'Clic : équiper ces 6 jutsu d\'un coup. Les recharges suivent les jutsu ; ceux qui entrent attendent '+fmtCd(CDLOCK)+' ; un jutsu en cours n\'est jamais coupé.'})}}
 
 const CAMPS=['Alliance Shinobi','Akatsuki'];
 const VILLAGES=[['Konoha','#1f3a6a'],['Suna','#7a5a2a'],['Kiri','#2a5a6a'],['Kumo','#3a3a4a'],['Iwa','#5a3a2a'],['Oto','#4a2a5a'],['Nukenin','#2a2a2a'],['Ame','#4a5a6a'],['Yu','#6a4a3a']];
@@ -12746,7 +12749,7 @@ if(cutin.t<=0){cutin=null;return}const k=cutin.t,in_=Math.min(1,(1.4-k)*6),out=M
 // n nom court (aussi le nom du bot), full nom complet, g groupe (GALG : groupe affiché sur la ligne d'identité de la fiche), sec section de la liste (sinon d'après le clan ou g, voir rosSec),
 // side camp du bot (0 Alliance, 1 Akatsuki), nat nature, clan (-1 sans), sty style de combat (Clic G), st arbre de style, fam familles de sub, dsh dash, k jutsu appris (noms), bar barre de départ (6 noms), al alias, l apparence {v village,t tenue,c coiffure,h cheveux,p peau,k chakra,a accessoire,f visage,b bandeau,d dos, e yeux,o/s couleurs de tenue,z taille,w carrure,r bras,n cou}, d jeu en une ligne
 // équilibrage par perso (simulateur, mode « persos » : chaque perso contre les autres, 40-60 % visés) : [PV, puissance] ; voir preBal (nr_ninja.js)
-const PREBAL={"Chino":[0.998,0.998],"Chôji":[1.009,1.009],"Danzô":[1.02,1.02],"Deidara":[1.108,1.108],"Gaara":[1.005,1.005],"Haku":[1.038,1.038],"Hidan":[1.055,1.055],"Hinata":[1.008,1.008],"Hiruzen":[1.067,1.067],"Ino":[1.009,1.009],"Itachi":[1.01,1.01],"Jiraiya":[0.999,0.999],"Kabuto":[1.031,1.031],"Kakashi":[1.009,1.009],"Kankurô":[1.004,1.004],"Kiba":[0.995,0.995],"Kidômaru":[1.02,1.02],"Kimimaro":[0.969,0.969],"Kisame":[1.059,1.059],"Konan":[1.008,1.008],"Kushina":[0.952,0.952],"Madara":[1.042,1.042],"Minato":[1.013,1.013],"Naruto":[1.049,1.049],"Neji":[1.039,1.039],"Obito":[1.028,1.028],"Orochimaru":[1.0,1.0],"Pain":[1.03,1.03],"Sakura":[1.021,1.021],"Sasame":[1.005,1.005],"Sasori":[1.015,1.015],"Sasuke":[1.014,1.014],"Shikamaru":[0.985,0.985],"Shino":[1.05,1.05],"Suigetsu":[1.006,1.006],"Temari":[0.992,0.992],"Tsunade":[1.01,1.01],"Zabuza":[1.023,1.023]};
+const PREBAL={"Chino":[0.998,0.998],"Chôji":[1.009,1.009],"Danzô":[1.02,1.02],"Deidara":[1.12,1.12],"Gaara":[1.005,1.005],"Haku":[1.038,1.038],"Hidan":[1.035,1.035],"Hinata":[1.008,1.008],"Hiruzen":[1.067,1.067],"Ino":[1.009,1.009],"Itachi":[1.01,1.01],"Jiraiya":[0.999,0.999],"Kabuto":[1.031,1.031],"Kakashi":[1.009,1.009],"Kankurô":[1.004,1.004],"Kiba":[0.995,0.995],"Kidômaru":[1.02,1.02],"Kimimaro":[0.969,0.969],"Kisame":[1.059,1.059],"Konan":[1.008,1.008],"Kushina":[0.939,0.939],"Madara":[1.042,1.042],"Minato":[1.013,1.013],"Naruto":[1.049,1.049],"Neji":[1.055,1.055],"Obito":[1.028,1.028],"Orochimaru":[1.0,1.0],"Pain":[1.03,1.03],"Sakura":[1.021,1.021],"Sasame":[1.005,1.005],"Sasori":[1.015,1.015],"Sasuke":[1.014,1.014],"Shikamaru":[0.985,0.985],"Shino":[1.05,1.05],"Suigetsu":[1.006,1.006],"Temari":[0.992,0.992],"Tsunade":[1.01,1.01],"Zabuza":[1.023,1.023]};
 const GALG=['Équipe 7','Akatsuki','Sannin & Hokage','Konoha','Suna','Oto','Kiri','Autres clans'];
 const PRESETS=[
  {n:'Naruto',full:'Naruto Uzumaki',g:0,side:0,nat:2,clan:-1,sty:'Taijutsu',st:0,fam:[5,7],dsh:'f5',k:['Fûton : Balle d\'air','Fûton : Grande balle d\'air','Fûton : Rafale à bout portant','Fûton : Lame d\'air','Fûton : Couloir de vent','Kage Bunshin : leurre','Contre du clone','Clone explosif','Chakra de Kyûbi','Rasengan'],bar:['Rasengan','Contre du clone','Kage Bunshin : leurre','Chakra de Kyûbi','Fûton : Lame d\'air','Fûton : Couloir de vent'],l:{v:0,t:8,c:0,h:0,p:0,k:4,a:0,f:1,b:0,d:0,e:2,y:2},d:'Fonceur increvable : clones, Rasengan au contact, chakra de Kyûbi et couloir de vent'},
@@ -15360,7 +15363,7 @@ function drawCreator(){
  {const cols=crCols(),cards=crCards();CRH=-1;
   const trs=treesOf(EB),frT=trs.filter(ckFreeT),allF=trs.length>0&&frT.length===trs.length;
   [...RANKO].forEach((r,ri)=>{const y=CRG.y+ri*CRG.rh;rr({x:BX,y:y+4,w:28,h:CRG.ch-8},7,RANKC[r]);text(r,BX+14,y+CRG.ch/2+2,15,'#14100a');text(allF?'0':String(RKB[r].ck),BX+14,y+CRG.ch/2+14,8.5,'#14100a','center','normal');
-   if(free&&inRect(mouse,{x:BX,y,w:30,h:CRG.ch}))hoverTip('rk'+r,()=>({t:'Rang '+r,col:RANKC[r],l:frT.length?[[allF?'Tous tes arbres sont martiaux : 0 chakra':`${frT.map(catName).join(', ')} : 0 chakra`,'#8fe38f']]:[],d:`${allF?'0 chakra par lancer':`Chakra ${RKB[r].ck} par lancer`} · recharge ${RKB[r].cd.join(' à ')} s réelles (le compteur décompte en temps de jeu : ${RKB[r].cd.map(v=>String(rtIn(v)).replace('.',',')).join(' à ')})${r==='S'?' · cut-in au lancer':''}. Les jutsu de nature demandent aussi des mudras (${'DCBAS'.indexOf(r)+2}). Arbres martiaux (${ckFreeNm()}) : 0 chakra. Dash et Kawarimi : sans chakra.`}))});
+   if(free&&inRect(mouse,{x:BX,y,w:30,h:CRG.ch}))hoverTip('rk'+r,()=>({t:'Rang '+r,col:RANKC[r],l:frT.length?[[allF?'Tous tes arbres sont martiaux : 0 chakra':`${frT.map(catName).join(', ')} : 0 chakra`,'#8fe38f']]:[],d:`${allF?'0 chakra par lancer':`Chakra ${RKB[r].ck} par lancer`} · recharge ${RKB[r].cd.join(' à ')} s réelles (le compteur décompte en temps de jeu : ${RKB[r].cd.map(v=>String(rtIn(v)).replace('.',',')).join(' à ')} s)${r==='S'?' · cut-in au lancer':''}. Les jutsu de nature demandent aussi des mudras (${'DCBAS'.indexOf(r)+2}). Arbres martiaux (${ckFreeNm()}) : 0 chakra. Dash et Kawarimi : sans chakra.`}))});
   for(const c of cols){const k=crHead(c,false);if(c.t==='+fam'){const R={x:c.x,y:CRG.y,w:c.w,h:4*CRG.rh+CRG.ch},h=hv(R);g.save();g.setLineDash([6,5]);rr(R,9,h?'rgba(50,62,36,.6)':'rgba(20,30,16,.35)',h?'#9f9':'#3a6a3a',1.4);g.restore();
     wrapL('Sans clan : choisis jusqu\'à '+FAMMAX+' familles de sub (Iryô, Fûinjutsu, Genjutsu…) ; tu apprends 1 sub par rang, toutes familles confondues.',c.w-30,FNT(12)).forEach((l,i)=>text(l,c.x+c.w/2,CRG.y+90+i*17,12,'#a8c898','center','normal'));
     text('+ Choisir des familles',c.x+c.w/2,CRG.y+200,14,h?'#fff':'#9f9');if(h)hoverTip('addfam',()=>({t:'Familles de sub',col:'#7fd87f',d:'Clique pour choisir tes familles (jusqu\'à '+FAMMAX+').'}));continue}
@@ -16007,6 +16010,7 @@ const BLCD=.1,BLCK=.25,blRk=(r,cd,ck)=>{const R=RKB[r],R0=RKB_CD0[r];if(!R||!R0)
 const blJD0=id=>JBAL[blJK(JL[id])]||JBAL[JL[id].ocat+'|'+JL[id].n]||{};
 const blJD=id=>{const q=blJD0(id);if(q.cd==null&&q.ck==null)return q;const [cd,ck]=blRk(JL[id].r,q.cd,q.ck);return Object.assign({},q,cd!=null?{cd}:{},ck!=null?{ck}:{})}; // (transition : clé d'origine d'un jutsu déplacé dans un autre arbre) // réglage par défaut du jutsu (JBAL, nr_ninja.js) : d dégâts ×, cd recharge, ck coût
 // (recharge d'un profil F8 : en secondes RÉELLES, comme tout l'affichage ; le moteur la convertit en temps de jeu, rtIn)
+// (réglage JBAL × jcd, blHook : arrondi au 0,1 s RÉEL, comme blJBase et les menus)
 const blJBase=(p,id)=>{const o=BLJ0[id],J=blJD(id);return{cd:Math.round(rtOut(J.cd??o.cd)*blG(p,'jcd')*10)/10,ck:o.hpc||o.fr?null:J.ck??blG(p,'ck'+o.rank),d:J.d??1}};
 // chiffres des descriptions : les « N dégâts » (et les listes « 12, 12 puis 16 dégâts ») suivent le multiplicateur ; un réglage propre au jutsu est signalé
 const blDescScale=(d,m)=>m===1?d:d.replace(/(\d+(?:,\d+)?)(?=(?:\s*(?:,|puis|et)\s*\d+(?:,\d+)?)*\s*(?:de\s+|d'\s*)?dégâts)/g,s=>{const v=parseFloat(s.replace(',','.'))*m;return v<10&&!Number.isInteger(v)?blF(v,1):String(Math.round(v))});
@@ -16041,7 +16045,7 @@ function blHook(){
  const MK=mkNinja;mkNinja=function(b,s){const o=MK(b,s);if(BLC.hp!==1)o.hp=Math.round(o.hp*BLC.hp);if(BLC.spd!==1)o.spd=Math.round(o.spd*BLC.spd);return o};
  const JU=jutsu;BLJ0=JL.map((_,i)=>{const o=JU(i);return{cd:o.cd,hpc:!!o.hpc,rank:o.rank,fr:ckFreeT(o.tree)}});
  jutsu=function(id){const o=JU(id),q=BLC.pj&&BLC.pj[blJK(JL[id])],J=blJD(id),m=BLC.jm*(q&&q.d!=null?q.d:J.d??1);if(m!==1)o.bdm=m;
-  if(q&&q.cd!=null)o.cd=rtIn(q.cd);else{const c=J.cd??o.cd;if(BLC.jcd!==1||c!==o.cd)o.cd=Math.round(c*BLC.jcd*10)/10}const ck=q&&q.ck!=null?q.ck:J.ck;if(ck!=null&&!o.hpc)o.ckO=ck;return o};
+  if(q&&q.cd!=null)o.cd=rtIn(q.cd);else{const c=J.cd??o.cd;if(BLC.jcd!==1||c!==o.cd)o.cd=rtIn(Math.round(rtOut(c)*BLC.jcd*10)/10)}const ck=q&&q.ck!=null?q.ck:J.ck;if(ck!=null&&!o.hpc)o.ckO=ck;return o};
  const SA=styleAb;styleAb=function(i){const o=SA(i),m=BLC.m1*(BLC.sd&&BLC.sd[i]||1);if(m!==1){o.bdm=m;o.d=blDescScale(o.d,m*BLC.gm)+(BLC.sd&&BLC.sd[i]?' · ⚖ dégâts ×'+blF(BLC.sd[i]):'')}else if(BLC.gm!==1)o.d=blDescScale(o.d,BLC.gm);return o};
  const FI=fire;fire=function(u,ab,a,td,ex){if(u&&ab&&ab.jid!=null)(u.usedJ||(u.usedJ=new Set)).add(ab.jid);const m=ab&&ab.bdm||1;return m===1&&BLJ===1?FI(u,ab,a,td,ex):blRun(m,u,()=>FI(u,ab,a,td,ex))};
  const HI=hit;hit=function(t,src,dmg,o){if(src&&src!==t&&typeof dmg==='number'){let m=BLC.gm;if(BLJ!==1&&src===BLU)m*=BLJ;if(m!==1){dmg*=m;if(o&&o.dot&&o.dot.dps)o=Object.assign({},o,{dot:Object.assign({},o.dot,{dps:o.dot.dps*m})})}}return HI(t,src,dmg,o)};
