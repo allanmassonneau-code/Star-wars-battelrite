@@ -1,4 +1,4 @@
-// ===================== BARRE DE JUTSU EN COMBAT (6 cases) : recharges qui suivent le jutsu, blocage de 2 s, règles « equip_jutsu_at » =====================
+// ===================== BARRE DE JUTSU EN COMBAT (6 cases) : recharges qui suivent le jutsu, blocage de 2 s de jeu (2,5 s réelles), règles « equip_jutsu_at » =====================
 // Chaque unité a sa propre copie du ninja (unitCh) : u.ch.abil = [style, case 1 … case 6 (null = vide), dash, Kawarimi], u.ch.bar = 6 jid (-1 = vide).
 // Toute modification de barre passe par setBar (HÔTE ou hors ligne seulement) ; en ligne, l'invité DEMANDE (barReq → {t:'eq'}), l'hôte valide et répond ({t:'eqr'}),
 // la barre de l'invité ne change que par l'instantané (champ synchronisé barS).
@@ -24,7 +24,7 @@ function remCd(u,jid){const i=u.ch.bar?u.ch.bar.indexOf(jid):-1;return i>=0?Math
 function barBusy(u){const s=new Set();if(u.cast&&u.cast.i>0)s.add(u.cast.i);if(u.chan&&u.chan.i>0)s.add(u.chan.i);if(u.jst&&u.jst.i>0)s.add(u.jst.i);if(u.hm_bw&&u.hm_bw.i>0)s.add(u.hm_bw.i);
  for(const x of aux)if(x.owner===u&&BARAUX.has(x.type)){if(x.i>0)s.add(x.i);if(x.si>0)s.add(x.si)}return s}
 const barNorm=nb=>{const o=[];for(let s=0;s<BARN;s++){const v=nb&&nb[s];o.push(typeof v==='number'&&Number.isInteger(v)&&v>=0&&!o.includes(v)?v:-1)}return o};
-// applique une nouvelle barre (6 jid) : les recharges suivent le jutsu, un jutsu qui ENTRE reçoit max(stash, 2 s), un jutsu qui SORT garde sa recharge dans le stash (u.cst).
+// applique une nouvelle barre (6 jid) : les recharges suivent le jutsu, un jutsu qui ENTRE reçoit max(stash, CDLOCK = 2 s de jeu = 2,5 s réelles), un jutsu qui SORT garde sa recharge dans le stash (u.cst).
 // Un cast en cours n'est jamais interrompu : si un jutsu occupé (canalisation, relance…) devait QUITTER la barre, le changement attend la fin (u.barQ, renvoie pend:true).
 function setBar(u,nb){nb=barNorm(nb).map(j=>j>=0&&u.ch.jab&&u.ch.jab[j]?j:-1);const ob=u.ch.bar.slice();
  for(const i of barBusy(u)){const j=ob[i-BAR0];if(j>=0&&!nb.includes(j)){u.barQ=nb;MBAR[u.c+'|'+u.team]=nb.slice();return{ok:true,pend:true}}} // barre en attente : gardée pour la manche suivante même si on meurt avant la fin du jutsu
@@ -49,7 +49,7 @@ function setBar(u,nb){nb=barNorm(nb).map(j=>j>=0&&u.ch.jab&&u.ch.jab[j]?j:-1);co
 // stash : décompte hors barre ; un jutsu à charges y regagne ses charges une à une (comme dans la barre)
 function stashTick(u,dt){const T=u.cst;if(!T)return;for(const k in T){if((T[k]-=dt)>0)continue;const g=u.csg&&u.csg[k],ab=g&&u.ch.jab&&u.ch.jab[k];
  if(g&&ab&&ab.charges){g.n++;if(g.n<ab.charges){T[k]+=ab.cd;continue}delete u.csg[k]}delete T[k]}}
-// blocage d'entrée d'un jutsu à charges (ses charges reviennent avec lui, mais il attend 2 s comme les autres)
+// blocage d'entrée d'un jutsu à charges (ses charges reviennent avec lui, mais il attend CDLOCK comme les autres)
 const barLocked=(u,ab)=>!!(ab&&ab.charges&&ab.jid!=null&&u.lkj&&u.lkj[ab.jid]>SIMT);
 // changement en attente (cast/canalisation en cours) : appliqué dès que possible ; la barre favorite demandée (u.favQ) devient alors la barre équipée (u.favI)
 function barTry(u){if(u.barQ&&!u.dead){setBar(u,u.barQ);if(!u.barQ&&u.favQ!=null){u.favI=u.favQ;u.favQ=null}}}

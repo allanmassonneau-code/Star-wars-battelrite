@@ -51,8 +51,8 @@ function rosLoad(){let raw=null,R=null;try{raw=localStorage.getItem(RKEY)}catch(
 function rosSave(){if(RSIM)return;try{localStorage.setItem(RKEY,JSON.stringify({v:6,nid:ROS.nid,mine:ROS.mine.map(m=>({id:m.id,build:bOut(m.build)})),anime:Object.fromEntries(Object.entries(ROS.anime).map(([n,b])=>[n,bOut(b)])),last:ROS.last}))}catch(e){}}
 // ----- passage aux barres favorites (build v6), fait au chargement :
 // · perso ou retouche v5 (ROS.v5) : « Barre 1 » (son ancienne barre), puis ses anciens presets, puis (perso de l'anime) ses barres préfaites dont tous les jutsu sont appris,
-//   puis des barres qui couvrent ses autres jutsu appris (barsCover : avant, le menu B donnait accès à tous) ; au plus BARSMAX barres, sans doublon
-// · anciens presets de barre (onglet ★ Favoris de l'ancien menu B : nrBar1 {clé du perso: [{n, b:['Nom|arbre' ×6]}]}, et avant eux nrFav1 {clé: ['Nom|arbre', …]}),
+//   puis des barres qui couvrent ses autres jutsu appris (barsCover : avant les barres favorites, l'ancienne interface donnait accès à tous) ; au plus BARSMAX barres, sans doublon
+// · anciens presets de barre (onglet ★ Favoris de l'ancienne interface de barre : nrBar1 {clé du perso: [{n, b:['Nom|arbre' ×6]}]}, et avant eux nrFav1 {clé: ['Nom|arbre', …]}),
 //   repris UNE fois (puis nrBarMig = 1), AVANT les barres préfaites : un perso de l'anime non retouché garde sa barre de départ, puis ses presets, puis ses autres barres préfaites
 //   (il devient alors « retouché ») ; les presets qui ne trouvent pas de place sont signalés une fois
 function rosMigBars(){if(RSIM)return;let done=null,P={},F={};try{done=localStorage.getItem('nrBarMig')}catch(e){}

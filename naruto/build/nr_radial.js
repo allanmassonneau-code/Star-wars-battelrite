@@ -3,7 +3,7 @@
 // B maintenu = la roue s'ouvre au milieu de l'écran (nom + 6 icônes de chaque barre, ✓ = équipée, cadre orange = surlignée) ;
 // molette haut / bas = surligner la barre précédente / suivante (ZQSD, clics et 1-6 restent au ninja) ;
 // B relâché = la barre surlignée est équipée si on a tourné la molette et qu'elle n'est pas déjà à l'écran (un simple appui sur B ne change rien) ; Échap = fermer sans rien changer.
-// Le changement suit les règles de setBar (nr_bar.js) : les recharges suivent les jutsu, un jutsu qui entre attend au moins 2 s, un jutsu en cours n'est jamais coupé (« en attente »).
+// Le changement suit les règles de setBar (nr_bar.js) : les recharges suivent les jutsu, un jutsu qui entre attend au moins CDLOCK = 2 s de jeu (2,5 s réelles), un jutsu en cours n'est jamais coupé (« en attente »).
 // En ligne, l'invité DEMANDE la barre n° i à l'hôte (barReq → {t:'eq',a:'fav',s:i}), qui valide avec sa copie du build et répond (BMUI.ack) ; la barre revient par l'instantané.
 const RB={open:false,hi:0,moved:false,acc:0,t0:0,msg:'',msgC:'#8fe38f',msgT:0,flash:0};
 const rbOk=()=>(state==='fight'||state==='countdown')&&!!player&&!!player.ch&&!!player.ch.jab&&barsOf(player).length>0;

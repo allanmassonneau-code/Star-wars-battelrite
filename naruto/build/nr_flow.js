@@ -9,11 +9,11 @@ const RKB={D:{ck:8,cd:[20,30]},C:{ck:14,cd:[30,40]},B:{ck:20,cd:[40,60]},A:{ck:2
 const RKB_CD0={D:[4,7],C:[6,10],B:[8,12],A:[11,16],S:[18,24]};
 // TEMPS RÉEL : les fourchettes RKB.cd sont des secondes À LA MONTRE (un S « 100 s » dure 100 s réelles). Le jeu tournant à GSPEED (80 %), la recharge
 // INTERNE (ab.cd, u.cds, stash : secondes de jeu) = réel × GSPEED (rtIn) : 100 s réelles = 80 s de jeu. Toutes les recharges AFFICHÉES comme valeur nominale
-// (menus, infobulles, F8, soin : fmtCd, nr_menu.js) sont en secondes réelles (rtOut), comme les compteurs en direct (HUD, menu B : cdTxt)
+// (menus, infobulles, F8, soin : fmtCd, nr_menu.js) sont en secondes réelles (rtOut), comme les compteurs en direct (HUD, roue des barres de B : cdTxt)
 // Compteurs en direct affichés en secondes réelles (CDLIVE_REEL) : un « 100 s » part de 100 et atteint 0 au bout de 100 s réelles. Dash, Kawarimi, soin, attaque de base :
 // durées internes inchangées, seul leur affichage nominal passe en secondes réelles (même règle pour tous).
 const rtIn=v=>Math.round(v*GSPEED*1000)/1000,rtOut=v=>Math.round(v/GSPEED*1000)/1000,CDLIVE_REEL=true;
-const cdTxt=v=>(v=CDLIVE_REEL?v/GSPEED:v)>=10?String(Math.ceil(v)):v.toFixed(1).replace('.',','); // recharge restante affichée en direct (HUD, menu B) : secondes réelles (CDLIVE_REEL), entières au-dessus de 10 s, virgule décimale
+const cdTxt=v=>(v=CDLIVE_REEL?v/GSPEED:v)>=10?String(Math.ceil(v)):v.toFixed(1).replace('.',','); // recharge restante affichée en direct (HUD, roue des barres de B, minuterie du Kawarimi) : secondes réelles (CDLIVE_REEL), entières au-dessus de 10 s, virgule décimale
 const rkCdR=(r,cd,libre)=>{const o=RKB_CD0[r],R=RKB[r];if(!o||!R||typeof cd!=='number'||!isFinite(cd))return cd;const [a,b]=o,[c,d]=R.cd;
  const v=cd<a?(libre?c*cd/a:c):cd>b?(libre?d*cd/b:d):c+(cd-a)/(b-a)*(d-c);return Math.round(v*10)/10};
 const rkCd=(r,cd,libre)=>{const v=rkCdR(r,cd,libre);return typeof v==='number'&&isFinite(v)?rtIn(v):v}; // recharge INTERNE (secondes de jeu) d'une valeur de l'ancien barème

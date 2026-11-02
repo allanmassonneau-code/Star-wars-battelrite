@@ -569,11 +569,11 @@ const RKB={D:{ck:8,cd:[20,30]},C:{ck:14,cd:[30,40]},B:{ck:20,cd:[40,60]},A:{ck:2
 const RKB_CD0={D:[4,7],C:[6,10],B:[8,12],A:[11,16],S:[18,24]};
 // TEMPS RÉEL : les fourchettes RKB.cd sont des secondes À LA MONTRE (un S « 100 s » dure 100 s réelles). Le jeu tournant à GSPEED (80 %), la recharge
 // INTERNE (ab.cd, u.cds, stash : secondes de jeu) = réel × GSPEED (rtIn) : 100 s réelles = 80 s de jeu. Toutes les recharges AFFICHÉES comme valeur nominale
-// (menus, infobulles, F8, soin : fmtCd, nr_menu.js) sont en secondes réelles (rtOut), comme les compteurs en direct (HUD, menu B : cdTxt)
+// (menus, infobulles, F8, soin : fmtCd, nr_menu.js) sont en secondes réelles (rtOut), comme les compteurs en direct (HUD, roue des barres de B : cdTxt)
 // Compteurs en direct affichés en secondes réelles (CDLIVE_REEL) : un « 100 s » part de 100 et atteint 0 au bout de 100 s réelles. Dash, Kawarimi, soin, attaque de base :
 // durées internes inchangées, seul leur affichage nominal passe en secondes réelles (même règle pour tous).
 const rtIn=v=>Math.round(v*GSPEED*1000)/1000,rtOut=v=>Math.round(v/GSPEED*1000)/1000,CDLIVE_REEL=true;
-const cdTxt=v=>(v=CDLIVE_REEL?v/GSPEED:v)>=10?String(Math.ceil(v)):v.toFixed(1).replace('.',','); // recharge restante affichée en direct (HUD, menu B) : secondes réelles (CDLIVE_REEL), entières au-dessus de 10 s, virgule décimale
+const cdTxt=v=>(v=CDLIVE_REEL?v/GSPEED:v)>=10?String(Math.ceil(v)):v.toFixed(1).replace('.',','); // recharge restante affichée en direct (HUD, roue des barres de B, minuterie du Kawarimi) : secondes réelles (CDLIVE_REEL), entières au-dessus de 10 s, virgule décimale
 const rkCdR=(r,cd,libre)=>{const o=RKB_CD0[r],R=RKB[r];if(!o||!R||typeof cd!=='number'||!isFinite(cd))return cd;const [a,b]=o,[c,d]=R.cd;
  const v=cd<a?(libre?c*cd/a:c):cd>b?(libre?d*cd/b:d):c+(cd-a)/(b-a)*(d-c);return Math.round(v*10)/10};
 const rkCd=(r,cd,libre)=>{const v=rkCdR(r,cd,libre);return typeof v==='number'&&isFinite(v)?rtIn(v):v}; // recharge INTERNE (secondes de jeu) d'une valeur de l'ancien barème
@@ -11976,9 +11976,14 @@ const JCD={}; // (Lotus primaire / Lotus caché : recharge du barème de leur ra
 // puis barres auto des kits tirés au hasard qui couvrent tout le kit (3 barres pour 15 jutsu, au lieu de 1 à 3) : CLANBAL / NATBAL / STYLEBAL / FAMBAL recalés en 3 pas
 // (le dernier sur la moyenne de deux graines), PREBAL une fois ; validé sur des graines neuves (voir le message de commit)
 // (fusion des trois chantiers : tables de la branche barres favorites gardées, puis rééquilibrage commun)
-const CLANBAL={"0":[0.818,0.78],"1":[0.756,0.76],"2":[1.06,1.102],"3":[0.915,0.823],"4":[0.923,0.923],"5":[1.117,1.122],"6":[1.075,0.91],"7":[0.981,1.022],"8":[0.855,0.968],"9":[0.975,0.824],"10":[0.85,0.501],"11":[1.08,0.94],"12":[1.056,0.994],"13":[1.137,1.119],"14":[0.996,1.349],"15":[1.084,0.98],"16":[0.964,1.102],"17":[0.989,1.05],"18":[0.946,0.935],"19":[0.829,1.024],"20":[0.958,1.132],"21":[1.015,0.692],"22":[0.904,0.711],"-1":[1.008,0.966]},NATBAL={"0":[1.161,0.958],"1":[1.045,1.122],"2":[1.003,1.011],"3":[1.057,0.992],"4":[1.037,1.049]},STYLEBAL={"0":[1.021,1.025],"1":[1.016,1.002],"2":[0.9,0.865],"2:-1":[0.807,0.724],"3":[0.886,0.927],"7":[1.041,1.072],"8":[1.009,0.926],"10":[1.008,1.094],"12":[0.891,1.024],"15":[1.125,1.319],"16":[0.985,0.985],"18":[0.936,0.855],"19":[1.044,0.862],"20":[1.01,1.01],"23":[1.005,1.027],"24":[1.002,1.008],"25":[1.244,1.103],"26":[1.097,1.1],"29":[1.027,1.015],"31":[1.006,1.009],"32":[1.013,1.054],"33":[1.045,1.013]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
+// rééquilibrage commun après fusion (recharges en temps réel + Kawarimi ancre + barres favorites) : au départ 32 catégories sur 74 hors 45-55 % (35,8-77 %),
+// martiaux très au-dessus (Kenjutsuka 74,8 %, Bukijutsuka 77 %, Taijutsuka 68 % ; Rock Lee / Gaï / Tenten / Mifune 69 / 68 / 68 / 75 % contre les persos de l'anime),
+// 17 persos de l'anime hors 40-60 % (26-77 %) ; tune2 en 4 pas (K = 8, 11, 14, 14 ; 400 puis 600 duels par catégorie) + Taijutsuka ×0,985 à la main,
+// CLANBAL 10 / 21 / 22 ≈ ×0,85 ; validé sur deux graines neuves (600 duels par catégorie) : 73 catégories sur 74 à 45-55 % (45,3-55,3), persos de l'anime 41-58 %,
+// Rock Lee / Gaï / Tenten / Mifune 53 / 46 / 46 / 45 %, duel médian 54 s de jeu
+const CLANBAL={"0":[0.831,0.793],"1":[0.77,0.774],"2":[1.079,1.122],"3":[0.922,0.829],"4":[0.923,0.923],"5":[1.149,1.154],"6":[1.075,0.911],"7":[0.981,1.022],"8":[0.866,0.981],"9":[0.975,0.824],"10":[0.786,0.462],"11":[1.097,0.955],"12":[1.033,0.972],"13":[1.151,1.132],"14":[1.005,1.361],"15":[1.084,0.98],"16":[0.982,1.123],"17":[0.992,1.053],"18":[0.922,0.911],"19":[0.829,1.024],"20":[0.972,1.148],"21":[0.937,0.639],"22":[0.831,0.653],"-1":[1.008,0.966]},NATBAL={"0":[1.161,0.958],"1":[1.045,1.122],"2":[1.003,1.011],"3":[1.068,1.003],"4":[1.037,1.049]},STYLEBAL={"0":[1.031,1.035],"1":[1.026,1.012],"2":[0.892,0.858],"2:-1":[0.8,0.718],"3":[0.893,0.934],"7":[1.041,1.072],"8":[1.001,0.918],"10":[1.041,1.13],"12":[0.901,1.036],"15":[1.133,1.329],"16":[0.985,0.985],"18":[0.939,0.858],"19":[1.055,0.872],"20":[1.01,1.01],"23":[1.016,1.038],"24":[0.975,0.981],"25":[1.244,1.103],"26":[1.097,1.1],"29":[1.029,1.017],"31":[1.006,1.009],"32":[1.025,1.067],"33":[1.052,1.02]}; // STYLEBAL[indice du style] ou STYLEBAL['indice:clan'] = [PV, puissance], réglés par duels simulés (Kenjutsu sans clan à part)
 // équilibrage par arbre de style (TREEBAL[st]) et par famille de sub (FAMBAL[f], moyenne géométrique des familles prises) : [PV, puissance], défaut [1, 1]
-const TREEBAL={"1":[1.097,1.09],"0":[1.016,1.068],"2":[1.029,1.057]},FAMBAL={"0":[0.791,1.2],"1":[1.029,1.012],"2":[1.037,1.134],"3":[0.973,1.103],"4":[1.048,1.027],"5":[0.95,1.101],"6":[0.937,1.016],"7":[0.967,1.03]};
+const TREEBAL={"1":[1.097,1.09],"0":[1.046,1.1],"2":[1.029,1.057]},FAMBAL={"0":[0.786,1.193],"1":[1.038,1.021],"2":[1.052,1.15],"3":[0.963,1.092],"4":[1.049,1.028],"5":[0.95,1.101],"6":[0.937,1.016],"7":[0.96,1.022]};
 // équilibrage par jutsu (« catégorie|nom ») : d = dégâts ×, cd = recharge (s), ck = coût en chakra ; appliqué par nr_bal.js (les « N dégâts » des descriptions suivent d)
 const JBAL={
  "c0|Amaterasu":{"d":0.4,"cd":17.6},
@@ -12325,7 +12330,7 @@ function pickName(b,n){n=JREN[n]||n;const L=treesOf(b),c=JL.filter(j=>j.n===n);r
 // nom + arbre ('Nom|f3') → jid ; repli sur le nom seul dans les arbres du build
 function pickKey(b,s){s=String(s||'');const i=s.lastIndexOf('|'),n0=i>=0?s.slice(0,i):s,n=JREN[n0]||n0,c=i>=0?s.slice(i+1):'';const J=c&&JL.find(j=>j.n===n&&j.cat===c);return J&&treesOf(b).includes(J.cat)?J.id:pickName(b,n)}
 const jKey=id=>JL[id]?JL[id].n+'|'+JL[id].cat:'';
-// ===================== BARRE DE JUTSU EN COMBAT (6 cases) : recharges qui suivent le jutsu, blocage de 2 s, règles « equip_jutsu_at » =====================
+// ===================== BARRE DE JUTSU EN COMBAT (6 cases) : recharges qui suivent le jutsu, blocage de 2 s de jeu (2,5 s réelles), règles « equip_jutsu_at » =====================
 // Chaque unité a sa propre copie du ninja (unitCh) : u.ch.abil = [style, case 1 … case 6 (null = vide), dash, Kawarimi], u.ch.bar = 6 jid (-1 = vide).
 // Toute modification de barre passe par setBar (HÔTE ou hors ligne seulement) ; en ligne, l'invité DEMANDE (barReq → {t:'eq'}), l'hôte valide et répond ({t:'eqr'}),
 // la barre de l'invité ne change que par l'instantané (champ synchronisé barS).
@@ -12351,7 +12356,7 @@ function remCd(u,jid){const i=u.ch.bar?u.ch.bar.indexOf(jid):-1;return i>=0?Math
 function barBusy(u){const s=new Set();if(u.cast&&u.cast.i>0)s.add(u.cast.i);if(u.chan&&u.chan.i>0)s.add(u.chan.i);if(u.jst&&u.jst.i>0)s.add(u.jst.i);if(u.hm_bw&&u.hm_bw.i>0)s.add(u.hm_bw.i);
  for(const x of aux)if(x.owner===u&&BARAUX.has(x.type)){if(x.i>0)s.add(x.i);if(x.si>0)s.add(x.si)}return s}
 const barNorm=nb=>{const o=[];for(let s=0;s<BARN;s++){const v=nb&&nb[s];o.push(typeof v==='number'&&Number.isInteger(v)&&v>=0&&!o.includes(v)?v:-1)}return o};
-// applique une nouvelle barre (6 jid) : les recharges suivent le jutsu, un jutsu qui ENTRE reçoit max(stash, 2 s), un jutsu qui SORT garde sa recharge dans le stash (u.cst).
+// applique une nouvelle barre (6 jid) : les recharges suivent le jutsu, un jutsu qui ENTRE reçoit max(stash, CDLOCK = 2 s de jeu = 2,5 s réelles), un jutsu qui SORT garde sa recharge dans le stash (u.cst).
 // Un cast en cours n'est jamais interrompu : si un jutsu occupé (canalisation, relance…) devait QUITTER la barre, le changement attend la fin (u.barQ, renvoie pend:true).
 function setBar(u,nb){nb=barNorm(nb).map(j=>j>=0&&u.ch.jab&&u.ch.jab[j]?j:-1);const ob=u.ch.bar.slice();
  for(const i of barBusy(u)){const j=ob[i-BAR0];if(j>=0&&!nb.includes(j)){u.barQ=nb;MBAR[u.c+'|'+u.team]=nb.slice();return{ok:true,pend:true}}} // barre en attente : gardée pour la manche suivante même si on meurt avant la fin du jutsu
@@ -12376,7 +12381,7 @@ function setBar(u,nb){nb=barNorm(nb).map(j=>j>=0&&u.ch.jab&&u.ch.jab[j]?j:-1);co
 // stash : décompte hors barre ; un jutsu à charges y regagne ses charges une à une (comme dans la barre)
 function stashTick(u,dt){const T=u.cst;if(!T)return;for(const k in T){if((T[k]-=dt)>0)continue;const g=u.csg&&u.csg[k],ab=g&&u.ch.jab&&u.ch.jab[k];
  if(g&&ab&&ab.charges){g.n++;if(g.n<ab.charges){T[k]+=ab.cd;continue}delete u.csg[k]}delete T[k]}}
-// blocage d'entrée d'un jutsu à charges (ses charges reviennent avec lui, mais il attend 2 s comme les autres)
+// blocage d'entrée d'un jutsu à charges (ses charges reviennent avec lui, mais il attend CDLOCK comme les autres)
 const barLocked=(u,ab)=>!!(ab&&ab.charges&&ab.jid!=null&&u.lkj&&u.lkj[ab.jid]>SIMT);
 // changement en attente (cast/canalisation en cours) : appliqué dès que possible ; la barre favorite demandée (u.favQ) devient alors la barre équipée (u.favI)
 function barTry(u){if(u.barQ&&!u.dead){setBar(u,u.barQ);if(!u.barQ&&u.favQ!=null){u.favI=u.favQ;u.favQ=null}}}
@@ -12454,7 +12459,7 @@ const BMUI={open:false,frame(dt){},draw(){},esc(){return false},ack(r){}};
 // B maintenu = la roue s'ouvre au milieu de l'écran (nom + 6 icônes de chaque barre, ✓ = équipée, cadre orange = surlignée) ;
 // molette haut / bas = surligner la barre précédente / suivante (ZQSD, clics et 1-6 restent au ninja) ;
 // B relâché = la barre surlignée est équipée si on a tourné la molette et qu'elle n'est pas déjà à l'écran (un simple appui sur B ne change rien) ; Échap = fermer sans rien changer.
-// Le changement suit les règles de setBar (nr_bar.js) : les recharges suivent les jutsu, un jutsu qui entre attend au moins 2 s, un jutsu en cours n'est jamais coupé (« en attente »).
+// Le changement suit les règles de setBar (nr_bar.js) : les recharges suivent les jutsu, un jutsu qui entre attend au moins CDLOCK = 2 s de jeu (2,5 s réelles), un jutsu en cours n'est jamais coupé (« en attente »).
 // En ligne, l'invité DEMANDE la barre n° i à l'hôte (barReq → {t:'eq',a:'fav',s:i}), qui valide avec sa copie du build et répond (BMUI.ack) ; la barre revient par l'instantané.
 const RB={open:false,hi:0,moved:false,acc:0,t0:0,msg:'',msgC:'#8fe38f',msgT:0,flash:0};
 const rbOk=()=>(state==='fight'||state==='countdown')&&!!player&&!!player.ch&&!!player.ch.jab&&barsOf(player).length>0;
@@ -12719,7 +12724,7 @@ if(cutin.t<=0){cutin=null;return}const k=cutin.t,in_=Math.min(1,(1.4-k)*6),out=M
 // n nom court (aussi le nom du bot), full nom complet, g groupe (GALG : groupe affiché sur la ligne d'identité de la fiche), sec section de la liste (sinon d'après le clan ou g, voir rosSec),
 // side camp du bot (0 Alliance, 1 Akatsuki), nat nature, clan (-1 sans), sty style de combat (Clic G), st arbre de style, fam familles de sub, dsh dash, k jutsu appris (noms), bar barre de départ (6 noms), al alias, l apparence {v village,t tenue,c coiffure,h cheveux,p peau,k chakra,a accessoire,f visage,b bandeau,d dos, e yeux,o/s couleurs de tenue,z taille,w carrure,r bras,n cou}, d jeu en une ligne
 // équilibrage par perso (simulateur, mode « persos » : chaque perso contre les autres, 40-60 % visés) : [PV, puissance] ; voir preBal (nr_ninja.js)
-const PREBAL={"Chino":[0.998,0.998],"Chôji":[1.02,1.02],"Danzô":[0.992,0.992],"Deidara":[1.083,1.083],"Gaara":[1.024,1.024],"Haku":[1.016,1.016],"Hidan":[1.055,1.055],"Hinata":[1.008,1.008],"Hiruzen":[1.067,1.067],"Ino":[1.037,1.037],"Itachi":[1.032,1.032],"Jiraiya":[0.986,0.986],"Kabuto":[1.006,1.006],"Kakashi":[1.009,1.009],"Kankurô":[1.004,1.004],"Kiba":[0.98,0.98],"Kidômaru":[1.004,1.004],"Kimimaro":[0.969,0.969],"Kisame":[1.043,1.043],"Konan":[1.0,1.0],"Kushina":[1.002,1.002],"Madara":[1.02,1.02],"Minato":[0.999,0.999],"Naruto":[1.012,1.012],"Neji":[1.005,1.005],"Obito":[1.028,1.028],"Orochimaru":[1.016,1.016],"Pain":[1.03,1.03],"Sakura":[1.035,1.035],"Sasame":[1.018,1.018],"Sasori":[1.028,1.028],"Sasuke":[1.031,1.031],"Shikamaru":[0.974,0.974],"Shino":[1.024,1.024],"Suigetsu":[1.006,1.006],"Temari":[0.992,0.992],"Tsunade":[0.962,0.962],"Zabuza":[1.022,1.022]};
+const PREBAL={"Chino":[0.968,0.968],"Chôji":[1.042,1.042],"Danzô":[1.003,1.003],"Deidara":[1.123,1.123],"Gaara":[1.014,1.014],"Haku":[1.029,1.029],"Hidan":[1.055,1.055],"Hinata":[0.989,0.989],"Hiruzen":[1.055,1.055],"Ino":[1.03,1.03],"Itachi":[1.045,1.045],"Jiraiya":[0.986,0.986],"Kabuto":[1.013,1.013],"Kakashi":[1.009,1.009],"Kankurô":[0.992,0.992],"Kiba":[1.024,1.024],"Kidômaru":[0.998,0.998],"Kimimaro":[0.96,0.96],"Kisame":[0.995,0.995],"Konan":[1.021,1.021],"Kushina":[1.002,1.002],"Madara":[1.02,1.02],"Minato":[1.026,1.026],"Naruto":[1.038,1.038],"Neji":[1.008,1.008],"Obito":[1.034,1.034],"Orochimaru":[1.015,1.015],"Pain":[1.073,1.073],"Sakura":[1.035,1.035],"Sasame":[1.004,1.004],"Sasori":[1.028,1.028],"Sasuke":[1.043,1.043],"Shikamaru":[0.987,0.987],"Shino":[1.024,1.024],"Suigetsu":[1.006,1.006],"Temari":[0.992,0.992],"Tsunade":[0.965,0.965],"Zabuza":[1.005,1.005]};
 const GALG=['Équipe 7','Akatsuki','Sannin & Hokage','Konoha','Suna','Oto','Kiri','Autres clans'];
 const PRESETS=[
  {n:'Naruto',full:'Naruto Uzumaki',g:0,side:0,nat:2,clan:-1,sty:'Taijutsu',st:0,fam:[5,7],dsh:'f5',k:['Fûton : Balle d\'air','Fûton : Grande balle d\'air','Fûton : Rafale à bout portant','Fûton : Lame d\'air','Fûton : Couloir de vent','Kage Bunshin : leurre','Contre du clone','Clone explosif','Chakra de Kyûbi','Rasengan'],bar:['Rasengan','Contre du clone','Kage Bunshin : leurre','Chakra de Kyûbi','Fûton : Lame d\'air','Fûton : Couloir de vent'],l:{v:0,t:8,c:0,h:0,p:0,k:4,a:0,f:1,b:0,d:0,e:2,y:2},d:'Fonceur increvable : clones, Rasengan au contact, chakra de Kyûbi et couloir de vent'},
@@ -15455,7 +15460,7 @@ function drawCreator(){
    if(on&&EB.bars.length>1){const D=crDelR(R);rr(D,5,hd?'#c0392b':'rgba(26,16,8,.35)');text('✕',D.x+D.w/2,D.y+14.5,11,hd?'#fff':'#3a2208','center')}
    if(h)hoverTip('crtab'+i+(hd?'d':''),()=>hd?{t:`Supprimer « ${q.n} »`,col:'#ff7a6a',d:'Une confirmation est demandée. Les jutsu restent appris.'}
     :{t:`Barre ${i+1} : ${q.n}${i===0?' (départ)':''}`,col:i===0?'#8fe38f':'#ffd38a',l:crBars()[i].map((id,s)=>[`${s+1}. ${id>=0?crN(id)+' · rang '+JL[id].r:'vide'}`,id>=0?liftC(catCol(JL[id].cat),.5):'#7a8aa8']),
-     d:(dup>=0?`Identique à la barre ${dup+1} : change au moins une case (à l'enregistrement, une barre en double est retirée). `:'')+(i===0?`Barre de départ : celle que tu as en début de combat. En combat, ${lbl.KeyB} maintenu + molette passe d'une barre à l'autre (relâcher ${lbl.KeyB} : équiper).`:`En combat : ${lbl.KeyB} maintenu + molette pour la surligner, relâcher ${lbl.KeyB} pour l'équiper. Les recharges suivent les jutsu.`),
+     d:(dup>=0?`Identique à la barre ${dup+1} : change au moins une case (à l'enregistrement, une barre en double est retirée). `:'')+(i===0?`Barre de départ : celle que tu as en début de combat. En combat, ${lbl.KeyB} maintenu + molette passe d'une barre à l'autre (relâcher ${lbl.KeyB} : équiper).`:`En combat : ${lbl.KeyB} maintenu + molette pour la surligner, relâcher ${lbl.KeyB} pour l'équiper. Les recharges suivent les jutsu (un jutsu qui arrive attend au moins ${fmtCd(CDLOCK)}).`),
      f:on?'Clic : renommer · ✕ ou clic D : supprimer':'Clic : modifier cette barre · clic D : supprimer'})});
   if(EB.bars.length<BARSMAX){const R=crPlusR(),h=hv(R);g.save();g.setLineDash([5,4]);rr({x:R.x,y:R.y,w:34,h:R.h},9,h?'rgba(74,48,24,.95)':'rgba(24,17,11,.6)',h?'#ffc53a':'rgba(255,197,58,.55)',1.3);g.restore();text('+',R.x+17,R.y+21,18,h?'#fff':'#ffc53a','center');
    if(h)hoverTip('crplus',()=>({t:'Nouvelle barre favorite',col:'#ffc53a',d:`Ajoute une barre (${EB.bars.length}/${BARSMAX}) remplie d'abord avec tes jutsu appris absents des autres barres. Tu la retouches ensuite case par case.`}))}}
@@ -15526,8 +15531,8 @@ function rosLoad(){let raw=null,R=null;try{raw=localStorage.getItem(RKEY)}catch(
 function rosSave(){if(RSIM)return;try{localStorage.setItem(RKEY,JSON.stringify({v:6,nid:ROS.nid,mine:ROS.mine.map(m=>({id:m.id,build:bOut(m.build)})),anime:Object.fromEntries(Object.entries(ROS.anime).map(([n,b])=>[n,bOut(b)])),last:ROS.last}))}catch(e){}}
 // ----- passage aux barres favorites (build v6), fait au chargement :
 // · perso ou retouche v5 (ROS.v5) : « Barre 1 » (son ancienne barre), puis ses anciens presets, puis (perso de l'anime) ses barres préfaites dont tous les jutsu sont appris,
-//   puis des barres qui couvrent ses autres jutsu appris (barsCover : avant, le menu B donnait accès à tous) ; au plus BARSMAX barres, sans doublon
-// · anciens presets de barre (onglet ★ Favoris de l'ancien menu B : nrBar1 {clé du perso: [{n, b:['Nom|arbre' ×6]}]}, et avant eux nrFav1 {clé: ['Nom|arbre', …]}),
+//   puis des barres qui couvrent ses autres jutsu appris (barsCover : avant les barres favorites, l'ancienne interface donnait accès à tous) ; au plus BARSMAX barres, sans doublon
+// · anciens presets de barre (onglet ★ Favoris de l'ancienne interface de barre : nrBar1 {clé du perso: [{n, b:['Nom|arbre' ×6]}]}, et avant eux nrFav1 {clé: ['Nom|arbre', …]}),
 //   repris UNE fois (puis nrBarMig = 1), AVANT les barres préfaites : un perso de l'anime non retouché garde sa barre de départ, puis ses presets, puis ses autres barres préfaites
 //   (il devient alors « retouché ») ; les presets qui ne trouvent pas de place sont signalés une fois
 function rosMigBars(){if(RSIM)return;let done=null,P={},F={};try{done=localStorage.getItem('nrBarMig')}catch(e){}
