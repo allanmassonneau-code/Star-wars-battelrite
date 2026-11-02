@@ -25,6 +25,10 @@ NATURES.forEach((n,i)=>defTree('n'+i,{type:'nature',name:n[0],col:n[2],take:1}))
 STNAME.forEach((n,i)=>defTree('t'+i,{type:'style',name:n,col:STCOL[i],take:1}));
 CLANS.forEach((c,i)=>defTree('c'+i,{type:'clan',name:'Clan '+c[0],col:c[1],take:isMartial(i)?2:1,force:isMartial(i)}));
 FAMS.forEach((f,i)=>defTree('f'+i,{type:'famille',name:f[0],col:f[1],take:1,pool:'fam'}));
+// arbres martiaux SANS CHAKRA (demande joueur) : les 3 arbres de style (Taijutsu, Kenjutsu, Bukijutsu) et les clans purement martiaux (Taijutsuka, Kenjutsuka, Bukijutsuka)
+// → jcost = 0 pour tous leurs jutsu (un coût en PV « hpc » resterait payé) ; affiché « 0 chakra » partout
+STNAME.forEach((n,i)=>TREES['t'+i].ckFree=true);for(const c in MARTIAL)TREES['c'+c].ckFree=true;
+const ckFreeT=t=>!!(t&&TREES[t]&&TREES[t].ckFree),ckFreeNm=()=>STNAME.join(', ')+', '+Object.keys(MARTIAL).map(c=>CLANS[c][0]).join(', ');
 // TREEMOVE (transition, catalogue actuel) : 'catégorie|nom' → [arbre, rang] (déplace une ligne dans un arbre, au besoin à un autre rang) ou null (retirée des arbres, code conservé)
 // les agents de contenu déplacent les lignes dans le bon fichier kits/… puis retirent l'entrée d'ici
 const TREEMOVE={

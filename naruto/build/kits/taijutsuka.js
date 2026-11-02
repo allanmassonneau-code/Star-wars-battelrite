@@ -9,7 +9,7 @@ KIT('c10',[
  ['C','x.tj_daisen','Konoha Daisenpû','3 coups de pied tournoyants en avançant vers le curseur (6, 6 puis 10 dégâts) ; le 3e projette en l\'air','leaf'],
  ['C','x.tj_esquive','Esquive du fauve','1,5 s : esquive le prochain coup, riposte d\'un coup de pied retourné (14 dégâts) et accélère','leaf'],
  ['B','x.tj_goriki','Konoha Gôriki Senpû','Coup de pied surpuissant : 26 dégâts, ignore parades et boucliers, repousse loin ; contre un obstacle, étourdit 0,8 s','tai'],
- ['B','x.tj_gates','Portes célestes','Ouvre d\'un coup jusqu\'à la 3e porte : inarrêtable 1,5 s et 25 % de dégâts en moins, puis 3 s de coups plus rapides et régénération ; ton prochain coup frappe double','gate'],
+ ['B','x.tj_gates','Portes célestes','Ouvre d\'un coup jusqu\'à la 3e porte : inarrêtable 1,5 s et 20 % de dégâts en moins, puis 1,5 s de coups plus rapides et régénération ; ton prochain coup frappe double','gate'],
  ['A','x.tj_elephant','Éléphant du soir','5 coups de poing d\'air s\'abattent sur la zone visée, qui suit le curseur : 5 × 8 dégâts, le dernier étourdit 0,8 s','tai'],
  ['A','x.tj_peacock','Paon du matin','6e porte : rafale de coups enflammés 0,8 s (immobile), éventail de plumes de feu : jusqu\'à 40 dégâts ; le dernier projette','peacock'],
  ['S','x.tj_lotus2','Lotus caché','3e porte (−10 % PV) : fonce ; si tu touches, 2 assauts éclair traversent la cible puis l\'écrasent au sol : 55 dégâts, étourdi 1 s','tai'],
@@ -69,8 +69,8 @@ Object.assign(NAT,{
   aux.push({type:'tj_lotus',x:u.x,y:u.y,r:0,t:1.5,m:1.5,team:u.team,owner:u,ui:units.indexOf(u),ph:0,d:u.dash,k:0});tjSay(u,'LOTUS !','#6aff7a');sparks(u.x,u.y,'#6aff7a',8,'gate')}),
  // Lotus caché (Ura Renge) : trois assauts éclair ; défini plus bas
  tj_lotus2:S_('Lotus caché','',20,{hero:'rey',line:{len:230,w:36},ai:{mode:'gap',min:30,max:230,p:.65}},null),
- // Poids retirés : les poids tombent, la vitesse explose
- tj_weights:S_('Poids retirés','',6,{hero:'quigon',ai:{mode:'gap',min:150,max:500,p:.4}},(u)=>{u.root=0;u.slow=0;u.haste=Math.max(u.haste,2.2);anim(u,'tj_weights',.32);if(u.ch.clan===TAIJ){tjGate(u,Math.min(5,tjG(u)+1));u.tj_cT=3}S('dash',u);
+ // Poids retirés : les poids tombent, la vitesse explose (IA : sans chakra, ne le lance plus à chaque ouverture : 220-450 de distance, p 0,25)
+ tj_weights:S_('Poids retirés','',6,{hero:'quigon',ai:{mode:'gap',min:220,max:450,p:.25}},(u)=>{u.root=0;u.slow=0;u.haste=Math.max(u.haste,2.2);anim(u,'tj_weights',.32);if(u.ch.clan===TAIJ){tjGate(u,Math.min(5,tjG(u)+1));u.tj_cT=3}S('dash',u);
   const x=u.x,y=u.y;jx({jfx:'tj_weights',x,y,t:.9,m:.9});later(u,.22,()=>{for(const e of enemies(u))if(Math.hypot(e.x-x,e.y-y)<85+e.r)hit(e,u,8,{slow:.8,fx:x,fy:y});
    if(near(x,y)){S('rock',u);shake=Math.max(shake,.15)}aux.push({type:'tj_crater',x,y,r:30,t:5,m:5,team:u.team,owner:u})})}),
  // Bond du fauve : saut et coup de talon (Konoha Daisenkô)
@@ -139,9 +139,10 @@ NAT.tj_lotus2.f=(u,a)=>{u.hp=Math.max(1,u.hp-u.hp*.1);tjGate(u,3);jx({jfx:'tj_ga
  tjUra(u,a,230,0,null)};
 function tjUra(u,a,L,n,tg){S('dash',u);anim(u,n===2?'tj_flykick':n?'lunge':'kickup',.22);dash(u,a,L,.13,{});aux.push({type:'tj_ura',owner:u,d:u.dash,n,tg,sx:u.x,sy:u.y,x:u.x,y:u.y,r:0,t:.6,m:.6,team:u.team,hs:new Set()})}
 Object.assign(NATHERO,{tj:'kylo'});
-// Portes célestes (fusion Première Porte + Porte de la Vie + Corps de jade) : 1,5 s inarrêtable (−25 % de dégâts), puis la 3e porte (coups plus rapides, régénération)
-NAT.tj_gates=S_('Portes célestes','',10,{hero:'savage',ai:SELF(180,.6)},(u)=>{u.root=0;u.slow=0;u.unstop=Math.max(u.unstop,1.5);u.drT=Math.max(u.drT,1.5);u.dr=Math.max(u.dr||0,.25);u.critBuf=Math.max(u.critBuf||0,1);
- tjGate(u,Math.max(3,tjG(u)));u.tj_cT=3;u.tj_life=Math.max(u.tj_life||0,4.5);u.regenB=Math.max(u.regenB,4.5);u.haste=Math.max(u.haste,4.5);u.stam=100;u.tj_red=Math.max(u.tj_red||0,4.5);anim(u,'tj_gate',.5);S('heavy',u);
+// Portes célestes (fusion Première Porte + Porte de la Vie + Corps de jade) : 1,5 s inarrêtable (−20 % de dégâts), puis la 3e porte (coups plus rapides, régénération)
+// (sans chakra depuis que les arbres martiaux sont gratuits : élan de la 3e porte ramené de 4,5 à 3 s au total, −25 → −20 % de dégâts subis, endurance remontée à 60 au lieu de 100)
+NAT.tj_gates=S_('Portes célestes','',10,{hero:'savage',ai:SELF(180,.6)},(u)=>{u.root=0;u.slow=0;u.unstop=Math.max(u.unstop,1.5);u.drT=Math.max(u.drT,1.5);u.dr=Math.max(u.dr||0,.2);u.critBuf=Math.max(u.critBuf||0,1);
+ tjGate(u,Math.max(3,tjG(u)));u.tj_cT=3;u.tj_life=Math.max(u.tj_life||0,3);u.regenB=Math.max(u.regenB,3);u.haste=Math.max(u.haste,3);u.stam=Math.max(u.stam,60);u.tj_red=Math.max(u.tj_red||0,3);anim(u,'tj_gate',.5);S('heavy',u);
  jx({jfx:'tj_gate',ui:units.indexOf(u),x:u.x,y:u.y,n:3,t:.8,m:.8});jx({jfx:'tj_jade',ui:units.indexOf(u),x:u.x,y:u.y,t:1.5,m:1.5});tjSay(u,'PORTES CÉLESTES !','#6aff7a');if(near(u.x,u.y))shake=Math.max(shake,.15)});
 // dash du clan (Espace) : Pas du fauve — ruée de 190 ; fini près d'un ennemi (90), on réapparaît dans son dos ; le coup de base suivant (1,2 s) frappe +30 % ; ouvre une demi-porte
 NAT.tj_pas=S_('Pas du fauve','',5,{hero:'ventress',ai:{mode:'gap',min:120,max:330,p:.45}},(u,a,td)=>{const d=clamp(td||190,60,190),ox=u.x,oy=u.y;S('dash',u);anim(u,'lunge',.2);

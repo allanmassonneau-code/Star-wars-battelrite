@@ -4,7 +4,7 @@ const GSPEED=.8; // tout le jeu tourne à 80 % : combats plus lisibles
 // (une mécanique ULT() prend le haut de la fourchette) ; plus d'ultime : le cut-in, le cri et la bordure dorée du HUD passent aux jutsu de rang S
 const RKB={D:{ck:8,cd:[4,7]},C:{ck:14,cd:[6,10]},B:{ck:20,cd:[8,12]},A:{ck:28,cd:[11,16]},S:{ck:40,cd:[18,24]}},MUDRAS={D:2,C:3,B:4,A:5,S:6},MUDRA_T=.13;
 // coût en chakra d'un jutsu (dash et Kawarimi : pas de rang = 0) : une jauge pleine ≈ 2 jutsu S ; ckO = coût propre au jutsu (JBAL / profil d'équilibrage)
-const jcost=ab=>ab&&ab.rank&&RKB[ab.rank]&&!ab.hpc?(ab.ckO!=null?ab.ckO:RKB[ab.rank].ck):0;
+const jcost=ab=>ab&&ab.rank&&RKB[ab.rank]&&!ab.hpc&&!ckFreeT(ab.tree)?(ab.ckO!=null?ab.ckO:RKB[ab.rank].ck):0; // arbres martiaux (TREES[…].ckFree, nr_kits.js) : 0 chakra
 let COMBO3=false; // vrai pendant le 5e coup du combo corps à corps (petit étourdissement)
 // attaque de base = toujours au corps à corps : combo de 5 coups (20 d'endurance chacun = un combo complet) ; toutes les armes des styles sont de mêlée
 // (le moteur garde le cas « distance » : 10 d'endurance par tir, sans combo, pour une arme hors de cette liste)
