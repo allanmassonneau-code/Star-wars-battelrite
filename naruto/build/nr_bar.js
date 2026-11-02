@@ -78,7 +78,7 @@ function cdPut(u,o){if(!o||!u||!u.ch||!u.ch.bar)return;u.cst=o.cst;u.csg=o.csg;
 AFTER.push(()=>{const R0=respawn;respawn=function(u){const k=cdKeep(u);R0(u);try{cdPut(u,k)}catch(e){console.error(e)}}});
 // ---------- en ligne ----------
 // version du protocole (format v6 : barre de 6, menu B, presets 'bar', arbres martiaux sans chakra ; v7 : recharges longues D 20-30 s … S 80-100 s, recharges gardées à la réapparition) : hôte et invité doivent l'avoir tous les deux, sinon la connexion est coupée avec un message
-const NPV=7,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez toi et chez ton ami.';let NVT=0;
+const NPV=8,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez toi et chez ton ami.';let NVT=0;
 const netVerT=()=>performance.now()-NVT<4000;
 function netVerHost(P){P.nver=1;net.peers=net.peers.filter(x=>x!==P);try{P.conn.send({t:'nver'})}catch(e){}setTimeout(()=>{try{P.conn.close()}catch(e){}},300);setStat('Un ami a une autre version du jeu : il doit recharger la page.');try{sendLobby()}catch(e){}}
 function netVerGuest(){NVT=performance.now();netReset();state='menu';setStat(VERMSG);try{netUI(true)}catch(e){}}
