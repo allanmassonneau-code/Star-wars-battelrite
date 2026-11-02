@@ -26,8 +26,8 @@ const barNorm=nb=>{const o=[];for(let s=0;s<BARN;s++){const v=nb&&nb[s];o.push(t
 // applique une nouvelle barre (6 jid) : les recharges suivent le jutsu, un jutsu qui ENTRE reçoit max(stash, 2 s), un jutsu qui SORT garde sa recharge dans le stash (u.cst).
 // Un cast en cours n'est jamais interrompu : si un jutsu occupé (canalisation, relance…) devait QUITTER la barre, le changement attend la fin (u.barQ, renvoie pend:true).
 function setBar(u,nb){nb=barNorm(nb).map(j=>j>=0&&u.ch.jab&&u.ch.jab[j]?j:-1);const ob=u.ch.bar.slice();
- for(const i of barBusy(u)){const j=ob[i-BAR0];if(j>=0&&!nb.includes(j)){u.barQ=nb;return{ok:true,pend:true}}}
- u.barQ=null;if(ob.every((j,s)=>j===nb[s]))return{ok:true};
+ for(const i of barBusy(u)){const j=ob[i-BAR0];if(j>=0&&!nb.includes(j)){u.barQ=nb;MBAR[u.c+'|'+u.team]=nb.slice();return{ok:true,pend:true}}} // barre en attente : gardée pour la manche suivante même si on meurt avant la fin du jutsu
+ u.barQ=null;if(ob.every((j,s)=>j===nb[s])){MBAR[u.c+'|'+u.team]=nb.slice();return{ok:true}}
  const cd={},cg={};ob.forEach((j,s)=>{if(j>=0){cd[j]=u.cds[BAR0+s];cg[j]=u.chg?u.chg[BAR0+s]:0}});if(!u.cst)u.cst={};if(!u.csg)u.csg={};
  const mp={};ob.forEach((j,s)=>{if(j>=0&&nb.includes(j))mp[BAR0+s]=BAR0+nb.indexOf(j)});
  for(let s=0;s<BARN;s++){const j=nb[s],i=BAR0+s;
@@ -67,8 +67,8 @@ function barSetAll(u,nb){if(!u||!u.ch||!u.ch.jab)return{ok:false,e:'unit'};if(!A
   if(!u.ch.learn.includes(j)||!u.ch.jab[j])return{ok:false,e:'nolearn'};if(o.includes(j))return{ok:false,e:'bar'};o.push(j)}
  if(o.every(j=>j<0))return{ok:false,e:'nobar'};if(barCur(u).every((j,s)=>j===o[s]))return{ok:false,e:'samebar'};return setBar(u,o)}
 // ---------- en ligne ----------
-// version du protocole (format v5 : barre de 6, menu B) : hôte et invité doivent l'avoir tous les deux, sinon la connexion est coupée avec un message
-const NPV=5,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez toi et chez ton ami.';let NVT=0;
+// version du protocole (format v6 : barre de 6, menu B, presets 'bar', arbres martiaux sans chakra) : hôte et invité doivent l'avoir tous les deux, sinon la connexion est coupée avec un message
+const NPV=6,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez toi et chez ton ami.';let NVT=0;
 const netVerT=()=>performance.now()-NVT<4000;
 function netVerHost(P){P.nver=1;net.peers=net.peers.filter(x=>x!==P);try{P.conn.send({t:'nver'})}catch(e){}setTimeout(()=>{try{P.conn.close()}catch(e){}},300);setStat('Un ami a une autre version du jeu : il doit recharger la page.');try{sendLobby()}catch(e){}}
 function netVerGuest(){NVT=performance.now();netReset();state='menu';setStat(VERMSG);try{netUI(true)}catch(e){}}
@@ -104,8 +104,11 @@ function preLoad(){try{if(SIMQ)return{};const o=JSON.parse(localStorage.getItem(
 function preSave(o){try{if(SIMQ)return;localStorage.setItem('nrBar1',JSON.stringify(o))}catch(e){}}
 const preKey=()=>typeof MEK!=='undefined'&&MEK||'p0';
 const preName=n=>String(n==null?'':n).replace(/[<>\u0000-\u001f]/g,'').trim().slice(0,PRENM);
-function preList(k){const L=preLoad()[k||preKey()];if(!Array.isArray(L))return[];
+function preList(k){k=k||preKey();let L=preLoad()[k];if(!Array.isArray(L)){L=preMig(k);if(!L)return[]}
  return L.filter(p=>p&&Array.isArray(p.b)).slice(0,PREMAX).map((p,i)=>({n:preName(p.n)||'Barre '+(i+1),b:Array.from({length:BARN},(_,s)=>typeof p.b[s]==='string'?p.b[s].slice(0,80):'')}))}
+// anciens favoris par jutsu (nrFav1 {perso: ['Nom|arbre', …]}) : repris une fois en une barre « Favoris » (6 premiers), puis nrBar1 fait foi
+function preMig(k){try{if(SIMQ)return null;const F=JSON.parse(localStorage.getItem('nrFav1')||'{}'),f=F&&F[k];if(!Array.isArray(f))return null;const v=f.filter(x=>typeof x==='string'&&x).slice(0,BARN);if(!v.length)return null;
+ const L=[{n:'Favoris',b:Array.from({length:BARN},(_,s)=>v[s]||'')}];prePut(L,k);return L}catch(e){return null}}
 function prePut(L,k){const o=preLoad();o[k||preKey()]=L.slice(0,PREMAX);preSave(o)}
 // barre (6 jid) → preset (6 noms) ; preset → 6 jid parmi les jutsu appris de l'unité (-1 si oublié)
 const preOf=bar=>Array.from({length:BARN},(_,s)=>bar&&bar[s]>=0?jKey(bar[s]):'');

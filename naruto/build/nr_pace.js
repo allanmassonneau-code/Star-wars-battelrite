@@ -25,8 +25,8 @@ function ckTick(u,dt){if(u.dead)return;const pm=ckPm(u);if(u.ckLock>0)u.ckLock-=
 // « pas assez de chakra » : message (limité) et éclat de la case sur la barre de jutsu
 function ckLack(u,i){if(u.ckMsg>SIMT)return;u.ckMsg=SIMT+.7;if(u===player||u.human)say(u,'CHAKRA INSUFFISANT ('+lbl.KeyR+')','#4ab0ff');if(u===player){ckFl.i=i;ckFl.t=performance.now()+450}}
 const ckFl={i:-1,t:0};
-// IA : se recharger quand c'est sûr (personne autour, ou l'adversaire est neutralisé / se recharge aussi)
-function aiChk(u,dt){if(u.sub_sage>0||!aiNeedCk(u))return false;const lo=u.aiCkLo||(u.aiCkLo=CK.aiLo+rnd()*CK.aiLoR),e=nearE(u,u.x,u.y,CK.aiSafe+250),d=e?dist(u,e):1e9,
+// IA : se recharger quand c'est sûr (personne autour, ou l'adversaire est neutralisé / se recharge aussi). Perso martial (aucun jutsu payant) : seulement s'il a été vidé (épuisé)
+function aiChk(u,dt){if(u.sub_sage>0||(!aiNeedCk(u)&&!u.exh))return false;const lo=u.aiCkLo||(u.aiCkLo=CK.aiLo+rnd()*CK.aiLoR),e=nearE(u,u.x,u.y,CK.aiSafe+250),d=e?dist(u,e):1e9,
   busy=e&&(e.stun>.5||e.sleepT<0||e.chk||e.root>.8||e.dead);
  if(u.chk)return u.energy<(u.aiCkTo||95)&&!(e&&d<(u.aiCkSt||CK.aiStop)&&!busy);
  if(u.energy>=lo){u.aiLowT=0;return false}u.aiLowT=(u.aiLowT||0)+dt; // à sec depuis longtemps sans fenêtre sûre : prend le risque plus près
@@ -48,7 +48,7 @@ function aiSave(u,i,h){if(h.mode==='esc'||h.mode==='def'||h.mode==='heal')return
 function ckHud(p,x,y,w){const lo=p.energy<30,t=performance.now()/1000,cy=H-84;text(String(Math.floor(p.energy)),x+w+6,y+4,10,p.exh?'#ff8a8a':'#7fc4ff','left');if(p.dead)return;
  if(p.exh){g.fillStyle=rgba('#ff4a4a',.25+.2*Math.sin(t*8));g.fillRect(x,y,w,5);text(`ÉPUISÉ : plus lent, endurance lente · ${lbl.KeyR} maintenu = chakra`,W/2,cy,13,'#ff9a9a','center')}
  else if(p.chk)text(`Concentration du chakra… ${Math.floor(p.energy)} / 100`,W/2,cy,13,'#8fd0ff','center');
- else if(lo)text(`Chakra bas · ${lbl.KeyR} maintenu = chakra (immobile, à l'abri)`,W/2,cy,12,rgba('#8fd0ff',.65+.35*Math.sin(t*6)),'center','normal')}
+ else if(lo&&aiNeedCk(p))text(`Chakra bas · ${lbl.KeyR} maintenu = chakra (immobile, à l'abri)`,W/2,cy,12,rgba('#8fd0ff',.65+.35*Math.sin(t*6)),'center','normal')}
 // barre de jutsu : coût en chakra de chaque case, case grisée « CHAKRA » si la jauge ne suffit pas
 // HUD : case vide de la barre (grisée, avec sa touche)
 function hudEmpty(p,i,x,y,s,sh){g.fillStyle='rgba(13,19,32,.45)';g.fillRect(x,y,s,sh);g.strokeStyle='#1c2638';g.lineWidth=1.5;g.setLineDash([4,4]);g.strokeRect(x,y,s,sh);g.setLineDash([]);text(lbl[SLOTS[i]]||'',x+s/2,y+24,16,'#3a4660','center');text('vide',x+s/2,y+sh+13,9,'#4a5670','center','normal')}
