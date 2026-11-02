@@ -186,7 +186,8 @@ function bmDrawPre(lh,t){const L=bmPre(),n=L.length;
   // 6 cases
   for(let s=0;s<BARN;s++){const C=bmPCellR(R,s),k=p.b[s],j=nb[s],J=j>=0?JL[j]:null,lost=!!k&&j<0;
    rr(C,6,'rgba(13,19,32,.85)',J&&J.r==='S'?'#b89a3a':'#3a4a66',1.1);text(String(s+1),C.x+4,C.y+11,9,'#8a9ab8','left');
-   if(J){jIcon(C.x+C.w/2,C.y+C.h/2+2,9,catCol(J.cat),J.cat,J.r==='S');text(J.r,C.x+C.w-4,C.y+11,9.5,RANKC[J.r]||'#cfd8ea','right')}
+   if(J){const ab=player.ch.jab[j],ck=jcost(ab);jIcon(C.x+C.w/2,C.y+C.h/2+1,9,catCol(J.cat),J.cat,J.r==='S');text(J.r,C.x+C.w-4,C.y+11,9.5,RANKC[J.r]||'#cfd8ea','right');
+    if(ab&&!ab.hpc)text(String(ck),C.x+C.w-4,C.y+C.h-3,8.5,ck?'#7fc8ff':'#8fe38f','right')} // coût en chakra (0 en vert : arbres martiaux)
    else text(lost?'?':'·',C.x+C.w/2,C.y+C.h/2+5,lost?13:12,lost?'#ff7a6a':'#5a6680','center')}
   // boutons
   {const S=bmPSaveR(R);rr(S,6,hS?'#ff9a3a':'rgba(50,34,20,.9)','#c08040',1);text('Enregistrer',S.x+S.w/2,S.y+16,10.5,hS?'#1a1008':'#f3d9b0','center')}
@@ -194,5 +195,5 @@ function bmDrawPre(lh,t){const L=bmPre(),n=L.length;
   if(h)hoverTip('bmp'+i+(hS?'s':hD?'d':hN?'n':''),()=>hS?{ax:BMP.x,t:'Enregistrer dans « '+p.n+' »',col:'#ffc53a',d:'Remplace les 6 cases de ce preset par ta barre actuelle.'}
    :hD?{ax:BMP.x,t:'Supprimer « '+p.n+' »',col:'#ff7a6a',d:'Deux clics : le premier demande confirmation.'}
    :hN?{ax:BMP.x,t:'Renommer « '+p.n+' »',col:'#ffc53a',d:`Clic puis tape le nom (${PRENM} caractères max) · Entrée : valider · Échap : annuler.`}
-   :{ax:BMP.x,t:p.n+(on?' (équipée)':''),col:'#ffc53a',l:p.b.map((k,s)=>{const j=nb[s];return[`${s+1}. `+(j>=0?`${jName(j)} · rang ${JL[j].r}`:k?`${k.split('|')[0]} (non appris : ignoré)`:'vide'),j>=0?liftC(catCol(JL[j].cat),.5):k?'#ff7a6a':'#7a8aa8']}),
+   :{ax:BMP.x,t:p.n+(on?' (équipée)':''),col:'#ffc53a',l:p.b.map((k,s)=>{const j=nb[s];return[`${s+1}. `+(j>=0?`${jName(j)} · rang ${JL[j].r} · ${jcostT(player.ch.jab[j])}`:k?`${k.split('|')[0]} (non appris : ignoré)`:'vide'),j>=0?liftC(catCol(JL[j].cat),.5):k?'#ff7a6a':'#7a8aa8']}),
     d:'Clic : équiper ces 6 jutsu d\'un coup. Les recharges suivent les jutsu ; ceux qui entrent attendent 2 s ; un jutsu en cours n\'est jamais coupé.'})}}
