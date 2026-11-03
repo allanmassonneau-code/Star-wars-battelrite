@@ -24,7 +24,8 @@ NATURES.forEach((n,i)=>defTree('n'+i,{type:'nature',name:n[0],col:n[2],take:1}))
 STNAME.forEach((n,i)=>defTree('t'+i,{type:'style',name:n,col:STCOL[i],take:1}));
 CLANS.forEach((c,i)=>defTree('c'+i,{type:'clan',name:'Clan '+c[0],col:c[1],take:isMartial(i)?2:1,force:isMartial(i)}));
 FAMS.forEach((f,i)=>defTree('f'+i,{type:'famille',name:f[0],col:f[1],take:1,pool:'fam'}));
-// KEKKEI GENKAI (sans clan, À LA PLACE des sub) : KGS[i] = {n:'Yôton', col:'#…', d:'phrase courte (assistant, fiche)', el:'élément décrit', tag:'2 lettres de l'icône'}
+// KEKKEI GENKAI (sans clan, À LA PLACE des sub) : KGS[i] = {n:'Yôton', col:'#…', d:'phrase courte (assistant, fiche)', el:'natures d'origine (texte)', tag:'2 lettres (repli de l'icône)',
+//   nat: nature suggérée (★ de l'étape Origine), ico(f): icône dessinée (repère de 32 px, couleur f ; jIcon)} — les 10 KG : kits/kg_*.js (outils communs : kits/kg_common.js)
 // déclaré par defKG(i, o) dans un fichier kits/kg_*.js (avant nr_tree.js, comme les KIT) : arbre 'g'+i (type 'kg', 1 jutsu par rang de D à S, même forme qu'un arbre de clan)
 // KGTRAITS[i] : trait du KG (même interface que TRAITS[clan], voir trait() plus bas) · DASHG[i] : son dash (comme DASHC[clan]) · KGBAL[i] : [PV, puissance] (comme CLANBAL)
 // L'assistant (nr_wiz.js, étape Origine) liste KGS tout seul : un KG déclaré ici apparaît dans « Sans clan + kekkei genkai » sans autre code.

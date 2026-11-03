@@ -80,6 +80,14 @@ function rosMigSubs(){if(RSIM)return;let done=null;try{done=localStorage.getItem
  try{localStorage.setItem('nrSubMig','1')}catch(e){}if(!L.length)return;
  const c={t:'Nouvelle liste des sub',d:`Plus de familles à choisir : exactement 1 sub par rang, dans la liste de tous les sub. ${L.slice(0,2).join(' · ')}${L.length>2?` · et ${L.length-2} autre${L.length>3?'s':''}`:''}. « Modifier » pour compléter.`,ok:'Compris',no:'Fermer',col:'#ffb347',fn:()=>{}};
  CONFQ.push(c)}
+// ----- arrivée des kekkei genkai (fait une fois, nrKgMig). Choix : un sans-clan à sub RESTE VALIDE (« Sans clan · sub » reste une origine, avec la liste
+// unique des sub, comme les persos de l'anime qui en ont) ; rien n'est converti d'office. Une fenêtre signale qu'il peut prendre un kekkei genkai à la place,
+// avec une suggestion d'après sa nature (KGS[i].nat, aussi marquée ★ dans l'étape Origine) ; le changement se fait à l'étape Origine (« Modifier »).
+function rosMigKG(){if(RSIM)return;let done=null;try{done=localStorage.getItem('nrKgMig')}catch(e){}if(done)return;try{localStorage.setItem('nrKgMig','1')}catch(e){}
+ const KG=KGS.map((_,i)=>i).filter(kgOk);if(!KG.length)return;const L=[];
+ for(const m of ROS.mine){const b=m.build;if(!b||b.clan>=0||kgOk(b.kg))continue;const s=b.nat>=0?KG.find(i=>KGS[i].nat===b.nat):undefined;L.push(b.name+(s!=null?` (${NATURES[b.nat][0]} → ${KGS[s].n} ?)`:''))}
+ if(!L.length)return;
+ CONFQ.push({t:'Les kekkei genkai sont arrivés',d:`Un sans-clan peut prendre un kekkei genkai (arbre complet D → S et son trait) au lieu des sub. Les tiens gardent leurs sub : ${L[0]}${L.length>1?` et ${L.length-1} autre${L.length>2?'s':''}`:''}. « Modifier » → Origine pour en choisir un.`,ok:'Compris',no:'Fermer',col:'#ffb347',fn:()=>{}})}
 const CONFQ=[]; // fenêtres en attente (montrées l'une après l'autre)
 // ----- liste des persos : {k, b build, sec section, P perso de l'anime (+ i son indice, mod retouché) ou id (les tiens)}
 function rosEntries(){if(RL)return RL;RL=[];
@@ -92,7 +100,7 @@ const rosOver=E=>false,rosOverWarn=E=>false;
 function rosChanged(){RL=RLAY=null;rosSave()}
 // recherche par nom (sans accents ni majuscules) : nom, nom complet, village, clan, nature
 const fold=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
-const rosMatch=E=>!RQ||fold([E.b.name,E.P?E.P.full:'',SECS[E.sec][0],E.b.clan>=0?CLANS[E.b.clan][0]:'sans clan',E.b.nat>=0?NATURES[E.b.nat][0]:''].join(' ')).includes(RQ);
+const rosMatch=E=>!RQ||fold([E.b.name,E.P?E.P.full:'',SECS[E.sec][0],E.b.clan>=0?CLANS[E.b.clan][0]:'sans clan '+(kgOk(E.b.kg)?KGS[E.b.kg].n+' kekkei genkai':''),E.b.nat>=0?NATURES[E.b.nat][0]:''].join(' ')).includes(RQ);
 // ninjas d'aperçu : un par perso, refait quand sa build change (modèle 3D gardé tant qu'il s'affiche) ; stats recalculées si le profil d'équilibrage change
 const RF=new Map(),blVer=()=>{try{return BLC.sig||''}catch(e){return''}};
 function rosFake(E){let F=RF.get(E.k);const v=blVer();
@@ -204,8 +212,8 @@ function rosCard(E,R,hov,t){const F=rosFake(E),u=F.u,ch=F.ch,S=SECS[E.sec],col=S
  {const sc=ch.look.scale>1?.88:.98;drawPrevN(u,px,fy,sc,0);cardChar(F,px,fy,sc,hov,t);drawPrevN(u,px,fy,sc,1)}g.restore();
  g.fillStyle=rgba(col,.8);g.fillRect(R.x+8,R.y+ph+4,R.w-16,1.5);secMark(R.x+14,R.y+14,8,E.sec);
  fitT(b.name,R.x+R.w/2,R.y+ph+20,14,b.side?'#ffb0a0':'#ffd38a',R.w-12,'bold',10,'center');
- {const ic=[];ic.push(b.clan>=0?['c'+b.clan,CLANS[b.clan][1]]:['u','#c8b89a']);if(b.nat>=0)ic.push(['n'+b.nat,NATURES[b.nat][2]]);
-  const s=(b.clan>=0?CLANS[b.clan][0]:'Sans clan')+(b.nat>=0?' · '+NATURES[b.nat][0]:''),z=10;g.font=FNT(z,'bold');const tw=Math.min(R.w-14-ic.length*15,g.measureText(s).width),x0=R.x+R.w/2-(ic.length*15+tw)/2;
+ {const ic=[],kg=b.clan<0&&kgOk(b.kg);ic.push(b.clan>=0?['c'+b.clan,CLANS[b.clan][1]]:kg?['g'+b.kg,KGS[b.kg].col]:['u','#c8b89a']);if(b.nat>=0)ic.push(['n'+b.nat,NATURES[b.nat][2]]);
+  const s=(b.clan>=0?CLANS[b.clan][0]:kg?KGS[b.kg].n:'Sans clan')+(b.nat>=0?' · '+NATURES[b.nat][0]:''),z=10;g.font=FNT(z,'bold');const tw=Math.min(R.w-14-ic.length*15,g.measureText(s).width),x0=R.x+R.w/2-(ic.length*15+tw)/2;
   ic.forEach(([k,c2],i)=>jIcon(x0+6+i*15,R.y+ph+31,6,c2,k));fitT(s,x0+ic.length*15+1,R.y+ph+35,z,'#d8c0a0',tw+1,'bold',8)}
  if(hov&&scr==='list'){for(const q of cardBtns(E,R)){const h=inRect(mouse,q.R);rr(q.R,6,h?'#ffb347':'rgba(20,13,8,.88)',h?'#ffe0a0':'#8a5a2a',1.2);uiIcon(q.k,q.R.x+q.R.w/2,q.R.y+q.R.h/2,8.5,h?'#1a1008':'#f3d9b0');if(h)hoverTip('cb'+q.k+E.k,()=>({t:q.t,d:BTIP[q.k]}))}}
  else if(scr==='opp'&&hov)tag(R.x+R.w-6,R.y+7,me?'TON DOUBLE':'AFFRONTER','#ff6a3a','#fff');
@@ -367,5 +375,5 @@ function rosQSync(){wizISync();if(!RQI)return;let bl=false;try{bl=BLC.open}catch
 // ----- au chargement : la liste, puis le perso joué la dernière fois (MY)
 try{rosLoad()}catch(e){ROS={mine:[],anime:{},last:{},nid:1};RL=RLAY=null}
 try{rosMigBars()}catch(e){console.error(e)}
-try{rosMigSubs()}catch(e){console.error(e)}
+try{rosMigSubs()}catch(e){console.error(e)}try{rosMigKG()}catch(e){console.error(e)}
 {const E=rosGet(ROS.last.me)||rosGet('a:'+PRESETS[0].n);MEK=FK=E.k;MY=sanitizeBuild(E.b);MYCH=mkNinja(MY);CH.p0=MYCH}

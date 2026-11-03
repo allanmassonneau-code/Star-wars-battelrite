@@ -109,18 +109,19 @@ let BLX=null; // tâche en cours dans l'iframe
 function blSimJob(job){blApply(blNorm(job.prof),true);HLS.on=job.mode==='heal'&&!!blG(blNorm(job.prof),'heal');const q=[];for(let i=0;i<job.per;i++)for(const c of job.cats)q.push([c,i]);
  const PB=PRESETS.map((P,i)=>{try{return presetBuild(i,P.n,0)}catch(e){return null}});
  BLX={job,R:srnd(job.seed||77),q,i:0,cur:null,PB,res:{cats:{},j:{},ts:[],done:0,total:q.length,mix:0}};for(const c of job.cats)BLX.res.cats[c]={w:0,n:0,to:0,ts:[]}}
-// kit aléatoire dans une catégorie : 'c<k>' clan, 'u' sans clan, 'n<k>' nature, 't<k>' arbre de style, 'f<k>' famille (sans clan qui la prend), 's<k>' style de base, 'free'
+// kit aléatoire dans une catégorie : 'c<k>' clan, 'u' sans clan, 'g<k>' sans clan à kekkei genkai, 'n<k>' nature, 't<k>' arbre de style, 'f<k>' famille (sans clan qui la prend), 's<k>' style de base, 'free'
 function blKit(R,cat){const k=x=>Math.floor(R()*x.length);let a=randomBuild(R,0,'a');if(cat==='free')return a;
  const T=cat[0],v=+cat.slice(1),b=Object.assign({},a,{k:null,bar:null});
  if(cat==='u')b.clan=-1;else if(T==='n'){b.nat=v;if(isMartial(b.clan))b.clan=-1}else if(T==='c')b.clan=v;else if(T==='t'){b.st=v;if(isMartial(b.clan))b.clan=+Object.keys(MARTIAL).find(c=>MARTIAL[c]===v)}
  else if(T==='f'){b.clan=-1;b.kg=-1}
+ else if(T==='g'){b.clan=-1;b.kg=v}
  else if(T==='s'){const ok=[-1,...CLANS.map((_,i)=>i)].filter(c=>[0,1,2].some(st=>stylesOf({clan:c,st,fam:[]}).includes(v)));if(!ok.includes(b.clan))b.clan=ok[k(ok)];for(const st of[b.st,0,1,2])if(stylesOf({clan:b.clan,st,fam:[]}).includes(v)){b.st=st;break}b.w=v}
  const o=sanitizeBuild(b);if(T!=='s'){const SW=stylesOf(o);o.w=SW[k(SW)]}
  const ids=[];for(const t of treesOf(o))for(const r of RANKO)ids.push(...TREE[t][r]);for(let i=ids.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]]}
  if(T==='f')ids.sort((x,y)=>(JL[y].cat==='f'+v)-(JL[x].cat==='f'+v)); // la famille testée d'abord : ses jutsu sont appris
  o.k=[];for(const id of ids)if(canLearn(o.k,id))o.k.push(id);const L=o.k.slice();o.bar=[];while(o.bar.length<BARN&&L.length)o.bar.push(L.splice(k(L),1)[0]);o.bars=autoBars(o);
  const D=dashOpts(o);o.dsh=D[k(D)];return sanitizeBuild(o,true)}
-const blInCat=(b,cat)=>{if(cat==='free')return true;const T=cat[0],v=+cat.slice(1);return cat==='u'?b.clan===-1:T==='c'?b.clan===v:T==='n'?b.nat===v:T==='t'?b.st===v:T==='f'?b.clan<0&&b.fam.includes(v):T==='s'?b.w===v:false};
+const blInCat=(b,cat)=>{if(cat==='free')return true;const T=cat[0],v=+cat.slice(1);return cat==='u'?b.clan===-1:T==='c'?b.clan===v:T==='n'?b.nat===v:T==='t'?b.st===v:T==='f'?b.clan<0&&b.fam.includes(v):T==='g'?b.clan<0&&b.kg===v:T==='s'?b.w===v:false};
 function blDuelSetup(cat,i){const X=BLX,R=X.R;let a,b;
  if(X.job.kits==='preset'){const P=X.PB.map((b,i)=>b&&blInCat(b,cat)?i:-1).filter(i=>i>=0);if(P.length){const ia=P[Math.floor(R()*P.length)];a=X.PB[ia];let ib;do ib=Math.floor(R()*X.PB.length);while((ib===ia||!X.PB[ib])&&X.PB.length>1);b=X.PB[ib]}else{a=blKit(R,cat);b=randomBuild(R,1,'b');X.res.mix++}}
  else{a=blKit(R,cat);b=randomBuild(R,1,'b')}

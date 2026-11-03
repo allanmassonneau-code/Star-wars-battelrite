@@ -127,7 +127,7 @@ function jIcon(x,y,r,col,cat,ult){g.save();g.fillStyle=col;g.strokeStyle='#14100
   case'n4':g.moveTo(-11,8);g.lineTo(-4,-5);g.lineTo(0,1);g.lineTo(4,-9);g.lineTo(11,8);g.closePath();g.fill();break
   case'u':case'f':g.moveTo(0,-12);g.lineTo(3,-3);g.lineTo(12,0);g.lineTo(3,3);g.lineTo(0,12);g.lineTo(-3,3);g.lineTo(-12,0);g.lineTo(-3,-3);g.closePath();g.fill();g.fillStyle=col;g.beginPath();g.arc(0,0,2.4,0,7);g.fill();break
   case'c':{const t=clanTag(+cat.slice(1));text(t,0,t.length>1?5:6,t.length>1?13:17,f)}break
-  case'g':{const K=KGS[+cat.slice(1)],t=K?K.tag:'?';text(t,0,t.length>1?5:6,t.length>1?13:17,f)}break
+  case'g':{const i=+cat.slice(1),K=KGS[i];if(K&&K.ico){g.fillStyle=f;g.strokeStyle=f;K.ico(f,col)}else{const t=K?K.tag:'?';text(t,0,t.length>1?5:6,t.length>1?13:17,f)}}break
   case'p':g.arc(0,0,7,0,7);g.stroke();g.beginPath();g.arc(0,0,2.5,0,7);g.fill();break
   default:g.moveTo(-7,7);g.lineTo(1,-1);g.stroke();g.beginPath();g.moveTo(-1,-5);g.lineTo(10,-10);g.lineTo(5,1);g.closePath();g.fill();g.beginPath();g.arc(-9,9,2.6,0,7);g.stroke()}
  g.restore()}

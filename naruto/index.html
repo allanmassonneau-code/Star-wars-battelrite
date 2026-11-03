@@ -695,7 +695,8 @@ NATURES.forEach((n,i)=>defTree('n'+i,{type:'nature',name:n[0],col:n[2],take:1}))
 STNAME.forEach((n,i)=>defTree('t'+i,{type:'style',name:n,col:STCOL[i],take:1}));
 CLANS.forEach((c,i)=>defTree('c'+i,{type:'clan',name:'Clan '+c[0],col:c[1],take:isMartial(i)?2:1,force:isMartial(i)}));
 FAMS.forEach((f,i)=>defTree('f'+i,{type:'famille',name:f[0],col:f[1],take:1,pool:'fam'}));
-// KEKKEI GENKAI (sans clan, À LA PLACE des sub) : KGS[i] = {n:'Yôton', col:'#…', d:'phrase courte (assistant, fiche)', el:'élément décrit', tag:'2 lettres de l'icône'}
+// KEKKEI GENKAI (sans clan, À LA PLACE des sub) : KGS[i] = {n:'Yôton', col:'#…', d:'phrase courte (assistant, fiche)', el:'natures d'origine (texte)', tag:'2 lettres (repli de l'icône)',
+//   nat: nature suggérée (★ de l'étape Origine), ico(f): icône dessinée (repère de 32 px, couleur f ; jIcon)} — les 10 KG : kits/kg_*.js (outils communs : kits/kg_common.js)
 // déclaré par defKG(i, o) dans un fichier kits/kg_*.js (avant nr_tree.js, comme les KIT) : arbre 'g'+i (type 'kg', 1 jutsu par rang de D à S, même forme qu'un arbre de clan)
 // KGTRAITS[i] : trait du KG (même interface que TRAITS[clan], voir trait() plus bas) · DASHG[i] : son dash (comme DASHC[clan]) · KGBAL[i] : [PV, puissance] (comme CLANBAL)
 // L'assistant (nr_wiz.js, étape Origine) liste KGS tout seul : un KG déclaré ici apparaît dans « Sans clan + kekkei genkai » sans autre code.
@@ -11932,6 +11933,947 @@ JFXD.bk_twin=(f,k,e,t,u)=>{if(e>.5)return;const o=u&&!u.dead?u:f,pr=e/.5;for(con
 JFXD.bk_bind=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;const q=P(tg.x,tg.y,tg.z||0),s=q.s;g.save();g.globalCompositeOperation='lighter';for(let i=0;i<5;i++){const y=q.y-(12+i*10)*s,w=(15-Math.abs(i-2)*1.5)*s;g.strokeStyle=rgba('#ffd36a',.9*Math.min(1,k*4));g.lineWidth=3*s;
  g.beginPath();g.ellipse(q.x,y,w,w*.35,-.2,t*3+i,t*3+i+4);g.stroke()}g.restore()};
 
+// ===== Kekkei genkai (sans clan, À LA PLACE des sub) : outils communs (préfixe gk_) =====
+// Chaque kekkei genkai (kits/kg_*.js) appelle defKG(i,{…}) (nr_kits.js), écrit KIT('g<i>',…) (1 jutsu par rang, D → S, comme un clan),
+// KGTRAITS[i] (trait), DASHG[i] (dash) et KGBAL[i]. Ce fichier réunit ce qu'ils partagent : palettes, coups, cumuls (états du trait),
+// flaques au sol, rayons, explosions, dessins de projectiles et la petite icône de l'étape Origine.
+// Palettes : GK[vfx] = {a clair, b principal, c sombre, d contour} (VP[vfx] est rempli d'après elles : étincelles et impacts aux couleurs du KG)
+const GK={};
+function gkPal(v,a,b,c,d){GK[v]={a,b,c,d};AFTER.push(()=>{VP[v]=[b,a,c]})}
+const gkI=u=>units.indexOf(u);
+const gkIn=(e,x,y,r)=>Math.hypot(e.x-x,e.y-y)<r+e.r;
+// coup aux couleurs du KG (VFX = clé du KG : le trait reconnaît ses propres jutsu, même dans les effets différés)
+function gkHit(e,u,d,o,v){const V=VFX;VFX=v;const r=hit(e,u,d,o||{});VFX=V;return r}
+function gkS(k,u){const V=VFX;VFX=null;S(k,u);VFX=V} // son brut (sans variante d'élément)
+function gkAoe(u,x,y,r,d,o,v,cb){let n=0;for(const e of enemies(u))if(gkIn(e,x,y,r)&&gkHit(e,u,d,Object.assign({fx:x,fy:y,unblockable:1},o),v)){n++;if(cb)cb(e)}return n}
+// le jutsu en cours vient-il de ce KG ? (VFX posé par fire et par gkHit)
+const gkMine=v=>VFX===v;
+// contrôle à chaque image pendant un dash (charges, poings) : aux.push({type:'gk_chk',…,f})
+AUXF.gk_chk=x=>{if(x.t>0&&x.f)x.f()};AUXD.gk_chk=()=>{};
+// pilote : fait virer un projectile vers l'ennemi le plus proche (tête chercheuse douce)
+function gkSteer(u,p,rate,R){aux.push({type:'gk_pil',x:p.x,y:p.y,r:0,t:p.life+.2,m:p.life+.2,team:u.team,owner:u,p,rate,R})}
+AUXF.gk_pil=(x,dt)=>{const p=x.p;if(!p||p.dead||p.life<=0||!projs.includes(p)){x.t=0;return}x.x=p.x;x.y=p.y;const o=x.owner;if(!o)return;const e=nearE(o,p.x,p.y,x.R);if(!e)return;
+ const h=Math.atan2(p.vy,p.vx);let df=Math.atan2(e.y-p.y,e.x-p.x)-h;while(df>Math.PI)df-=2*Math.PI;while(df<-Math.PI)df+=2*Math.PI;const na=h+clamp(df,-x.rate*dt,x.rate*dt),sp=Math.hypot(p.vx,p.vy);p.vx=Math.cos(na)*sp;p.vy=Math.sin(na)*sp};
+AUXD.gk_pil=()=>{};
+// ---------- cumuls posés par un trait (un objet aux de l'hôte par cible et par clé : compte, fonte, insensibilité) ----------
+// t[key] = nombre de cumuls (synchronisé : AFTER UK.push(key) dans le fichier du KG)
+function gkStack(src,t,key,n,max,dur){if(!t||t.dead||!src||t.team===src.team||t.phase>0||!(n>0))return 0;let x=null;
+ for(const q of aux)if(q.type==='gk_st'&&q.tg===t&&q.key===key&&!q.done){x=q;break}
+ if(!x){x={type:'gk_st',x:t.x,y:t.y,r:0,t:1,m:1,team:src.team,owner:src,tg:t,key,n:0,d:0,im:0};aux.push(x)}
+ if(x.im>0)return 0;x.n=Math.min(max,x.n+n);x.d=dur;x.owner=src;t[key]=x.n;return x.n}
+function gkStSet(t,key,n,im){for(const q of aux)if(q.type==='gk_st'&&q.tg===t&&q.key===key&&!q.done){q.n=n;q.im=im||0;t[key]=n}}
+AUXF.gk_st=(x,dt)=>{const t=x.tg;if(x.done)return;if(!t||t.dead||units.indexOf(t)<0){x.done=1;x.t=0;if(t)t[x.key]=0;return}
+ x.x=t.x;x.y=t.y;if(x.d>0){x.d-=dt;if(x.d<=0)x.n=0}if(x.im>0)x.im-=dt;t[x.key]=x.n;if(!x.n&&!(x.im>0)){x.done=1;x.t=0}else x.t=1};
+AUXD.gk_st=()=>{};
+// pastilles des cumuls sous les pieds de la cible : GKST = [{key, max, col, c2}]
+const GKST=[];
+STATD.push((u,p,S,sk)=>{if(u.dead)return;sk=sk||1;let row=0;for(const s of GKST){const n=u[s.key]|0;if(!n)continue;const t=performance.now()/1000;g.save();
+ g.fillStyle=rgba(s.col,.16+.05*n);g.beginPath();g.ellipse(p.x,p.y+row*3*S,(15+n*3)*S*sk,(5+n)*S*sk,0,0,7);g.fill();
+ for(let i=0;i<s.max;i++){const b=t*1.4+i*Math.PI*2/s.max,x=p.x+Math.cos(b)*17*S*sk,y=p.y+Math.sin(b)*6*S*sk-3*S,on=i<n,z=4.5*S;
+  g.fillStyle=on?s.col:rgba(s.col,.18);g.strokeStyle=on?s.c2:rgba(s.c2,.3);g.lineWidth=1;g.beginPath();g.arc(x,y-z*.4,z*.8,0,7);g.fill();g.stroke()}
+ g.restore();row++}});
+// ligne de trait du HUD : nom · cumuls de l'ennemi le plus proche
+function gkHud(u,x,y,nm,key,max,col,col0,extra){y-=20;let tg=null,bd=1e9;for(const e of units)if(!e.dead&&e.team!==u.team){const d=dist(u,e);if(d<bd){bd=d;tg=e}}
+ const n=key&&tg?tg[key]|0:0;text(nm+(key?' · cible : '+'●'.repeat(n)+'○'.repeat(max-n):'')+(extra?' '+extra:''),x,y+6,11,n?col:col0,'left','normal')}
+// ---------- flaques et nappes au sol (lave, brume, or, poussière…) ----------
+// gkPool(u,x,y,{r,t,kind,vfx,d (dégâts par tick),iv (intervalle, 0,5 s),o (options du coup),sl (ralentit),fn(e,x) (à chaque tick sur un ennemi),self(o,x) (lanceur dedans, chaque image)})
+// kind = dessin (GKPOOL[kind]) : seul ce qui est synchronisé (x y r t m kind) sert au dessin, chez l'hôte comme chez les invités
+const GKPOOL={};
+function gkPool(u,x,y,o){const q=Object.assign({type:'gk_pool',x:clamp(x,B.x+10,B.x+B.w-10),y:clamp(y,B.y+10,B.y+B.h-10),r:70,t:3,team:u.team,owner:u,k:.15,iv:.5,danger:1},o);q.m=q.t;aux.push(q);return q}
+AUXF.gk_pool=(x,dt)=>{const o=x.owner;if(x.t<=0||!o)return;if(x.self&&!o.dead&&gkIn(o,x.x,x.y,x.r))x.self(o,x);
+ if(x.sl)for(const e of enemies(o))if(gkIn(e,x.x,x.y,x.r)&&!(e.dash&&e.dash.jump)&&e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.2);
+ if(x.k>0)return;x.k=x.iv;for(const e of enemies(o)){if(!gkIn(e,x.x,x.y,x.r)||(e.dash&&e.dash.jump)||e.airT>0)continue;const h=x.d?gkHit(e,o,x.d,Object.assign({silent:1},x.o),x.vfx):true;if(h&&x.fn)x.fn(e,x)}};
+AUXD.gk_pool=(x,k,t)=>{const D=GKPOOL[x.kind];if(D)D(x,Math.min(1,x.t/.45,(x.m-x.t)/.2+.15),t)};
+// bande au sol (traînée d'un dash) : gkStrip(u,x0,y0,x1,y1,{w,t,kind,vfx,d,iv,o,sl,fn,self})
+function gkStrip(u,x0,y0,x1,y1,o){const L=Math.hypot(x1-x0,y1-y0);const q=Object.assign({type:'gk_strip',x:x0,y:y0,a:Math.atan2(y1-y0,x1-x0),len:Math.max(24,L),w:46,r:0,t:2.5,team:u.team,owner:u,k:.1,iv:.5,hs:new Set()},o);q.m=q.t;aux.push(q);return q}
+const gkOnStrip=(x,e,pad)=>{const ca=Math.cos(x.a),sa=Math.sin(x.a),dx=e.x-x.x,dy=e.y-x.y,f=dx*ca+dy*sa;return f>-e.r*pad&&f<x.len+e.r*pad&&Math.abs(-dx*sa+dy*ca)<x.w/2+e.r*pad};
+AUXF.gk_strip=(x,dt)=>{const o=x.owner;if(x.t<=0||!o)return;if(x.self&&!o.dead&&gkOnStrip(x,o,1))x.self(o,x);
+ if(x.sl)for(const e of enemies(o))if(gkOnStrip(x,e,.6)&&!(e.dash&&e.dash.jump)&&e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.2);
+ if(x.k>0)return;x.k=x.iv;for(const e of enemies(o)){if(!gkOnStrip(x,e,.6)||(e.dash&&e.dash.jump))continue;const h=x.d?gkHit(e,o,x.d,Object.assign({silent:1},x.o),x.vfx):true;if(h&&x.fn)x.fn(e,x)}};
+AUXD.gk_strip=(x,k,t)=>{const D=GKPOOL[x.kind];if(!D)return;const ca=Math.cos(x.a),sa=Math.sin(x.a),n=Math.max(1,Math.round(x.len/34)),al=Math.min(1,x.t/.45,(x.m-x.t)/.2+.15);
+ for(let i=0;i<n;i++){const f=(i+.5)/n*x.len;D({x:x.x+ca*f,y:x.y+sa*f,r:x.w*.62,t:x.t,m:x.m,kind:x.kind,strip:1,i},al,t+i*.37)}};
+// ---------- rayons (lasers, fils de poussière, foudre) ----------
+// touche tout ce qui est dans le rectangle (longueur len, largeur w) ; GKBEAM[st] dessine (st = style du rayon)
+const GKBEAM={};
+function gkBeam(u,x0,y0,a,len,w,d,o,v,st,cb,dur){const ca=Math.cos(a),sa=Math.sin(a),hs=[];
+ for(const e of enemies(u)){const dx=e.x-x0,dy=e.y-y0,f=dx*ca+dy*sa,s=Math.abs(-dx*sa+dy*ca);if(f>-e.r&&f<len+e.r&&s<w/2+e.r&&gkHit(e,u,d,Object.assign({unblockable:1},o),v)){hs.push(e);if(cb)cb(e)}}
+ const x2=clamp(x0+ca*len,B.x,B.x+B.w),y2=clamp(y0+sa*len,B.y,B.y+B.h);jx({jfx:'gk_beam',x:x0,y:y0,x2,y2,w,st,t:dur||.4,m:dur||.4});return hs}
+JFXD.gk_beam=(f,k,e,t)=>{const D=GKBEAM[f.st];if(D)D(f,k,e,t)};
+// rayon générique : cœur blanc, halo à la couleur, éclats le long
+function gkBeamDraw(f,k,e,t,c1,c2,o={}){const A=P(f.x,f.y,o.z??30),Bq=P(f.x2,f.y2,o.z??30),s=A.s,w=f.w*s*(o.thin?.5:1);g.save();g.lineCap='round';
+ if(o.dark){g.strokeStyle=rgba(c2,.85*k);g.lineWidth=w*1.2*(.6+.4*k);g.beginPath();g.moveTo(A.x,A.y);g.lineTo(Bq.x,Bq.y);g.stroke();g.globalCompositeOperation='lighter';g.strokeStyle=rgba(c1,.8*k);g.lineWidth=Math.max(1.5,w*.25);g.stroke()}
+ else{g.globalCompositeOperation='lighter';g.strokeStyle=rgba(c2,.45*k);g.lineWidth=w*1.6*(.5+.5*k);g.beginPath();g.moveTo(A.x,A.y);g.lineTo(Bq.x,Bq.y);g.stroke();
+  g.strokeStyle=rgba(c1,.9*k);g.lineWidth=w*.55;g.stroke();g.strokeStyle=rgba('#ffffff',.95*k);g.lineWidth=Math.max(1.2,w*.18);g.stroke()}
+ const n=10;for(let i=0;i<n;i++){const m=((i/n+t*1.7)%1),x=lerp(A.x,Bq.x,m),y=lerp(A.y,Bq.y,m)+Math.sin(i*7.3+t*20)*w*.6;g.fillStyle=rgba(o.dark?c1:'#ffffff',.8*k);g.fillRect(x-1.5*s,y-1.5*s,3*s,3*s)}
+ g.restore()}
+// éclair brisé (foudre, foudre noire) entre deux points
+function gkZig(x0,y0,x1,y1,seg,amp,seed){const L=[];for(let i=0;i<=seg;i++){const m=i/seg,j=i===0||i===seg?0:Math.sin(seed+i*12.9898)*43758.5453%1;L.push({x:lerp(x0,x1,m)+(j-.5)*amp*(i%2?1:-1),y:lerp(y0,y1,m)+(Math.cos(seed*1.7+i*7.1)*amp*.5)})}return L}
+function gkBolt(pts,c1,c2,w,k,dark){g.save();g.lineCap='round';g.lineJoin='round';const path=()=>{g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y))};
+ if(dark){path();g.strokeStyle=rgba(c2,.9*k);g.lineWidth=w*1.6;g.stroke();g.globalCompositeOperation='lighter';path();g.strokeStyle=rgba(c1,.9*k);g.lineWidth=w*.45;g.stroke()}
+ else{g.globalCompositeOperation='lighter';path();g.strokeStyle=rgba(c2,.5*k);g.lineWidth=w*2.2;g.stroke();path();g.strokeStyle=rgba(c1,.95*k);g.lineWidth=w*.8;g.stroke();path();g.strokeStyle=rgba('#ffffff',k);g.lineWidth=Math.max(1,w*.3);g.stroke()}g.restore()}
+// ---------- explosions et ondes ----------
+// jx({jfx:'gk_boom',x,y,r,v (palette),s (style : 'blast' 'lava' 'steam' 'gold' 'dust' 'crys' 'iron' 'dry'),t,m})
+JFXD.gk_boom=(f,k,e,t)=>{const C=GK[f.v]||{a:'#fff',b:'#fc6',c:'#a50',d:'#420'},q=P(f.x,f.y,0),s=q.s,R=f.r,st=f.s||'blast';g.save();
+ if(st==='blast'||st==='lava'||st==='dry'){g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(q.x,q.y-18*s,0,q.x,q.y-18*s,R*s*(.5+e*.8));gr.addColorStop(0,rgba('#ffffff',.9*k));gr.addColorStop(.35,rgba(C.a,.75*k));gr.addColorStop(1,rgba(C.b,0));g.fillStyle=gr;g.beginPath();g.ellipse(q.x,q.y-18*s,R*s*(.5+e*.8),R*s*(.4+e*.6),0,0,7);g.fill();g.globalCompositeOperation='source-over'}
+ if(st==='steam'||st==='dust'){for(let i=0;i<10;i++){const b=i*.63+f.x*.01,d=R*(.2+e*.8)*(i%2?.7:1),p=P(f.x+Math.cos(b)*d,f.y+Math.sin(b)*d,10+e*40+(i%3)*8);g.fillStyle=rgba(i%2?C.a:'#ffffff',.5*k);g.beginPath();g.arc(p.x,p.y,(12+e*20)*s,0,7);g.fill()}}
+ g.strokeStyle=rgba(C.a,.85*k);g.lineWidth=(5*k+1)*s;gEll(f.x,f.y,R*(.3+e*.75));g.stroke();g.strokeStyle=rgba(C.c,.5*k);g.lineWidth=2;gEll(f.x,f.y,R*(.2+e*.65));g.stroke();
+ const n=st==='steam'||st==='dust'?0:12;for(let i=0;i<n;i++){const b=i*(6.283/n)+f.y*.01,d=R*(.12+e*.9)*(i%2?.75:1),h=40*Math.sin(Math.PI*Math.min(1,e*1.15))+(i%3)*8,p=P(f.x+Math.cos(b)*d,f.y+Math.sin(b)*d,h);
+  g.save();g.translate(p.x,p.y);g.rotate(b+e*6);g.globalAlpha=Math.min(1,k*1.5);g.fillStyle=i%3?C.b:C.a;g.strokeStyle=C.d;g.lineWidth=.8;
+  if(st==='crys'||st==='iron'){g.beginPath();g.moveTo(-5*s,0);g.lineTo(0,-3.4*s);g.lineTo(6*s,0);g.lineTo(0,2.6*s);g.closePath();g.fill();g.stroke()}
+  else if(st==='gold'){g.beginPath();g.arc(0,0,3.2*s,0,7);g.fill();g.stroke()}
+  else{g.beginPath();g.arc(0,0,(2+(i%3))*s,0,7);g.fill()}g.restore()}
+ g.restore()};
+// ---------- projectiles ----------
+// sphère lumineuse (cœur blanc, halo, traînée de braises) : PROJD[kind]=gkOrbD(v,{n:traînée,spk:pointes})
+const gkOrbD=(v,o={})=>(p,R,ra,t)=>{const C=GK[v];g.rotate(ra);g.save();g.globalCompositeOperation='lighter';
+ for(let i=1;i<=(o.n??5);i++){g.fillStyle=rgba(C.b,.3*(1-i/6));g.beginPath();g.arc(-i*R*.8,Math.sin(t/60+i)*2,R*(1-i*.12),0,7);g.fill()}
+ const gr=g.createRadialGradient(0,0,0,0,0,R*1.9);gr.addColorStop(0,rgba('#ffffff',.95));gr.addColorStop(.4,rgba(C.a,.9));gr.addColorStop(1,rgba(C.b,0));g.fillStyle=gr;g.beginPath();g.arc(0,0,R*1.9,0,7);g.fill();g.restore();
+ if(o.spk){g.strokeStyle=rgba(C.a,.85);g.lineWidth=1.4;for(let i=0;i<o.spk;i++){const b=i*6.283/o.spk+t/200;g.beginPath();g.moveTo(Math.cos(b)*R*.8,Math.sin(b)*R*.8);g.lineTo(Math.cos(b)*R*1.7,Math.sin(b)*R*1.7);g.stroke()}}
+ g.fillStyle=o.core||C.a;g.beginPath();g.arc(0,0,R*.62,0,7);g.fill()};
+// éclat (aiguille, cristal, pointe de fer)
+const gkShardD=(v,L=16)=>(p,R,ra,t)=>{const C=GK[v];g.rotate(ra);g.fillStyle=rgba(C.a,.35);for(let i=1;i<4;i++)g.fillRect(-L-i*7,-1,3,2);
+ g.fillStyle=C.b;g.strokeStyle=C.d;g.lineWidth=.9;g.beginPath();g.moveTo(L,0);g.lineTo(L*.2,-R*.5-2);g.lineTo(-L,-1.2);g.lineTo(-L,1.2);g.lineTo(L*.2,R*.5+2);g.closePath();g.fill();g.stroke();g.fillStyle=C.a;g.fillRect(-L*.6,-.6,L*1.2,1.2)};
+// masse lourde et grumeleuse (roche en fusion, or) : grumeaux qui tournent sur eux-mêmes
+const gkLumpD=(v,o={})=>(p,R,ra,t)=>{const C=GK[v];g.save();if(o.glow){g.globalCompositeOperation='lighter';g.fillStyle=rgba(C.b,.35);g.beginPath();g.arc(0,0,R*1.7,0,7);g.fill();g.globalCompositeOperation='source-over'}
+ g.rotate(t/(o.spin||220));g.fillStyle=C.c;g.strokeStyle=C.d;g.lineWidth=1.2;g.beginPath();for(let i=0;i<9;i++){const b=i*.698,rr=R*(.82+.18*Math.sin(i*2.7));i?g.lineTo(Math.cos(b)*rr,Math.sin(b)*rr):g.moveTo(Math.cos(b)*rr,Math.sin(b)*rr)}g.closePath();g.fill();g.stroke();
+ g.fillStyle=C.b;for(let i=0;i<4;i++){const b=i*1.57+.4;g.beginPath();g.arc(Math.cos(b)*R*.38,Math.sin(b)*R*.38,R*.26,0,7);g.fill()}g.fillStyle=C.a;g.beginPath();g.arc(-R*.2,-R*.25,R*.18,0,7);g.fill();g.restore()};
+// ---------- dessin d'un pilier / bloc (cristal, cube, prison) vu en 3/4 ----------
+function gkPrism(cx,cy,r,h,n,rot,cA,cB,cO,al){const pts=[];for(let i=0;i<n;i++){const b=rot+i*6.283/n;pts.push([cx+Math.cos(b)*r,cy+Math.sin(b)*r])}
+ const base=pts.map(([x,y])=>P(x,y,0)),top=pts.map(([x,y])=>P(x,y,h));g.save();g.globalAlpha*=al;g.lineWidth=1;g.strokeStyle=cO;
+ for(let i=0;i<n;i++){const j=(i+1)%n;if(base[j].x-base[i].x<=0&&n>2)continue;poly([base[i],base[j],top[j],top[i]],i%2?cA:cB);g.stroke()}poly(top,cA);g.stroke();g.restore()}
+// ---------- icône d'un KG (jIcon, case 'g') : KGS[i].ico(g) dessine dans un repère de 32 px centré, à la couleur f ----------
+// ---------- animation : deux paumes poussées vers l'avant (rayons, jets) ----------
+Object.assign(ANIM,{
+ gk_push:(P,e)=>{const c=e<.3,k=c?ezo(e/.3):1-ezio(Math.min(1,(e-.3)/.7))*.7;for(const s of['L','R']){const sd=s==='L'?1:-1;pz(P,'arm'+s,c?-.5*k:-1.55*k,0,c?.6*sd*k:.1*sd);pz(P,'fore'+s,c?-1.5*k:-.1)}
+  pz(P,'chest',c?-.2*k:.3*k);P.root.z=c?-3*k:8*k;if(!c){pz(P,'thighL',-.6*k);pz(P,'shinL',.5*k);pz(P,'thighR',.4*k)}},
+ // mains levées vers le ciel, puis abattues (ce qui tombe d'en haut)
+ gk_call:(P,e)=>{const up=e<.55,k=up?ezo(e/.55):1-ezo(Math.min(1,(e-.55)/.3));pz(P,'armL',(up?-2.8:-1.2)*k,0,.4*k);pz(P,'armR',(up?-2.8:-1.2)*k,0,-.4*k);pz(P,'foreL',-.3*k);pz(P,'foreR',-.3*k);pz(P,'chest',(up?-.25:.35)*k);pz(P,'head',(up?-.35:.1)*k);P.root.y=up?2*k:-4*k},
+ // ramassé, mains jointes qui concentrent, puis s'ouvrent
+ gk_charge:(P,e)=>{const k=ezo(Math.min(1,e/.3));pz(P,'armL',-1.3*k,0,-.45*k);pz(P,'armR',-1.3*k,0,.45*k);pz(P,'foreL',-1.5*k);pz(P,'foreR',-1.5*k);pz(P,'chest',.15*k);P.root.y=-5*k*(1-Math.max(0,e-.8)*5);pz(P,'thighL',-.5*k);pz(P,'shinL',.8*k);pz(P,'thighR',.3*k);pz(P,'shinR',.6*k)},
+});
+
+// ===== Kekkei genkai g0 : Yôton, la lave (préfixe yo_) — Katon + Doton (Rôshi, Mei Terumî) =====
+// Identité : le contrôle du terrain. Chaque jutsu laisse des FLAQUES DE LAVE qui brûlent et ralentissent les ennemis, et où le lanceur file plus vite (trait).
+// Roches en fusion, jet de lave en cloche, armure de magma, éruption sous les pieds, pluie de magma ; dash : coulée qui laisse une traînée brûlante.
+gkPal('yo_lava','#ffd27a','#ff6a1a','#8a1e08','#3a0c04');ELM.yo_lava=0; // la lave brûle : élément feu (Suiton la refroidit)
+defKG(0,{n:'Yôton',col:'#ff5a1a',tag:'Yô',el:'Katon + Doton',nat:0,d:'La lave : flaques brûlantes, bombes de magma, armure de lave',
+ ico:f=>{g.beginPath();g.moveTo(-10,8);g.quadraticCurveTo(-11,-2,-4,-4);g.quadraticCurveTo(-1,-12,5,-8);g.quadraticCurveTo(12,-6,10,4);g.quadraticCurveTo(10,10,2,10);g.closePath();g.fill();
+  g.globalCompositeOperation='destination-out';for(const [x,y,r] of[[-3,2,2.4],[4,-2,1.8],[3,5,1.4]]){g.beginPath();g.arc(x,y,r,0,7);g.fill()}g.globalCompositeOperation='source-over'}});
+const YO_D={
+ rocks:'3 roches en fusion lancées en éventail retombent autour du point visé : 7 dégâts chacune et brûlure (6 dégâts en 3 s) ; celle du milieu laisse une petite flaque de lave (2 s)',
+ jet:'Jet de lave en cloche (420 max) : à l\'impact, 20 dégâts, brûlure (6 dégâts en 3 s) et une flaque de lave (3 s) qui brûle et ralentit',
+ armor:'Armure de magma 4 s : −30 % de dégâts subis ; un ennemi qui te frappe au corps à corps prend 6 dégâts et brûle ; tes coups de base brûlent (4 dégâts en 2 s)',
+ kazan:'Le sol se fend sous le point visé (alerte 0,7 s) puis entre en éruption : 34 dégâts, projeté 0,6 s, et une grande flaque de lave (3,5 s)',
+ rain:'Pluie de magma 2,4 s : 7 bombes de lave s\'abattent autour du point visé (alerte au sol) : 13 dégâts chacune, brûlure, et une flaque à chaque impact',
+ dash:'Tu files sur une coulée de lave (220) ; la traînée (2,5 s) brûle les ennemis (3 dégâts toutes les 0,5 s) et te rend plus rapide'};
+KIT('g0',[
+ ['D','x.yo_rocks','Yôton : Kakugan',YO_D.rocks,'yo_lava'],
+ ['C','x.yo_jet','Yôton : Yôkai',YO_D.jet,'yo_lava'],
+ ['B','x.yo_armor','Yôton : Armure de magma',YO_D.armor,'yo_lava'],
+ ['A','x.yo_kazan','Yôton : Kazan',YO_D.kazan,'yo_lava'],
+ ['S','x.yo_rain','Yôton : Pluie de magma',YO_D.rain,'yo_lava'],
+]);
+DASHG[0]={src:'x.yo_dash',n:'Coulée de lave',d:YO_D.dash,vfx:'yo_lava',cd:7};
+KGBAL[0]=[0.905,0.895];
+const YOC=GK.yo_lava,YO_BURN=()=>BURN(2,3);
+// flaque de lave : 3 dégâts toutes les 0,5 s (brûlure), ralentit ; le lanceur y est plus rapide (trait)
+const yoPool=(u,x,y,r,t)=>gkPool(u,x,y,{r,t,kind:'yo',vfx:'yo_lava',d:3,o:{dot:BURN(2,2)},sl:1,self:o=>{o.haste=Math.max(o.haste||0,.15)}});
+// bombe de lave en cloche : visuel jx 'yo_lob' (u → point), impact différé avec alerte au sol
+function yoLob(u,x,y,del,R,f,sx,sy){jx({jfx:'yo_lob',x:sx??u.x,y:sy??u.y,x2:x,y2:y,t:del,m:del});later(u,del,()=>{f();jx({jfx:'gk_boom',x,y,r:R,v:'yo_lava',s:'lava',t:.55,m:.55});if(near(x,y)){gkS('fire',u);gkS('rock',u);sparks(x,y,YOC.b,12,'yo_lava')}},{x,y,r:R})}
+Object.assign(NAT,{
+ // ---------- Kakugan (D) : 3 roches en fusion en éventail ----------
+ yo_rocks:SP('Yôton : Kakugan',YO_D.rocks,5,{ai:RG(420,.7),tele:{r:90,max:420}},(u,a,td)=>{const c=atP(u,a,td,420);gkS('rock',u);gkS('fire',u);anim(u,'throw2',.45);
+  for(let i=-1;i<=1;i++){const b=a+Math.PI/2,o=i*62,x=c.x+Math.cos(b)*o+Math.cos(a)*(i?-14:12),y=c.y+Math.sin(b)*o+Math.sin(a)*(i?-14:12),del=.5+Math.abs(i)*.06;
+   yoLob(u,x,y,del,40,()=>{gkAoe(u,x,y,40,7,{dot:YO_BURN()},'yo_lava');if(!i)yoPool(u,x,y,45,2)})}}),
+ // ---------- Yôkai (C) : jet de lave en cloche, flaque ----------
+ yo_jet:SP('Yôton : Yôkai',YO_D.jet,8,{ai:RG(420,.7),tele:{r:85,max:420}},(u,a,td)=>{const c=atP(u,a,td,420),D=.55+Math.hypot(c.x-u.x,c.y-u.y)/1400;gkS('water',u);gkS('fire',u);anim(u,'breath',.55);
+  jx({jfx:'yo_spew',ui:gkI(u),x:u.x,y:u.y,a,t:.45,m:.45});yoLob(u,c.x,c.y,D,85,()=>{gkAoe(u,c.x,c.y,85,20,{dot:YO_BURN()},'yo_lava');yoPool(u,c.x,c.y,80,3)})}),
+ // ---------- Armure de magma (B) ----------
+ yo_armor:SP('Yôton : Armure de magma',YO_D.armor,10,{ai:DEF},(u)=>{gkS('fire',u);gkS('heavy',u);anim(u,'gk_charge',.5);u.drT=Math.max(u.drT||0,4);u.dr=Math.max(u.drT>4.01?u.dr||0:0,.3);u.yo_ar=4;
+  jx({jfx:'gk_boom',x:u.x,y:u.y,r:70,v:'yo_lava',s:'lava',t:.5,m:.5});say(u,'ARMURE DE MAGMA',YOC.a)}),
+ // ---------- Kazan (A) : éruption sous le point visé ----------
+ yo_kazan:SP('Yôton : Kazan',YO_D.kazan,13,{ai:RG(400,.65),tele:{r:100,max:400}},(u,a,td)=>{const c=atP(u,a,td,400),D=.7;gkS('rock',u);anim(u,'stomp',.6);if(near(u.x,u.y))shake=Math.max(shake,.12);
+  jx({jfx:'yo_crack',x:c.x,y:c.y,r:100,t:D,m:D});
+  later(u,D,()=>{gkAoe(u,c.x,c.y,100,34,{air:.6,dot:YO_BURN()},'yo_lava');yoPool(u,c.x,c.y,95,3.5);jx({jfx:'yo_erupt',x:c.x,y:c.y,r:100,t:1.1,m:1.1});jx({jfx:'gk_boom',x:c.x,y:c.y,r:120,v:'yo_lava',s:'lava',t:.6,m:.6});
+   if(near(c.x,c.y)){gkS('boom',u);gkS('fire',u);shake=Math.max(shake,.35);sparks(c.x,c.y,YOC.a,22,'yo_lava')}},{x:c.x,y:c.y,r:100})}),
+ // ---------- Pluie de magma (S) : 7 bombes sur 2,4 s ----------
+ yo_rain:ULT('Yôton : Pluie de magma',YO_D.rain,{ai:RG(420,.8),tele:{r:170,max:420}},(u,a,td)=>{const c=atP(u,a,td,420),R=170;gkS('fire',u);gkS('roar',u);anim(u,'gk_call',.9);
+  jx({jfx:'yo_sky',x:c.x,y:c.y,r:R,t:2.8,m:2.8});
+  for(let i=0;i<7;i++){const b=i*2.39+rnd()*.6,d=i===0?0:R*(.3+rnd()*.62),x=c.x+Math.cos(b)*d,y=c.y+Math.sin(b)*d,del=.55+i*.31;
+   yoLob(u,x,y,del,58,()=>{gkAoe(u,x,y,58,13,{dot:YO_BURN()},'yo_lava');yoPool(u,x,y,52,2.5)},x,y)}}),
+ // ---------- dash : Coulée de lave ----------
+ yo_dash:SP('Coulée de lave',YO_D.dash,7,{ai:ESC},(u,a,td)=>{const d=clamp(td||220,120,220),x0=u.x,y0=u.y;gkS('fire',u);gkS('dash',u);anim(u,'lunge',.3);
+  const ex=clamp(u.x+Math.cos(a)*d,B.x+u.r,B.x+B.w-u.r),ey=clamp(u.y+Math.sin(a)*d,B.y+u.r,B.y+B.h-u.r);
+  gkStrip(u,x0,y0,ex,ey,{w:48,t:2.5,kind:'yo',vfx:'yo_lava',d:3,o:{dot:BURN(2,2)},self:o=>{o.haste=Math.max(o.haste||0,.15)}});dash(u,a,d,.24,{})}),
+});
+Object.assign(NATHERO,{yo:'kylo'});
+// ---- trait : Magma
+KGTRAITS[0]={nom:'Magma',desc:'Ta lave brûle : tes flaques ralentissent et brûlent les ennemis, et tu y files plus vite. Un ennemi qui te frappe au corps à corps se brûle (4 dégâts en 2 s ; 6 dégâts de plus sous l\'Armure de magma)',
+ init(u){u.yo_ar=0},
+ update(u,dt){if(u.yo_cds!==u.cds){u.yo_cds=u.cds;u.yo_ar=0}if(u.yo_ar>0)u.yo_ar=Math.max(0,u.yo_ar-dt)},
+ deal(src,t,dmg,o){return dmg},
+ landed(src,t,dmg,o){if(src.yo_ar>0&&o.basic&&dmg>0&&!t.dead){t.dot=Math.max(t.dot||0,2);t.dotT=Math.max(t.dotT||0,2);t.dotSrc=src;t.dotEl=0}},
+ take(t,src,dmg,o){if(src&&src!==t&&o.melee&&!o.thorn&&dmg>0&&!src.dead){src.dot=Math.max(src.dot||0,2);src.dotT=Math.max(src.dotT||0,2);src.dotSrc=t;src.dotEl=0;
+   if(t.yo_ar>0){const V=VFX;VFX='yo_lava';hit(src,t,6,{silent:1,thorn:1});VFX=V;if(near(t.x,t.y))sparks(t.x,t.y,YOC.b,6,'yo_lava')}}return dmg},
+ draw(u,p,S,sk){if(!(u.yo_ar>0))return;const t=performance.now()/1000,a=Math.min(1,u.yo_ar*2);g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(YOC.b,.18*a);g.beginPath();g.ellipse(p.x,p.y-30*S*sk,24*S*sk,38*S*sk,0,0,7);g.fill();
+  for(let i=0;i<7;i++){const b=i*.9+t*2,x=p.x+Math.cos(b)*15*S*sk,y=p.y-(6+((t*24+i*9)%50))*S*sk;g.fillStyle=rgba(i%2?YOC.a:YOC.b,.7*a);g.beginPath();g.arc(x,y,(2+(i%3))*S,0,7);g.fill()}
+  g.strokeStyle=rgba(YOC.c,.8*a);g.lineWidth=2*S;for(let i=0;i<3;i++){const x=p.x+(i-1)*9*S;g.beginPath();g.moveTo(x,p.y-12*S);g.lineTo(x+3*S,p.y-26*S);g.lineTo(x-2*S,p.y-40*S);g.stroke()}g.restore()},
+ prev(u,p,S,front){if(front)return;g.save();g.fillStyle=rgba(YOC.b,.25);g.beginPath();g.ellipse(p.x,p.y,26*S,8*S,0,0,7);g.fill();g.restore()},
+ hud(u,x,y){gkHud(u,x,y,'Magma'+(u.yo_ar>0?' · ARMURE '+u.yo_ar.toFixed(1).replace('.',',')+' s':''),null,0,YOC.a,YOC.a)}};
+AFTER.push(()=>UK.push('yo_ar'));
+// ---- visuels
+PROJD.yo_rock=gkLumpD('yo_lava',{glow:1});
+// flaque de lave : croûte sombre, veines incandescentes, bulles qui crèvent
+GKPOOL.yo=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,R=x.r;g.save();
+ const gr=g.createRadialGradient(q.x,q.y,0,q.x,q.y,R*s);gr.addColorStop(0,rgba(YOC.a,.75*k));gr.addColorStop(.45,rgba(YOC.b,.65*k));gr.addColorStop(1,rgba(YOC.c,.25*k));g.fillStyle=gr;g.beginPath();g.ellipse(q.x,q.y,R*s,R*s*K,0,0,7);g.fill();
+ g.strokeStyle=rgba(YOC.d,.65*k);g.lineWidth=1.6*s;for(let i=0;i<5;i++){const b=i*1.26+(x.i||0),p1=P(x.x+Math.cos(b)*R*.25,x.y+Math.sin(b)*R*.25,0),p2=P(x.x+Math.cos(b+.4)*R*.75,x.y+Math.sin(b+.4)*R*.75,0);g.beginPath();g.moveTo(p1.x,p1.y);g.lineTo(p2.x,p2.y);g.stroke()}
+ g.globalCompositeOperation='lighter';for(let i=0;i<(x.strip?2:5);i++){const ph=(t*.9+i*.37)%1,b=i*2.1+(x.i||0)*1.3,d=R*.55*((i*.37)%1),p=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,ph*10),r=(2+ph*5)*s;g.strokeStyle=rgba(YOC.a,.8*k*(1-ph));g.lineWidth=1.4;g.beginPath();g.arc(p.x,p.y,r,0,7);g.stroke()}
+ g.fillStyle=rgba('#ffffff',.35*k);g.beginPath();g.ellipse(q.x,q.y,R*.3*s,R*.3*s*K,0,0,7);g.fill();g.restore()};
+// bombe de lave en cloche (u → point)
+JFXD.yo_lob=(f,k,e,t)=>{const m=Math.min(1,e*1.05),fall=f.x===f.x2&&f.y===f.y2,x=lerp(f.x,f.x2,m),y=lerp(f.y,f.y2,m),h=fall?320*(1-m*m):Math.sin(Math.PI*m)*130+24*(1-m),q=P(x,y,h),s=q.s;if(m>=1)return;g.save();
+ g.globalCompositeOperation='lighter';for(let i=1;i<6;i++){const m2=Math.max(0,m-i*.035),q2=P(lerp(f.x,f.x2,m2),lerp(f.y,f.y2,m2),fall?320*(1-m2*m2):Math.sin(Math.PI*m2)*130+24*(1-m2));g.fillStyle=rgba(YOC.b,.35*(1-i/6));g.beginPath();g.arc(q2.x,q2.y,(9-i)*s,0,7);g.fill()}
+ g.globalCompositeOperation='source-over';g.translate(q.x,q.y);PROJD.yo_rock({},11*s,0,t*1000);g.restore()};
+// jet de lave craché par le lanceur
+JFXD.yo_spew=(f,k,e,t,u)=>{if(!u||u.dead)return;g.save();g.globalCompositeOperation='lighter';for(let i=0;i<10;i++){const d=(10+e*70+i*6),b=f.a+(i%3-1)*.12,q=P(u.x+Math.cos(b)*d,u.y+Math.sin(b)*d,46+e*30-i*2);g.fillStyle=rgba(i%2?YOC.a:YOC.b,.75*k);g.beginPath();g.arc(q.x,q.y,(6-i*.35)*q.s,0,7);g.fill()}g.restore()};
+// sol qui se fend (Kazan) : fissures rougeoyantes qui s'élargissent
+JFXD.yo_crack=(f,k,e,t)=>{const R=f.r;g.save();g.strokeStyle=rgba(YOC.b,.5+.5*e);g.lineWidth=1+e*3;g.lineCap='round';for(let i=0;i<7;i++){const b=i*.9+f.x*.01;let px=f.x,py=f.y;g.beginPath();const p0=P(px,py,0);g.moveTo(p0.x,p0.y);
+  for(let j=1;j<=4;j++){const d=R*e*j/4;px=f.x+Math.cos(b+Math.sin(j*3+i)*.35)*d;py=f.y+Math.sin(b+Math.sin(j*3+i)*.35)*d;const q=P(px,py,0);g.lineTo(q.x,q.y)}g.stroke()}
+ g.globalCompositeOperation='lighter';g.fillStyle=rgba(YOC.a,.25*e);gEll(f.x,f.y,R*e*.5);g.fill();g.restore()};
+// éruption : colonne de lave qui jaillit et retombe en gerbes
+JFXD.yo_erupt=(f,k,e,t)=>{const q=P(f.x,f.y,0),s=q.s,h=Math.sin(Math.PI*Math.min(1,e*1.6))*170,w=f.r*.45*s;if(h<2&&e>.5)return;g.save();
+ const gr=g.createLinearGradient(0,q.y-h*s,0,q.y);gr.addColorStop(0,rgba(YOC.a,.9*k));gr.addColorStop(.5,rgba(YOC.b,.9*k));gr.addColorStop(1,rgba(YOC.c,.8*k));g.fillStyle=gr;
+ g.beginPath();g.moveTo(q.x-w,q.y);g.quadraticCurveTo(q.x-w*.4,q.y-h*s*.6,q.x-w*.25,q.y-h*s);g.quadraticCurveTo(q.x,q.y-h*s*1.12,q.x+w*.25,q.y-h*s);g.quadraticCurveTo(q.x+w*.4,q.y-h*s*.6,q.x+w,q.y);g.closePath();g.fill();
+ g.globalCompositeOperation='lighter';for(let i=0;i<16;i++){const b=i*.39,m=Math.min(1,e*1.4),d=f.r*1.1*m,hh=Math.sin(Math.PI*m)*(110+(i%4)*25),p=P(f.x+Math.cos(b)*d,f.y+Math.sin(b)*d,hh);g.fillStyle=rgba(i%2?YOC.a:YOC.b,.85*k);g.beginPath();g.arc(p.x,p.y,(3+(i%3))*s,0,7);g.fill()}g.restore()};
+// ciel de la pluie de magma : ombre rougeoyante au sol, braises qui tombent
+JFXD.yo_sky=(f,k,e,t)=>{g.save();g.fillStyle=rgba(YOC.c,.18*Math.min(1,k*3));gEll(f.x,f.y,f.r);g.fill();g.strokeStyle=rgba(YOC.b,.55*Math.min(1,k*3));g.lineWidth=2;g.setLineDash([8,6]);g.lineDashOffset=-t*30;gEll(f.x,f.y,f.r);g.stroke();g.setLineDash([]);
+ g.globalCompositeOperation='lighter';for(let i=0;i<14;i++){const b=i*2.4,d=f.r*((i*.29)%1),z=200-((t*160+i*37)%200),p=P(f.x+Math.cos(b)*d,f.y+Math.sin(b)*d,z);g.fillStyle=rgba(YOC.a,.6*k);g.fillRect(p.x-1.5,p.y-4,3,8)}g.restore()};
+
+// ===== Kekkei genkai g1 : Futton, la vapeur bouillante (préfixe ft_) — Katon + Suiton (Han, Mei Terumî) =====
+// Identité : l'usure. La vapeur et la brume acide RONGENT (trait : corrosion, jusqu'à 3 cumuls) ; à 3 cumuls, la cible est ralentie et prend plus cher.
+// Jet de vapeur, brume acide, armure de vapeur (Han), charge bouillante, grand chaudron qui entre en éruption ; dash : propulsion de vapeur.
+gkPal('ft_steam','#fff4ec','#f2a890','#b0503a','#4a1a12');
+defKG(1,{n:'Futton',col:'#f0907a',tag:'Fu',el:'Katon + Suiton',nat:1,d:'La vapeur bouillante : brume acide qui ronge, armure de vapeur, charges brûlantes',
+ ico:f=>{g.lineWidth=2.6;for(let i=-1;i<=1;i++){g.beginPath();g.moveTo(i*7,10);g.bezierCurveTo(i*7-5,4,i*7+5,0,i*7,-5);g.bezierCurveTo(i*7-4,-8,i*7+2,-11,i*7,-12);g.stroke()}}});
+const FT_D={
+ jet:'Jet de vapeur bouillante devant toi (160) : 14 dégâts, repousse et 1 corrosion',
+ mist:'Brume acide au point visé (420 max) pendant 4 s : 3 dégâts toutes les 0,5 s, ralentit et ajoute 1 corrosion par seconde passée dedans',
+ armor:'Armure de vapeur 4 s : la vapeur jaillit (10 dégâts, repousse autour), −25 % de dégâts subis, plus rapide ; les ennemis au contact prennent 4 dégâts toutes les 0,5 s et 1 corrosion',
+ charge:'Charge propulsée par la vapeur (320) : le 1er ennemi percuté prend 34 dégâts, est violemment repoussé et reçoit 2 corrosions ; la vapeur explose autour (10 dégâts)',
+ caul:'Grand chaudron au point visé (360 max) : la pression monte 1 s, puis tout entre en éruption : 50 dégâts, projeté 0,8 s, 2 corrosions ; la brume acide reste 3 s',
+ dash:'Propulsion de vapeur (230) : un nuage bouillant reste à ton point de départ 1,5 s (ralentit, 1 corrosion)'};
+KIT('g1',[
+ ['D','x.ft_jet','Futton : Jet de vapeur',FT_D.jet,'ft_steam'],
+ ['C','x.ft_mist','Futton : Kômu',FT_D.mist,'ft_steam'],
+ ['B','x.ft_armor','Futton : Armure de vapeur',FT_D.armor,'ft_steam'],
+ ['A','x.ft_charge','Futton : Kôkô',FT_D.charge,'ft_steam'],
+ ['S','x.ft_caul','Futton : Grand chaudron',FT_D.caul,'ft_steam'],
+]);
+DASHG[1]={src:'x.ft_dash',n:'Propulsion de vapeur',d:FT_D.dash,vfx:'ft_steam',cd:7};
+KGBAL[1]=[0.92,0.915];
+const FTC=GK.ft_steam,FT_MAX=3,ftCor=(u,e,n)=>gkStack(u,e,'ft_cor',n,FT_MAX,4);
+// brume acide : 3 dégâts / 0,5 s, ralentit, 1 corrosion par seconde (un tick sur deux)
+const ftMist=(u,x,y,r,t)=>gkPool(u,x,y,{r,t,kind:'ft',vfx:'ft_steam',d:3,sl:1,fn:(e,q)=>{q.n2=(q.n2||0)+1;if(q.n2%2)ftCor(u,e,1)}});
+Object.assign(NAT,{
+ // ---------- Jet de vapeur (D) ----------
+ ft_jet:SP('Futton : Jet de vapeur',FT_D.jet,5,{ai:RG(170,.8),line:{len:170,w:110}},(u,a)=>{gkS('water',u);gkS('wind',u);anim(u,'gk_push',.4);jx({jfx:'ft_cone',ui:gkI(u),x:u.x,y:u.y,a,r:170,t:.5,m:.5});
+  for(const e of enemies(u))if(dist(u,e)<170+e.r&&angDiff(ang(u,e),a)<.5&&gkHit(e,u,14,{kb:220,unblockable:1},'ft_steam'))ftCor(u,e,1)}),
+ // ---------- Kômu (C) : brume acide ----------
+ ft_mist:SP('Futton : Kômu',FT_D.mist,8,{ai:RG(420,.6),tele:{r:110,max:420}},(u,a,td)=>{const c=atP(u,a,td,420);gkS('water',u);gkS('wind',u);anim(u,'breath',.55);
+  jx({jfx:'ft_cone',ui:gkI(u),x:u.x,y:u.y,a,r:120,t:.45,m:.45});jx({jfx:'gk_boom',x:c.x,y:c.y,r:110,v:'ft_steam',s:'steam',t:.6,m:.6});ftMist(u,c.x,c.y,110,4)}),
+ // ---------- Armure de vapeur (B) ----------
+ ft_armor:SP('Futton : Armure de vapeur',FT_D.armor,10,{ai:SELF(160,.6)},(u)=>{gkS('water',u);gkS('boom',u);anim(u,'gk_charge',.45);u.ft_ar=4;u.drT=Math.max(u.drT||0,4);u.dr=Math.max(u.drT>4.01?u.dr||0:0,.25);u.haste=Math.max(u.haste||0,4);
+  gkAoe(u,u.x,u.y,95,10,{kb:260},'ft_steam',e=>ftCor(u,e,1));jx({jfx:'gk_boom',x:u.x,y:u.y,r:100,v:'ft_steam',s:'steam',t:.6,m:.6});say(u,'ARMURE DE VAPEUR',FTC.a)}),
+ // ---------- Kôkô (A) : charge propulsée ----------
+ ft_charge:SP('Futton : Kôkô',FT_D.charge,13,{ai:{mode:'gap',min:80,max:330,p:.7},line:{len:320,w:50}},(u,a,td)=>{gkS('boom',u);gkS('dash',u);anim(u,'lunge',.45);let done=0;
+  jx({jfx:'ft_trail',ui:gkI(u),x:u.x,y:u.y,t:.45,m:.45});
+  const chk=()=>{if(done||u.dead)return;for(const e of enemies(u))if(dist(u,e)<u.r+e.r+14){done=1;u.dash=null;gkHit(e,u,34,{kb:520,stun:.2,unblockable:1},'ft_steam');ftCor(u,e,2);
+    gkAoe(u,u.x,u.y,80,10,{},'ft_steam');jx({jfx:'gk_boom',x:e.x,y:e.y,r:90,v:'ft_steam',s:'steam',t:.6,m:.6});if(near(u.x,u.y)){gkS('heavy',u);shake=Math.max(shake,.3)}return}};
+  dash(u,a,320,.32,{end:chk});aux.push({type:'gk_chk',x:u.x,y:u.y,r:0,t:.36,m:.36,team:u.team,owner:u,f:chk})}),
+ // ---------- Grand chaudron (S) ----------
+ ft_caul:ULT('Futton : Grand chaudron',FT_D.caul,{ai:RG(360,.8),tele:{r:170,max:360}},(u,a,td)=>{const c=atP(u,a,td,360),R=170,D=1;gkS('water',u);gkS('heavy',u);anim(u,'gk_call',.9);
+  jx({jfx:'ft_build',x:c.x,y:c.y,r:R,t:D,m:D});
+  later(u,D,()=>{gkAoe(u,c.x,c.y,R,50,{air:.8},'ft_steam',e=>ftCor(u,e,2));ftMist(u,c.x,c.y,R,3);jx({jfx:'ft_geyser',x:c.x,y:c.y,r:R,t:1.2,m:1.2});jx({jfx:'gk_boom',x:c.x,y:c.y,r:R*1.1,v:'ft_steam',s:'steam',t:.8,m:.8});
+   if(near(c.x,c.y)){gkS('boom',u);gkS('water',u);shake=Math.max(shake,.4)}},{x:c.x,y:c.y,r:R})}),
+ // ---------- dash : Propulsion de vapeur ----------
+ ft_dash:SP('Propulsion de vapeur',FT_D.dash,7,{ai:ESC},(u,a,td)=>{const x0=u.x,y0=u.y;gkS('water',u);gkS('dash',u);anim(u,'lunge',.3);
+  gkPool(u,x0,y0,{r:70,t:1.5,kind:'ft',vfx:'ft_steam',sl:1,fn:(e,q)=>{q.hs=q.hs||new Set();if(!q.hs.has(e)){q.hs.add(e);ftCor(u,e,1)}}});jx({jfx:'gk_boom',x:x0,y:y0,r:70,v:'ft_steam',s:'steam',t:.5,m:.5});dash(u,a,clamp(td||230,120,230),.22,{})}),
+});
+Object.assign(NATHERO,{ft:'kylo'});
+// ---- trait : Corrosion
+GKST.push({key:'ft_cor',max:FT_MAX,col:'#c8e070',c2:'#4a5a10'});
+KGTRAITS[1]={nom:'Corrosion',desc:'Ta vapeur ronge : chaque cumul de corrosion (3 au plus, 4 s) fait subir +6 % de tes dégâts ; à 3 cumuls, la cible est aussi ralentie. Sous l\'Armure de vapeur, les ennemis au contact sont ébouillantés',
+ init(u){u.ft_ar=0},
+ update(u,dt){if(u.ft_cds!==u.cds){u.ft_cds=u.cds;u.ft_ar=0}
+  for(const e of enemies(u))if((e.ft_cor|0)>=FT_MAX&&e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.15);
+  if(u.ft_ar>0){u.ft_ar=Math.max(0,u.ft_ar-dt);u.ft_k=(u.ft_k||0)-dt;if(u.ft_k<=0){u.ft_k=.5;for(const e of enemies(u))if(dist(u,e)<u.r+e.r+40&&gkHit(e,u,4,{silent:1},'ft_steam'))ftCor(u,e,1)}}},
+ deal(src,t,dmg,o){const n=t.ft_cor|0;return n?dmg*(1+.06*n):dmg},
+ draw(u,p,S,sk){if(!(u.ft_ar>0))return;const t=performance.now()/1000,a=Math.min(1,u.ft_ar*2);g.save();for(let i=0;i<9;i++){const ph=(t*.8+i/9)%1,b=i*.7,x=p.x+Math.cos(b+t)*16*S*sk,y=p.y-(10+ph*60)*S*sk;g.fillStyle=rgba(i%2?FTC.a:'#ffffff',.4*a*(1-ph));g.beginPath();g.arc(x,y,(6+ph*10)*S,0,7);g.fill()}g.restore()},
+ prev(u,p,S,front){if(!front)return;const t=performance.now()/1000;g.save();for(let i=0;i<4;i++){const ph=(t*.5+i/4)%1;g.fillStyle=rgba('#ffffff',.25*(1-ph));g.beginPath();g.arc(p.x+(i-1.5)*8*S,p.y-(20+ph*40)*S,(4+ph*6)*S,0,7);g.fill()}g.restore()},
+ hud(u,x,y){gkHud(u,x,y,'Corrosion','ft_cor',FT_MAX,'#c8e070',FTC.a,u.ft_ar>0?'· ARMURE':'')}};
+AFTER.push(()=>UK.push('ft_cor','ft_ar'));
+// ---- visuels
+// brume acide : nappes laiteuses teintées de vert, bulles qui crèvent
+GKPOOL.ft=(x,k,t)=>{const R=x.r;g.save();g.fillStyle=rgba('#d8e8b0',.16*k);gEll(x.x,x.y,R);g.fill();
+ for(let i=0;i<(x.strip?2:9);i++){const b=i*2.4+t*.25*(i%2?1:-1),d=R*(.15+((i*.31)%1)*.7),z=8+((t*12+i*9)%26),p=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,z),r=(16+(i%3)*7)*p.s*(x.r/90);
+  g.fillStyle=rgba(i%3?'#f4f0e4':'#d6e6a8',.28*k);g.beginPath();g.arc(p.x,p.y,r,0,7);g.fill()}
+ g.strokeStyle=rgba('#b8d070',.45*k);g.lineWidth=1.5;g.setLineDash([6,6]);g.lineDashOffset=-t*12;gEll(x.x,x.y,R);g.stroke();g.setLineDash([]);g.restore()};
+// jet de vapeur : cône de bouffées blanches
+JFXD.ft_cone=(f,k,e,t,u)=>{const x0=u&&!u.dead?u.x:f.x,y0=u&&!u.dead?u.y:f.y;g.save();for(let i=0;i<16;i++){const m=Math.min(1,e*1.6)*(.3+((i*.37)%1)*.7),b=f.a+((i%5)-2)*.18,d=f.r*m,q=P(x0+Math.cos(b)*d,y0+Math.sin(b)*d,30+m*16),r=(8+m*22)*q.s;
+  g.fillStyle=rgba(i%3?'#ffffff':FTC.a,.55*k);g.beginPath();g.arc(q.x,q.y,r,0,7);g.fill()}g.restore()};
+// traînée de la charge
+JFXD.ft_trail=(f,k,e,t,u)=>{if(!u||u.dead)return;g.save();for(let i=0;i<6;i++){const q=P(u.x-Math.cos(u.aim)*(14+i*14),u.y-Math.sin(u.aim)*(14+i*14),20+i*4);g.fillStyle=rgba(i%2?'#ffffff':FTC.a,.5*k*(1-i/7));g.beginPath();g.arc(q.x,q.y,(10+i*4)*q.s,0,7);g.fill()}g.restore()};
+// chaudron : la pression monte (anneau qui se resserre, sol qui bouillonne)
+JFXD.ft_build=(f,k,e,t)=>{g.save();g.fillStyle=rgba(FTC.b,.1+.25*e);gEll(f.x,f.y,f.r);g.fill();g.strokeStyle=rgba(FTC.a,.8);g.lineWidth=2+e*3;gEll(f.x,f.y,f.r*(1-e*.75));g.stroke();
+ for(let i=0;i<12;i++){const b=i*.52,d=f.r*((i*.43)%1),p=P(f.x+Math.cos(b)*d,f.y+Math.sin(b)*d,Math.abs(Math.sin(t*9+i))*8*e);g.strokeStyle=rgba('#ffffff',.6*e);g.lineWidth=1.2;g.beginPath();g.arc(p.x,p.y,(3+e*4)*p.s,0,7);g.stroke()}g.restore()};
+// geyser de vapeur
+JFXD.ft_geyser=(f,k,e,t)=>{g.save();for(let i=0;i<18;i++){const b=i*.35,d=f.r*.6*((i*.29)%1),m=Math.min(1,e*1.3),z=m*(150+(i%4)*30),p=P(f.x+Math.cos(b)*d*(1+m),f.y+Math.sin(b)*d*(1+m),z),r=(14+m*26)*p.s;g.fillStyle=rgba(i%3?'#ffffff':FTC.a,.5*k);g.beginPath();g.arc(p.x,p.y,r,0,7);g.fill()}g.restore()};
+
+// ===== Kekkei genkai g2 : Jiton, le sable de fer et le magnétisme (préfixe ji_) — façon Troisième Kazekage =====
+// Identité : la traque. Tes jutsu AIMANTENT la cible (trait, 4 s) ; sur une cible aimantée, le sable de fer revient vers elle :
+// tes jutsu suivants l'attirent vers toi et frappent plus fort. Pointes, pluie de fer, bras de fer, bouclier, forêt de pointes ; dash : glissade magnétique.
+gkPal('ji_iron','#b8c0d8','#5a6078','#2a2e3c','#0e1016');
+defKG(2,{n:'Jiton',col:'#6a7290',tag:'Ji',el:'Doton + Fûton',nat:4,d:'Le sable de fer : aimante la cible, l\'attire, la cloue sous des pointes de fer',
+ ico:f=>{g.lineWidth=4.2;g.lineCap='butt';g.beginPath();g.arc(0,-1,7,Math.PI,0);g.lineTo(7,9);g.moveTo(-7,-1);g.lineTo(-7,9);g.stroke();g.fillRect(-9.5,5,5,5);g.fillRect(4.5,5,5,5)}});
+const JI_D={
+ needle:'4 pointes de sable de fer en éventail : 4 dégâts chacune ; aimante la cible',
+ rain:'Le sable de fer s\'abat sur le point visé (alerte 0,55 s) : 20 dégâts et ralentit 1 s ; une cible déjà aimantée est clouée 0,7 s',
+ arm:'Un bras de sable de fer saisit le 1er ennemi touché (480) : 22 dégâts, il est ramené jusqu\'à toi et aimanté',
+ shield:'Bouclier de sable de fer 3 s (absorbe 45 dégâts) ; quand il cède ou à la fin, le fer éclate autour de toi : 22 dégâts, repousse et aimante',
+ forest:'Forêt de pointes au point visé (380 max) : les ennemis aimantés à 500 ou moins sont d\'abord attirés au centre ; puis 3 vagues de pointes (18 dégâts chacune), la dernière entrave 0,8 s',
+ dash:'Glissade magnétique (240) sur ton sable de fer : les ennemis traversés sont aimantés'};
+KIT('g2',[
+ ['D','x.ji_needle','Jiton : Pointes de fer',JI_D.needle,'ji_iron'],
+ ['C','x.ji_rain','Jiton : Sajin Kôka',JI_D.rain,'ji_iron'],
+ ['B','x.ji_arm','Jiton : Bras de sable de fer',JI_D.arm,'ji_iron'],
+ ['A','x.ji_shield','Jiton : Bouclier de fer',JI_D.shield,'ji_iron'],
+ ['S','x.ji_forest','Jiton : Sajin Kaika Shôtan',JI_D.forest,'ji_iron'],
+]);
+DASHG[2]={src:'x.ji_dash',n:'Glissade magnétique',d:JI_D.dash,vfx:'ji_iron',cd:7};
+KGBAL[2]=[0.99,0.97];
+const JIC=GK.ji_iron,jiMag=(u,e)=>gkStack(u,e,'ji_mag',1,1,4);
+// attraction d'une cible aimantée vers le lanceur (sur un nouveau jutsu de fer)
+function jiPull(u,e,d){if(!e||e.dead||!(e.ji_mag>0)||e.unstop>0)return;const a=Math.atan2(u.y-e.y,u.x-e.x),k=Math.min(d,Math.max(0,dist(u,e)-u.r-e.r-30));e.kx+=Math.cos(a)*k*5;e.ky+=Math.sin(a)*k*5;
+ jx({jfx:'ji_lines',x:e.x,y:e.y,x2:u.x,y2:u.y,t:.4,m:.4})}
+Object.assign(NAT,{
+ // ---------- Pointes de fer (D) ----------
+ ji_needle:SP('Jiton : Pointes de fer',JI_D.needle,5,{ai:RG(460,.75),line:{len:460,w:80}},(u,a)=>{gkS('sand',u);gkS('blaster',u);anim(u,'throw2',.4);jx({jfx:'ji_swirl',ui:gkI(u),x:u.x,y:u.y,t:.4,m:.4});const hit1=new Set();
+  for(let i=0;i<4;i++)proj(u,a+(i-1.5)*.13,{spd:900,r:6,dmg:4,life:.52,col:JIC.b,kind:'ji_nd',vfx:'ji_iron',onHit:(p,t)=>{if(!hit1.has(t)){hit1.add(t);jiPull(p.owner,t,40);jiMag(p.owner,t)}}})}),
+ // ---------- Sajin Kôka (C) ----------
+ ji_rain:SP('Jiton : Sajin Kôka',JI_D.rain,8,{ai:RG(420,.65),tele:{r:80,max:420}},(u,a,td)=>{const c=atP(u,a,td,420),D=.55;gkS('sand',u);anim(u,'gk_call',.6);jx({jfx:'ji_cloud',x:c.x,y:c.y,r:80,t:D+.3,m:D+.3});
+  later(u,D,()=>{for(const e of enemies(u))if(gkIn(e,c.x,c.y,80)){const m=e.ji_mag>0;if(gkHit(e,u,20,m?{root:.7,unblockable:1}:{slow:1,unblockable:1},'ji_iron'))jiMag(u,e)}
+   jx({jfx:'ji_spikes',x:c.x,y:c.y,r:80,n:9,t:.7,m:.7});if(near(c.x,c.y)){gkS('rock',u);gkS('sand',u);shake=Math.max(shake,.12)}},{x:c.x,y:c.y,r:80})}),
+ // ---------- Bras de sable de fer (B) : grappin ----------
+ ji_arm:SP('Jiton : Bras de sable de fer',JI_D.arm,10,{ai:{mode:'gap',min:150,max:470,p:.6},line:{len:480,w:34}},(u,a)=>{gkS('sand',u);gkS('heavy',u);anim(u,'point',.45);
+  proj(u,a,{spd:900,r:14,dmg:22,life:.54,col:JIC.b,kind:'ji_arm',vfx:'ji_iron',hook:1,o:{unblockable:1},onHit:(p,t)=>{jiMag(p.owner,t);if(near(t.x,t.y)){gkS('heavy',t);sparks(t.x,t.y,JIC.a,10,'ji_iron')}}});
+  jx({jfx:'ji_armT',ui:gkI(u),x:u.x,y:u.y,t:.55,m:.55})}),
+ // ---------- Bouclier de fer (A) ----------
+ ji_shield:SP('Jiton : Bouclier de fer',JI_D.shield,13,{ai:DEF},(u)=>{gkS('sand',u);gkS('heavy',u);anim(u,'gk_charge',.5);shieldU(u,45,3);u.ji_sh=3;
+  aux.push({type:'ji_sh',x:u.x,y:u.y,r:0,t:3.05,m:3.05,team:u.team,owner:u,ui:gkI(u),k:0});say(u,'BOUCLIER DE FER',JIC.a)}),
+ // ---------- Sajin Kaika Shôtan (S) ----------
+ ji_forest:ULT('Jiton : Sajin Kaika Shôtan',JI_D.forest,{ai:RG(380,.8),tele:{r:160,max:380}},(u,a,td)=>{const c=atP(u,a,td,380),R=160;gkS('sand',u);gkS('roar',u);anim(u,'gk_call',1);
+  for(const e of enemies(u))if(e.ji_mag>0&&Math.hypot(e.x-c.x,e.y-c.y)<500&&e.unstop<=0){const b=Math.atan2(c.y-e.y,c.x-e.x),d=Math.hypot(c.x-e.x,c.y-e.y);e.kx+=Math.cos(b)*Math.min(900,d*4.5);e.ky+=Math.sin(b)*Math.min(900,d*4.5);jx({jfx:'ji_lines',x:e.x,y:e.y,x2:c.x,y2:c.y,t:.6,m:.6});say(e,'ATTIRÉ',JIC.a)}
+  jx({jfx:'ji_cloud',x:c.x,y:c.y,r:R,t:1.6,m:1.6});
+  for(let w=0;w<3;w++)later(u,.6+w*.3,()=>{const last=w===2;for(const e of enemies(u))if(gkIn(e,c.x,c.y,R)&&gkHit(e,u,18,last?{root:.8,unblockable:1}:{unblockable:1,slow:.6},'ji_iron'))jiMag(u,e);
+   jx({jfx:'ji_spikes',x:c.x,y:c.y,r:R,n:16+w*4,big:1,t:.8,m:.8});if(near(c.x,c.y)){gkS('rock',u);shake=Math.max(shake,.15+w*.08)}},w?{}:{x:c.x,y:c.y,r:R})}),
+ // ---------- dash : Glissade magnétique ----------
+ ji_dash:SP('Glissade magnétique',JI_D.dash,7,{ai:ESC},(u,a,td)=>{const x0=u.x,y0=u.y,d=clamp(td||240,120,240);gkS('sand',u);gkS('dash',u);anim(u,'lunge',.3);
+  dash(u,a,d,.24,{through:1,end:()=>{for(const e of enemies(u)){const dx=e.x-x0,dy=e.y-y0,ca=Math.cos(a),sa=Math.sin(a),f=dx*ca+dy*sa;if(f>-e.r&&f<d+e.r&&Math.abs(-dx*sa+dy*ca)<e.r+u.r+10)jiMag(u,e)}}});
+  jx({jfx:'ji_lines',x:x0,y:y0,x2:clamp(x0+Math.cos(a)*d,B.x,B.x+B.w),y2:clamp(y0+Math.sin(a)*d,B.y,B.y+B.h),t:.45,m:.45})}),
+});
+Object.assign(NATHERO,{ji:'kylo'});
+// bouclier : éclate quand il cède ou à la fin
+AUXF.ji_sh=(x,dt)=>{const u=x.owner;if(x.done||!u)return;if(u.dead){x.done=1;x.t=0;return}x.x=u.x;x.y=u.y;
+ if(u.shield<=0||x.t<=0){x.done=1;x.t=0;u.ji_sh=0;u.shield=0;gkAoe(u,u.x,u.y,110,22,{kb:320},'ji_iron',e=>jiMag(u,e));jx({jfx:'ji_spikes',x:u.x,y:u.y,r:110,n:14,t:.6,m:.6});jx({jfx:'gk_boom',x:u.x,y:u.y,r:110,v:'ji_iron',s:'iron',t:.5,m:.5});if(near(u.x,u.y)){gkS('rock',u);shake=Math.max(shake,.2)}}};
+AUXD.ji_sh=(x,k,t)=>{const u=units[x.ui];if(!u||u.dead)return;const q=P(u.x,u.y,0),s=q.s;g.save();for(let i=0;i<26;i++){const b=i*.24+t*(i%2?2.2:-1.8),r=(34+(i%4)*5)*s,z=10+((i*13)%50),p=P(u.x+Math.cos(b)*r/s,u.y+Math.sin(b)*r/s*.9,z);
+  g.fillStyle=i%3?JIC.c:JIC.b;g.fillRect(p.x-2*s,p.y-2*s,4*s,4*s)}g.strokeStyle=rgba(JIC.a,.5);g.lineWidth=2;g.beginPath();g.ellipse(q.x,q.y-28*s,30*s,38*s,0,0,7);g.stroke();g.restore()};
+// ---- trait : Magnétisme
+GKST.push({key:'ji_mag',max:1,col:'#9aa6d0',c2:'#20243a'});
+KGTRAITS[2]={nom:'Magnétisme',desc:'Tes jutsu de fer aimantent la cible 4 s. Sur une cible aimantée, ton sable de fer frappe plus fort (+15 % de dégâts de tes jutsu) et la ramène vers toi (attirée de 40 par les Pointes de fer, clouée par la pluie de fer, attirée au centre de la forêt de pointes)',
+ deal(src,t,dmg,o){return t.ji_mag>0&&gkMine('ji_iron')?dmg*1.15:dmg},
+ draw(u,p,S,sk){const t=performance.now()/1000;g.save();g.fillStyle=JIC.c;for(let i=0;i<6;i++){const b=t*1.6+i*1.05,x=p.x+Math.cos(b)*19*S*sk,y=p.y+Math.sin(b)*6*S*sk-(4+Math.sin(t*3+i)*3)*S;g.fillRect(x-1.5*S,y-1.5*S,3*S,3*S)}g.restore()},
+ prev(u,p,S,front){if(front)return;g.save();g.fillStyle=rgba(JIC.c,.35);g.beginPath();g.ellipse(p.x,p.y,26*S,8*S,0,0,7);g.fill();g.restore()},
+ hud(u,x,y){gkHud(u,x,y,'Magnétisme','ji_mag',1,'#b8c4f0',JIC.a,u.ji_sh>0?'· BOUCLIER':'')}};
+AFTER.push(()=>UK.push('ji_mag','ji_sh'));
+// lignes de force sur une cible aimantée
+STATD.push((u,p,S,sk)=>{if(!(u.ji_mag>0)||u.dead)return;const t=performance.now()/1000;g.save();g.strokeStyle=rgba('#9aa6d0',.55);g.lineWidth=1.2*S;for(let i=0;i<3;i++){const r=(14+((t*20+i*8)%24))*S*(sk||1);g.beginPath();g.ellipse(p.x,p.y-36*S,r,r*.45,0,0,7);g.stroke()}g.restore()});
+// ---- visuels
+PROJD.ji_nd=gkShardD('ji_iron',14);
+// bras de sable de fer : main griffue au bout d'un flot de grains
+PROJD.ji_arm=(p,R,ra,t)=>{g.rotate(ra);g.fillStyle=JIC.c;for(let i=0;i<14;i++){const x=-8-i*7,y=Math.sin(t/40+i)*4;g.fillRect(x-2,y-2,4+((i*3)%3),4)}
+ g.fillStyle=JIC.b;g.strokeStyle=JIC.d;g.lineWidth=1.2;g.beginPath();g.ellipse(0,0,10,9,0,0,7);g.fill();g.stroke();g.lineCap='round';for(let i=0;i<4;i++){const y=-6+i*4;g.strokeStyle=JIC.d;g.lineWidth=4;g.beginPath();g.moveTo(6,y*.7);g.quadraticCurveTo(14,y,18,y*1.3+3);g.stroke();g.strokeStyle=JIC.b;g.lineWidth=2.4;g.stroke()}};
+// grains de fer qui tournent autour des mains
+JFXD.ji_swirl=(f,k,e,t,u)=>{if(!u||u.dead)return;g.save();g.fillStyle=rgba(JIC.c,k);for(let i=0;i<14;i++){const b=t*8+i*.45,r=14+e*16,q=P(u.x+Math.cos(b)*r,u.y+Math.sin(b)*r*.6,40+Math.sin(b*2)*6);g.fillRect(q.x-1.6,q.y-1.6,3.2,3.2)}g.restore()};
+JFXD.ji_armT=(f,k,e,t,u)=>{if(!u||u.dead)return;JFXD.ji_swirl(f,k,e,t,u)};
+// nuage de sable de fer au-dessus de la zone (pluie, forêt)
+JFXD.ji_cloud=(f,k,e,t)=>{g.save();g.fillStyle=rgba(JIC.d,.22*Math.min(1,k*3));gEll(f.x,f.y,f.r);g.fill();for(let i=0;i<22;i++){const b=i*2.4+t*.6,d=f.r*((i*.27)%1),z=110+Math.sin(t*2+i)*10,p=P(f.x+Math.cos(b)*d,f.y+Math.sin(b)*d,z);g.fillStyle=rgba(i%2?JIC.c:JIC.d,.75*Math.min(1,k*3));g.beginPath();g.arc(p.x,p.y,(5+(i%3)*3)*p.s,0,7);g.fill()}
+ g.fillStyle=rgba(JIC.c,.8*Math.min(1,k*3));for(let i=0;i<10;i++){const b=i*1.9,d=f.r*((i*.41)%1),z=100-((t*260+i*30)%100),p=P(f.x+Math.cos(b)*d,f.y+Math.sin(b)*d,z);g.fillRect(p.x-1,p.y-5,2,10)}g.restore()};
+// pointes de fer qui jaillissent du sol
+JFXD.ji_spikes=(f,k,e,t)=>{const up=ezo(Math.min(1,e*5)),fade=Math.min(1,k*2.5),n=f.n||10;g.save();for(let i=0;i<n;i++){const b=i*2.399+f.x*.01,d=f.r*Math.sqrt(((i*.618)%1)),bp=P(f.x+Math.cos(b)*d,f.y+Math.sin(b)*d,0),s=bp.s,h=(f.big?46:34)*(.6+((i*.37)%1)*.6)*up*fade,w=(4+(i%3))*s,tp=P(f.x+Math.cos(b)*d*1.05,f.y+Math.sin(b)*d*1.05,h);
+  g.fillStyle=JIC.c;g.strokeStyle=JIC.d;g.lineWidth=1;g.beginPath();g.moveTo(bp.x-w,bp.y);g.lineTo(tp.x,tp.y);g.lineTo(bp.x+w,bp.y);g.closePath();g.fill();g.stroke();g.strokeStyle=rgba(JIC.a,.7);g.beginPath();g.moveTo(bp.x-w*.2,bp.y);g.lineTo(tp.x,tp.y);g.stroke()}g.restore()};
+// lignes de force magnétiques (attraction)
+JFXD.ji_lines=(f,k,e,t)=>{const A=P(f.x,f.y,30),Bq=P(f.x2,f.y2,30);g.save();g.strokeStyle=rgba('#9aa6d0',.7*k);g.lineWidth=1.5;for(let j=-1;j<=1;j++){g.beginPath();g.moveTo(A.x,A.y);g.quadraticCurveTo((A.x+Bq.x)/2+j*16,(A.y+Bq.y)/2-j*20,Bq.x,Bq.y);g.stroke()}
+ g.fillStyle=rgba(JIC.c,k);for(let i=0;i<8;i++){const m=(i/8+e*1.5)%1;g.fillRect(lerp(A.x,Bq.x,m)-2,lerp(A.y,Bq.y,m)-2,4,4)}g.restore()};
+
+// ===== Kekkei genkai g3 : Bakuton, l'explosion (préfixe bt_) — façon Gari et les poseurs de mines d'Iwa =====
+// Identité : la mise en charge. Tes jutsu posent des CHARGES sur la cible (trait, 2 au plus) ; ton coup de base sur une cible chargée
+// fait tout sauter (8 dégâts par charge, recul). Poing mine, mine, grenade de chakra, réaction en chaîne, grande détonation ; dash : souffle explosif.
+gkPal('bt_blast','#fff4c0','#ffb030','#c04a10','#3a1606');
+defKG(3,{n:'Bakuton',col:'#ffb030',tag:'Ba',el:'Doton + Raiton',nat:4,d:'L\'explosion : charges posées sur l\'ennemi, mines, réactions en chaîne',
+ ico:f=>{g.beginPath();for(let i=0;i<16;i++){const b=i*Math.PI/8,r=i%2?5:12;g.lineTo(Math.cos(b)*r,Math.sin(b)*r)}g.closePath();g.fill()}});
+const BT_D={
+ fist:'Jiraiken : tu bondis (120) et frappes le 1er ennemi : 10 dégâts et une mine collée qui saute 0,6 s plus tard (8 dégâts, repousse)',
+ mine:'Pose une mine au point visé (320 max), armée en 0,5 s, 12 s au plus : 22 dégâts et repousse fort quand un ennemi marche dessus',
+ gren:'Grenade de chakra (430 max) : explose au sol, 26 dégâts et étourdit 0,6 s autour',
+ chain:'Réaction en chaîne : 6 explosions courent devant toi (420) à 0,1 s d\'écart : 12 dégâts chacune et repousse',
+ big:'Tu concentres 1 s (immobile, insensible au contrôle), puis tout ton corps explose : 62 dégâts et repousse violemment autour de toi (210), étourdit 0,5 s ; toi, tu n\'as rien',
+ dash:'Une explosion derrière toi te propulse (250) : les ennemis tout près de ton point de départ prennent 6 dégâts et sont repoussés'};
+KIT('g3',[
+ ['D','x.bt_fist','Bakuton : Jiraiken',BT_D.fist,'bt_blast'],
+ ['C','x.bt_mine','Bakuton : Mine',BT_D.mine,'bt_blast'],
+ ['B','x.bt_gren','Bakuton : Grenade de chakra',BT_D.gren,'bt_blast'],
+ ['A','x.bt_chain','Bakuton : Réaction en chaîne',BT_D.chain,'bt_blast'],
+ ['S','x.bt_big','Bakuton : Grande détonation',BT_D.big,'bt_blast'],
+]);
+DASHG[3]={src:'x.bt_dash',n:'Souffle explosif',d:BT_D.dash,vfx:'bt_blast',cd:7};
+KGBAL[3]=[0.95,0.935];
+const BTC=GK.bt_blast,BT_MAX=2,btCh=(u,e)=>gkStack(u,e,'bt_ch',1,BT_MAX,5);
+function btBoom(u,x,y,r,d,o,sz){const n=gkAoe(u,x,y,r,d,Object.assign({kb:260},o),'bt_blast',e=>btCh(u,e));jx({jfx:'gk_boom',x,y,r:r*1.15,v:'bt_blast',s:'blast',t:.5,m:.5});
+ if(near(x,y)){gkS('boom',u);sparks(x,y,BTC.b,10,'bt_blast');shake=Math.max(shake,sz||.15)}return n}
+Object.assign(NAT,{
+ // ---------- Jiraiken (D) : poing mine ----------
+ bt_fist:SP('Bakuton : Jiraiken',BT_D.fist,5,{ai:{mode:'gap',min:40,max:170,p:.8},line:{len:150,w:50}},(u,a)=>{gkS('dash',u);anim(u,'lunge',.4);let done=0;
+  const chk=()=>{if(done||u.dead)return;for(const e of enemies(u))if(dist(u,e)<u.r+e.r+22&&angDiff(ang(u,e),a)<1.2){done=1;u.dash=null;if(gkHit(e,u,10,{melee:1},'bt_blast')){btCh(u,e);
+     const ti=gkI(e);jx({jfx:'bt_tag',ti,x:e.x,y:e.y,t:.6,m:.6});later(u,.6,()=>{if(!e.dead)btBoom(u,e.x,e.y,55,8,{})})}if(near(e.x,e.y))gkS('hit',e);return}};
+  dash(u,a,120,.16,{end:chk});aux.push({type:'gk_chk',x:u.x,y:u.y,r:0,t:.2,m:.2,team:u.team,owner:u,f:chk})}),
+ // ---------- Mine (C) ----------
+ bt_mine:SP('Bakuton : Mine',BT_D.mine,8,{ai:RG(320,.5)},(u,a,td)=>{const c=atP(u,a,td,320);gkS('deflect',u);anim(u,'stomp',.4);for(const x of aux)if(x.type==='bt_mine'&&x.owner===u)x.t=Math.min(x.t,.01);
+  aux.push({type:'bt_mine',x:c.x,y:c.y,r:30,t:12,m:12,team:u.team,owner:u,k:.5,arm:.5})}),
+ // ---------- Grenade de chakra (B) ----------
+ bt_gren:SP('Bakuton : Grenade de chakra',BT_D.gren,10,{ai:RG(430,.65),tele:{r:90,max:430}},(u,a,td)=>{const c=atP(u,a,td,430),D=.35+Math.hypot(c.x-u.x,c.y-u.y)/1300;gkS('blaster',u);anim(u,'throw2',.45);
+  jx({jfx:'bt_lob',x:u.x,y:u.y,x2:c.x,y2:c.y,t:D,m:D});later(u,D,()=>btBoom(u,c.x,c.y,90,26,{stun:.6,kb:120},.25),{x:c.x,y:c.y,r:90})}),
+ // ---------- Réaction en chaîne (A) ----------
+ bt_chain:SP('Bakuton : Réaction en chaîne',BT_D.chain,13,{ai:RG(400,.7),line:{len:420,w:110}},(u,a)=>{gkS('heavy',u);anim(u,'stomp',.5);const x0=u.x,y0=u.y;
+  for(let i=0;i<6;i++){const d=60+i*70,x=clamp(x0+Math.cos(a)*d,B.x+10,B.x+B.w-10),y=clamp(y0+Math.sin(a)*d,B.y+10,B.y+B.h-10);later(u,.12+i*.1,()=>btBoom(u,x,y,58,12,{kb:240},.12),i?{}:{x,y,r:58})}
+  jx({jfx:'bt_fuse',x:x0,y:y0,a,len:420,t:.75,m:.75})}),
+ // ---------- Grande détonation (S) ----------
+ bt_big:ULT('Bakuton : Grande détonation',BT_D.big,{ai:SELF(180,.85),tele:{self:1,r:210}},(u)=>{gkS('roar',u);anim(u,'gk_charge',1.1);u.root=Math.max(u.root,1);u.unstop=Math.max(u.unstop,1.15);u.bt_bg=1;
+  aux.push({type:'bt_big',x:u.x,y:u.y,r:210,t:1,m:1,team:u.team,owner:u,ui:gkI(u),danger:1})}),
+ // ---------- dash : Souffle explosif ----------
+ bt_dash:SP('Souffle explosif',BT_D.dash,7,{ai:ESC},(u,a,td)=>{const x0=u.x-Math.cos(a)*20,y0=u.y-Math.sin(a)*20;anim(u,'lunge',.3);gkS('dash',u);
+  btBoom(u,x0,y0,55,6,{kb:320},.12);dash(u,a,clamp(td||250,130,250),.2,{})}),
+});
+Object.assign(NATHERO,{bt:'kylo'});
+// mine : s'arme, puis saute au premier ennemi qui marche dessus
+AUXF.bt_mine=(x,dt)=>{const o=x.owner;if(x.done||!o)return;if(x.arm>0){x.arm-=dt;return}if(x.t<=.02){x.done=1;return}
+ for(const e of enemies(o))if(gkIn(e,x.x,x.y,x.r)&&!(e.dash&&e.dash.jump)){x.done=1;x.t=0;btBoom(o,x.x,x.y,80,22,{kb:420},.25);return}};
+AUXD.bt_mine=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,armed=!(x.m-x.t<.5);g.save();g.fillStyle='#3a2a1a';g.strokeStyle='#14100a';g.lineWidth=1.2;g.beginPath();g.ellipse(q.x,q.y,12*s,5*s,0,0,7);g.fill();g.stroke();
+ g.fillStyle='#f4e6c0';g.fillRect(q.x-7*s,q.y-4*s,14*s,4*s);g.fillStyle='#c0201a';g.fillRect(q.x-1.5*s,q.y-4*s,3*s,4*s);
+ if(armed){const bl=(Math.sin(t*8)+1)/2;g.globalCompositeOperation='lighter';g.fillStyle=rgba(BTC.b,.3+.5*bl);g.beginPath();g.arc(q.x,q.y-6*s,(3+bl*3)*s,0,7);g.fill();g.strokeStyle=rgba(BTC.b,.25);gEll(x.x,x.y,x.r);g.stroke()}g.restore()};
+// grande détonation : la lumière monte, puis tout saute
+AUXF.bt_big=(x,dt)=>{const u=x.owner;if(x.done||!u)return;if(u.dead){x.done=1;x.t=0;u.bt_bg=0;return}x.x=u.x;x.y=u.y;u.root=Math.max(u.root,.05);
+ if(x.t<=0){x.done=1;u.bt_bg=0;gkAoe(u,u.x,u.y,210,62,{kb:700,stun:.5},'bt_blast',e=>btCh(u,e));jx({jfx:'gk_boom',x:u.x,y:u.y,r:260,v:'bt_blast',s:'blast',t:.9,m:.9});jx({jfx:'bt_flash',x:u.x,y:u.y,t:.5,m:.5});
+  if(near(u.x,u.y)){gkS('boom',u);gkS('heavy',u);shake=Math.max(shake,.6);sparks(u.x,u.y,BTC.a,30,'bt_blast')}}};
+AUXD.bt_big=(x,k,t)=>{const u=units[x.ui];if(!u)return;const e=1-x.t/x.m,q=P(u.x,u.y,40),s=q.s;g.save();g.strokeStyle=rgba(BTC.b,.4+.5*e);g.lineWidth=2+e*4;gEll(u.x,u.y,x.r*(1-e*.85));g.stroke();g.fillStyle=rgba(BTC.c,.12+.2*e);gEll(u.x,u.y,x.r);g.fill();
+ g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(q.x,q.y,0,q.x,q.y,(30+e*50)*s);gr.addColorStop(0,rgba('#ffffff',.6+.4*e));gr.addColorStop(1,rgba(BTC.b,0));g.fillStyle=gr;g.beginPath();g.arc(q.x,q.y,(30+e*50)*s,0,7);g.fill();
+ g.strokeStyle=rgba('#ffffff',.6*e);g.lineWidth=2;for(let i=0;i<8;i++){const b=i*.785+t*2;g.beginPath();g.moveTo(q.x+Math.cos(b)*12*s,q.y+Math.sin(b)*12*s);g.lineTo(q.x+Math.cos(b)*(30+e*60)*s,q.y+Math.sin(b)*(30+e*60)*s);g.stroke()}g.restore()};
+// ---- trait : Détonateur
+GKST.push({key:'bt_ch',max:BT_MAX,col:'#ffb030',c2:'#5a2a06'});
+KGTRAITS[3]={nom:'Détonateur',desc:'Tes explosions posent des charges sur la cible (2 au plus, 5 s). Ton coup de base sur une cible chargée fait sauter toutes ses charges : 8 dégâts par charge et recul',
+ landed(src,t,dmg,o){if(!o.basic||dmg<=0||t.dead)return;const n=t.bt_ch|0;if(!n)return;gkStSet(t,'bt_ch',0);const V=VFX;VFX='bt_blast';hit(t,src,8*n,{kb:180*n,unblockable:1,fx:src.x,fy:src.y});VFX=V;
+  jx({jfx:'gk_boom',x:t.x,y:t.y,r:40+n*15,v:'bt_blast',s:'blast',t:.45,m:.45});if(near(t.x,t.y)){gkS('boom',t);shake=Math.max(shake,.12)}},
+ draw(u,p,S,sk){if(!(u.bt_bg>0))return;const t=performance.now()/1000;g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba(BTC.a,.7);g.lineWidth=2*S;for(let i=0;i<5;i++){const y=p.y-(10+i*12)*S;g.beginPath();g.moveTo(p.x-12*S,y);g.lineTo(p.x+(Math.sin(t*30+i)*6)*S,y-6*S);g.lineTo(p.x+12*S,y);g.stroke()}g.restore()},
+ prev(u,p,S,front){if(!front)return;g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(BTC.b,.5);g.beginPath();g.arc(p.x+14*S,p.y-40*S,3*S,0,7);g.fill();g.restore()},
+ hud(u,x,y){gkHud(u,x,y,'Détonateur','bt_ch',BT_MAX,BTC.b,BTC.a)}};
+AFTER.push(()=>UK.push('bt_ch','bt_bg'));
+// charge visible : petit parchemin explosif collé, mèche qui grésille
+STATD.push((u,p,S,sk)=>{const n=u.bt_ch|0;if(!n||u.dead)return;const t=performance.now()/1000;g.save();for(let i=0;i<n;i++){const x=p.x+(i?10:-10)*S,y=p.y-(36+i*8)*S;g.fillStyle='#f4e6c0';g.strokeStyle='#5a2a06';g.lineWidth=1;g.fillRect(x-4*S,y-6*S,8*S,12*S);g.strokeRect(x-4*S,y-6*S,8*S,12*S);
+ g.fillStyle='#c0201a';g.fillRect(x-1*S,y-4*S,2*S,8*S);g.globalCompositeOperation='lighter';g.fillStyle=rgba(BTC.b,.5+.5*Math.sin(t*14+i));g.beginPath();g.arc(x,y-8*S,2.5*S,0,7);g.fill();g.globalCompositeOperation='source-over'}g.restore()});
+// ---- visuels
+JFXD.bt_tag=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;const q=P(tg.x,tg.y,40),s=q.s,bl=Math.sin(e*40)>0;g.save();g.fillStyle=bl?'#ffffff':BTC.b;g.beginPath();g.arc(q.x,q.y,(4+e*6)*s,0,7);g.fill();g.restore()};
+JFXD.bt_lob=(f,k,e,t)=>{const m=Math.min(1,e*1.05);if(m>=1)return;const x=lerp(f.x,f.x2,m),y=lerp(f.y,f.y2,m),q=P(x,y,Math.sin(Math.PI*m)*110+30*(1-m)),s=q.s;g.save();g.globalCompositeOperation='lighter';
+ const gr=g.createRadialGradient(q.x,q.y,0,q.x,q.y,14*s);gr.addColorStop(0,'#ffffff');gr.addColorStop(.5,rgba(BTC.b,.9));gr.addColorStop(1,rgba(BTC.c,0));g.fillStyle=gr;g.beginPath();g.arc(q.x,q.y,14*s,0,7);g.fill();g.strokeStyle=rgba(BTC.a,.8);g.lineWidth=1.5;g.beginPath();g.arc(q.x,q.y,(8+Math.sin(t*20)*2)*s,0,7);g.stroke();g.restore()};
+// mèche de chakra qui court au sol avant la réaction en chaîne
+JFXD.bt_fuse=(f,k,e,t)=>{const L=f.len*Math.min(1,e*1.25),A=P(f.x,f.y,0),Bq=P(f.x+Math.cos(f.a)*L,f.y+Math.sin(f.a)*L,0);g.save();g.strokeStyle=rgba(BTC.c,.7*k);g.lineWidth=3;g.setLineDash([5,4]);g.beginPath();g.moveTo(A.x,A.y);g.lineTo(Bq.x,Bq.y);g.stroke();g.setLineDash([]);
+ g.globalCompositeOperation='lighter';g.fillStyle=rgba('#ffffff',k);g.beginPath();g.arc(Bq.x,Bq.y,4,0,7);g.fill();g.restore()};
+JFXD.bt_flash=(f,k)=>{g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba('#fff4c0',.35*k);g.fillRect(0,0,W,H);g.restore()};
+
+// ===== Kekkei genkai g4 : Shakuton, l'incandescence (préfixe sk_) — Katon + Fûton (Pakura de Suna) =====
+// Identité : la pression qui assèche. Des sphères de chaleur flottent, traquent et collent ; chaque touche DESSÈCHE (trait, 3 cumuls) :
+// à 3, la chaleur aspire l'eau du corps d'un coup (12 dégâts, ralenti). Sphère traqueuse, sphères en orbite, essaim, étreinte, soleil ; dash : envol brûlant.
+gkPal('sk_heat','#fff0b0','#ff8a2a','#b03a10','#4a1406');
+defKG(4,{n:'Shakuton',col:'#ff7a2a',tag:'Sh',el:'Katon + Fûton',nat:2,d:'L\'incandescence : sphères de chaleur qui traquent et dessèchent l\'ennemi',
+ ico:f=>{g.beginPath();g.arc(0,0,6.5,0,7);g.fill();g.lineWidth=2.2;for(let i=0;i<8;i++){const b=i*Math.PI/4;g.beginPath();g.moveTo(Math.cos(b)*9,Math.sin(b)*9);g.lineTo(Math.cos(b)*12.5,Math.sin(b)*12.5);g.stroke()}}});
+const SK_D={
+ orb:'Sphère de chaleur qui traque l\'ennemi le plus proche de sa course : 14 dégâts et 1 dessèchement',
+ orbit:'3 sphères tournent autour de toi 5 s : chacune brûle le 1er ennemi qu\'elle frôle (9 dégâts et 1 dessèchement), puis s\'éteint',
+ swarm:'5 sphères partent en éventail puis fondent sur les ennemis proches : 6 dégâts chacune, 1 dessèchement (2 au plus par lancer)',
+ grasp:'Une grosse sphère file (480) et se colle au 1er ennemi touché 2,5 s : 7 dégâts toutes les 0,5 s, ralenti, 1 dessèchement par seconde',
+ sun:'Un soleil de chakra grossit au-dessus du point visé (380 max) pendant 1,2 s puis s\'abat : 56 dégâts et 3 dessèchements (assèche aussitôt)',
+ dash:'Bond porté par la chaleur (240, au-dessus des obstacles) ; une sphère reste à ton point de départ et explose 0,4 s plus tard (8 dégâts, 1 dessèchement)'};
+KIT('g4',[
+ ['D','x.sk_orb','Shakuton : Sphère ardente',SK_D.orb,'sk_heat'],
+ ['C','x.sk_orbit','Shakuton : Kajôsatsu',SK_D.orbit,'sk_heat'],
+ ['B','x.sk_swarm','Shakuton : Essaim de sphères',SK_D.swarm,'sk_heat'],
+ ['A','x.sk_grasp','Shakuton : Étreinte brûlante',SK_D.grasp,'sk_heat'],
+ ['S','x.sk_sun','Shakuton : Soleil incandescent',SK_D.sun,'sk_heat'],
+]);
+DASHG[4]={src:'x.sk_dash',n:'Envol brûlant',d:SK_D.dash,vfx:'sk_heat',cd:7};
+KGBAL[4]=[0.98,0.965];
+const SKC=GK.sk_heat,SK_MAX=3;
+// dessèchement : à 3 cumuls, 12 dégâts, ralenti 1,5 s, puis insensible 4 s
+function skDry(u,e,n){const c=gkStack(u,e,'sk_dry',n,SK_MAX,5);if(c>=SK_MAX&&!e.dead){gkStSet(e,'sk_dry',0,4);gkHit(e,u,12,{slow:1.5,unblockable:1},'sk_heat');say(e,'DESSÉCHÉ','#ffb060');
+  jx({jfx:'sk_dryfx',ti:gkI(e),x:e.x,y:e.y,t:.8,m:.8});if(near(e.x,e.y))gkS('fire',e)}return c}
+Object.assign(NAT,{
+ // ---------- Sphère ardente (D) ----------
+ sk_orb:SP('Shakuton : Sphère ardente',SK_D.orb,5,{ai:RG(480,.75)},(u,a)=>{gkS('fire',u);anim(u,'palm',.4);proj(u,a,{spd:470,r:12,dmg:14,life:1.15,col:SKC.b,kind:'sk_orb',vfx:'sk_heat',onHit:(p,t)=>skDry(p.owner,t,1)});gkSteer(u,projs[projs.length-1],3.2,260)}),
+ // ---------- Kajôsatsu (C) : 3 sphères en orbite ----------
+ sk_orbit:SP('Shakuton : Kajôsatsu',SK_D.orbit,8,{ai:SELF(150,.6)},(u)=>{gkS('fire',u);gkS('wind',u);anim(u,'gk_charge',.45);for(const x of aux)if(x.type==='sk_orbit'&&x.owner===u)x.t=0;
+  aux.push({type:'sk_orbit',x:u.x,y:u.y,r:62,t:5,m:5,team:u.team,owner:u,ui:gkI(u),k:0,n:7,a:0})}),
+ // ---------- Essaim de sphères (B) ----------
+ sk_swarm:SP('Shakuton : Essaim de sphères',SK_D.swarm,10,{ai:RG(460,.7)},(u,a)=>{gkS('fire',u);gkS('wind',u);anim(u,'gk_push',.45);const D=new Map();
+  for(let i=0;i<5;i++){proj(u,a+(i-2)*.38,{spd:420,r:8,dmg:6,life:1.3,col:SKC.b,kind:'sk_orb',vfx:'sk_heat',onHit:(p,t)=>{const n=(D.get(t)||0)+1;D.set(t,n);if(n<=2)skDry(p.owner,t,1)}});gkSteer(u,projs[projs.length-1],4,420)}}),
+ // ---------- Étreinte brûlante (A) ----------
+ sk_grasp:SP('Shakuton : Étreinte brûlante',SK_D.grasp,13,{ai:RG(470,.65),line:{len:480,w:44}},(u,a)=>{gkS('fire',u);gkS('roar',u);anim(u,'gk_push',.5);
+  proj(u,a,{spd:620,r:16,dmg:0,life:.78,col:SKC.b,kind:'sk_big',vfx:'sk_heat',noClash:1,onHit:(p,t)=>{if(t.dead)return;for(const x of aux)if(x.type==='sk_grab'&&x.tg===t)x.t=0;
+   aux.push({type:'sk_grab',x:t.x,y:t.y,r:0,t:2.5,m:2.5,team:p.owner.team,owner:p.owner,tg:t,ti:gkI(t),k:.5,n:0});say(t,'ÉTREINTE BRÛLANTE','#ffb060')}})}),
+ // ---------- Soleil incandescent (S) ----------
+ sk_sun:ULT('Shakuton : Soleil incandescent',SK_D.sun,{ai:RG(380,.8),tele:{r:140,max:380}},(u,a,td)=>{const c=atP(u,a,td,380),R=140,D=1.2;gkS('fire',u);gkS('roar',u);anim(u,'gk_call',1.1);
+  jx({jfx:'sk_sun',x:c.x,y:c.y,r:R,d:D,t:D+.5,m:D+.5});
+  later(u,D,()=>{gkAoe(u,c.x,c.y,R,56,{},'sk_heat',e=>skDry(u,e,3));jx({jfx:'gk_boom',x:c.x,y:c.y,r:R*1.2,v:'sk_heat',s:'dry',t:.8,m:.8});if(near(c.x,c.y)){gkS('boom',u);gkS('fire',u);shake=Math.max(shake,.4)}},{x:c.x,y:c.y,r:R})}),
+ // ---------- dash : Envol brûlant ----------
+ sk_dash:SP('Envol brûlant',SK_D.dash,7,{ai:ESC},(u,a,td)=>{const x0=u.x,y0=u.y;gkS('wind',u);gkS('dash',u);anim(u,'leap',.4);dash(u,a,clamp(td||240,130,240),.32,{jump:1});
+  jx({jfx:'sk_mini',x:x0,y:y0,t:.4,m:.4});later(u,.4,()=>{gkAoe(u,x0,y0,60,8,{},'sk_heat',e=>skDry(u,e,1));jx({jfx:'gk_boom',x:x0,y:y0,r:60,v:'sk_heat',s:'dry',t:.45,m:.45});if(near(x0,y0))gkS('fire',u)},{x:x0,y:y0,r:60})}),
+});
+Object.assign(NATHERO,{sk:'kylo'});
+// sphères en orbite
+const skOrbP=(x,i,u)=>{const b=x.a+i*2.094;return{x:u.x+Math.cos(b)*x.r,y:u.y+Math.sin(b)*x.r}};
+AUXF.sk_orbit=(x,dt)=>{const u=x.owner;if(!u||u.dead){x.t=0;return}x.x=u.x;x.y=u.y;x.a+=dt*3.4;
+ for(let i=0;i<3;i++){if(!(x.n&1<<i))continue;const p=skOrbP(x,i,u);for(const e of enemies(u))if(gkIn(e,p.x,p.y,14)){x.n&=~(1<<i);if(gkHit(e,u,9,{unblockable:1,fx:p.x,fy:p.y},'sk_heat'))skDry(u,e,1);jx({jfx:'gk_boom',x:p.x,y:p.y,r:34,v:'sk_heat',s:'dry',t:.35,m:.35});if(near(p.x,p.y))sparks(p.x,p.y,SKC.a,6,'sk_heat');break}}if(!x.n)x.t=0};
+AUXD.sk_orbit=(x,k,t)=>{const u=units[x.ui];if(!u||u.dead)return;const a0=x.a;for(let i=0;i<3;i++){if(!(x.n&1<<i))continue;const b=a0+i*2.094,q=P(u.x+Math.cos(b)*x.r,u.y+Math.sin(b)*x.r,34+Math.sin(t*4+i)*6);g.save();g.translate(q.x,q.y);PROJD.sk_orb({},11*q.s,b+Math.PI/2,t*1000);g.restore()}};
+// étreinte : la sphère colle et brûle
+AUXF.sk_grab=(x,dt)=>{const e=x.tg,o=x.owner;if(!e||e.dead||!o){x.t=0;return}x.x=e.x;x.y=e.y;if(e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.2);
+ if(x.k<=0&&x.t>0.02){x.k=.5;x.n++;if(gkHit(e,o,7,{silent:0,unblockable:1},'sk_heat')&&x.n%2===0)skDry(o,e,1)}};
+AUXD.sk_grab=(x,k,t)=>{const e=units[x.ti];if(!e||e.dead)return;const q=P(e.x,e.y,36),s=q.s;g.save();g.translate(q.x,q.y);PROJD.sk_big({},(22+Math.sin(t*10)*2)*s,0,t*1000);g.restore()};
+// ---- trait : Dessèchement
+GKST.push({key:'sk_dry',max:SK_MAX,col:'#ffb060',c2:'#5a2a06'});
+KGTRAITS[4]={nom:'Dessèchement',desc:'Tes sphères dessèchent (3 cumuls au plus, 5 s). À 3 cumuls, la chaleur aspire l\'eau du corps d\'un coup : 12 dégâts et ralenti 1,5 s, puis la cible est insensible au dessèchement 4 s. Une cible trempée sèche aussitôt (plus trempée)',
+ landed(src,t,dmg,o){if(gkMine('sk_heat')&&t.wet>0)t.wet=0},
+ draw(u,p,S,sk){const t=performance.now()/1000;g.save();g.globalCompositeOperation='lighter';for(let i=0;i<2;i++){const b=t*1.5+i*Math.PI,q={x:p.x+Math.cos(b)*20*S*(sk||1),y:p.y-46*S-Math.sin(b)*6*S};g.fillStyle=rgba(SKC.b,.55);g.beginPath();g.arc(q.x,q.y,4*S,0,7);g.fill();g.fillStyle=rgba('#ffffff',.8);g.beginPath();g.arc(q.x,q.y,1.8*S,0,7);g.fill()}g.restore()},
+ prev(u,p,S,front){if(front)KGTRAITS[4].draw(u,p,S,1)},
+ hud(u,x,y){gkHud(u,x,y,'Dessèchement','sk_dry',SK_MAX,'#ffb060',SKC.a)}};
+AFTER.push(()=>UK.push('sk_dry'));
+// ---- visuels
+PROJD.sk_orb=gkOrbD('sk_heat',{n:4,spk:8});
+PROJD.sk_big=gkOrbD('sk_heat',{n:6,spk:12,core:'#fff6d0'});
+// cible desséchée : la vapeur d'eau quitte le corps, peau craquelée
+JFXD.sk_dryfx=(f,k,e,t,u,tg)=>{const o=tg&&!tg.dead?tg:f,q=P(o.x,o.y,0),s=q.s;g.save();for(let i=0;i<10;i++){const b=i*.63,z=20+e*70+(i%3)*10,p=P(o.x+Math.cos(b)*(10+e*20),o.y+Math.sin(b)*(10+e*20),z);g.fillStyle=rgba('#e8f4ff',.45*k);g.beginPath();g.arc(p.x,p.y,(4+e*8)*s,0,7);g.fill()}
+ g.strokeStyle=rgba(SKC.c,.8*k);g.lineWidth=1.5;for(let i=0;i<4;i++){const y=q.y-(16+i*10)*s;g.beginPath();g.moveTo(q.x-8*s,y);g.lineTo(q.x-2*s,y-3*s);g.lineTo(q.x+3*s,y+2*s);g.lineTo(q.x+8*s,y-2*s);g.stroke()}g.restore()};
+// soleil qui grossit puis s'abat
+JFXD.sk_sun=(f,k,e,t)=>{const el=e*f.m,g0=Math.min(1,el/f.d),fall=el>f.d?Math.min(1,(el-f.d)/.12):0;if(fall>=1&&el>f.d+.15){return}const z=180*(1-fall)+30,q=P(f.x,f.y,z),s=q.s,R=(14+g0*f.r*.45)*s;g.save();
+ g.fillStyle=rgba(SKC.c,.18*g0);gEll(f.x,f.y,f.r*g0);g.fill();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(q.x,q.y,0,q.x,q.y,R*1.6);gr.addColorStop(0,'#ffffff');gr.addColorStop(.45,rgba(SKC.a,.95));gr.addColorStop(.8,rgba(SKC.b,.5));gr.addColorStop(1,rgba(SKC.b,0));g.fillStyle=gr;g.beginPath();g.arc(q.x,q.y,R*1.6,0,7);g.fill();
+ g.strokeStyle=rgba(SKC.a,.7);g.lineWidth=2;for(let i=0;i<14;i++){const b=i*.449+t*.8;g.beginPath();g.moveTo(q.x+Math.cos(b)*R*1.1,q.y+Math.sin(b)*R*1.1);g.lineTo(q.x+Math.cos(b)*R*1.5,q.y+Math.sin(b)*R*1.5);g.stroke()}g.restore()};
+JFXD.sk_mini=(f,k,e,t)=>{const q=P(f.x,f.y,24);g.save();g.translate(q.x,q.y);PROJD.sk_orb({},(8+e*6)*q.s,0,t*1000);g.restore()};
+
+// ===== Kekkei genkai g5 : Ranton, la tempête (préfixe rt_) — Suiton + Raiton (Darui, Atsui… et le cirque laser) =====
+// Identité : le tireur d'orage. Des rayons de foudre-eau, rapides et précis ; ta pluie TREMPE (trait) et tes rayons frappent plus fort
+// et ralentissent une cible trempée. Rayon, nuage d'orage, rayon courbe, cirque laser, grand rayon canalisé ; dash : éclair d'orage.
+gkPal('rt_storm','#e8fbff','#5ac8ff','#1a5a9a','#0a1e3a');
+defKG(5,{n:'Ranton',col:'#4ab8f0',tag:'Ra',el:'Suiton + Raiton',nat:3,d:'La tempête : rayons de foudre-eau, nuages qui trempent, cirque laser',
+ ico:f=>{g.lineWidth=2.6;g.beginPath();g.moveTo(-11,-6);g.lineTo(-3,-1);g.lineTo(-7,2);g.lineTo(11,9);g.stroke();g.beginPath();g.moveTo(5,-12);g.bezierCurveTo(8,-7,10,-5,10,-3);g.arc(6,-3,4,0,Math.PI);g.bezierCurveTo(2,-5,3,-7,5,-12);g.fill()}});
+const RT_D={
+ ray:'Rayon de foudre-eau instantané (520) : 14 dégâts',
+ cloud:'Nuage d\'orage au point visé (420 max) pendant 3,5 s : la pluie trempe et ralentit ; un éclair frappe un ennemi dessous toutes les 0,7 s (5 dégâts)',
+ curve:'Rayon qui suit ta visée en vol (1100 de vitesse) : 24 dégâts ; une cible trempée est étourdie 0,5 s',
+ circus:'Reizâ Sâkasu : 8 rayons jaillissent en gerbe puis fondent sur les ennemis (520) : 5 dégâts chacun',
+ great:'Grand rayon de tempête canalisé 1,8 s (immobile ; un étourdissement l\'arrête) : il suit lentement ta visée, 900 de long, 7 dégâts toutes les 0,2 s',
+ dash:'Tu deviens éclair (220) : les ennemis sur ta trajectoire prennent 6 dégâts et sont trempés'};
+KIT('g5',[
+ ['D','x.rt_ray','Ranton : Rayon',RT_D.ray,'rt_storm'],
+ ['C','x.rt_cloud','Ranton : Nuage d\'orage',RT_D.cloud,'rt_storm'],
+ ['B','x.rt_curve','Ranton : Rayon courbe',RT_D.curve,'rt_storm'],
+ ['A','x.rt_circus','Ranton : Reizâ Sâkasu',RT_D.circus,'rt_storm'],
+ ['S','x.rt_great','Ranton : Grand rayon de tempête',RT_D.great,'rt_storm'],
+]);
+DASHG[5]={src:'x.rt_dash',n:'Éclair d\'orage',d:RT_D.dash,vfx:'rt_storm',cd:7};
+KGBAL[5]=[0.98,0.98];
+const RTC=GK.rt_storm;
+const rtWet=e=>{if(!e.dead)e.wet=Math.max(e.wet||0,3)};
+GKBEAM.rt=(f,k,e,t)=>gkBeamDraw(f,k,e,t,RTC.a,RTC.b,{z:34});
+Object.assign(NAT,{
+ // ---------- Rayon (D) ----------
+ rt_ray:SP('Ranton : Rayon',RT_D.ray,5,{ai:RG(520,.75),line:{len:520,w:22}},(u,a)=>{gkS('zap',u);gkS('water',u);anim(u,'point',.35);gkBeam(u,u.x,u.y,a,520,22,14,{},'rt_storm','rt',null,.35)}),
+ // ---------- Nuage d'orage (C) ----------
+ rt_cloud:SP('Ranton : Nuage d\'orage',RT_D.cloud,8,{ai:RG(420,.6),tele:{r:100,max:420}},(u,a,td)=>{const c=atP(u,a,td,420);gkS('water',u);gkS('zap',u);anim(u,'gk_call',.6);
+  aux.push({type:'rt_cloud',x:c.x,y:c.y,r:100,t:3.5,m:3.5,team:u.team,owner:u,k:.5,danger:1})}),
+ // ---------- Rayon courbe (B) ----------
+ rt_curve:SP('Ranton : Rayon courbe',RT_D.curve,10,{ai:RG(560,.65),line:{len:560,w:26}},(u,a)=>{gkS('zap',u);gkS('blaster',u);anim(u,'gk_push',.4);
+  proj(u,a,{spd:1100,r:9,dmg:24,life:.58,col:RTC.b,kind:'rt_bolt',vfx:'rt_storm',steer:1,onHit:(p,t)=>{if(t.wet>0&&!t.dead&&t.unstop<=0){t.stun=Math.max(t.stun,.5);say(t,'ÉTOURDI','#b8f')}}})}),
+ // ---------- Reizâ Sâkasu (A) ----------
+ rt_circus:SP('Ranton : Reizâ Sâkasu',RT_D.circus,13,{ai:RG(500,.7)},(u,a)=>{gkS('zap',u);gkS('chidori',u);anim(u,'gk_call',.6);
+  for(let i=0;i<8;i++){proj(u,a+(i-3.5)*.42,{spd:640,r:6,dmg:5,life:1.2,col:RTC.a,kind:'rt_bolt',vfx:'rt_storm',o:{slow:.3}});gkSteer(u,projs[projs.length-1],5.5,520)}
+  jx({jfx:'gk_boom',x:u.x,y:u.y,r:60,v:'rt_storm',s:'blast',t:.4,m:.4})}),
+ // ---------- Grand rayon de tempête (S) : canalisé ----------
+ rt_great:ULT('Ranton : Grand rayon de tempête',RT_D.great,{ai:RG(700,.8),line:{len:900,w:46}},(u,a)=>{gkS('zap',u);gkS('roar',u);anim(u,'gk_push',1.9);u.rt_gr=1.8;
+  aux.push({type:'rt_great',x:u.x,y:u.y,a,len:900,w:46,r:0,t:1.8,m:1.8,team:u.team,owner:u,ui:gkI(u),k:.15})}),
+ // ---------- dash : Éclair d'orage ----------
+ rt_dash:SP('Éclair d\'orage',RT_D.dash,7,{ai:ESC},(u,a,td)=>{const x0=u.x,y0=u.y,d=clamp(td||220,120,220);gkS('zap',u);anim(u,'lunge',.25);u.phase=Math.max(u.phase||0,.12);
+  u.dash=null;u.kx=u.ky=0;u.x=clamp(u.x+Math.cos(a)*d,B.x+u.r,B.x+B.w-u.r);u.y=clamp(u.y+Math.sin(a)*d,B.y+u.r,B.y+B.h-u.r);collide(u);
+  const L=Math.hypot(u.x-x0,u.y-y0),b=Math.atan2(u.y-y0,u.x-x0);gkBeam(u,x0,y0,b,L,40,6,{},'rt_storm','rtz',e=>rtWet(e),.4)}),
+});
+Object.assign(NATHERO,{rt:'kylo'});
+GKBEAM.rtz=(f,k,e,t)=>{const A=P(f.x,f.y,30),Bq=P(f.x2,f.y2,30);gkBolt(gkZig(A.x,A.y,Bq.x,Bq.y,9,16,f.x+t*7),RTC.a,RTC.b,3*A.s,k)};
+// nuage : pluie (trempe, ralentit), un éclair toutes les 0,7 s sur un ennemi dessous
+AUXF.rt_cloud=(x,dt)=>{const o=x.owner;if(x.t<=0||!o)return;for(const e of enemies(o))if(gkIn(e,x.x,x.y,x.r)){rtWet(e);if(e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.15)}
+ if(x.k>0)return;x.k=.7;const L=enemies(o).filter(e=>gkIn(e,x.x,x.y,x.r));if(!L.length)return;const e=L[Math.floor(rnd()*L.length)];gkHit(e,o,5,{unblockable:1},'rt_storm');
+ jx({jfx:'rt_strike',ti:gkI(e),x:e.x,y:e.y,t:.3,m:.3});if(near(e.x,e.y))gkS('zap',o)};
+AUXD.rt_cloud=(x,k,t)=>{g.save();g.fillStyle=rgba(RTC.d,.2*k);gEll(x.x,x.y,x.r);g.fill();g.strokeStyle=rgba(RTC.b,.35*k);g.lineWidth=1;for(let i=0;i<26;i++){const b=i*2.4,d=x.r*((i*.31)%1),z=120-((t*300+i*23)%120),p=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,z);g.beginPath();g.moveTo(p.x,p.y);g.lineTo(p.x-1,p.y+9*p.s);g.stroke()}
+ for(let i=0;i<9;i++){const b=i*.7+t*.3,d=x.r*.6*((i*.47)%1),p=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,126+Math.sin(t+i)*5),r=(26+(i%3)*8)*p.s;g.fillStyle=rgba(i%2?'#3a4a64':'#56688a',.75*k);g.beginPath();g.ellipse(p.x,p.y,r,r*.55,0,0,7);g.fill()}
+ if(Math.sin(t*9)>.92){const p=P(x.x,x.y,120);g.globalCompositeOperation='lighter';g.fillStyle=rgba(RTC.a,.35);g.beginPath();g.ellipse(p.x,p.y,x.r*p.s*.6,x.r*p.s*.3,0,0,7);g.fill()}g.restore()};
+// grand rayon : suit la visée à 1,6 rad/s ; coups toutes les 0,2 s ; un étourdissement l'arrête
+AUXF.rt_great=(x,dt)=>{const u=x.owner;if(x.done||!u)return;if(u.dead||u.stun>0){x.done=1;x.t=0;u.rt_gr=0;return}if(x.t<=0){x.done=1;u.rt_gr=0;return}
+ u.root=Math.max(u.root,.1);u.rootV=null;u.rt_gr=x.t;x.x=u.x;x.y=u.y;let df=(u.aim||0)-x.a;while(df>Math.PI)df-=2*Math.PI;while(df<-Math.PI)df+=2*Math.PI;x.a+=clamp(df,-1.6*dt,1.6*dt);
+ if(x.k<=0){x.k=.2;gkBeam(u,u.x,u.y,x.a,x.len,x.w,7,{silent:0},'rt_storm','rtg',null,.22);if(near(u.x,u.y))gkS('zap',u)}};
+AUXD.rt_great=(x,k,t)=>{const u=units[x.ui];if(!u||u.dead)return;const p=fwd(u,x.a,x.len);gkBeamDraw({x:u.x,y:u.y,x2:p.x,y2:p.y,w:x.w},.9,0,t,RTC.a,RTC.b,{z:36});
+ const A=P(u.x+Math.cos(x.a)*20,u.y+Math.sin(x.a)*20,36),Bq=P(p.x,p.y,36);for(let j=0;j<2;j++)gkBolt(gkZig(A.x,A.y,Bq.x,Bq.y,14,22,t*13+j*5),RTC.a,RTC.b,2*A.s,.8)};
+GKBEAM.rtg=()=>{};
+// ---- trait : Pluie d'orage
+KGTRAITS[5]={nom:'Pluie d\'orage',desc:'Tes jutsu de Ranton trempent la cible (3 s). Tes rayons sur une cible déjà trempée font +15 % de dégâts et la ralentissent 0,6 s',
+ deal(src,t,dmg,o){return gkMine('rt_storm')&&t.wet>0?dmg*1.15:dmg},
+ landed(src,t,dmg,o){if(!gkMine('rt_storm')||t.dead)return;if(t.wet>0&&t.unstop<=0&&!(t.slowImm>0))t.slow=Math.max(t.slow,.6);rtWet(t)},
+ draw(u,p,S,sk){const t=performance.now()/1000;g.save();g.globalCompositeOperation='lighter';if(Math.sin(t*7+u.x)>.6){const q=gkZig(p.x-10*S,p.y-60*S,p.x+8*S,p.y-20*S,4,8*S,t*9);gkBolt(q,RTC.a,RTC.b,1.6*S,.6)}g.restore();
+  if(u.rt_gr>0){g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(RTC.b,.25);g.beginPath();g.ellipse(p.x,p.y-34*S,26*S,40*S,0,0,7);g.fill();g.restore()}},
+ prev(u,p,S,front){if(front)KGTRAITS[5].draw(u,p,S,1)},
+ hud(u,x,y){gkHud(u,x,y,'Pluie d\'orage',null,0,RTC.a,RTC.a)}};
+AFTER.push(()=>UK.push('rt_gr'));
+// ---- visuels
+// rayon courbe / laser du cirque : trait lumineux
+PROJD.rt_bolt=(p,R,ra,t)=>{g.rotate(ra);g.globalCompositeOperation='lighter';g.strokeStyle=rgba(RTC.b,.55);g.lineWidth=R*2.2;g.lineCap='round';g.beginPath();g.moveTo(-R*5,0);g.lineTo(R,0);g.stroke();g.strokeStyle=rgba(RTC.a,.95);g.lineWidth=R*.9;g.stroke();g.strokeStyle='#ffffff';g.lineWidth=R*.35;g.stroke()};
+JFXD.rt_strike=(f,k,e,t,u,tg)=>{const o=tg&&!tg.dead?tg:f,A=P(o.x,o.y,140),Bq=P(o.x,o.y,10);gkBolt(gkZig(A.x,A.y,Bq.x,Bq.y,7,14,f.x+e),RTC.a,RTC.b,3*A.s,k);g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(RTC.a,.4*k);gEll(o.x,o.y,26);g.fill();g.restore()};
+
+// ===== Kekkei genkai g6 : Shôton, le cristal (préfixe so_) — façon Guren =====
+// Identité : le bâtisseur. Chaque jutsu laisse des CRISTAUX plantés dans le sol (4 s) ; près d'eux, tout RÉSONNE (trait) :
+// l'ennemi y prend +15 % de tes dégâts, toi tu y subis −15 %. Éclats, pics, prison, dragon de cristal, prison des cinq pans ; dash : pas de cristal.
+gkPal('so_cry','#ffe6fa','#e07ad8','#8a2a8a','#3a0a3a');
+defKG(6,{n:'Shôton',col:'#e07ad8',tag:'Sô',el:'Doton',nat:4,d:'Le cristal : pics, prisons et cristaux qui résonnent et renforcent tes coups',
+ ico:f=>{g.beginPath();g.moveTo(0,-13);g.lineTo(8,-4);g.lineTo(5,12);g.lineTo(-5,12);g.lineTo(-8,-4);g.closePath();g.fill();g.globalCompositeOperation='destination-out';g.lineWidth=1.6;g.beginPath();g.moveTo(0,-13);g.lineTo(0,12);g.moveTo(-8,-4);g.lineTo(8,-4);g.stroke();g.globalCompositeOperation='source-over'}});
+const SO_D={
+ shard:'3 éclats de cristal perçants en éventail : 5 dégâts chacun ; celui du milieu se plante au sol en bout de course (cristal, 4 s)',
+ spikes:'Des pics de cristal jaillissent en ligne devant toi (380) : 20 dégâts, ralentit 1 s ; 2 cristaux restent plantés (4 s)',
+ prison:'Le cristal enveloppe le point visé (380 max) après 0,7 s : 16 dégâts et entrave 1 s ; un cristal reste (4 s)',
+ dragon:'Hashô Kôryû : un dragon de cristal perçant (520) : 34 dégâts, ralentit 1 s ; il sème 3 cristaux sur sa route (4 s)',
+ penta:'Prison des cinq pans au point visé (320 max) : après 0,7 s, cinq murs de cristal enferment les ennemis 2,2 s (un déplacement en sort), puis ils éclatent vers l\'intérieur : 58 dégâts',
+ dash:'Glissade sur le cristal (230) : un cristal pousse à ton point de départ (4 s)'};
+KIT('g6',[
+ ['D','x.so_shard','Shôton : Éclats de cristal',SO_D.shard,'so_cry'],
+ ['C','x.so_spikes','Shôton : Pics de cristal',SO_D.spikes,'so_cry'],
+ ['B','x.so_prison','Shôton : Prison de cristal',SO_D.prison,'so_cry'],
+ ['A','x.so_dragon','Shôton : Hashô Kôryû',SO_D.dragon,'so_cry'],
+ ['S','x.so_penta','Shôton : Kesshô Gokei',SO_D.penta,'so_cry'],
+]);
+DASHG[6]={src:'x.so_dash',n:'Pas de cristal',d:SO_D.dash,vfx:'so_cry',cd:7};
+KGBAL[6]=[0.97,0.955];
+const SOC=GK.so_cry,SO_RES=120;
+// cristal planté (4 s, 6 au plus par lanceur) : purement un repère (résonance du trait) ; on le dessine en prisme
+function soCry(u,x,y,big){const L=aux.filter(q=>q.type==='so_cry'&&q.owner===u&&q.t>0);if(L.length>=6)L[0].t=Math.min(L[0].t,.3);
+ aux.push({type:'so_cry',x:clamp(x,B.x+10,B.x+B.w-10),y:clamp(y,B.y+10,B.y+B.h-10),r:0,t:4,m:4,team:u.team,owner:u,n:big?1:0,a:rnd()*6})}
+const soNear=(u,x,y)=>{for(const q of aux)if(q.type==='so_cry'&&q.owner===u&&q.t>.05&&Math.hypot(q.x-x,q.y-y)<SO_RES)return true;return false};
+Object.assign(NAT,{
+ // ---------- Éclats de cristal (D) ----------
+ so_shard:SP('Shôton : Éclats de cristal',SO_D.shard,5,{ai:RG(460,.75),line:{len:460,w:70}},(u,a)=>{gkS('deflect',u);gkS('blaster',u);anim(u,'throw2',.4);
+  for(let i=-1;i<=1;i++){proj(u,a+i*.16,{spd:860,r:7,dmg:5,life:.54,col:SOC.b,kind:'so_sh',vfx:'so_cry',pierce:1});if(!i){const p=projs[projs.length-1];aux.push({type:'so_pl',x:p.x,y:p.y,r:0,t:p.life+.1,m:p.life+.1,team:u.team,owner:u,p})}}}),
+ // ---------- Pics de cristal (C) ----------
+ so_spikes:SP('Shôton : Pics de cristal',SO_D.spikes,8,{ai:RG(380,.65),line:{len:380,w:60}},(u,a)=>{gkS('rock',u);gkS('deflect',u);anim(u,'stomp',.5);
+  aux.push({type:'so_spk',x:u.x+Math.cos(a)*18,y:u.y+Math.sin(a)*18,a,len:380,w:60,r:0,t:1.4,m:1.4,team:u.team,owner:u,k:0,hs:new Set(),n:0});
+  for(const f of[.45,.9])soCry(u,u.x+Math.cos(a)*380*f,u.y+Math.sin(a)*380*f)}),
+ // ---------- Prison de cristal (B) ----------
+ so_prison:SP('Shôton : Prison de cristal',SO_D.prison,10,{ai:RG(380,.6),tele:{r:70,max:380}},(u,a,td)=>{const c=atP(u,a,td,380),D=.7;gkS('deflect',u);anim(u,'gk_charge',.5);
+  later(u,D,()=>{for(const e of enemies(u))if(gkIn(e,c.x,c.y,70)&&gkHit(e,u,16,{root:1,unblockable:1},'so_cry'))jx({jfx:'so_enc',ti:gkI(e),x:e.x,y:e.y,t:1,m:1});soCry(u,c.x,c.y,1);
+   jx({jfx:'gk_boom',x:c.x,y:c.y,r:80,v:'so_cry',s:'crys',t:.5,m:.5});if(near(c.x,c.y)){gkS('rock',u);gkS('deflect',u)}},{x:c.x,y:c.y,r:70})}),
+ // ---------- Hashô Kôryû (A) ----------
+ so_dragon:SP('Shôton : Hashô Kôryû',SO_D.dragon,13,{ai:RG(500,.65),line:{len:520,w:44}},(u,a)=>{gkS('roar',u);gkS('deflect',u);anim(u,'gk_push',.55);
+  proj(u,a,{spd:620,r:20,dmg:34,life:.84,col:SOC.b,kind:'so_drag',vfx:'so_cry',pierce:1,o:{slow:1}});const p=projs[projs.length-1];aux.push({type:'so_pl',x:p.x,y:p.y,r:0,t:p.life+.1,m:p.life+.1,team:u.team,owner:u,p,drop:.28,dk:.28})}),
+ // ---------- Kesshô Gokei (S) : prison des cinq pans ----------
+ so_penta:ULT('Shôton : Kesshô Gokei',SO_D.penta,{ai:RG(320,.85),tele:{r:150,max:320}},(u,a,td)=>{const c=atP(u,a,td,320),R=150;c.x=clamp(c.x,B.x+R+10,B.x+B.w-R-10);c.y=clamp(c.y,B.y+R+10,B.y+B.h-R-10);
+  gkS('deflect',u);gkS('heavy',u);anim(u,'gk_call',.9);aux.push({type:'so_penta',x:c.x,y:c.y,r:R,t:2.9,m:2.9,team:u.team,owner:u,a:rnd()*6,tr:null,danger:1})}),
+ // ---------- dash : Pas de cristal ----------
+ so_dash:SP('Pas de cristal',SO_D.dash,7,{ai:ESC},(u,a,td)=>{gkS('deflect',u);gkS('dash',u);anim(u,'lunge',.3);soCry(u,u.x,u.y);dash(u,a,clamp(td||230,120,230),.22,{})}),
+});
+Object.assign(NATHERO,{so:'kylo'});
+// projectile qui plante des cristaux (fin de course ; ou tous les drop s)
+AUXF.so_pl=(x,dt)=>{const p=x.p;if(x.done||!p){x.t=0;return}const alive=!p.dead&&p.life>0&&projs.includes(p);if(alive){x.x=p.x;x.y=p.y;if(x.drop){x.dk-=dt;if(x.dk<=0){x.dk=x.drop;soCry(x.owner,p.x,p.y)}}return}
+ x.done=1;x.t=0;if(!x.drop)soCry(x.owner,x.x,x.y)};AUXD.so_pl=()=>{};
+// pics en ligne (le front avance en 0,3 s)
+AUXF.so_spk=(x,dt)=>{const o=x.owner;if(x.t<=0||!o)return;const el=x.m-x.t,front=Math.min(x.len,el/.3*x.len),ca=Math.cos(x.a),sa=Math.sin(x.a);
+ for(const e of enemies(o)){if(x.hs.has(e))continue;const dx=e.x-x.x,dy=e.y-x.y,f=dx*ca+dy*sa;if(f<-e.r||f>front+e.r||Math.abs(-dx*sa+dy*ca)>x.w/2+e.r)continue;x.hs.add(e);gkHit(e,o,20,{slow:1,unblockable:1},'so_cry');if(near(e.x,e.y))sparks(e.x,e.y,SOC.a,8,'so_cry')}};
+AUXD.so_spk=(x,k,t)=>{const el=x.m-x.t,front=Math.min(x.len,el/.3*x.len),ca=Math.cos(x.a),sa=Math.sin(x.a),fade=Math.min(1,x.t/.35),n=Math.floor(x.len/26);
+ for(let i=0;i<n;i++){const f=i*26+13;if(f>front)break;const age=Math.min(1,(el-f/x.len*.3)/.12),lat=(((i*7)%5)-2)/2*x.w*.3;gkPrism(x.x+ca*f-sa*lat,x.y+sa*f+ca*lat,6+(i%3)*2,(28+(i%3)*12)*ezo(age)*fade,4,i*.7,SOC.a,SOC.b,SOC.d,.95)}};
+// cristal planté
+AUXF.so_cry=()=>{};
+AUXD.so_cry=(x,k,t)=>{const up=ezo(Math.min(1,(x.m-x.t)/.2)),end=Math.min(1,x.t/.3),big=x.n?1.4:1;g.save();g.fillStyle=rgba(SOC.b,.06*end);gEll(x.x,x.y,SO_RES);g.fill();g.strokeStyle=rgba(SOC.b,.22*end);g.setLineDash([4,6]);gEll(x.x,x.y,SO_RES);g.stroke();g.setLineDash([]);g.restore();
+ for(let i=0;i<3;i++){const b=x.a+i*2.1,d=i?9:0;gkPrism(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,(i?5:8)*big,(i?24:40)*big*up*end,6,x.a+i,SOC.a,SOC.b,SOC.d,.92)}
+ const q=P(x.x,x.y,44*big*up);g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba('#ffffff',.25+.25*Math.sin(t*4+x.a));g.beginPath();g.arc(q.x,q.y,5*q.s,0,7);g.fill();g.restore()};
+// prison des cinq pans : alerte 0,7 s, puis 2,2 s d'enfermement, puis éclatement
+AUXF.so_penta=(x,dt)=>{const o=x.owner;if(x.done||!o)return;const el=x.m-x.t;
+ if(el>=.7&&!x.tr){x.tr=new Set();for(const e of enemies(o))if(gkIn(e,x.x,x.y,x.r)){x.tr.add(e);say(e,'ENFERMÉ',SOC.a)}if(near(x.x,x.y)){gkS('rock',o);gkS('deflect',o);shake=Math.max(shake,.2)}for(let i=0;i<5;i++){const b=x.a+i*1.2566;soCry(o,x.x+Math.cos(b)*x.r,x.y+Math.sin(b)*x.r,1)}}
+ if(x.tr)for(const e of x.tr){if(e.dead)continue;const dx=e.x-x.x,dy=e.y-x.y,d=Math.hypot(dx,dy),lim=x.r-e.r-10;if(d>x.r+60){x.tr.delete(e);continue}if(e.dash||e.phase>0)continue;
+  if(d>lim&&d>0){e.x=x.x+dx/d*lim;e.y=x.y+dy/d*lim;const vn=(e.kx*dx+e.ky*dy)/d;if(vn>0){e.kx-=vn*dx/d;e.ky-=vn*dy/d}}}
+ if(x.t<=0){x.done=1;for(const e of enemies(o))if(gkIn(e,x.x,x.y,x.r+10))gkHit(e,o,58,{unblockable:1,fx:x.x,fy:x.y},'so_cry');jx({jfx:'gk_boom',x:x.x,y:x.y,r:x.r*1.1,v:'so_cry',s:'crys',t:.8,m:.8});
+  if(near(x.x,x.y)){gkS('boom',o);gkS('rock',o);shake=Math.max(shake,.4)}}};
+AUXD.so_penta=(x,k,t)=>{const el=x.m-x.t,rise=el<.7?0:ezo(Math.min(1,(el-.7)/.25)),R=x.r;g.save();g.fillStyle=rgba(SOC.b,.08+.1*Math.min(1,el/.7));gEll(x.x,x.y,R);g.fill();
+ const V=[0,1,2,3,4].map(i=>{const b=x.a+i*1.2566;return P(x.x+Math.cos(b)*R,x.y+Math.sin(b)*R,0)});g.strokeStyle=rgba(SOC.b,.6+.4*Math.min(1,el/.7));g.lineWidth=2.5;g.beginPath();V.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.closePath();g.stroke();g.restore();
+ if(rise>0)for(let i=0;i<5;i++){const b0=x.a+i*1.2566,b1=b0+1.2566,H=90*rise,n=4;for(let j=0;j<n;j++){const m=(j+.5)/n,bx=lerp(x.x+Math.cos(b0)*R,x.x+Math.cos(b1)*R,m),by=lerp(x.y+Math.sin(b0)*R,x.y+Math.sin(b1)*R,m);gkPrism(bx,by,14,H*(.75+.25*Math.sin(j*2.1+i)),5,b0+j,SOC.a,SOC.b,SOC.d,.55)}}};
+// ---- trait : Résonance
+KGTRAITS[6]={nom:'Résonance',desc:'Tes cristaux restent plantés 4 s. Un ennemi à moins de 120 de l\'un d\'eux subit +15 % de tes dégâts ; toi, près d\'eux, tu subis −15 % de dégâts',
+ deal(src,t,dmg,o){return soNear(src,t.x,t.y)?dmg*1.15:dmg},
+ take(t,src,dmg,o){return src&&src!==t&&soNear(t,t.x,t.y)?dmg*.85:dmg},
+ update(u,dt){u.so_rs=soNear(u,u.x,u.y)?1:0},
+ draw(u,p,S,sk){if(!u.so_rs)return;const t=performance.now()/1000;g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba(SOC.a,.5+.2*Math.sin(t*5));g.lineWidth=1.5*S;g.beginPath();g.ellipse(p.x,p.y-30*S,22*S,36*S,0,0,7);g.stroke();g.restore()},
+ prev(u,p,S,front){if(front)return;g.save();g.fillStyle=rgba(SOC.b,.3);g.beginPath();g.ellipse(p.x,p.y,24*S,8*S,0,0,7);g.fill();g.restore()},
+ hud(u,x,y){gkHud(u,x,y,'Résonance'+(u.so_rs?' · près de tes cristaux (−15 % subis)':''),null,0,SOC.a,SOC.a)}};
+AFTER.push(()=>UK.push('so_rs'));
+// ---- visuels
+PROJD.so_sh=gkShardD('so_cry',15);
+// dragon de cristal : tête anguleuse, corps de prismes
+PROJD.so_drag=(p,R,ra,t)=>{g.rotate(ra);if(Math.cos(ra)<0)g.scale(1,-1);const s=R/20;g.scale(s,s);
+ for(let i=6;i>=1;i--){const x=-i*11,y=Math.sin(t/90-i*.8)*5;g.fillStyle=i%2?SOC.b:SOC.a;g.strokeStyle=SOC.d;g.lineWidth=1.1;g.beginPath();g.moveTo(x+9,y);g.lineTo(x,y-11+i*.6);g.lineTo(x-9,y);g.lineTo(x,y+9-i*.5);g.closePath();g.fill();g.stroke()}
+ g.fillStyle=SOC.a;g.strokeStyle=SOC.d;g.lineWidth=1.4;g.beginPath();g.moveTo(30,-2);g.lineTo(12,-14);g.lineTo(-4,-10);g.lineTo(-6,8);g.lineTo(10,10);g.lineTo(30,4);g.closePath();g.fill();g.stroke();
+ g.fillStyle=SOC.b;g.beginPath();g.moveTo(4,-11);g.lineTo(-10,-26);g.lineTo(-2,-11);g.fill();g.stroke();g.fillStyle='#fff';g.beginPath();g.arc(12,-5,2.4,0,7);g.fill();
+ g.globalCompositeOperation='lighter';g.fillStyle=rgba(SOC.b,.3);g.beginPath();g.ellipse(4,0,30,16,0,0,7);g.fill()};
+// cible enveloppée de cristal (entravée)
+JFXD.so_enc=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;const up=ezo(Math.min(1,e*6)),fade=Math.min(1,k*3);for(let i=0;i<6;i++){const b=i*1.047+.3;gkPrism(tg.x+Math.cos(b)*16,tg.y+Math.sin(b)*16,7,(30+(i%3)*12)*up*fade,5,b,SOC.a,SOC.b,SOC.d,.7)}};
+
+// ===== Kekkei genkai g7 : Jinton, la poussière (préfixe jn_) — Katon + Fûton + Doton (Ônoki, Mû) =====
+// Identité : l'artilleur. Des formes géométriques (fil, cube, cône) lentes à venir mais qui DÉSINTÈGRENT (trait) : elles traversent la garde,
+// brisent les boucliers et ignorent la réduction de dégâts. Fil, cube, cône, cube d'expansion, Genkai Hakuri ; dash : lévitation (comme Ônoki).
+gkPal('jn_dust','#ffffff','#bfe8ee','#6aa0b0','#24404a');
+defKG(7,{n:'Jinton',col:'#a8dce6',tag:'Jn',el:'Katon + Fûton + Doton',nat:2,d:'La poussière : cubes, cônes et rayons qui désintègrent, boucliers compris',
+ ico:f=>{g.lineWidth=2;g.beginPath();g.moveTo(0,-11);g.lineTo(10,-5);g.lineTo(10,7);g.lineTo(0,12);g.lineTo(-10,7);g.lineTo(-10,-5);g.closePath();g.stroke();g.beginPath();g.moveTo(-10,-5);g.lineTo(0,1);g.lineTo(10,-5);g.moveTo(0,1);g.lineTo(0,12);g.stroke();g.beginPath();g.arc(0,1,2.6,0,7);g.fill()}});
+const JN_D={
+ thread:'Un fil de poussière file après 0,15 s (460) : 14 dégâts',
+ cube:'Un cube se forme au point visé (420 max) et se referme après 0,6 s : 24 dégâts',
+ cone:'Cône de désintégration perçant (560) : 28 dégâts et silence 0,8 s (ni jutsu)',
+ grow:'Un cube grandit au point visé (360 max) pendant 0,9 s : 12 dégâts toutes les 0,3 s aux ennemis dedans, ralentit',
+ hakuri:'Genkai Hakuri no Jutsu : 1 s de concentration (immobile), puis un immense rayon (900) : 68 dégâts',
+ dash:'Lévitation : tu t\'envoles par-dessus tout (260) et tu n\'es plus ralenti pendant 1 s'};
+KIT('g7',[
+ ['D','x.jn_thread','Jinton : Fil de poussière',JN_D.thread,'jn_dust'],
+ ['C','x.jn_cube','Jinton : Cube',JN_D.cube,'jn_dust'],
+ ['B','x.jn_cone','Jinton : Cône de désintégration',JN_D.cone,'jn_dust'],
+ ['A','x.jn_grow','Jinton : Cube d\'expansion',JN_D.grow,'jn_dust'],
+ ['S','x.jn_hakuri','Jinton : Genkai Hakuri',JN_D.hakuri,'jn_dust'],
+]);
+DASHG[7]={src:'x.jn_dash',n:'Lévitation',d:JN_D.dash,vfx:'jn_dust',cd:7};
+KGBAL[7]=[0.965,0.94];
+const JNC=GK.jn_dust;
+GKBEAM.jn=(f,k,e,t)=>{gkBeamDraw(f,k,e,t,JNC.a,JNC.b,{z:34,thin:f.w<30});const A=P(f.x,f.y,34),Bq=P(f.x2,f.y2,34);g.save();g.strokeStyle=rgba(JNC.c,.6*k);g.lineWidth=1;for(const sd of[-1,1]){g.beginPath();g.moveTo(A.x,A.y+sd*f.w*.45*A.s);g.lineTo(Bq.x,Bq.y+sd*f.w*.45*A.s);g.stroke()}g.restore()};
+// cube de poussière (dessin) : arêtes lumineuses, cœur sphérique blanc
+function jnCube(x,y,r,al,t,core){const c=[[-1,-1],[1,-1],[1,1],[-1,1]],h=r*1.6,rot=t*.6;const pt=(i,z)=>{const [a,b]=c[i],ca=Math.cos(rot),sa=Math.sin(rot);return P(x+(a*ca-b*sa)*r,y+(a*sa+b*ca)*r,z)};
+ const Bo=[0,1,2,3].map(i=>pt(i,6)),To=[0,1,2,3].map(i=>pt(i,6+h));g.save();g.globalAlpha*=al;poly(To,rgba(JNC.a,.18));g.strokeStyle=rgba(JNC.a,.9);g.lineWidth=1.6;
+ g.beginPath();for(let i=0;i<4;i++){const j=(i+1)%4;g.moveTo(Bo[i].x,Bo[i].y);g.lineTo(Bo[j].x,Bo[j].y);g.moveTo(To[i].x,To[i].y);g.lineTo(To[j].x,To[j].y);g.moveTo(Bo[i].x,Bo[i].y);g.lineTo(To[i].x,To[i].y)}g.stroke();
+ if(core){const q=P(x,y,6+h/2),R=r*.55*q.s;g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(q.x,q.y,0,q.x,q.y,R*1.8);gr.addColorStop(0,'#ffffff');gr.addColorStop(.5,rgba(JNC.b,.7));gr.addColorStop(1,rgba(JNC.b,0));g.fillStyle=gr;g.beginPath();g.arc(q.x,q.y,R*1.8,0,7);g.fill()}g.restore()}
+Object.assign(NAT,{
+ // ---------- Fil de poussière (D) ----------
+ jn_thread:SP('Jinton : Fil de poussière',JN_D.thread,5,{ai:RG(460,.75),line:{len:460,w:20}},(u,a)=>{gkS('zap',u);anim(u,'point',.4);jx({jfx:'jn_glow',ui:gkI(u),x:u.x,y:u.y,t:.2,m:.2});
+  later(u,.15,()=>{if(u.dead)return;gkBeam(u,u.x,u.y,u.aim,460,20,14,{},'jn_dust','jn',null,.4);if(near(u.x,u.y))gkS('blaster',u)})}),
+ // ---------- Cube (C) ----------
+ jn_cube:SP('Jinton : Cube',JN_D.cube,8,{ai:RG(420,.65),tele:{r:65,max:420}},(u,a,td)=>{const c=atP(u,a,td,420),D=.6;gkS('zap',u);anim(u,'gk_push',.5);jx({jfx:'jn_cubeF',x:c.x,y:c.y,r:46,d:D,t:D+.35,m:D+.35});
+  later(u,D,()=>{gkAoe(u,c.x,c.y,65,24,{},'jn_dust');jx({jfx:'gk_boom',x:c.x,y:c.y,r:75,v:'jn_dust',s:'dust',t:.5,m:.5});if(near(c.x,c.y)){gkS('boom',u);shake=Math.max(shake,.12)}},{x:c.x,y:c.y,r:65})}),
+ // ---------- Cône de désintégration (B) ----------
+ jn_cone:SP('Jinton : Cône de désintégration',JN_D.cone,10,{ai:RG(540,.6),line:{len:560,w:36}},(u,a)=>{gkS('zap',u);gkS('blaster',u);anim(u,'gk_push',.45);
+  proj(u,a,{spd:760,r:16,dmg:28,life:.74,col:JNC.b,kind:'jn_cone',vfx:'jn_dust',pierce:1,o:{silence:.8,unblockable:1}})}),
+ // ---------- Cube d'expansion (A) ----------
+ jn_grow:SP('Jinton : Cube d\'expansion',JN_D.grow,13,{ai:RG(360,.7),tele:{r:120,max:360}},(u,a,td)=>{const c=atP(u,a,td,360);gkS('zap',u);gkS('heavy',u);anim(u,'gk_push',.6);
+  aux.push({type:'jn_grow',x:c.x,y:c.y,r:30,t:1,m:1,team:u.team,owner:u,k:.3,danger:1})}),
+ // ---------- Genkai Hakuri (S) ----------
+ jn_hakuri:ULT('Jinton : Genkai Hakuri',JN_D.hakuri,{ai:RG(800,.8),line:{len:900,w:64}},(u,a)=>{gkS('roar',u);gkS('zap',u);anim(u,'gk_charge',1.2);u.root=Math.max(u.root,1.05);u.jn_ch=1;
+  aux.push({type:'jn_hak',x:u.x,y:u.y,a,r:0,t:1,m:1,team:u.team,owner:u,ui:gkI(u)})}),
+ // ---------- dash : Lévitation ----------
+ jn_dash:SP('Lévitation',JN_D.dash,7,{ai:ESC},(u,a,td)=>{gkS('wind',u);anim(u,'leap',.45);u.slowImm=Math.max(u.slowImm||0,1);u.slow=0;dash(u,a,clamp(td||260,130,260),.36,{jump:1});jx({jfx:'gk_boom',x:u.x,y:u.y,r:50,v:'jn_dust',s:'dust',t:.4,m:.4})}),
+});
+Object.assign(NATHERO,{jn:'kylo'});
+// cube d'expansion : grandit de 30 à 120 en 0,9 s ; 12 dégâts toutes les 0,3 s dedans
+AUXF.jn_grow=(x,dt)=>{const o=x.owner;if(x.t<=0||!o)return;const e0=Math.min(1,(x.m-x.t)/.9);x.r=30+90*e0;for(const e of enemies(o))if(gkIn(e,x.x,x.y,x.r)&&e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.2);
+ if(x.k>0)return;x.k=.3;gkAoe(o,x.x,x.y,x.r,12,{},'jn_dust');if(near(x.x,x.y))gkS('zap',o)};
+AUXD.jn_grow=(x,k,t)=>{g.save();g.fillStyle=rgba(JNC.b,.15);gEll(x.x,x.y,x.r);g.fill();g.restore();jnCube(x.x,x.y,x.r*.72,Math.min(1,x.t/.2),t,1)};
+// Genkai Hakuri : concentration puis rayon
+AUXF.jn_hak=(x,dt)=>{const u=x.owner;if(x.done||!u)return;if(u.dead){x.done=1;x.t=0;u.jn_ch=0;return}x.x=u.x;x.y=u.y;x.a=u.aim;u.root=Math.max(u.root,.05);
+ if(x.t<=0){x.done=1;u.jn_ch=0;gkBeam(u,u.x,u.y,u.aim,900,64,68,{},'jn_dust','jn',null,.7);jx({jfx:'gk_boom',x:u.x+Math.cos(u.aim)*40,y:u.y+Math.sin(u.aim)*40,r:80,v:'jn_dust',s:'dust',t:.5,m:.5});if(near(u.x,u.y)){gkS('boom',u);gkS('zap',u);shake=Math.max(shake,.45)}}};
+AUXD.jn_hak=(x,k,t)=>{const u=units[x.ui];if(!u||u.dead)return;const e=1-x.t/x.m,p=fwd(u,x.a,900),q=P(u.x+Math.cos(x.a)*26,u.y+Math.sin(x.a)*26,0);
+ g.save();g.strokeStyle=rgba(JNC.b,.3+.4*e);g.lineWidth=1.5;g.setLineDash([10,8]);const A=P(u.x,u.y,0),Bq=P(p.x,p.y,0);for(const sd of[-1,1]){const ox=-Math.sin(x.a)*32*sd,oy=Math.cos(x.a)*32*sd,a1=P(u.x+ox,u.y+oy,0),b1=P(p.x+ox,p.y+oy,0);g.beginPath();g.moveTo(a1.x,a1.y);g.lineTo(b1.x,b1.y);g.stroke()}g.setLineDash([]);g.restore();
+ jnCube(u.x+Math.cos(x.a)*26,u.y+Math.sin(x.a)*26,8+e*10,1,t*3,1)};
+// ---- trait : Désintégration
+KGTRAITS[7]={nom:'Désintégration',desc:'Tes jutsu de Jinton désintègrent : ils brisent les boucliers, ignorent la réduction de dégâts et traversent la garde',
+ deal(src,t,dmg,o){if(!gkMine('jn_dust'))return dmg;if(t.shield>0){t.shield=0;say(t,'BOUCLIER DÉSINTÉGRÉ',JNC.a)}if(t.drT>0&&t.dr>0&&t.dr<.95)dmg/=1-t.dr;return dmg},
+ draw(u,p,S,sk){const t=performance.now()/1000;if(u.jn_ch>0)return;g.save();g.strokeStyle=rgba(JNC.b,.5);g.lineWidth=1;const q={x:p.x+16*S,y:p.y-60*S+Math.sin(t*2)*3*S},r=4*S,rot=t;g.beginPath();for(let i=0;i<4;i++){const b=rot+i*1.57;g.lineTo(q.x+Math.cos(b)*r,q.y+Math.sin(b)*r*.6)}g.closePath();g.stroke();g.restore()},
+ prev(u,p,S,front){if(front)KGTRAITS[7].draw(u,p,S,1)},
+ hud(u,x,y){gkHud(u,x,y,'Désintégration'+(u.jn_ch>0?' · CONCENTRATION':''),null,0,JNC.a,JNC.a)}};
+AFTER.push(()=>UK.push('jn_ch'));
+// ---- visuels
+// cône de désintégration : pointe blanche, arêtes, sphère au culot
+PROJD.jn_cone=(p,R,ra,t)=>{g.rotate(ra);g.globalCompositeOperation='lighter';g.fillStyle=rgba(JNC.b,.25);g.beginPath();g.moveTo(R*1.4,0);g.lineTo(-R*1.6,-R);g.lineTo(-R*1.6,R);g.closePath();g.fill();g.globalCompositeOperation='source-over';
+ g.fillStyle=rgba(JNC.a,.55);g.strokeStyle=JNC.a;g.lineWidth=1.4;g.beginPath();g.moveTo(R*1.3,0);g.lineTo(-R,-R*.75);g.lineTo(-R,R*.75);g.closePath();g.fill();g.stroke();g.beginPath();g.moveTo(R*1.3,0);g.lineTo(-R,0);g.stroke();
+ g.globalCompositeOperation='lighter';g.fillStyle='#ffffff';g.beginPath();g.arc(-R*.6,0,R*.35,0,7);g.fill()};
+// cube qui se forme puis se referme
+JFXD.jn_cubeF=(f,k,e,t)=>{const el=e*f.m,form=Math.min(1,el/f.d),cl=el>f.d?Math.min(1,(el-f.d)/.15):0;if(cl>=1)return;jnCube(f.x,f.y,f.r*(1.25-.25*form)*(1-cl*.7),Math.min(1,form*2)*(1-cl),t,1)};
+JFXD.jn_glow=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x+Math.cos(u.aim)*24,u.y+Math.sin(u.aim)*24,44);g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba('#ffffff',.8*k);g.beginPath();g.arc(q.x,q.y,6*q.s,0,7);g.fill();g.restore()};
+
+// ===== Kekkei genkai g8 : Kiminari, la foudre noire (préfixe kn_) — façon Darui et la panthère du Raikage =====
+// Identité : le perceur rapide. Une foudre sombre qui traverse tout : tes jutsu ignorent la garde, et chaque touche te charge (trait) :
+// plus rapide 2,5 s. Trait noir, arc noir, éclair fourchu, ruée noire, jugement noir ; dash : pas noir.
+gkPal('kn_black','#c8a8ff','#7a4aff','#1a0a2a','#05020a');ELM.kn_black=3; // foudre : bat Doton, ×1,35 sur une cible trempée
+defKG(8,{n:'Kiminari',col:'#5a3a9a',tag:'Ki',el:'Raiton',nat:3,d:'La foudre noire : éclairs sombres, perçants et très rapides, qui traversent la garde',
+ ico:f=>{g.beginPath();g.moveTo(4,-13);g.lineTo(-8,2);g.lineTo(-1,2);g.lineTo(-5,13);g.lineTo(9,-3);g.lineTo(2,-3);g.lineTo(6,-13);g.closePath();g.fill()}});
+const KN_D={
+ lance:'Trait de foudre noire très rapide et perçant (560) : 13 dégâts',
+ arc:'Arc de foudre noire devant toi (260) : 18 dégâts et ralentit 0,8 s',
+ fork:'Un éclair rampe au sol jusqu\'au point visé (480 max) : le 1er ennemi touché prend 18 dégâts et est étourdi 0,5 s ; au bout, il se divise en 3 éclairs (8 dégâts chacun)',
+ rush:'Tu traverses en éclair (340) : 34 dégâts aux ennemis traversés ; ta trace explose 0,5 s plus tard (10 dégâts)',
+ judge:'Jugement noir : marque l\'ennemi visé (520) ; 5 éclairs noirs s\'abattent là où il se tient (0,3 s d\'alerte chacun) : 12 dégâts chacun, le dernier étourdit 0,6 s',
+ dash:'Pas noir : tu disparais dans un éclair (200) et tu es plus rapide 1 s'};
+KIT('g8',[
+ ['D','x.kn_lance','Kiminari : Trait noir',KN_D.lance,'kn_black'],
+ ['C','x.kn_arc','Kiminari : Arc noir',KN_D.arc,'kn_black'],
+ ['B','x.kn_fork','Kiminari : Éclair fourchu',KN_D.fork,'kn_black'],
+ ['A','x.kn_rush','Kiminari : Ruée noire',KN_D.rush,'kn_black'],
+ ['S','x.kn_judge','Kiminari : Jugement noir',KN_D.judge,'kn_black'],
+]);
+DASHG[8]={src:'x.kn_dash',n:'Pas noir',d:KN_D.dash,vfx:'kn_black',cd:6};
+KGBAL[8]=[0.95,0.92];
+const KNC=GK.kn_black;
+GKBEAM.kn=(f,k,e,t)=>{const A=P(f.x,f.y,32),Bq=P(f.x2,f.y2,32);gkBolt(gkZig(A.x,A.y,Bq.x,Bq.y,10,18,f.x*.1+t*11),KNC.a,KNC.c,6*A.s,k,1);gkBolt(gkZig(A.x,A.y,Bq.x,Bq.y,7,26,f.y*.1+t*7),KNC.a,KNC.c,2*A.s,k*.7,1)};
+Object.assign(NAT,{
+ // ---------- Trait noir (D) ----------
+ kn_lance:SP('Kiminari : Trait noir',KN_D.lance,4,{ai:RG(540,.8),line:{len:560,w:20}},(u,a)=>{gkS('zap',u);gkS('chidori',u);anim(u,'point',.3);proj(u,a,{spd:1500,r:7,dmg:13,life:.38,col:KNC.b,kind:'kn_bolt',vfx:'kn_black',pierce:1,o:{unblockable:1}})}),
+ // ---------- Arc noir (C) ----------
+ kn_arc:SP('Kiminari : Arc noir',KN_D.arc,7,{ai:RG(250,.8),line:{len:260,w:150}},(u,a)=>{gkS('zap',u);gkS('chidori',u);anim(u,'gk_push',.35);
+  for(const e of enemies(u))if(dist(u,e)<260+e.r&&angDiff(ang(u,e),a)<.6)gkHit(e,u,18,{slow:.8,unblockable:1},'kn_black');jx({jfx:'kn_arc',ui:gkI(u),x:u.x,y:u.y,a,t:.3,m:.3})}),
+ // ---------- Éclair fourchu (B) ----------
+ kn_fork:SP('Kiminari : Éclair fourchu',KN_D.fork,10,{ai:RG(470,.65),line:{len:480,w:30}},(u,a,td)=>{const L=clamp(td||480,120,480);gkS('zap',u);anim(u,'stomp',.4);
+  proj(u,a,{spd:950,r:12,dmg:18,life:L/950,col:KNC.b,kind:'kn_bolt',vfx:'kn_black',o:{stun:.5,unblockable:1}});const p=projs[projs.length-1];aux.push({type:'kn_fork',x:p.x,y:p.y,r:0,t:p.life+.1,m:p.life+.1,team:u.team,owner:u,p,a})}),
+ // ---------- Ruée noire (A) ----------
+ kn_rush:SP('Kiminari : Ruée noire',KN_D.rush,12,{ai:{mode:'gap',min:60,max:330,p:.7},line:{len:340,w:50}},(u,a)=>{const x0=u.x,y0=u.y;gkS('zap',u);gkS('dash',u);anim(u,'lunge',.35);u.phase=Math.max(u.phase||0,.22);
+  const ex=clamp(u.x+Math.cos(a)*340,B.x+u.r,B.x+B.w-u.r),ey=clamp(u.y+Math.sin(a)*340,B.y+u.r,B.y+B.h-u.r),L=Math.hypot(ex-x0,ey-y0);
+  dash(u,a,340,.18,{through:1,end:()=>{gkBeam(u,x0,y0,a,L,56,34,{},'kn_black','kn',null,.35);later(u,.5,()=>gkBeam(u,x0,y0,a,L,56,10,{},'kn_black','kn',null,.3),{});aux.push({type:'kn_trace',x:x0,y:y0,a,len:L,r:0,t:.5,m:.5,team:u.team})}})}),
+ // ---------- Jugement noir (S) ----------
+ kn_judge:ULT('Kiminari : Jugement noir',KN_D.judge,{ai:RG(520,.85)},(u,a,td)=>{const e=pick(u,a,td||400,520);if(!e||dist(u,e)>560){subRefund(u,'kn_judge',1,'AUCUNE CIBLE',KNC.a);return}
+  gkS('zap',u);gkS('roar',u);anim(u,'gk_call',.8);say(e,'JUGEMENT NOIR',KNC.a);
+  for(let i=0;i<5;i++)aux.push({type:'kn_strike',x:e.x,y:e.y,r:52,t:.3+i*.3,m:.3+i*.3,team:u.team,owner:u,tg:e,last:i===4,set:i*.3,danger:1})}),
+ // ---------- dash : Pas noir ----------
+ kn_dash:SP('Pas noir',KN_D.dash,6,{ai:ESC},(u,a,td)=>{const x0=u.x,y0=u.y,d=clamp(td||200,110,200);gkS('zap',u);u.phase=Math.max(u.phase||0,.1);u.dash=null;u.kx=u.ky=0;
+  u.x=clamp(u.x+Math.cos(a)*d,B.x+u.r,B.x+B.w-u.r);u.y=clamp(u.y+Math.sin(a)*d,B.y+u.r,B.y+B.h-u.r);collide(u);u.haste=Math.max(u.haste||0,1);jx({jfx:'gk_beam',x:x0,y:y0,x2:u.x,y2:u.y,w:20,st:'kn',t:.3,m:.3})}),
+});
+Object.assign(NATHERO,{kn:'kylo'});
+// éclair fourchu : en bout de course, 3 éclairs
+AUXF.kn_fork=(x,dt)=>{const p=x.p;if(x.done||!p){x.t=0;return}const alive=!p.dead&&p.life>0&&projs.includes(p);if(alive){x.x=p.x;x.y=p.y;return}x.done=1;x.t=0;if(p.hitAny)return;const o=x.owner;if(!o||o.dead)return;
+ for(let i=-1;i<=1;i++)gkBeam(o,x.x,x.y,x.a+i*.7,140,26,8,{},'kn_black','kn',null,.3);if(near(x.x,x.y))gkS('zap',o)};AUXD.kn_fork=()=>{};
+// trace de la ruée (dessin seulement)
+AUXF.kn_trace=()=>{};AUXD.kn_trace=(x,k,t)=>{const ca=Math.cos(x.a),sa=Math.sin(x.a);g.save();for(let i=0;i<6;i++){const f=((i+.5)/6)*x.len,q=P(x.x+ca*f,x.y+sa*f,6+Math.sin(t*30+i)*4);g.globalCompositeOperation='lighter';g.fillStyle=rgba(KNC.b,.5);g.fillRect(q.x-2,q.y-2,4,4)}g.restore()};
+// éclair du jugement : alerte au sol (se pose sur la cible jusqu'à 0,3 s avant), puis frappe
+AUXF.kn_strike=(x,dt)=>{const o=x.owner,e=x.tg;if(x.done||!o)return;if(x.t>.3&&e&&!e.dead){x.x=e.x;x.y=e.y}
+ if(x.t<=0){x.done=1;const n=gkAoe(o,x.x,x.y,x.r,12,x.last?{stun:.6}:{},'kn_black');jx({jfx:'kn_sky',x:x.x,y:x.y,t:.35,m:.35});if(near(x.x,x.y)){gkS('zap',o);if(x.last)gkS('boom',o);shake=Math.max(shake,x.last?.25:.1)}}};
+AUXD.kn_strike=(x,k,t)=>{if(x.t>.35)return;const e=clamp(1-x.t/.3,0,1);g.save();g.fillStyle=rgba(KNC.c,.35);gEll(x.x,x.y,x.r);g.fill();g.fillStyle=rgba(KNC.b,.4);gEll(x.x,x.y,x.r*e);g.fill();g.strokeStyle=KNC.b;g.lineWidth=2;gEll(x.x,x.y,x.r);g.stroke();g.restore()};
+// ---- trait : Foudre noire (charge de vitesse)
+KGTRAITS[8]={nom:'Foudre noire',desc:'Tes éclairs noirs traversent la garde. Chaque fois qu\'un de tes jutsu de Kiminari touche, tu es plus rapide 2,5 s',
+ landed(src,t,dmg,o){if(gkMine('kn_black')&&dmg>0){src.haste=Math.max(src.haste||0,2.5);src.kn_hs=2.5}},
+ update(u,dt){if(u.kn_hs>0)u.kn_hs=Math.max(0,u.kn_hs-dt)},
+ draw(u,p,S,sk){const t=performance.now()/1000,on=u.kn_hs>0;g.save();if(on||Math.sin(t*5+u.y)>.7){const q=gkZig(p.x+(Math.sin(t*3)*14)*S,p.y-62*S,p.x-6*S,p.y-12*S,5,9*S,t*13);gkBolt(q,KNC.a,KNC.c,(on?2.2:1.4)*S,on?.9:.5,1)}g.restore()},
+ prev(u,p,S,front){if(front)KGTRAITS[8].draw(u,p,S,1)},
+ hud(u,x,y){gkHud(u,x,y,'Foudre noire'+(u.kn_hs>0?' · CHARGÉ':''),null,0,KNC.a,KNC.a)}};
+AFTER.push(()=>UK.push('kn_hs'));
+// ---- visuels
+PROJD.kn_bolt=(p,R,ra,t)=>{g.rotate(ra);const L=R*6;gkBolt(gkZig(-L,0,R,0,6,R*1.4,t*.03+p.x*.01),KNC.a,KNC.c,R*.9,1,1);g.globalCompositeOperation='lighter';g.fillStyle=rgba(KNC.a,.6);g.beginPath();g.arc(R*.6,0,R*.8,0,7);g.fill()};
+JFXD.kn_arc=(f,k,e,t,u)=>{const x0=u&&!u.dead?u.x:f.x,y0=u&&!u.dead?u.y:f.y,A=P(x0,y0,36);for(let i=0;i<5;i++){const b=f.a+(i-2)*.25,Bq=P(x0+Math.cos(b)*250,y0+Math.sin(b)*250,30);gkBolt(gkZig(A.x,A.y,Bq.x,Bq.y,6,18,i*3+t*15),KNC.a,KNC.c,3*A.s,k,1)}};
+JFXD.kn_sky=(f,k,e,t)=>{const A=P(f.x,f.y,220),Bq=P(f.x,f.y,0);gkBolt(gkZig(A.x,A.y,Bq.x,Bq.y,8,20,f.x+f.y),KNC.a,KNC.c,5*A.s,k,1);g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(KNC.b,.45*k);gEll(f.x,f.y,40);g.fill();g.restore()};
+
+// ===== Kekkei genkai g9 : Sakin, la poudre d'or (préfixe gd_) — façon Rasa, le Quatrième Kazekage =====
+// Identité : le poids. Une poudre d'or LOURDE et lente, qui colle et alourdit (trait, 3 cumuls) : dès 2 cumuls l'ennemi est ralenti,
+// à 3 il est écrasé par ton prochain coup d'or (+10 dégâts, étourdi). Rien de vif ni de perçant (c'est le contraire du sable de fer) :
+// masses qui tombent, vagues qui poussent, gangue qui fige, raz-de-marée d'or. Dash : glisse dorée.
+gkPal('gd_gold','#fff2b0','#e8b030','#9a6a10','#3a2604');
+defKG(9,{n:'Sakin',col:'#e0a828',tag:'Sa',el:'Doton',nat:4,d:'La poudre d\'or : lourde et lente, elle colle, alourdit et écrase',
+ ico:f=>{for(const [x,y,r] of[[-6,6,4.6],[4,6,4.6],[-1,-2,4.6],[8,-1,2.6],[-9,-2,2.4],[2,-9,2.8]]){g.beginPath();g.arc(x,y,r,0,7);g.fill()}}});
+const GD_D={
+ fist:'Masse d\'or lente et lourde (440) : 16 dégâts, repousse et alourdit',
+ wave:'Une vague d\'or roule devant toi (300) en 1 s : 20 dégâts, elle emporte les ennemis avec elle et alourdit',
+ gangue:'L\'or enveloppe le point visé (360 max) après 0,8 s : 18 dégâts, entrave 1 s et alourdit 2 fois',
+ hammer:'Une énorme masse d\'or tombe lentement sur le point visé (400 max, alerte 1,1 s) : 42 dégâts, étourdit 0,6 s ; l\'or répandu ralentit 3 s',
+ tide:'Raz-de-marée d\'or : une immense vague roule devant toi pendant 3 s (480) : 12 dégâts toutes les 0,5 s aux ennemis dedans, emportés et alourdis',
+ dash:'Tu glisses sur un tapis d\'or (210) ; il reste 2 s et ralentit les ennemis qui le foulent'};
+KIT('g9',[
+ ['D','x.gd_fist','Sakin : Masse d\'or',GD_D.fist,'gd_gold'],
+ ['C','x.gd_wave','Sakin : Vague d\'or',GD_D.wave,'gd_gold'],
+ ['B','x.gd_gangue','Sakin : Gangue d\'or',GD_D.gangue,'gd_gold'],
+ ['A','x.gd_hammer','Sakin : Marteau d\'or',GD_D.hammer,'gd_gold'],
+ ['S','x.gd_tide','Sakin : Ôgon no Tsunami',GD_D.tide,'gd_gold'],
+]);
+DASHG[9]={src:'x.gd_dash',n:'Glisse dorée',d:GD_D.dash,vfx:'gd_gold',cd:7};
+KGBAL[9]=[1,0.99];
+const GDC=GK.gd_gold,GD_MAX=3,gdW=(u,e,n)=>gkStack(u,e,'gd_w',n,GD_MAX,5);
+// vague d'or : bande qui avance (vitesse sp) et emporte les ennemis dedans ; d dégâts tous les iv (ou 1 fois si iv = 0)
+function gdWave(u,a,len,w,dur,d,iv){const x={type:'gd_wave',x:u.x+Math.cos(a)*30,y:u.y+Math.sin(a)*30,a,len,w,r:0,t:dur,m:dur,team:u.team,owner:u,k:0,iv,d,hs:new Set(),sp:len/dur,dep:30,danger:0};aux.push(x);return x}
+Object.assign(NAT,{
+ // ---------- Masse d'or (D) ----------
+ gd_fist:SP('Sakin : Masse d\'or',GD_D.fist,5,{ai:RG(430,.75),line:{len:440,w:36}},(u,a)=>{gkS('sand',u);gkS('heavy',u);anim(u,'gk_push',.45);
+  proj(u,a,{spd:440,r:15,dmg:16,life:1,col:GDC.b,kind:'gd_lump',vfx:'gd_gold',o:{kb:200},onHit:(p,t)=>{gdW(p.owner,t,1);if(near(t.x,t.y))sparks(t.x,t.y,GDC.a,10,'gd_gold')}})}),
+ // ---------- Vague d'or (C) ----------
+ gd_wave:SP('Sakin : Vague d\'or',GD_D.wave,8,{ai:RG(300,.7),line:{len:300,w:130}},(u,a)=>{gkS('sand',u);gkS('heavy',u);anim(u,'gk_push',.6);gdWave(u,a,300,130,1,20,0)}),
+ // ---------- Gangue d'or (B) ----------
+ gd_gangue:SP('Sakin : Gangue d\'or',GD_D.gangue,10,{ai:RG(360,.6),tele:{r:75,max:360}},(u,a,td)=>{const c=atP(u,a,td,360),D=.8;gkS('sand',u);anim(u,'gk_charge',.6);jx({jfx:'gd_swirl',x:c.x,y:c.y,r:75,t:D,m:D});
+  later(u,D,()=>{for(const e of enemies(u))if(gkIn(e,c.x,c.y,75)&&gkHit(e,u,18,{root:1,unblockable:1},'gd_gold')){gdW(u,e,2);jx({jfx:'gd_enc',ti:gkI(e),x:e.x,y:e.y,t:1,m:1})}
+   jx({jfx:'gk_boom',x:c.x,y:c.y,r:85,v:'gd_gold',s:'gold',t:.5,m:.5});if(near(c.x,c.y)){gkS('sand',u);gkS('heavy',u)}},{x:c.x,y:c.y,r:75})}),
+ // ---------- Marteau d'or (A) ----------
+ gd_hammer:SP('Sakin : Marteau d\'or',GD_D.hammer,13,{ai:RG(400,.65),tele:{r:95,max:400}},(u,a,td)=>{const c=atP(u,a,td,400),D=1.1;gkS('sand',u);gkS('roar',u);anim(u,'gk_call',1);jx({jfx:'gd_mass',x:c.x,y:c.y,r:95,d:D,t:D+.1,m:D+.1});
+  later(u,D,()=>{gkAoe(u,c.x,c.y,95,42,{stun:.6},'gd_gold',e=>gdW(u,e,1));gkPool(u,c.x,c.y,{r:95,t:3,kind:'gd',vfx:'gd_gold',sl:1});jx({jfx:'gk_boom',x:c.x,y:c.y,r:120,v:'gd_gold',s:'gold',t:.7,m:.7});
+   if(near(c.x,c.y)){gkS('boom',u);gkS('rock',u);shake=Math.max(shake,.45)}},{x:c.x,y:c.y,r:95})}),
+ // ---------- Ôgon no Tsunami (S) ----------
+ gd_tide:ULT('Sakin : Ôgon no Tsunami',GD_D.tide,{ai:RG(420,.8),line:{len:480,w:240}},(u,a)=>{gkS('sand',u);gkS('roar',u);anim(u,'gk_push',1);gdWave(u,a,480,240,3,12,.5);if(near(u.x,u.y))shake=Math.max(shake,.2)}),
+ // ---------- dash : Glisse dorée ----------
+ gd_dash:SP('Glisse dorée',GD_D.dash,7,{ai:ESC},(u,a,td)=>{const x0=u.x,y0=u.y,d=clamp(td||210,110,210);gkS('sand',u);gkS('dash',u);anim(u,'lunge',.3);
+  const ex=clamp(u.x+Math.cos(a)*d,B.x+u.r,B.x+B.w-u.r),ey=clamp(u.y+Math.sin(a)*d,B.y+u.r,B.y+B.h-u.r);gkStrip(u,x0,y0,ex,ey,{w:50,t:2,kind:'gd',vfx:'gd_gold',sl:1});dash(u,a,d,.26,{})}),
+});
+Object.assign(NATHERO,{gd:'kylo'});
+// vague d'or : le front avance ; les ennemis dans la vague sont emportés (et pas la peine de les toucher 2 fois si iv = 0)
+AUXF.gd_wave=(x,dt)=>{const o=x.owner;if(x.t<=0||!o)return;const ca=Math.cos(x.a),sa=Math.sin(x.a),dep=Math.min(x.len,x.dep+x.sp*dt);const mv=dep-x.dep;x.dep=dep;const cx=x.x+ca*dep,cy=x.y+sa*dep,th=60;
+ const ins=e=>{const dx=e.x-cx,dy=e.y-cy,f=dx*ca+dy*sa;return f>-th-e.r&&f<20+e.r&&Math.abs(-dx*sa+dy*ca)<x.w/2+e.r};
+ for(const e of enemies(o)){if(!ins(e)||(e.dash&&e.dash.jump)||e.phase>0)continue;if(e.unstop<=0){e.x+=ca*mv;e.y+=sa*mv;collide(e)}
+  if(x.iv?x.k<=0:!x.hs.has(e)){x.hs.add(e);if(gkHit(e,o,x.d,{unblockable:1,fx:cx-ca*80,fy:cy-sa*80},'gd_gold'))gdW(o,e,1)}}
+ if(x.iv&&x.k<=0)x.k=x.iv};
+AUXD.gd_wave=(x,k,t)=>{const el=x.m-x.t,dep=Math.min(x.len,30+x.len/x.m*el),ca=Math.cos(x.a),sa=Math.sin(x.a),hw=x.w/2,cx=x.x+ca*dep,cy=x.y+sa*dep,al=Math.min(1,x.t/.3),n=Math.max(6,Math.round(x.w/18));
+ const Q=(f,s,z)=>P(x.x+ca*f-sa*s,x.y+sa*f+ca*s,z||0);g.save();poly([Q(0,-hw*.5),Q(dep,-hw),Q(dep,hw),Q(0,hw*.5)],rgba(GDC.c,.25*al));
+ const big=x.w>200?1.5:1,TOP=[],BAS=[],FR=[];for(let i=0;i<n;i++){const s=(i/(n-1)-.5)*x.w,h=(30+Math.sin(t*5+i*1.3)*7)*big*(1-Math.pow(Math.abs(i/(n-1)-.5)*2,3)*.5);TOP.push(Q(dep-6,s,h));BAS.push(Q(dep-46*big,s,0));FR.push(Q(dep+6,s,0))}
+ g.globalAlpha=al;const yT=Math.min(...TOP.map(p=>p.y)),yB=Math.max(...FR.map(p=>p.y)),gr=g.createLinearGradient(0,yT,0,yB);gr.addColorStop(0,GDC.a);gr.addColorStop(.45,GDC.b);gr.addColorStop(1,GDC.c);
+ g.fillStyle=gr;g.strokeStyle=GDC.d;g.lineWidth=1.3;g.beginPath();BAS.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));for(let i=n-1;i>=0;i--)g.lineTo(TOP[i].x,TOP[i].y);g.closePath();g.fill();
+ g.beginPath();FR.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));for(let i=n-1;i>=0;i--)g.lineTo(TOP[i].x,TOP[i].y);g.closePath();g.fill();g.stroke();
+ g.strokeStyle=rgba('#fff6c8',.9);g.lineWidth=2;g.beginPath();TOP.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.stroke();
+ g.fillStyle=GDC.c;for(let i=0;i<n;i++){const p=TOP[i];g.beginPath();g.arc(p.x+Math.sin(t*7+i)*3,p.y-3,(2.5+(i%3))*p.s,0,7);g.fill()}
+ g.globalAlpha=al;g.fillStyle='#fffbe0';for(let i=0;i<14;i++){const s=((i*.37)%1-.5)*x.w,p=Q(dep-((t*60+i*13)%50),s,10+((i*7)%30));if(Math.sin(t*9+i)>.4)g.fillRect(p.x-1,p.y-1,2.5,2.5)}g.restore()};
+// ---- trait : Poids de l'or
+GKST.push({key:'gd_w',max:GD_MAX,col:'#f0c040',c2:'#5a3a04'});
+KGTRAITS[9]={nom:'Poids de l\'or',desc:'Ta poudre d\'or colle et alourdit (3 cumuls au plus, 5 s) : dès 2 cumuls l\'ennemi est ralenti. À 3 cumuls, ton prochain coup d\'or l\'écrase : +10 dégâts et étourdi 0,6 s (les cumuls tombent)',
+ update(u,dt){for(const e of enemies(u))if((e.gd_w|0)>=2&&e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.15)},
+ deal(src,t,dmg,o){return gkMine('gd_gold')&&(t.gd_w|0)>=GD_MAX&&dmg>0?dmg+10:dmg},
+ landed(src,t,dmg,o){if(!gkMine('gd_gold')||(t.gd_w|0)<GD_MAX||dmg<=0||t.dead)return;gkStSet(t,'gd_w',0,1.5);if(t.unstop<=0){t.stun=Math.max(t.stun,.6);say(t,'ÉCRASÉ','#f0c040')}jx({jfx:'gk_boom',x:t.x,y:t.y,r:60,v:'gd_gold',s:'gold',t:.5,m:.5});if(near(t.x,t.y)){gkS('heavy',t);shake=Math.max(shake,.2)}},
+ draw(u,p,S,sk){const t=performance.now()/1000;g.save();g.fillStyle=GDC.b;for(let i=0;i<8;i++){const b=t*.7+i*.785,x=p.x+Math.cos(b)*20*S*(sk||1),y=p.y+Math.sin(b)*6*S-(2+Math.abs(Math.sin(t*2+i))*6)*S;g.beginPath();g.arc(x,y,1.8*S,0,7);g.fill()}g.restore()},
+ drawB(u,p,S,sk){const s=S*(sk||1);g.save();g.fillStyle='#c89a3a';g.strokeStyle='#5a3a10';g.lineWidth=1.2;g.beginPath();g.ellipse(p.x-14*s,p.y-44*s,7*s,10*s,-.3,0,7);g.fill();g.stroke();g.fillStyle='#e8c060';g.fillRect(p.x-17*s,p.y-56*s,6*s,4*s);g.restore()}, // gourde d'or dans le dos
+ prev(u,p,S,front){(front?KGTRAITS[9].draw:KGTRAITS[9].drawB)(u,p,S,1)},
+ hud(u,x,y){gkHud(u,x,y,'Poids de l\'or','gd_w',GD_MAX,'#f0c040',GDC.a)}};
+AFTER.push(()=>UK.push('gd_w'));
+// cible alourdie : poudre d'or qui coule sur elle
+STATD.push((u,p,S,sk)=>{const n=u.gd_w|0;if(!n||u.dead)return;const t=performance.now()/1000;g.save();g.fillStyle=rgba(GDC.b,.8);for(let i=0;i<n*4;i++){const x=p.x+Math.sin(i*2.3)*12*S,y=p.y-(54-((t*30+i*11)%46))*S;g.fillRect(x-1,y-1,2.2,2.2)}
+ g.fillStyle=rgba(GDC.c,.45);g.beginPath();g.ellipse(p.x,p.y-2*S,(12+n*4)*S,(4+n)*S,0,0,7);g.fill();g.restore()});
+// ---- visuels
+PROJD.gd_lump=gkLumpD('gd_gold',{spin:420});
+// nappe d'or (marteau, glisse) : sable doré lourd, scintillements
+GKPOOL.gd=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,R=x.r;g.save();const gr=g.createRadialGradient(q.x,q.y,0,q.x,q.y,R*s);gr.addColorStop(0,rgba(GDC.b,.7*k));gr.addColorStop(.7,rgba(GDC.c,.5*k));gr.addColorStop(1,rgba(GDC.c,0));g.fillStyle=gr;g.beginPath();g.ellipse(q.x,q.y,R*s,R*s*K,0,0,7);g.fill();
+ g.fillStyle=rgba('#fff6c8',.9*k);for(let i=0;i<(x.strip?2:9);i++){const b=i*2.4+(x.i||0),d=R*((i*.37)%1)*.85,p=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,1),tw=Math.max(0,Math.sin(t*5+i*1.7));if(tw>.5){g.fillRect(p.x-2*tw,p.y-.5,4*tw,1);g.fillRect(p.x-.5,p.y-2*tw,1,4*tw)}}g.restore()};
+// or qui tourbillonne avant la gangue
+JFXD.gd_swirl=(f,k,e,t)=>{g.save();for(let i=0;i<24;i++){const b=i*.26+t*3,d=f.r*(1.3-e*.8)*(.6+((i*.37)%1)*.4),p=P(f.x+Math.cos(b)*d,f.y+Math.sin(b)*d,10+e*30+(i%4)*6);g.fillStyle=i%2?GDC.a:GDC.b;g.beginPath();g.arc(p.x,p.y,(2.5+(i%3))*p.s,0,7);g.fill()}g.restore()};
+// cible prise dans une gangue d'or
+JFXD.gd_enc=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;const q=P(tg.x,tg.y,0),s=q.s,h=46*s*Math.min(1,e*6),a=Math.min(1,k*3);g.save();g.globalAlpha=a;const gr=g.createLinearGradient(0,q.y-h,0,q.y);gr.addColorStop(0,rgba(GDC.a,.85));gr.addColorStop(1,rgba(GDC.c,.9));g.fillStyle=gr;g.strokeStyle=GDC.d;g.lineWidth=1.2;
+ g.beginPath();g.moveTo(q.x-18*s,q.y+2*s);g.quadraticCurveTo(q.x-22*s,q.y-h*.7,q.x-6*s,q.y-h);g.quadraticCurveTo(q.x+4*s,q.y-h*1.08,q.x+12*s,q.y-h*.9);g.quadraticCurveTo(q.x+24*s,q.y-h*.4,q.x+18*s,q.y+2*s);g.closePath();g.fill();g.stroke();g.restore()};
+// marteau d'or : énorme masse grumeleuse qui descend lentement, ombre qui grossit
+JFXD.gd_mass=(f,k,e,t)=>{const el=e*f.m,m=Math.min(1,el/f.d),z=320*(1-m*m),q=P(f.x,f.y,z+40),s=q.s,R=f.r*.7*s;g.save();g.fillStyle=rgba('#000000',.15+.25*m);gEll(f.x,f.y,f.r*(.4+.6*m));g.fill();g.translate(q.x,q.y);PROJD.gd_lump({},R,0,t*1000*.3);g.restore()};
+
 for(const k in NAT)NAT[k].key=k;
 
 const JD=KITROWS; // le catalogue est assemblé par les fichiers kits/*.js (un par catégorie)
@@ -12916,9 +13858,9 @@ const saveCfg=()=>{try{localStorage.setItem('nrCfg',JSON.stringify(CFG))}catch(e
 const teamN=()=>Math.min(4,Math.max(mode==='arena'&&coop()?2:1,CFG.team,humansPer(0),humansPer(1)));
 const sdR=()=>mode!=='arena'||!CFG.sd||timer<SD_START?9999:lerp(1150,70,clamp((timer-SD_START)/SD_LEN,0,1));
 // UXK : champs ajoutés en cours de partie, déclarés d'avance (forme cachée unique)
-const UXK=["rid","wet","mk","stk","rootV","blockT","chk","sprintLock","sprint","run","runT","_tri","sub_nd","jstN","jstV","aiSprint","hy_byak","hy_stepB","hy_seen","uc_tm","uc_obs","uc_cpN","uc_cpT","uc_rcT","tj_g","tj_cT","tj_n","tj_cds","ak_cal","sa_shT","sa_cds","sa_arm","sa_armT","sa_sph","sa_fly","sa_brk","ab_eat","ab_tk","in_bcd","na_dk","kg_os","kg_osT","kg_armT","kg_larT","cmb","cmbH","cmbT","thrT","st_kn","st_kt","anim","relT","auraV","dmgBy","st_sh","uc_tmF","uc_cp","phase","uc_shB","uc_rec","uc_rdT","st_vp","ya_mkU","ya_mk","ya_mkB","uc_suT","tj_8","tj_red","ak_roll","shieldBy","ak_bf","ya_lnkT","ya_lnkU","dotSrc","dotEl","dotK","ya_pz","ya_pa","na_tT","in_flair","in_wolf","do_sw","jst","sa_sink","ab_last","ab_col","ab_colT","ab_src","ak_arm","ya_sl","ya_slI","sub_ctr","ak_spk","hy_tkN","hy_tk","hy_tkU","sub_slug","thirdImm","st_luT","do_ar","do_ac","chan","tj_life","tj_esq","na_pl","riposteS","hy_dg","uc_am","na_by","na_hT","hy_rvU","c3T","hy_imU","ka_ht","counterS","absorbEn","izT","izS","parry","aiParry","fearX","fearY","tauntSrc","su_pr","ab_vd","ab_vdT","ab_spyT","ab_spyS","uz_clT","_tr","_pz","_land","_dog3","buf","bufL","ckLock","chkT","exh","ckMsg","aiCkLo","aiLowT","aiCkSt","aiCkTo","hlC","hlTg","hlCd","hlN","hlR","hlMsg","hlQ","sub_hk","sub_sage","kwE","kwT","kwX","kwY","sub_byk","sub_rskW","sub_nr_kyu","sub_nr_clQ","sub_hm","sub_hrR","sub_hrRT","sub_cp","sub_cpN","sub_cpM","_cpC","_cpOn","sub_obs","sub_mnt","sub_kum","sub_kumT","sub_kebT","sub_kumH","su_mA","do_mo","uc_gk","na_sh","ab_ven","in_four","uz_st","uz_scE","uz_rtE","uz_rtB","uz_fv","tj_pb","hk_pol","hk_polT","hk_polS","hk_polN","hk_imm","hk_gT","hk_wc","hk_mg","rr_mn","rr_mT","rr_gl","rr_gh","rr_cds","rr_mF","hm_armE","hm_arm","hm_bw","hm_bow","hm_cd0","sg_px","sg_py","sg_pa","sg_hp","sg_dn","sg_hT","sg_ax","sg_ay","sg_ox","sg_oy","_sgf","_sgx","_sgy","_sgT","_sgF","_sgH","ci_hp","ci_bl","ci_pd","ci_aiT","km_pp","km_hc","km_sc","km_sw","km_ang","km_angK","km_ppT","km_rs","fm_side","fm_bcd","hs_eat","hs_scl","hs_fus","hs_cds","hz_w","hz_ctr","hz_arm","hz_armB","hz_pud","hz_gT","hz_zap","yu_mk","yu_cds","kj_sh","kj_t","kj_kam","kj_kiai","kj_uke","kj_arm","kj_ten","kj_tenHit","kj_cds","bk_w","bk_axe","bk_ton","bk_cds","barQ","barN","favI","favQ","aiSwT","aiBarT","aiBarN","gvx","gvy","usedJ"];
+const UXK=["rid","wet","mk","stk","rootV","blockT","chk","sprintLock","sprint","run","runT","_tri","sub_nd","jstN","jstV","aiSprint","hy_byak","hy_stepB","hy_seen","uc_tm","uc_obs","uc_cpN","uc_cpT","uc_rcT","tj_g","tj_cT","tj_n","tj_cds","ak_cal","sa_shT","sa_cds","sa_arm","sa_armT","sa_sph","sa_fly","sa_brk","ab_eat","ab_tk","in_bcd","na_dk","kg_os","kg_osT","kg_armT","kg_larT","cmb","cmbH","cmbT","thrT","st_kn","st_kt","anim","relT","auraV","dmgBy","st_sh","uc_tmF","uc_cp","phase","uc_shB","uc_rec","uc_rdT","st_vp","ya_mkU","ya_mk","ya_mkB","uc_suT","tj_8","tj_red","ak_roll","shieldBy","ak_bf","ya_lnkT","ya_lnkU","dotSrc","dotEl","dotK","ya_pz","ya_pa","na_tT","in_flair","in_wolf","do_sw","jst","sa_sink","ab_last","ab_col","ab_colT","ab_src","ak_arm","ya_sl","ya_slI","sub_ctr","ak_spk","hy_tkN","hy_tk","hy_tkU","sub_slug","thirdImm","st_luT","do_ar","do_ac","chan","tj_life","tj_esq","na_pl","riposteS","hy_dg","uc_am","na_by","na_hT","hy_rvU","c3T","hy_imU","ka_ht","counterS","absorbEn","izT","izS","parry","aiParry","fearX","fearY","tauntSrc","su_pr","ab_vd","ab_vdT","ab_spyT","ab_spyS","uz_clT","_tr","_pz","_land","_dog3","buf","bufL","ckLock","chkT","exh","ckMsg","aiCkLo","aiLowT","aiCkSt","aiCkTo","hlC","hlTg","hlCd","hlN","hlR","hlMsg","hlQ","sub_hk","sub_sage","kwE","kwT","kwX","kwY","sub_byk","sub_rskW","sub_nr_kyu","sub_nr_clQ","sub_hm","sub_hrR","sub_hrRT","sub_cp","sub_cpN","sub_cpM","_cpC","_cpOn","sub_obs","sub_mnt","sub_kum","sub_kumT","sub_kebT","sub_kumH","su_mA","do_mo","uc_gk","na_sh","ab_ven","in_four","uz_st","uz_scE","uz_rtE","uz_rtB","uz_fv","tj_pb","hk_pol","hk_polT","hk_polS","hk_polN","hk_imm","hk_gT","hk_wc","hk_mg","rr_mn","rr_mT","rr_gl","rr_gh","rr_cds","rr_mF","hm_armE","hm_arm","hm_bw","hm_bow","hm_cd0","sg_px","sg_py","sg_pa","sg_hp","sg_dn","sg_hT","sg_ax","sg_ay","sg_ox","sg_oy","_sgf","_sgx","_sgy","_sgT","_sgF","_sgH","ci_hp","ci_bl","ci_pd","ci_aiT","km_pp","km_hc","km_sc","km_sw","km_ang","km_angK","km_ppT","km_rs","fm_side","fm_bcd","hs_eat","hs_scl","hs_fus","hs_cds","hz_w","hz_ctr","hz_arm","hz_armB","hz_pud","hz_gT","hz_zap","yu_mk","yu_cds","kj_sh","kj_t","kj_kam","kj_kiai","kj_uke","kj_arm","kj_ten","kj_tenHit","kj_cds","bk_w","bk_axe","bk_ton","bk_cds","yo_ar","yo_cds","ft_ar","ft_cds","ft_k","ji_sh","bt_bg","rt_gr","so_rs","jn_ch","kn_hs","barQ","barN","favI","favQ","aiSwT","aiBarT","aiBarN","gvx","gvy","usedJ"];
 function mkUnit(c,x,y,team){const ch=unitCh(c,state==='menu'?null:MBAR[c+'|'+team]);return{c,ch,x,y,z:0,vx:0,vy:0,kx:0,ky:0,r:18*(ch.look.scale>1?1.1:1),hp:ch.hp,max:ch.hp,energy:0,team,hero:!ch.trooper,cds:[0,0,0,0,0,0,0,0,0],cst:{},csg:{},lkj:{},barS:ch.bar?ch.bar.join(','):'',stun:0,slow:0,haste:0,rage:0,rapid:0,unstop:0,deflect:0,shield:0,shieldT:0,
- stam:100,stamT:0,block:false,blockLock:0,aiBlock:0,dash:null,cast:null,spin:null,flame:null,aim:team?Math.PI:0,swing:0,swingA:0,saberOut:0,walk:0,moving:0,aiT:.3+rnd()*.4,strT:0,strDir:rnd()<.5?1:-1,flash:0,dead:false,deadT:0,respawn:0,tgt:null,lane:y,ctrl:null,human:false,nx:x,ny:y,root:0,stealth:0,ambush:0,airT:0,hits:0,chg:ch.abil.map(a=>a&&a.charges||0),ammo:ch.abil[0].ammo||0,silence:0,fear:0,taunt:0,disarm:0,vuln:0,counter:0,riposte:0,dodge:0,absorb:0,thorns:0,dr:0,drT:0,cdrHit:0,lsB:0,regenB:0,slowImm:0,giant:0,riot:0,chrome:0,parryAll:0,thornSlow:0,wallStun:0,critBuf:0,pierceBuf:0,dot:0,dotT:0,sleepT:0,markB:null,stick:null,rid:undefined,wet:undefined,mk:undefined,stk:undefined,rootV:undefined,blockT:undefined,chk:undefined,sprintLock:undefined,sprint:undefined,run:undefined,runT:undefined,_tri:undefined,sub_nd:undefined,jstN:undefined,jstV:undefined,aiSprint:undefined,hy_byak:undefined,hy_stepB:undefined,hy_seen:undefined,uc_tm:undefined,uc_obs:undefined,uc_cpN:undefined,uc_cpT:undefined,uc_rcT:undefined,tj_g:undefined,tj_cT:undefined,tj_n:undefined,tj_cds:undefined,ak_cal:undefined,sa_shT:undefined,sa_cds:undefined,sa_arm:undefined,sa_armT:undefined,sa_sph:undefined,sa_fly:undefined,sa_brk:undefined,ab_eat:undefined,ab_tk:undefined,in_bcd:undefined,na_dk:undefined,kg_os:undefined,kg_osT:undefined,kg_armT:undefined,kg_larT:undefined,cmb:undefined,cmbH:undefined,cmbT:undefined,thrT:undefined,st_kn:undefined,st_kt:undefined,anim:undefined,relT:undefined,auraV:undefined,dmgBy:undefined,st_sh:undefined,uc_tmF:undefined,uc_cp:undefined,phase:undefined,uc_shB:undefined,uc_rec:undefined,uc_rdT:undefined,st_vp:undefined,ya_mkU:undefined,ya_mk:undefined,ya_mkB:undefined,uc_suT:undefined,tj_8:undefined,tj_red:undefined,ak_roll:undefined,shieldBy:undefined,ak_bf:undefined,ya_lnkT:undefined,ya_lnkU:undefined,dotSrc:undefined,dotEl:undefined,dotK:undefined,ya_pz:undefined,ya_pa:undefined,na_tT:undefined,in_flair:undefined,in_wolf:undefined,do_sw:undefined,jst:undefined,sa_sink:undefined,ab_last:undefined,ab_col:undefined,ab_colT:undefined,ab_src:undefined,ak_arm:undefined,ya_sl:undefined,ya_slI:undefined,sub_ctr:undefined,ak_spk:undefined,hy_tkN:undefined,hy_tk:undefined,hy_tkU:undefined,sub_slug:undefined,thirdImm:undefined,st_luT:undefined,do_ar:undefined,do_ac:undefined,chan:undefined,tj_life:undefined,tj_esq:undefined,na_pl:undefined,riposteS:undefined,hy_dg:undefined,uc_am:undefined,na_by:undefined,na_hT:undefined,hy_rvU:undefined,c3T:undefined,hy_imU:undefined,ka_ht:undefined,counterS:undefined,absorbEn:undefined,izT:undefined,izS:undefined,parry:undefined,aiParry:undefined,fearX:undefined,fearY:undefined,tauntSrc:undefined,su_pr:undefined,ab_vd:undefined,ab_vdT:undefined,ab_spyT:undefined,ab_spyS:undefined,uz_clT:undefined,_tr:undefined,_pz:undefined,_land:undefined,_dog3:undefined,buf:undefined,bufL:undefined,ckLock:undefined,chkT:undefined,exh:undefined,ckMsg:undefined,aiCkLo:undefined,aiLowT:undefined,aiCkSt:undefined,aiCkTo:undefined,hlC:undefined,hlTg:undefined,hlCd:undefined,hlN:undefined,hlR:undefined,hlMsg:undefined,hlQ:undefined,sub_hk:undefined,sub_sage:undefined,kwE:undefined,kwT:undefined,kwX:undefined,kwY:undefined,sub_byk:undefined,sub_rskW:undefined,sub_nr_kyu:undefined,sub_nr_clQ:undefined,sub_hm:undefined,sub_hrR:undefined,sub_hrRT:undefined,sub_cp:undefined,sub_cpN:undefined,sub_cpM:undefined,_cpC:undefined,_cpOn:undefined,sub_obs:undefined,sub_mnt:undefined,sub_kum:undefined,sub_kumT:undefined,sub_kebT:undefined,sub_kumH:undefined,su_mA:undefined,do_mo:undefined,uc_gk:undefined,na_sh:undefined,ab_ven:undefined,in_four:undefined,uz_st:undefined,uz_scE:undefined,uz_rtE:undefined,uz_rtB:undefined,uz_fv:undefined,tj_pb:undefined,hk_pol:undefined,hk_polT:undefined,hk_polS:undefined,hk_polN:undefined,hk_imm:undefined,hk_gT:undefined,hk_wc:undefined,hk_mg:undefined,rr_mn:undefined,rr_mT:undefined,rr_gl:undefined,rr_gh:undefined,rr_cds:undefined,rr_mF:undefined,hm_armE:undefined,hm_arm:undefined,hm_bw:undefined,hm_bow:undefined,hm_cd0:undefined,sg_px:undefined,sg_py:undefined,sg_pa:undefined,sg_hp:undefined,sg_dn:undefined,sg_hT:undefined,sg_ax:undefined,sg_ay:undefined,sg_ox:undefined,sg_oy:undefined,_sgf:undefined,_sgx:undefined,_sgy:undefined,_sgT:undefined,_sgF:undefined,_sgH:undefined,ci_hp:undefined,ci_bl:undefined,ci_pd:undefined,ci_aiT:undefined,km_pp:undefined,km_hc:undefined,km_sc:undefined,km_sw:undefined,km_ang:undefined,km_angK:undefined,km_ppT:undefined,km_rs:undefined,fm_side:undefined,fm_bcd:undefined,hs_eat:undefined,hs_scl:undefined,hs_fus:undefined,hs_cds:undefined,hz_w:undefined,hz_ctr:undefined,hz_arm:undefined,hz_armB:undefined,hz_pud:undefined,hz_gT:undefined,hz_zap:undefined,yu_mk:undefined,yu_cds:undefined,kj_sh:undefined,kj_t:undefined,kj_kam:undefined,kj_kiai:undefined,kj_uke:undefined,kj_arm:undefined,kj_ten:undefined,kj_tenHit:undefined,kj_cds:undefined,bk_w:undefined,bk_axe:undefined,bk_ton:undefined,bk_cds:undefined,barQ:undefined,barN:undefined,favI:undefined,favQ:undefined,aiSwT:undefined,aiBarT:undefined,aiBarN:undefined,gvx:undefined,gvy:undefined,usedJ:undefined}}
+ stam:100,stamT:0,block:false,blockLock:0,aiBlock:0,dash:null,cast:null,spin:null,flame:null,aim:team?Math.PI:0,swing:0,swingA:0,saberOut:0,walk:0,moving:0,aiT:.3+rnd()*.4,strT:0,strDir:rnd()<.5?1:-1,flash:0,dead:false,deadT:0,respawn:0,tgt:null,lane:y,ctrl:null,human:false,nx:x,ny:y,root:0,stealth:0,ambush:0,airT:0,hits:0,chg:ch.abil.map(a=>a&&a.charges||0),ammo:ch.abil[0].ammo||0,silence:0,fear:0,taunt:0,disarm:0,vuln:0,counter:0,riposte:0,dodge:0,absorb:0,thorns:0,dr:0,drT:0,cdrHit:0,lsB:0,regenB:0,slowImm:0,giant:0,riot:0,chrome:0,parryAll:0,thornSlow:0,wallStun:0,critBuf:0,pierceBuf:0,dot:0,dotT:0,sleepT:0,markB:null,stick:null,rid:undefined,wet:undefined,mk:undefined,stk:undefined,rootV:undefined,blockT:undefined,chk:undefined,sprintLock:undefined,sprint:undefined,run:undefined,runT:undefined,_tri:undefined,sub_nd:undefined,jstN:undefined,jstV:undefined,aiSprint:undefined,hy_byak:undefined,hy_stepB:undefined,hy_seen:undefined,uc_tm:undefined,uc_obs:undefined,uc_cpN:undefined,uc_cpT:undefined,uc_rcT:undefined,tj_g:undefined,tj_cT:undefined,tj_n:undefined,tj_cds:undefined,ak_cal:undefined,sa_shT:undefined,sa_cds:undefined,sa_arm:undefined,sa_armT:undefined,sa_sph:undefined,sa_fly:undefined,sa_brk:undefined,ab_eat:undefined,ab_tk:undefined,in_bcd:undefined,na_dk:undefined,kg_os:undefined,kg_osT:undefined,kg_armT:undefined,kg_larT:undefined,cmb:undefined,cmbH:undefined,cmbT:undefined,thrT:undefined,st_kn:undefined,st_kt:undefined,anim:undefined,relT:undefined,auraV:undefined,dmgBy:undefined,st_sh:undefined,uc_tmF:undefined,uc_cp:undefined,phase:undefined,uc_shB:undefined,uc_rec:undefined,uc_rdT:undefined,st_vp:undefined,ya_mkU:undefined,ya_mk:undefined,ya_mkB:undefined,uc_suT:undefined,tj_8:undefined,tj_red:undefined,ak_roll:undefined,shieldBy:undefined,ak_bf:undefined,ya_lnkT:undefined,ya_lnkU:undefined,dotSrc:undefined,dotEl:undefined,dotK:undefined,ya_pz:undefined,ya_pa:undefined,na_tT:undefined,in_flair:undefined,in_wolf:undefined,do_sw:undefined,jst:undefined,sa_sink:undefined,ab_last:undefined,ab_col:undefined,ab_colT:undefined,ab_src:undefined,ak_arm:undefined,ya_sl:undefined,ya_slI:undefined,sub_ctr:undefined,ak_spk:undefined,hy_tkN:undefined,hy_tk:undefined,hy_tkU:undefined,sub_slug:undefined,thirdImm:undefined,st_luT:undefined,do_ar:undefined,do_ac:undefined,chan:undefined,tj_life:undefined,tj_esq:undefined,na_pl:undefined,riposteS:undefined,hy_dg:undefined,uc_am:undefined,na_by:undefined,na_hT:undefined,hy_rvU:undefined,c3T:undefined,hy_imU:undefined,ka_ht:undefined,counterS:undefined,absorbEn:undefined,izT:undefined,izS:undefined,parry:undefined,aiParry:undefined,fearX:undefined,fearY:undefined,tauntSrc:undefined,su_pr:undefined,ab_vd:undefined,ab_vdT:undefined,ab_spyT:undefined,ab_spyS:undefined,uz_clT:undefined,_tr:undefined,_pz:undefined,_land:undefined,_dog3:undefined,buf:undefined,bufL:undefined,ckLock:undefined,chkT:undefined,exh:undefined,ckMsg:undefined,aiCkLo:undefined,aiLowT:undefined,aiCkSt:undefined,aiCkTo:undefined,hlC:undefined,hlTg:undefined,hlCd:undefined,hlN:undefined,hlR:undefined,hlMsg:undefined,hlQ:undefined,sub_hk:undefined,sub_sage:undefined,kwE:undefined,kwT:undefined,kwX:undefined,kwY:undefined,sub_byk:undefined,sub_rskW:undefined,sub_nr_kyu:undefined,sub_nr_clQ:undefined,sub_hm:undefined,sub_hrR:undefined,sub_hrRT:undefined,sub_cp:undefined,sub_cpN:undefined,sub_cpM:undefined,_cpC:undefined,_cpOn:undefined,sub_obs:undefined,sub_mnt:undefined,sub_kum:undefined,sub_kumT:undefined,sub_kebT:undefined,sub_kumH:undefined,su_mA:undefined,do_mo:undefined,uc_gk:undefined,na_sh:undefined,ab_ven:undefined,in_four:undefined,uz_st:undefined,uz_scE:undefined,uz_rtE:undefined,uz_rtB:undefined,uz_fv:undefined,tj_pb:undefined,hk_pol:undefined,hk_polT:undefined,hk_polS:undefined,hk_polN:undefined,hk_imm:undefined,hk_gT:undefined,hk_wc:undefined,hk_mg:undefined,rr_mn:undefined,rr_mT:undefined,rr_gl:undefined,rr_gh:undefined,rr_cds:undefined,rr_mF:undefined,hm_armE:undefined,hm_arm:undefined,hm_bw:undefined,hm_bow:undefined,hm_cd0:undefined,sg_px:undefined,sg_py:undefined,sg_pa:undefined,sg_hp:undefined,sg_dn:undefined,sg_hT:undefined,sg_ax:undefined,sg_ay:undefined,sg_ox:undefined,sg_oy:undefined,_sgf:undefined,_sgx:undefined,_sgy:undefined,_sgT:undefined,_sgF:undefined,_sgH:undefined,ci_hp:undefined,ci_bl:undefined,ci_pd:undefined,ci_aiT:undefined,km_pp:undefined,km_hc:undefined,km_sc:undefined,km_sw:undefined,km_ang:undefined,km_angK:undefined,km_ppT:undefined,km_rs:undefined,fm_side:undefined,fm_bcd:undefined,hs_eat:undefined,hs_scl:undefined,hs_fus:undefined,hs_cds:undefined,hz_w:undefined,hz_ctr:undefined,hz_arm:undefined,hz_armB:undefined,hz_pud:undefined,hz_gT:undefined,hz_zap:undefined,yu_mk:undefined,yu_cds:undefined,kj_sh:undefined,kj_t:undefined,kj_kam:undefined,kj_kiai:undefined,kj_uke:undefined,kj_arm:undefined,kj_ten:undefined,kj_tenHit:undefined,kj_cds:undefined,bk_w:undefined,bk_axe:undefined,bk_ton:undefined,bk_cds:undefined,yo_ar:undefined,yo_cds:undefined,ft_ar:undefined,ft_cds:undefined,ft_k:undefined,ji_sh:undefined,bt_bg:undefined,rt_gr:undefined,so_rs:undefined,jn_ch:undefined,kn_hs:undefined,barQ:undefined,barN:undefined,favI:undefined,favQ:undefined,aiSwT:undefined,aiBarT:undefined,aiBarN:undefined,gvx:undefined,gvy:undefined,usedJ:undefined}}
 // statistiques de la partie (éliminations, morts, assistances, dégâts infligés/subis, soins), par perso et par camp
 let STATS={},CUR=null;
 const stOf=u=>{const k=u.c+'|'+u.team;return STATS[k]||(STATS[k]={c:u.c,team:u.team,k:0,d:0,a:0,dmg:0,tk:0,heal:0,sh:0})};
@@ -15215,7 +16157,7 @@ function jIcon(x,y,r,col,cat,ult){g.save();g.fillStyle=col;g.strokeStyle='#14100
   case'n4':g.moveTo(-11,8);g.lineTo(-4,-5);g.lineTo(0,1);g.lineTo(4,-9);g.lineTo(11,8);g.closePath();g.fill();break
   case'u':case'f':g.moveTo(0,-12);g.lineTo(3,-3);g.lineTo(12,0);g.lineTo(3,3);g.lineTo(0,12);g.lineTo(-3,3);g.lineTo(-12,0);g.lineTo(-3,-3);g.closePath();g.fill();g.fillStyle=col;g.beginPath();g.arc(0,0,2.4,0,7);g.fill();break
   case'c':{const t=clanTag(+cat.slice(1));text(t,0,t.length>1?5:6,t.length>1?13:17,f)}break
-  case'g':{const K=KGS[+cat.slice(1)],t=K?K.tag:'?';text(t,0,t.length>1?5:6,t.length>1?13:17,f)}break
+  case'g':{const i=+cat.slice(1),K=KGS[i];if(K&&K.ico){g.fillStyle=f;g.strokeStyle=f;K.ico(f,col)}else{const t=K?K.tag:'?';text(t,0,t.length>1?5:6,t.length>1?13:17,f)}}break
   case'p':g.arc(0,0,7,0,7);g.stroke();g.beginPath();g.arc(0,0,2.5,0,7);g.fill();break
   default:g.moveTo(-7,7);g.lineTo(1,-1);g.stroke();g.beginPath();g.moveTo(-1,-5);g.lineTo(10,-10);g.lineTo(5,1);g.closePath();g.fill();g.beginPath();g.arc(-9,9,2.6,0,7);g.stroke()}
  g.restore()}
@@ -15413,6 +16355,14 @@ function rosMigSubs(){if(RSIM)return;let done=null;try{done=localStorage.getItem
  try{localStorage.setItem('nrSubMig','1')}catch(e){}if(!L.length)return;
  const c={t:'Nouvelle liste des sub',d:`Plus de familles à choisir : exactement 1 sub par rang, dans la liste de tous les sub. ${L.slice(0,2).join(' · ')}${L.length>2?` · et ${L.length-2} autre${L.length>3?'s':''}`:''}. « Modifier » pour compléter.`,ok:'Compris',no:'Fermer',col:'#ffb347',fn:()=>{}};
  CONFQ.push(c)}
+// ----- arrivée des kekkei genkai (fait une fois, nrKgMig). Choix : un sans-clan à sub RESTE VALIDE (« Sans clan · sub » reste une origine, avec la liste
+// unique des sub, comme les persos de l'anime qui en ont) ; rien n'est converti d'office. Une fenêtre signale qu'il peut prendre un kekkei genkai à la place,
+// avec une suggestion d'après sa nature (KGS[i].nat, aussi marquée ★ dans l'étape Origine) ; le changement se fait à l'étape Origine (« Modifier »).
+function rosMigKG(){if(RSIM)return;let done=null;try{done=localStorage.getItem('nrKgMig')}catch(e){}if(done)return;try{localStorage.setItem('nrKgMig','1')}catch(e){}
+ const KG=KGS.map((_,i)=>i).filter(kgOk);if(!KG.length)return;const L=[];
+ for(const m of ROS.mine){const b=m.build;if(!b||b.clan>=0||kgOk(b.kg))continue;const s=b.nat>=0?KG.find(i=>KGS[i].nat===b.nat):undefined;L.push(b.name+(s!=null?` (${NATURES[b.nat][0]} → ${KGS[s].n} ?)`:''))}
+ if(!L.length)return;
+ CONFQ.push({t:'Les kekkei genkai sont arrivés',d:`Un sans-clan peut prendre un kekkei genkai (arbre complet D → S et son trait) au lieu des sub. Les tiens gardent leurs sub : ${L[0]}${L.length>1?` et ${L.length-1} autre${L.length>2?'s':''}`:''}. « Modifier » → Origine pour en choisir un.`,ok:'Compris',no:'Fermer',col:'#ffb347',fn:()=>{}})}
 const CONFQ=[]; // fenêtres en attente (montrées l'une après l'autre)
 // ----- liste des persos : {k, b build, sec section, P perso de l'anime (+ i son indice, mod retouché) ou id (les tiens)}
 function rosEntries(){if(RL)return RL;RL=[];
@@ -15425,7 +16375,7 @@ const rosOver=E=>false,rosOverWarn=E=>false;
 function rosChanged(){RL=RLAY=null;rosSave()}
 // recherche par nom (sans accents ni majuscules) : nom, nom complet, village, clan, nature
 const fold=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
-const rosMatch=E=>!RQ||fold([E.b.name,E.P?E.P.full:'',SECS[E.sec][0],E.b.clan>=0?CLANS[E.b.clan][0]:'sans clan',E.b.nat>=0?NATURES[E.b.nat][0]:''].join(' ')).includes(RQ);
+const rosMatch=E=>!RQ||fold([E.b.name,E.P?E.P.full:'',SECS[E.sec][0],E.b.clan>=0?CLANS[E.b.clan][0]:'sans clan '+(kgOk(E.b.kg)?KGS[E.b.kg].n+' kekkei genkai':''),E.b.nat>=0?NATURES[E.b.nat][0]:''].join(' ')).includes(RQ);
 // ninjas d'aperçu : un par perso, refait quand sa build change (modèle 3D gardé tant qu'il s'affiche) ; stats recalculées si le profil d'équilibrage change
 const RF=new Map(),blVer=()=>{try{return BLC.sig||''}catch(e){return''}};
 function rosFake(E){let F=RF.get(E.k);const v=blVer();
@@ -15537,8 +16487,8 @@ function rosCard(E,R,hov,t){const F=rosFake(E),u=F.u,ch=F.ch,S=SECS[E.sec],col=S
  {const sc=ch.look.scale>1?.88:.98;drawPrevN(u,px,fy,sc,0);cardChar(F,px,fy,sc,hov,t);drawPrevN(u,px,fy,sc,1)}g.restore();
  g.fillStyle=rgba(col,.8);g.fillRect(R.x+8,R.y+ph+4,R.w-16,1.5);secMark(R.x+14,R.y+14,8,E.sec);
  fitT(b.name,R.x+R.w/2,R.y+ph+20,14,b.side?'#ffb0a0':'#ffd38a',R.w-12,'bold',10,'center');
- {const ic=[];ic.push(b.clan>=0?['c'+b.clan,CLANS[b.clan][1]]:['u','#c8b89a']);if(b.nat>=0)ic.push(['n'+b.nat,NATURES[b.nat][2]]);
-  const s=(b.clan>=0?CLANS[b.clan][0]:'Sans clan')+(b.nat>=0?' · '+NATURES[b.nat][0]:''),z=10;g.font=FNT(z,'bold');const tw=Math.min(R.w-14-ic.length*15,g.measureText(s).width),x0=R.x+R.w/2-(ic.length*15+tw)/2;
+ {const ic=[],kg=b.clan<0&&kgOk(b.kg);ic.push(b.clan>=0?['c'+b.clan,CLANS[b.clan][1]]:kg?['g'+b.kg,KGS[b.kg].col]:['u','#c8b89a']);if(b.nat>=0)ic.push(['n'+b.nat,NATURES[b.nat][2]]);
+  const s=(b.clan>=0?CLANS[b.clan][0]:kg?KGS[b.kg].n:'Sans clan')+(b.nat>=0?' · '+NATURES[b.nat][0]:''),z=10;g.font=FNT(z,'bold');const tw=Math.min(R.w-14-ic.length*15,g.measureText(s).width),x0=R.x+R.w/2-(ic.length*15+tw)/2;
   ic.forEach(([k,c2],i)=>jIcon(x0+6+i*15,R.y+ph+31,6,c2,k));fitT(s,x0+ic.length*15+1,R.y+ph+35,z,'#d8c0a0',tw+1,'bold',8)}
  if(hov&&scr==='list'){for(const q of cardBtns(E,R)){const h=inRect(mouse,q.R);rr(q.R,6,h?'#ffb347':'rgba(20,13,8,.88)',h?'#ffe0a0':'#8a5a2a',1.2);uiIcon(q.k,q.R.x+q.R.w/2,q.R.y+q.R.h/2,8.5,h?'#1a1008':'#f3d9b0');if(h)hoverTip('cb'+q.k+E.k,()=>({t:q.t,d:BTIP[q.k]}))}}
  else if(scr==='opp'&&hov)tag(R.x+R.w-6,R.y+7,me?'TON DOUBLE':'AFFRONTER','#ff6a3a','#fff');
@@ -15700,7 +16650,7 @@ function rosQSync(){wizISync();if(!RQI)return;let bl=false;try{bl=BLC.open}catch
 // ----- au chargement : la liste, puis le perso joué la dernière fois (MY)
 try{rosLoad()}catch(e){ROS={mine:[],anime:{},last:{},nid:1};RL=RLAY=null}
 try{rosMigBars()}catch(e){console.error(e)}
-try{rosMigSubs()}catch(e){console.error(e)}
+try{rosMigSubs()}catch(e){console.error(e)}try{rosMigKG()}catch(e){console.error(e)}
 {const E=rosGet(ROS.last.me)||rosGet('a:'+PRESETS[0].n);MEK=FK=E.k;MY=sanitizeBuild(E.b);MYCH=mkNinja(MY);CH.p0=MYCH}
 // ===================== CRÉATION D'UN PERSO : assistant plein écran en 8 étapes =====================
 // Identité → Origine → Nature → Style → Jutsu → Barres → Apparence → Résumé. Barre des étapes en haut (une étape déjà vue se rouvre d'un clic), aperçu 3D à droite,
@@ -15741,7 +16691,7 @@ const wzOrigins=()=>CLANS.map((_,i)=>'c'+i).concat(['s'],KGS.map((_,i)=>i).filte
 function wzSetOrig(o,quiet){const cur=wzOrig(EB);if(o===cur)return;
  const go=()=>{if(o[0]==='c'){EB.clan=+o.slice(1);EB.kg=-1}else{EB.clan=-1;EB.kg=o[0]==='g'?+o.slice(1):-1}
   if(!isMartial(EB.clan)&&EB.nat<0)EB.nat=0;const cs=clanStyle(EB.clan);if(cs>=0)EB.w=cs;EB.dsh=EB.clan>=0?'c':'b';
-  EB.k=EB.k.filter(id=>{const t=JL[id].cat[0];return t==='n'||t==='t'});edTrees();edRebuild();
+  EB.k=EB.k.filter(id=>{const t=JL[id].cat[0];return t==='n'||t==='t'});edTrees();EB.bars=barsCover(EB,EB.bars||[]);edRebuild(); // les jutsu de la nouvelle origine qui n'ont pas repris une case vidée entrent dans une barre ajoutée (4 au plus)
   for(const i of[3,4,5])if(i<=WZ.max&&i!==WZ.s)WZ.rev.add(i);
   crSay(`${wzOrigN(o)} : ses jutsu sont pré-choisis (le 1er de chaque rang) · revois les étapes Jutsu et Barres`,'#8fe38f')};
  if(WZ.max>1&&!quiet)CONF={t:'Changer d\'origine ?',d:`Passer de « ${wzOrigN(cur)} » à « ${wzOrigN(o)} » remet à zéro les jutsu de ton origine, ton attaque de base de clan et ton dash ; tes barres sont refaites avec ce qui reste. Nature et style sont gardés.`,ok:'Changer d\'origine',no:'Garder',col:'#ffb347',fn:go};
@@ -15841,7 +16791,8 @@ function wzDrawOrig(){const C=wzOrigCards(),cur=wzOrig(EB);wzSect(`CLANS (${CLAN
   const o=c.o,col=wzOrigCol(o),sel=o===cur,T=wzOrigT(o);wzCard(R,col,sel,h);jIcon(R.x+22,R.y+R.h/2,12,col,wzOrigIc(o));
   const nm=o[0]==='c'?CLANS[+o.slice(1)][0]:o[0]==='g'?KGS[+o.slice(1)].n:'Sub (liste)',sub=o==='s'?'1 par rang, 40 au choix':isMartial(+o.slice(1))&&o[0]==='c'?'clan martial':T?T.nom||T.name||'':'';
   fitT(nm,R.x+40,R.y+17,13.5,sel?'#fff':'#ffd38a',R.w-(sel?66:48),'bold',9);fitT(sub,R.x+40,R.y+32,10.5,sel?liftC(col,.7):'#b89a70',R.w-48,'normal',8);
-  if(h)hoverTip('wzo'+o,()=>({t:wzOrigN(o),col:liftC(col,.6),l:[[o==='s'?'Sans clan : exactement 1 sub par rang, choisis dans la liste de tous les sub (étape Jutsu)':o[0]==='g'?'Sans clan : l\'arbre du kekkei genkai (1 jutsu par rang, D → S) remplace les sub':isMartial(+o.slice(1))?'Clan martial : pas de nature, arbre de style imposé, 2 jutsu par rang tous appris':'Arbre de clan : 1 jutsu par rang (D → S), sans mudra',liftC(col,.5)]].concat(T?[['Trait · '+(T.nom||T.name||''),'#ffd38a']]:[]),d:T?T.desc||' ':' ',f:sel?'Ton origine':'Clic : choisir'+(WZ.max>1?' (confirmation : les jutsu de l\'origine repartent de zéro)':'')}))}}
+  if(o[0]==='g'&&EB.nat>=0&&KGS[+o.slice(1)].nat===EB.nat&&!sel)text('★',R.x+R.w-12,R.y+15,12,'#ffd36a'); // va avec la nature choisie
+  if(h)hoverTip('wzo'+o,()=>({t:wzOrigN(o),col:liftC(col,.6),l:(o[0]==='g'?[[KGS[+o.slice(1)].d+' ('+KGS[+o.slice(1)].el+')','#ffd38a'],...[[...'DCB'],[...'AS']].map((R,i)=>[(i?'':'Jutsu : ')+R.map(r=>(TREE[o][r][0]!=null?JL[TREE[o][r][0]].n.replace(/^[^:]+ : /,''):'?')+' ('+r+')').join(' · '),'#d8b888'])]:[]).concat([[o==='s'?'Sans clan : exactement 1 sub par rang, choisis dans la liste de tous les sub (étape Jutsu)':o[0]==='g'?'Sans clan : l\'arbre du kekkei genkai (1 jutsu par rang, D → S) remplace les sub':isMartial(+o.slice(1))?'Clan martial : pas de nature, arbre de style imposé, 2 jutsu par rang tous appris':'Arbre de clan : 1 jutsu par rang (D → S), sans mudra',liftC(col,.5)]]).concat(T?[['Trait · '+(T.nom||T.name||''),'#ffd38a']]:[]),d:T?T.desc||' ':' ',f:sel?'Ton origine':'Clic : choisir'+(WZ.max>1?' (confirmation : les jutsu de l\'origine repartent de zéro)':'')}))}}
 function wzClickOrig(){for(const c of wzOrigCards().L)if(c.o&&inRect(mouse,c.R)){wzSetOrig(c.o);return true}return false}
 // ---------- étape 3 : Nature ----------
 const wzNatR=i=>{const w=(WW-4*10)/5;return{x:WX+i*(w+10),y:WCT+10,w,h:WBOT-WCT-14}};
@@ -16392,18 +17343,19 @@ let BLX=null; // tâche en cours dans l'iframe
 function blSimJob(job){blApply(blNorm(job.prof),true);HLS.on=job.mode==='heal'&&!!blG(blNorm(job.prof),'heal');const q=[];for(let i=0;i<job.per;i++)for(const c of job.cats)q.push([c,i]);
  const PB=PRESETS.map((P,i)=>{try{return presetBuild(i,P.n,0)}catch(e){return null}});
  BLX={job,R:srnd(job.seed||77),q,i:0,cur:null,PB,res:{cats:{},j:{},ts:[],done:0,total:q.length,mix:0}};for(const c of job.cats)BLX.res.cats[c]={w:0,n:0,to:0,ts:[]}}
-// kit aléatoire dans une catégorie : 'c<k>' clan, 'u' sans clan, 'n<k>' nature, 't<k>' arbre de style, 'f<k>' famille (sans clan qui la prend), 's<k>' style de base, 'free'
+// kit aléatoire dans une catégorie : 'c<k>' clan, 'u' sans clan, 'g<k>' sans clan à kekkei genkai, 'n<k>' nature, 't<k>' arbre de style, 'f<k>' famille (sans clan qui la prend), 's<k>' style de base, 'free'
 function blKit(R,cat){const k=x=>Math.floor(R()*x.length);let a=randomBuild(R,0,'a');if(cat==='free')return a;
  const T=cat[0],v=+cat.slice(1),b=Object.assign({},a,{k:null,bar:null});
  if(cat==='u')b.clan=-1;else if(T==='n'){b.nat=v;if(isMartial(b.clan))b.clan=-1}else if(T==='c')b.clan=v;else if(T==='t'){b.st=v;if(isMartial(b.clan))b.clan=+Object.keys(MARTIAL).find(c=>MARTIAL[c]===v)}
  else if(T==='f'){b.clan=-1;b.kg=-1}
+ else if(T==='g'){b.clan=-1;b.kg=v}
  else if(T==='s'){const ok=[-1,...CLANS.map((_,i)=>i)].filter(c=>[0,1,2].some(st=>stylesOf({clan:c,st,fam:[]}).includes(v)));if(!ok.includes(b.clan))b.clan=ok[k(ok)];for(const st of[b.st,0,1,2])if(stylesOf({clan:b.clan,st,fam:[]}).includes(v)){b.st=st;break}b.w=v}
  const o=sanitizeBuild(b);if(T!=='s'){const SW=stylesOf(o);o.w=SW[k(SW)]}
  const ids=[];for(const t of treesOf(o))for(const r of RANKO)ids.push(...TREE[t][r]);for(let i=ids.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]]}
  if(T==='f')ids.sort((x,y)=>(JL[y].cat==='f'+v)-(JL[x].cat==='f'+v)); // la famille testée d'abord : ses jutsu sont appris
  o.k=[];for(const id of ids)if(canLearn(o.k,id))o.k.push(id);const L=o.k.slice();o.bar=[];while(o.bar.length<BARN&&L.length)o.bar.push(L.splice(k(L),1)[0]);o.bars=autoBars(o);
  const D=dashOpts(o);o.dsh=D[k(D)];return sanitizeBuild(o,true)}
-const blInCat=(b,cat)=>{if(cat==='free')return true;const T=cat[0],v=+cat.slice(1);return cat==='u'?b.clan===-1:T==='c'?b.clan===v:T==='n'?b.nat===v:T==='t'?b.st===v:T==='f'?b.clan<0&&b.fam.includes(v):T==='s'?b.w===v:false};
+const blInCat=(b,cat)=>{if(cat==='free')return true;const T=cat[0],v=+cat.slice(1);return cat==='u'?b.clan===-1:T==='c'?b.clan===v:T==='n'?b.nat===v:T==='t'?b.st===v:T==='f'?b.clan<0&&b.fam.includes(v):T==='g'?b.clan<0&&b.kg===v:T==='s'?b.w===v:false};
 function blDuelSetup(cat,i){const X=BLX,R=X.R;let a,b;
  if(X.job.kits==='preset'){const P=X.PB.map((b,i)=>b&&blInCat(b,cat)?i:-1).filter(i=>i>=0);if(P.length){const ia=P[Math.floor(R()*P.length)];a=X.PB[ia];let ib;do ib=Math.floor(R()*X.PB.length);while((ib===ia||!X.PB[ib])&&X.PB.length>1);b=X.PB[ib]}else{a=blKit(R,cat);b=randomBuild(R,1,'b');X.res.mix++}}
  else{a=blKit(R,cat);b=randomBuild(R,1,'b')}

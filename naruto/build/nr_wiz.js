@@ -37,7 +37,7 @@ const wzOrigins=()=>CLANS.map((_,i)=>'c'+i).concat(['s'],KGS.map((_,i)=>i).filte
 function wzSetOrig(o,quiet){const cur=wzOrig(EB);if(o===cur)return;
  const go=()=>{if(o[0]==='c'){EB.clan=+o.slice(1);EB.kg=-1}else{EB.clan=-1;EB.kg=o[0]==='g'?+o.slice(1):-1}
   if(!isMartial(EB.clan)&&EB.nat<0)EB.nat=0;const cs=clanStyle(EB.clan);if(cs>=0)EB.w=cs;EB.dsh=EB.clan>=0?'c':'b';
-  EB.k=EB.k.filter(id=>{const t=JL[id].cat[0];return t==='n'||t==='t'});edTrees();edRebuild();
+  EB.k=EB.k.filter(id=>{const t=JL[id].cat[0];return t==='n'||t==='t'});edTrees();EB.bars=barsCover(EB,EB.bars||[]);edRebuild(); // les jutsu de la nouvelle origine qui n'ont pas repris une case vidée entrent dans une barre ajoutée (4 au plus)
   for(const i of[3,4,5])if(i<=WZ.max&&i!==WZ.s)WZ.rev.add(i);
   crSay(`${wzOrigN(o)} : ses jutsu sont pré-choisis (le 1er de chaque rang) · revois les étapes Jutsu et Barres`,'#8fe38f')};
  if(WZ.max>1&&!quiet)CONF={t:'Changer d\'origine ?',d:`Passer de « ${wzOrigN(cur)} » à « ${wzOrigN(o)} » remet à zéro les jutsu de ton origine, ton attaque de base de clan et ton dash ; tes barres sont refaites avec ce qui reste. Nature et style sont gardés.`,ok:'Changer d\'origine',no:'Garder',col:'#ffb347',fn:go};
@@ -137,7 +137,8 @@ function wzDrawOrig(){const C=wzOrigCards(),cur=wzOrig(EB);wzSect(`CLANS (${CLAN
   const o=c.o,col=wzOrigCol(o),sel=o===cur,T=wzOrigT(o);wzCard(R,col,sel,h);jIcon(R.x+22,R.y+R.h/2,12,col,wzOrigIc(o));
   const nm=o[0]==='c'?CLANS[+o.slice(1)][0]:o[0]==='g'?KGS[+o.slice(1)].n:'Sub (liste)',sub=o==='s'?'1 par rang, 40 au choix':isMartial(+o.slice(1))&&o[0]==='c'?'clan martial':T?T.nom||T.name||'':'';
   fitT(nm,R.x+40,R.y+17,13.5,sel?'#fff':'#ffd38a',R.w-(sel?66:48),'bold',9);fitT(sub,R.x+40,R.y+32,10.5,sel?liftC(col,.7):'#b89a70',R.w-48,'normal',8);
-  if(h)hoverTip('wzo'+o,()=>({t:wzOrigN(o),col:liftC(col,.6),l:[[o==='s'?'Sans clan : exactement 1 sub par rang, choisis dans la liste de tous les sub (étape Jutsu)':o[0]==='g'?'Sans clan : l\'arbre du kekkei genkai (1 jutsu par rang, D → S) remplace les sub':isMartial(+o.slice(1))?'Clan martial : pas de nature, arbre de style imposé, 2 jutsu par rang tous appris':'Arbre de clan : 1 jutsu par rang (D → S), sans mudra',liftC(col,.5)]].concat(T?[['Trait · '+(T.nom||T.name||''),'#ffd38a']]:[]),d:T?T.desc||' ':' ',f:sel?'Ton origine':'Clic : choisir'+(WZ.max>1?' (confirmation : les jutsu de l\'origine repartent de zéro)':'')}))}}
+  if(o[0]==='g'&&EB.nat>=0&&KGS[+o.slice(1)].nat===EB.nat&&!sel)text('★',R.x+R.w-12,R.y+15,12,'#ffd36a'); // va avec la nature choisie
+  if(h)hoverTip('wzo'+o,()=>({t:wzOrigN(o),col:liftC(col,.6),l:(o[0]==='g'?[[KGS[+o.slice(1)].d+' ('+KGS[+o.slice(1)].el+')','#ffd38a'],...[[...'DCB'],[...'AS']].map((R,i)=>[(i?'':'Jutsu : ')+R.map(r=>(TREE[o][r][0]!=null?JL[TREE[o][r][0]].n.replace(/^[^:]+ : /,''):'?')+' ('+r+')').join(' · '),'#d8b888'])]:[]).concat([[o==='s'?'Sans clan : exactement 1 sub par rang, choisis dans la liste de tous les sub (étape Jutsu)':o[0]==='g'?'Sans clan : l\'arbre du kekkei genkai (1 jutsu par rang, D → S) remplace les sub':isMartial(+o.slice(1))?'Clan martial : pas de nature, arbre de style imposé, 2 jutsu par rang tous appris':'Arbre de clan : 1 jutsu par rang (D → S), sans mudra',liftC(col,.5)]]).concat(T?[['Trait · '+(T.nom||T.name||''),'#ffd38a']]:[]),d:T?T.desc||' ':' ',f:sel?'Ton origine':'Clic : choisir'+(WZ.max>1?' (confirmation : les jutsu de l\'origine repartent de zéro)':'')}))}}
 function wzClickOrig(){for(const c of wzOrigCards().L)if(c.o&&inRect(mouse,c.R)){wzSetOrig(c.o);return true}return false}
 // ---------- étape 3 : Nature ----------
 const wzNatR=i=>{const w=(WW-4*10)/5;return{x:WX+i*(w+10),y:WCT+10,w,h:WBOT-WCT-14}};
