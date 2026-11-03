@@ -20,7 +20,7 @@ KIT('g9',[
  ['S','x.gd_tide','Sakin : Ôgon no Tsunami',GD_D.tide,'gd_gold'],
 ]);
 DASHG[9]={src:'x.gd_dash',n:'Glisse dorée',d:GD_D.dash,vfx:'gd_gold',cd:7};
-KGBAL[9]=[1,0.99];
+KGBAL[9]=[0.998,0.988];
 const GDC=GK.gd_gold,GD_MAX=3,gdW=(u,e,n)=>gkStack(u,e,'gd_w',n,GD_MAX,5);
 // vague d'or : bande qui avance (vitesse sp) et emporte les ennemis dedans ; d dégâts tous les iv (ou 1 fois si iv = 0)
 function gdWave(u,a,len,w,dur,d,iv){const x={type:'gd_wave',x:u.x+Math.cos(a)*30,y:u.y+Math.sin(a)*30,a,len,w,r:0,t:dur,m:dur,team:u.team,owner:u,k:0,iv,d,hs:new Set(),sp:len/dur,dep:30,danger:0};aux.push(x);return x}

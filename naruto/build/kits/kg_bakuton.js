@@ -19,7 +19,7 @@ KIT('g3',[
  ['S','x.bt_big','Bakuton : Grande détonation',BT_D.big,'bt_blast'],
 ]);
 DASHG[3]={src:'x.bt_dash',n:'Souffle explosif',d:BT_D.dash,vfx:'bt_blast',cd:7};
-KGBAL[3]=[0.95,0.935];
+KGBAL[3]=[0.942,0.927];
 const BTC=GK.bt_blast,BT_MAX=2,btCh=(u,e)=>gkStack(u,e,'bt_ch',1,BT_MAX,5);
 function btBoom(u,x,y,r,d,o,sz){const n=gkAoe(u,x,y,r,d,Object.assign({kb:260},o),'bt_blast',e=>btCh(u,e));jx({jfx:'gk_boom',x,y,r:r*1.15,v:'bt_blast',s:'blast',t:.5,m:.5});
  if(near(x,y)){gkS('boom',u);sparks(x,y,BTC.b,10,'bt_blast');shake=Math.max(shake,sz||.15)}return n}

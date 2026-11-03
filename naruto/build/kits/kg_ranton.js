@@ -19,7 +19,7 @@ KIT('g5',[
  ['S','x.rt_great','Ranton : Grand rayon de tempête',RT_D.great,'rt_storm'],
 ]);
 DASHG[5]={src:'x.rt_dash',n:'Éclair d\'orage',d:RT_D.dash,vfx:'rt_storm',cd:7};
-KGBAL[5]=[0.98,0.98];
+KGBAL[5]=[0.97,0.97];
 const RTC=GK.rt_storm;
 const rtWet=e=>{if(!e.dead)e.wet=Math.max(e.wet||0,3)};
 GKBEAM.rt=(f,k,e,t)=>gkBeamDraw(f,k,e,t,RTC.a,RTC.b,{z:34});

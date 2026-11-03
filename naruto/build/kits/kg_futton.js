@@ -19,7 +19,7 @@ KIT('g1',[
  ['S','x.ft_caul','Futton : Grand chaudron',FT_D.caul,'ft_steam'],
 ]);
 DASHG[1]={src:'x.ft_dash',n:'Propulsion de vapeur',d:FT_D.dash,vfx:'ft_steam',cd:7};
-KGBAL[1]=[0.92,0.915];
+KGBAL[1]=[0.909,0.904];
 const FTC=GK.ft_steam,FT_MAX=3,ftCor=(u,e,n)=>gkStack(u,e,'ft_cor',n,FT_MAX,4);
 // brume acide : 3 dégâts / 0,5 s, ralentit, 1 corrosion par seconde (un tick sur deux)
 const ftMist=(u,x,y,r,t)=>gkPool(u,x,y,{r,t,kind:'ft',vfx:'ft_steam',d:3,sl:1,fn:(e,q)=>{q.n2=(q.n2||0)+1;if(q.n2%2)ftCor(u,e,1)}});

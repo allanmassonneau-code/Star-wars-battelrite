@@ -19,7 +19,7 @@ KIT('g2',[
  ['S','x.ji_forest','Jiton : Sajin Kaika Shôtan',JI_D.forest,'ji_iron'],
 ]);
 DASHG[2]={src:'x.ji_dash',n:'Glissade magnétique',d:JI_D.dash,vfx:'ji_iron',cd:7};
-KGBAL[2]=[0.99,0.97];
+KGBAL[2]=[0.983,0.962];
 const JIC=GK.ji_iron,jiMag=(u,e)=>gkStack(u,e,'ji_mag',1,1,4);
 // attraction d'une cible aimantée vers le lanceur (sur un nouveau jutsu de fer)
 function jiPull(u,e,d){if(!e||e.dead||!(e.ji_mag>0)||e.unstop>0)return;const a=Math.atan2(u.y-e.y,u.x-e.x),k=Math.min(d,Math.max(0,dist(u,e)-u.r-e.r-30));e.kx+=Math.cos(a)*k*5;e.ky+=Math.sin(a)*k*5;

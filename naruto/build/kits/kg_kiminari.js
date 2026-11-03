@@ -19,7 +19,7 @@ KIT('g8',[
  ['S','x.kn_judge','Kiminari : Jugement noir',KN_D.judge,'kn_black'],
 ]);
 DASHG[8]={src:'x.kn_dash',n:'Pas noir',d:KN_D.dash,vfx:'kn_black',cd:6};
-KGBAL[8]=[0.95,0.92];
+KGBAL[8]=[0.942,0.912];
 const KNC=GK.kn_black;
 GKBEAM.kn=(f,k,e,t)=>{const A=P(f.x,f.y,32),Bq=P(f.x2,f.y2,32);gkBolt(gkZig(A.x,A.y,Bq.x,Bq.y,10,18,f.x*.1+t*11),KNC.a,KNC.c,6*A.s,k,1);gkBolt(gkZig(A.x,A.y,Bq.x,Bq.y,7,26,f.y*.1+t*7),KNC.a,KNC.c,2*A.s,k*.7,1)};
 Object.assign(NAT,{

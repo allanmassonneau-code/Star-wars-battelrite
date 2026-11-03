@@ -19,7 +19,7 @@ KIT('g4',[
  ['S','x.sk_sun','Shakuton : Soleil incandescent',SK_D.sun,'sk_heat'],
 ]);
 DASHG[4]={src:'x.sk_dash',n:'Envol brûlant',d:SK_D.dash,vfx:'sk_heat',cd:7};
-KGBAL[4]=[0.98,0.965];
+KGBAL[4]=[0.964,0.95];
 const SKC=GK.sk_heat,SK_MAX=3;
 // dessèchement : à 3 cumuls, 12 dégâts, ralenti 1,5 s, puis insensible 4 s
 function skDry(u,e,n){const c=gkStack(u,e,'sk_dry',n,SK_MAX,5);if(c>=SK_MAX&&!e.dead){gkStSet(e,'sk_dry',0,4);gkHit(e,u,12,{slow:1.5,unblockable:1},'sk_heat');say(e,'DESSÉCHÉ','#ffb060');

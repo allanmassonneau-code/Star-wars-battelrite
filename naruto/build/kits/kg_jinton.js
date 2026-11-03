@@ -19,7 +19,7 @@ KIT('g7',[
  ['S','x.jn_hakuri','Jinton : Genkai Hakuri',JN_D.hakuri,'jn_dust'],
 ]);
 DASHG[7]={src:'x.jn_dash',n:'Lévitation',d:JN_D.dash,vfx:'jn_dust',cd:7};
-KGBAL[7]=[0.965,0.94];
+KGBAL[7]=[0.96,0.935];
 const JNC=GK.jn_dust;
 GKBEAM.jn=(f,k,e,t)=>{gkBeamDraw(f,k,e,t,JNC.a,JNC.b,{z:34,thin:f.w<30});const A=P(f.x,f.y,34),Bq=P(f.x2,f.y2,34);g.save();g.strokeStyle=rgba(JNC.c,.6*k);g.lineWidth=1;for(const sd of[-1,1]){g.beginPath();g.moveTo(A.x,A.y+sd*f.w*.45*A.s);g.lineTo(Bq.x,Bq.y+sd*f.w*.45*A.s);g.stroke()}g.restore()};
 // cube de poussière (dessin) : arêtes lumineuses, cœur sphérique blanc

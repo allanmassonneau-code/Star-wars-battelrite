@@ -20,7 +20,7 @@ KIT('g0',[
  ['S','x.yo_rain','Yôton : Pluie de magma',YO_D.rain,'yo_lava'],
 ]);
 DASHG[0]={src:'x.yo_dash',n:'Coulée de lave',d:YO_D.dash,vfx:'yo_lava',cd:7};
-KGBAL[0]=[0.905,0.895];
+KGBAL[0]=[0.889,0.879];
 const YOC=GK.yo_lava,YO_BURN=()=>BURN(2,3);
 // flaque de lave : 3 dégâts toutes les 0,5 s (brûlure), ralentit ; le lanceur y est plus rapide (trait)
 const yoPool=(u,x,y,r,t)=>gkPool(u,x,y,{r,t,kind:'yo',vfx:'yo_lava',d:3,o:{dot:BURN(2,2)},sl:1,self:o=>{o.haste=Math.max(o.haste||0,.15)}});

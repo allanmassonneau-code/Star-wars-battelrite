@@ -19,7 +19,7 @@ KIT('g6',[
  ['S','x.so_penta','Shôton : Kesshô Gokei',SO_D.penta,'so_cry'],
 ]);
 DASHG[6]={src:'x.so_dash',n:'Pas de cristal',d:SO_D.dash,vfx:'so_cry',cd:7};
-KGBAL[6]=[0.97,0.955];
+KGBAL[6]=[0.961,0.946];
 const SOC=GK.so_cry,SO_RES=120;
 // cristal planté (4 s, 6 au plus par lanceur) : purement un repère (résonance du trait) ; on le dessine en prisme
 function soCry(u,x,y,big){const L=aux.filter(q=>q.type==='so_cry'&&q.owner===u&&q.t>0);if(L.length>=6)L[0].t=Math.min(L[0].t,.3);
