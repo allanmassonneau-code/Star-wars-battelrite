@@ -13945,6 +13945,10 @@ Object.assign(BMUI,{
   if(pressed.KeyB){delete pressed.KeyB;if(!quitOn&&!RB.open)rbOpen()}
   if(RB.open&&(quitOn||!keys.KeyB))rbClose(!quitOn); // B relâché : on équipe la barre surlignée
   if(RB.open){const n=barsOf(player).length;if(RB.hi>=n)RB.hi=0}
+  // B maintenu + 1 à 4 (rangée ou pavé numérique) : équipe directement la barre de ce numéro (la touche ne lance pas le jutsu de la case) ;
+  // tant que B reste maintenu, on peut enchaîner (B + 2 puis 3)
+  if(keys.KeyB&&!quitOn){const n=barsOf(player).length;for(let k=1;k<=n;k++)if(pressed['Digit'+k]||pressed['Numpad'+k]){for(let j=1;j<=n;j++){delete pressed['Digit'+j];delete pressed['Numpad'+j]}
+   if(!RB.open)rbOpen();RB.hi=k-1;RB.moved=true;rbClose(true);break}}
   BMUI.open=RB.open},
  esc(){if(RB.open){rbClose(false);BMUI.open=false;return true}return false},
  ack(r,w){if(!r)return;const n=w&&barsOf(player)[w.i]?`« ${barsOf(player)[w.i].n} »`:'La barre';
@@ -13967,7 +13971,7 @@ function rbDraw(){const L=barsOf(player),n=L.length,cur=favCur(player),pd=rbPend
  // voile sombre seulement sur la bande du haut (le centre de l'écran reste net)
  {const y0=74,y1=226,gr=g.createLinearGradient(0,y0,0,y1);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.18,'rgba(0,0,0,.42)');gr.addColorStop(.8,'rgba(0,0,0,.34)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,y0,W,y1-y0)}
  // en-tête : touche, n° surligné / total, aide
- {const hy=RBC.hy(),s=n>1?`${lbl.KeyB||'B'} maintenu · barre ${RB.hi+1}/${n} · molette : choisir · relâcher ${lbl.KeyB||'B'} : équiper · Échap : annuler · le combat continue`:`Une seule barre : ajoutes-en (jusqu'à ${BARSMAX}) dans la création du perso`;
+ {const hy=RBC.hy(),s=n>1?`${lbl.KeyB||'B'} maintenu · barre ${RB.hi+1}/${n} · molette ou 1-${n} : choisir · relâcher ${lbl.KeyB||'B'} : équiper · Échap : annuler · le combat continue`:`Une seule barre : ajoutes-en (jusqu'à ${BARSMAX}) dans la création du perso`;
   g.font=FNT(12,'bold');const w=Math.min(820,g.measureText(s).width+30);g.save();g.shadowColor='#ff9a3a';g.shadowBlur=10;rr({x:W/2-w/2,y:hy-13,w,h:24},12,'rgba(20,13,8,.92)','#ff9a3a',1.4);g.restore();fitT(s,W/2,hy+4,12,'#f3d9b0',w-20,'bold',9,'center')}
  L.forEach((q,i)=>{const P0=rbPos(i,n),hi=i===RB.hi,P=hi?{x:P0.x,y:P0.y+6}:P0,on=i===cur,pe=i===pd,s=hi?1.06:1,w=RBC.w*s,h=RBC.h*s,R={x:P.x-w/2,y:P.y-h/2,w,h};
   g.save();if(hi){g.shadowColor='#ffb347';g.shadowBlur=22}rr(R,12,hi?'rgba(60,38,18,.96)':'rgba(16,11,8,.9)',hi?'#ffb347':on?'#5fd35f':pe?'#ffb347':'rgba(140,100,60,.7)',hi?3:on?2:1.2);g.restore();
