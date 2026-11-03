@@ -61,7 +61,8 @@ const BARCHG=[];
 // TRAITS[clan] : trait de clan {nom,desc,init(u),update(u,dt),deal(src,t,dmg,o)→dmg,take(t,src,dmg,o)→dmg (<0 = annule),draw(u,p,S,sk),hud(u,x,y)}
 // STATD : dessins d'états supplémentaires sur les ninjas, (u,p,S,sk)=>{…}
 // CLOOK[clan] : apparence imposée par le clan, (look, l, style)=>{…} modifie look (ex. look.head.eye='#c8e8ff', look.head.skin=…, look.scale=…)
-const AFTER=[],ANIM={},TRAITS={},STATD=[],CLOOK={};
+// WALLD[vfx] : dessin d'un mur du moteur (walls) à ce vfx, (w, p écran, rx, h, t)=>{…} (nr_vfx.js drawWallN), ex. le mur de bois Senju
+const AFTER=[],ANIM={},TRAITS={},STATD=[],CLOOK={},WALLD={};
 const anim=(u,k,d=.5)=>{u.anim={k,t:d,m:d}};
 const trait=u=>u&&u.ch&&(u.ch.clan<0&&kgOk(u.ch.kg)?KGTRAITS[u.ch.kg]:TRAITS[u.ch.clan])||null;
 // trait d'une build (fiche, assistant) : celui du KG pour un sans-clan à kekkei genkai, sinon celui du clan (TRAITS[-1] « Nindô » pour un sans-clan à sub)

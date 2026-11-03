@@ -100,6 +100,7 @@ function drawFieldN(f,t){const v=f.vfx;if(!v||f.pet||f.spinner||f.dome)return fa
  return true}
 
 function drawWallN(w){const p=P(w.x,w.y),rx=w.r*p.s,h=60*p.s,t=performance.now()/1000;
+ if(w.vfx&&WALLD[w.vfx]){WALLD[w.vfx](w,p,rx,h,t);return true}
  if(w.vfx==='fire'||w.burn){g.save();g.globalCompositeOperation='lighter';for(let i=0;i<4;i++){const x=p.x+(i-1.5)*rx*.6,hh=h*(.6+Math.sin(t*9+i+w.x)*.25);const gr=g.createLinearGradient(0,p.y-hh,0,p.y);gr.addColorStop(0,'rgba(255,120,40,0)');gr.addColorStop(.6,'rgba(255,140,40,.7)');gr.addColorStop(1,'rgba(255,240,180,.9)');g.fillStyle=gr;g.beginPath();g.moveTo(x-rx*.45,p.y);g.quadraticCurveTo(x,p.y-hh*1.4,x+rx*.45,p.y);g.fill()}g.restore();return true}
  if(w.vfx==='wind'||w.wind){g.save();g.strokeStyle='rgba(220,255,245,.65)';g.lineWidth=2;for(let i=0;i<4;i++){const y=p.y-h*(i/4)-((t*60+i*11)%15)*p.s;g.beginPath();g.ellipse(p.x,y,rx*1.1,4*p.s,0,t*6+i,t*6+i+4);g.stroke()}g.fillStyle='rgba(200,255,240,.12)';g.fillRect(p.x-rx,p.y-h,rx*2,h);g.restore();return true}
  if(w.vfx==='earth'||w.earth){g.save();const sh=Math.abs(w.x*7+w.y*3|0)%5;g.fillStyle='#5a4028';g.beginPath();g.moveTo(p.x-rx*1.05,p.y);g.lineTo(p.x-rx*.9,p.y-h*(.75+sh*.04));g.lineTo(p.x-rx*.2,p.y-h*(.95+sh*.02));g.lineTo(p.x+rx*.7,p.y-h*(.8+sh*.05));g.lineTo(p.x+rx*1.05,p.y);g.closePath();g.fill();

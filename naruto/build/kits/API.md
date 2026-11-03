@@ -19,7 +19,12 @@ Le générateur `python3 naruto/build/mknaruto.py` assemble tout dans `naruto/in
 | c7 | Yamanaka | yamanaka.js | ya_ | | c18 | Hoshigaki | hoshigaki.js | hs_ |
 | c8 | Sabaku | sabaku.js | sa_ | | c19 | Hôzuki | hozuki.js | hz_ |
 | c9 | Kaguya | kaguya.js | kg_ | | c20 | Yuki | yuki.js | yu_ |
-| c10 | Taijutsuka (`TAIJ`, sans nature) | taijutsuka.js | tj_ | | | | | |
+| c10 | Taijutsuka (`TAIJ`, sans nature) | taijutsuka.js | tj_ | | c21 | Kenjutsuka | kenjutsuka.js | kj_ |
+| c22 | Bukijutsuka | bukijutsuka.js | bk_ | | c23 | Senju (Mokuton) | senju.js | sj_ |
+| c24 | Ôtsutsuki (céleste) | otsutsuki.js | ot_ | | c25 | Kurama (genjutsu) | kurama.js | kr_ |
+| c26 | Iburi (fumée) | iburi.js | ib_ | | c27 | Jûgo (énergie naturelle) | jugo.js | jg_ |
+
+Les clans c23-c27 n'ont pas de style propre (ils prennent les attaques de base sans clan) et réutilisent les outils de `kits/kg_common.js` (chargé avant eux). Mur de bois Senju : murs du moteur à `vfx:'sj_wood'`, dessinés par `WALLD[vfx]` (nr_kits.js, appelé par `drawWallN`) : tout kit peut y déclarer le dessin de ses propres murs.
 
 Les indices sont figés (sauvegardes, `PRESETS`, réseau) : ne jamais réordonner `CLANS`. Un clan ajouté a par défaut `CLANBAL` = [1, 1], aucun trait, aucun style propre.
 
@@ -54,7 +59,7 @@ L'écran de création est un assistant en 8 étapes (Identité → Origine → N
 
 ## Règles d'or
 - **Préfixe** : toutes les clés que tu crées (NAT, PROJD, AUXF/AUXD, JFXD, DETO, ANIM, champs ajoutés aux ninjas) commencent par le préfixe de ta catégorie
-  (`ka_`, `su_`, `fu_`, `ra_`, `do_`, `uc_`, `hy_`, `na_`, `ak_`, `ab_`, `in_`, `uz_`, `ya_`, `sa_`, `kg_`, `tj_` pour Taijutsuka, `hk_ rr_ hm_ sg_ ci_ km_ fm_ hs_ hz_ yu_` pour les clans c11-c20, `sub_` pour Subjutsu (fichier `sub_naruto.js` : `sub_nr_…` conseillé), `st_` pour les styles).
+  (`sj_ ot_ kr_ ib_ jg_` pour les clans c23-c27, `ka_`, `su_`, `fu_`, `ra_`, `do_`, `uc_`, `hy_`, `na_`, `ak_`, `ab_`, `in_`, `uz_`, `ya_`, `sa_`, `kg_`, `tj_` pour Taijutsuka, `hk_ rr_ hm_ sg_ ci_ km_ fm_ hs_ hz_ yu_` pour les clans c11-c20, `sub_` pour Subjutsu (fichier `sub_naruto.js` : `sub_nr_…` conseillé), `st_` pour les styles).
 - **Au chargement du fichier**, n'utilise que : `KIT`, `NAT`, `SP`, `ULT`, `RG`, `SELF`, `DEF`, `ESC`, `GAP`, `HEALM`, `ALLY`, `S_`, `BURN`, les registres
   (`PROJD AUXF AUXD JFXD DETO ANIM TRAITS STATD AFTER NATHERO`) et des fonctions. Tout le reste (VP, VSND, UK, units…) seulement **dans des fonctions**
   ou dans `AFTER.push(()=>{…})` (exécuté une fois tout le jeu chargé).
