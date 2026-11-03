@@ -15,7 +15,7 @@ let WZ={s:0,max:0,sc:0,tab:null,q:'',rk:'',fm:-1,rev:new Set()};
 const WZC={x:30,y:112,w:850,h:532},WZP={x:894,y:112,w:356,h:532},WCT=176,WX=42,WW=826,WBOT=WZC.y+WZC.h-8;
 const wzStepR=i=>{const w=(1220-7*8)/8;return{x:30+i*(w+8),y:52,w,h:40}};
 const wzBack={x:30,y:658,w:190,h:44},wzRnd={x:232,y:658,w:200,h:44},wzNextB=saveBtn;
-function wzOpen(edit){WZ={s:0,max:edit?WZN-1:0,sc:0,tab:null,q:'',rk:'',fm:-1,rev:new Set()};LTAB=0;if(WZI){WZI.value='';WZI.k=null}}
+function wzOpen(edit){CRHOLE=[];WZ={s:0,max:edit?WZN-1:0,sc:0,tab:null,q:'',rk:'',fm:-1,rev:new Set()};LTAB=0;if(WZI){WZI.value='';WZI.k=null}}
 // ---------- étapes : validité, navigation ----------
 // étape bloquante : nom vide, sub manquant (exactement 1 par rang pour un sans-clan à sub)
 function wzErr(i){if(i===0&&!String(EB.name||'').trim())return'Donne un nom à ton ninja';

@@ -227,11 +227,16 @@ const crSay=(s,c)=>{CRMSG=s;CRMC=c||'#c8b89a';CRMT=performance.now()+2600};
 // (cartes des arbres : étape Jutsu de l'assistant, nr_wiz.js)
 const crForced=jid=>!!(JL[jid]&&TREES[JL[jid].cat]&&TREES[JL[jid].cat].force);
 // apprendre : un jutsu remplacé (même rang, même arbre ou même réserve de familles) laisse sa case de barre au nouveau
+// un jutsu OUBLIÉ (clic sur un jutsu appris) laisse ses cases vides en mémoire (CRHOLE) : apprendre ensuite un jutsu du même rang et de la même réserve
+// (même arbre, ou les sub) les reprend, comme un remplacement direct (oublier Shôsen puis prendre un autre sub A = même case dans chaque barre)
+let CRHOLE=[];const crPool=J=>catType(J.cat)==='famille'?'f':J.cat;
 function crLearn(jid){const OB=crBars().map(B=>B.slice()),ok=EB.k.slice();if(!learnJ(EB,jid))return false;
- const gone=ok.filter(id=>!EB.k.includes(id));crBars().forEach((B,bi)=>OB[bi].forEach((id,s)=>{if(gone.includes(id)&&B[s]===-1&&!B.includes(jid))B[s]=jid}));return gone}
+ const gone=ok.filter(id=>!EB.k.includes(id));crBars().forEach((B,bi)=>OB[bi].forEach((id,s)=>{if(gone.includes(id)&&B[s]===-1&&!B.includes(jid))B[s]=jid}));
+ {const J=JL[jid],H=CRHOLE.filter(h=>h.r===J.r&&h.p===crPool(J));CRHOLE=CRHOLE.filter(h=>!H.includes(h));const BB=crBars();for(const h of H){const B=BB[h.bi];if(B&&B[h.s]===-1&&!B.includes(jid))B[h.s]=jid}}
+ return gone}
 function crToggle(jid){const J=JL[jid];if(!J)return;
  if(crForced(jid)&&EB.k.includes(jid)){crSay('Clan martial : ce jutsu est appris d\'office','#c8b89a');return}
- if(EB.k.includes(jid)){unlearnJ(EB,jid);edRebuild();crSay(`${crN(jid)} oublié : le rang ${J.r} de ${catName(J.cat)} reste vide`,'#ffb347');return}
+ if(EB.k.includes(jid)){const J0=JL[jid];crBars().forEach((B,bi)=>B.forEach((id,s)=>{if(id===jid)CRHOLE.push({bi,s,r:J0.r,p:crPool(J0)})}));unlearnJ(EB,jid);edRebuild();crSay(`${crN(jid)} oublié : le rang ${J.r} de ${catName(J.cat)} reste vide`,'#ffb347');return}
  const g0=crLearn(jid);edRebuild();crSay(g0&&g0.length?`${crN(jid)} appris (remplace ${g0.map(id=>JL[id].n).join(', ')})`:`${crN(jid)} appris`,'#8fe38f')}
 // survol + 1-6 : pose dans la case (apprend au besoin ; déjà ailleurs dans la barre = échange)
 function crPlace(jid,s){const J=JL[jid];if(!J)return;if(!EB.k.includes(jid))crLearn(jid);if(!EB.k.includes(jid))return;
