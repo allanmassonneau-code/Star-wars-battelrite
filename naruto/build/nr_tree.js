@@ -2,7 +2,8 @@
 const SIMQ=/[?&]sim=1(&|$)/.test(location.search); // page du simulateur (pas de sauvegarde, pas d'avertissements)
 // Tout est piloté par les données déclarées dans nr_kits.js (TREES, POOLS, TREEMOVE, DASH*) et par les lignes KIT(arbre,[…]) des kits.
 // Règles (DESIGN §2, §13) : nature 1 par rang (parmi 2) · style 1 par rang · clan 1 par rang · clans martiaux 2 par rang, tous appris ·
-// sans clan : jusqu'à 5 familles, 5 sub au total (1 par rang toutes familles confondues, pool 'fam'). Un rang peut rester vide.
+// sans clan à sub : TOUS les sub (une seule liste, familles = simples étiquettes), exactement 1 sub par rang (pool 'fam' : 1 au plus ; l'assistant en exige 5) ;
+// sans clan à kekkei genkai (b.kg, KGS) : l'arbre du KG ('g'+kg, 1 par rang) à la place des sub. Un rang de nature, de style ou de clan peut rester vide.
 // JL : jutsu des arbres {id, cat (arbre), ocat (catégorie d'origine de la ligne), slot (ancien emplacement, 0 en v5), r, src, n, d, vfx, P}
 // DASHPOOL : anciens déplacements (emplacement 2) retirés des arbres, réserve des dashs {cat, src, n, d, vfx, r}
 const JL=[],DASHPOOL=[];
@@ -27,14 +28,28 @@ const catCol=c=>{const T=TREES[c];return T?T.col:'#c8b89a'};
 const catType=c=>TREES[c]?TREES[c].type:null;
 // ---------- règles ----------
 // arbres accessibles d'un build : sa nature, son arbre de style, son clan ou ses familles
-function treesOf(o){const L=[];if(o.nat>=0)L.push('n'+o.nat);L.push('t'+(o.st|0));if(o.clan>=0)L.push('c'+o.clan);else for(const f of o.fam||[])L.push('f'+f);return L.filter(t=>TREES[t])}
+// (sans clan : l'arbre de son kekkei genkai, sinon les arbres de TOUTES les familles de sub : plus de choix de familles, le pool 'fam' limite à 1 sub par rang)
+const FAMT=FAMS.map((_,i)=>'f'+i);
+function treesOf(o){const L=[];if(o.nat>=0)L.push('n'+o.nat);L.push('t'+(o.st|0));if(o.clan>=0)L.push('c'+o.clan);else if(kgOk(o.kg))L.push('g'+o.kg);else L.push(...FAMT);return L.filter(t=>TREES[t])}
+// arbres à montrer (fiche, résumés) : ceux du build, sans les familles de sub dont aucun sub n'est appris
+const treesShown=b=>treesOf(b).filter(t=>catType(t)!=='famille'||(b.k||[]).some(j=>JL[j]&&JL[j].cat===t));
+// familles des sub appris (ordre des rangs D → S) : b.fam est DÉRIVÉ (étiquettes, dash de famille, équilibrage FAMBAL, subHasF)
+const famOfK=K=>{const F=[];for(const r of RANKO)for(const id of K||[]){const J=JL[id];if(J&&J.r===r&&TREES[J.cat]&&TREES[J.cat].type==='famille'){const f=+J.cat.slice(1);if(!F.includes(f))F.push(f)}}return F};
+// sub appris par rang ({D: jid|-1, …}) et rangs sans sub (l'assistant en exige exactement 1 par rang)
+const subByRank=K=>{const o={};for(const r of RANKO)o[r]=-1;for(const id of K||[]){const J=JL[id];if(J&&catType(J.cat)==='famille'&&o[J.r]<0)o[J.r]=id}return o};
+const subMissing=b=>b&&b.clan<0&&!kgOk(b.kg)?[...RANKO].filter(r=>subByRank(b.k)[r]<0):[];
+// complète les rangs de sub vides d'un sans-clan à sub (bots copiés sur un perso de l'anime au kit incomplet) : un sub d'une famille qu'il a déjà, sinon le 1er du rang ;
+// les sub ajoutés entrent dans ses barres (barsCover : nouvelle barre s'il en a moins de BARSMAX). Déterministe (pas de tirage : les autres bots ne changent pas).
+function subFill(b){if(!b||b.clan>=0||kgOk(b.kg))return b;const miss=subMissing(b);if(!miss.length)return b;const F=famOfK(b.k);
+ for(const r of miss){const L=JL.filter(J=>J.r===r&&catType(J.cat)==='famille'),J=L.find(J=>F.includes(+J.cat.slice(1)))||L[0];if(J)b.k.push(J.id)}
+ b.fam=famOfK(b.k);if(Array.isArray(b.bars)&&b.bars.length){b.bars=barsCover(b,b.bars.map(q=>({n:q.n,b:q.b.slice()})));b.bar=b.bars[0].b.slice()}return b}
 // le jutsu peut-il s'ajouter à la liste K (limites de son arbre et de son pool à son rang) ? renvoie '' si oui, sinon la limite atteinte ('tree' ou 'pool')
 function learnBlock(K,jid){const J=JL[jid],T=TREES[J.cat];let nT=0,nP=0;
  for(const id of K){const I=JL[id];if(I.r!==J.r)continue;if(I.cat===J.cat)nT++;if(T.pool&&TREES[I.cat].pool===T.pool)nP++}
  if(nT>=tTake(T,J.r))return'tree';if(T.pool&&nP>=tTake(POOLS[T.pool],J.r))return'pool';return''}
 const canLearn=(K,jid)=>!learnBlock(K,jid);
 // ajoute aux jutsu appris tout ce que les limites permettent encore (ordre : arbres, puis rangs, puis catalogue)
-function autoLearn(o,K){K=K?K.slice():[];for(const t of treesOf(o))for(const r of RANKO)for(const id of TREE[t][r])if(!K.includes(id)&&canLearn(K,id))K.push(id);return K}
+function autoLearn(o,K,TR){K=K?K.slice():[];for(const t of TR||treesOf(o))for(const r of RANKO)for(const id of TREE[t][r])if(!K.includes(id)&&canLearn(K,id))K.push(id);return K}
 // apprend un jutsu (création, persos de l'anime) : si la limite de son rang est atteinte, le plus ancien appris du même arbre (ou du même pool) à ce rang est oublié (et retiré de la barre)
 function learnJ(o,jid){const J=JL[jid];if(!J||!treesOf(o).includes(J.cat))return false;if(o.k.includes(jid))return true;
  for(let n=0;n<20;n++){const b=learnBlock(o.k,jid);if(!b)break;const T=TREES[J.cat],v=o.k.find(id=>JL[id].r===J.r&&(b==='tree'?JL[id].cat===J.cat:TREES[JL[id].cat].pool===T.pool));if(v==null)return false;unlearnJ(o,v)}
@@ -51,11 +66,12 @@ function buildTrees(o){const R={};for(const t of treesOf(o))R[t]=[...RANKO].map(
 function stylesOf(o){const all=STYLES.map((_,i)=>i),c=o.clan;
  if(c>=0){const own=all.filter(i=>STYLES[i][5].includes(c));if(own.length)return own;if(!isMartial(c))return all.filter(i=>STYLES[i][5].includes(-1))}
  const t=STREE[o.st|0],L=all.filter(i=>STYLES[i][5].includes(-1)&&STYLES[i][8]===t);return L.length?L:all.filter(i=>STYLES[i][5].includes(-1))}
-// dashs permis d'un sans-clan : 'b' normal, 'n' celui de sa nature, 'f<k>' celui d'une de ses familles
-const dashOpts=o=>o.clan>=0?['c']:['b'].concat(o.nat>=0?['n']:[]).concat((o.fam||[]).map(f=>'f'+f));
-const dashOf=b=>b.clan>=0?DASHC[b.clan]||DASHB:b.dsh==='n'?DASHN[b.nat]||DASHB:b.dsh&&b.dsh[0]==='f'?DASHF[+b.dsh.slice(1)]||DASHB:DASHB;
+// dashs permis d'un sans-clan : 'b' normal, 'n' celui de sa nature, 'g' celui de son kekkei genkai (DASHG), 'f<k>' celui de la famille d'un de ses sub (b.fam dérivé)
+const dashOpts=o=>o.clan>=0?['c']:['b'].concat(o.nat>=0?['n']:[]).concat(kgOk(o.kg)?(DASHG[o.kg]?['g']:[]):(o.fam||[]).map(f=>'f'+f));
+const dashOf=b=>b.clan>=0?DASHC[b.clan]||DASHB:b.dsh==='n'?DASHN[b.nat]||DASHB:b.dsh==='g'&&kgOk(b.kg)?DASHG[b.kg]||DASHB:b.dsh&&b.dsh[0]==='f'?DASHF[+b.dsh.slice(1)]||DASHB:DASHB;
 // ---------- build v6 ----------
-// {v:6, name, side, clan (-1 sans clan), nat (-1 pour un clan martial), st (arbre de style 0-2), w (indice STYLES de l'attaque de base), fam:[familles], dsh, k:[jid appris],
+// {v:6, name, side, clan (-1 sans clan), kg (kekkei genkai d'un sans-clan, indice KGS, -1 = sub), nat (-1 pour un clan martial), st (arbre de style 0-2), w (indice STYLES de l'attaque de base),
+//  fam:[familles des sub appris : DÉRIVÉ de k, l'entrée est ignorée], dsh, k:[jid appris],
 //  bar:[6 jid | -1] (= bars[0].b, la barre de départ), bars:[{n:nom, b:[6 jid | -1]}, …] (1 à BARSMAX barres favorites, changées en combat avec la roue de B), l:{apparence}}
 // v5 → v6 : un build sans bars reçoit une seule barre « Barre 1 » = sa barre. `bar` fait foi pour la 1re barre (le code qui ne connaît que bar reste juste).
 // Chaque barre : jutsu APPRIS seulement, sans doublon, 6 cases ; une barre toute vide est refaite automatiquement (la 1re par autoBar, une autre par barFresh :
@@ -75,20 +91,20 @@ const barName=(n,i)=>String(n==null?'':n).replace(/[<>\u0000-\u001f]/g,'').trim(
 function barSan(B,K){const o=[];B=Array.isArray(B)?B:[];for(let s=0;s<BARN;s++){const v=B[s];const id=typeof v==='number'?v|0:-1;o.push(id===v&&K.includes(id)&&!o.includes(id)?id:-1)}return o}
 // bornes → arbres → appris → barre → dash ; idempotent : sanitizeBuild(sanitizeBuild(b)) ≡ sanitizeBuild(b). strict : jamais d'appris vides (bots, builds reçus)
 function sanitizeBuild(b,strict){b=b&&typeof b==='object'?b:{};const n=(a,m)=>Math.max(0,Math.min(m-1,(a|0)));const l=b.l||{};
- const o={v:6,name:String(b.name||'Ninja').replace(/[<>]/g,'').slice(0,16)||'Ninja',side:b.side?1:0,clan:b.clan==null?-1:Math.max(-1,Math.min(CLANS.length-1,b.clan|0)),nat:0,st:0,w:0,fam:[],dsh:'b',k:[],bar:[],
+ const o={v:6,name:String(b.name||'Ninja').replace(/[<>]/g,'').slice(0,16)||'Ninja',side:b.side?1:0,clan:b.clan==null?-1:Math.max(-1,Math.min(CLANS.length-1,b.clan|0)),kg:-1,nat:0,st:0,w:0,fam:[],dsh:'b',k:[],bar:[],
   l:{v:n(l.v,VILLAGES.length),t:n(l.t,TENUES.length),c:n(l.c,COIFS.length),h:n(l.h,HAIRC.length),p:n(l.p,PEAUX.length),k:n(l.k,CHAKRAS.length),a:n(l.a,ACCS.length),f:n(l.f,FACES.length),b:n(l.b,BANDS.length),d:n(l.d,BACKS.length),
    e:n(l.e,EYES.length),o:n(l.o,TENCOL.length),s:n(l.s,TENCOL.length),z:n(l.z,TAILLES.length),w:n(l.w,CARRURES.length),r:n(l.r,ARMS.length),n:n(l.n,NECKS.length),
    g:n(l.g,GEARS.length),m:n(l.m,OVERS.length),y:n(l.y,SYMS.length),q:n(l.q,BANDC.length),x:n(l.x,TENCOL.length)}};
  const mar=isMartial(o.clan);o.nat=mar?-1:n(b.nat,NATURES.length);
  const w0=b.w!=null?b.w|0:Array.isArray(b.j)?b.j[0]|0:-1; // (un vieux build v4 garde au moins son style)
  if(mar)o.st=MARTIAL[o.clan];else if(b.st!=null)o.st=n(b.st,STREE.length);else if(STYLES[w0]&&STREE.includes(STYLES[w0][8]))o.st=STREE.indexOf(STYLES[w0][8]);
- if(o.clan<0&&Array.isArray(b.fam))for(const f of b.fam){const v=f|0;if(v===f&&v>=0&&v<FAMS.length&&!o.fam.includes(v)&&o.fam.length<FAMMAX)o.fam.push(v)}
+ if(o.clan<0&&kgOk(b.kg|0)&&(b.kg|0)===b.kg)o.kg=b.kg;
  {const SW=stylesOf(o),cs=clanStyle(o.clan);o.w=SW.includes(w0)?w0:SW.includes(cs)?cs:SW[0]??0}
  const tr=treesOf(o);let K=[];
  if(Array.isArray(b.k)){for(const v of b.k){const id=v|0;if(id!==v||!JL[id]||!tr.includes(JL[id].cat)||K.includes(id))continue;if(canLearn(K,id))K.push(id)}}else K=autoLearn(o);
  if(strict&&!K.length)K=autoLearn(o);
  for(const t of tr)if(TREES[t].force)for(const r of RANKO)for(const id of TREE[t][r])if(!K.includes(id)&&canLearn(K,id))K.push(id); // clans martiaux : tout appris
- o.k=K;
+ o.k=K;if(o.clan<0&&o.kg<0)o.fam=famOfK(K);
  {const src=Array.isArray(b.bars)&&b.bars.length?b.bars.slice(0,BARSMAX):[{n:'Barre 1',b:b.bar}];o.bars=[];
   src.forEach((q,i)=>{if(!q||typeof q!=='object')return;o.bars.push({n:barName(q.n,o.bars.length),b:barSan(i===0&&Array.isArray(b.bar)&&b.bar.length?b.bar:q.b,K)})});
   if(!o.bars.length)o.bars.push({n:'Barre 1',b:barSan(b.bar,K)});

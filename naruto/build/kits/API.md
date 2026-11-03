@@ -23,6 +23,15 @@ Le générateur `python3 naruto/build/mknaruto.py` assemble tout dans `naruto/in
 
 Les indices sont figés (sauvegardes, `PRESETS`, réseau) : ne jamais réordonner `CLANS`. Un clan ajouté a par défaut `CLANBAL` = [1, 1], aucun trait, aucun style propre.
 
+## Assistant de création (nr_wiz.js) : ce qu'il lit
+L'écran de création est un assistant en 8 étapes (Identité → Origine → Nature → Style → Jutsu → Barres → Apparence → Résumé). Il est **piloté par les données** : rien à coder dans `nr_wiz.js` pour un nouveau clan ou un nouveau kekkei genkai.
+- **Nouveau clan** : ajouter l'entrée à la fin de `CLANS` (nr_ninja.js) et `CLANVIL` (nr_roster.js), puis son fichier `kits/<clan>.js` (dans `KIT_ORDER`, mknaruto.py) avec `KIT('c<n>',…)`, `TRAITS[<n>]`, `DASHC[<n>]`, `CLOOK[<n>]`, éventuellement un style propre. Il apparaît tout seul dans la grille « Clans » de l'étape Origine (5 colonnes, 30 clans tiennent sans défilement), son trait dans la carte, l'aperçu et le Résumé ; les bots le tirent (`CLANRND`) dès que son arbre a des jutsu.
+- **Kekkei genkai (sans clan, à la place des sub)** : dans un fichier `kits/kg_<nom>.js` (dans `KIT_ORDER`, avant `nr_tree.js` comme tout kit) :
+  `defKG(<i>,{n:'Yôton',col:'#ff5a1a',tag:'Yô',d:'Lave : …'})` (crée l'arbre `g<i>`, 1 jutsu par rang de D à S, comme un clan), puis `KIT('g<i>',[[rang, mécanique, nom, description, vfx], …])`,
+  `KGTRAITS[<i>]={nom,desc,…}` (même interface que `TRAITS`, branché par `trait(u)` et `traitOfB(b)`), `DASHG[<i>]={src,n,d,vfx}` (son dash, proposé avec le dash normal et celui de la nature), `KGBAL[<i>]=[PV, puissance]`.
+  La carte apparaît dans « Sans clan » de l'étape Origine (l'emplacement en pointillés disparaît), l'onglet de l'étape Jutsu devient « Kekkei genkai · <nom> », le Résumé et la fiche suivent ; la moitié des bots sans clan prennent un KG (`randomKit`). Build : champ `kg` (indice, -1 = sub), validé par `kgOk` dans `sanitizeBuild`.
+- **Sub (sans clan sans KG)** : une seule liste de tous les sub (familles `f0-f7` = étiquettes et filtres), **exactement 1 sub par rang** (pool `fam` ; l'assistant refuse « Suivant » tant qu'un rang manque). `b.fam` est dérivé des sub appris (`famOfK`) : dash de famille, `FAMBAL`, `subHasF`.
+
 ## Points d'extension d'un clan (tout depuis son propre fichier)
 - `KIT('c<n>',[…])` + `Object.assign(NAT,{…})` + `Object.assign(NATHERO,{<préfixe>:'perso'})` (obligatoire : stats de référence de tes mécaniques).
 - `TRAITS[<n>]={…}` : trait du clan (voir plus bas).
@@ -130,8 +139,8 @@ Crochets facultatifs :
 - `drawB(u,p,S,sk)` : dessin **derrière** le ninja (appelé avant lui) ; `draw` dessine devant.
 - `prev(u,p,S,front)` : signe du trait dans les aperçus (cartes et fiche de la liste des persos, création), appelé derrière (`front` faux) puis devant (`front` vrai) le ninja.
 
-## Menu : liste des persos et création (`nr_roster.js`, `nr_menu.js`)
-- `scr` = écran du menu : `'list'` (liste + fiche), `'opp'` (arène / duel hors ligne : choix de l'adversaire), `'edit'` (création, `drawCreator`). `drawMenu` choisit l'écran ; `menuClick` reçoit les clics (`menuGrab()` vrai : il les prend tous, avant les boutons de mode).
+## Menu : liste des persos et création (`nr_roster.js`, `nr_menu.js`, `nr_wiz.js`)
+- `scr` = écran du menu : `'list'` (liste + fiche), `'opp'` (arène / duel hors ligne : choix de l'adversaire), `'edit'` (création : assistant en 8 étapes, `drawWiz` / `wizClick`, `nr_wiz.js` ; `WZ` = étape affichée, étapes ouvertes, filtres de la liste des sub). `drawMenu` choisit l'écran ; `menuClick` reçoit les clics (`menuGrab()` vrai : il les prend tous, avant les boutons de mode).
 - Persos : `rosEntries()` = `{k, b, sec, P?, i?, mod?, id?}` ; clés `'m'+id` (« Mes ninjas ») et `'a:'+nom` (perso de l'anime, `PRESETS`). Section : `SECS` (village ou groupe) ; celle d'un perso de l'anime vient de `P.sec`, sinon de son groupe `g` (`rosSec`). Un nouveau perso de l'anime n'a rien d'autre à déclarer.
 - `MY` = build du perso joué (`MEK`), `CH.p0` = son ninja ; `rebuildMine()` le recalcule et, en ligne, l'envoie (`{t:'build'}`) ou diffuse le salon, comme avant. Le perso en création est `EB` (`edRebuild`), rien n'est gardé ni envoyé avant `edSave()`.
 - Adversaire choisi : `CH.o0` + `OPPK='o0'`, lu par `startMatch` à la place du tirage (aussi en 2 contre 2 / 3 contre 3, ses alliés restent des bots). Un adversaire de ton camp passe dans le camp d'en face pour le combat (titres des équipes et message de fin suivent le camp). Un double-clic qui ouvre l'étape adversaire ne lance rien (`OPPT`, 0,5 s).

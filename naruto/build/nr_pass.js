@@ -141,10 +141,10 @@ function presetBuild(i,name,side){const P=PRESETS[i],w=STYLES.findIndex(x=>x[0]=
  b.st=P.st!=null?P.st:w>=0&&STREE.includes(STYLES[w][8])?STREE.indexOf(STYLES[w][8]):0;
  const o=sanitizeBuild(b);o.k=[];o.bar=[];const want=P.k&&P.k!=='all'?P.k:P.j||[],bar=[];
  for(const n of want){let id=pickName(o,n);
-  if(id<0&&o.clan<0){const J=JL.find(j=>j.n===n&&catType(j.cat)==='famille');if(J&&o.fam.length<FAMMAX){o.fam.push(+J.cat.slice(1));id=J.id}}
   if(id<0){if(!DASHPOOL.some(D=>D.n===n)&&!SIMQ)console.warn('Perso '+P.n+' : jutsu introuvable « '+n+' »');continue}
   if(learnJ(o,id)&&(!P.bar)&&!bar.includes(id))bar.push(id)}
- o.k=autoLearn(o,o.k);
+ // rangs de sub non donnés : complétés dans SES familles (P.fam et celles de ses sub), comme avant la liste unique des sub (même kit qu'avant)
+ {const FA=new Set((Array.isArray(P.fam)?P.fam:[]).concat(famOfK(o.k)));o.k=autoLearn(o,o.k,treesOf(o).filter(t=>catType(t)!=='famille'||FA.has(+t.slice(1))))}
  // vide : rangs laissés vides exprès (nom d'un jutsu, ou 'arbre:rang' ; 'fam:rang' = rang du pool des familles d'un sans-clan), sauf jutsu demandés dans k
  if(P.vide)for(const v of P.vide){const m=/^(\w+):([DCBAS])$/.exec(v);o.k=o.k.filter(id=>{const J=JL[id];if(!m)return J.n!==v;return!(J.r===m[2]&&(m[1]==='fam'?catType(J.cat)==='famille':J.cat===m[1])&&!want.includes(J.n))})}
  if(P.bar)for(const n of P.bar){const id=pickName(o,n);if(id>=0&&o.k.includes(id)&&!bar.includes(id))bar.push(id);else if(n)console.warn('Perso '+P.n+' : barre, jutsu non appris « '+n+' »')}
@@ -153,6 +153,7 @@ function presetBuild(i,name,side){const P=PRESETS[i],w=STYLES.findIndex(x=>x[0]=
  // barres favorites préfaites (PREBARS) : la 1re devient la barre de départ ; un jutsu non appris est signalé et laissé vide
  o.bars=[{n:'Barre 1',b:o.bar.slice()}];const PBs=PREBARS[P.n];
  if(PBs){o.bars=PBs.slice(0,BARSMAX).map(([n,L])=>{const b=[];for(const x of L){const id=pickName(o,x);if(id>=0&&o.k.includes(id)&&!b.includes(id))b.push(id);else if(!SIMQ)console.warn('Perso '+P.n+' : barre « '+n+' », jutsu non appris « '+x+' »')}while(b.length<BARN)b.push(-1);return{n,b:b.slice(0,BARN)}});o.bar=o.bars[0].b.slice()}
+ o.dsh=P.dsh||'b'; // (le 1er sanitizeBuild, sans jutsu appris, n'avait pas encore les familles de ses sub : son dash de famille revient ici)
  return sanitizeBuild(o,true)}
 // « Modèles de kit » (création) : le perso en cours prend le kit et l'apparence du perso de l'anime ; son nom et son camp sont gardés.
 // Seul un NOUVEAU perso au nom par défaut (« Ninja », « Nouveau ninja ») ou au nom d'un perso de l'anime prend le nom du modèle, numéroté s'il est déjà pris (« Itachi (2) », et il suit les modèles suivants tant qu'on ne l'a pas renommé) ; un perso existant qu'on modifie garde toujours son nom

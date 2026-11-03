@@ -83,7 +83,7 @@ AFTER.push(()=>{const R0=respawn;respawn=function(u){const k=cdKeep(u),fi=u.favI
 // ---------- en ligne ----------
 // version du protocole (v6 : barre de 6, arbres martiaux sans chakra ; v7 : recharges longues, gardées à la réapparition ; v8 : recharges en temps réel (×0,8 en temps de jeu) ; v9 : Kawarimi commun en ancre de 10 s ;
 // v10 : barres favorites (build v6, bars), roue de B, demande {t:'eq',a:'fav',s:n° de barre}) : hôte et invité doivent l'avoir tous les deux, sinon la connexion est coupée avec un message
-const NPV=10,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez toi et chez ton ami.';let NVT=0;
+const NPV=11,VERMSG='Version différente du jeu : recharge la page (Ctrl+F5) chez toi et chez ton ami.';let NVT=0;
 const netVerT=()=>performance.now()-NVT<4000;
 function netVerHost(P){P.nver=1;net.peers=net.peers.filter(x=>x!==P);try{P.conn.send({t:'nver'})}catch(e){}setTimeout(()=>{try{P.conn.close()}catch(e){}},300);setStat('Un ami a une autre version du jeu : il doit recharger la page.');try{sendLobby()}catch(e){}}
 function netVerGuest(){NVT=performance.now();netReset();state='menu';setStat(VERMSG);try{netUI(true)}catch(e){}}

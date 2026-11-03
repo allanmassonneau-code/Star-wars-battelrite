@@ -15,7 +15,6 @@ const KENJ=21,BUKI=22,MARTIAL={10:0,21:1,22:2};const isMartial=c=>MARTIAL[c]!=nu
 const STREE=['tai','ken','buki'],STNAME=['Taijutsu','Kenjutsu','Bukijutsu'],STCOL=['#e8a060','#b8c8d8','#c8a070'];
 // familles de sub (sans clan) : [nom, couleur]
 const FAMS=[['Iryô','#7fe07f'],['Fûinjutsu / Hiraishin','#ffd36a'],['Genjutsu','#b07ae0'],['Kuchiyose','#e0905a'],['Shurikenjutsu','#a8b4c8'],['Kage Bunshin','#8ab0ff'],['Senjutsu','#9ad05a'],['Jutsu interdits','#c0283a']];
-const FAMMAX=5; // familles au plus pour un sans-clan
 // TREES[id] = {id, type:'nature'|'style'|'clan'|'famille', name, col, take (nombre ou {D:…,S:…} = jutsu à apprendre au plus par rang), pool (limite partagée), force (tout apprendre)}
 // POOLS[nom] = {take} : limite par rang PARTAGÉE par tous les arbres du même pool (familles : 5 sub au total, 1 par rang toutes familles confondues)
 const TREES={},POOLS={fam:{take:1}};
@@ -25,6 +24,13 @@ NATURES.forEach((n,i)=>defTree('n'+i,{type:'nature',name:n[0],col:n[2],take:1}))
 STNAME.forEach((n,i)=>defTree('t'+i,{type:'style',name:n,col:STCOL[i],take:1}));
 CLANS.forEach((c,i)=>defTree('c'+i,{type:'clan',name:'Clan '+c[0],col:c[1],take:isMartial(i)?2:1,force:isMartial(i)}));
 FAMS.forEach((f,i)=>defTree('f'+i,{type:'famille',name:f[0],col:f[1],take:1,pool:'fam'}));
+// KEKKEI GENKAI (sans clan, À LA PLACE des sub) : KGS[i] = {n:'Yôton', col:'#…', d:'phrase courte (assistant, fiche)', el:'élément décrit', tag:'2 lettres de l'icône'}
+// déclaré par defKG(i, o) dans un fichier kits/kg_*.js (avant nr_tree.js, comme les KIT) : arbre 'g'+i (type 'kg', 1 jutsu par rang de D à S, même forme qu'un arbre de clan)
+// KGTRAITS[i] : trait du KG (même interface que TRAITS[clan], voir trait() plus bas) · DASHG[i] : son dash (comme DASHC[clan]) · KGBAL[i] : [PV, puissance] (comme CLANBAL)
+// L'assistant (nr_wiz.js, étape Origine) liste KGS tout seul : un KG déclaré ici apparaît dans « Sans clan + kekkei genkai » sans autre code.
+const KGS=[],KGTRAITS={},DASHG={},KGBAL={};
+function defKG(i,o){KGS[i]=Object.assign({tag:String(o.n||'?').slice(0,2)},o);defTree('g'+i,{type:'kg',name:o.n,col:o.col,take:1});return KGS[i]}
+const kgOk=k=>k!=null&&k>=0&&!!KGS[k]&&!!TREES['g'+k];
 // arbres martiaux SANS CHAKRA (demande joueur) : les 3 arbres de style (Taijutsu, Kenjutsu, Bukijutsu) et les clans purement martiaux (Taijutsuka, Kenjutsuka, Bukijutsuka)
 // → jcost = 0 pour tous leurs jutsu (un coût en PV « hpc » resterait payé) ; affiché « 0 chakra » partout
 STNAME.forEach((n,i)=>TREES['t'+i].ckFree=true);for(const c in MARTIAL)TREES['c'+c].ckFree=true;
@@ -56,7 +62,9 @@ const BARCHG=[];
 // CLOOK[clan] : apparence imposée par le clan, (look, l, style)=>{…} modifie look (ex. look.head.eye='#c8e8ff', look.head.skin=…, look.scale=…)
 const AFTER=[],ANIM={},TRAITS={},STATD=[],CLOOK={};
 const anim=(u,k,d=.5)=>{u.anim={k,t:d,m:d}};
-const trait=u=>u&&u.ch&&TRAITS[u.ch.clan]||null;
+const trait=u=>u&&u.ch&&(u.ch.clan<0&&kgOk(u.ch.kg)?KGTRAITS[u.ch.kg]:TRAITS[u.ch.clan])||null;
+// trait d'une build (fiche, assistant) : celui du KG pour un sans-clan à kekkei genkai, sinon celui du clan (TRAITS[-1] « Nindô » pour un sans-clan à sub)
+const traitOfB=b=>b&&(b.clan<0&&kgOk(b.kg)?KGTRAITS[b.kg]:TRAITS[b.clan])||null;
 function traitDmg(t,src,dmg,o){const a=src&&src!==t?trait(src):null,d=trait(t);if(a&&a.deal)dmg=a.deal(src,t,dmg,o);if(dmg>=0&&d&&d.take)dmg=d.take(t,src,dmg,o);if(dmg>=0&&a&&a.landed)a.landed(src,t,dmg,o);return dmg} // landed : effets de l'attaquant une fois le coup confirmé par la défense
 // nom d'un jutsu sous sa case du HUD : rétréci jusqu'à 8 ; encore trop long, on garde ce qui suit « : » (« Lune de sang »), puis « … »
 function hudAbN(s,x,y,col,w){s=String(s);g.font=FNT(8,'normal');if(g.measureText(s).width>w&&s.includes(' : '))s=s.slice(s.lastIndexOf(' : ')+3);fitT(s,x,y,10,col,w,'normal',8,'center')}

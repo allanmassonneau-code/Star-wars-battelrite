@@ -113,9 +113,8 @@ function blSimJob(job){blApply(blNorm(job.prof),true);HLS.on=job.mode==='heal'&&
 function blKit(R,cat){const k=x=>Math.floor(R()*x.length);let a=randomBuild(R,0,'a');if(cat==='free')return a;
  const T=cat[0],v=+cat.slice(1),b=Object.assign({},a,{k:null,bar:null});
  if(cat==='u')b.clan=-1;else if(T==='n'){b.nat=v;if(isMartial(b.clan))b.clan=-1}else if(T==='c')b.clan=v;else if(T==='t'){b.st=v;if(isMartial(b.clan))b.clan=+Object.keys(MARTIAL).find(c=>MARTIAL[c]===v)}
- else if(T==='f'){b.clan=-1;b.fam=(b.fam||[]).filter(f=>f!==v).slice(0,FAMMAX-1);b.fam.unshift(v)}
+ else if(T==='f'){b.clan=-1;b.kg=-1}
  else if(T==='s'){const ok=[-1,...CLANS.map((_,i)=>i)].filter(c=>[0,1,2].some(st=>stylesOf({clan:c,st,fam:[]}).includes(v)));if(!ok.includes(b.clan))b.clan=ok[k(ok)];for(const st of[b.st,0,1,2])if(stylesOf({clan:b.clan,st,fam:[]}).includes(v)){b.st=st;break}b.w=v}
- if(b.clan<0&&T!=='f'&&!(b.fam||[]).length){const F=FAMS.map((_,i)=>i),n=2+Math.floor(R()*4);b.fam=[];while(b.fam.length<n&&F.length)b.fam.push(F.splice(k(F),1)[0])} // sans clan devenu sans famille (ex. 'u', nature d'un clan martial) : 2 à 5 familles, comme les bots
  const o=sanitizeBuild(b);if(T!=='s'){const SW=stylesOf(o);o.w=SW[k(SW)]}
  const ids=[];for(const t of treesOf(o))for(const r of RANKO)ids.push(...TREE[t][r]);for(let i=ids.length-1;i>0;i--){const j=Math.floor(R()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]]}
  if(T==='f')ids.sort((x,y)=>(JL[y].cat==='f'+v)-(JL[x].cat==='f'+v)); // la famille testée d'abord : ses jutsu sont appris

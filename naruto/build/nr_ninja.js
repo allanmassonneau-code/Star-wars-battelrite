@@ -1,5 +1,5 @@
 // ===================== NINJAS : chacun crée son ninja et compose son kit =====================
-// Build v5 (voir FONDATION.md) : clan, nature, arbre de style (Tai/Ken/Buki) + attaque de base, familles de sub (sans clan), dash, jutsu APPRIS par arbre et par rang, barre de 6 cases.
+// Build v6 (voir FONDATION.md) : clan, nature, arbre de style (Tai/Ken/Buki) + attaque de base, sans clan : 5 sub (1 par rang, liste unique) ou un kekkei genkai (kg), dash, jutsu APPRIS par arbre et par rang, barre de 6 cases.
 // Les jutsu réutilisent les mécaniques éprouvées du moteur (SRC) avec leurs propres effets visuels (vfx). Plus de budget de points, de passif ni de voie. Pas de versions EX.
 const RANKC={D:'#9aa3ad',C:'#6fcf6f',B:'#5ab4ff',A:'#c07aff',S:'#ffc53a'};
 const NATURES=[['Katon','Feu','#ff7a2a'],['Suiton','Eau','#3aa8ff'],['Fûton','Vent','#9fe8c8'],['Raiton','Foudre','#ffe14a'],['Doton','Terre','#b08850']];
@@ -436,17 +436,17 @@ const famBal=F=>{let h=1,p=1;for(const f of F){const v=FAMBAL[f]||[1,1];h*=v[0];
 function mkNinja(b,strict){b=sanitizeBuild(b,strict);const S=STYLES[b.w]||STYLES[0],a0=styleAb(b.w),jab={};for(const id of b.k){jab[id]=jutsu(id);const al=b.al&&b.al[jKey(id)];if(al)jab[id].n=al} // al : nom affiché propre au perso (ex. « Raikiri » pour le Chidori de Kakashi)
  let hp=0,pw=0,sp=0,W=0;const add=(a,w)=>{const o=SRC[a.src]||SRC[a0.src];hp+=o.hp*w;pw+=o.pw*w;sp+=o.spd*w;W+=w};add(a0,5);const wk=b.k.length?5/b.k.length:0;for(const id of b.k)add(jab[id],wk);if(!b.k.length)add(a0,5);
  hp*=S[6];pw*=S[7];if(isMartial(b.clan)){hp*=1.05;sp+=4*W} // corps surentraîné : pas de ninjutsu, mais plus solide et plus rapide
- {const cb=CLANBAL[b.clan]||[1,1],nb=b.nat>=0?NATBAL[b.nat]||[1,1]:[1,1],sb=STYLEBAL[b.w+':'+b.clan]||STYLEBAL[b.w]||[1,1],tb=TREEBAL[b.st]||[1,1],fb=b.clan<0?famBal(b.fam):[1,1],qb=preBal(b);hp*=cb[0]*nb[0]*sb[0]*tb[0]*fb[0]*qb[0];pw*=cb[1]*nb[1]*sb[1]*tb[1]*fb[1]*qb[1]}
- const lign=b.clan>=0?'Clan '+CLANS[b.clan][0]:'Sans clan',dashAb=dashAbOf(b),shunAb=shunAbOf(),bar=b.bar.slice();
- return{name:b.name,side:b.side,desc:`${lign}${b.nat>=0?' · '+NATURES[b.nat][0]:''} · ${STNAME[b.st]}`,hp:Math.round(hp/W*HPK),spd:Math.round(sp/W),pw:Math.round(pw/W*100)/100,clan:b.clan,nat:b.nat,st:b.st,fam:b.fam.slice(),
+ {const cb=CLANBAL[b.clan]||[1,1],nb=b.nat>=0?NATBAL[b.nat]||[1,1]:[1,1],sb=STYLEBAL[b.w+':'+b.clan]||STYLEBAL[b.w]||[1,1],tb=TREEBAL[b.st]||[1,1],fb=b.clan<0?(b.kg>=0?KGBAL[b.kg]||[1,1]:famBal(b.fam)):[1,1],qb=preBal(b);hp*=cb[0]*nb[0]*sb[0]*tb[0]*fb[0]*qb[0];pw*=cb[1]*nb[1]*sb[1]*tb[1]*fb[1]*qb[1]}
+ const lign=b.clan>=0?'Clan '+CLANS[b.clan][0]:b.kg>=0?'Sans clan · '+KGS[b.kg].n:'Sans clan',dashAb=dashAbOf(b),shunAb=shunAbOf(),bar=b.bar.slice();
+ return{name:b.name,side:b.side,desc:`${lign}${b.nat>=0?' · '+NATURES[b.nat][0]:''} · ${STNAME[b.st]}`,hp:Math.round(hp/W*HPK),spd:Math.round(sp/W),pw:Math.round(pw/W*100)/100,clan:b.clan,kg:b.kg,nat:b.nat,st:b.st,fam:b.fam.slice(),
   pref:{bigfist:85,bone:90,sword:90,chain:90,fan:85,vine:85,puppet:95}[S[4]]||75,taij:isMartial(b.clan),pass:null,look:ninjaLook(b.l,b.clan,b.w),
   abil:[a0,...bar.map(id=>id>=0?jab[id]:null),dashAb,shunAb],jab,learn:b.k.slice(),bar0:bar,bar:bar.slice(),dashAb,shunAb,build:b}}
 // générateur pseudo-aléatoire déterministe (mêmes ninjas adverses chez tous les joueurs en ligne)
 const srnd=seed=>()=>(seed=seed*16807%2147483647)/2147483647;
-// kit au hasard (bots) : clan 80 % (parmi les clans qui ont des jutsu), nature, arbre de style, attaque de base, 2 à 5 familles sans clan, jutsu appris tirés au hasard rang par rang, barre de 6 au hasard (+ des barres favorites auto qui couvrent tous les jutsu appris : 3 barres pour 15 jutsu), dash au hasard
+// kit au hasard (bots) : clan 80 % (parmi les clans qui ont des jutsu), nature, arbre de style, attaque de base, sans clan : kekkei genkai (1 fois sur 2) ou 5 sub (exactement 1 par rang, tirés dans toute la liste), jutsu appris tirés au hasard rang par rang, barre de 6 au hasard (+ des barres favorites auto qui couvrent tous les jutsu appris : 3 barres pour 15 jutsu), dash au hasard
 const CLANRND=()=>CLANS.map((_,i)=>i).filter(i=>RANKO.split('').some(r=>TREE['c'+i]&&TREE['c'+i][r].length));
-function randomKit(r,b){const k=a=>Math.floor(r()*a.length),CR=CLANRND();b.nat=k(NATURES);b.clan=r()<.8?CR[k(CR)]:-1;b.st=k(STREE);b.fam=[];
- if(b.clan<0){const F=FAMS.map((_,i)=>i),n=2+Math.floor(r()*4);while(b.fam.length<n&&F.length)b.fam.push(F.splice(k(F),1)[0])}
+function randomKit(r,b){const k=a=>Math.floor(r()*a.length),CR=CLANRND();b.nat=k(NATURES);b.clan=r()<.8?CR[k(CR)]:-1;b.st=k(STREE);b.fam=[];b.kg=-1;
+ if(b.clan<0){const KG=KGS.map((_,i)=>i).filter(kgOk);if(KG.length&&r()<.5)b.kg=KG[k(KG)]} // sans clan : kekkei genkai une fois sur 2 (dès qu'il y en a), sinon les sub (1 par rang, tirés dans toute la liste)
  b.k=null;b.bar=null;b.w=-1;b.dsh='b';const o=sanitizeBuild(b);{const SW=stylesOf(o);o.w=SW[k(SW)]}
  const ids=[];for(const t of treesOf(o))for(const R of RANKO)ids.push(...TREE[t][R]);for(let i=ids.length-1;i>0;i--){const j=Math.floor(r()*(i+1));[ids[i],ids[j]]=[ids[j],ids[i]]}
  o.k=[];for(const id of ids)if(canLearn(o.k,id))o.k.push(id);
@@ -468,9 +468,9 @@ const BOTN=[['Hayate','Kaito','Ren','Sora','Yuki','Haruto','Aiko','Daichi','Emi'
  ['Kurogane','Akuma','Raijin','Mizore','Shiden','Gekkô','Hebi','Kagerô','Oboro','Tetsu','Jaku','Kirisame','Yami','Rasetsu','Kuroi','Hyôga','Doku','Zangetsu','Mukuro','Shura']];
 /*NR_PASS*/
 // ninjas adverses : les persos de l'anime (leur kit et leur apparence, dans leur camp) + des ninjas inventés :
-// moitié sur le kit d'un perso mais avec leur propre apparence (un bot n'a l'air d'un perso que s'il en porte le nom), moitié au hasard ; le nom de clan suit le prénom
+// moitié sur le kit d'un perso (sub complétés : 1 par rang, subFill) mais avec leur propre apparence (un bot n'a l'air d'un perso que s'il en porte le nom), moitié au hasard ; le nom de clan suit le prénom
 const NPRE0=37; // nombre de persos de l'anime avant les ajouts : les bots copient toujours les mêmes kits
-const CH={};{const r=srnd(4242);for(let s=0;s<2;s++)BOTN[s].forEach((n,i)=>{let b=randomBuild(r,s,n);if(r()<.5){const q=presetBuild(Math.floor(r()*Math.min(PRESETS.length,NPRE0)),n,s);q.l=b.l;b=q}if(b.clan>=0)b.name=n+' '+CLANS[b.clan][0];if(s&&r()<.6){b.l.t=2;b.l.v=6}CH['b'+(s*20+i)]=mkNinja(b,true)});
+const CH={};{const r=srnd(4242);for(let s=0;s<2;s++)BOTN[s].forEach((n,i)=>{let b=randomBuild(r,s,n);if(r()<.5){const q=presetBuild(Math.floor(r()*Math.min(PRESETS.length,NPRE0)),n,s);q.l=b.l;b=subFill(q)}if(b.clan>=0)b.name=n+' '+CLANS[b.clan][0];if(s&&r()<.6){b.l.t=2;b.l.v=6}CH['b'+(s*20+i)]=mkNinja(b,true)});
  PRESETS.forEach((P,i)=>{CH['a'+i]=mkNinja(presetBuild(i,P.n,P.side),true)})}
 const HEROES=Object.keys(CH);
 // ton ninja : la liste « Mes ninjas » (nrRoster2, nr_roster.js) le remplace au chargement ; les anciennes sauvegardes (nrBuild4/3, nrRoster1) ne sont plus lues

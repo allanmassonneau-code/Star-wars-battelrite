@@ -1,8 +1,8 @@
 // ===== Familles de sub (ninjas sans clan) : aides communes aux 8 familles (kits/fam_*.js) =====
-// Un sans-clan prend jusqu'à 5 familles et 5 sub au total (1 par rang, toutes familles confondues) : voir TREES / POOLS.fam (nr_kits.js).
+// Un sans-clan (sans kekkei genkai) choisit ses 5 sub dans UNE liste de tous les sub : exactement 1 par rang, la famille n'est qu'une étiquette (TREES / POOLS.fam, nr_kits.js).
 // Les mécaniques déjà écrites restent dans kits/sub.js, sub_nrp1.js, sub_nrp2.js, sub_naruto.js ; les anciennes lignes KIT('u',…) de ces fichiers sont ignorées.
 // Règles de famille : les jutsu interdits ne coûtent que du chakra (DESIGN §13) ; chaque famille a son dash (DASHF[f], sans-clan seulement).
-// la famille f est-elle prise par ce ninja (sans clan) ?
+// la famille f est-elle celle d'un de ses sub appris (ch.fam, dérivé de k) ?
 const subHasF=(u,f)=>!!(u&&u.ch&&u.ch.clan<0&&(u.ch.fam||[]).includes(f));
 // rend le chakra et met une recharge courte (jutsu refusé : pas de cible, pas de marque…) ; i<0 : jutsu lancé hors barre (copie du Sharingan), rien à rendre
 function subRefund(u,k,cd,msg,col){const i=subIdx(u,k);if(i>0){u.cds[i]=cd??1;u.energy=Math.min(100,u.energy+jcost(u.ch.abil[i]));const C=u.ch.abil[i].charges;if(C&&u.chg){u.chg[i]=Math.min(C,u.chg[i]+1);if(u.chg[i]>=C)u.cds[i]=0}}if(msg&&near(u.x,u.y))say(u,msg,col||'#ffffff')}

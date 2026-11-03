@@ -64,7 +64,7 @@ rep("(win===light?'La Force est avec toi.':'Le côté obscur l\\'emporte…')","
 rep("Ton adversaire sera un personnage du camp opposé","Clique ton perso, puis ton adversaire")
 rep("`${CFG.bsize} personnages contre ${CFG.bsize}","`${CFG.bsize} ninjas contre ${CFG.bsize}")
 # ---------- menu : créateur de ninja
-cut("// ---------- Menu : mode + panel de personnages ----------","function bar(x,y,w,h,v,col,right)",open(SP+'nr_menu.js').read()+open(SP+'nr_roster.js').read())
+cut("// ---------- Menu : mode + panel de personnages ----------","function bar(x,y,w,h,v,col,right)",open(SP+'nr_menu.js').read()+open(SP+'nr_roster.js').read()+open(SP+'nr_wiz.js').read())
 rep("const coopBtn={x:1040,y:76,w:158,h:30},readyBtn={x:1052,y:550,w:158,h:32},teamBtn={x:880,y:550,w:160,h:32};",
     "const coopBtn={x:1040,y:76,w:158,h:30},readyBtn={x:850,y:677,w:230,h:36},teamBtn={x:610,y:677,w:230,h:36};")
 # panneau de choix du créateur ouvert : il capte le clic (pas de bouton de mode, PRÊT ou ÉQUIPE en dessous)
