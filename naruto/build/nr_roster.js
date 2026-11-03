@@ -131,7 +131,7 @@ function rosAct(k,E){if(k==='play'||k==='fight')rosPick(E);else if(k==='rnd')ros
 // ----- création / modification : EB est une copie de travail, rien n'est gardé ni envoyé avant « Enregistrer »
 function rosEdit(k){const E=k?rosGet(k):null;picker=null;CRMT=0;CRH=-1;presetI=E&&E.P?E.i:-1;if(RQI)RQI.blur();
  if(coop()&&net.ready){net.ready=false;if(net.role==='host')sendLobby();else netSend({t:'ready',v:false})} // en ligne : on n'est plus PRÊT pendant la création (la partie ne part pas sans toi)
- EBI=0;EB=E?sanitizeBuild(E.b):randomBuild(srnd(Date.now()%2147483646+1),0,'Nouveau ninja');edRebuild();ED={k:E?k:null,o:JSON.stringify(EB)};scr='edit'}
+ EBI=0;EBSN=null;EB=E?sanitizeBuild(E.b):randomBuild(srnd(Date.now()%2147483646+1),0,'Nouveau ninja');edRebuild();ED={k:E?k:null,o:JSON.stringify(EB)};scr='edit'}
 const edDirty=()=>!!ED&&!!EB&&JSON.stringify(EB)!==ED.o;
 function edSave(){EB=sanitizeBuild(EB);let k=ED.k;const E=k?rosGet(k):null;
  if(!E){const id=ROS.nid++;ROS.mine.push({id,build:EB});k='m'+id}
@@ -280,7 +280,7 @@ function drawFiche(E,t){const opp=scr==='opp',me=rosGet(MEK);if(!E)return;const 
   if(E.mod)tag(Math.min(x+nw+76,x+w),y-14,'RETOUCHÉ','rgba(255,179,71,.85)');y+=20;
   fitT(E.P?[E.P.full!==b.name?E.P.full:'',S[0],GALG[E.P.g]!==S[0]?GALG[E.P.g]:''].filter(Boolean).join(' · '):`Mes ninjas · créé par toi`,x,y,12.5,liftC(col,.55),w,'bold',9);y+=22;
   {const ic=[b.clan>=0?['c'+b.clan,CLANS[b.clan][1]]:['u','#c8b89a']];if(b.nat>=0)ic.push(['n'+b.nat,NATURES[b.nat][2]]);ic.forEach(([k,c2],i)=>jIcon(x+8+i*19,y-4,8,c2,k));fitT(ch.desc,x+ic.length*19+2,y,12,'#e8cfa8',w-ic.length*19-2,'normal',9)}y+=21;
-  fitT(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2)}`,x,y,13.5,'#ffd38a',w,'bold',10);y+=18;
+  fitT(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2).replace('.',',')}`,x,y,13.5,'#ffd38a',w,'bold',10);y+=18;
   {const ov=rosOver(E),cs=opp&&me&&E.k!==me.k&&b.side===me.b.side?`${CAMPS[1-b.side]} pour ce combat (camp d'en face)`:CAMPS[b.side];fitT(`Camp : ${cs} · ${b.k.length} jutsu appris (${treesOf(b).map(catName).join(', ')})`,x,y,11.5,ov?'#ff8a7a':'#b89a70',w,ov?'bold':'normal',8)}y+=20;
   const d=E.P?(E.mod?'Version retouchée. ':'')+E.P.d:'Un de tes ninjas : « Modifier » pour retoucher son apparence et son kit, « Dupliquer » pour en tester une variante.';
   wrapL(d,w,FNT(12)).slice(0,3).forEach((l,i)=>text(l,x,y+i*16,12,'#cdb898','left','normal'))}

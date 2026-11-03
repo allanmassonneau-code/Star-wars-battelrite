@@ -156,7 +156,7 @@ function presetBuild(i,name,side){const P=PRESETS[i],w=STYLES.findIndex(x=>x[0]=
  return sanitizeBuild(o,true)}
 // « Modèles de kit » (création) : le perso en cours prend le kit et l'apparence du perso de l'anime ; son nom et son camp sont gardés.
 // Seul un NOUVEAU perso au nom par défaut (« Ninja », « Nouveau ninja ») ou au nom d'un perso de l'anime prend le nom du modèle, numéroté s'il est déjà pris (« Itachi (2) », et il suit les modèles suivants tant qu'on ne l'a pas renommé) ; un perso existant qu'on modifie garde toujours son nom
-function applyPreset(i){const P=PRESETS[i],keep=typeof ED!=='undefined'&&ED&&ED.k,au=typeof ED!=='undefined'&&ED,nm=!keep&&(!EB.name||EB.name==='Ninja'||EB.name==='Nouveau ninja'||PRESETS.some(q=>q.n===EB.name)||au&&EB.name===au.auto)?dupName(P.n):EB.name;if(au&&!keep&&nm!==EB.name)au.auto=nm;EB=presetBuild(i,nm,EB.side);presetI=i;edRebuild()}
+function applyPreset(i){const P=PRESETS[i],keep=typeof ED!=='undefined'&&ED&&ED.k,au=typeof ED!=='undefined'&&ED,nm=!keep&&(!EB.name||EB.name==='Ninja'||EB.name==='Nouveau ninja'||PRESETS.some(q=>q.n===EB.name)||au&&EB.name===au.auto)?dupName(P.n):EB.name;if(au&&!keep&&nm!==EB.name)au.auto=nm;EBSN=null;EB=presetBuild(i,nm,EB.side);presetI=i;edRebuild()}
 // ---------- Cartes de l'arène ----------
 const MAPS=[['Terrain d\'entraînement'],['Vallée de la Fin'],['Désert de Suna']];
 const THEMES=[{sky:['#2a2650','#a8506a','#f3a65a'],floor:['#3e5a2c','#4f6e34'],line:'rgba(30,50,20,.18)',wall:['#6a4426','#4a2e18'],post:['#4a2e18','#9a6a3a','#3a2210','#b88a52']},

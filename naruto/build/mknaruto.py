@@ -397,7 +397,7 @@ rep("for(const i of[5,3,1,2,4]){","for(const i of aiOrder(u)){") # bots : barre 
 rep("const pref=u.ch.pref,rad=d>pref+40?1:","const pref=aiPref(u,e),rad=d>aiIn(u,pref)?1:")
 rep("if(!h||u.cds[i]>0||u.energy<jcost(ab))continue;","if(!h||u.cds[i]>0||u.energy<jcost(ab)||aiSave(u,i,h))continue;")
 # HUD : coût en chakra des cases, jauge chiffrée, case du soin
-rep("if(ab.cast)text(`${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');","if(ab.cast)text(ab.mud?`${ab.mud} mudras`:`incant. ${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');hudCost(p,ab,i,x,y,s,sh);") # temps d'incantation dit comme tel (pas confondu avec une recharge)
+rep("if(ab.cast)text(`${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');","if(ab.cast&&p.cds[i]<=0&&!(i&&p.energy<jcost(ab)))fitT(ab.mud?`${ab.mud} mudras`:`incant. ${fmtCd(ab.cast)}`,x+4,y+sh-5,9,'#7f93b8',s-(ab.charges||ab.ammo?30:8),'normal',7,'left');hudCost(p,ab,i,x,y,s,sh);") # temps d'incantation dit comme tel (pas confondu avec une recharge), en secondes réelles (fmtCd), en bas à gauche de la case : le haut gauche est au badge du chakra ; caché pendant la recharge et le manque de chakra (leurs textes sont au même endroit)
 rep("if(ab.ult&&!ready){g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-p.energy/100),s,sh*p.energy/100)}","if(ab.ult&&!ready&&p.cds[i]<=0){const f=Math.min(1,p.energy/Math.max(1,jcost(ab)));g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-f),s,sh*f)}")
 rep("text(muted?`${lbl.KeyM} : son coupé`","drawHealHud(p,x0+n*(s+gap)+6,y,sh);text(muted?`${lbl.KeyM} : son coupé`")
 rep("eBar(30,59,360,p.energy/100);{const T=trait(p);","eBar(30,59,360,p.energy/100);ckHud(p,30,59,360);{const T=trait(p);")
@@ -441,6 +441,15 @@ rep("drawHealHud(p,x0+n*(s+gap)+6,y,sh);","kwHud(p,x0,y,s,sh,gap);drawHealHud(p,
 # Échap ferme la roue sans ouvrir « Quitter » ; la roue ne bloque ni les déplacements ni les coups
 rep("function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;","function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;try{BMUI.frame(dt)}catch(e){console.error(e)}")
 rep(" drawAmbient();drawHud();drawCutin();"," drawAmbient();drawHud();drawCutin();")
+# temps réel juste aussi sous 30 images/s : la boucle fait 1 à 3 pas de simulation par image (pas ≤ 0,033 s, image comptée jusqu'à 0,1 s) au lieu de plafonner l'image
+# à 0,033 s (à 17 i/s le jeu tournait à 0,46 × le temps réel au lieu de 0,8, les compteurs « réels » duraient plus que la montre) ; sous 10 i/s le jeu ralentit (pas d'emballement).
+# Les appuis de l'image (pressed) ne servent qu'au 1er pas (pas de double déclenchement), puis sont rendus pour le dessin. Menu : un seul pas.
+rep("""function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;try{BMUI.frame(dt)}catch(e){console.error(e)}
+ if(isGuest()&&net.live)guestFrame(dt*GSPEED);else if(quitOn&&!coop()&&state!=='menu'){}else{const udt=hs>0?0:dt;hs=Math.max(0,hs-dt);update(udt*GSPEED)}
+ netTick(dt);""","""function loop(now){const raw=Math.max(0,Math.min(.1,(now-last)/1000)),ns=state==='menu'?1:Math.max(1,Math.ceil(raw/.0334)),dt=Math.min(.033,raw/ns);last=now;try{BMUI.frame(dt*ns)}catch(e){console.error(e)}
+ const P0=pressed;for(let si=0;si<ns;si++){if(si)pressed={};
+ if(isGuest()&&net.live)guestFrame(dt*GSPEED);else if(quitOn&&!coop()&&state!=='menu'){}else{const udt=hs>0?0:dt;hs=Math.max(0,hs-dt);update(udt*GSPEED)}}pressed=P0;
+ netTick(dt*ns);""")
 # la roue est dessinée en dernier (avant le curseur) : bandeaux plein écran (COMBATTEZ !, mort, jutsu S) et compte à rebours passent dessous
 rep("text('Clic ou Entrée pour revenir au menu',W/2,H-16,15,'#9fb3d9','center','normal')}\n drawCursor();","text('Clic ou Entrée pour revenir au menu',W/2,H-16,15,'#9fb3d9','center','normal')}\n try{BMUI.draw()}catch(e){console.error(e)}drawCursor();")
 rep("if(e.code==='Escape'&&state!=='menu'&&!e.repeat)quitUI(!quitOn)","if(e.code==='Escape'&&state!=='menu'&&!e.repeat){if(!BMUI.esc())quitUI(!quitOn)}")

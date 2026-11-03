@@ -573,7 +573,7 @@ const RKB_CD0={D:[4,7],C:[6,10],B:[8,12],A:[11,16],S:[18,24]};
 // Compteurs en direct affichés en secondes réelles (CDLIVE_REEL) : un « 100 s » part de 100 et atteint 0 au bout de 100 s réelles. Dash, Kawarimi, soin, attaque de base :
 // durées internes inchangées, seul leur affichage nominal passe en secondes réelles (même règle pour tous).
 const rtIn=v=>Math.round(v*GSPEED*1000)/1000,rtOut=v=>Math.round(v/GSPEED*1000)/1000,CDLIVE_REEL=true;
-const cdTxt=v=>(v=CDLIVE_REEL?v/GSPEED:v)>=10?String(Math.ceil(v)):v.toFixed(1).replace('.',','); // recharge restante affichée en direct (HUD, roue des barres de B, minuterie du Kawarimi) : secondes réelles (CDLIVE_REEL), entières au-dessus de 10 s, virgule décimale
+const cdTxt=v=>(v=CDLIVE_REEL?v/GSPEED:v)>=10?String(Math.round(v)):v.toFixed(1).replace('.',','); // recharge restante affichée en direct (HUD, roue des barres de B, minuterie du Kawarimi) : secondes réelles (CDLIVE_REEL), entières (arrondies : un « 23,3 s » des menus part de 23, un « 100 s » de 100) au-dessus de 10 s, virgule décimale en dessous
 const rkCdR=(r,cd,libre)=>{const o=RKB_CD0[r],R=RKB[r];if(!o||!R||typeof cd!=='number'||!isFinite(cd))return cd;const [a,b]=o,[c,d]=R.cd;
  const v=cd<a?(libre?c*cd/a:c):cd>b?(libre?d*cd/b:d):c+(cd-a)/(b-a)*(d-c);return Math.round(v*10)/10};
 const rkCd=(r,cd,libre)=>{const v=rkCdR(r,cd,libre);return typeof v==='number'&&isFinite(v)?rtIn(v):v}; // recharge INTERNE (secondes de jeu) d'une valeur de l'ancien barème
@@ -632,7 +632,7 @@ function chanAb(key){return function(u,a,t){const i=u.ch.abil.findIndex(x=>x&&x.
  if(u.chan&&u.chan.key===key){releaseChan(u);return}const p=fwd(u,a,Math.min(t||300,480));u.chan={key,i,x:p.x,y:p.y,r:150,t:0,max:3,cd:u.ch.abil[i].cd};u.cds[i]=.3;
  aux.push({type:'chan',x:p.x,y:p.y,r:150,t:3.3,m:3.3,team:u.team,owner:u,vfx:'fire',k:0})}}
 function releaseChan(u){const c=u.chan;if(!c)return;u.chan=null;u.cds[c.i]=c.cd;const pow=1+1.6*Math.min(1,c.t/c.max);VFX='fire';aoe(u,c.x,c.y,c.r,26*pow,{dot:BURN(5,3),unblockable:1},'#ff7a2a');field(u,c.x,c.y,{r:c.r,t:2.5,dps:6*pow,col:'#ff7a2a',vfx:'fire'});detoFx(c.x,c.y,c.r,'fire');if(near(c.x,c.y)){shake=Math.max(shake,.35);S('boom',u)}VFX=null;
- for(const x of aux)if(x.type==='chan'&&x.owner===u)x.t=0;say(u,'NUÉE ARDENTE ×'+pow.toFixed(1),'#ff9a3a')}
+ for(const x of aux)if(x.type==='chan'&&x.owner===u)x.t=0;say(u,'NUÉE ARDENTE ×'+pow.toFixed(1).replace('.',','),'#ff9a3a')}
 const NAT={}; // mécaniques sur mesure des jutsu (remplies par kits/*.js)
 // stats de référence (pour les PV / la puissance du ninja) : un perso Star Wars proche dans l'esprit
 const NATHERO={}; // stats de référence par préfixe (rempli par les kits)
@@ -12456,7 +12456,7 @@ function autoBars(o){const b=(o.bar||autoBar(o)).slice();return barsCover(o,[{n:
 const BMUI={open:false,frame(dt){},draw(){},esc(){return false},ack(r){}};
 // ===================== ROUE DES BARRES FAVORITES (touche B maintenue) : le combat continue, rien n'est mis en pause =====================
 // Les barres se font dans la création du perso (1 à BARSMAX barres de 6, build v6 : ch.build.bars). En combat :
-// B maintenu = la roue s'ouvre au milieu de l'écran (nom + 6 icônes de chaque barre, ✓ = équipée, cadre orange = surlignée) ;
+// B maintenu = la roue s'ouvre en haut de l'écran, en rangée (le centre, où la caméra garde le ninja, reste dégagé) (nom + 6 icônes de chaque barre, ✓ = équipée, cadre orange = surlignée) ;
 // molette haut / bas = surligner la barre précédente / suivante (ZQSD, clics et 1-6 restent au ninja) ;
 // B relâché = la barre surlignée est équipée si on a tourné la molette et qu'elle n'est pas déjà à l'écran (un simple appui sur B ne change rien) ; Échap = fermer sans rien changer.
 // Le changement suit les règles de setBar (nr_bar.js) : les recharges suivent les jutsu, un jutsu qui entre attend au moins CDLOCK = 2 s de jeu (2,5 s réelles), un jutsu en cours n'est jamais coupé (« en attente »).
@@ -12506,19 +12506,18 @@ function rbHud(){const L=barsOf(player),c=favCur(player),p=rbPend(),y=H-82;
  const pn=p>=0?` · « ${L[p].n} » en attente…`:'';
  const s=L.length>1?`Barre « ${c>=0?L[c].n:'perso'} » ${c>=0?c+1:'–'}/${L.length}${pn} · ${lbl.KeyB} maintenu + molette : changer de barre`:`Barre « ${L[0].n} » · ajoute d'autres barres dans la création du perso (roue : ${lbl.KeyB})`;
  if(state==='fight'||state==='countdown')fitT(s,W/2,y,10.5,p>=0?'rgba(255,179,71,.9)':'rgba(159,179,217,.6)',760,'normal',8.5,'center')}
-// place des cartes autour du centre : 1 en haut ; 2 haut / bas ; 3 en triangle ; 4 en croix (haut, droite, bas, gauche)
-const RBC={w:262,h:84,cx:()=>W/2,cy:()=>H/2-20};
-function rbPos(i,n){const cx=RBC.cx(),cy=RBC.cy();if(n===1)return{x:cx,y:cy-120};if(n===2)return{x:cx,y:cy+(i?120:-120)};
- const a=-Math.PI/2+i*2*Math.PI/n,rx=n===3?230:262,ry=n===3?118:132;return{x:cx+Math.cos(a)*rx,y:cy+Math.sin(a)*ry}}
-function rbDraw(){const L=barsOf(player),n=L.length,cur=favCur(player),pd=rbPend(),cx=RBC.cx(),cy=RBC.cy(),t=performance.now()/1000,k=Math.min(1,(performance.now()-RB.t0)/120);
+// place des cartes : une rangée en HAUT de l'écran (sous les scores), jamais au centre : la caméra suit le joueur, son ninja et l'ennemi au contact
+// restent visibles pendant le choix (le combat continue). Cartes de gauche à droite dans l'ordre des barres ; la surlignée descend un peu (effet de roue).
+const RBC={w:262,h:84,gap:14,cy:()=>156,hy:()=>97};
+function rbPos(i,n){const w=n*RBC.w+(n-1)*RBC.gap;return{x:W/2-w/2+RBC.w/2+i*(RBC.w+RBC.gap),y:RBC.cy()}}
+function rbDraw(){const L=barsOf(player),n=L.length,cur=favCur(player),pd=rbPend(),t=performance.now()/1000,k=Math.min(1,(performance.now()-RB.t0)/120);
  g.save();g.globalAlpha=k;
- {const gr=g.createRadialGradient(cx,cy,40,cx,cy,420);gr.addColorStop(0,'rgba(0,0,0,.5)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(cx-440,cy-300,880,600)}
- // rayon vers la barre surlignée
- {const P=rbPos(RB.hi,n);g.strokeStyle=rgba('#ffb347',.55);g.lineWidth=3;g.setLineDash([7,6]);g.lineDashOffset=-t*30;const a=Math.atan2(P.y-cy,P.x-cx);g.beginPath();g.moveTo(cx+Math.cos(a)*58,cy+Math.sin(a)*58);g.lineTo(P.x,P.y);g.stroke();g.setLineDash([])}
- // centre
- {g.save();g.shadowColor='#ff9a3a';g.shadowBlur=18;g.fillStyle='rgba(20,13,8,.92)';g.beginPath();g.arc(cx,cy,54,0,7);g.fill();g.restore();g.strokeStyle='#ff9a3a';g.lineWidth=2;g.beginPath();g.arc(cx,cy,54,0,7);g.stroke();
-  text(lbl.KeyB||'B',cx,cy-10,24,'#ffb347','center');text(`${RB.hi+1} / ${n}`,cx,cy+12,12,'#f3d9b0','center');fitT(n>1?'molette':'1 seule barre',cx,cy+28,10,'#a89070',96,'normal',8,'center')}
- L.forEach((q,i)=>{const P=rbPos(i,n),hi=i===RB.hi,on=i===cur,pe=i===pd,s=hi?1.06:1,w=RBC.w*s,h=RBC.h*s,R={x:P.x-w/2,y:P.y-h/2,w,h};
+ // voile sombre seulement sur la bande du haut (le centre de l'écran reste net)
+ {const y0=74,y1=226,gr=g.createLinearGradient(0,y0,0,y1);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.18,'rgba(0,0,0,.42)');gr.addColorStop(.8,'rgba(0,0,0,.34)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,y0,W,y1-y0)}
+ // en-tête : touche, n° surligné / total, aide
+ {const hy=RBC.hy(),s=n>1?`${lbl.KeyB||'B'} maintenu · barre ${RB.hi+1}/${n} · molette : choisir · relâcher ${lbl.KeyB||'B'} : équiper · Échap : annuler · le combat continue`:`Une seule barre : ajoutes-en (jusqu'à ${BARSMAX}) dans la création du perso`;
+  g.font=FNT(12,'bold');const w=Math.min(820,g.measureText(s).width+30);g.save();g.shadowColor='#ff9a3a';g.shadowBlur=10;rr({x:W/2-w/2,y:hy-13,w,h:24},12,'rgba(20,13,8,.92)','#ff9a3a',1.4);g.restore();fitT(s,W/2,hy+4,12,'#f3d9b0',w-20,'bold',9,'center')}
+ L.forEach((q,i)=>{const P0=rbPos(i,n),hi=i===RB.hi,P=hi?{x:P0.x,y:P0.y+6}:P0,on=i===cur,pe=i===pd,s=hi?1.06:1,w=RBC.w*s,h=RBC.h*s,R={x:P.x-w/2,y:P.y-h/2,w,h};
   g.save();if(hi){g.shadowColor='#ffb347';g.shadowBlur=22}rr(R,12,hi?'rgba(60,38,18,.96)':'rgba(16,11,8,.9)',hi?'#ffb347':on?'#5fd35f':pe?'#ffb347':'rgba(140,100,60,.7)',hi?3:on?2:1.2);g.restore();
   // en-tête : n°, nom, état
   rr({x:R.x+8,y:R.y+7,w:20,h:18},5,hi?'#ffb347':'rgba(80,56,30,.95)');text(String(i+1),R.x+18,R.y+20.5,12,hi?'#1a1008':'#f3d9b0','center');
@@ -12531,9 +12530,6 @@ function rbDraw(){const L=barsOf(player),n=L.length,cur=favCur(player),pd=rbPend
    if(!J){text('·',C.x+C.w/2,C.y+C.h/2+5,13,'#5a6680','center');continue}
    jIcon(C.x+C.w/2,C.y+C.h/2,Math.min(13,C.h*.34),catCol(J.cat),J.cat,J.r==='S');text(J.r,C.x+C.w-4,C.y+11,9,RANKC[J.r]||'#cfd8ea','right');
    const rem=remCd(player,j);if(rem>0){g.fillStyle='rgba(0,0,0,.55)';g.beginPath();g.roundRect(C.x,C.y,C.w,C.h,6);g.fill();text(cdTxt(rem),C.x+C.w/2,C.y+C.h/2+5,12,'#ffe81f','center')}}});
- // aide
- {const s=n>1?`Molette : choisir · relâcher ${lbl.KeyB} : équiper la barre surlignée · Échap : annuler · le combat continue`:'Une seule barre : ajoutes-en (jusqu\'à '+BARSMAX+') dans la création du perso';
-  const y=cy+(n===1?40:n===2?190:n===3?150:200);g.font=FNT(12,'bold');const w=Math.min(720,g.measureText(s).width+30);rr({x:cx-w/2,y:y-16,w,h:24},12,'rgba(14,10,8,.8)','rgba(255,154,58,.5)',1);fitT(s,cx,y+1,12,'#f3d9b0',w-20,'bold',9,'center')}
  g.restore()}
 
 const CAMPS=['Alliance Shinobi','Akatsuki'];
@@ -12845,7 +12841,7 @@ function presetBuild(i,name,side){const P=PRESETS[i],w=STYLES.findIndex(x=>x[0]=
  return sanitizeBuild(o,true)}
 // « Modèles de kit » (création) : le perso en cours prend le kit et l'apparence du perso de l'anime ; son nom et son camp sont gardés.
 // Seul un NOUVEAU perso au nom par défaut (« Ninja », « Nouveau ninja ») ou au nom d'un perso de l'anime prend le nom du modèle, numéroté s'il est déjà pris (« Itachi (2) », et il suit les modèles suivants tant qu'on ne l'a pas renommé) ; un perso existant qu'on modifie garde toujours son nom
-function applyPreset(i){const P=PRESETS[i],keep=typeof ED!=='undefined'&&ED&&ED.k,au=typeof ED!=='undefined'&&ED,nm=!keep&&(!EB.name||EB.name==='Ninja'||EB.name==='Nouveau ninja'||PRESETS.some(q=>q.n===EB.name)||au&&EB.name===au.auto)?dupName(P.n):EB.name;if(au&&!keep&&nm!==EB.name)au.auto=nm;EB=presetBuild(i,nm,EB.side);presetI=i;edRebuild()}
+function applyPreset(i){const P=PRESETS[i],keep=typeof ED!=='undefined'&&ED&&ED.k,au=typeof ED!=='undefined'&&ED,nm=!keep&&(!EB.name||EB.name==='Ninja'||EB.name==='Nouveau ninja'||PRESETS.some(q=>q.n===EB.name)||au&&EB.name===au.auto)?dupName(P.n):EB.name;if(au&&!keep&&nm!==EB.name)au.auto=nm;EBSN=null;EB=presetBuild(i,nm,EB.side);presetI=i;edRebuild()}
 // ---------- Cartes de l'arène ----------
 const MAPS=[['Terrain d\'entraînement'],['Vallée de la Fin'],['Désert de Suna']];
 const THEMES=[{sky:['#2a2650','#a8506a','#f3a65a'],floor:['#3e5a2c','#4f6e34'],line:'rgba(30,50,20,.18)',wall:['#6a4426','#4a2e18'],post:['#4a2e18','#9a6a3a','#3a2210','#b88a52']},
@@ -15087,12 +15083,12 @@ const appOff=k=>(k==='nat'||k==='st')&&isMartial(EB.clan);
 // nouveau clan / nature / style / familles : les jutsu gardés restent dans leur case ; une case dont le jutsu a disparu reçoit un jutsu appris du même rang
 // (de préférence du nouvel arbre : Lame d'air A → Chidori A), puis les cases vidées qui restent sont complétées (ordre de la barre automatique)
 // (toutes les barres favorites : chacune comble ses propres trous)
-function edTrees(){const OB=(EB.bars||[{b:EB.bar||[]}]).map((q,i)=>(i===0&&EB.bar?EB.bar:q.b||[]).slice()),ok=(EB.k||[]).slice();EB=sanitizeBuild(EB);EB.k=autoLearn(EB,EB.k);EB=sanitizeBuild(EB);
+function edTrees(){const OB=(EB.bars||[{b:EB.bar||[]}]).map((q,i)=>(i===0&&EB.bar?EB.bar:q.b||[]).slice()),ok=(EB.k||[]).slice(),SN=crSnap();EB=sanitizeBuild(EB);EB.k=autoLearn(EB,EB.k);EB=sanitizeBuild(EB);
  OB.forEach((ob,bi)=>{const q=EB.bars[bi];if(!q)return;const B=bi===0?EB.bar:q.b;
   const hole=ob.map((id,s)=>id>=0&&JL[id]&&B[s]===-1);if(!hole.some(Boolean))return;const free=()=>EB.k.filter(id=>!B.includes(id));
   hole.forEach((h,s)=>{if(!h)return;const c=free().filter(id=>JL[id].r===JL[ob[s]].r),p=c.find(id=>!ok.includes(id))??c[0];if(p!=null)B[s]=p});
   const rest=hole.map((h,s)=>h&&B[s]===-1?s:-1).filter(s=>s>=0);if(rest.length){const A=autoBar(Object.assign({},EB,{k:free()})).filter(id=>id>=0);for(const s of rest){if(!A.length)break;B[s]=A.shift()}}});
- EB=sanitizeBuild(EB);crFixI()}
+ EB=sanitizeBuild(EB);crFixI();crRetheme(SN)}
 // nom affiché d'un jutsu dans la création (alias propre au perso, ex. « Raikiri »)
 const crN=jid=>(EB&&EB.al&&EB.al[jKey(jid)])||(JL[jid]?JL[jid].n:'');
 // cases vides alors que des jutsu appris sont hors de la barre (avertissement à l'enregistrement)
@@ -15105,12 +15101,20 @@ const crFixI=()=>{EBI=Math.max(0,Math.min((EB.bars||[]).length-1,EBI|0))};
 const crB=()=>{crFixI();return EBI===0||!EB.bars[EBI]?EB.bar:EB.bars[EBI].b};
 const crSetB=B=>{crFixI();if(EBI===0)EB.bar=B;else EB.bars[EBI].b=B};
 const crBN=i=>{const q=EB.bars&&EB.bars[i==null?EBI:i];return q?q.n:'Barre 1'};
+// noms automatiques : une barre dont le nom est encore celui que barTheme lui donnait (« Fûton », « Hoki 2 »… : nom jamais retouché) ou « Barre n »
+// reprend le nom de l'arbre le plus présent après chaque changement de son contenu (clan / nature / style / familles, jutsu appris ou retirés, cases, « Barre auto », « Compléter » :
+// edRebuild compare à l'état d'avant, EBSN, repéré par les noms) ; un nom choisi par le joueur ne bouge jamais. EBSN est remis à zéro à l'ouverture d'un perso, d'un kit aléatoire ou d'un modèle
+function crSnap(){const B=crBars().map(b=>b.slice()),L=[],a=new Set();(EB.bars||[]).forEach((q,i)=>{const t=barTheme(EB,B[i],L);L.push({n:q.n,b:B[i]});if(q.n===t||/^Barre \d+$/.test(q.n))a.add(q.n)});return{a}}
+function crRetheme(S){if(!S||!EB||!EB.bars)return;const B=crBars(),L=[],au=EB.bars.map(q=>S.a.has(q.n));EB.bars.forEach((q,i)=>{if(au[i]&&B[i].some(id=>id>=0)){const fix=EB.bars.filter((x,j)=>j>i&&!au[j]).map(x=>({n:x.n}));q.n=barTheme(EB,B[i],L.concat(fix))}L.push({n:q.n,b:B[i]})})}
 // barre auto de la barre modifiée : la 1re = rang S → D en alternant les arbres ; une autre prend d'abord les jutsu absents des autres barres
-function crAutoB(){if(EBI===0)return autoBar(EB);const used=new Set(crBars().filter((_,i)=>i!==EBI).flat()),fresh=EB.k.filter(id=>!used.has(id));
- const a=fresh.length?autoBar(Object.assign({},EB,{k:fresh})).filter(id=>id>=0):[];for(const id of autoBar(EB))if(a.length<BARN&&id>=0&&!a.includes(id))a.push(id);while(a.length<BARN)a.push(-1);return a}
+// (tous les jutsu appris déjà placés : mélange des jutsu les MOINS présents dans les autres barres, pris tour à tour dans chacune, pour ne pas refaire la barre 1)
+function crAutoB(){if(EBI===0)return autoBar(EB);const OB=crBars().filter((_,i)=>i!==EBI),used=new Set(OB.flat()),fresh=EB.k.filter(id=>!used.has(id));
+ let a=fresh.length?autoBar(Object.assign({},EB,{k:fresh})).filter(id=>id>=0):[];
+ if(!fresh.length&&OB.length){const cnt=id=>OB.reduce((n,b)=>n+(b.includes(id)?1:0),0),pos=id=>{for(let s=0;s<BARN;s++)for(let b=0;b<OB.length;b++)if(OB[b][s]===id)return s*BARSMAX+b;return 99};
+  const pick=EB.k.filter(id=>JL[id]).sort((x,y)=>cnt(x)-cnt(y)||pos(x)-pos(y)).slice(0,BARN);a=autoBar(Object.assign({},EB,{k:pick})).filter(id=>id>=0);for(const id of pick)if(a.length<BARN&&!a.includes(id))a.push(id)}for(const id of autoBar(EB))if(a.length<BARN&&id>=0&&!a.includes(id))a.push(id);while(a.length<BARN)a.push(-1);return a}
 function crBarNew(){if(EB.bars.length>=BARSMAX){crSay(`${BARSMAX} barres au plus : supprimes-en une (✕) pour en créer une autre`,'#ff7a6a');return}
- let k=EB.bars.length+1;while(EB.bars.some(q=>q.n==='Barre '+k))k++;const n='Barre '+k;EB.bars.push({n,b:EB.bar.slice()});EBI=EB.bars.length-1;EB.bars[EBI].b=crAutoB();edRebuild();
- crSay(`« ${n} » créée avec des jutsu absents des autres barres : retouche ses 6 cases`,'#8fe38f')}
+ const all=crOut().length===0;EB.bars.push({n:'',b:EB.bar.slice()});EBI=EB.bars.length-1;EB.bars[EBI].b=crAutoB();EB.bars[EBI].n=barTheme(EB,EB.bars[EBI].b,EB.bars.slice(0,EBI));edRebuild();const n=crBN();
+ crSay(all?`« ${n} » créée : tous tes jutsu appris sont déjà dans une barre, elle mélange ceux qui y sont le moins (aucune barre identique) · retouche ses 6 cases`:`« ${n} » créée avec des jutsu absents des autres barres : retouche ses 6 cases`,all?'#ffd38a':'#8fe38f')}
 function crBarRen(){const q=EB.bars[EBI];if(!q)return;const n=prompt(`Nom de la barre (${BARNM} caractères max)`,q.n);if(n===null)return;const v=barName(n,EBI);if(v===q.n)return;q.n=v;edRebuild();crSay(`Barre renommée « ${v} »`,'#8fe38f')}
 function crBarDel(i){if(EB.bars.length<2){crSay('Il faut au moins une barre','#ff7a6a');return}const n=EB.bars[i].n;
  CONF={t:`Supprimer la barre « ${n} » ?`,d:'Ses 6 cases sont oubliées (les jutsu restent appris).'+(i===0?' La barre suivante devient la barre de départ.':''),ok:'Supprimer',col:'#ff6a5a',
@@ -15164,7 +15168,8 @@ function rebuildMine(){MY=sanitizeBuild(MY);MYCH=mkNinja(MY); // (le perso joué
  if(!isGuest())CH.p0=MYCH;
  if(net.role==='host'){net.ready=false;sendLobby()}else if(isGuest()&&coop()){net.ready=false;netSend({t:'build',b:MY,pv:NPV});netSend({t:'ready',v:false})}}
 // perso en création : seul l'aperçu change (rien n'est envoyé ni gardé avant « Enregistrer »)
-function edRebuild(){EB=sanitizeBuild(EB);EBCH=mkNinja(EB)}
+let EBSN=null;
+function edRebuild(){EB=sanitizeBuild(EB);if(EBSN)crRetheme(EBSN);EBSN=crSnap();EBCH=mkNinja(EB)}
 const lookTabD=['Coiffure, couleur des cheveux, yeux (dont dôjutsu purement décoratifs), marques du visage, accessoire de tête et bandeau.','Peau, taille et carrure (purement visuelles : la zone de coups ne change pas), couleur du chakra et village.','Tenue et ses deux couleurs (principale et secondaire, « D\'origine » garde celles de la tenue), haori ou cape par-dessus, couleur du masque et de l\'écharpe.','Accessoires des bras et du cou, objet et symbole dans le dos, porte-kunai et pochette, couleur du bandeau (le ninja tourne pour montrer son dos).'];
 // --- textes d'aide des options de build
 function optDesc(k,v){
@@ -15260,7 +15265,7 @@ function creatorClick(){
  for(let i=0;i<LTABS.length;i++)if(inRect(mouse,ltabR(i))){LTAB=i;return true}
  if(inRect(mouse,cancelBtn)){edCancel();return true}
  if(inRect(mouse,presetBtn)){openPicker('preset');return true}
- if(inRect(mouse,rndBuildBtn)){EB=randomKit(srnd((Date.now()%2147483647)||7),EB);edRebuild();return true}
+ if(inRect(mouse,rndBuildBtn)){EBSN=null;EB=randomKit(srnd((Date.now()%2147483647)||7),EB);edRebuild();return true}
  const cyc=(k,n,d)=>{setB(k,(getB(k)+n+d)%n);edRebuild()};
  for(const [i,[,list,k]] of buildKeys().entries()){const R=selRect(i);if(!inRect(mouse,R))continue;if(appOff(k))return true;const n=list().length;
   if(mouse.x<R.x+24)cyc(k,n,-1);else if(mouse.x>R.x+R.w-24)cyc(k,n,1);else openPicker(k);return true}
@@ -15272,9 +15277,9 @@ function creatorClick(){
  if(EBI>0&&inRect(mouse,crStartBtn)){crBarStart();return true}
  for(const C of crCards())if(inRect(mouse,C.R)){if(C.jid>=0)crToggle(C.jid);return true}
  for(const c of crCols())if(c.t==='+fam'&&inRect(mouse,{x:c.x,y:CRG.y,w:c.w,h:4*CRG.rh+CRG.ch})){openPicker('fam');return true}
- if(inRect(mouse,crAutoBtn)){crSetB(crAutoB());edRebuild();crSay(EBI===0?'Barre refaite : du rang S au rang D, en alternant les arbres':'Barre refaite : d\'abord les jutsu absents des autres barres, du rang S au rang D','#8fe38f');return true}
+ if(inRect(mouse,crAutoBtn)){const SN=crSnap();crSetB(crAutoB());edRebuild();crRetheme(SN);crSay(EBI===0?'Barre refaite : du rang S au rang D, en alternant les arbres':'Barre refaite : d\'abord les jutsu absents des autres barres, du rang S au rang D','#8fe38f');return true}
  if(inRect(mouse,crFillBtn)){const n=crFill();crSay(n?n+' case'+(n>1?'s':'')+' remplie'+(n>1?'s':''):'Aucune case vide à remplir (ou plus de jutsu appris hors de la barre)',n?'#8fe38f':'#c8b89a');return true}
- if(inRect(mouse,saveBtn)){if(edOver())return true;const w=crSaveWarn();if(w&&!(EDW&&performance.now()-EDW<6000)){EDW=performance.now();crSay(w,'#ffb347');return true}EDW=0;crDedupe();edSave();return true}
+ if(inRect(mouse,saveBtn)){if(edOver())return true;const w=crSaveWarn(),sg=w+'|'+JSON.stringify(crBars())+'|'+EB.bars.map(q=>q.n).join('|')+'|'+(EB.k||[]).join(',');if(w&&!(EDW&&EDW.s===sg&&performance.now()-EDW.t<6000)){EDW={t:performance.now(),s:sg};crSay(w,'#ffb347');return true}EDW=0;crDedupe();edSave();return true}
  return false}
 // --- dessin d'une carte du panneau de choix
 function drawCard(D,it,R,hov){const j=D.kind==='j',a=D.kind==='a';
@@ -15331,7 +15336,7 @@ function crToggle(jid){const J=JL[jid];if(!J)return;
 function crPlace(jid,s){const J=JL[jid];if(!J)return;if(!EB.k.includes(jid))crLearn(jid);if(!EB.k.includes(jid))return;
  const B=crB(),t=B.indexOf(jid);if(t===s){crSay(`${crN(jid)} est déjà en case ${s+1}`,'#c8b89a');return}if(t>=0)B[t]=B[s];B[s]=jid;edRebuild();crSay(`${crN(jid)} → « ${crBN()} », case ${s+1}`,'#8fe38f')}
 // complète les cases vides avec les jutsu appris hors de la barre (ordre de la barre automatique) ; renvoie le nombre de cases remplies
-function crFill(){const B=crB(),A=autoBar(Object.assign({},EB,{k:EB.k.filter(id=>!B.includes(id))})).filter(id=>id>=0);let n=0;crSetB(B.map(id=>id>=0||!A.length?id:(n++,A.shift())));edRebuild();return n}
+function crFill(){const SN=crSnap(),B=crB(),A=autoBar(Object.assign({},EB,{k:EB.k.filter(id=>!B.includes(id))})).filter(id=>id>=0);let n=0;crSetB(B.map(id=>id>=0||!A.length?id:(n++,A.shift())));edRebuild();crRetheme(SN);return n}
 // une carte de jutsu (appris : couleur de l'arbre ; non appris : sombre ; n° de case en vert si dans la barre)
 function crCard(C,hov){const R=C.R,col=catCol(C.t);
  if(C.jid<0){g.save();g.setLineDash([4,4]);rr(R,7,'rgba(20,14,10,.35)','rgba(120,90,60,.45)',1);g.restore();text('—',R.x+R.w/2,R.y+R.h/2+5,13,'#5a4a3a');return}
@@ -15379,7 +15384,7 @@ function drawCreator(){
  g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(220,316,50,13,0,0,7);g.fill();
  {g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(220,290,0,220,290,140);gr.addColorStop(0,rgba(ch.look.weapon.col,.16));gr.addColorStop(1,rgba(ch.look.weapon.col,0));g.fillStyle=gr;g.fillRect(80,186,280,150);g.restore()}
  drawPrevN(fake,220,314,1.6,0);drawChar3(fake,220,314,1.6);drawPrevN(fake,220,314,1.6,1);
- text(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2)}`,220,342,12.5,'#ffd38a','center','bold');
+ text(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2).replace('.',',')}`,220,342,12.5,'#ffd38a','center','bold');
  fitT(ch.desc,220,358,11,'#b89a70',350,'normal',9,'center');
  // en-tête de section
  const sect=(s,x,y,w)=>{text(s,x+w/2,y+4,11,'#ffb347','center');g.font=FNT(11,'bold');const tw=g.measureText(s).width/2+10;g.fillStyle='rgba(255,154,58,.45)';g.fillRect(x,y,w/2-tw,1.5);g.fillRect(x+w/2+tw,y,w/2-tw,1.5)};
@@ -15463,7 +15468,7 @@ function drawCreator(){
      d:(dup>=0?`Identique à la barre ${dup+1} : change au moins une case (à l'enregistrement, une barre en double est retirée). `:'')+(i===0?`Barre de départ : celle que tu as en début de combat. En combat, ${lbl.KeyB} maintenu + molette passe d'une barre à l'autre (relâcher ${lbl.KeyB} : équiper).`:`En combat : ${lbl.KeyB} maintenu + molette pour la surligner, relâcher ${lbl.KeyB} pour l'équiper. Les recharges suivent les jutsu (un jutsu qui arrive attend au moins ${fmtCd(CDLOCK)}).`),
      f:on?'Clic : renommer · ✕ ou clic D : supprimer':'Clic : modifier cette barre · clic D : supprimer'})});
   if(EB.bars.length<BARSMAX){const R=crPlusR(),h=hv(R);g.save();g.setLineDash([5,4]);rr({x:R.x,y:R.y,w:34,h:R.h},9,h?'rgba(74,48,24,.95)':'rgba(24,17,11,.6)',h?'#ffc53a':'rgba(255,197,58,.55)',1.3);g.restore();text('+',R.x+17,R.y+21,18,h?'#fff':'#ffc53a','center');
-   if(h)hoverTip('crplus',()=>({t:'Nouvelle barre favorite',col:'#ffc53a',d:`Ajoute une barre (${EB.bars.length}/${BARSMAX}) remplie d'abord avec tes jutsu appris absents des autres barres. Tu la retouches ensuite case par case.`}))}}
+   if(h)hoverTip('crplus',()=>({t:'Nouvelle barre favorite',col:'#ffc53a',d:`Ajoute une barre (${EB.bars.length}/${BARSMAX}) remplie d'abord avec tes jutsu appris absents des autres barres (s'ils y sont tous : ceux qui y sont le moins). Elle prend le nom de l'arbre le plus présent. Tu la retouches ensuite case par case.`}))}}
  btn(rndBuildBtn,'🎲 Kit aléatoire',false);btn(presetBtn,'📜 Modèles de kit',false);
  if(hv(rndBuildBtn))hoverTip('rndK',()=>({t:'Kit aléatoire',d:'Tire au hasard clan, nature, style, familles, jutsu appris et barre. Ton apparence ne change pas.'}));
  if(hv(presetBtn))hoverTip('pre',()=>({t:'Modèles de kit',d:'Les persos de l\'anime en liste : leur kit et leur apparence comme point de départ à retoucher.'}));
@@ -15611,7 +15616,7 @@ function rosAct(k,E){if(k==='play'||k==='fight')rosPick(E);else if(k==='rnd')ros
 // ----- création / modification : EB est une copie de travail, rien n'est gardé ni envoyé avant « Enregistrer »
 function rosEdit(k){const E=k?rosGet(k):null;picker=null;CRMT=0;CRH=-1;presetI=E&&E.P?E.i:-1;if(RQI)RQI.blur();
  if(coop()&&net.ready){net.ready=false;if(net.role==='host')sendLobby();else netSend({t:'ready',v:false})} // en ligne : on n'est plus PRÊT pendant la création (la partie ne part pas sans toi)
- EBI=0;EB=E?sanitizeBuild(E.b):randomBuild(srnd(Date.now()%2147483646+1),0,'Nouveau ninja');edRebuild();ED={k:E?k:null,o:JSON.stringify(EB)};scr='edit'}
+ EBI=0;EBSN=null;EB=E?sanitizeBuild(E.b):randomBuild(srnd(Date.now()%2147483646+1),0,'Nouveau ninja');edRebuild();ED={k:E?k:null,o:JSON.stringify(EB)};scr='edit'}
 const edDirty=()=>!!ED&&!!EB&&JSON.stringify(EB)!==ED.o;
 function edSave(){EB=sanitizeBuild(EB);let k=ED.k;const E=k?rosGet(k):null;
  if(!E){const id=ROS.nid++;ROS.mine.push({id,build:EB});k='m'+id}
@@ -15760,7 +15765,7 @@ function drawFiche(E,t){const opp=scr==='opp',me=rosGet(MEK);if(!E)return;const 
   if(E.mod)tag(Math.min(x+nw+76,x+w),y-14,'RETOUCHÉ','rgba(255,179,71,.85)');y+=20;
   fitT(E.P?[E.P.full!==b.name?E.P.full:'',S[0],GALG[E.P.g]!==S[0]?GALG[E.P.g]:''].filter(Boolean).join(' · '):`Mes ninjas · créé par toi`,x,y,12.5,liftC(col,.55),w,'bold',9);y+=22;
   {const ic=[b.clan>=0?['c'+b.clan,CLANS[b.clan][1]]:['u','#c8b89a']];if(b.nat>=0)ic.push(['n'+b.nat,NATURES[b.nat][2]]);ic.forEach(([k,c2],i)=>jIcon(x+8+i*19,y-4,8,c2,k));fitT(ch.desc,x+ic.length*19+2,y,12,'#e8cfa8',w-ic.length*19-2,'normal',9)}y+=21;
-  fitT(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2)}`,x,y,13.5,'#ffd38a',w,'bold',10);y+=18;
+  fitT(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2).replace('.',',')}`,x,y,13.5,'#ffd38a',w,'bold',10);y+=18;
   {const ov=rosOver(E),cs=opp&&me&&E.k!==me.k&&b.side===me.b.side?`${CAMPS[1-b.side]} pour ce combat (camp d'en face)`:CAMPS[b.side];fitT(`Camp : ${cs} · ${b.k.length} jutsu appris (${treesOf(b).map(catName).join(', ')})`,x,y,11.5,ov?'#ff8a7a':'#b89a70',w,ov?'bold':'normal',8)}y+=20;
   const d=E.P?(E.mod?'Version retouchée. ':'')+E.P.d:'Un de tes ninjas : « Modifier » pour retoucher son apparence et son kit, « Dupliquer » pour en tester une variante.';
   wrapL(d,w,FNT(12)).slice(0,3).forEach((l,i)=>text(l,x,y+i*16,12,'#cdb898','left','normal'))}
@@ -15878,7 +15883,7 @@ function drawHud(){
   text(k,x+s/2,y+24,k.length>2?13:20,ready?'#fff':'#667','center');
   if(exS)text('EX',x+5,y+13,10,'#ffe81f','left');
   if(ab.charges)text('×'+p.chg[i],x+s-5,y+sh-5,12,'#7df','right');if(ab.ammo)text(p.ammo+'/'+ab.ammo,x+s-5,y+sh-5,11,'#ffb03a','right');
-  if(ab.cast)text(ab.mud?`${ab.mud} mudras`:`incant. ${ab.cast}s`,x+s-4,y+12,9,'#7f93b8','right','normal');hudCost(p,ab,i,x,y,s,sh);
+  if(ab.cast&&p.cds[i]<=0&&!(i&&p.energy<jcost(ab)))fitT(ab.mud?`${ab.mud} mudras`:`incant. ${fmtCd(ab.cast)}`,x+4,y+sh-5,9,'#7f93b8',s-(ab.charges||ab.ammo?30:8),'normal',7,'left');hudCost(p,ab,i,x,y,s,sh);
   if(!ab.ult&&p.cds[i]>0&&!(ab.charges&&p.chg[i]>0)){const kk=Math.min(1,p.cds[i]/ab.cd);g.fillStyle='rgba(0,0,0,.6)';g.fillRect(x,y+sh*(1-kk),s,sh*kk);text(cdTxt(p.cds[i]),x+s/2,y+42,13,'#ffe81f')}
   if(ab.ult&&!ready&&p.cds[i]<=0){const f=Math.min(1,p.energy/Math.max(1,jcost(ab)));g.fillStyle='rgba(255,232,31,.25)';g.fillRect(x,y+sh*(1-f),s,sh*f)}
   hudAbN(exS&&ab.ex?ab.ex.n:ab.n,x+s/2,y+sh+13,exS&&ab.ex?'#ffe81f':'#9fb3d9',s+gap-4)});
@@ -16050,9 +16055,10 @@ function netTick(dt){if(!coop())return;net.sendT-=dt;if(net.sendT>0)return;
   for(const P of livePeers()){if(state!=='menu'&&j===null)continue;const i=units.findIndex(u=>u.ctrl==='remote'&&u.rid===P.id);try{P.conn.send(state==='menu'?base:{t:'snap',j,you:i,mc:i>=0?units[i].cds:null,ms:i>=0&&units[i].ch.learn?units[i].ch.learn.map(k=>rd(units[i].cst[k]||0)):null,ack:P.in?P.in.seq||0:0})}catch(e){}}
   net.ev={fx:[],txt:[],snd:[],sp:[],ci:[]}}
  else if(net.live){net.sendT=0;const I=localInput();netSend({t:'in',seq:net.seq,mx:I.mx,my:I.my,ax:rd(I.ax),ay:rd(I.ay),l:!!mouse.l,p:Object.keys(net.gp),sh:!!I.sh,f:!!I.f,r:!!I.r,cx:rd(cam.x),cy:rd(cam.y)});net.gp={}}}
-function loop(now){const dt=Math.min(.033,(now-last)/1000);last=now;try{BMUI.frame(dt)}catch(e){console.error(e)}
- if(isGuest()&&net.live)guestFrame(dt*GSPEED);else if(quitOn&&!coop()&&state!=='menu'){}else{const udt=hs>0?0:dt;hs=Math.max(0,hs-dt);update(udt*GSPEED)}
- netTick(dt);draw();backB.hidden=state!=='menu';rosQSync();quitB.hidden=state==='menu';if(quitOn&&state==='menu')quitUI(false);pressed={};requestAnimationFrame(loop)}
+function loop(now){const raw=Math.max(0,Math.min(.1,(now-last)/1000)),ns=state==='menu'?1:Math.max(1,Math.ceil(raw/.0334)),dt=Math.min(.033,raw/ns);last=now;try{BMUI.frame(dt*ns)}catch(e){console.error(e)}
+ const P0=pressed;for(let si=0;si<ns;si++){if(si)pressed={};
+ if(isGuest()&&net.live)guestFrame(dt*GSPEED);else if(quitOn&&!coop()&&state!=='menu'){}else{const udt=hs>0?0:dt;hs=Math.max(0,hs-dt);update(udt*GSPEED)}}pressed=P0;
+ netTick(dt*ns);draw();backB.hidden=state!=='menu';rosQSync();quitB.hidden=state==='menu';if(quitOn&&state==='menu')quitUI(false);pressed={};requestAnimationFrame(loop)}
 // quitter une partie en cours : bouton en haut à gauche ou Échap ; en solo la partie est en pause pendant la question
 const quitB=document.getElementById('quitB');let quitOn=false;
 function quitUI(v){quitOn=v;$('quitD').hidden=!v;if(v){$('quitN').textContent=isGuest()?'Tu quittes le salon : un bot prend ta place.':coop()?'Tu es l\'hôte : la partie s\'arrête pour tout le monde et vous revenez au salon. Elle continue tant que tu n\'as pas choisi.':'La partie est en pause.';$('qNo').focus()}else document.activeElement&&document.activeElement.blur()}

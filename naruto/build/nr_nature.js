@@ -18,7 +18,7 @@ function chanAb(key){return function(u,a,t){const i=u.ch.abil.findIndex(x=>x&&x.
  if(u.chan&&u.chan.key===key){releaseChan(u);return}const p=fwd(u,a,Math.min(t||300,480));u.chan={key,i,x:p.x,y:p.y,r:150,t:0,max:3,cd:u.ch.abil[i].cd};u.cds[i]=.3;
  aux.push({type:'chan',x:p.x,y:p.y,r:150,t:3.3,m:3.3,team:u.team,owner:u,vfx:'fire',k:0})}}
 function releaseChan(u){const c=u.chan;if(!c)return;u.chan=null;u.cds[c.i]=c.cd;const pow=1+1.6*Math.min(1,c.t/c.max);VFX='fire';aoe(u,c.x,c.y,c.r,26*pow,{dot:BURN(5,3),unblockable:1},'#ff7a2a');field(u,c.x,c.y,{r:c.r,t:2.5,dps:6*pow,col:'#ff7a2a',vfx:'fire'});detoFx(c.x,c.y,c.r,'fire');if(near(c.x,c.y)){shake=Math.max(shake,.35);S('boom',u)}VFX=null;
- for(const x of aux)if(x.type==='chan'&&x.owner===u)x.t=0;say(u,'NUÉE ARDENTE ×'+pow.toFixed(1),'#ff9a3a')}
+ for(const x of aux)if(x.type==='chan'&&x.owner===u)x.t=0;say(u,'NUÉE ARDENTE ×'+pow.toFixed(1).replace('.',','),'#ff9a3a')}
 const NAT={}; // mécaniques sur mesure des jutsu (remplies par kits/*.js)
 // stats de référence (pour les PV / la puissance du ninja) : un perso Star Wars proche dans l'esprit
 const NATHERO={}; // stats de référence par préfixe (rempli par les kits)

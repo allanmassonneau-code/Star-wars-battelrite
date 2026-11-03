@@ -13,7 +13,7 @@ const RKB_CD0={D:[4,7],C:[6,10],B:[8,12],A:[11,16],S:[18,24]};
 // Compteurs en direct affichés en secondes réelles (CDLIVE_REEL) : un « 100 s » part de 100 et atteint 0 au bout de 100 s réelles. Dash, Kawarimi, soin, attaque de base :
 // durées internes inchangées, seul leur affichage nominal passe en secondes réelles (même règle pour tous).
 const rtIn=v=>Math.round(v*GSPEED*1000)/1000,rtOut=v=>Math.round(v/GSPEED*1000)/1000,CDLIVE_REEL=true;
-const cdTxt=v=>(v=CDLIVE_REEL?v/GSPEED:v)>=10?String(Math.ceil(v)):v.toFixed(1).replace('.',','); // recharge restante affichée en direct (HUD, roue des barres de B, minuterie du Kawarimi) : secondes réelles (CDLIVE_REEL), entières au-dessus de 10 s, virgule décimale
+const cdTxt=v=>(v=CDLIVE_REEL?v/GSPEED:v)>=10?String(Math.round(v)):v.toFixed(1).replace('.',','); // recharge restante affichée en direct (HUD, roue des barres de B, minuterie du Kawarimi) : secondes réelles (CDLIVE_REEL), entières (arrondies : un « 23,3 s » des menus part de 23, un « 100 s » de 100) au-dessus de 10 s, virgule décimale en dessous
 const rkCdR=(r,cd,libre)=>{const o=RKB_CD0[r],R=RKB[r];if(!o||!R||typeof cd!=='number'||!isFinite(cd))return cd;const [a,b]=o,[c,d]=R.cd;
  const v=cd<a?(libre?c*cd/a:c):cd>b?(libre?d*cd/b:d):c+(cd-a)/(b-a)*(d-c);return Math.round(v*10)/10};
 const rkCd=(r,cd,libre)=>{const v=rkCdR(r,cd,libre);return typeof v==='number'&&isFinite(v)?rtIn(v):v}; // recharge INTERNE (secondes de jeu) d'une valeur de l'ancien barème

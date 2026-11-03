@@ -1,6 +1,6 @@
 // ===================== ROUE DES BARRES FAVORITES (touche B maintenue) : le combat continue, rien n'est mis en pause =====================
 // Les barres se font dans la création du perso (1 à BARSMAX barres de 6, build v6 : ch.build.bars). En combat :
-// B maintenu = la roue s'ouvre au milieu de l'écran (nom + 6 icônes de chaque barre, ✓ = équipée, cadre orange = surlignée) ;
+// B maintenu = la roue s'ouvre en haut de l'écran, en rangée (le centre, où la caméra garde le ninja, reste dégagé) (nom + 6 icônes de chaque barre, ✓ = équipée, cadre orange = surlignée) ;
 // molette haut / bas = surligner la barre précédente / suivante (ZQSD, clics et 1-6 restent au ninja) ;
 // B relâché = la barre surlignée est équipée si on a tourné la molette et qu'elle n'est pas déjà à l'écran (un simple appui sur B ne change rien) ; Échap = fermer sans rien changer.
 // Le changement suit les règles de setBar (nr_bar.js) : les recharges suivent les jutsu, un jutsu qui entre attend au moins CDLOCK = 2 s de jeu (2,5 s réelles), un jutsu en cours n'est jamais coupé (« en attente »).
@@ -50,19 +50,18 @@ function rbHud(){const L=barsOf(player),c=favCur(player),p=rbPend(),y=H-82;
  const pn=p>=0?` · « ${L[p].n} » en attente…`:'';
  const s=L.length>1?`Barre « ${c>=0?L[c].n:'perso'} » ${c>=0?c+1:'–'}/${L.length}${pn} · ${lbl.KeyB} maintenu + molette : changer de barre`:`Barre « ${L[0].n} » · ajoute d'autres barres dans la création du perso (roue : ${lbl.KeyB})`;
  if(state==='fight'||state==='countdown')fitT(s,W/2,y,10.5,p>=0?'rgba(255,179,71,.9)':'rgba(159,179,217,.6)',760,'normal',8.5,'center')}
-// place des cartes autour du centre : 1 en haut ; 2 haut / bas ; 3 en triangle ; 4 en croix (haut, droite, bas, gauche)
-const RBC={w:262,h:84,cx:()=>W/2,cy:()=>H/2-20};
-function rbPos(i,n){const cx=RBC.cx(),cy=RBC.cy();if(n===1)return{x:cx,y:cy-120};if(n===2)return{x:cx,y:cy+(i?120:-120)};
- const a=-Math.PI/2+i*2*Math.PI/n,rx=n===3?230:262,ry=n===3?118:132;return{x:cx+Math.cos(a)*rx,y:cy+Math.sin(a)*ry}}
-function rbDraw(){const L=barsOf(player),n=L.length,cur=favCur(player),pd=rbPend(),cx=RBC.cx(),cy=RBC.cy(),t=performance.now()/1000,k=Math.min(1,(performance.now()-RB.t0)/120);
+// place des cartes : une rangée en HAUT de l'écran (sous les scores), jamais au centre : la caméra suit le joueur, son ninja et l'ennemi au contact
+// restent visibles pendant le choix (le combat continue). Cartes de gauche à droite dans l'ordre des barres ; la surlignée descend un peu (effet de roue).
+const RBC={w:262,h:84,gap:14,cy:()=>156,hy:()=>97};
+function rbPos(i,n){const w=n*RBC.w+(n-1)*RBC.gap;return{x:W/2-w/2+RBC.w/2+i*(RBC.w+RBC.gap),y:RBC.cy()}}
+function rbDraw(){const L=barsOf(player),n=L.length,cur=favCur(player),pd=rbPend(),t=performance.now()/1000,k=Math.min(1,(performance.now()-RB.t0)/120);
  g.save();g.globalAlpha=k;
- {const gr=g.createRadialGradient(cx,cy,40,cx,cy,420);gr.addColorStop(0,'rgba(0,0,0,.5)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(cx-440,cy-300,880,600)}
- // rayon vers la barre surlignée
- {const P=rbPos(RB.hi,n);g.strokeStyle=rgba('#ffb347',.55);g.lineWidth=3;g.setLineDash([7,6]);g.lineDashOffset=-t*30;const a=Math.atan2(P.y-cy,P.x-cx);g.beginPath();g.moveTo(cx+Math.cos(a)*58,cy+Math.sin(a)*58);g.lineTo(P.x,P.y);g.stroke();g.setLineDash([])}
- // centre
- {g.save();g.shadowColor='#ff9a3a';g.shadowBlur=18;g.fillStyle='rgba(20,13,8,.92)';g.beginPath();g.arc(cx,cy,54,0,7);g.fill();g.restore();g.strokeStyle='#ff9a3a';g.lineWidth=2;g.beginPath();g.arc(cx,cy,54,0,7);g.stroke();
-  text(lbl.KeyB||'B',cx,cy-10,24,'#ffb347','center');text(`${RB.hi+1} / ${n}`,cx,cy+12,12,'#f3d9b0','center');fitT(n>1?'molette':'1 seule barre',cx,cy+28,10,'#a89070',96,'normal',8,'center')}
- L.forEach((q,i)=>{const P=rbPos(i,n),hi=i===RB.hi,on=i===cur,pe=i===pd,s=hi?1.06:1,w=RBC.w*s,h=RBC.h*s,R={x:P.x-w/2,y:P.y-h/2,w,h};
+ // voile sombre seulement sur la bande du haut (le centre de l'écran reste net)
+ {const y0=74,y1=226,gr=g.createLinearGradient(0,y0,0,y1);gr.addColorStop(0,'rgba(0,0,0,0)');gr.addColorStop(.18,'rgba(0,0,0,.42)');gr.addColorStop(.8,'rgba(0,0,0,.34)');gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(0,y0,W,y1-y0)}
+ // en-tête : touche, n° surligné / total, aide
+ {const hy=RBC.hy(),s=n>1?`${lbl.KeyB||'B'} maintenu · barre ${RB.hi+1}/${n} · molette : choisir · relâcher ${lbl.KeyB||'B'} : équiper · Échap : annuler · le combat continue`:`Une seule barre : ajoutes-en (jusqu'à ${BARSMAX}) dans la création du perso`;
+  g.font=FNT(12,'bold');const w=Math.min(820,g.measureText(s).width+30);g.save();g.shadowColor='#ff9a3a';g.shadowBlur=10;rr({x:W/2-w/2,y:hy-13,w,h:24},12,'rgba(20,13,8,.92)','#ff9a3a',1.4);g.restore();fitT(s,W/2,hy+4,12,'#f3d9b0',w-20,'bold',9,'center')}
+ L.forEach((q,i)=>{const P0=rbPos(i,n),hi=i===RB.hi,P=hi?{x:P0.x,y:P0.y+6}:P0,on=i===cur,pe=i===pd,s=hi?1.06:1,w=RBC.w*s,h=RBC.h*s,R={x:P.x-w/2,y:P.y-h/2,w,h};
   g.save();if(hi){g.shadowColor='#ffb347';g.shadowBlur=22}rr(R,12,hi?'rgba(60,38,18,.96)':'rgba(16,11,8,.9)',hi?'#ffb347':on?'#5fd35f':pe?'#ffb347':'rgba(140,100,60,.7)',hi?3:on?2:1.2);g.restore();
   // en-tête : n°, nom, état
   rr({x:R.x+8,y:R.y+7,w:20,h:18},5,hi?'#ffb347':'rgba(80,56,30,.95)');text(String(i+1),R.x+18,R.y+20.5,12,hi?'#1a1008':'#f3d9b0','center');
@@ -75,7 +74,4 @@ function rbDraw(){const L=barsOf(player),n=L.length,cur=favCur(player),pd=rbPend
    if(!J){text('·',C.x+C.w/2,C.y+C.h/2+5,13,'#5a6680','center');continue}
    jIcon(C.x+C.w/2,C.y+C.h/2,Math.min(13,C.h*.34),catCol(J.cat),J.cat,J.r==='S');text(J.r,C.x+C.w-4,C.y+11,9,RANKC[J.r]||'#cfd8ea','right');
    const rem=remCd(player,j);if(rem>0){g.fillStyle='rgba(0,0,0,.55)';g.beginPath();g.roundRect(C.x,C.y,C.w,C.h,6);g.fill();text(cdTxt(rem),C.x+C.w/2,C.y+C.h/2+5,12,'#ffe81f','center')}}});
- // aide
- {const s=n>1?`Molette : choisir · relâcher ${lbl.KeyB} : équiper la barre surlignée · Échap : annuler · le combat continue`:'Une seule barre : ajoutes-en (jusqu\'à '+BARSMAX+') dans la création du perso';
-  const y=cy+(n===1?40:n===2?190:n===3?150:200);g.font=FNT(12,'bold');const w=Math.min(720,g.measureText(s).width+30);rr({x:cx-w/2,y:y-16,w,h:24},12,'rgba(14,10,8,.8)','rgba(255,154,58,.5)',1);fitT(s,cx,y+1,12,'#f3d9b0',w-20,'bold',9,'center')}
  g.restore()}
