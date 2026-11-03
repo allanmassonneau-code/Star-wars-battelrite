@@ -15,7 +15,7 @@ KIT('n3',[
  ['A','x.ra_chidori','Chidori','Fonce, la foudre au poing : le premier ennemi touché subit un coup imparable, est projeté et étourdi','chidori'],
  ['A','x.ra_storm','Raiton : Orage','Nuage d\'orage : sa pluie trempe les ennemis (foudre +35 %) et 3 éclairs frappent ceux restés dessous','lightning'],
  ['S','x.ra_kirin','Raiton : Kirin','Un orage couvre la zone ; peu après, Kirin foudroie l\'ennemi le plus au centre : énormes dégâts, étourdit','kirin'],
- ['S','x.ra_armor','Raiton : Armure de foudre','Étourdit autour de toi, puis 7 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s','lightning'],
+ ['S','x.ra_armor','Raiton : Armure de foudre','Étourdit autour de toi, puis 5,5 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s','lightning'],
 ]);
 DASHN[3]={src:'x.ra_step',n:'Raiton : Pas de l\'éclair',d:'Fonce en éclair à travers les ennemis (7 dégâts, ralentit) en laissant une courte traînée électrique qui ralentit',vfx:'lightning',cd:7};
 // ---- outils de la foudre
@@ -96,7 +96,7 @@ Object.assign(NAT,{
   aux.push({type:'ra_kirin',x:p.x,y:p.y,r:200,t:.8,m:.8,team:u.team,owner:u,vfx:'kirin',k:0,danger:1});jx({jfx:'ra_cloud',x:p.x,y:p.y,r:200,kir:1,c:'#bfe6ff',t:.85,m:.85});
   anim(u,'ra_kirin',.8);raS('zap',u);raS('wind',u)}),
  // ---- armure de foudre (Raikage) : l'armure jaillit (étourdit autour), puis vitesse, force, réflexes, rien ne la retient
- ra_armor:SP('Raiton : Armure de foudre','Étourdit autour de toi, puis 7 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s',20,{ai:SELF(320,.8)},(u)=>{const D=7;
+ ra_armor:SP('Raiton : Armure de foudre','Étourdit autour de toi, puis 5,5 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s',20,{ai:SELF(320,.8)},(u)=>{const D=5.5;
   u.haste=Math.max(u.haste,D);u.rage=Math.max(u.rage,D);u.slowImm=Math.max(u.slowImm,D);u.slow=0;u.root=0;u.dodge=Math.max(u.dodge,D);aoe(u,u.x,u.y,110,12,{stun:.5},'#bfe6ff');
   for(const x of aux)if(x.type==='ra_armor'&&x.owner===u)x.t=0;aux.push({type:'ra_armor',x:u.x,y:u.y,r:0,t:D,m:D,team:u.team,owner:u,k:2});
   jx({jfx:'ra_armor',ui:raUi(u),x:u.x,y:u.y,t:D,m:D});jx({jfx:'ra_armorburst',ui:raUi(u),x:u.x,y:u.y,t:.6,m:.6});anim(u,'ra_flex',.6);raS('chidori',u);raS('heavy',u)}),

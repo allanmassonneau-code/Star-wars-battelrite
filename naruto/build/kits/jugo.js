@@ -58,11 +58,20 @@ TRAITS[27]={nom:'Fureur naturelle',desc:'Frapper et encaisser remplit ta fureur 
  take(t,src,dmg,o){if(src&&src!==t&&dmg>0)jgRage(t,dmg*.5);return dmg},
  draw(u,p,S,sk){const t=performance.now()/1000,b=u.jg_b>0,f=(u.jg_f||0)/100;sk=sk||1;g.save();
   if(b){g.globalCompositeOperation='lighter';for(let i=0;i<7;i++){const a=i*.9+t*3,x=p.x+Math.cos(a)*14*S*sk,y=p.y-(10+((t*60+i*13)%50))*S;g.fillStyle=rgba(i%2?JGC.b:'#ff5a1a',.6);g.beginPath();g.moveTo(x-3*S,y);g.quadraticCurveTo(x,y-12*S,x+3*S,y);g.fill()}
-   g.globalCompositeOperation='source-over';g.fillStyle=rgba('#3a1a0a',.55);for(const [dx,dy,r] of[[-7,-50,4],[6,-44,3.4],[-3,-36,3],[8,-30,2.6]]){g.beginPath();g.arc(p.x+dx*S*sk,p.y+dy*S*sk,r*S,0,7);g.fill()}}
+   g.globalCompositeOperation='source-over';jgLimbs(u,p,S*sk,t);g.fillStyle=rgba('#3a1a0a',.55);for(const [dx,dy,r] of[[-7,-50,4],[6,-44,3.4],[-3,-36,3],[8,-30,2.6]]){g.beginPath();g.arc(p.x+dx*S*sk,p.y+dy*S*sk,r*S,0,7);g.fill()}}
   else if(f>.5){g.fillStyle=rgba(JGC.b,(f-.5)*.6);g.beginPath();g.ellipse(p.x,p.y,(16+f*8)*S*sk,(5+f*2)*S*sk,0,0,7);g.fill()}g.restore()},
  prev(u,p,S,front){if(front)TRAITS[27].draw(Object.assign({},u,{jg_b:1}),p,S,1)},
  hud(u,x,y){const f=Math.round(u.jg_f||0),b=u.jg_b>0,n=Math.round(f/10);gkHud(u,x,y,'Fureur naturelle · '+(b?'TRANSFORMÉ':'▮'.repeat(n)+'▯'.repeat(10-n)),null,0,b?'#ffb04a':f>=60?JGC.b:'#c89a6a','#c89a6a')}};
 AFTER.push(()=>UK.push('jg_f','jg_b'));
+// membres mutés de la transformation : un bras-massue hérissé à chaque épaule (celui du côté de la visée pointe vers elle, l'autre pend), qui se balancent ; trois pointes osseuses dans le dos
+function jgLimbs(u,p,S,t){const A=u.aim||0,ax=Math.cos(A),ay=Math.sin(A)*.6;
+ const sp=(x,y,a,l,w)=>{g.beginPath();g.moveTo(x+Math.cos(a+1.57)*w,y+Math.sin(a+1.57)*w);g.lineTo(x+Math.cos(a)*l,y+Math.sin(a)*l);g.lineTo(x+Math.cos(a-1.57)*w,y+Math.sin(a-1.57)*w);g.closePath();g.fill();g.stroke()};
+ g.fillStyle='#4a2a14';g.strokeStyle='#1e0e06';g.lineWidth=S;for(const [x0,a,h] of[[-7,-1.9,16],[0,-1.57,22],[7,-1.24,16]])sp(p.x+x0*S,p.y-50*S,a,h*S,3.2*S);
+ for(const sd of[-1,1]){const fw=sd*ax>0,sw=Math.sin(t*5+sd*1.3)*.16,base=fw?Math.atan2(ay*.7+.45,ax):Math.atan2(1,sd*.35),a=base+sw,ox=p.x+sd*13*S,oy=p.y-42*S,L=(fw?27:20)*S,ex=ox+Math.cos(a)*L,ey=oy+Math.sin(a)*L,nx=-Math.sin(a),ny=Math.cos(a),R=(fw?9:7)*S;
+  g.fillStyle='#7a5434';g.strokeStyle='#2a140a';g.lineWidth=1.3*S;g.beginPath();g.moveTo(ox+nx*4*S,oy+ny*4*S);g.lineTo(ex+nx*R*.8,ey+ny*R*.8);g.lineTo(ex-nx*R*.8,ey-ny*R*.8);g.lineTo(ox-nx*4*S,oy-ny*4*S);g.closePath();g.fill();g.stroke();
+  g.fillStyle='#4a2a14';for(const k of[-1,0,1])sp(ex+Math.cos(a+k*.9)*R*.7,ey+Math.sin(a+k*.9)*R*.7,a+k*.9,R*.95,2.6*S);
+  g.fillStyle='#8a6040';g.beginPath();g.arc(ex,ey,R,0,7);g.fill();g.stroke();
+  g.strokeStyle=rgba('#ff8a2a',.6+.3*Math.sin(t*9+sd));g.lineWidth=1.5*S;g.beginPath();g.moveTo(ox+Math.cos(a)*5*S,oy+Math.sin(a)*5*S);g.lineTo(ex-Math.cos(a)*R*.3+nx*2*S,ey-Math.sin(a)*R*.3+ny*2*S);g.lineTo(ex+nx*R*.5,ey+ny*R*.5);g.stroke()}}
 // ---- apparence : yeux ambrés, marque maudite au visage (sauf autre marque choisie), carrure un peu plus massive
 CLOOK[27]=(look)=>{const h=look.head;h.eye=h.eye||'#e8902a';if(!h.face)h.face='maudite';look.scale=Math.max(look.scale||1,1.06)};
 // ---- visuels

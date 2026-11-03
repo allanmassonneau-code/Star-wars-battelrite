@@ -344,7 +344,9 @@ rep("eBar(30,59,360,p.energy/100);","eBar(30,59,360,p.energy/100);{const T=trait
 rep('<script src="peerjs.min.js','<script src="three.min.js"></script>\n<script src="peerjs.min.js')
 rep("function draw(){\n fit();g.setTransform(RS,0,0,RS,0,0);g.imageSmoothingEnabled=true;","function draw(){\n fit();g.setTransform(RS,0,0,RS,0,0);g.imageSmoothingEnabled=true;render3D();")
 # barre de vie et nom au-dessus des persos : suit la taille choisie (bh)
-rep("const top=p.y-(100*sk)*p.s;","const top=p.y-(100*sk*(u.ch.look&&u.ch.look.bh||1))*p.s;")
+# ellipse au sol : rayon borné à 0 (un cercle d'alerte qui rétrécit, ou une projection à échelle négative, levait « radius is negative » et coupait l'image)
+rep("function gEll(x,y,r,a0=0,a1=7){const p=P(x,y);g.beginPath();g.ellipse(p.x,p.y,r*p.s,r*p.s*K,0,a0,a1)}","function gEll(x,y,r,a0=0,a1=7){const p=P(x,y),R=Math.max(0,r*p.s)||0;g.beginPath();g.ellipse(p.x,p.y,R,R*K,0,a0,a1)}")
+rep("const top=p.y-(100*sk)*p.s;","const top=p.y-(100*sk*(u.ch.look&&u.ch.look.bh||1)*(u.giant>0?1.32:1))*p.s;") # géant : la barre de PV passe au-dessus de la tête agrandie
 rep("drawChar(u,p.x,p.y,S2)","drawChar3(u,p.x,p.y,S2)")
 # textes flottants : un nouveau texte qui chevauche un texte récent du même endroit monte d'une ligne (« ENTRAVÉ » puis « COLLÉ » lisibles)
 rep(" for(const t of txt){const p=P(t.x,t.y,t.z);"," txtLay();for(const t of txt){const p=P(t.x,t.y,t.z);")

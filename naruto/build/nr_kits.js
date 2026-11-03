@@ -69,7 +69,9 @@ const trait=u=>u&&u.ch&&(u.ch.clan<0&&kgOk(u.ch.kg)?KGTRAITS[u.ch.kg]:TRAITS[u.c
 const traitOfB=b=>b&&(b.clan<0&&kgOk(b.kg)?KGTRAITS[b.kg]:TRAITS[b.clan])||null;
 function traitDmg(t,src,dmg,o){const a=src&&src!==t?trait(src):null,d=trait(t);if(a&&a.deal)dmg=a.deal(src,t,dmg,o);if(dmg>=0&&d&&d.take)dmg=d.take(t,src,dmg,o);if(dmg>=0&&a&&a.landed)a.landed(src,t,dmg,o);return dmg} // landed : effets de l'attaquant une fois le coup confirmé par la défense
 // nom d'un jutsu sous sa case du HUD : rétréci jusqu'à 8 ; encore trop long, on garde ce qui suit « : » (« Lune de sang »), puis « … »
-function hudAbN(s,x,y,col,w){s=String(s);g.font=FNT(8,'normal');if(g.measureText(s).width>w&&s.includes(' : '))s=s.slice(s.lastIndexOf(' : ')+3);fitT(s,x,y,10,col,w,'normal',8,'center')}
+// un préfixe qui ne fait que nommer l'arbre (« Katon : », « Kiminari : », « Mokuton : »…) est toujours retiré : l'icône de la case montre déjà l'arbre, et tous les noms se lisent de la même façon
+let HUDPX=null;const hudPx=()=>HUDPX||(HUDPX=new Set([...NATURES.map(n=>n[0]),...KGS.map(k=>k.n),...CLANS.map(c=>c[0]),'Mokuton','Genjutsu','Senjutsu','Fûinjutsu','Iryô','Kuchiyose','Ninjutsu','Taijutsu','Kenjutsu','Bukijutsu']));
+function hudAbN(s,x,y,col,w){s=String(s);const i=s.indexOf(' : ');if(i>0&&hudPx().has(s.slice(0,i)))s=s.slice(i+3);g.font=FNT(8,'normal');if(g.measureText(s).width>w&&s.includes(' : '))s=s.slice(s.lastIndexOf(' : ')+3);fitT(s,x,y,10,col,w,'normal',8,'center')}
 function txtLay(){const W0=t=>String(t.s).length*4.6+6;for(let i=0;i<txt.length;i++){const t=txt[i];if(t.ly)continue;t.ly=1;
  for(let n=0;n<6;n++){let hit=false;for(let j=0;j<txt.length;j++){const o=txt[j];if(j===i||!o.ly)continue;if(Math.abs(o.y-t.y)<26&&Math.abs(o.z-t.z)<15&&Math.abs(o.x-t.x)<W0(o)+W0(t)){hit=true;break}}if(!hit)break;t.z+=16}}}
 function drawBackN(u,p,S,sk){if(u.dead)return;const T=trait(u);if(T&&T.drawB)T.drawB(u,p,S,sk)} // dessins de trait DERRIÈRE le ninja (avant drawChar3)

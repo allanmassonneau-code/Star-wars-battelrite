@@ -139,7 +139,8 @@ function btn(R,label,on,col='#ff9a3a'){const h=inRect(mouse,R)&&picker===null;rr
 let tipK=null,tipT0=0,TIP=null;
 const hoverTip=(k,f)=>{if(k!==tipK){tipK=k;tipT0=performance.now()}TIP=f};
 function drawTip(){if(!TIP){tipK=null;return}if(performance.now()-tipT0<300)return;const T=TIP(),w=380,F=FNT(12);const L=wrapL(T.d,w-24,F),extra=T.l||[];
- const h=34+extra.length*16+L.length*15+(T.f?20:0);let x=mouse.x+18,y=mouse.y+18;if(x+w>W-8)x=mouse.x-w-14;if(y+h>H-8)y=Math.max(8,H-8-h);
+ const h=34+extra.length*16+L.length*15+(T.f?20:0);const yM=state==='menu'&&scr==='edit'&&mouse.y<650?650:H-8; // assistant : l'infobulle d'une carte ne couvre pas les boutons du bas (Retour, Aléatoire, Suivant)
+ let x=mouse.x+18,y=mouse.y+18;if(x+w>W-8)x=mouse.x-w-14;if(y+h>yM)y=Math.max(8,yM-h);
  if(T.ax!=null){x=Math.max(8,T.ax-w-10);y=clamp(mouse.y-20,8,Math.max(8,H-8-h))} // ancrée à gauche d'un panneau
  g.save();g.shadowColor='rgba(0,0,0,.6)';g.shadowBlur=14;rr({x,y,w,h},8,'rgba(18,12,8,.98)',T.col||'#ffb347',1.5);g.restore();
  fitT(T.t,x+12,y+22,15,T.col||'#ffd38a',w-24,'bold',11);let yy=y+40;for(const [s,c] of extra){fitT(s,x+12,yy,11.5,c||'#d8b888',w-24,'normal',9);yy+=16}
@@ -177,7 +178,9 @@ function applyPick(it){const p=picker;
  if(p===0){EB.w=it.v;picker=null}
  else if(typeof p==='number'&&p>=BAR0&&p<BAR0+BARN){const s0=p-BAR0;if(it.v==='clear')crB()[s0]=-1;else{crLearn(it.v);const B=crB();const t=B.indexOf(it.v);if(t>=0&&t!==s0)B[t]=B[s0];B[s0]=it.v}picker=null}
  else if(p===DASHI){EB.dsh=it.v;picker=null}
- else if(p==='preset'){picker=null;applyPreset(it.v);WZ.max=WZN-1;WZ.rev.clear();crSay(`Modèle « ${PRESETS[it.v].full} » repris : toutes les étapes sont ouvertes, retouche ce que tu veux`,'#8fe38f');return}
+ else if(p==='preset'){picker=null;const P=PRESETS[it.v],go=()=>{applyPreset(it.v);WZ.max=WZN-1;WZ.rev.clear();WZ.keep=null;CRHOLE=[];crSay(`Modèle « ${P.full} » repris : toutes les étapes sont ouvertes, retouche ce que tu veux`,'#8fe38f')};
+  // un perso déjà commencé (ou déjà enregistré) : son kit et son apparence seraient écrasés, on confirme d'abord
+  if(edDirty()||ED&&ED.k||WZ.max>0)CONF={t:`Partir de ${P.full} ?`,d:`Ton origine, ta nature, ton style, tes jutsu, tes barres et ton apparence actuels sont remplacés par ceux de ${P.full}. `+(ED&&ED.k||!(['','Ninja','Nouveau ninja'].includes(EB.name||'')||PRESETS.some(q=>q.n===EB.name)||ED&&EB.name===ED.auto)?'Ton nom et ton camp sont gardés.':'Ton camp est gardé.'),ok:'Reprendre ce modèle',no:'Garder mon perso',col:'#ffb347',fn:go};else go();return}
  else{setB(p,it.v);if(!p.startsWith('l.'))picker=null}
  edRebuild()}
 try{cv.addEventListener('wheel',e=>{if(state==='menu'&&picker!==null){pickScroll+=e.deltaY*(e.deltaMode?40:1);e.preventDefault()}},{passive:false})}catch(e){}

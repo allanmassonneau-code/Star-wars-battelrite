@@ -8,8 +8,8 @@ function gkPal(v,a,b,c,d){GK[v]={a,b,c,d};AFTER.push(()=>{VP[v]=[b,a,c]})}
 const gkI=u=>units.indexOf(u);
 const gkIn=(e,x,y,r)=>Math.hypot(e.x-x,e.y-y)<r+e.r;
 // coup aux couleurs du KG (VFX = clé du KG : le trait reconnaît ses propres jutsu, même dans les effets différés)
-function gkHit(e,u,d,o,v){const V=VFX;VFX=v;const r=hit(e,u,d,o||{});VFX=V;return r}
-function gkS(k,u){const V=VFX;VFX=null;S(k,u);VFX=V} // son brut (sans variante d'élément)
+function gkHit(e,u,d,o,v){const V=VFX;VFX=v;try{return hit(e,u,d,o||{})}finally{VFX=V}}
+function gkS(k,u){const V=VFX;VFX=null;try{S(k,u)}finally{VFX=V}} // son brut (sans variante d'élément)
 function gkAoe(u,x,y,r,d,o,v,cb){let n=0;for(const e of enemies(u))if(gkIn(e,x,y,r)&&gkHit(e,u,d,Object.assign({fx:x,fy:y,unblockable:1},o),v)){n++;if(cb)cb(e)}return n}
 // le jutsu en cours vient-il de ce KG ? (VFX posé par fire et par gkHit)
 const gkMine=v=>VFX===v;

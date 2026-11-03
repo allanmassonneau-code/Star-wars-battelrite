@@ -47,7 +47,7 @@ TRAITS[25]={nom:'Écho de l\'illusion',desc:'Tes genjutsu font mal deux fois : 1
  update(u,dt){for(const e of units)if(e.kr_e>0&&e.kr_eo===u)e.kr_e=Math.max(0,e.kr_e-dt)},
  draw(u,p,S,sk){const t=performance.now()/1000;g.save();for(let i=0;i<5;i++){const b=t*.9+i*1.26,h=((t*18+i*12)%56)*S,x=p.x+Math.cos(b)*18*S*(sk||1),y=p.y-h;g.globalAlpha=Math.max(0,1-h/(56*S))*.85;g.fillStyle=i%2?KRC.b:KRC.a;g.beginPath();g.ellipse(x,y,3.2*S,1.6*S,b*2,0,7);g.fill()}g.restore()},
  prev(u,p,S,front){if(front)TRAITS[25].draw(u,p,S,1)},
- hud(u,x,y){let n=0;for(const e of units)if(!e.dead&&e.team!==u.team&&e.kr_e>0)n++;gkHud(u,x,y,'Écho de l\'illusion'+(n?' · écho en route':''),null,0,KRC.a,'#e8a8d8')}};
+ hud(u,x,y){let n=0;for(const e of units)if(!e.dead&&e.team!==u.team&&e.kr_e>0&&(e.kr_eo===u||e.kr_eo==null))n++; /* ses échos à lui (kr_eo n'existe que chez l'hôte) */gkHud(u,x,y,'Écho de l\'illusion'+(n?' · écho en route':''),null,0,KRC.a,'#e8a8d8')}};
 AFTER.push(()=>UK.push('kr_e'));
 // cible qui attend son écho : silhouette rose qui tremble
 STATD.push((u,p,S)=>{if(!(u.kr_e>0)||u.dead)return;const t=performance.now()/1000;g.save();g.strokeStyle=rgba(KRC.b,.55*Math.min(1,u.kr_e*2));g.lineWidth=1.5;const j=Math.sin(t*40)*2*S;g.beginPath();g.ellipse(p.x+j,p.y-32*S,13*S,30*S,0,0,7);g.stroke();g.restore()});

@@ -11,15 +11,18 @@ const WZS=[['Identité','Ton nom et ton camp, ou un perso de l\'anime comme poin
  ['Barres','Tes barres de 6 jutsu (touches 1 à 6, roue de B en combat) et ton dash'],['Apparence','Tête, corps, tenue, équipement : l\'aperçu à droite suit'],['Résumé','Tout vérifier, puis enregistrer']];
 const WZN=WZS.length;
 // WZ : s étape affichée, max dernière étape ouverte, sc défilement (liste des sub, styles), tab onglet de l'étape Jutsu, q / rk / fm filtres des sub (texte, rang, famille), rev étapes à revoir
-let WZ={s:0,max:0,sc:0,tab:null,q:'',rk:'',fm:-1,rev:new Set()};
+let WZ={s:0,max:0,sc:0,tab:null,q:'',rk:'',fm:-1,rev:new Set(),keep:null}; // keep : nature / style d'avant un clan martial
 const WZC={x:30,y:112,w:850,h:532},WZP={x:894,y:112,w:356,h:532},WCT=176,WX=42,WW=826,WBOT=WZC.y+WZC.h-8;
 const wzStepR=i=>{const w=(1220-7*8)/8;return{x:30+i*(w+8),y:52,w,h:40}};
 const wzBack={x:30,y:658,w:190,h:44},wzRnd={x:232,y:658,w:200,h:44},wzNextB=saveBtn;
-function wzOpen(edit){CRHOLE=[];WZ={s:0,max:edit?WZN-1:0,sc:0,tab:null,q:'',rk:'',fm:-1,rev:new Set()};LTAB=0;if(WZI){WZI.value='';WZI.k=null}}
+function wzOpen(edit){CRHOLE=[];WZ={s:0,max:edit?WZN-1:0,sc:0,tab:null,q:'',rk:'',fm:-1,rev:new Set(),keep:null};LTAB=0;if(WZI){WZI.value='';WZI.k=null}}
 // ---------- étapes : validité, navigation ----------
 // étape bloquante : nom vide, sub manquant (exactement 1 par rang pour un sans-clan à sub)
+// perso de l'anime au kit canon incomplet (Deidara, Hidan, Orochimaru, Zabuza) qui garde exactement ses sub d'origine : la règle « 1 sub par rang » ne bloque pas sa retouche
+const wzSubIds=b=>(b.k||[]).filter(id=>JL[id]&&catType(JL[id].cat)==='famille').sort((x,y)=>x-y).join(',');
+function wzCanonSubs(){const E=ED&&ED.k?rosGet(ED.k):null;if(!E||!E.P||EB.clan>=0||kgOk(EB.kg))return false;const O=presetOf(E.i);return O.clan<0&&!kgOk(O.kg)&&wzSubIds(EB)===wzSubIds(O)}
 function wzErr(i){if(i===0&&!String(EB.name||'').trim())return'Donne un nom à ton ninja';
- if(i===4){const m=subMissing(EB);if(m.length)return`Il te manque ${m.length>1?'les sub de rang':'le sub de rang'} ${m.join(', ')} : il faut exactement 1 sub par rang (onglet « Sub »)`}return''}
+ if(i===4){const m=subMissing(EB);if(m.length&&!wzCanonSubs())return`Il te manque ${m.length>1?'les sub de rang':'le sub de rang'} ${m.join(', ')} : il faut exactement 1 sub par rang (onglet « Sub »)`}return''}
 function wzGo(i){i=clamp(i|0,0,WZN-1);if(i===WZ.s)return;WZ.s=i;WZ.sc=0;picker=null;WZ.rev.delete(i);if(i>WZ.max)WZ.max=i;if(i===4)WZ.tab=null;CRH=-1}
 function wzNext(){const e=wzErr(WZ.s);if(e){crSay(e,'#ff7a6a');return}if(WZ.s===WZN-1){wzSave();return}wzGo(WZ.s+1)}
 function wzPrev(){if(WZ.s>0)wzGo(WZ.s-1);else edCancel()}
@@ -33,21 +36,32 @@ const wzOrigCol=o=>o[0]==='c'?CLANS[+o.slice(1)][1]:o[0]==='g'?KGS[+o.slice(1)].
 const wzOrigIc=o=>o[0]==='c'?o:o[0]==='g'?o:'u';
 const wzOrigT=o=>o[0]==='c'?TRAITS[+o.slice(1)]:o[0]==='g'?KGTRAITS[+o.slice(1)]:TRAITS[-1];
 const wzOrigins=()=>CLANS.map((_,i)=>'c'+i).concat(['s'],KGS.map((_,i)=>i).filter(kgOk).map(i=>'g'+i));
-// ce que l'origine emporte : les jutsu de son arbre (clan, sub ou KG), l'attaque de base de clan, le dash ; nature et style restent (sauf clan martial : nature aucune, style imposé)
-function wzSetOrig(o,quiet){const cur=wzOrig(EB);if(o===cur)return;
- const go=()=>{if(o[0]==='c'){EB.clan=+o.slice(1);EB.kg=-1}else{EB.clan=-1;EB.kg=o[0]==='g'?+o.slice(1):-1}
-  if(!isMartial(EB.clan)&&EB.nat<0)EB.nat=0;const cs=clanStyle(EB.clan);if(cs>=0)EB.w=cs;EB.dsh=EB.clan>=0?'c':'b';
-  EB.k=EB.k.filter(id=>{const t=JL[id].cat[0];return t==='n'||t==='t'});edTrees();EB.bars=barsCover(EB,EB.bars||[]);edRebuild(); // les jutsu de la nouvelle origine qui n'ont pas repris une case vidée entrent dans une barre ajoutée (4 au plus)
-  for(const i of[3,4,5])if(i<=WZ.max&&i!==WZ.s)WZ.rev.add(i);
-  crSay(`${wzOrigN(o)} : ses jutsu sont pré-choisis (le 1er de chaque rang) · revois les étapes Jutsu et Barres`,'#8fe38f')};
- if(WZ.max>1&&!quiet)CONF={t:'Changer d\'origine ?',d:`Passer de « ${wzOrigN(cur)} » à « ${wzOrigN(o)} » remet à zéro les jutsu de ton origine, ton attaque de base de clan et ton dash ; tes barres sont refaites avec ce qui reste. Nature et style sont gardés.`,ok:'Changer d\'origine',no:'Garder',col:'#ffb347',fn:go};
+// ce que l'origine emporte : les jutsu de son arbre (clan, sub ou KG), l'attaque de base de clan, le dash ; nature et style restent, sauf clan martial (nature aucune, style imposé) :
+// la nature et le style d'avant un clan martial sont gardés à part (WZ.keep) et reviennent quand on en sort. Les barres sont refaites : la barre de départ commence par
+// les jutsu de la nouvelle origine (startBar), les autres couvrent le reste du kit. Le dash devient celui du clan ou du kekkei genkai.
+function wzOrigFx(o){const c=o[0]==='c'?+o.slice(1):-1,m0=isMartial(EB.clan),m1=isMartial(c),K=WZ.keep;let nat=EB.nat,st=EB.st;
+ if(m1){nat=-1;st=MARTIAL[c]}else if(m0){nat=K?K.nat:0;st=K?K.st:0}
+ return{nat,st,m0,m1}}
+function wzSubPick(){const r=srnd((Date.now()%2147483646)+1),used=new Set(),K=[];r(); // sub de départ d'un sans-clan à sub : 1 par rang, de familles toutes différentes, au hasard
+ for(const R of RANKO){const L=JL.filter(J=>J.r===R&&catType(J.cat)==='famille'),F=L.filter(J=>!used.has(J.cat)),C=F.length?F:L,J=C[Math.floor(r()*C.length)];if(J){K.push(J.id);used.add(J.cat)}}return K}
+function wzSetOrig(o,quiet){const cur=wzOrig(EB);if(o===cur)return;const fx=wzOrigFx(o);
+ const go=()=>{const n0=EB.nat,s0=EB.st,w0=EB.w;if(!fx.m0&&fx.m1)WZ.keep={nat:EB.nat,st:EB.st,w:EB.w};
+  if(o[0]==='c'){EB.clan=+o.slice(1);EB.kg=-1}else{EB.clan=-1;EB.kg=o[0]==='g'?+o.slice(1):-1}
+  EB.nat=fx.nat<0&&!fx.m1?0:fx.nat;EB.st=fx.st;if(fx.m0&&!fx.m1&&WZ.keep)EB.w=WZ.keep.w;const cs=clanStyle(EB.clan);if(cs>=0)EB.w=cs;
+  EB.k=EB.k.filter(id=>{const t=JL[id].cat[0];return t==='n'&&+JL[id].cat.slice(1)===EB.nat||t==='t'&&+JL[id].cat.slice(1)===EB.st});if(o==='s')EB.k=EB.k.concat(wzSubPick());
+  EB.dsh=EB.clan>=0?'c':o[0]==='g'&&DASHG[EB.kg]?'g':'b';EB.bar=[];EB.bars=[];EB=sanitizeBuild(EB);EB.k=autoLearn(EB,EB.k);EB=sanitizeBuild(EB);
+  EB.bars=startBars(EB);EB.bar=EB.bars[0].b.slice();EBI=0;EBSN=null;CRHOLE=[];edRebuild();
+  if(EB.nat!==n0&&2<=WZ.max)WZ.rev.add(2);if((EB.st!==s0||EB.w!==w0)&&3<=WZ.max)WZ.rev.add(3);for(const i of[4,5])if(i<=WZ.max)WZ.rev.add(i);WZ.rev.delete(WZ.s);
+  crSay(`${wzOrigN(o)} : ${o==='s'?'5 sub tirés au hasard (1 par rang, familles différentes)':'ses jutsu sont pré-choisis'}, en tête de ta barre de départ`+(WZ.max>=4?' · revois les étapes Jutsu et Barres':''),'#8fe38f')};
+ if(WZ.max>1&&!quiet){const ch=[];if(fx.m1)ch.push(`clan martial : pas de nature, arbre de style ${STNAME[fx.st]} imposé`);else if(fx.m0)ch.push(`nature ${NATURES[fx.nat<0?0:fx.nat][0]} et style ${STNAME[fx.st]} d'avant le clan martial reviennent`);
+  CONF={t:'Changer d\'origine ?',d:`Passer de « ${wzOrigN(cur)} » à « ${wzOrigN(o)} » remet à zéro les jutsu de ton origine, ton attaque de base de clan, ton dash et tes barres (ta barre de départ commencera par la nouvelle origine). `+(ch.length?ch[0][0].toUpperCase()+ch[0].slice(1)+'.':'Nature et style sont gardés.'),ok:'Changer d\'origine',no:'Garder',col:'#ffb347',fn:go}}
  else go()}
 // ---------- Aléatoire : l'étape affichée seule ----------
 function wzRandom(){const r=srnd((Date.now()%2147483646)+1),k=a=>Math.floor(r()*a.length),s=WZ.s;r();
  if(s===0){EB.side=r()<.5?0:1;const L=BOTN[EB.side];EB.name=L[k(L)];if(WZI)WZI.k=null;edRebuild();crSay(`Nom et camp tirés au hasard : ${EB.name}, ${CAMPS[EB.side]}`,'#8fe38f')}
  else if(s===1){const L=wzOrigins().filter(o=>o!==wzOrig(EB));wzSetOrig(L[k(L)])}
  else if(s===2){if(EB.nat<0){crSay('Clan martial : pas de nature à tirer','#c8b89a');return}const L=[0,1,2,3,4].filter(i=>i!==EB.nat);setB('nat',L[k(L)]);edRebuild();crSay(`Nature tirée au hasard : ${NATURES[EB.nat][0]}`,'#8fe38f')}
- else if(s===3){if(!isMartial(EB.clan)){const L=[0,1,2].filter(i=>i!==EB.st);setB('st',L[k(L)])}const SW=stylesOf(EB);EB.w=SW[k(SW)];edRebuild();crSay(`Style tiré au hasard : ${STNAME[EB.st]} · ${STYLES[EB.w][0]}`,'#8fe38f')}
+ else if(s===3){if(!isMartial(EB.clan)){const L=[0,1,2].filter(i=>i!==EB.st);setB('st',L[k(L)])}const SW=stylesOf(EB);EB.w=SW[k(SW)];edRebuild();crSay(`Style tiré au hasard : `+(fold(STNAME[EB.st])===fold(STYLES[EB.w][0])?`arbre et attaque de base ${STNAME[EB.st]}`:`arbre ${STNAME[EB.st]} · attaque de base ${STYLES[EB.w][0]}`),'#8fe38f')}
  else if(s===4){const K=[];for(const t of treesOf(EB)){const T=TREES[t];if(T.force||T.pool)continue;for(const R of RANKO){const L=TREE[t][R].slice();for(let n=0;n<tTake(T,R)&&L.length;n++)K.push(L.splice(k(L),1)[0])}}
   if(EB.clan<0&&!kgOk(EB.kg))for(const R of RANKO){const L=JL.filter(J=>J.r===R&&catType(J.cat)==='famille');K.push(L[k(L)].id)}
   EB.k=K;edTrees();edRebuild();crSay('Jutsu tirés au hasard : 1 par rang dans chaque arbre'+(EB.clan<0&&!kgOk(EB.kg)?' (et 1 sub par rang)':''),'#8fe38f')}
@@ -57,13 +71,16 @@ function wzRandom(){const r=srnd((Date.now()%2147483646)+1),k=a=>Math.floor(r()*
 // ---------- champ de texte posé sur le canevas (nom à l'étape Identité, recherche des sub à l'étape Jutsu) ----------
 const WZI=(()=>{try{const st=document.createElement('style');st.textContent='#wzI{position:fixed;z-index:3;box-sizing:border-box;border:1.5px solid #8a5a2a;background:#140d07;color:#ffd38a;padding:0 .7em;font-family:"Trebuchet MS",system-ui,sans-serif;font-weight:bold;outline:none}#wzI:focus{border-color:#ffb347;box-shadow:0 0 10px #ff9a3a88}#wzI::placeholder{color:#8a7458;font-weight:normal}';document.head.appendChild(st);
  const e=document.createElement('input');e.id='wzI';e.type='text';e.autocomplete='off';e.spellcheck=false;e.hidden=true;e.k=null;
- e.addEventListener('input',()=>{if(!EB)return;if(e.k==='name')EB.name=e.value.replace(/[<>]/g,'').slice(0,16);else if(e.k==='q'){WZ.q=e.value;WZ.sc=0}});
- e.addEventListener('keydown',ev=>{if(ev.key==='Enter'){e.blur();if(e.k==='name')wzNext();ev.preventDefault()}else if(ev.key==='Escape'){if(e.k==='q'&&e.value){e.value='';WZ.q='';WZ.sc=0}else e.blur();ev.preventDefault()}});
+ e.addEventListener('input',()=>{if(!EB)return;if(e.k==='name'){const v=e.value.replace(/[<>]/g,'');if(v!==e.value){const c=Math.max(0,(e.selectionStart||0)-(e.value.length-v.length));e.value=v;try{e.setSelectionRange(c,c)}catch(er){}}EB.name=v.slice(0,16)}else if(e.k==='q'){WZ.q=e.value;WZ.sc=0}}); // < et > ne s'écrivent pas (le champ montre le nom tel qu'il sera gardé)
+ // Entrée = Suivant (nom comme recherche) ; Échap : la recherche non vide s'efface, sinon Retour (à la 1re étape : quitter, confirmé si besoin)
+ e.addEventListener('keydown',ev=>{if(ev.key==='Enter'){e.blur();wzNext();ev.preventDefault()}else if(ev.key==='Escape'){if(e.k==='q'&&e.value){e.value='';WZ.q='';WZ.sc=0}else{e.blur();wzPrev()}ev.preventDefault()}});
  e.addEventListener('blur',()=>{if(e.k==='name'&&EB){EB.name=String(EB.name||'').trim().slice(0,16)||'Ninja';e.value=EB.name;edRebuild()}});
  document.body.appendChild(e);return e}catch(err){return null}})();
 const wzIR=k=>k==='name'?{x:WX+130,y:WCT+30,w:420,h:44}:{x:WX+330,y:WCT+96,w:250,h:28};
 let WZIB='';
-function wizISync(){if(!WZI)return;let bl=false;try{bl=BLC.open}catch(e){}
+// le bouton HTML « Partie & options » passe au-dessus du canevas : il s'efface derrière l'assombrissement d'une fenêtre de confirmation
+let OPTB0;function optBSync(){if(OPTB0===undefined)OPTB0=document.getElementById('optB');if(!OPTB0)return;const d=state==='menu'&&!!CONF?'1':'';if(OPTB0.dataset.dim!==d){OPTB0.dataset.dim=d;OPTB0.style.opacity=d?'.22':'';OPTB0.style.pointerEvents=d?'none':''}}
+function wizISync(){try{optBSync()}catch(e){}if(!WZI)return;let bl=false;try{bl=BLC.open}catch(e){}
  const k=state==='menu'&&scr==='edit'&&ED&&EB&&picker===null&&!CONF&&!bl&&!quitOn?(WZ.s===0?'name':WZ.s===4&&wzTab()==='sub'?'q':null):null;
  if(!k){if(!WZI.hidden){if(document.activeElement===WZI)WZI.blur();WZI.hidden=true;WZI.k=null}return}
  if(WZI.k!==k){WZI.k=k;WZI.hidden=false;WZI.value=k==='name'?EB.name:WZ.q;WZI.maxLength=k==='name'?16:40;WZI.placeholder=k==='name'?'Nom de ton ninja':'Chercher un sub (nom, effet, famille)…';WZI.setAttribute('aria-label',WZI.placeholder);WZIB=''}
@@ -100,9 +117,9 @@ function wzPreview(t){const P=WZP,ch=EBCH,o=wzOrig(EB),col=wzOrigCol(o),T=traitO
  fitT(EB.name,cx,P.y+28,21,ch.side?'#ff9a9a':'#ffd38a',P.w-30,'bold',12,'center');fitT(CAMPS[EB.side],cx,P.y+46,11.5,ch.side?'#ff7a7a':'#8fc8ff',P.w-30,'normal',9,'center');
  let y=fy+26;fitT(ch.desc,cx,y,13,liftC(col,.6),P.w-24,'bold',9,'center');y+=19;
  fitT(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2).replace('.',',')}`,cx,y,12,'#e8cfa8',P.w-24,'normal',9,'center');y+=12;
- if(T){const R={x:P.x+12,y,w:P.w-24,h:74};rr(R,8,'rgba(0,0,0,.28)',rgba(col,.45),1);fitT('TRAIT · '+(T.nom||T.name||''),R.x+10,R.y+17,12,liftC(col,.62),R.w-20,'bold',9);
-  wrapL(T.desc||'',R.w-20,FNT(10.5)).slice(0,3).forEach((l,i)=>{const L=wrapL(T.desc||'',R.w-20,FNT(10.5));fitT(i===2&&L.length>3?l+'…':l,R.x+10,R.y+33+i*13.5,10.5,'#d8c4a4',R.w-20,'normal',8)});
-  if(wzHv(R))hoverTip('wzpt',()=>({t:T.nom||T.name||'Trait',col:liftC(col,.6),l:[[wzOrigN(o),liftC(col,.5)]],d:T.desc||' '}));y+=82}
+ if(T){const L=wrapL(T.desc||'',P.w-44,FNT(10)),n=Math.min(4,L.length),R={x:P.x+12,y,w:P.w-24,h:26+n*12.5+6};rr(R,8,'rgba(0,0,0,.28)',rgba(col,.45),1);fitT('TRAIT · '+(T.nom||T.name||''),R.x+10,R.y+17,12,liftC(col,.62),R.w-20,'bold',9);
+  L.slice(0,n).forEach((l,i)=>fitT(i===n-1&&L.length>n?l+'…':l,R.x+10,R.y+32+i*12.5,10,'#d8c4a4',R.w-20,'normal',8)); // 4 lignes au plus (le texte entier dans l'infobulle)
+  if(wzHv(R))hoverTip('wzpt',()=>({t:T.nom||T.name||'Trait',col:liftC(col,.6),l:[[wzOrigN(o),liftC(col,.5)]],d:T.desc||' '}));y+=R.h+8}
  // barre de départ (6 cases)
  {const n=BARN,w=(P.w-24-(n-1)*5)/n,yb=P.y+P.h-48;text(`BARRE DE DÉPART « ${crBN(0)} »`,cx,yb-7,10,'#b89a70','center');
   for(let s=0;s<n;s++){const id=EB.bar[s],J=id>=0?JL[id]:null,R={x:P.x+12+s*(w+5),y:yb,w,h:38};rr(R,7,'rgba(13,19,32,.88)',J&&J.r==='S'?'#ffb347':'#3a4a66',1.2);
@@ -138,7 +155,9 @@ function wzDrawOrig(){const C=wzOrigCards(),cur=wzOrig(EB);wzSect(`CLANS (${CLAN
   const nm=o[0]==='c'?CLANS[+o.slice(1)][0]:o[0]==='g'?KGS[+o.slice(1)].n:'Sub (liste)',sub=o==='s'?'1 par rang, 40 au choix':isMartial(+o.slice(1))&&o[0]==='c'?'clan martial':T?T.nom||T.name||'':'';
   fitT(nm,R.x+40,R.y+17,13.5,sel?'#fff':'#ffd38a',R.w-(sel?66:48),'bold',9);fitT(sub,R.x+40,R.y+32,10.5,sel?liftC(col,.7):'#b89a70',R.w-48,'normal',8);
   if(o[0]==='g'&&EB.nat>=0&&KGS[+o.slice(1)].nat===EB.nat&&!sel)text('★',R.x+R.w-12,R.y+15,12,'#ffd36a'); // va avec la nature choisie
-  if(h)hoverTip('wzo'+o,()=>({t:wzOrigN(o),col:liftC(col,.6),l:(o[0]==='g'?[[KGS[+o.slice(1)].d+' ('+KGS[+o.slice(1)].el+')','#ffd38a'],...[[...'DCB'],[...'AS']].map((R,i)=>[(i?'':'Jutsu : ')+R.map(r=>(TREE[o][r][0]!=null?JL[TREE[o][r][0]].n.replace(/^[^:]+ : /,''):'?')+' ('+r+')').join(' · '),'#d8b888'])]:[]).concat([[o==='s'?'Sans clan : exactement 1 sub par rang, choisis dans la liste de tous les sub (étape Jutsu)':o[0]==='g'?'Sans clan : l\'arbre du kekkei genkai (1 jutsu par rang, D → S) remplace les sub':isMartial(+o.slice(1))?'Clan martial : pas de nature, arbre de style imposé, 2 jutsu par rang tous appris':'Arbre de clan : 1 jutsu par rang (D → S), sans mudra',liftC(col,.5)]]).concat(T?[['Trait · '+(T.nom||T.name||''),'#ffd38a']]:[]),d:T?T.desc||' ':' ',f:sel?'Ton origine':'Clic : choisir'+(WZ.max>1?' (confirmation : les jutsu de l\'origine repartent de zéro)':'')}))}}
+  if(h)hoverTip('wzo'+o,()=>{const K=o[0]==='g'?KGS[+o.slice(1)]:null,tn=T?T.nom||T.name||'':'',rule=o==='s'?'Sans clan : exactement 1 sub par rang, choisis dans la liste de tous les sub (étape Jutsu)':K?'Sans clan : l\'arbre du kekkei genkai (1 jutsu par rang, D → S) remplace les sub':isMartial(+o.slice(1))?'Clan martial : pas de nature, arbre de style imposé, 2 jutsu par rang tous appris':'Arbre de clan : 1 jutsu par rang (D → S), sans mudra';
+   const J=o==='s'?[]:[...RANKO].map(r=>[r+' · '+TREE[o][r].map(id=>JL[id].n.replace(/^[^:]+ : /,'')).join(' / '),'#d8b888']);
+   return{t:wzOrigN(o),col:liftC(col,.6),l:J,d:(K?`${K.d} (${K.el}). `:'')+rule+'.'+(T?` Trait « ${tn} » : ${T.desc||''}`:''),f:sel?'Ton origine':'Clic : choisir'+(WZ.max>1?' (confirmation : les jutsu de l\'origine repartent de zéro)':'')}})}}
 function wzClickOrig(){for(const c of wzOrigCards().L)if(c.o&&inRect(mouse,c.R)){wzSetOrig(c.o);return true}return false}
 // ---------- étape 3 : Nature ----------
 const wzNatR=i=>{const w=(WW-4*10)/5;return{x:WX+i*(w+10),y:WCT+10,w,h:WBOT-WCT-14}};
@@ -186,7 +205,11 @@ function wzJCard(C,t,hov){const R=C.R;if(C.jid<0){g.save();g.setLineDash([4,4]);
  fitT(`${jcostT(ab)} · recharge ${fmtCd(ab.cd)} · ${ab.mud?ab.mud+' mudras':'sans mudra'}`,R.x+42,R.y+36,11,lr?'#e0c8a0':'#9a8468',R.w-52,'normal',8);
  const L=wrapL(J.d,R.w-24,FNT(11)),n=Math.max(1,Math.floor((R.h-44)/14));L.slice(0,n).forEach((l,i)=>fitT(i===n-1&&L.length>n?l+'…':l,R.x+12,R.y+54+i*14,11,lr?'#d8c8ac':'#8a7a64',R.w-24,'normal',8))}
 // liste des sub : tous, filtrés par rang, famille et texte ; triés par rang puis famille
-function wzSubs(){const q=fold(WZ.q.trim());return JL.filter(J=>catType(J.cat)==='famille'&&(!WZ.rk||J.r===WZ.rk)&&(WZ.fm<0||J.cat==='f'+WZ.fm)&&(!q||fold(J.n+' '+J.d+' '+FAMS[+J.cat.slice(1)][0]).includes(q)))
+// recherche souple : chaque mot doit se retrouver (sans accents ni majuscules), au début d'un mot à une lettre près (« soin » trouve « Soigne »), ou par un mot voisin (WZSYN)
+const WZSYN={soin:['soign','regen','gueri','iryo','pv'],soigner:['soin','regen'],heal:['soign','regen'],degat:['degat'],invoc:['kuchiyose','invoqu'],clone:['bunshin'],sceau:['fuin','scell'],teleport:['hiraishin','telepor'],illusion:['genjutsu'],etourdi:['etourdi','stun'],ralenti:['ralenti','lent'],bouclier:['bouclier','barriere','protege']};
+function wzMatch(t,q){const W=t.split(/[^a-z0-9]+/).filter(Boolean);return q.split(/\s+/).filter(Boolean).every(w=>{if(t.includes(w))return true;
+ const p=w.length>=4?w.slice(0,Math.max(3,w.length-1)):null;if(p&&W.some(x=>x.startsWith(p)))return true;const S=WZSYN[w]||WZSYN[w.replace(/s$/,'')];return!!S&&S.some(y=>t.includes(y))})}
+function wzSubs(){const q=fold(WZ.q.trim());return JL.filter(J=>catType(J.cat)==='famille'&&(!WZ.rk||J.r===WZ.rk)&&(WZ.fm<0||J.cat==='f'+WZ.fm)&&(!q||wzMatch(fold(J.n+' '+J.d+' '+FAMS[+J.cat.slice(1)][0]),q)))
  .sort((a,b)=>RANKO.indexOf(a.r)-RANKO.indexOf(b.r)||(+a.cat.slice(1))-(+b.cat.slice(1))||a.id-b.id)}
 const wzSlotR=i=>{const w=(WW-4*8)/5;return{x:WX+i*(w+8),y:WCT+40,w,h:48}};
 const wzRkR=i=>({x:WX+(i?62+(i-1)*42:0),y:WCT+96,w:i?36:56,h:28});
@@ -315,9 +338,12 @@ function wzDrawSum(){WZSUM=[];const ch=EBCH,o=wzOrig(EB),T=traitOfB(EB),xl=WX,wl
  {const nb=EB.bars.length,yy=wzSumBox(xr,yr,wr,32+nb*26,`BARRES (${nb})`,5);EB.bars.forEach((q,i)=>{const B=crBars()[i],y0=yy+i*26;fitT((i===0?'★ ':'')+(i+1)+'. '+q.n,xr+10,y0+5,12,i===0?'#bff0b0':'#f3d9b0',130,'bold',8);
    B.forEach((id,s)=>{const x=xr+150+s*((wr-160)/6),Q={x:x-2,y:y0-12,w:24,h:24};if(id>=0){const J=JL[id];jIcon(x+10,y0,10,catCol(J.cat),J.cat,J.r==='S');if(wzHv(Q))hoverTip('wzsb'+i+':'+s,()=>({t:crN(id),col:liftC(catCol(J.cat),.55),l:[[`${catName(J.cat)} · rang ${J.r} · touche ${s+1}`,'#d8b888']],d:J.d}))}else text('—',x+10,y0+4,10,'#5a6680')})});yr=yy+nb*26+8}
  {const errs=[];for(let i=0;i<WZN-1;i++){const e=wzErr(i);if(e)errs.push([e,'#ff8a7a'])}const w=crSaveWarn();if(w)errs.push([w.split(' · ')[0],'#ffb347']);
-  const R={x:xr,y:yr,w:wr,h:Math.max(40,WBOT-yr)};rr(R,9,errs.length?'rgba(60,24,14,.6)':'rgba(20,46,20,.55)',errs.length?'#c0582a':'#4a8a4a',1.2);
-  if(!errs.length){text('✓ Tout est prêt : « ✔ Enregistrer » range ce ninja dans « Mes ninjas »',xr+12,yr+24,12.5,'#9fe39f','left')}
-  else{let yy=yr+20;for(const [e,c] of errs)for(const l of wrapL(e,wr-24,FNT(11.5)).slice(0,2)){if(yy>R.y+R.h-4)break;text(l,xr+12,yy,11.5,c,'left','normal');yy+=15}}}}
+  // cadre à la hauteur de son texte (le reste de la colonne reste libre)
+  const ok=['✓ Tout est prêt',ED&&ED.k?'« ✔ Enregistrer » garde tes changements sur ce perso.':'« ✔ Enregistrer » range ce ninja dans « Mes ninjas », prêt à jouer.'],
+   L=errs.length?errs.flatMap(([e,c])=>wrapL(e,wr-24,FNT(11.5)).slice(0,3).map(l=>[l,c])):wrapL(ok[1],wr-24,FNT(12)).map(l=>[l,'#cfe8c8']),
+   R={x:xr,y:yr,w:wr,h:Math.min(Math.max(40,WBOT-yr),(errs.length?14:36)+L.length*15+10)};rr(R,9,errs.length?'rgba(60,24,14,.6)':'rgba(20,46,20,.55)',errs.length?'#c0582a':'#4a8a4a',1.2);
+  let yy=yr+20;if(!errs.length){text(ok[0],xr+12,yy+1,14,'#9fe39f','left');yy+=21}
+  for(const [l,c] of L){if(yy>R.y+R.h-4)break;fitT(l,xr+12,yy,errs.length?11.5:12,c,wr-24,'normal',9);yy+=15}}}
 function wzClickSum(){for(const q of WZSUM)if(inRect(mouse,q.R)){wzGo(q.step);return true}return false}
 // ---------- écran ----------
 const WZDRAW=[wzDrawId,wzDrawOrig,wzDrawNat,wzDrawStyle,wzDrawJutsu,wzDrawBars,wzDrawLook,wzDrawSum],WZCLICK=[wzClickId,wzClickOrig,wzClickNat,wzClickStyle,wzClickJutsu,wzClickBars,wzClickLook,wzClickSum];

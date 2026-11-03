@@ -40,6 +40,10 @@ L'écran de création est un assistant en 8 étapes (Identité → Origine → N
   Équilibrage : `KGBAL[i]` réglé par duels simulés (catégorie `g<i>` du simulateur, `blKit`).
 - **Sub (sans clan sans KG)** : une seule liste de tous les sub (familles `f0-f7` = étiquettes et filtres), **exactement 1 sub par rang** (pool `fam` ; l'assistant refuse « Suivant » tant qu'un rang manque). `b.fam` est dérivé des sub appris (`famOfK`) : dash de famille, `FAMBAL`, `subHasF`.
 
+- **Barres d'une origine choisie** (`nr_tree.js`) : `startBar(b)` = les jutsu appris de l'arbre de clan (non martial) ou de kekkei genkai d'abord, rang S → D (5 cases), la 6e par la barre auto ; `startBars(b)` = `startBar` + `barsCover`. Utilisé pour un nouveau perso (`rosEdit`) et à chaque changement d'origine (`wzSetOrig`) ; les bots gardent leur tirage (`randomKit`).
+- **Changement d'origine** (`wzSetOrig`) : `wzOrigFx` dit ce qui change de nature / style (clan martial) ; la nature et le style d'avant un clan martial sont gardés dans `WZ.keep` et reviennent quand on en sort ; seules les étapes vraiment touchées sont marquées « à revoir ». Sans clan à sub : `wzSubPick` tire 5 sub de familles différentes.
+- **Persos de l'anime au kit canon incomplet** : `wzCanonSubs()` laisse enregistrer une retouche tant que les sub sont ceux de l'original ; `rosDup` complète les rangs vides (`subFill`).
+
 ## Points d'extension d'un clan (tout depuis son propre fichier)
 - `KIT('c<n>',[…])` + `Object.assign(NAT,{…})` + `Object.assign(NATHERO,{<préfixe>:'perso'})` (obligatoire : stats de référence de tes mécaniques).
 - `TRAITS[<n>]={…}` : trait du clan (voir plus bas).

@@ -59,6 +59,14 @@ function unlearnJ(o,jid){o.k=o.k.filter(id=>id!==jid);if(o.bar)o.bar=o.bar.map(i
 function autoBar(o){const K=o.k||[],tr=treesOf(o),out=[];let rot=0;const ti=id=>{const i=tr.indexOf(JL[id].cat);return((i-rot)%tr.length+tr.length)%tr.length};
  for(let pass=0;pass<4&&out.length<6;pass++)for(const r of'SABCD'){if(out.length>=6)break;const C=K.filter(id=>JL[id].r===r&&!out.includes(id));if(!C.length)continue;C.sort((a,b)=>ti(a)-ti(b)||a-b);out.push(C[0]);rot++}
  while(out.length<6)out.push(-1);return out}
+// barre de départ d'une ORIGINE choisie (assistant : nouveau perso, changement d'origine) : les jutsu appris de l'arbre de clan ou de kekkei genkai d'abord (rang S → D,
+// tous ses 5 jutsu sous les touches 1 à 5), la case qui reste par la barre auto ; sans clan à sub et clan martial : la barre auto. Les bots gardent leur tirage (randomKit).
+function startBar(o){const K=o.k||[],t=o.clan>=0&&!isMartial(o.clan)?'c'+o.clan:o.clan<0&&kgOk(o.kg)?'g'+o.kg:null;if(!t)return autoBar(o);
+ const out=[];for(const r of'SABCD')for(const id of K)if(out.length<BARN-1&&JL[id]&&JL[id].cat===t&&JL[id].r===r&&!out.includes(id))out.push(id);
+ for(const id of autoBar(Object.assign({},o,{k:K.filter(id=>!out.includes(id))})))if(out.length<BARN&&id>=0)out.push(id);for(const id of autoBar(o))if(out.length<BARN&&id>=0&&!out.includes(id))out.push(id);
+ while(out.length<BARN)out.push(-1);return out}
+// barres d'une origine choisie : startBar, puis des barres qui couvrent le reste du kit (barsCover)
+function startBars(o){const b0=startBar(o);return barsCover(o,[{n:barTheme(o,b0,[]),b:b0.slice()}])}
 // pour le créateur : {arbre: [[jid du rang D…], …, [jid du rang S…]]}
 function buildTrees(o){const R={};for(const t of treesOf(o))R[t]=[...RANKO].map(r=>TREE[t][r].slice());return R}
 // styles d'attaque de base permis : clan « normal » → tout style qui liste le clan (sinon les styles sans clan) ; clan martial → son style propre s'il en a un ;

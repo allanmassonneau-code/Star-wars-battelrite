@@ -141,7 +141,8 @@ function rosFight(E){if(!E||!rosGet(MEK)){scr='list';return}if(performance.now()
 function rosRandomOpp(){const L=rosEntries().filter(e=>e.k!==MEK&&!rosOver(e));if(L.length)rosFight(L[Math.floor(Math.random()*L.length)])}
 function rosBack(){scr='list';FK=MEK}
 function dupName(n){const base=String(n).replace(/ \(\d+\)$/,''),used=new Set(rosEntries().map(e=>e.b.name));for(let i=2;;i++){const suf=` (${i})`,s=base.slice(0,16-suf.length).trimEnd()+suf;if(!used.has(s)||i>99)return s}}
-function rosDup(E){const id=ROS.nid++;ROS.mine.push({id,build:sanitizeBuild(Object.assign({},E.b,{name:dupName(E.b.name)}))});rosChanged();FK='m'+id;RFL={k:FK,t:performance.now()};rosReveal(FK)}
+function rosDup(E){const id=ROS.nid++;ROS.mine.push({id,build:sanitizeBuild(subFill(sanitizeBuild(Object.assign({},E.b,{name:dupName(E.b.name)}))))}); // la copie est à toi : elle suit la règle « 1 sub par rang » (rangs vides complétés, subFill)
+rosChanged();FK='m'+id;RFL={k:FK,t:performance.now()};rosReveal(FK)}
 function rosDel(E){ROS.mine=ROS.mine.filter(m=>m.id!==E.id);if(ROS.last.opp===E.k)delete ROS.last.opp;rosChanged();RF.delete(E.k);DC.delete('c:'+E.k);if(MEK===E.k)rosUse(rosGet('a:'+PRESETS[0].n));if(FK===E.k)FK=MEK}
 function rosReset(E){delete ROS.anime[E.P.n];rosChanged();if(MEK===E.k){MEK=null;rosUse(rosGet(E.k))}FK=E.k;RFL={k:E.k,t:performance.now()}}
 function rosAct(k,E){if(k==='play'||k==='fight')rosPick(E);else if(k==='rnd')rosRandomOpp();else if(k==='edit')rosEdit(E.k);else if(k==='dup')rosDup(E);else if(k==='back')rosBack();
@@ -150,7 +151,7 @@ function rosAct(k,E){if(k==='play'||k==='fight')rosPick(E);else if(k==='rnd')ros
 // ----- création / modification : EB est une copie de travail, rien n'est gardé ni envoyé avant « Enregistrer »
 function rosEdit(k){const E=k?rosGet(k):null;picker=null;CRMT=0;CRH=-1;presetI=E&&E.P?E.i:-1;if(RQI)RQI.blur();
  if(coop()&&net.ready){net.ready=false;if(net.role==='host')sendLobby();else netSend({t:'ready',v:false})} // en ligne : on n'est plus PRÊT pendant la création (la partie ne part pas sans toi)
- EBI=0;EBSN=null;EB=E?sanitizeBuild(E.b):randomBuild(srnd(Date.now()%2147483646+1),0,'Nouveau ninja');edRebuild();ED={k:E?k:null,o:JSON.stringify(EB)};scr='edit';wzOpen(!!E)} // modifier : l'assistant s'ouvre avec toutes les étapes déjà vues
+ EBI=0;EBSN=null;EB=E?sanitizeBuild(E.b):randomBuild(srnd(Date.now()%2147483646+1),0,'Nouveau ninja');if(!E){EB.bars=startBars(EB);EB.bar=EB.bars[0].b.slice()}edRebuild();ED={k:E?k:null,o:JSON.stringify(EB)};scr='edit';wzOpen(!!E)} // modifier : l'assistant s'ouvre avec toutes les étapes déjà vues
 const edDirty=()=>!!ED&&!!EB&&JSON.stringify(EB)!==ED.o;
 function edSave(){EB=sanitizeBuild(EB);let k=ED.k;const E=k?rosGet(k):null;
  if(!E){const id=ROS.nid++;ROS.mine.push({id,build:EB});k='m'+id}
@@ -162,10 +163,10 @@ function edSave(){EB=sanitizeBuild(EB);let k=ED.k;const E=k?rosGet(k):null;
 function edClose(){scr='list';ED=null;picker=null}
 function edCancel(){if(edDirty())CONF={t:'Quitter sans enregistrer ?',d:'Les changements faits sur ce perso seront perdus.',ok:'Quitter',no:'Continuer',col:'#ff8a5a',fn:edClose};else edClose()}
 // ----- fenêtre de confirmation (dessinée dans le canevas) : Entrée = oui, Échap = non
-const confBox=()=>({x:W/2-250,y:H/2-95,w:500,h:190}),confBtns=()=>{const B=confBox();return[{x:B.x+B.w/2-205,y:B.y+B.h-58,w:195,h:40},{x:B.x+B.w/2+10,y:B.y+B.h-58,w:195,h:40}]};
+const confN=()=>CONF?Math.min(5,wrapL(CONF.d,440,FNT(13)).length):3,confBox=()=>{const h=190+Math.max(0,confN()-3)*18;return{x:W/2-250,y:H/2-h/2,w:500,h}},confBtns=()=>{const B=confBox();return[{x:B.x+B.w/2-205,y:B.y+B.h-58,w:195,h:40},{x:B.x+B.w/2+10,y:B.y+B.h-58,w:195,h:40}]};
 function drawConf(){if(!CONF)return;const B=confBox(),c=CONF.col||'#ff9a3a',[a,b]=confBtns();g.fillStyle='rgba(0,0,0,.62)';g.fillRect(0,0,W,H);
  g.save();g.shadowColor='rgba(0,0,0,.7)';g.shadowBlur=24;rr(B,14,'rgba(26,17,10,.98)',c,2);g.restore();
- fitT(CONF.t,B.x+B.w/2,B.y+42,20,'#ffd38a',B.w-40,'bold',13,'center');wrapL(CONF.d,B.w-60,FNT(13)).slice(0,3).forEach((l,i)=>text(l,B.x+B.w/2,B.y+74+i*18,13,'#e8cfa8','center','normal'));
+ fitT(CONF.t,B.x+B.w/2,B.y+42,20,'#ffd38a',B.w-40,'bold',13,'center');wrapL(CONF.d,B.w-60,FNT(13)).slice(0,5).forEach((l,i)=>text(l,B.x+B.w/2,B.y+74+i*18,13,'#e8cfa8','center','normal'));
  {const h=inRect(mouse,a);rr(a,a.h/2,h?'#fff0d0':c,null);fitT(CONF.ok,a.x+a.w/2,a.y+26,15,'#1a1008',a.w-20,'bold',11,'center')}
  {const h=inRect(mouse,b);rr(b,b.h/2,h?'rgba(90,60,30,.95)':'rgba(40,28,18,.92)','#8a5a2a',1.5);fitT(CONF.no||'Annuler',b.x+b.w/2,b.y+26,15,'#f3d9b0',b.w-20,'bold',11,'center')}
  text('Entrée : '+CONF.ok.toLowerCase()+' · Échap : '+(CONF.no||'annuler').toLowerCase(),B.x+B.w/2,B.y+B.h-8,10.5,'#9a8060','center','normal')}
