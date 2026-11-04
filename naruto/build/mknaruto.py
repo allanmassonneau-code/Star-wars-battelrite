@@ -346,6 +346,8 @@ rep("function gEll(x,y,r,a0=0,a1=7){const p=P(x,y);g.beginPath();g.ellipse(p.x,p
 rep("const top=p.y-(100*sk)*p.s;","const top=p.y-(100*sk*(u.ch.look&&u.ch.look.bh||1)*(u.giant>0?1.32:1))*p.s;") # géant : la barre de PV passe au-dessus de la tête agrandie
 # textes flottants : un nouveau texte qui chevauche un texte récent du même endroit monte d'une ligne (« ENTRAVÉ » puis « COLLÉ » lisibles)
 rep(" for(const t of txt){const p=P(t.x,t.y,t.z);"," txtLay();for(const t of txt){const p=P(t.x,t.y,t.z);")
+rep(" txtLay();for(const t of txt){const p=P(t.x,t.y,t.z);g.globalAlpha=Math.min(1,t.t*2);const big=t.s[0]==='-'&&+t.s.slice(1)>=20,fs=Math.round((big?19:15)*(1+Math.max(0,t.t-.86)*4.5));g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)';g.font=`bold ${fs}px \"Trebuchet MS\",system-ui,sans-serif`;g.textAlign='center';g.strokeText(t.s,p.x,p.y);text(t.s,p.x,p.y,fs,t.col)}",
+    " txtLay();for(const t of txtVis()){const p=P(t.x,t.y,t.z),S=t._v||t.s;g.globalAlpha=Math.min(1,t.t*2)*(t._f<1?.6:1);const big=S[0]==='-'&&+S.slice(1)>=20,fs=Math.round((big?19:15)*(t._f||1)*(1+Math.max(0,t.t-.86)*4.5));g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)';g.font=`bold ${fs}px \"Trebuchet MS\",system-ui,sans-serif`;g.textAlign='center';g.strokeText(S,p.x,p.y);text(S,p.x,p.y,fs,t.col)}") # grande mêlée : textes regroupés (txtVis, nr_kits.js)
 # HUD : nom du jutsu ajusté à sa case (rétréci, sans le préfixe « Katon : » si besoin, sinon coupé)
 rep("text(exS&&ab.ex?ab.ex.n:ab.n,x+s/2,y+sh+13,10,exS&&ab.ex?'#ffe81f':'#9fb3d9','center','normal')});","hudAbN(exS&&ab.ex?ab.ex.n:ab.n,x+s/2,y+sh+13,exS&&ab.ex?'#ffe81f':'#9fb3d9',s+gap-4)});")
 rep("drawDog(u);drawChar(u,p.x,p.y,S2);if(u.ch.look.dog","drawDog(u);drawBackN(u,p,S2,sk);drawChar(u,p.x,p.y,S2);if(u.ch.look.dog")
@@ -495,7 +497,7 @@ rep("if(ab.rank==='S'&&i>0&&!rec){S('v_'+u.c,u);if(u===player)flashS=.25;if(near
 rep("const udt=hs>0?0:dt;hs=Math.max(0,hs-dt);update(udt*GSPEED)}}pressed=P0;","const udt=hs>0&&!coop()?0:dt;hs=Math.max(0,hs-dt);update(udt*GSPEED)}}pressed=P0;") # en ligne : jamais de pause de la simulation
 # lanceur courant (FXO) et marquage des effets créés (oi) : décor des jutsu ennemis atténué au dessin, chez chaque joueur
 rep("ab.f(u,a,td,ab.P||{});CUR=null;\n if(VFX)","FXO=u;try{ab.f(u,a,td,ab.P||{})}finally{FXO=null}CUR=null;fxTag(f0,u);\n if(VFX)")
-rep("if(AUXF[x.type]){AUXF[x.type](x,dt);continue}","if(AUXF[x.type]){const f0=fx.length;FXO=x.owner||null;AUXF[x.type](x,dt);FXO=null;fxTag(f0,x.owner);continue}")
+rep("if(AUXF[x.type]){AUXF[x.type](x,dt);continue}","if(AUXF[x.type]){const f0=fx.length;FXO=x.owner||null;try{AUXF[x.type](x,dt)}finally{FXO=null}fxTag(f0,x.owner);continue}")
 rep(" for(const p of projs){VFX=p.vfx||null;"," for(const p of projs){VFX=p.vfx||null;FXO=p.owner||null;")
 rep("VFX=null;projs=projs.filter(p=>!p.dead);","VFX=null;FXO=null;projs=projs.filter(p=>!p.dead);")
 rep("VFX=z.vfx||null;aoe(z.owner","VFX=z.vfx||null;FXO=z.owner||null;aoe(z.owner")
@@ -504,9 +506,10 @@ rep("if(near(z.x,z.y)){if(!z.vfx||z.vfx==='lightning')SFX.zap();","if(near(z.x,z
 rep("function explode(p){const V0=VFX;","function explode(p){const V0=VFX,O0=FXO;FXO=p.owner||O0;")
 rep("SFX.boom();detoFx(p.x,p.y,p.ar||80,p.vfx)}for(let i=fi0;i<fields.length;i++)fields[i].vfx=fields[i].vfx||VFX;VFX=V0}","SFX.boom();detoFx(p.x,p.y,p.ar||80,p.vfx);fxDeto(p.x,p.y,p.ar||80,p.vfx,p.owner)}for(let i=fi0;i<fields.length;i++)fields[i].vfx=fields[i].vfx||VFX;VFX=V0;FXO=O0}")
 rep("else if(!p.boom&&near(p.x,p.y))sparks(p.x,p.y,p.col,4,p.vfx);","else if(!p.boom&&near(p.x,p.y)){sparks(p.x,p.y,p.col,4,p.vfx);if(!DARKV[p.vfx])fxFlare(p.x,p.y,p.vfx&&p.vfx!=='chakra'?vcol(p.vfx,p.col):p.col,{u:p.owner,z:28,r:8+p.r,t:.12,al:.7})}")
-rep("net.ev.sp.push([Math.round(x),Math.round(y),col,n,v]);}if(v==='imp')","net.ev.sp.push([Math.round(x),Math.round(y),col,n,v]);}const oi=fxOI();if(v==='imp')")
-rep("for(let i=0;i<n;i++){const a=rnd()*7,s=(v==='smoke'","for(let i=0,N=fxN(n,oi);i<N;i++){const a=rnd()*7,s=(v==='smoke'")
-rep("col,r:2+rnd()*2,vfx:v})}}","col,r:2+rnd()*2,vfx:v,oi})}}")
+rep("net.ev.sp.push([Math.round(x),Math.round(y),col,n,v]);}if(v==='imp'){fx.push({x,y,z:34,imp:1,t:.18,m:.18,vx:0,vy:0,col,r:n>1?1.6:1,a:rnd()*7});return}","net.ev.sp.push([Math.round(x),Math.round(y),col,n,v]);}const oi=fxOI();if(v==='imp'){fx.push({x,y,z:34,imp:1,t:.18,m:.18,vx:0,vy:0,col,r:n>1?1.6:1,a:fxR()*7,oi});return}")
+# étincelles : hasard VISUEL (fxR) car leur nombre dépend de l'intensité, de la foule et du camp : le hasard du jeu ne dépend jamais des réglages d'affichage
+rep("for(let i=0;i<n;i++){const a=rnd()*7,s=(v==='smoke'||v==='leaf'?40:80)+rnd()*(v==='smoke'||v==='leaf'?120:260);fx.push({x,y,z:20+rnd()*20,","for(let i=0,N=fxN(n,oi);i<N;i++){const a=fxR()*7,s=(v==='smoke'||v==='leaf'?40:80)+fxR()*(v==='smoke'||v==='leaf'?120:260);fx.push({x,y,z:20+fxR()*20,")
+rep("col,r:2+rnd()*2,vfx:v})}}","col,r:2+fxR()*2,vfx:v,oi})}}")
 rep("fx.push({x,y,ring:r,t:.35,m:.35,col,vfx:VFX})","fx.push({x,y,ring:r,t:.35,m:.35,col,vfx:VFX,oi:fxOI()})")
 rep("fx.push({beam:1,x,y,x2,y2,col,w,t:.35,m:.35})","fx.push({beam:1,x,y,x2,y2,col,w,t:.35,m:.35,oi:fxOI()})")
 # lueurs du moteur : sprite pré-rendu au lieu d'un dégradé recréé à chaque appel (bataille 20c20)
@@ -514,8 +517,12 @@ rep("""function glow(x,y,r,col,a){const p=P(x,y),R0=r*p.s;if(!(R0>0)||p.x+R0<-16
  const gr=g.createRadialGradient(p.x,p.y,0,p.x,p.y,R0);gr.addColorStop(0,rgba(col,a));gr.addColorStop(1,rgba(col,0));g.fillStyle=gr;g.beginPath();g.ellipse(p.x,p.y,r*p.s,r*p.s*K,0,0,7);g.fill()}""",
 """function glow(x,y,r,col,a){const p=P(x,y),R0=r*p.s;if(!(R0>0)||!(a>0)||p.x+R0<-16||p.x-R0>W+16||p.y+R0<-16||p.y-R0>H+16)return; // hors écran ou loin au nord (rayon négatif)
  const ga=g.globalAlpha;g.globalAlpha=ga*Math.min(1,a);g.drawImage(fxSpr(col,0),p.x-R0,p.y-R0*K,R0*2,R0*2*K);g.globalAlpha=ga}""")
-rep("for(const f of fx)if(f.light)glow(f.x,f.y,f.r,f.col,.45*f.t/f.m);","for(const f of fx)if(f.light){const a=(f.a??.45)*f.t/f.m*fxA(f)*(f.oi!=null?Math.min(1,fxK(f)/.8):1);if(a>.03)glow(f.x,f.y,f.r,f.col,a)}")
+rep("for(const f of fx)if(f.light)glow(f.x,f.y,f.r,f.col,.45*f.t/f.m);","{const lo=(OPT.fxi??1)===0,cr=FXF.alive>10;let nL=0;for(const f of fx)if(f.light){const r=fxRel(f);if(lo&&r!==0&&(cr||r===2))continue;if(cr&&r!==0&&++nL>(lo?0:24))continue;const a=(f.a??.45)*f.t/f.m*fxA(f)*(f.oi!=null?Math.min(1,fxK(f)/.8):1);if(a>.03)glow(f.x,f.y,lo?f.r*.75:f.r,f.col,a)}}") # Faible : pas de lumières des autres en mêlée (ni des ennemis), les miennes plus petites ; mêlée : 24 lumières des autres au plus
 rep("fx=fx.filter(f=>f.t>0);for(const t of txt)","fx=fx.filter(f=>f.t>0);fxCull();for(const t of txt)")
+# réseau : les alertes de danger passent toujours (jusqu'à 220 effets par envoi) ; au-delà de 90, le petit décor (étincelles, fumée, éclats, lumières) n'est plus envoyé
+rep("for(let i=fx0;i<fx.length&&net.ev.fx.length<150;i++){if(fx[i].vx!==undefined)continue;","for(let i=fx0;i<fx.length&&net.ev.fx.length<220;i++){if(fx[i].vx!==undefined)continue;{const q=fx[i],tl=q.tele||q.danger||(q.jfx&&(FXTELE.has(q.jfx)||FXTELER.test(q.jfx)));if(!tl&&(net.ev.fx.length>=150||(net.ev.fx.length>=90&&(q.light||FXSMALL[q.fk]))))continue}")
+rep("function say(u,s,col){if(near(u.x,u.y))txt.push({x:u.x+(rnd()-.5)*20,","function say(u,s,col){if(near(u.x,u.y))txt.push({x:u.x+(fxR()-.5)*20,") # décalage du texte : hasard visuel (le hasard du jeu ne dépend pas de la caméra)
+rep("if(!o.silent){t.flash=.12;ckHit(t,src,dmg,o);","if(!o.silent){t.flash=.12;t.fxHT=SIMT;ckHit(t,src,dmg,o);") # pas du coup qui porte : le hit-stop (fxHitStop) ne se déclenche que sur un vrai coup
 # option « Intensité des effets » (Partie & options → Affichage), gardée dans nrOpt comme les autres options d'affichage ; propre à chaque joueur (rien n'est envoyé en ligne)
 rep(' <h2 style="margin-top:14px">Affichage</h2>\n',' <h2 style="margin-top:14px">Affichage</h2>\n <label title="Faible : moins de particules, aucune secousse. En grande bataille les effets sont adoucis automatiquement ; ceux des ennemis restent discrets, leurs zones de danger toujours nettes.">Intensité des effets <select id="oFxI"><option value="0">Faible</option><option value="1">Normal</option><option value="2">Fort</option></select></label>\n')
 rep("$('oSpat').checked=OPT.spat;$('oMute').checked=muted}","$('oSpat').checked=OPT.spat;$('oMute').checked=muted;$('oFxI').value=String(OPT.fxi==null?1:OPT.fxi)}")

@@ -123,8 +123,10 @@ const CSP={
  chakra:(P,k,b,s,t)=>{legsW(P,s);const o=.3*k; // deux mains qui rassemblent le chakra puis s'écartent
   pzl(P,'armL',-1.2,0,-.3+o,b);pzl(P,'foreL',-1.2,0,0,b);pzl(P,'armR',-1.2,0,.3-o,b);pzl(P,'foreR',-1.2,0,0,b);pzl(P,'chest',.1,0,0,s)},
 };
+// fin des mudras : au plus tard à 62 % de l'incantation, pour que la préparation propre à l'élément (bras levés du Doton, souffle du Katon…) se voie vraiment
+const mdEnd=md=>Math.min(1-Math.min(.3,.9/md.n),.62);
 function castPose(u,P,t,A){const c=u.cast,ab=castAb(u,c),k=c01(c.t/(c.dur||1)),st=A.cs||anStyle(ab),S=ab&&ab.rank==='S'?1:0,md=typeof mudraOf==='function'?mudraOf(u):null,s=ezo(c01(k/.22));
- let b;if(md){mudraPose(P,md,t);b=smt(1-Math.min(.3,.9/md.n),1,k);legsW(P,s,.8)}else{b=ezo(c01(k/.35));pz(P,'armL',-.5,0,.2);pz(P,'armR',-.5,0,-.2)}
+ let b;if(md){mudraPose(P,md,t);b=smt(mdEnd(md),1,k);legsW(P,s,.8)}else{b=ezo(c01(k/.35));pz(P,'armL',-.5,0,.2);pz(P,'armR',-.5,0,-.2)}
  (CSP[st]||CSP.chakra)(P,k,b,s,t,u);
  if(S){const f=smt(.5,1,k);P.root.y-=2.5*s;P.root.x+=Math.sin(t*53)*.35*f;padd(P,'head',-.15*f);padd(P,'chest',-.1*f)}} // rang S : posture plus basse et frémissement qui monte
 // ---- libération du jutsu (0,3 s après le lancer) quand le kit n'a pas sa propre animation
@@ -155,7 +157,7 @@ function basePose(u,t,rec,P,A){A=A||rec.A||{ph:0};const mv=u.moving&&!u.dead,air
  if(run){const back=fw<-.35,nin=run>1&&fw>.3,spr=nin&&u.sprint,w=back?-(u.walk||0):(u.walk||0),a=nin?(spr?1.22:1.08):back?.6:.8,s=Math.sin(w),c=Math.cos(w);
   pz(P,'thighL',-s*a,0,0);pz(P,'thighR',s*a,0,0);pz(P,'shinL',.25+Math.max(0,Math.sin(w-1.1))*(nin?1.45:1.25));pz(P,'shinR',.25+Math.max(0,Math.sin(w+Math.PI-1.1))*(nin?1.45:1.25));
   pz(P,'footL',-.2*s);pz(P,'footR',.2*s);P.root.y=Math.abs(c)*(nin?1.3:1.6)-(nin?2:.6);pz(P,'hips',0,s*.16);
-  if(nin){const L=spr?.74:.56;pz(P,'chest',L,-s*.1);pz(P,'spine',.2);pz(P,'head',-L*.8);pz(P,'armL',1.18+.08*s,0,.24);pz(P,'armR',1.18-.08*s,0,-.24);pz(P,'foreL',-.08);pz(P,'foreR',-.08);pz(P,'handL',.4);pz(P,'handR',.4);pz(P,'cape',-1.15);pz(P,'cape2',-.4)} // course ninja : buste couché, bras tendus en arrière
+  if(nin){const L=spr?.74:.56;pz(P,'chest',L,-s*.1);pz(P,'spine',.2);pz(P,'head',-L*.8);pz(P,'armL',.62+.06*s,0,.5);pz(P,'armR',.62-.06*s,0,-.5);pz(P,'foreL',-.05);pz(P,'foreR',-.05);pz(P,'handL',.5);pz(P,'handR',.5);pz(P,'cape',-1.15);pz(P,'cape2',-.4)} // course ninja : buste couché, bras tendus en arrière
   else if(back){pz(P,'chest',-.12,-s*.08);pz(P,'head',.08);pz(P,'armL',-.7+s*.25,0,.15);pz(P,'armR',-.7-s*.25,0,-.15);pz(P,'foreL',-1.5);pz(P,'foreR',-1.5);pz(P,'cape',-.15)} // recule en gardant la garde
   else{pz(P,'chest',.16+(run>1?.12:0),-s*.14);pz(P,'armL',s*.68,0,.12);pz(P,'armR',-s*.68,0,-.12);pz(P,'foreL',-.75-.3*Math.max(0,-s));pz(P,'foreR',-.75-.3*Math.max(0,s));pz(P,'cape',-.35-Math.abs(s)*.1);pz(P,'cape2',-.2)}
   if(!nin&&Math.abs(sd)>.45){const q=sd*(Math.abs(sd)-.45)/.55;P.rootR.z-=.14*q;padd(P,'thighL',0,0,.22*q*s);padd(P,'thighR',0,0,.22*q*s);padd(P,'chest',0,0,.1*q);padd(P,'head',0,0,-.1*q)} // pas chassés
@@ -287,7 +289,7 @@ function deathPose(u,P,t,A){const d=u.deadT||0,sg=A.dS||1,b=c01(d/.16),f=c01((d-
  pz(P,'head',-.45*sg*b*(1-f)+(-.2*sg)*f);pz(P,'chest',-.3*sg*b);pz(P,'shinL',.9*b*(1-f)+.4*f);pz(P,'shinR',.8*b*(1-f)+.1*f);pz(P,'thighL',-.3*f);
  pz(P,'armL',-.9*b*(1-f)-.4*f,0,.6*b+.6*f);pz(P,'armR',-.8*b*(1-f)-.5*f,0,-.6*b-.5*f);pz(P,'foreL',-.3*f);pz(P,'cape',-.6*f)}
 // ---- état d'animation propre à chaque ninja (détecte les événements à partir des champs synchronisés)
-function anNew(){return{ph:Math.random()*6.28,fl:0,hp:-1,hT:9,hK:0,hZ:1,hX:0,hs:0,vic:0,sq:0,kd:0,kT:0,kS:1,kX:0,lT:9,air:false,cs:null,csT:9,rl:0,rs:null,dd:0,dS:1,dX:0}}
+function anNew(){return{ph:fxR()*6.28,fl:0,hp:-1,hT:9,hK:0,hZ:1,hX:0,hs:0,vic:0,sq:0,kd:0,kT:0,kS:1,kX:0,lT:9,air:false,cs:null,csT:9,rl:0,rs:null,dd:0,dS:1,dX:0}}
 function anEvents(u,A,dt){const fl=u.flash||0,hp=u.hp||0,mx=u.max||300;
  if(fl>A.fl+.03&&!u.dead&&A.hp>=0){const d=Math.max(0,A.hp-hp);A.hK=Math.min(1,.42+d/(mx*.11));A.hT=0;
   // d'où vient le coup : élan de recul (hôte) sinon l'ennemi le plus proche
@@ -298,7 +300,7 @@ function anEvents(u,A,dt){const fl=u.flash||0,hp=u.hp||0,mx=u.max||300;
  if(u.fxHS>0&&A.hs<=0){A.hs=Math.min(.08,u.fxHS);A.vic=A.hT<.05?1:0}
  A.fl=fl;A.hp=hp;A.hT+=dt;
  if(u.airT>0&&!A.kd&&!u.dead){A.kd=1;A.kT=0;A.kS=A.hT<.4&&A.hZ<-.2?-1:1;A.kX=A.hT<.4?A.hX:0}
- if(A.kd){A.kT+=dt;if(u.dead)A.kd=0;else if(A.kd===1&&!(u.airT>0)){A.kd=2;A.kT=0;A.lT=9}else if(A.kd===2&&((!(u.stun>0)&&A.kT>.22)||A.kT>1.4||u.moving&&A.kT>.15)){A.kd=3;A.kT=0}else if(A.kd===3&&A.kT>.45)A.kd=0}
+ if(A.kd){A.kT+=dt;if(u.dead)A.kd=0;else if(A.kd===1&&!(u.airT>0)){A.kd=2;A.kT=0;A.lT=9}else if(A.kd===2&&((!(u.stun>0)&&A.kT>.22)||A.kT>1.4||u.moving&&!(u.stun>0)&&!(Math.hypot(u.kx||0,u.ky||0)>40)&&A.kT>.15)){A.kd=3;A.kT=0}else if(A.kd===3&&A.kT>.45)A.kd=0}
  const inAir=(u.z||0)>5||u.airT>0||!!(u.dash&&u.dash.jump);if(A.air&&!inAir&&!u.dead&&!A.kd)A.lT=0;A.air=inAir;A.lT+=dt;
  if(u.cast){A.cs=anStyle(castAb(u,u.cast));A.csT=0}else A.csT+=dt;
  // jutsu instantané (sans incantation) : repéré par sa recharge qui repart (hôte, et le joueur chez un invité) → libération propre à sa catégorie
@@ -381,7 +383,7 @@ const RT9=new Float64Array(9),LEGS2=[[BI.thighL,BI.shinL,BI.footL,-1],[BI.thighR
 function rigOf(u){return u._rg||(u._rg={P:poseNew(),C:poseNew(),A:anNew(),rP:{x:0,y:0,z:0},rR:{x:0,y:0,z:0},last:0,M:new Float64Array(NBONE*9),J:new Float64Array(NBONE*3),S:new Float64Array(NBONE*2),
  off:null,offL:null,flip:false,fs:1,ax:1,ay:0,hL:[0,0],hR:[0,0],hc:[0,0],wa:0,wd:0,zL:0,zR:0})}
 // pose de l'image (une seule mise à jour par image, même si le ninja est dessiné plusieurs fois : images rémanentes, teinte, cartes)
-function rigUpd(u,R,t){const now=performance.now();let dt=(now-R.last)/1000;if(R.last&&dt<.003)return R;const first=!R.last;R.last=now;dt=Math.min(.05,Math.max(0,dt))||1/60;
+function rigUpd(u,R,t){const sim=typeof SIMT!=='undefined'&&state==='fight'&&!isGuest(),now=sim?SIMT*1000:performance.now();if(sim!==R.sim){R.sim=sim;R.last=0}let dt=(now-R.last)/1000;if(R.last&&dt>=0&&dt<.003)return R;const first=!R.last;R.last=now;dt=Math.min(.05,Math.max(0,dt));if(!sim)dt=dt||1/60; // en combat (hôte, hors ligne) : temps du JEU (pause, arrêt sur coup, ralenti suivis) ; invité et menus : temps réel
  const A=R.A,P=poseClr(R.P);try{anEvents(u,A,dt);if(u.dead)deathPose(u,P,t,A);else{basePose(u,t,R,P,A);actionPose(u,t,R,P,A);if(A.kd)downPose(u,P,t,A)}}catch(e){}
  // arrêt sur image : les os ne bougent plus pendant ~75 ms ; juste après un coup, le buste répond plus sec
  let pdt=dt,bo=1;if(A.hs>0){A.hs-=dt;pdt=0}else if(A.hT<.12)bo=2.3;

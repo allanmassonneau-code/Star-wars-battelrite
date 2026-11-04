@@ -77,7 +77,7 @@ Object.assign(NAT,{
   u.giant=Math.max(u.giant,T+.4);u.unstop=Math.max(u.unstop,T);aux.push({type:'ak_quake',x:u.x,y:u.y,r:95*(1+.15*F),t:T,m:T,team:u.team,owner:u,ui:units.indexOf(u),k:.25,M:1+.2*F,vfx:'tai'});
   jx({jfx:'ak_grow',ui:units.indexOf(u),x:u.x,y:u.y,t:.8,m:.8});fxRing(u.x,u.y,{u,r0:20,r1:130,col:'#ffb04a',t:.5,w:6});fxSmoke(u.x,u.y,{u,col:'#d8c8b0',n:6,r:50,s:16,t:1,al:.24,rise:20});fxDecal(u.x,u.y,'crack',{u,r:60,t:3});const d0=td;later(u,.4,()=>{if(u.dead||u.stun>0&&!(u.unstop>0))return;ak_slamDo(u,u.aim,d0,F)})}),
  // Pilule rouge : Mode Papillon (v5, fusion) : soin + libération, puis le Papillon (les calories gardées allongent les ailes)
- ak_redbf:ULT('Pilule rouge : Mode Papillon','',{ai:SELF(320,.8)},(u,a,td,P)=>{heal(u,30);cleanse(u);anim(u,'ak_pill',.4);S('fire',u);jx({jfx:'ak_pill',ui:units.indexOf(u),x:u.x,y:u.y,col:'#ff3a2a',red:1,t:.9,m:.9});fxFlare(u.x,u.y,'#ff3a1a',{u,z:44,r:34,t:.3});
+ ak_redbf:ULT('Pilule rouge : Mode Papillon','',{ai:SELF(320,.8)},(u,a,td,P)=>{heal(u,30);cleanse(u);anim(u,'ak_pill',.4);S('fire',u);jx({jfx:'ak_pill',ui:units.indexOf(u),x:u.x,y:u.y,col:'#ff3a2a',red:1,t:.9,m:.9});fxFlare(u.x,u.y,'#ff3a1a',{u,z:44,r:22,t:.25});
   NAT.ak_butterfly.f(u,a,td,P)}),
  // dash : Boulet humain (pointes à 50 calories)
  ak_rollD:S_('Boulet humain','',7,{hero:'chewie',ai:{mode:'gap',min:130,max:360,p:.5}},(u,a)=>{const bl=(u.ak_cal||0)>=50;if(bl){u.ak_cal-=50;say(u,'BOULET À POINTES','#ffb04a')}S('dash',u);S(bl?'saber':'heavy',u);anim(u,'ak_ball',.7);
@@ -232,7 +232,7 @@ JFXD.ak_pill=(f,k,e,t,u)=>{if(!u||u.dead)return;const c=f.col,q=P(u.x,u.y,u.z||0
 JFXD.ak_fed=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x,u.y,u.z||0),s=q.s*1.3*(u.ch.look.scale||1);g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff9a3a',.8*k);g.lineWidth=3;g.beginPath();g.ellipse(q.x,q.y-36*s,(16+e*26)*s,(26+e*34)*s,0,0,7);g.stroke();
  for(let i=0;i<6;i++){const b=i*1.05+t*4,x=q.x+Math.cos(b)*16*s,y=q.y-(18+e*56+(i%3)*8)*s;g.fillStyle=rgba(i%2?'#ffd36a':'#ff7a2a',.75*k);g.beginPath();g.moveTo(x-3*s,y);g.quadraticCurveTo(x,y-12*s,x+3*s,y);g.fill()}};
 // éclosion du Mode Papillon : anneau et nuée de papillons de chakra
-JFXD.ak_bfburst=(f,k,e,t)=>{const q=P(f.x,f.y,40);g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff7ad8',.8*k);g.lineWidth=5*k+1;g.beginPath();g.ellipse(q.x,q.y+30*q.s,(30+e*150)*q.s,(30+e*150)*q.s*K,0,0,7);g.stroke();
+JFXD.ak_bfburst=(f,k,e,t)=>{const q=P(f.x,f.y,40);g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff7ad8',.55*k);g.lineWidth=4*k+1;g.beginPath();g.ellipse(q.x,q.y+30*q.s,(30+e*150)*q.s,(30+e*150)*q.s*K,0,0,7);g.stroke();
  for(let i=0;i<9;i++){const b=i*.7+.3,r=(20+e*140)*q.s,x=q.x+Math.cos(b)*r,y=q.y+Math.sin(b)*r*K-e*50*q.s,fl=Math.abs(Math.sin(t*18+i))*.8+.2,w=7*q.s;g.fillStyle=rgba(i%2?'#ff9ae8':'#a8f0ff',.85*k);
   g.beginPath();g.ellipse(x-w*fl*.6,y,w*fl,w*.8,-.5,0,7);g.fill();g.beginPath();g.ellipse(x+w*fl*.6,y,w*fl,w*.8,.5,0,7);g.fill()}};
 // Décuplement : anneaux d'expansion et flèches qui poussent vers l'extérieur

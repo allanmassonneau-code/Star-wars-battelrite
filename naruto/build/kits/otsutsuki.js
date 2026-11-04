@@ -41,7 +41,7 @@ Object.assign(NAT,{
  ot_bone:SP('Haikotsu : Os des cendres',OT_D.bone,12,{ai:RG(540,.65),line:{len:560,w:22}},(u,a)=>{gkS('bone',u);gkS('blaster',u);anim(u,'throw2',.45);
   fxFlare(u.x+Math.cos(a)*26,u.y+Math.sin(a)*26,'#f4f0e8',{u,z:36,r:20,t:.16});fxSmoke(u.x+Math.cos(a)*26,u.y+Math.sin(a)*26,{u,col:'#bcb6ac',n:3,r:14,s:9,al:.25,dx:Math.cos(a)*40,dy:Math.sin(a)*40});
   proj(u,a,{spd:1050,r:9,dmg:30,life:.53,col:'#f4f0e8',kind:'ot_bone',vfx:'ot_void',pierce:1,o:{slow:1,dot:{dps:4,dur:3}},onHit:(p,t)=>{if(!near(t.x,t.y))return;const o=p.owner;sparks(t.x,t.y,'#d8d4cc',6,'smoke');fxFlare(t.x,t.y,'#ffffff',{u:o,z:32,r:20,t:.16});
-   fxBurst(t.x,t.y,'#9a948a',{u:o,n:12,sp:180,sh:'dot',w:1.8,gr:-20,up:40,add:0,c2:'#5a544c',a:Math.atan2(p.vy,p.vx),arc:1.6});fxSmoke(t.x,t.y,{u:o,col:'#bcb6ac',n:4,r:16,s:10,al:.26,rise:30,t:1.4});fxHitStop(o,t,30)}})}),
+   fxBurst(t.x,t.y,'#9a948a',{u:o,n:12,sp:180,sh:'dot',w:1.8,gr:-20,up:40,add:0,c2:'#5a544c',a:Math.atan2(p.vy,p.vx),arc:1.6});fxSmoke(t.x,t.y,{u:o,col:'#bcb6ac',n:5,r:18,s:11,al:.26,rise:36,t:1.5});fxRing(t.x,t.y,{u:o,r0:6,r1:34,col:'#d8d0f0',c2:'#ffffff',w:3,t:.3});fxDecal(t.x,t.y,'x',{u:o,r:20,t:2.5,col:'#6a645a',al:.35});fxEmbers(t.x,t.y,16,'#d8d2c8',{u:o,n:8,h:60,t:1.4,c2:'#8a84a0',w:1.6});fxHitStop(o,t,30)}})}),
  // ---------- Kyûkyoku Kôdô Kyûdama (S) : l'orbe tombe, s'étend puis éclate ----------
  ot_ball:ULT('Kyûkyoku Kôdô Kyûdama',OT_D.ball,{ai:RG(380,.85),tele:{r:170,max:380}},(u,a,td)=>{const c=atP(u,a,td,380),D=1.3;gkS('rasengan',u);gkS('roar',u);anim(u,'gk_call',1.1);jx({jfx:'ot_grow',x:c.x,y:c.y,r:170,d:D,t:D+.05,m:D+.05});fxCast(u,'jinton',D,{glyph:1,n:14,c2:'#ffffff'});fxPillar(u.x,u.y,OTC.b,{u,h:180,w:22,t:D,al:.35});
   later(u,D,()=>{gkAoe(u,c.x,c.y,170,55,{kb:200},'ot_void',e=>{otDrain(u,e,15);fxHitStop(u,e,55,1)});jx({jfx:'ot_burst',x:c.x,y:c.y,r:170,t:.8,m:.8});
@@ -77,8 +77,11 @@ PROJD.ot_orb=(p,R,ra,t)=>{g.save();g.globalCompositeOperation='lighter';g.fillSt
 PROJD.ot_pull=(p,R,ra,t)=>{g.rotate(ra);g.strokeStyle=rgba(OTC.b,.85);for(let i=0;i<3;i++){const k=((t/160+i/3)%1);g.lineWidth=2*(1-k)+.5;g.beginPath();g.ellipse(-k*R*2,0,R*(.5+k*.8),R*(1+k*1.2),0,0,7);g.stroke()}
  g.fillStyle=rgba('#ffffff',.85);g.beginPath();g.arc(0,0,R*.35,0,7);g.fill()};
 // os des cendres : os blanc effilé, cendres qui s'en détachent
-PROJD.ot_bone=(p,R,ra,t)=>{g.rotate(ra);g.fillStyle=rgba('#bcb6ac',.55);for(let i=1;i<6;i++)g.fillRect(-14-i*8,Math.sin(t/50+i*2)*3-1,2.5,2.5);
- g.fillStyle='#f4f0e8';g.strokeStyle='#6a645a';g.lineWidth=.9;g.beginPath();g.moveTo(R*2.2,0);g.lineTo(R*.6,-R*.45);g.lineTo(-R*1.6,-R*.35);g.arc(-R*1.8,-R*.35,R*.4,0,7);g.moveTo(-R*1.6,R*.35);g.arc(-R*1.8,R*.35,R*.4,0,7);g.lineTo(-R*1.6,R*.35);g.lineTo(R*.6,R*.45);g.closePath();g.fill();g.stroke()};
+// os des cendres : pieu d'os pâle à aura du vide, qui s'effrite en cendres derrière lui
+PROJD.ot_bone=(p,R,ra,t)=>{const A0=p&&p.owner?fxA(p):1;g.rotate(ra);fxTailL(R*10,R*2.6,'#d8d0f0',.5*A0);fxGlowS(0,0,R*2.6,'#b8b0d8',.45*A0);
+ g.fillStyle=rgba('#bcb6ac',.7);for(let i=1;i<8;i++){const x=-R*1.8-i*R*1.1,y=Math.sin(t/45+i*2)*R*.5*(1+i*.15),s=R*.32*(1-i/9);g.fillRect(x-s,y-s,s*2,s*2)}
+ const S=1.35;g.scale(S,S);g.fillStyle='#f6f2ea';g.strokeStyle='#5a544a';g.lineWidth=.9/S;g.beginPath();g.moveTo(R*2.4,0);g.lineTo(R*.6,-R*.5);g.lineTo(-R*1.6,-R*.38);g.arc(-R*1.85,-R*.38,R*.42,0,7);g.moveTo(-R*1.6,R*.38);g.arc(-R*1.85,R*.38,R*.42,0,7);g.lineTo(-R*1.6,R*.38);g.lineTo(R*.6,R*.5);g.closePath();g.fill();g.stroke();
+ g.strokeStyle=rgba('#8a84a0',.7);g.lineWidth=.8/S;g.beginPath();g.moveTo(R*.2,-R*.3);g.lineTo(-R*.6,R*.1);g.lineTo(-R*1.2,-R*.2);g.stroke()}; // fêlures
 // onde du Shinra Tensei : sphère d'air déformé, sol balayé
 JFXD.ot_wave=(f,k,e,t)=>{const q=P(f.x,f.y,30),s=q.s,R=f.r*(.2+.8*(1-Math.pow(1-e,2.5)));g.save();g.strokeStyle=rgba('#ffffff',.85*k);g.lineWidth=(6*k+1)*s;g.beginPath();g.ellipse(q.x,q.y,R*s,R*s*.75,0,0,7);g.stroke();
  g.strokeStyle=rgba(OTC.b,.6*k);g.lineWidth=3*s;g.beginPath();g.ellipse(q.x,q.y,R*.8*s,R*.6*s,0,0,7);g.stroke();g.strokeStyle=rgba(OTC.b,.5*k);g.lineWidth=2;gEll(f.x,f.y,R);g.stroke();if(f.r2){g.strokeStyle=rgba('#ffffff',.3*k);g.setLineDash([6,6]);gEll(f.x,f.y,f.r2*(R/f.r));g.stroke();g.setLineDash([])}

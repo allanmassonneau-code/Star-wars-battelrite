@@ -72,8 +72,18 @@ function traitDmg(t,src,dmg,o){const a=src&&src!==t?trait(src):null,d=trait(t);i
 // un préfixe qui ne fait que nommer l'arbre (« Katon : », « Kiminari : », « Mokuton : »…) est toujours retiré : l'icône de la case montre déjà l'arbre, et tous les noms se lisent de la même façon
 let HUDPX=null;const hudPx=()=>HUDPX||(HUDPX=new Set([...NATURES.map(n=>n[0]),...KGS.map(k=>k.n),...CLANS.map(c=>c[0]),'Mokuton','Genjutsu','Senjutsu','Fûinjutsu','Iryô','Kuchiyose','Ninjutsu','Taijutsu','Kenjutsu','Bukijutsu']));
 function hudAbN(s,x,y,col,w){s=String(s);const i=s.indexOf(' : ');if(i>0&&hudPx().has(s.slice(0,i)))s=s.slice(i+3);g.font=FNT(8,'normal');if(g.measureText(s).width>w&&s.includes(' : '))s=s.slice(s.lastIndexOf(' : ')+3);fitT(s,x,y,10,col,w,'normal',8,'center')}
-function txtLay(){const W0=t=>String(t.s).length*4.6+6;for(let i=0;i<txt.length;i++){const t=txt[i];if(t.ly)continue;t.ly=1;
- for(let n=0;n<6;n++){let hit=false;for(let j=0;j<txt.length;j++){const o=txt[j];if(j===i||!o.ly)continue;if(Math.abs(o.y-t.y)<26&&Math.abs(o.z-t.z)<15&&Math.abs(o.x-t.x)<W0(o)+W0(t)){hit=true;break}}if(!hit)break;t.z+=16}}}
+// grande mêlée (plus de 10 ninjas en vie) : textes flottants regroupés AU DESSIN (chaque écran, hôte comme invité) :
+// les dégâts « -N » proches et récents s'additionnent en un seul chiffre, les mots d'état loin de mon ninja disparaissent,
+// les textes lointains sont plus petits et plus pâles, 22 textes au plus (les plus proches de moi d'abord), empilement limité à 2 lignes
+const TXN=/^-\d+$/;
+function txtVis(){const crowd=FXF.alive>10;if(!crowd){for(const t of txt){t._h=0;t._v=null;t._f=1}return txt}
+ const pl=player&&!player.dead?player:{x:cam.x,y:cam.y},L=[];for(const t of txt){t._h=0;t._v=null;t._d=Math.hypot(t.x-pl.x,t.y-pl.y);t._f=t._d<300?1:.72}
+ const N=txt.filter(t=>TXN.test(t.s)).sort((a,b)=>a._d-b._d);
+ for(let i=0;i<N.length;i++){const t=N[i];if(t._h)continue;let v=+t.s.slice(1);for(let j=i+1;j<N.length;j++){const o=N[j];if(!o._h&&Math.abs(o.x-t.x)<34&&Math.abs(o.y-t.y)<20&&Math.abs(o.t-t.t)<.7){o._h=1;v+=+o.s.slice(1)}}if(v!==+t.s.slice(1))t._v='-'+v}
+ for(const t of txt){if(t._h)continue;if(!TXN.test(t.s)&&t._d>300)continue;L.push(t)}
+ if(L.length>22){L.sort((a,b)=>a._d-b._d);L.length=22}return L}
+function txtLay(){const W0=t=>String(t.s).length*4.6+6,mx=FXF.alive>10?2:6;for(let i=0;i<txt.length;i++){const t=txt[i];if(t.ly)continue;t.ly=1;
+ for(let n=0;n<mx;n++){let hit=false;for(let j=0;j<txt.length;j++){const o=txt[j];if(j===i||!o.ly)continue;if(Math.abs(o.y-t.y)<26&&Math.abs(o.z-t.z)<15&&Math.abs(o.x-t.x)<W0(o)+W0(t)){hit=true;break}}if(!hit)break;t.z+=16}}}
 function drawBackN(u,p,S,sk){if(u.dead)return;const T=trait(u);if(T&&T.drawB)T.drawB(u,p,S,sk)} // dessins de trait DERRIÈRE le ninja (avant drawChar)
 function drawPrevN(u,x,y,S,front){const T=trait(u);if(T&&T.prev)try{T.prev(u,{x,y},S,front)}catch(e){}} // signe du trait dans les aperçus (galerie, créateur) : front=0 derrière, 1 devant
 function drawExtraN(u,p,S,sk){if(u.dead)return;const T=trait(u);if(T&&T.draw)T.draw(u,p,S,sk);for(const f of STATD)f(u,p,S,sk)}

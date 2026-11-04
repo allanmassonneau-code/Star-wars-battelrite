@@ -225,8 +225,9 @@ function headAcc2D(h,hx,hy,R,ex,back,fl){const a=h.acc,c=v=>fl?'#fff':v;
  if(a==='kabuto'){outlined(()=>{g.arc(hx,hy-1.5,R+1.6,Math.PI,2*Math.PI)},c('#3a3a48'));g.fillStyle=c('#2a2a34');g.fillRect(hx-R-3,hy-2.5,2*R+6,3);if(!back){g.strokeStyle=c('#e8c040');g.lineWidth=1.8;g.beginPath();g.moveTo(ex,hy-10);g.lineTo(ex-6,hy-22);g.moveTo(ex,hy-10);g.lineTo(ex+6,hy-22);g.stroke()}}
  if(a==='paille'){outlined(()=>{g.moveTo(hx-21,hy-5);g.lineTo(hx,hy-27);g.lineTo(hx+21,hy-5);g.quadraticCurveTo(hx,hy-1,hx-21,hy-5)},c('#c8a860'));g.strokeStyle=c('#8a6a3a');g.lineWidth=.7;for(let i=-2;i<=2;i++){g.beginPath();g.moveTo(hx,hy-26);g.lineTo(hx+i*8,hy-4.6);g.stroke()}
   g.fillStyle=c('#f0ece0');for(const x of back?[-14,-7,0,7,14]:[-17,-12,12,17])g.fillRect(hx+x-1,hy-4,2,9);if(!back)for(const s of[-1,1]){g.fillStyle=c('#c02a2a');g.fillRect(hx+s*15-.5,hy-3,1,5);blob(hx+s*15,hy+3,1.8,c('#f0c840'))}}}
-// éclair blanc du coup reçu : court (130 ms au plus par rafale), pour que les coups répétés (broyage, dôme) ne blanchissent pas la cible en continu
-function hitFl(u){if(!(u.flash>0)||u.dead){u._fl0=0;return 0}const n=performance.now();if(!u._fl0||n-(u._flL||0)>90)u._fl0=n;u._flL=n;return n-u._fl0<130?Math.min(1,u.flash/.12):0}
+// éclair blanc du coup reçu : 90 ms au plus, puis 650 ms sans nouvel éclair même si les coups continuent (broyage, dôme, rafales) :
+// la cible n'est jamais blanche plus de ~12 % du temps, elle garde ses couleurs et ses détails pendant un jutsu à coups répétés
+function hitFl(u){if(!(u.flash>0)||u.dead)return 0;const n=performance.now();if(!u._fl0||(n-(u._flL||0)>90&&n-u._fl0>650))u._fl0=n;u._flL=n;return n-u._fl0<90?1:0}
 // dessin d'un ninja : rig 2D (nr_pose.js) → jambes, torse, tête, bras et arme tracés sur les points de la pose (style chibi, contour, ombrage)
 function drawNinja(u,bx,by,s,ghost,al){
  const L=u.ch.look,h=L.head,W=L.weapon,k=W.k||'fist',t=performance.now()/1000;
@@ -317,7 +318,7 @@ function drawNinja(u,bx,by,s,ghost,al){
 }
 // mudras : doigts du signe, chakra qui monte à chaque signe ; s'efface quand les mains quittent le signe (préparation propre à l'élément)
 function mudraFx(u,hf,hb,fx,t,c){const md=mudraOf(u);if(!md)return;const [f,b]=[hf,hb],mx=(f[0]+b[0])/2,my=(f[1]+b[1])/2,fs=fx>=0?1:-1,st=md.sg[3],pw=(md.i+md.q)/md.n;
-  const kc=u.cast.dur?Math.min(1,u.cast.t/u.cast.dur):1,f0=1-Math.min(.3,.9/md.n),fd=kc<f0?1:Math.max(0,1-(kc-f0)/(1-f0)*1.6);if(fd<=0)return;g.save();g.globalAlpha*=fd;
+  const kc=u.cast.dur?Math.min(1,u.cast.t/u.cast.dur):1,f0=mdEnd(md),fd=kc<f0?1:Math.max(0,1-(kc-f0)/(1-f0)*1.6);if(fd<=0)return;g.save();g.globalAlpha*=fd;
   // doigts du signe
   g.strokeStyle=OUT;g.lineWidth=2.6;g.lineCap='round';const fing=(x,y,dx,dy)=>{g.strokeStyle=OUT;g.lineWidth=2.6;g.beginPath();g.moveTo(x,y);g.lineTo(x+dx,y+dy);g.stroke();g.strokeStyle=u.ch.look.head.skin;g.lineWidth=1.4;g.stroke()};
   if(st==='up'||st==='tri'){fing(mx,my-2,0,-7);if(st==='tri'){fing(mx-1.5,my-1,-2,-6);fing(mx+1.5,my-1,2,-6)}}
@@ -325,8 +326,8 @@ function mudraFx(u,hf,hb,fx,t,c){const md=mudraOf(u);if(!md)return;const [f,b]=[
   else if(st==='down'){fing(mx,my+2,0,6)}else if(st==='cross'){fing(f[0],f[1],-3,-5);fing(b[0],b[1],3,-5)}else if(st==='flat'){fing(f[0],f[1],fs*5,0)}
   blob(f[0],f[1],2.7,u.ch.look.head.skin);blob(b[0],b[1],2.7,u.ch.look.head.skin);
   // chakra qui monte à chaque signe, éclair au changement de signe
-  g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.25+.45*pw);g.beginPath();g.arc(mx,my,4+6*pw+rnd()*1.5,0,7);g.fill();
-  if(md.q<.3){const k2=md.q/.3;g.strokeStyle=rgba('#ffffff',.9*(1-k2));g.lineWidth=1.6;g.beginPath();g.arc(mx,my,5+14*k2,0,7);g.stroke();
+  g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.16+.28*pw);g.beginPath();g.arc(mx,my,3+4*pw+fxR(),0,7);g.fill(); // chakra discret : les mains et le signe restent lisibles
+  if(md.q<.3){const k2=md.q/.3;g.strokeStyle=rgba('#ffffff',.55*(1-k2));g.lineWidth=1.6;g.beginPath();g.arc(mx,my,5+14*k2,0,7);g.stroke();
    for(let q=0;q<6;q++){const b2=q*1.047+md.i;g.beginPath();g.moveTo(mx+Math.cos(b2)*(6+8*k2),my+Math.sin(b2)*(6+8*k2));g.lineTo(mx+Math.cos(b2)*(10+12*k2),my+Math.sin(b2)*(10+12*k2));g.stroke()}}
   g.strokeStyle=rgba(c,.7);g.lineWidth=1.2;g.beginPath();g.arc(mx,my,11+3*pw,t*7,t*7+1.5+3*pw);g.stroke();g.restore()}
 // gestes d'incantation lisibles en 2D : paumes médicales qui luisent, foudre qui crépite dans la main, braise aux lèvres (Katon),
@@ -382,6 +383,9 @@ function drawNinjaHead(u,h,fx,fy,back,fl,t,run){const hx=fx*1.5,hy=-53,ex=hx+fx*
   if(L.hood==='chat')for(const s of[-1,1])outlined(()=>{g.moveTo(hx+s*5,hy-14);g.lineTo(hx+s*10,hy-23);g.lineTo(hx+s*12,hy-10)},fl?'#fff':L.hoodC||L.torso)}
  else{
  if(h.style!=='chauve'&&!(HS&&HS.cap===0)){g.beginPath();if(back)g.arc(hx,hy,R+.6,0,7);else g.arc(hx,hy-1,R+.6,Math.PI*1.04,Math.PI*1.96);g.fill()}
+ if(back&&h.style!=='chauve'&&!(HS&&HS.cap===0)){ // vu de dos : mèches dessinées sur le crâne et pointes de la nuque (plus de « crâne lisse »)
+  g.strokeStyle=fl?'#ddd':shade(hc,.7);g.lineWidth=1.3;g.lineCap='round';for(let i=-2;i<=2;i++){g.beginPath();g.moveTo(hx+i*3.6,hy-R*.8);g.quadraticCurveTo(hx+i*5.2,hy-1,hx+i*4,hy+R*.72);g.stroke()}
+  if(h.style!=='lisse'){g.fillStyle=hc;g.beginPath();g.moveTo(hx-R*.85,hy+R*.4);for(let i=0;i<4;i++){const x=hx-R*.85+i*R*.425;g.lineTo(x+R*.21,hy+R*1.08);g.lineTo(x+R*.425,hy+R*.45)}g.closePath();g.fill()}}
  if(h.style==='pics')for(let i=-3;i<=3;i++){const a=-Math.PI/2+i*.38;outlined(()=>{g.moveTo(hx+Math.cos(a-.25)*R*.8,hy+Math.sin(a-.25)*R*.8);g.lineTo(hx+Math.cos(a)*(R+9-Math.abs(i)),hy+Math.sin(a)*(R+9-Math.abs(i))-1);g.lineTo(hx+Math.cos(a+.25)*R*.8,hy+Math.sin(a+.25)*R*.8)},hc)}
  if(h.style==='courts'){g.beginPath();g.arc(hx,hy-3,R+1,Math.PI*1.1,Math.PI*1.9);g.fill()}
  if(h.style==='chignons'){blob(hx-12,hy-10,5.5,hc);blob(hx+12,hy-10,5.5,hc)}
@@ -456,7 +460,7 @@ function drawNinjaWeapon(u,L,W,k,hf,hb,fx,fy,back,fl,t,R){const [x,y]=hf,a=R?R.w
    g.fillStyle=act?c:'#d3d8e2';g.beginPath();g.moveTo(1,-3.6);g.lineTo(15,0);g.lineTo(1,3.6);g.fill();g.restore()}}
  // mudras : chakra entre les mains pendant l'incantation
  const md=mudraOf(u);if(md)mudraFx(u,hf,hb,fx,t,c)
- else if(u.cast&&!(R&&CH2D.has(R.A.cs))){g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.45+rnd()*.3);g.beginPath();g.arc(hf[0],hf[1],6+rnd()*3,0,7);g.fill();g.strokeStyle=rgba(c,.85);g.lineWidth=1.2;g.beginPath();g.arc(hf[0],hf[1],11,t*7,t*7+4.5);g.stroke();g.restore()}
+ else if(u.cast&&!(R&&CH2D.has(R.A.cs))){g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.28+fxR()*.18);g.beginPath();g.arc(hf[0],hf[1],4+fxR()*2,0,7);g.fill();g.strokeStyle=rgba(c,.85);g.lineWidth=1.2;g.beginPath();g.arc(hf[0],hf[1],11,t*7,t*7+4.5);g.stroke();g.restore()}
 }
 // chien ninja (Inuzuka) : suit son maître et bondit quand il attaque
 function drawDog(u){if(u.dead||!u.ch.look.dog)return;const t=performance.now()/1000,a=u.aim,atk=u.swing>0,d=atk?30:-22,ox=u.x+Math.cos(a+(atk?0:1.9))*Math.abs(d)*(atk?1:1),oy=u.y+Math.sin(a+(atk?0:1.9))*Math.abs(d)+6,p=P(ox,oy),s=p.s*1.25,f=Math.cos(a)>=0?1:-1,run=u.moving?Math.sin(t*16):0;

@@ -54,7 +54,7 @@ Object.assign(NAT,{
  // Konoha Senpû : coup de pied circulaire à 360°
  tj_senpu:S_('Konoha Senpû','',5,{hero:'maul',tele:{self:1,r:100},ai:SELF(105,.6)},(u,a)=>{S('wind',u);anim(u,'tj_senpu',.36);
   for(const e of enemies(u))if(dist(u,e)<100+e.r)hit(e,u,12,{melee:1,kb:280,slow:.7,fx:u.x,fy:u.y});
-  jx({jfx:'tj_whirl',ui:units.indexOf(u),x:u.x,y:u.y,r:100,t:.4,m:.4});sparks(u.x,u.y,'#5aa83a',4,'leaf');fxRing(u.x,u.y,{u,r0:30,r1:100,col:'#e8fff0',w:4,t:.3});tjLeaves(u,u.x,u.y,8,220)}),
+  jx({jfx:'tj_whirl',ui:units.indexOf(u),x:u.x,y:u.y,r:100,t:.4,m:.4});sparks(u.x,u.y,'#5aa83a',4,'leaf');fxRing(u.x,u.y,{u,r0:30,r1:100,col:'#e8fff0',w:5,t:.32});fxWind(u.x,u.y,0,{u,spin:1,w:100,n:9,t:.4,col:'#e8fff0',z:10});fxSmoke(u.x,u.y,{u,col:'#d8c8a8',n:5,r:70,s:12,t:.7,al:.22,rise:10});fxDecal(u.x,u.y,'leaf',{u,r:80,t:2.5});tjLeaves(u,u.x,u.y,8,220)}), // tourbillon : anneau = rayon réel (100), filets de vent qui tournent, poussière et feuilles au sol
  // Konoha Daisenpû : trois tours en avançant (on peut viser entre deux tours), le dernier projette en l'air
  tj_daisen:S_('Konoha Daisenpû','',10,{hero:'savage',line:{len:190,w:210},ai:RG(150,.6)},(u,a)=>{let i=0;
   const spin=(o,n)=>{S('wind',o);dash(o,o.aim,40,.17,{});jx({jfx:'tj_whirl',ui:units.indexOf(o),x:o.x,y:o.y,r:108,t:.3,m:.3,big:1});
@@ -420,11 +420,11 @@ JFXD.tj_foot=(f,k,e)=>{fxTele(f.x,f.y,68,e,'#e8fff0',f,.05);const h=(1-ezo(e))*1
  const top=q.y-170*q.s;g.fillStyle=rgba('#dff8ea',.08);g.beginPath();g.moveTo(q.x-R*.95,q.y);g.lineTo(q.x-R*.6,top);g.lineTo(q.x+R*.6,top);g.lineTo(q.x+R*.95,q.y);g.closePath();g.fill();
  g.fillStyle=rgba('#ffffff',.06);g.beginPath();g.moveTo(q.x-R*.55,q.y);g.lineTo(q.x-R*.35,top);g.lineTo(q.x-R*.05,top);g.lineTo(q.x+R*.05,q.y);g.closePath();g.fill();
  g.strokeStyle=rgba('#ffffff',.3);g.lineWidth=1.5;for(let i=1;i<4;i++){const w=R*(.95-.075*i);g.beginPath();g.ellipse(q.x,q.y-i*40*q.s,w,w*K*.45,0,.25,Math.PI-.25);g.stroke()}
- g.fillStyle=rgba('#dff8ea',.14);g.beginPath();g.ellipse(q.x,q.y,R*.96,R*.96*K,0,0,7);g.fill();g.strokeStyle=rgba('#ffffff',.75);g.lineWidth=3;g.stroke();
- g.strokeStyle=rgba('#ffffff',.35);g.lineWidth=1.5;g.beginPath();g.ellipse(q.x,q.y,R*.7,R*.7*K,0,0,7);g.stroke();g.fillStyle=rgba('#ffffff',.5);for(let i=0;i<4;i++){const b=1.57-.7+i*.47;g.beginPath();g.ellipse(q.x+Math.cos(b)*R*.82,q.y+Math.sin(b)*R*.82*K,R*.16,R*.1+1,0,0,7);g.fill()}};
-JFXD.tj_stomp=(f,k,e)=>{const q=P(f.x,f.y,0),R=f.r*q.s*(.6+e*.7);g.globalCompositeOperation='lighter';g.strokeStyle=rgba(f.last?'#ffe08a':'#e8fff0',.85*k);g.lineWidth=7*k+1;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();
- g.fillStyle=rgba(f.last?'#ffe08a':'#ffffff',.25*k);g.beginPath();g.ellipse(q.x,q.y,f.r*q.s*.8,f.r*q.s*.8*K,0,0,7);g.fill();g.globalCompositeOperation='source-over';
- g.fillStyle=rgba('#d8c8a8',.4*k);for(let i=0;i<7;i++){const b=i*.9,d=R*1.05;g.beginPath();g.ellipse(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*K-5*q.s,(8+e*10)*q.s,(5+e*4)*q.s,0,0,7);g.fill()}};
+ g.fillStyle=rgba('#dff8ea',.07);g.beginPath();g.ellipse(q.x,q.y,R*.96,R*.96*K,0,0,7);g.fill();g.strokeStyle=rgba('#ffffff',.5);g.lineWidth=2.4;g.stroke();
+ g.strokeStyle=rgba('#ffffff',.35);g.lineWidth=1.5;g.beginPath();g.ellipse(q.x,q.y,R*.7,R*.7*K,0,0,7);g.stroke();g.fillStyle=rgba('#ffffff',.28);for(let i=0;i<4;i++){const b=1.57-.7+i*.47;g.beginPath();g.ellipse(q.x+Math.cos(b)*R*.82,q.y+Math.sin(b)*R*.82*K,R*.16,R*.1+1,0,0,7);g.fill()}};
+JFXD.tj_stomp=(f,k,e)=>{const q=P(f.x,f.y,0),R=f.r*q.s*(.6+e*.7);g.globalCompositeOperation='lighter';g.strokeStyle=rgba(f.last?'#ffe08a':'#e8fff0',.62*k);g.lineWidth=5.5*k+1;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();
+ g.fillStyle=rgba(f.last?'#ffe08a':'#ffffff',.12*k);g.beginPath();g.ellipse(q.x,q.y,f.r*q.s*.8,f.r*q.s*.8*K,0,0,7);g.fill();g.globalCompositeOperation='source-over';
+ g.fillStyle=rgba('#d8c8a8',.26*k);for(let i=0;i<7;i++){const b=i*.9,d=R*1.05;g.beginPath();g.ellipse(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*K-5*q.s,(8+e*10)*q.s,(5+e*4)*q.s,0,0,7);g.fill()}};
 // Nuit de la mort : dragon de vapeur rouge sur toute la ligne
 JFXD.tj_dragon=(f,k,e,t)=>{const el=f.m-f.t,pr=Math.min(1,el/f.dur),L=f.len*pr,ca=Math.cos(f.a),sa=Math.sin(f.a),N=16,pts=[];
  for(let i=0;i<=N;i++){const d=L*i/N,w=Math.sin(i*.8-t*14)*26*(i/N)*(1.2-i/N);pts.push(P(clamp(f.x+ca*d-sa*w,B.x,B.x+B.w),clamp(f.y+sa*d+ca*w,B.y,B.y+B.h),36+Math.sin(i*.5+t*6)*8))}

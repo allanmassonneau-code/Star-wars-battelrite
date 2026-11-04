@@ -243,7 +243,7 @@ PROJD.su_dragon=(p,R,ra,t)=>{const sp=Math.hypot(p.vx,p.vy)||800,th=Math.atan2(p
  for(let i=0;i<4;i++){const b=t/80+i*1.6;circ(hx+Math.cos(b)*R*1.2,hy+Math.sin(b)*R*.6,R*.12,'rgba(232,246,255,.8)')}};
 // dôme d'eau en deux passes : arrière (sous les ninjas) puis avant (par-dessus, translucide)
 function su_drawDome(x,y,r,hf,gr,al,t,front,dark){if(gr<=0||al<=0)return;const q=P(x,y,0),rx=r*q.s,H=r*hf*q.s*gr,a0=front?0:Math.PI,a1=front?Math.PI:2*Math.PI;g.save();g.globalAlpha=al;
- g.fillStyle=rgba(dark?'#1a5ab0':'#3aa8ff',front?.13:.2);g.beginPath();g.ellipse(q.x,q.y,rx,H,0,Math.PI,2*Math.PI);g.ellipse(q.x,q.y,rx,rx*K,0,0,Math.PI);g.fill();
+ g.fillStyle=rgba(dark?'#1a5ab0':'#3aa8ff',front?.08:.13);g.beginPath();g.ellipse(q.x,q.y,rx,H,0,Math.PI,2*Math.PI);g.ellipse(q.x,q.y,rx,rx*K,0,0,Math.PI);g.fill();
  g.lineWidth=2.4*q.s;g.setLineDash([rx*.42,rx*.26]);
  for(let i=0;i<5;i++){const h=H*(.08+i*.19),w=rx*Math.sqrt(Math.max(0,1-(h/H)**2));if(w<6)continue;g.strokeStyle=rgba(i%2?'#bfe6ff':'#e8f6ff',front?.55:.32);g.lineDashOffset=(i%2?1:-1)*t*rx*1.4;g.beginPath();g.ellipse(q.x,q.y-h,w,w*K,0,a0,a1);g.stroke()}
  g.setLineDash([]);g.strokeStyle=rgba('#ffffff',front?.8:.4);g.lineWidth=3*q.s;g.beginPath();g.ellipse(q.x,q.y,rx,rx*K,0,a0,a1);g.stroke();
@@ -254,7 +254,7 @@ JFXD.su_wallF=(f,k,e,t)=>{const x=su_auxAt('su_wall',f);if(x)su_drawDome(x.x,x.y
 // dôme des requins : eau sombre, requins qui tournent (devant ou derrière les ninjas selon leur position)
 function su_domeSharks(x,t,front,al){for(let i=0;i<4;i++){const b=t*1.1+i*1.571,sb=Math.sin(b);if(front?sb<0:sb>=0)continue;const q=P(x.x+Math.cos(b)*x.r*.72,x.y+sb*x.r*.72,40+Math.sin(t*3+i)*12);
  g.save();g.globalAlpha=.8*al;g.translate(q.x,q.y);g.scale(q.s,q.s);su_sharkD(1.35,Math.atan2(Math.cos(b)*K,-Math.sin(b)),t*1000,0,0);g.restore()}}
-AUXD.su_dome=(x,k,t)=>{const gr=Math.min(1,(x.m-x.t)/.15),al=Math.min(1,x.t/.4);g.fillStyle=rgba('#1a5ab0',.28*al);gEll(x.x,x.y,x.r);g.fill();
+AUXD.su_dome=(x,k,t)=>{const gr=Math.min(1,(x.m-x.t)/.15),al=Math.min(1,x.t/.4);g.fillStyle=rgba('#1a5ab0',.15*al);gEll(x.x,x.y,x.r);g.fill(); // eau au sol légère : les ninjas pris dedans restent nets
  if(fxRel(x)===2){g.strokeStyle=rgba('#ff3b3b',.75*al);g.lineWidth=1.6;g.setLineDash([12,7]);g.lineDashOffset=-t*30;gEll(x.x,x.y,x.r-3);g.stroke();g.setLineDash([])} // paroi ennemie : liseré rouge
  su_dim(x,()=>{fxGlowG(x.x,x.y,x.r*.9,'#3aa8ff',.25*al);g.lineWidth=1.4;for(let i=0;i<3;i++){const s=(t*.5+i/3)%1;g.strokeStyle=rgba('#bfe6ff',.45*al*(1-s));gEll(x.x,x.y,x.r*(.2+.75*s));g.stroke()}});
  su_drawDome(x.x,x.y,x.r,.8,gr,al,t,0,1);su_domeSharks(x,t,0,al)};

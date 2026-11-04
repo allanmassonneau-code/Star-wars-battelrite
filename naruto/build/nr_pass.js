@@ -28,9 +28,12 @@ function drawAura(u,p,S,sk,front){const v=u.auraV,t=performance.now()/1000,cx=p.
 // ---------- Ultime : bandeau d'annonce façon jeux de combat ----------
 let cutin=null;
 function drawCutin(){if(!cutin)return;cutin.t-=1.25/60; // environ 1,1 s à l'écran
-if(cutin.t<=0){cutin=null;return}const k=cutin.t,in_=Math.min(1,(1.4-k)*6),out=Math.min(1,k*4),a=Math.min(in_,out),y=H*.22; // haut de l'écran : l'attaque annoncée au sol reste visible
- g.save();g.globalAlpha=a;g.translate((1-in_)*-300,0);g.fillStyle='rgba(10,6,4,.78)';g.beginPath();g.moveTo(0,y-40);g.lineTo(W,y-62);g.lineTo(W,y+22);g.lineTo(0,y+44);g.fill();
- g.fillStyle=cutin.col;g.fillRect(0,y+38,W,3);g.save();g.translate(W*.5,y);g.rotate(-.018);g.shadowColor=cutin.col;g.shadowBlur=24;text(cutin.s,0,6,46,'#fff4d8');g.restore();text(cutin.who,W*.5,y+30,15,cutin.col,'center');g.restore()}
+if(cutin.t<=0){cutin=null;return}const k=cutin.t,in_=Math.min(1,(1.4-k)*6),out=Math.min(1,k*4),a=Math.min(in_,out);
+ // plaque compacte en haut au centre (pas de bande sur toute la largeur) : le nom du jutsu S sans cacher le combat
+ g.save();g.font='bold 24px "Trebuchet MS",system-ui,sans-serif';const tw=Math.min(W*.6,g.measureText(cutin.s).width),w=tw+64,h=40,x=W*.5-w/2+(1-in_)*-60,y=Math.round(H*.14);
+ g.globalAlpha=a*.9;g.fillStyle='rgba(10,6,4,.6)';g.beginPath();g.moveTo(x+10,y);g.lineTo(x+w,y);g.lineTo(x+w-10,y+h);g.lineTo(x,y+h);g.closePath();g.fill();
+ g.fillStyle=cutin.col;g.fillRect(x+6,y+h-3,w-12,2.5);g.globalAlpha=a;g.save();g.shadowColor=cutin.col;g.shadowBlur=10;text(cutin.s,W*.5+(1-in_)*-60,y+27,24,'#fff4d8');g.restore();
+ text(cutin.who,W*.5+(1-in_)*-60,y-5,12,cutin.col,'center');g.restore()}
 // ---------- Persos de l'anime : kits préfaits (apparence + build fidèles au personnage) ----------
 // n nom court (aussi le nom du bot), full nom complet, g groupe (GALG : groupe affiché sur la ligne d'identité de la fiche), sec section de la liste (sinon d'après le clan ou g, voir rosSec),
 // side camp du bot (0 Alliance, 1 Akatsuki), nat nature, clan (-1 sans), sty style de combat (Clic G), st arbre de style, fam familles de sub, dsh dash, k jutsu appris (noms), bar barre de départ (6 noms), al alias, l apparence {v village,t tenue,c coiffure,h cheveux,p peau,k chakra,a accessoire,f visage,b bandeau,d dos, e yeux,o/s couleurs de tenue,z taille,w carrure,r bras,n cou}, d jeu en une ligne

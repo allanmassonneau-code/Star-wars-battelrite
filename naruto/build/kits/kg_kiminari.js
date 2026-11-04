@@ -32,7 +32,7 @@ Object.assign(NAT,{
   for(const e of enemies(u))if(dist(u,e)<260+e.r&&angDiff(ang(u,e),a)<.6&&gkHit(e,u,18,{slow:.8,unblockable:1},'kn_black')){fxArc(u.x,u.y,e.x,e.y,KNC.a,{u,z:34,t:.22,w:2.2});knHitFx(u,e.x,e.y,30,a)}jx({jfx:'kn_arc',ui:gkI(u),x:u.x,y:u.y,a,r:260,arc:.6,t:.3,m:.3})}),
  // ---------- Éclair fourchu (B) ----------
  kn_fork:SP('Kiminari : Éclair fourchu',KN_D.fork,10,{ai:RG(470,.65),line:{len:480,w:30}},(u,a,td)=>{const L=clamp(td||480,120,480);gkS('zap',u);anim(u,'stomp',.4);
-  proj(u,a,{spd:950,r:12,dmg:18,life:L/950,col:KNC.b,kind:'kn_bolt',vfx:'kn_black',o:{stun:.5,unblockable:1},onHit:(p,t)=>{knHitFx(p.owner,t.x,t.y,36,a);fxHitStop(p.owner,t,18)}});const p=projs[projs.length-1];aux.push({type:'kn_fork',x:p.x,y:p.y,r:0,t:p.life+.1,m:p.life+.1,team:u.team,owner:u,p,a})}),
+  proj(u,a,{spd:950,r:12,dmg:18,life:L/950,col:KNC.b,kind:'kn_bolt',vfx:'kn_black',o:{stun:.5,unblockable:1},onHit:(p,t)=>{knHitFx(p.owner,t.x,t.y,36,a);for(const d of[-.6,0,.6])fxArc(t.x,t.y,t.x+Math.cos(a+d)*48,t.y+Math.sin(a+d)*48,KNC.a,{u:p.owner,z:32,z2:20,w:2.2,t:.22,j:.3});fxHitStop(p.owner,t,18)}});const p=projs[projs.length-1];aux.push({type:'kn_fork',x:p.x,y:p.y,r:0,t:p.life+.1,m:p.life+.1,team:u.team,owner:u,p,a})}),
  // ---------- Ruée noire (A) ----------
  kn_rush:SP('Kiminari : Ruée noire',KN_D.rush,12,{ai:{mode:'gap',min:60,max:330,p:.7},line:{len:340,w:50}},(u,a)=>{const x0=u.x,y0=u.y;gkS('zap',u);gkS('dash',u);anim(u,'lunge',.35);u.phase=Math.max(u.phase||0,.22);
   const ex=clamp(u.x+Math.cos(a)*340,B.x+u.r,B.x+B.w-u.r),ey=clamp(u.y+Math.sin(a)*340,B.y+u.r,B.y+B.h-u.r),L=Math.hypot(ex-x0,ey-y0);
@@ -72,7 +72,10 @@ KGTRAITS[8]={nom:'Foudre noire',desc:'Tes éclairs noirs traversent la garde. Ch
 AFTER.push(()=>UK.push('kn_hs'));
 // ---- visuels
 // trait noir : éclair sombre à cœur violet, traînée effilée
-PROJD.kn_bolt=(p,R,ra,t)=>{g.rotate(ra);const L=R*6;fxTailL(L*1.4,R*2.4,KNC.b,.5*(p&&p.owner?fxA(p):1));gkBolt(gkZig(-L,0,R,0,6,R*1.4,Math.floor(t/50)+(p.x|0)*.01),KNC.a,KNC.c,R*.9,1,1);fxGlowS(R*.6,0,R*1.8,KNC.b,.7)};
+PROJD.kn_bolt=(p,R,ra,t)=>{g.rotate(ra);const L=R*6,A0=p&&p.owner?fxA(p):1,sd=Math.floor(t/50)+(p.x|0)*.01;fxTailL(L*1.6,R*3,KNC.b,.55*A0);fxSoftS(-L*.5,0,L*.7,KNC.c,.35*A0,R*1.6); // halo sombre (foudre noire)
+ gkBolt(gkZig(-L,0,R,0,6,R*1.4,sd),KNC.a,KNC.c,R*.9,1,1);
+ for(const sg of[-1,1]){const x0=-L*(.3+.2*fxH(sd|0,sg+1,1)),pts=gkZig(x0,0,x0-L*.55,sg*R*(1.6+fxH(sd|0,sg+1,2)),3,R*.7,sd+sg);gkBolt(pts,KNC.a,KNC.c,R*.45,.8,1)} // fourches qui crépitent le long du trait
+ fxGlowS(R*.6,0,R*2.2,KNC.b,.8);fxGlowS(R*.6,0,R*.7,'#ffffff',.5)};
 // arc noir : 6 éclairs qui couvrent EXACTEMENT le secteur touché (rayon r, demi-ouverture arc) + voile sombre bref sur ce secteur
 JFXD.kn_arc=(f,k,e,t,u)=>{const x0=u&&!u.dead?u.x:f.x,y0=u&&!u.dead?u.y:f.y,R=f.r||260,arc=f.arc||.6,A=P(x0,y0,36);
  if(e<.5){g.save();g.globalAlpha=.3*(1-e*2);g.fillStyle=KNC.c;g.beginPath();const p0=P(x0,y0,2);g.moveTo(p0.x,p0.y);for(let i=0;i<=12;i++){const b=f.a-arc+2*arc*i/12,q=P(x0+Math.cos(b)*R,y0+Math.sin(b)*R,2);g.lineTo(q.x,q.y)}g.closePath();g.fill();g.globalCompositeOperation='lighter';g.strokeStyle=KNC.b;g.lineWidth=1.5;g.stroke();g.restore()}

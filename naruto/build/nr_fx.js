@@ -9,6 +9,7 @@ const FXF={fl:0,t:0,crowd:1,alive:0,drawn:0,dec:0,shW:0,hp:null,hu:null,hooked:f
 let FXO=null,FXAM=1; // FXO : lanceur courant (posé par le moteur pendant un jutsu, un objet aux, une zone, un projectile) ; FXAM : opacité imposée (fxAlpha)
 const FXRK=[1,.8,.55,1]; // décor selon le camp : 0 le mien, 1 allié, 2 ennemi, 3 inconnu (décor du monde)
 const fxLvl=()=>FXL[OPT.fxi==null?1:OPT.fxi]||FXL[1];
+let FXRS=97531;const fxR=()=>(FXRS=FXRS*16807%2147483647)/2147483647; // hasard VISUEL à part : le dessin et les réglages d'affichage ne consomment jamais le hasard du jeu (rnd)
 const fxH=(s,i,k)=>{const v=Math.sin(s*12.9898+i*78.233+k*37.719)*43758.5453;return v-Math.floor(v)}; // hasard fixe (graine, indice, canal) → 0..1
 // ---- camp du lanceur : unité, indice d'unité, ou objet (fx avec oi/ui, projectile/aux/zone avec owner, objet avec team)
 function fxOwn(o){if(o==null)return FXO||CUR||null;if(typeof o==='number')return units[o]||null;if(o.ch&&o.max!==undefined)return o;
@@ -18,9 +19,10 @@ const fxOI=u=>{const w=u===undefined?(FXO||CUR):u;if(w==null)return undefined;if
 function fxTag(i0,u){const oi=fxOI(u);if(oi==null)return;for(let i=i0;i<fx.length;i++)if(fx[i].oi==null)fx[i].oi=oi}
 // ---- échelles : à appeler AU DESSIN (chaque écran a ses réglages)
 function fxK(o){const L=fxLvl(),r=fxRel(o),c=FXF.crowd;return L.k*(r===0?Math.max(c,.85):c)*FXRK[r]} // décor 0..1 (Normal, 1c1, mon jutsu = 0,8)
-function fxA(o){const r=fxRel(o);if(r===0||r===3)return 1;const L=fxLvl();return r===1?Math.min(1,L.a+.22):L.a*(.85+.15*FXF.crowd)} // opacité (ennemi ≈ 0,68 en Normal)
+function fxA(o){const r=fxRel(o);if(r===0||r===3)return 1;const L=fxLvl();if(r===1)return Math.min(1,L.a+.22);let a=L.a*(.85+.15*FXF.crowd);
+ const pl=player;if(pl&&!pl.dead&&o&&typeof o==='object'&&o.x!=null){const d=Math.hypot(o.x-pl.x,o.y-pl.y);if(d<110)a*=.5+.5*d/110}return a} // opacité (ennemi ≈ 0,68 en Normal) ; un effet ennemi posé SUR mon ninja : jusqu'à moitié moins (on se voit toujours dedans)
 function fxN(n,o){return n>0?Math.max(1,Math.round(n*fxK(o)/.8)):0} // nombre de particules (n = nombre voulu en Normal pour ton jutsu)
-function fxNB(n,o){let m=fxN(n,o);const B=fxLvl().b*(.55+.45*FXF.crowd),d=FXF.drawn;if(d>B*.6)m=Math.floor(m*Math.max(0,(B-d)/(B*.4)));FXF.drawn+=m;return m} // + budget global de l'image
+function fxNB(n,o){let m=fxN(n,o);const B0=fxLvl().b*(.55+.45*FXF.crowd),B=fxRel(o)===0?B0:B0*.7,d=FXF.drawn;if(d>B*.6)m=Math.floor(m*Math.max(0,(B-d)/(B*.4)));FXF.drawn+=m;return m} // + budget global de l'image ; les effets des autres s'arrêtent à 70 % du budget : il en reste toujours pour MES jutsu
 // ---- une fois par image (draw) : foule, secousse, coup lourd reçu
 function fxFrame(){const now=performance.now(),dt=FXF.t?Math.min(.1,Math.max(0,(now-FXF.t)/1000)):0;FXF.t=now;FXF.drawn=0;FXF.dec=0;FXF.fl=0;fxHook();
  let n=0;for(const u of units){if(!u.dead)n++;if(u.fxHS>0)u.fxHS=Math.max(0,u.fxHS-dt)}FXF.alive=n;FXF.crowd=n<=8?1:Math.max(.56,1-(n-8)*.44/32); // 20c20 : 0,56 (Normal ≈ Faible en 1c1)
@@ -34,9 +36,12 @@ function fxAlpha(m,fn){if(!(m<1))return fn();const o=FXAM;g.save();FXAM=o*Math.m
 function fxShake(a,x,y){if(x!=null&&!nearMe(x,y))return;FXF.shW=Math.max(FXF.shW,.45);shake=Math.max(shake,a)}
 function fxShakeNow(){const L=fxLvl();return FXF.shW>0&&L.sh>0&&shake>0?Math.min(shake,.5)*L.sh:0}
 // ---- arrêt sur coup (hit-stop) : gel visuel des deux ninjas (u.fxHS, lu par l'animation) ; vraie pause de 35-75 ms seulement hors ligne et pour un gros coup du joueur local
-function fxHitStop(src,t,dmg,big){if(!t||!t.ch)return false;if(!(big||dmg>=Math.max(16,(t.max||200)*.07)))return false;
+function fxHitStop(src,t,dmg,big){if(!t||!t.ch||t.fxHT!==SIMT)return false; // seulement si le coup a VRAIMENT porté à ce pas (pas d'arrêt sur une esquive, une parade, un Kawarimi, un ninja intangible)
+ if(!(big||dmg>=Math.max(16,(t.max||200)*.07)))return false;
  t.fxHS=Math.max(t.fxHS||0,.08);if(src&&src.ch)src.fxHS=Math.max(src.fxHS||0,.06);
  if((src===player||t===player)&&!isGuest()&&!coop())hs=Math.max(hs,Math.min(.075,.035+dmg/900));return true}
+// ---- objets solides (murs, pics, rochers, sculptures) : à moitié transparents quand un ninja vivant se tient juste derrière (on le voit toujours)
+function fxOcc(x,y,r,h){h=h||70;for(const u of units){if(u.dead)continue;const dy=y-u.y;if(dy>-4&&dy<h&&Math.abs(u.x-x)<r+16)return .42}return 1}
 // ---- couleurs : hex (#rgb / #rrggbb) depuis n'importe quelle couleur CSS, mis en cache
 const FXHX=new Map();let FXCX=null;
 function fxHex(c){if(typeof c!=='string')return'#ffffff';if(c[0]==='#'&&(c.length===7||c.length===4))return c;let h=FXHX.get(c);if(h)return h;
@@ -75,22 +80,22 @@ function fxRibbon(o,x,y,z,col,w=10,n=10,a=.6){const now=performance.now(),H=o._f
  g.globalAlpha=ga;g.globalCompositeOperation=o0}
 // ---- TÉLÉGRAPHES (danger) : JAMAIS atténués (ni intensité, ni foule, ni camp) ; forme = hitbox EXACTE ; k = progression 0→1 (1 = ça frappe)
 // ennemi : liseré rouge en plus de la couleur de l'élément ; dernier quart : bord qui pulse
-function fxTeleStyle(col,o,k,fill){const en=fxRel(o)===2,pl=k>.75?.6+.4*Math.sin(performance.now()/45):1;return{c:fxHex(col),en,pl,fill:fill??.1}}
+function fxTeleStyle(col,o,k,fill){const r=fxRel(o),en=r===2,pl=k>.75?.6+.4*Math.sin(performance.now()/45):1;return{c:fxHex(col),en,pl,fill:fill??.1,pf:en?.2:r===0?.11:.15}} // remplissage de progression : plein chez l'ennemi (danger), plus léger pour mes propres alertes (grandes zones)
 function fxTele(x,y,r,k,col,o,fill){const S=fxTeleStyle(col,o,k,fill),p=P(x,y),R=Math.max(0,r*p.s);if(!(R>0))return;const ga=g.globalAlpha;g.save();g.globalAlpha=1;
  g.fillStyle=rgba(S.c,S.fill);g.beginPath();g.ellipse(p.x,p.y,R,R*K,0,0,6.2832);g.fill();
- if(k>0){g.fillStyle=rgba(S.c,.2);g.beginPath();g.ellipse(p.x,p.y,R*Math.min(1,k),R*K*Math.min(1,k),0,0,6.2832);g.fill()}
+ if(k>0){g.fillStyle=rgba(S.c,S.pf);g.beginPath();g.ellipse(p.x,p.y,R*Math.min(1,k),R*K*Math.min(1,k),0,0,6.2832);g.fill()}
  g.lineWidth=2;g.strokeStyle=rgba('#000000',.45);g.beginPath();g.ellipse(p.x,p.y,R+1.5,(R+1.5)*K,0,0,6.2832);g.stroke();
  g.strokeStyle=rgba(S.c,.95*S.pl);g.beginPath();g.ellipse(p.x,p.y,R,R*K,0,0,6.2832);g.stroke();
  if(S.en){g.strokeStyle=rgba('#ff3b3b',.85*S.pl);g.lineWidth=1.4;g.setLineDash([10,6]);g.lineDashOffset=-performance.now()/40;g.beginPath();g.ellipse(p.x,p.y,R-3,Math.max(0,R-3)*K,0,0,6.2832);g.stroke();g.setLineDash([])}
  g.restore();g.globalAlpha=ga}
 // rectangle partant de (x, y) dans la direction a : longueur len, largeur w (hitbox des rayons / lignes)
 function fxTeleLine(x,y,a,len,w,k,col,o,fill){const S=fxTeleStyle(col,o,k,fill),c=Math.cos(a),s=Math.sin(a),h=w/2,cr=(f0,s0)=>P(x+c*f0-s*s0,y+s*f0+c*s0),poly4=(L)=>{const A=cr(0,-h),B=cr(L,-h),C=cr(L,h),D=cr(0,h);g.beginPath();g.moveTo(A.x,A.y);g.lineTo(B.x,B.y);g.lineTo(C.x,C.y);g.lineTo(D.x,D.y);g.closePath()};
- g.save();g.globalAlpha=1;g.fillStyle=rgba(S.c,S.fill);poly4(len);g.fill();if(k>0){g.fillStyle=rgba(S.c,.2);poly4(len*Math.min(1,k));g.fill()}
+ g.save();g.globalAlpha=1;g.fillStyle=rgba(S.c,S.fill);poly4(len);g.fill();if(k>0){g.fillStyle=rgba(S.c,S.pf);poly4(len*Math.min(1,k));g.fill()}
  poly4(len);g.lineWidth=3.5;g.strokeStyle=rgba('#000000',.4);g.stroke();g.lineWidth=2;g.strokeStyle=rgba(S.c,.95*S.pl);g.stroke();
  if(S.en){g.strokeStyle=rgba('#ff3b3b',.85*S.pl);g.lineWidth=1.4;g.setLineDash([10,6]);g.lineDashOffset=-performance.now()/40;poly4(len);g.stroke();g.setLineDash([])}g.restore()}
 // cône (secteur) depuis (x, y) : rayon R, ouverture totale arc
 function fxTeleCone(x,y,a,R,arc,k,col,o,fill){const S=fxTeleStyle(col,o,k,fill),path=r=>{const p0=P(x,y);g.beginPath();g.moveTo(p0.x,p0.y);for(let i=0;i<=16;i++){const b=a-arc/2+arc*i/16,q=P(x+Math.cos(b)*r,y+Math.sin(b)*r);g.lineTo(q.x,q.y)}g.closePath()};
- g.save();g.globalAlpha=1;g.fillStyle=rgba(S.c,S.fill);path(R);g.fill();if(k>0){g.fillStyle=rgba(S.c,.2);path(R*Math.min(1,k));g.fill()}
+ g.save();g.globalAlpha=1;g.fillStyle=rgba(S.c,S.fill);path(R);g.fill();if(k>0){g.fillStyle=rgba(S.c,S.pf);path(R*Math.min(1,k));g.fill()}
  path(R);g.lineWidth=3.5;g.strokeStyle=rgba('#000000',.4);g.stroke();g.lineWidth=2;g.strokeStyle=rgba(S.c,.95*S.pl);g.stroke();
  if(S.en){g.strokeStyle=rgba('#ff3b3b',.85*S.pl);g.lineWidth=1.4;g.setLineDash([10,6]);path(R);g.stroke();g.setLineDash([])}g.restore()}
 // ---- palettes par nature / famille : a principale, b claire, c sombre, h cœur chaud, sm fumée, e famille d'impact (fxImpact)
@@ -138,7 +143,7 @@ const FXPC={};
 function fxPal(v){if(!v)return FXP.chakra;if(FXP[v])return FXP[v];if(FXAL[v])return FXP[FXAL[v]];if(FXPC[v])return FXPC[v];
  const vp=typeof VP!=='undefined'&&VP[v];if(!vp)return FXP.chakra;const p={a:fxHex(vp[0]),b:fxHex(vp[1]||vp[0]),c:fxHex(vp[2]||vp[1]||vp[0]),h:'#ffffff',sm:fxHex(vp[1]||vp[0]),e:'chakra'};return FXPC[v]=p}
 // ---- effets analytiques : ajout (côté hôte ou local), un objet fx par effet
-function fxE(o){if(!near(o.x,o.y))return null;o.sd=o.sd??(Math.random()*997|0);if(o.oi==null){const i=fxOI(o.u);if(i!=null)o.oi=i}delete o.u;o.t=o.t||.4;o.m=o.t;fx.push(o);return o}
+function fxE(o){if(!near(o.x,o.y))return null;o.sd=o.sd??(fxR()*997|0);if(o.oi==null){const i=fxOI(o.u);if(i!=null)o.oi=i}delete o.u;o.t=o.t||.4;o.m=o.t;fx.push(o);return o}
 // étincelles / gouttes / pétales qui jaillissent : n (Normal, ton jutsu), sp vitesse, a+arc (cône), z hauteur, up élan vertical, gr gravité, w épaisseur, len traînée, sh 'line'|'dot'|'petal'
 const fxBurst=(x,y,col,o)=>fxE(Object.assign({fk:'burst',x,y,col,n:12,t:.45},o));
 const fxSmoke=(x,y,o)=>fxE(Object.assign({fk:'smoke',x,y,col:'#d8d8dc',n:6,t:.9},o)); // r étalement, s taille d'une bouffée, rise montée, al opacité (≤ .35), dx/dy dérive
@@ -156,7 +161,7 @@ const fxGlyph=(x,y,col,o)=>fxE(Object.assign({fk:'glyph',gd:1,x,y,col,r:44,t:.8}
 const fxLight=(x,y,r,col,o)=>{o=o||{};if(!near(x,y))return null;const f={light:1,x,y,r,col:fxHex(col),t:o.t||.3,m:o.t||.3,a:o.a??.45};const i=fxOI(o.u);if(i!=null)f.oi=i;fx.push(f);return f}; // lumière au sol (additive)
 // ---- combinés : impact selon l'élément, préparation (cast), jutsu de rang S
 function fxImpact(x,y,v,s=1,o={}){const C=fxPal(v),u=o.u,z=o.z??26,R=o.r||44*s,e=C.e,dec=o.dec!==0;
- fxFlare(x,y,C.a,{u,z,r:24*s,t:.2,c2:C.h});fxLight(x,y,90*s,C.a,{u,t:.3});if(o.ring!==0)fxRing(x,y,{u,r0:R*.2,r1:R,col:C.a,c2:C.h,t:.32,w:5*s});
+ const sF=Math.min(s,1.35);fxFlare(x,y,C.a,{u,z,r:24*sF,t:.2,c2:C.h});fxLight(x,y,90*Math.min(s,1.6),C.a,{u,t:.3}); // éclat plafonné : un gros impact ne délave jamais la cible (l'onde, elle, garde le vrai rayon)if(o.ring!==0)fxRing(x,y,{u,r0:R*.2,r1:R,col:C.a,c2:C.h,t:.32,w:5*s});
  if(e==='fire'){fxBurst(x,y,C.a,{u,z,n:14*s,sp:280*s,c2:C.h,up:70,gr:40});fxSmoke(x,y,{u,col:C.sm,n:4*s,r:R*.5,s:12*s,t:1.1,al:.24});if(dec)fxDecal(x,y,'scorch',{u,r:R*.7,t:3.5})}
  else if(e==='water'){fxBurst(x,y,C.b,{u,z,n:16*s,sp:240*s,c2:'#ffffff',up:150,gr:420,w:2.4,len:.06});if(dec)fxDecal(x,y,'puddle',{u,r:R*.75,t:3})}
  else if(e==='wind'){fxWind(x,y,o.a??0,{u,len:R*2.2,w:R,n:7*s,t:.45,col:C.b,spin:1});fxBurst(x,y,C.b,{u,z,n:8*s,sp:340*s,gr:0,up:10,w:1.4,len:.2})}
@@ -176,7 +181,7 @@ function fxCast(u,v,dur=.6,o={}){const C=fxPal(v);fxCharge(u,C.a,Object.assign({
 // lancement d'un jutsu de rang S (moteur, use()) : lumière locale autour du lanceur + fenêtre de secousse (3 s) si c'est moi ou tout près
 function fxSCast(u,ab){if(!near(u.x,u.y))return;const own=u===player,d=player?Math.hypot(u.x-player.x,u.y-player.y):1e9,C=fxPal(ab&&ab.vfx),col=ab&&ab.vfx&&ab.vfx!=='chakra'?C.a:(u.ch.look.weapon.col||C.a);
  if(own||d<520){FXF.shW=Math.max(FXF.shW,3);shake=Math.max(shake,own?.26:.12)}
- fxFlare(u.x,u.y,col,{u,z:40,r:36,t:.24});fxRing(u.x,u.y,{u,r0:16,r1:120,col,t:.5,w:6});fxLight(u.x,u.y,200,col,{u,t:.6,a:.5});fxPillar(u.x,u.y,col,{u,h:200,w:17,t:.5,al:.32})} // colonne fine et éclat réduit : le ninja 2D reste lisible dedans
+ fxFlare(u.x,u.y,col,{u,z:40,r:26,t:.22});fxRing(u.x,u.y,{u,r0:16,r1:120,col,t:.45,w:4,al:.6});fxLight(u.x,u.y,190,col,{u,t:.55,a:.34});fxPillar(u.x,u.y,col,{u,h:200,w:14,t:.45,al:.24})} // colonne fine et éclat réduit : le ninja 2D reste lisible dedans
 // explosion d'une zone / d'un projectile du moteur (cercle déjà dessiné au bon rayon) : lumière + trace au sol de l'élément
 function fxDeto(x,y,r,v,u){if(!near(x,y))return;const C=fxPal(v),e=C.e,s=clamp(r/80,.6,1.8);fxFlare(x,y,C.a,{u,z:30,r:22*s,t:.22,c2:C.h,al:.75});fxLight(x,y,r*1.2,C.a,{u,t:.35,a:.35});
  const d={fire:'scorch',lightning:'burn',earth:'crack',water:'puddle',ice:'ice',sand:'sand',seal:'seal'}[e];if(d)fxDecal(x,y,d,{u,r:r*.75,t:3.2,col:C.a});
@@ -233,7 +238,8 @@ FXK.wind=(f,k,e)=>{const n=fxNB(f.n||8,f);if(!n)return;const A=fxA(f)*(f.al??.6)
   const off=(r1-.5)*(f.w||60),s0=-(f.len||160)/2+ph*(f.len||160)*.7,s1=s0+(f.len||160)*.35,x0=f.x+ca*s0-sa*off,y0=f.y+sa*s0+ca*off,x1=f.x+ca*s1-sa*off,y1=f.y+sa*s1+ca*off,z=(f.z??18)+r2*26,q0=P(x0,y0,z),q1=P(x1,y1,z);
   g.lineWidth=Math.max(1,1.6*q1.s);g.beginPath();g.moveTo(q0.x,q0.y);g.quadraticCurveTo((q0.x+q1.x)/2-sa*8*q1.s,(q0.y+q1.y)/2-6*q1.s,q1.x,q1.y);g.stroke()}
  g.restore()};
-FXK.flare=(f,k,e)=>{if(++FXF.fl>10)return;const A=fxA(f)*(f.al??1),q=P(f.x,f.y,f.z??26),R=(f.r||28)*q.s*(.7+.5*Math.sqrt(e)),a=A*(1-e);if(!(a>0))return;
+FXK.flare=(f,k,e)=>{if(++FXF.fl>10&&(FXF.fl>16||fxRel(f)!==0))return; // 10 éclats par image, 6 de plus réservés aux miens
+ const A=fxA(f)*(f.al??1),q=P(f.x,f.y,f.z??26),R=(f.r||28)*q.s*(.7+.5*Math.sqrt(e)),a=A*(1-e);if(!(a>0))return;
  fxGlowS(q.x,q.y,R*1.5,f.col,a*.55);fxGlowS(q.x,q.y,R*.45,'#ffffff',a*.35); // modéré : ne délave jamais un corps
  if(f.star!==0){g.save();g.globalCompositeOperation='lighter';g.globalAlpha=a*.6;g.strokeStyle=f.c2||'#ffffff';g.lineCap='round';g.lineWidth=Math.max(1,1.6*q.s*(1-e));const L=R*1.6*(1-e*.4),rot=f.rot??((f.sd%7)*.45);
   for(let i=0;i<2;i++){const an=rot+i*1.5708;g.beginPath();g.moveTo(q.x-Math.cos(an)*L,q.y-Math.sin(an)*L*.6);g.lineTo(q.x+Math.cos(an)*L,q.y+Math.sin(an)*L*.6);g.stroke()}g.restore()}};
@@ -246,7 +252,7 @@ FXK.charge=(f,k,e)=>{const u=f.ui!=null?units[f.ui]:null;if(f.ui!=null&&(!u||u.d
  const c=P(cx,cy,f.z??34),n=fxNB(f.n||10,f),R=(f.r||46)*c.s,T=f.m*e,fi=Math.min(1,e*6)*Math.min(1,k*8);g.save();g.globalCompositeOperation='lighter';g.lineCap='round';
  for(let i=0;i<n;i++){const r1=fxH(f.sd,i,1),r2=fxH(f.sd,i,2),ph=(T*(1.5+r2)+r1)%1,an=r1*6.2832+ph*1.4,rr=R*(1-ph),x=c.x+Math.cos(an)*rr,y=c.y+Math.sin(an)*rr*.75,x0=c.x+Math.cos(an-.25)*rr*1.2,y0=c.y+Math.sin(an-.25)*rr*1.2*.75;
   g.globalAlpha=A*Math.sin(Math.PI*ph)*.9*fi;g.strokeStyle=i%3?f.col:(f.c2||'#ffffff');g.lineWidth=Math.max(1,1.8*c.s);g.beginPath();g.moveTo(x0,y0);g.lineTo(x,y);g.stroke()}
- g.restore();fxGlowS(c.x,c.y,(8+16*e)*c.s,f.col,A*.75*fi)};
+ g.restore();fxGlowS(c.x,c.y,(6+10*e)*c.s,f.col,A*.5*fi,undefined,0)}; // lueur sans cœur blanc : ne masque pas les mains ni le buste
 FXK.glyph=(f,k,e)=>{const u=f.ui!=null?units[f.ui]:null;if(f.ui!=null&&(!u||u.dead))return;const x=u?u.x:f.x,y=u?u.y:f.y,p=P(x,y),R=f.r*p.s*(.85+.15*Math.min(1,e*5)),A=fxA(f)*(f.al??.7)*Math.min(1,e*6)*Math.min(1,k*4),c=fxHex(f.col),t=performance.now()/1000;if(!(R>0))return;
  g.save();g.globalCompositeOperation='lighter';g.globalAlpha=A;g.strokeStyle=c;g.lineWidth=Math.max(1,1.5*p.s);g.beginPath();g.ellipse(p.x,p.y,R,R*K,0,0,6.2832);g.stroke();g.globalAlpha=A*.7;g.beginPath();g.ellipse(p.x,p.y,R*.7,R*.7*K,0,0,6.2832);g.stroke();
  g.globalAlpha=A;g.fillStyle=c;for(let i=0;i<6;i++){const a=i*1.047+t*1.2;g.fillRect(p.x+Math.cos(a)*R*.85-1.5*p.s,p.y+Math.sin(a)*R*.85*K-2.5*p.s,3*p.s,5*p.s)}g.restore();fxGlowS(p.x,p.y,R*.9,c,A*.35,R*.9*K,0)};
@@ -256,7 +262,7 @@ function fxGroundPass(){for(const f of fx){if(!f.gd||!f.fk||!near(f.x,f.y))conti
 function fxCull(){const c=FXF.crowd,cap=Math.round(fxLvl().b*.55*(c*c));let n=0,d=0;for(const f of fx){if(f.vx!==undefined)n++;else if(f.fk==='decal')d++}if(n<=cap&&d<=48)return;let x=n-cap,y=d-48;
  fx=fx.filter(f=>{if(x>0&&f.vx!==undefined){x--;return false}if(y>0&&f.fk==='decal'){y--;return false}return true})}
 // garde-fou : un effet de kit qui remplit tout l'écran d'une couleur unie (flash) est redessiné en éclat local à sa position
-const FXTELE=new Set(); // noms de jfx qui sont des télégraphes (jamais atténués) ; un jx({…, tele:1}) aussi
+const FXTELE=new Set();const FXSMALL={burst:1,smoke:1,debris:1,embers:1,flare:1,charge:1,wind:1}; // petit décor : premier sacrifié en réseau si l'envoi est plein // noms de jfx qui sont des télégraphes (jamais atténués) ; un jx({…, tele:1}) aussi
 function fxNoFull(fn){return function(f){const fr=g.fillRect;let used=false;g.fillRect=function(x,y,w,h){if(x<=0&&y<=0&&w>=W&&h>=H&&typeof this.fillStyle==='string'){if(!used&&f&&f.x!=null){used=true;const q=P(f.x,f.y,30),k=f.m?f.t/f.m:1;g.save();g.setTransform(RS,0,0,RS,0,0);fxGlowS(q.x,q.y,160*q.s,fxHex(this.fillStyle),.8*k);g.restore()}return}return fr.apply(this,arguments)};
  try{return fn.apply(this,arguments)}finally{delete g.fillRect}}}
 AFTER.push(()=>{for(const R of[JFXD,AUXD])for(const k in R){const f=R[k];if(typeof f==='function'&&/fillRect\(0,0,W,H\)/.test(String(f)))R[k]=fxNoFull(f)}});

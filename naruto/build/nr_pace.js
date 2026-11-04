@@ -98,7 +98,7 @@ JFXD.hl_cast=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x+Math.cos(u.aim)*14
  for(let i=0;i<6;i++){const a=i*1.047+t*5,r=(26-e*18)*s;g.fillStyle=rgba('#d8ffe0',.9);g.beginPath();g.arc(q.x+Math.cos(a)*r,q.y+Math.sin(a)*r*.7,1.8*s,0,7);g.fill()}
  const b=P(u.x,u.y,0);g.strokeStyle=rgba('#7dff9a',.6*e);g.lineWidth=2*s;g.beginPath();g.ellipse(b.x,b.y,(18+e*14)*s,(7+e*5)*s,0,0,7);g.stroke()};
 JFXD.hl_heal=(f,k,e,t,u,tg)=>{const T=tg&&!tg.dead?tg:null,tx=T?T.x:f.x,ty=T?T.y:f.y,b=P(tx,ty,0),s=b.s;g.globalCompositeOperation='lighter';
- if(u&&T&&u!==T&&e<.55){const a=P(u.x,u.y,42),c=P(tx,ty,42),al=Math.min(1,(.55-e)/.2);g.lineCap='round';g.strokeStyle=rgba('#7dff9a',.55*al);g.lineWidth=10*s;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(c.x,c.y);g.stroke();g.strokeStyle=rgba('#ffffff',.9*al);g.lineWidth=3*s;g.stroke();
+ if(u&&T&&u!==T&&e<.55){const a=P(u.x,u.y,42),c=P(tx,ty,42),mine=u===player||T===player,cr=mine||FXF.alive<=10?1:.4,al=Math.min(1,(.55-e)/.2)*cr;g.lineCap='round';g.strokeStyle=rgba('#7dff9a',.45*al);g.lineWidth=(mine?7:4)*s;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(c.x,c.y);g.stroke();g.strokeStyle=rgba('#ffffff',.75*al);g.lineWidth=(mine?2:1.2)*s;g.stroke(); // lien de soin : fin, et très discret en grande mêlée s'il ne me concerne pas
   for(let i=0;i<5;i++){const m=(e*2.2+i/5)%1;g.fillStyle=rgba('#ffffff',al);g.beginPath();g.arc(a.x+(c.x-a.x)*m,a.y+(c.y-a.y)*m,3*s,0,7);g.fill()}}
  const H=120*s*Math.min(1,e*5),w=(26+8*Math.sin(t*9))*s*Math.min(1,k*2.2),gr=g.createLinearGradient(0,b.y-H,0,b.y);gr.addColorStop(0,'rgba(125,255,154,0)');gr.addColorStop(.6,rgba('#7dff9a',.35*k));gr.addColorStop(1,rgba('#ffffff',.6*k));
  g.fillStyle=gr;g.beginPath();g.ellipse(b.x,b.y-H/2,w,H/2,0,0,7);g.fill();

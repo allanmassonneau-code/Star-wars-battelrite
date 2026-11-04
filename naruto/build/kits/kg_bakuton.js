@@ -27,10 +27,10 @@ function btBoom(u,x,y,r,d,o,sz){const n=gkAoe(u,x,y,r,d,Object.assign({kb:260},o
  if(near(x,y))gkS('boom',u);return n}
 Object.assign(NAT,{
  // ---------- Jiraiken (D) : poing mine ----------
- bt_fist:SP('Bakuton : Jiraiken',BT_D.fist,5,{ai:{mode:'gap',min:40,max:170,p:.8},line:{len:150,w:50}},(u,a)=>{gkS('dash',u);anim(u,'lunge',.4);let done=0;fxCharge(u,BTC.b,{t:.2,n:8,z:34,hd:18,c2:'#ffffff'});gkTrail(u,'bt_blast',.22,{w:14,z:30});
+ bt_fist:SP('Bakuton : Jiraiken',BT_D.fist,5,{ai:{mode:'gap',min:40,max:170,p:.8},line:{len:150,w:50}},(u,a)=>{gkS('dash',u);anim(u,'lunge',.4);let done=0;fxCharge(u,BTC.b,{t:.2,n:8,z:34,hd:18,c2:'#ffffff'});gkTrail(u,'bt_blast',.22,{w:14,z:30});jx({jfx:'bt_fistg',ui:gkI(u),x:u.x,y:u.y,a,t:.3,m:.3});
   const chk=()=>{if(done||u.dead)return;for(const e of enemies(u))if(dist(u,e)<u.r+e.r+22&&angDiff(ang(u,e),a)<1.2){done=1;u.dash=null;if(gkHit(e,u,10,{melee:1},'bt_blast')){btCh(u,e);
-     const ti=gkI(e);jx({jfx:'bt_tag',ti,x:e.x,y:e.y,t:.6,m:.6});fxFlare(e.x,e.y,BTC.b,{u,z:34,r:22,t:.15});fxBurst(e.x,e.y,BTC.a,{u,z:32,n:6,sp:220,a,arc:1.4,w:1.6,t:.3});later(u,.6,()=>{if(!e.dead)btBoom(u,e.x,e.y,55,8,{})})}if(near(e.x,e.y))gkS('hit',e);return}};
-  dash(u,a,120,.16,{end:chk});aux.push({type:'gk_chk',x:u.x,y:u.y,r:0,t:.2,m:.2,team:u.team,owner:u,f:chk})}),
+     const ti=gkI(e);jx({jfx:'bt_tag',ti,x:e.x,y:e.y,t:.6,m:.6});jx({jfx:'bt_punch',x:e.x-Math.cos(a)*e.r,y:e.y-Math.sin(a)*e.r,a,t:.42,m:.42});fxRing(e.x,e.y,{u,r0:6,r1:40,col:BTC.b,c2:'#ffffff',w:4,t:.26});fxSmoke(e.x,e.y,{u,col:'#5a4a40',n:3,r:18,s:10,t:.8,al:.22,rise:22,dx:Math.cos(a)*30,dy:Math.sin(a)*30});fxFlare(e.x,e.y,BTC.b,{u,z:34,r:22,t:.15});fxBurst(e.x,e.y,BTC.a,{u,z:32,n:6,sp:220,a,arc:1.4,w:1.6,t:.3});later(u,.6,()=>{if(!e.dead)btBoom(u,e.x,e.y,55,8,{})})}if(near(e.x,e.y))gkS('hit',e);return}};
+  dash(u,a,120,.16,{end:()=>{chk();if(!done&&!u.dead&&near(u.x,u.y)){const f=fwd(u,a,22);jx({jfx:'bt_punch',x:f.x,y:f.y,a,t:.3,m:.3,sm:1,oi:gkI(u)})}}});aux.push({type:'gk_chk',x:u.x,y:u.y,r:0,t:.2,m:.2,team:u.team,owner:u,f:chk})}), // dans le vide : petite détonation au poing (décor)
  // ---------- Mine (C) ----------
  bt_mine:SP('Bakuton : Mine',BT_D.mine,8,{ai:RG(320,.5)},(u,a,td)=>{const c=atP(u,a,td,320);gkS('deflect',u);anim(u,'stomp',.4);for(const x of aux)if(x.type==='bt_mine'&&x.owner===u)x.t=Math.min(x.t,.01);
   aux.push({type:'bt_mine',x:c.x,y:c.y,r:30,t:12,m:12,team:u.team,owner:u,k:.5,arm:.5});fxRing(c.x,c.y,{u,r0:6,r1:30,col:BTC.b,t:.3,w:3});fxSmoke(c.x,c.y,{u,col:'#9a8268',n:3,r:16,s:9,t:.7,al:.22,rise:10})}),
@@ -64,9 +64,9 @@ AUXF.bt_big=(x,dt)=>{const u=x.owner;if(x.done||!u)return;if(u.dead){x.done=1;x.
   fxBurst(u.x,u.y,BTC.a,{u,z:30,n:26,sp:520,up:160,gr:260,w:2.6,len:.14,c2:'#ffffff',t:.8});fxDecal(u.x,u.y,'scorch',{u,r:150,t:5});fxShake(.5,u.x,u.y);
   if(near(u.x,u.y)){gkS('boom',u);gkS('heavy',u)}}};
 // charge : télégraphe net au rayon réel (210, liseré rouge si ennemi), anneau qui se resserre, lumière qui monte DERRIÈRE le ninja (couche du sol), étincelles aspirées
-AUXD.bt_big=(x,k,t)=>{const u=units[x.ui];if(!u||x.done)return;const e=1-x.t/x.m,q=P(u.x,u.y,40),s=q.s,g0=P(u.x,u.y,0);fxTele(u.x,u.y,x.r,e,BTC.b,u,.08+.1*e);
+AUXD.bt_big=(x,k,t)=>{const u=units[x.ui];if(!u||x.done)return;const e=1-x.t/x.m,q=P(u.x,u.y,40),s=q.s,g0=P(u.x,u.y,0);fxTele(u.x,u.y,x.r,e,BTC.b,u,.06+.06*e);
  g.save();g.strokeStyle=rgba(BTC.b,.5+.5*e);g.lineWidth=2+e*4;gEll(u.x,u.y,x.r*(1-e*.85));g.stroke();g.restore();
- gkDim(u,()=>{fxGlowS(g0.x,g0.y,(40+e*90)*s,BTC.b,.3+.4*e,(40+e*90)*s*K,0);fxGlowS(q.x,q.y,(24+e*34)*s,BTC.b,.35+.3*e);
+ gkDim(u,()=>{fxGlowS(g0.x,g0.y,(40+e*90)*s,BTC.b,.18+.22*e,(40+e*90)*s*K,0);fxGlowS(q.x,q.y,(18+e*20)*s,BTC.b,.16+.16*e,undefined,0); // lueur sans cœur blanc : le lanceur reste lisible
   g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ffffff',.6*e);g.lineWidth=2;const n=gkN(10,u);for(let i=0;i<n;i++){const b=i*.628+t*2,ph=(t*2.2+i*.37)%1,r0=(14+(1-ph)*80)*s;g.beginPath();g.moveTo(q.x+Math.cos(b)*r0,q.y+Math.sin(b)*r0*.7);g.lineTo(q.x+Math.cos(b)*(r0+10*s),q.y+Math.sin(b)*(r0+10*s)*.7);g.stroke()}g.restore()})};
 // ---- trait : Détonateur
 GKST.push({key:'bt_ch',max:BT_MAX,col:'#ffb030',c2:'#5a2a06'});
@@ -92,4 +92,14 @@ JFXD.bt_fuse=(f,k,e,t)=>{const L=f.len*Math.min(1,e*1.25),A=P(f.x,f.y,0),Bq=P(f.
  fxGlowS(Bq.x,Bq.y,(10+3*Math.sin(t*40))*Bq.s,BTC.b,.9*k);fxGlowS(Bq.x,Bq.y,4*Bq.s,'#ffffff',k);
  g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(BTC.a,k);const n=gkN(6,f);for(let i=0;i<n;i++){const ph=(t*4+i*.17)%1,b=f.a+Math.PI+(((i*.618)%1)-.5)*2,p=P(f.x+Math.cos(f.a)*L+Math.cos(b)*ph*22,f.y+Math.sin(f.a)*L+Math.sin(b)*ph*22,ph*(1-ph)*40);g.fillRect(p.x-1,p.y-1,2,2)}g.restore()};
 // grande détonation : lumière LOCALE (plus jamais de voile plein écran) : boule de lumière au sol au rayon de l'explosion, qui s'éteint vite
-JFXD.bt_flash=(f,k)=>{const q=P(f.x,f.y,0),R=(f.r||210)*q.s;fxGlowS(q.x,q.y,R*1.2,'#fff4c0',.45*k*k,R*1.2*K,0)};
+JFXD.bt_flash=(f,k)=>{const q=P(f.x,f.y,0),R=(f.r||210)*q.s;fxGlowS(q.x,q.y,R*1.2,'#fff4c0',.26*k*k,R*1.2*K,0)};
+
+// Jiraiken : poing chargé d'argile explosive pendant la ruée (lueur qui crépite), puis détonation en éventail VERS L'AVANT au contact
+JFXD.bt_fistg=(f,k,e,t,u)=>{if(!u||u.dead)return;const a=u.aim,h=P(u.x+Math.cos(a)*18,u.y+Math.sin(a)*18,32),s=h.s,fl=.6+.4*Math.sin(t*60);
+ fxGlowS(h.x,h.y,(10+6*fl)*s,BTC.b,.75*Math.min(1,k*3));fxGlowS(h.x,h.y,4*s,'#ffffff',.6*Math.min(1,k*3));g.globalCompositeOperation='lighter';g.strokeStyle=rgba(BTC.a,.8*k);g.lineWidth=1.3*s;
+ for(let i=0;i<3;i++){const b=fxH((t*20|0),i,1)*6.28,r=(6+8*fxH((t*20|0),i,2))*s;g.beginPath();g.moveTo(h.x,h.y);g.lineTo(h.x+Math.cos(b)*r,h.y+Math.sin(b)*r*.8);g.stroke()}};
+JFXD.bt_punch=(f,k,e,t)=>{const q=P(f.x,f.y,30),s=q.s*(f.sm?.6:1),ee=1-Math.pow(1-e,3),ca=Math.cos(f.a),sa=Math.sin(f.a)*K,an=Math.atan2(sa,ca);g.save();g.translate(q.x,q.y);g.rotate(an);g.globalCompositeOperation='lighter';
+ const R=(14+44*ee)*s,A=Math.max(0,1-e*1.15);g.globalAlpha=A;g.drawImage(fxSpr(BTC.b,1),-R*.4,-R*.8,R*1.6,R*1.6); // boule de feu poussée vers l'avant (cœur blanc bref)
+ g.strokeStyle=BTC.a;g.lineWidth=Math.max(1,4*s*(1-e));g.beginPath();g.ellipse(R*.25,0,R*.55,R*.95,0,-1.2,1.2);g.stroke(); // onde en croissant
+ g.strokeStyle=BTC.b;g.lineCap='round';for(let i=0;i<7;i++){const b=(i-3)*.32,r0=R*.3,r1=R*(1+.25*fxH(f.x|0,i,1));g.lineWidth=Math.max(.8,2.2*s*(1-e));g.beginPath();g.moveTo(Math.cos(b)*r0,Math.sin(b)*r0);g.lineTo(Math.cos(b)*r1,Math.sin(b)*r1);g.stroke()}
+ g.restore()};

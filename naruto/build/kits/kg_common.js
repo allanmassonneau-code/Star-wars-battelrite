@@ -105,8 +105,8 @@ function gkBolt(pts,c1,c2,w,k,dark){g.save();g.lineCap='round';g.lineJoin='round
 // jx({jfx:'gk_boom',x,y,r,v (palette),s (style : 'blast' 'lava' 'steam' 'gold' 'dust' 'crys' 'iron' 'dry'),t,m})
 // l'onde s'arrête au rayon r : passer le rayon RÉEL du coup. Lumière en sprites additifs modérés (jamais un aplat blanc sur un ninja).
 JFXD.gk_boom=(f,k,e,t)=>{const C=GK[f.v]||{a:'#fff',b:'#fc6',c:'#a50',d:'#420'},q=P(f.x,f.y,0),s=q.s,R=f.r,st=f.s||'blast',hot=st==='blast'||st==='lava'||st==='dry',ee=1-Math.pow(1-e,3),soft=st==='steam'||st==='dust';g.save();
- const gr=R*s*(.45+.6*ee);fxGlowS(q.x,q.y,gr,C.b,(hot?.4:.26)*k,gr*K,0);
- if(hot){const b=P(f.x,f.y,16+34*ee),rr=Math.min(80,R*.5)*s*(.6+.7*ee);fxGlowS(b.x,b.y,rr,C.b,.36*k*k);fxGlowS(b.x,b.y,rr*.4,C.a,.28*k*k)}
+ const gr=R*s*(.45+.6*ee);fxGlowS(q.x,q.y,gr,C.b,(hot?.28:.2)*k,gr*K,0);
+ if(hot){const b=P(f.x,f.y,16+34*ee),rr=Math.min(80,R*.5)*s*(.6+.7*ee);fxGlowS(b.x,b.y,rr,C.b,.22*k*k,undefined,0);fxGlowS(b.x,b.y,rr*.4,C.a,.16*k*k)} // boule de feu sans voile : le lanceur au centre reste lisible
  // fumée, vapeur, poussière, poudre : bouffées douces (non additives, ≤ 0,3)
  const nS=gkN(soft?9:st==='crys'||st==='iron'?3:5,f),sc=st==='steam'?'#ffffff':st==='dust'?C.a:st==='gold'?C.b:st==='crys'?C.a:st==='iron'?C.c:'#4a3a36';
  for(let i=0;i<nS;i++){const b=i*2.399+f.x*.013,d=R*(.18+.72*ee)*(.55+.45*((i*.37)%1)),p=P(f.x+Math.cos(b)*d,f.y+Math.sin(b)*d,8+e*(st==='steam'?64:28)+(i%3)*7),rr=(9+e*18)*s*Math.min(1.7,R/80+.45);

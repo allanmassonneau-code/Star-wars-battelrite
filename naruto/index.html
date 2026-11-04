@@ -638,7 +638,7 @@ const NAT={}; // mécaniques sur mesure des jutsu (remplies par kits/*.js)
 // stats de référence (pour les PV / la puissance du ninja) : un perso Star Wars proche dans l'esprit
 const NATHERO={}; // stats de référence par préfixe (rempli par les kits)
 // mise à jour des objets spéciaux (hôte)
-function auxUpdate(dt){seqUpdate(dt);for(const x of aux){x.t-=dt;x.k-=dt;if(AUXF[x.type]){const f0=fx.length;FXO=x.owner||null;AUXF[x.type](x,dt);FXO=null;fxTag(f0,x.owner);continue}
+function auxUpdate(dt){seqUpdate(dt);for(const x of aux){x.t-=dt;x.k-=dt;if(AUXF[x.type]){const f0=fx.length;FXO=x.owner||null;try{AUXF[x.type](x,dt)}finally{FXO=null}fxTag(f0,x.owner);continue}
   if(x.type==='tornado'){x.x=clamp(x.x+x.vx*dt,B.x+20,B.x+B.w-20);x.y=clamp(x.y+x.vy*dt,B.y+20,B.y+B.h-20)}
   if(x.type==='prog'&&x.owner&&!x.owner.dead){x.x=x.owner.x;x.y=x.owner.y}
   const tick=x.k<=0;if(tick)x.k=.25;
@@ -744,8 +744,18 @@ function traitDmg(t,src,dmg,o){const a=src&&src!==t?trait(src):null,d=trait(t);i
 // un préfixe qui ne fait que nommer l'arbre (« Katon : », « Kiminari : », « Mokuton : »…) est toujours retiré : l'icône de la case montre déjà l'arbre, et tous les noms se lisent de la même façon
 let HUDPX=null;const hudPx=()=>HUDPX||(HUDPX=new Set([...NATURES.map(n=>n[0]),...KGS.map(k=>k.n),...CLANS.map(c=>c[0]),'Mokuton','Genjutsu','Senjutsu','Fûinjutsu','Iryô','Kuchiyose','Ninjutsu','Taijutsu','Kenjutsu','Bukijutsu']));
 function hudAbN(s,x,y,col,w){s=String(s);const i=s.indexOf(' : ');if(i>0&&hudPx().has(s.slice(0,i)))s=s.slice(i+3);g.font=FNT(8,'normal');if(g.measureText(s).width>w&&s.includes(' : '))s=s.slice(s.lastIndexOf(' : ')+3);fitT(s,x,y,10,col,w,'normal',8,'center')}
-function txtLay(){const W0=t=>String(t.s).length*4.6+6;for(let i=0;i<txt.length;i++){const t=txt[i];if(t.ly)continue;t.ly=1;
- for(let n=0;n<6;n++){let hit=false;for(let j=0;j<txt.length;j++){const o=txt[j];if(j===i||!o.ly)continue;if(Math.abs(o.y-t.y)<26&&Math.abs(o.z-t.z)<15&&Math.abs(o.x-t.x)<W0(o)+W0(t)){hit=true;break}}if(!hit)break;t.z+=16}}}
+// grande mêlée (plus de 10 ninjas en vie) : textes flottants regroupés AU DESSIN (chaque écran, hôte comme invité) :
+// les dégâts « -N » proches et récents s'additionnent en un seul chiffre, les mots d'état loin de mon ninja disparaissent,
+// les textes lointains sont plus petits et plus pâles, 22 textes au plus (les plus proches de moi d'abord), empilement limité à 2 lignes
+const TXN=/^-\d+$/;
+function txtVis(){const crowd=FXF.alive>10;if(!crowd){for(const t of txt){t._h=0;t._v=null;t._f=1}return txt}
+ const pl=player&&!player.dead?player:{x:cam.x,y:cam.y},L=[];for(const t of txt){t._h=0;t._v=null;t._d=Math.hypot(t.x-pl.x,t.y-pl.y);t._f=t._d<300?1:.72}
+ const N=txt.filter(t=>TXN.test(t.s)).sort((a,b)=>a._d-b._d);
+ for(let i=0;i<N.length;i++){const t=N[i];if(t._h)continue;let v=+t.s.slice(1);for(let j=i+1;j<N.length;j++){const o=N[j];if(!o._h&&Math.abs(o.x-t.x)<34&&Math.abs(o.y-t.y)<20&&Math.abs(o.t-t.t)<.7){o._h=1;v+=+o.s.slice(1)}}if(v!==+t.s.slice(1))t._v='-'+v}
+ for(const t of txt){if(t._h)continue;if(!TXN.test(t.s)&&t._d>300)continue;L.push(t)}
+ if(L.length>22){L.sort((a,b)=>a._d-b._d);L.length=22}return L}
+function txtLay(){const W0=t=>String(t.s).length*4.6+6,mx=FXF.alive>10?2:6;for(let i=0;i<txt.length;i++){const t=txt[i];if(t.ly)continue;t.ly=1;
+ for(let n=0;n<mx;n++){let hit=false;for(let j=0;j<txt.length;j++){const o=txt[j];if(j===i||!o.ly)continue;if(Math.abs(o.y-t.y)<26&&Math.abs(o.z-t.z)<15&&Math.abs(o.x-t.x)<W0(o)+W0(t)){hit=true;break}}if(!hit)break;t.z+=16}}}
 function drawBackN(u,p,S,sk){if(u.dead)return;const T=trait(u);if(T&&T.drawB)T.drawB(u,p,S,sk)} // dessins de trait DERRIÈRE le ninja (avant drawChar)
 function drawPrevN(u,x,y,S,front){const T=trait(u);if(T&&T.prev)try{T.prev(u,{x,y},S,front)}catch(e){}} // signe du trait dans les aperçus (galerie, créateur) : front=0 derrière, 1 devant
 function drawExtraN(u,p,S,sk){if(u.dead)return;const T=trait(u);if(T&&T.draw)T.draw(u,p,S,sk);for(const f of STATD)f(u,p,S,sk)}
@@ -814,6 +824,7 @@ const FXF={fl:0,t:0,crowd:1,alive:0,drawn:0,dec:0,shW:0,hp:null,hu:null,hooked:f
 let FXO=null,FXAM=1; // FXO : lanceur courant (posé par le moteur pendant un jutsu, un objet aux, une zone, un projectile) ; FXAM : opacité imposée (fxAlpha)
 const FXRK=[1,.8,.55,1]; // décor selon le camp : 0 le mien, 1 allié, 2 ennemi, 3 inconnu (décor du monde)
 const fxLvl=()=>FXL[OPT.fxi==null?1:OPT.fxi]||FXL[1];
+let FXRS=97531;const fxR=()=>(FXRS=FXRS*16807%2147483647)/2147483647; // hasard VISUEL à part : le dessin et les réglages d'affichage ne consomment jamais le hasard du jeu (rnd)
 const fxH=(s,i,k)=>{const v=Math.sin(s*12.9898+i*78.233+k*37.719)*43758.5453;return v-Math.floor(v)}; // hasard fixe (graine, indice, canal) → 0..1
 // ---- camp du lanceur : unité, indice d'unité, ou objet (fx avec oi/ui, projectile/aux/zone avec owner, objet avec team)
 function fxOwn(o){if(o==null)return FXO||CUR||null;if(typeof o==='number')return units[o]||null;if(o.ch&&o.max!==undefined)return o;
@@ -823,9 +834,10 @@ const fxOI=u=>{const w=u===undefined?(FXO||CUR):u;if(w==null)return undefined;if
 function fxTag(i0,u){const oi=fxOI(u);if(oi==null)return;for(let i=i0;i<fx.length;i++)if(fx[i].oi==null)fx[i].oi=oi}
 // ---- échelles : à appeler AU DESSIN (chaque écran a ses réglages)
 function fxK(o){const L=fxLvl(),r=fxRel(o),c=FXF.crowd;return L.k*(r===0?Math.max(c,.85):c)*FXRK[r]} // décor 0..1 (Normal, 1c1, mon jutsu = 0,8)
-function fxA(o){const r=fxRel(o);if(r===0||r===3)return 1;const L=fxLvl();return r===1?Math.min(1,L.a+.22):L.a*(.85+.15*FXF.crowd)} // opacité (ennemi ≈ 0,68 en Normal)
+function fxA(o){const r=fxRel(o);if(r===0||r===3)return 1;const L=fxLvl();if(r===1)return Math.min(1,L.a+.22);let a=L.a*(.85+.15*FXF.crowd);
+ const pl=player;if(pl&&!pl.dead&&o&&typeof o==='object'&&o.x!=null){const d=Math.hypot(o.x-pl.x,o.y-pl.y);if(d<110)a*=.5+.5*d/110}return a} // opacité (ennemi ≈ 0,68 en Normal) ; un effet ennemi posé SUR mon ninja : jusqu'à moitié moins (on se voit toujours dedans)
 function fxN(n,o){return n>0?Math.max(1,Math.round(n*fxK(o)/.8)):0} // nombre de particules (n = nombre voulu en Normal pour ton jutsu)
-function fxNB(n,o){let m=fxN(n,o);const B=fxLvl().b*(.55+.45*FXF.crowd),d=FXF.drawn;if(d>B*.6)m=Math.floor(m*Math.max(0,(B-d)/(B*.4)));FXF.drawn+=m;return m} // + budget global de l'image
+function fxNB(n,o){let m=fxN(n,o);const B0=fxLvl().b*(.55+.45*FXF.crowd),B=fxRel(o)===0?B0:B0*.7,d=FXF.drawn;if(d>B*.6)m=Math.floor(m*Math.max(0,(B-d)/(B*.4)));FXF.drawn+=m;return m} // + budget global de l'image ; les effets des autres s'arrêtent à 70 % du budget : il en reste toujours pour MES jutsu
 // ---- une fois par image (draw) : foule, secousse, coup lourd reçu
 function fxFrame(){const now=performance.now(),dt=FXF.t?Math.min(.1,Math.max(0,(now-FXF.t)/1000)):0;FXF.t=now;FXF.drawn=0;FXF.dec=0;FXF.fl=0;fxHook();
  let n=0;for(const u of units){if(!u.dead)n++;if(u.fxHS>0)u.fxHS=Math.max(0,u.fxHS-dt)}FXF.alive=n;FXF.crowd=n<=8?1:Math.max(.56,1-(n-8)*.44/32); // 20c20 : 0,56 (Normal ≈ Faible en 1c1)
@@ -839,9 +851,12 @@ function fxAlpha(m,fn){if(!(m<1))return fn();const o=FXAM;g.save();FXAM=o*Math.m
 function fxShake(a,x,y){if(x!=null&&!nearMe(x,y))return;FXF.shW=Math.max(FXF.shW,.45);shake=Math.max(shake,a)}
 function fxShakeNow(){const L=fxLvl();return FXF.shW>0&&L.sh>0&&shake>0?Math.min(shake,.5)*L.sh:0}
 // ---- arrêt sur coup (hit-stop) : gel visuel des deux ninjas (u.fxHS, lu par l'animation) ; vraie pause de 35-75 ms seulement hors ligne et pour un gros coup du joueur local
-function fxHitStop(src,t,dmg,big){if(!t||!t.ch)return false;if(!(big||dmg>=Math.max(16,(t.max||200)*.07)))return false;
+function fxHitStop(src,t,dmg,big){if(!t||!t.ch||t.fxHT!==SIMT)return false; // seulement si le coup a VRAIMENT porté à ce pas (pas d'arrêt sur une esquive, une parade, un Kawarimi, un ninja intangible)
+ if(!(big||dmg>=Math.max(16,(t.max||200)*.07)))return false;
  t.fxHS=Math.max(t.fxHS||0,.08);if(src&&src.ch)src.fxHS=Math.max(src.fxHS||0,.06);
  if((src===player||t===player)&&!isGuest()&&!coop())hs=Math.max(hs,Math.min(.075,.035+dmg/900));return true}
+// ---- objets solides (murs, pics, rochers, sculptures) : à moitié transparents quand un ninja vivant se tient juste derrière (on le voit toujours)
+function fxOcc(x,y,r,h){h=h||70;for(const u of units){if(u.dead)continue;const dy=y-u.y;if(dy>-4&&dy<h&&Math.abs(u.x-x)<r+16)return .42}return 1}
 // ---- couleurs : hex (#rgb / #rrggbb) depuis n'importe quelle couleur CSS, mis en cache
 const FXHX=new Map();let FXCX=null;
 function fxHex(c){if(typeof c!=='string')return'#ffffff';if(c[0]==='#'&&(c.length===7||c.length===4))return c;let h=FXHX.get(c);if(h)return h;
@@ -880,22 +895,22 @@ function fxRibbon(o,x,y,z,col,w=10,n=10,a=.6){const now=performance.now(),H=o._f
  g.globalAlpha=ga;g.globalCompositeOperation=o0}
 // ---- TÉLÉGRAPHES (danger) : JAMAIS atténués (ni intensité, ni foule, ni camp) ; forme = hitbox EXACTE ; k = progression 0→1 (1 = ça frappe)
 // ennemi : liseré rouge en plus de la couleur de l'élément ; dernier quart : bord qui pulse
-function fxTeleStyle(col,o,k,fill){const en=fxRel(o)===2,pl=k>.75?.6+.4*Math.sin(performance.now()/45):1;return{c:fxHex(col),en,pl,fill:fill??.1}}
+function fxTeleStyle(col,o,k,fill){const r=fxRel(o),en=r===2,pl=k>.75?.6+.4*Math.sin(performance.now()/45):1;return{c:fxHex(col),en,pl,fill:fill??.1,pf:en?.2:r===0?.11:.15}} // remplissage de progression : plein chez l'ennemi (danger), plus léger pour mes propres alertes (grandes zones)
 function fxTele(x,y,r,k,col,o,fill){const S=fxTeleStyle(col,o,k,fill),p=P(x,y),R=Math.max(0,r*p.s);if(!(R>0))return;const ga=g.globalAlpha;g.save();g.globalAlpha=1;
  g.fillStyle=rgba(S.c,S.fill);g.beginPath();g.ellipse(p.x,p.y,R,R*K,0,0,6.2832);g.fill();
- if(k>0){g.fillStyle=rgba(S.c,.2);g.beginPath();g.ellipse(p.x,p.y,R*Math.min(1,k),R*K*Math.min(1,k),0,0,6.2832);g.fill()}
+ if(k>0){g.fillStyle=rgba(S.c,S.pf);g.beginPath();g.ellipse(p.x,p.y,R*Math.min(1,k),R*K*Math.min(1,k),0,0,6.2832);g.fill()}
  g.lineWidth=2;g.strokeStyle=rgba('#000000',.45);g.beginPath();g.ellipse(p.x,p.y,R+1.5,(R+1.5)*K,0,0,6.2832);g.stroke();
  g.strokeStyle=rgba(S.c,.95*S.pl);g.beginPath();g.ellipse(p.x,p.y,R,R*K,0,0,6.2832);g.stroke();
  if(S.en){g.strokeStyle=rgba('#ff3b3b',.85*S.pl);g.lineWidth=1.4;g.setLineDash([10,6]);g.lineDashOffset=-performance.now()/40;g.beginPath();g.ellipse(p.x,p.y,R-3,Math.max(0,R-3)*K,0,0,6.2832);g.stroke();g.setLineDash([])}
  g.restore();g.globalAlpha=ga}
 // rectangle partant de (x, y) dans la direction a : longueur len, largeur w (hitbox des rayons / lignes)
 function fxTeleLine(x,y,a,len,w,k,col,o,fill){const S=fxTeleStyle(col,o,k,fill),c=Math.cos(a),s=Math.sin(a),h=w/2,cr=(f0,s0)=>P(x+c*f0-s*s0,y+s*f0+c*s0),poly4=(L)=>{const A=cr(0,-h),B=cr(L,-h),C=cr(L,h),D=cr(0,h);g.beginPath();g.moveTo(A.x,A.y);g.lineTo(B.x,B.y);g.lineTo(C.x,C.y);g.lineTo(D.x,D.y);g.closePath()};
- g.save();g.globalAlpha=1;g.fillStyle=rgba(S.c,S.fill);poly4(len);g.fill();if(k>0){g.fillStyle=rgba(S.c,.2);poly4(len*Math.min(1,k));g.fill()}
+ g.save();g.globalAlpha=1;g.fillStyle=rgba(S.c,S.fill);poly4(len);g.fill();if(k>0){g.fillStyle=rgba(S.c,S.pf);poly4(len*Math.min(1,k));g.fill()}
  poly4(len);g.lineWidth=3.5;g.strokeStyle=rgba('#000000',.4);g.stroke();g.lineWidth=2;g.strokeStyle=rgba(S.c,.95*S.pl);g.stroke();
  if(S.en){g.strokeStyle=rgba('#ff3b3b',.85*S.pl);g.lineWidth=1.4;g.setLineDash([10,6]);g.lineDashOffset=-performance.now()/40;poly4(len);g.stroke();g.setLineDash([])}g.restore()}
 // cône (secteur) depuis (x, y) : rayon R, ouverture totale arc
 function fxTeleCone(x,y,a,R,arc,k,col,o,fill){const S=fxTeleStyle(col,o,k,fill),path=r=>{const p0=P(x,y);g.beginPath();g.moveTo(p0.x,p0.y);for(let i=0;i<=16;i++){const b=a-arc/2+arc*i/16,q=P(x+Math.cos(b)*r,y+Math.sin(b)*r);g.lineTo(q.x,q.y)}g.closePath()};
- g.save();g.globalAlpha=1;g.fillStyle=rgba(S.c,S.fill);path(R);g.fill();if(k>0){g.fillStyle=rgba(S.c,.2);path(R*Math.min(1,k));g.fill()}
+ g.save();g.globalAlpha=1;g.fillStyle=rgba(S.c,S.fill);path(R);g.fill();if(k>0){g.fillStyle=rgba(S.c,S.pf);path(R*Math.min(1,k));g.fill()}
  path(R);g.lineWidth=3.5;g.strokeStyle=rgba('#000000',.4);g.stroke();g.lineWidth=2;g.strokeStyle=rgba(S.c,.95*S.pl);g.stroke();
  if(S.en){g.strokeStyle=rgba('#ff3b3b',.85*S.pl);g.lineWidth=1.4;g.setLineDash([10,6]);path(R);g.stroke();g.setLineDash([])}g.restore()}
 // ---- palettes par nature / famille : a principale, b claire, c sombre, h cœur chaud, sm fumée, e famille d'impact (fxImpact)
@@ -943,7 +958,7 @@ const FXPC={};
 function fxPal(v){if(!v)return FXP.chakra;if(FXP[v])return FXP[v];if(FXAL[v])return FXP[FXAL[v]];if(FXPC[v])return FXPC[v];
  const vp=typeof VP!=='undefined'&&VP[v];if(!vp)return FXP.chakra;const p={a:fxHex(vp[0]),b:fxHex(vp[1]||vp[0]),c:fxHex(vp[2]||vp[1]||vp[0]),h:'#ffffff',sm:fxHex(vp[1]||vp[0]),e:'chakra'};return FXPC[v]=p}
 // ---- effets analytiques : ajout (côté hôte ou local), un objet fx par effet
-function fxE(o){if(!near(o.x,o.y))return null;o.sd=o.sd??(Math.random()*997|0);if(o.oi==null){const i=fxOI(o.u);if(i!=null)o.oi=i}delete o.u;o.t=o.t||.4;o.m=o.t;fx.push(o);return o}
+function fxE(o){if(!near(o.x,o.y))return null;o.sd=o.sd??(fxR()*997|0);if(o.oi==null){const i=fxOI(o.u);if(i!=null)o.oi=i}delete o.u;o.t=o.t||.4;o.m=o.t;fx.push(o);return o}
 // étincelles / gouttes / pétales qui jaillissent : n (Normal, ton jutsu), sp vitesse, a+arc (cône), z hauteur, up élan vertical, gr gravité, w épaisseur, len traînée, sh 'line'|'dot'|'petal'
 const fxBurst=(x,y,col,o)=>fxE(Object.assign({fk:'burst',x,y,col,n:12,t:.45},o));
 const fxSmoke=(x,y,o)=>fxE(Object.assign({fk:'smoke',x,y,col:'#d8d8dc',n:6,t:.9},o)); // r étalement, s taille d'une bouffée, rise montée, al opacité (≤ .35), dx/dy dérive
@@ -961,7 +976,7 @@ const fxGlyph=(x,y,col,o)=>fxE(Object.assign({fk:'glyph',gd:1,x,y,col,r:44,t:.8}
 const fxLight=(x,y,r,col,o)=>{o=o||{};if(!near(x,y))return null;const f={light:1,x,y,r,col:fxHex(col),t:o.t||.3,m:o.t||.3,a:o.a??.45};const i=fxOI(o.u);if(i!=null)f.oi=i;fx.push(f);return f}; // lumière au sol (additive)
 // ---- combinés : impact selon l'élément, préparation (cast), jutsu de rang S
 function fxImpact(x,y,v,s=1,o={}){const C=fxPal(v),u=o.u,z=o.z??26,R=o.r||44*s,e=C.e,dec=o.dec!==0;
- fxFlare(x,y,C.a,{u,z,r:24*s,t:.2,c2:C.h});fxLight(x,y,90*s,C.a,{u,t:.3});if(o.ring!==0)fxRing(x,y,{u,r0:R*.2,r1:R,col:C.a,c2:C.h,t:.32,w:5*s});
+ const sF=Math.min(s,1.35);fxFlare(x,y,C.a,{u,z,r:24*sF,t:.2,c2:C.h});fxLight(x,y,90*Math.min(s,1.6),C.a,{u,t:.3}); // éclat plafonné : un gros impact ne délave jamais la cible (l'onde, elle, garde le vrai rayon)if(o.ring!==0)fxRing(x,y,{u,r0:R*.2,r1:R,col:C.a,c2:C.h,t:.32,w:5*s});
  if(e==='fire'){fxBurst(x,y,C.a,{u,z,n:14*s,sp:280*s,c2:C.h,up:70,gr:40});fxSmoke(x,y,{u,col:C.sm,n:4*s,r:R*.5,s:12*s,t:1.1,al:.24});if(dec)fxDecal(x,y,'scorch',{u,r:R*.7,t:3.5})}
  else if(e==='water'){fxBurst(x,y,C.b,{u,z,n:16*s,sp:240*s,c2:'#ffffff',up:150,gr:420,w:2.4,len:.06});if(dec)fxDecal(x,y,'puddle',{u,r:R*.75,t:3})}
  else if(e==='wind'){fxWind(x,y,o.a??0,{u,len:R*2.2,w:R,n:7*s,t:.45,col:C.b,spin:1});fxBurst(x,y,C.b,{u,z,n:8*s,sp:340*s,gr:0,up:10,w:1.4,len:.2})}
@@ -981,7 +996,7 @@ function fxCast(u,v,dur=.6,o={}){const C=fxPal(v);fxCharge(u,C.a,Object.assign({
 // lancement d'un jutsu de rang S (moteur, use()) : lumière locale autour du lanceur + fenêtre de secousse (3 s) si c'est moi ou tout près
 function fxSCast(u,ab){if(!near(u.x,u.y))return;const own=u===player,d=player?Math.hypot(u.x-player.x,u.y-player.y):1e9,C=fxPal(ab&&ab.vfx),col=ab&&ab.vfx&&ab.vfx!=='chakra'?C.a:(u.ch.look.weapon.col||C.a);
  if(own||d<520){FXF.shW=Math.max(FXF.shW,3);shake=Math.max(shake,own?.26:.12)}
- fxFlare(u.x,u.y,col,{u,z:40,r:36,t:.24});fxRing(u.x,u.y,{u,r0:16,r1:120,col,t:.5,w:6});fxLight(u.x,u.y,200,col,{u,t:.6,a:.5});fxPillar(u.x,u.y,col,{u,h:200,w:17,t:.5,al:.32})} // colonne fine et éclat réduit : le ninja 2D reste lisible dedans
+ fxFlare(u.x,u.y,col,{u,z:40,r:26,t:.22});fxRing(u.x,u.y,{u,r0:16,r1:120,col,t:.45,w:4,al:.6});fxLight(u.x,u.y,190,col,{u,t:.55,a:.34});fxPillar(u.x,u.y,col,{u,h:200,w:14,t:.45,al:.24})} // colonne fine et éclat réduit : le ninja 2D reste lisible dedans
 // explosion d'une zone / d'un projectile du moteur (cercle déjà dessiné au bon rayon) : lumière + trace au sol de l'élément
 function fxDeto(x,y,r,v,u){if(!near(x,y))return;const C=fxPal(v),e=C.e,s=clamp(r/80,.6,1.8);fxFlare(x,y,C.a,{u,z:30,r:22*s,t:.22,c2:C.h,al:.75});fxLight(x,y,r*1.2,C.a,{u,t:.35,a:.35});
  const d={fire:'scorch',lightning:'burn',earth:'crack',water:'puddle',ice:'ice',sand:'sand',seal:'seal'}[e];if(d)fxDecal(x,y,d,{u,r:r*.75,t:3.2,col:C.a});
@@ -1038,7 +1053,8 @@ FXK.wind=(f,k,e)=>{const n=fxNB(f.n||8,f);if(!n)return;const A=fxA(f)*(f.al??.6)
   const off=(r1-.5)*(f.w||60),s0=-(f.len||160)/2+ph*(f.len||160)*.7,s1=s0+(f.len||160)*.35,x0=f.x+ca*s0-sa*off,y0=f.y+sa*s0+ca*off,x1=f.x+ca*s1-sa*off,y1=f.y+sa*s1+ca*off,z=(f.z??18)+r2*26,q0=P(x0,y0,z),q1=P(x1,y1,z);
   g.lineWidth=Math.max(1,1.6*q1.s);g.beginPath();g.moveTo(q0.x,q0.y);g.quadraticCurveTo((q0.x+q1.x)/2-sa*8*q1.s,(q0.y+q1.y)/2-6*q1.s,q1.x,q1.y);g.stroke()}
  g.restore()};
-FXK.flare=(f,k,e)=>{if(++FXF.fl>10)return;const A=fxA(f)*(f.al??1),q=P(f.x,f.y,f.z??26),R=(f.r||28)*q.s*(.7+.5*Math.sqrt(e)),a=A*(1-e);if(!(a>0))return;
+FXK.flare=(f,k,e)=>{if(++FXF.fl>10&&(FXF.fl>16||fxRel(f)!==0))return; // 10 éclats par image, 6 de plus réservés aux miens
+ const A=fxA(f)*(f.al??1),q=P(f.x,f.y,f.z??26),R=(f.r||28)*q.s*(.7+.5*Math.sqrt(e)),a=A*(1-e);if(!(a>0))return;
  fxGlowS(q.x,q.y,R*1.5,f.col,a*.55);fxGlowS(q.x,q.y,R*.45,'#ffffff',a*.35); // modéré : ne délave jamais un corps
  if(f.star!==0){g.save();g.globalCompositeOperation='lighter';g.globalAlpha=a*.6;g.strokeStyle=f.c2||'#ffffff';g.lineCap='round';g.lineWidth=Math.max(1,1.6*q.s*(1-e));const L=R*1.6*(1-e*.4),rot=f.rot??((f.sd%7)*.45);
   for(let i=0;i<2;i++){const an=rot+i*1.5708;g.beginPath();g.moveTo(q.x-Math.cos(an)*L,q.y-Math.sin(an)*L*.6);g.lineTo(q.x+Math.cos(an)*L,q.y+Math.sin(an)*L*.6);g.stroke()}g.restore()}};
@@ -1051,7 +1067,7 @@ FXK.charge=(f,k,e)=>{const u=f.ui!=null?units[f.ui]:null;if(f.ui!=null&&(!u||u.d
  const c=P(cx,cy,f.z??34),n=fxNB(f.n||10,f),R=(f.r||46)*c.s,T=f.m*e,fi=Math.min(1,e*6)*Math.min(1,k*8);g.save();g.globalCompositeOperation='lighter';g.lineCap='round';
  for(let i=0;i<n;i++){const r1=fxH(f.sd,i,1),r2=fxH(f.sd,i,2),ph=(T*(1.5+r2)+r1)%1,an=r1*6.2832+ph*1.4,rr=R*(1-ph),x=c.x+Math.cos(an)*rr,y=c.y+Math.sin(an)*rr*.75,x0=c.x+Math.cos(an-.25)*rr*1.2,y0=c.y+Math.sin(an-.25)*rr*1.2*.75;
   g.globalAlpha=A*Math.sin(Math.PI*ph)*.9*fi;g.strokeStyle=i%3?f.col:(f.c2||'#ffffff');g.lineWidth=Math.max(1,1.8*c.s);g.beginPath();g.moveTo(x0,y0);g.lineTo(x,y);g.stroke()}
- g.restore();fxGlowS(c.x,c.y,(8+16*e)*c.s,f.col,A*.75*fi)};
+ g.restore();fxGlowS(c.x,c.y,(6+10*e)*c.s,f.col,A*.5*fi,undefined,0)}; // lueur sans cœur blanc : ne masque pas les mains ni le buste
 FXK.glyph=(f,k,e)=>{const u=f.ui!=null?units[f.ui]:null;if(f.ui!=null&&(!u||u.dead))return;const x=u?u.x:f.x,y=u?u.y:f.y,p=P(x,y),R=f.r*p.s*(.85+.15*Math.min(1,e*5)),A=fxA(f)*(f.al??.7)*Math.min(1,e*6)*Math.min(1,k*4),c=fxHex(f.col),t=performance.now()/1000;if(!(R>0))return;
  g.save();g.globalCompositeOperation='lighter';g.globalAlpha=A;g.strokeStyle=c;g.lineWidth=Math.max(1,1.5*p.s);g.beginPath();g.ellipse(p.x,p.y,R,R*K,0,0,6.2832);g.stroke();g.globalAlpha=A*.7;g.beginPath();g.ellipse(p.x,p.y,R*.7,R*.7*K,0,0,6.2832);g.stroke();
  g.globalAlpha=A;g.fillStyle=c;for(let i=0;i<6;i++){const a=i*1.047+t*1.2;g.fillRect(p.x+Math.cos(a)*R*.85-1.5*p.s,p.y+Math.sin(a)*R*.85*K-2.5*p.s,3*p.s,5*p.s)}g.restore();fxGlowS(p.x,p.y,R*.9,c,A*.35,R*.9*K,0)};
@@ -1061,7 +1077,7 @@ function fxGroundPass(){for(const f of fx){if(!f.gd||!f.fk||!near(f.x,f.y))conti
 function fxCull(){const c=FXF.crowd,cap=Math.round(fxLvl().b*.55*(c*c));let n=0,d=0;for(const f of fx){if(f.vx!==undefined)n++;else if(f.fk==='decal')d++}if(n<=cap&&d<=48)return;let x=n-cap,y=d-48;
  fx=fx.filter(f=>{if(x>0&&f.vx!==undefined){x--;return false}if(y>0&&f.fk==='decal'){y--;return false}return true})}
 // garde-fou : un effet de kit qui remplit tout l'écran d'une couleur unie (flash) est redessiné en éclat local à sa position
-const FXTELE=new Set(); // noms de jfx qui sont des télégraphes (jamais atténués) ; un jx({…, tele:1}) aussi
+const FXTELE=new Set();const FXSMALL={burst:1,smoke:1,debris:1,embers:1,flare:1,charge:1,wind:1}; // petit décor : premier sacrifié en réseau si l'envoi est plein // noms de jfx qui sont des télégraphes (jamais atténués) ; un jx({…, tele:1}) aussi
 function fxNoFull(fn){return function(f){const fr=g.fillRect;let used=false;g.fillRect=function(x,y,w,h){if(x<=0&&y<=0&&w>=W&&h>=H&&typeof this.fillStyle==='string'){if(!used&&f&&f.x!=null){used=true;const q=P(f.x,f.y,30),k=f.m?f.t/f.m:1;g.save();g.setTransform(RS,0,0,RS,0,0);fxGlowS(q.x,q.y,160*q.s,fxHex(this.fillStyle),.8*k);g.restore()}return}return fr.apply(this,arguments)};
  try{return fn.apply(this,arguments)}finally{delete g.fillRect}}}
 AFTER.push(()=>{for(const R of[JFXD,AUXD])for(const k in R){const f=R[k];if(typeof f==='function'&&/fillRect\(0,0,W,H\)/.test(String(f)))R[k]=fxNoFull(f)}});
@@ -1165,7 +1181,7 @@ JFXD.hl_cast=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x+Math.cos(u.aim)*14
  for(let i=0;i<6;i++){const a=i*1.047+t*5,r=(26-e*18)*s;g.fillStyle=rgba('#d8ffe0',.9);g.beginPath();g.arc(q.x+Math.cos(a)*r,q.y+Math.sin(a)*r*.7,1.8*s,0,7);g.fill()}
  const b=P(u.x,u.y,0);g.strokeStyle=rgba('#7dff9a',.6*e);g.lineWidth=2*s;g.beginPath();g.ellipse(b.x,b.y,(18+e*14)*s,(7+e*5)*s,0,0,7);g.stroke()};
 JFXD.hl_heal=(f,k,e,t,u,tg)=>{const T=tg&&!tg.dead?tg:null,tx=T?T.x:f.x,ty=T?T.y:f.y,b=P(tx,ty,0),s=b.s;g.globalCompositeOperation='lighter';
- if(u&&T&&u!==T&&e<.55){const a=P(u.x,u.y,42),c=P(tx,ty,42),al=Math.min(1,(.55-e)/.2);g.lineCap='round';g.strokeStyle=rgba('#7dff9a',.55*al);g.lineWidth=10*s;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(c.x,c.y);g.stroke();g.strokeStyle=rgba('#ffffff',.9*al);g.lineWidth=3*s;g.stroke();
+ if(u&&T&&u!==T&&e<.55){const a=P(u.x,u.y,42),c=P(tx,ty,42),mine=u===player||T===player,cr=mine||FXF.alive<=10?1:.4,al=Math.min(1,(.55-e)/.2)*cr;g.lineCap='round';g.strokeStyle=rgba('#7dff9a',.45*al);g.lineWidth=(mine?7:4)*s;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(c.x,c.y);g.stroke();g.strokeStyle=rgba('#ffffff',.75*al);g.lineWidth=(mine?2:1.2)*s;g.stroke(); // lien de soin : fin, et très discret en grande mêlée s'il ne me concerne pas
   for(let i=0;i<5;i++){const m=(e*2.2+i/5)%1;g.fillStyle=rgba('#ffffff',al);g.beginPath();g.arc(a.x+(c.x-a.x)*m,a.y+(c.y-a.y)*m,3*s,0,7);g.fill()}}
  const H=120*s*Math.min(1,e*5),w=(26+8*Math.sin(t*9))*s*Math.min(1,k*2.2),gr=g.createLinearGradient(0,b.y-H,0,b.y);gr.addColorStop(0,'rgba(125,255,154,0)');gr.addColorStop(.6,rgba('#7dff9a',.35*k));gr.addColorStop(1,rgba('#ffffff',.6*k));
  g.fillStyle=gr;g.beginPath();g.ellipse(b.x,b.y-H/2,w,H/2,0,0,7);g.fill();
@@ -1674,12 +1690,12 @@ Object.assign(NAT,{
   for(const e of enemies(u)){const dx=e.x-u.x,dy=e.y-u.y,f=dx*Math.cos(a)+dy*Math.sin(a),s=Math.abs(-dx*Math.sin(a)+dy*Math.cos(a));if(f<0||f>150+e.r||s>17+e.r)continue;
    const tip=f>105;if(hit(e,u,14*m*(tip?1.5:1),{melee:1,unblockable:m>1?1:0})){jx({jfx:'st_glint',ti:stI(e),x:e.x,y:e.y,a,t:.34,m:.34});fxBurst(e.x,e.y,'#e4eeff',{u,z:36,n:tip?9:5,sp:300,gr:0,up:10,w:1.3,a,arc:1.2,c2:'#ffffff'});if(tip)fxHitStop(u,e,21,1)}if(tip)say(e,'POINTE','#e4eeff')}
   fxFlare(u.x+Math.cos(a)*150,u.y+Math.sin(a)*150,'#cfe8ff',{u,z:32,r:16,t:.16});
-  jx({jfx:'ken_line',ui:stI(u),x:u.x,y:u.y,a,len:150,t:.35,m:.35});jx({jfx:'st_iai',ui:stI(u),x:u.x,y:u.y,a,R:150,t:.5,m:.5})}),
+  jx({jfx:'ken_iai2',ui:stI(u),x:u.x,y:u.y,a,len:150,w:34,t:.5,m:.5});fxWind(u.x+Math.cos(a)*75,u.y+Math.sin(a)*75,a,{u,len:150,w:30,n:5,t:.3,col:'#e4eeff'})}),
  // Ashigiri : entaille basse, ralentit et empêche le dash 1,5 s (la recharge du dash de la cible est repoussée)
  ken_ashi:S_('Ashigiri : Coupe aux jarrets','',8,{line:{len:115,w:180},ai:RG(115,.65)},(u,a)=>{const m=kenIai(u)?1.3:1;anim(u,'ken_low',.34);S('saber',u);
   for(const e of stIn(u,a,115,1.9)){if(!hit(e,u,18*m,{melee:1,slow:1.2,unblockable:m>1?1:0}))continue;e.cds[DASHI]=Math.max(e.cds[DASHI]||0,1.5);aux.push({type:'ken_legs',x:e.x,y:e.y,r:0,t:1.5,m:1.5,team:u.team,owner:u,ti:stI(e)});say(e,'JAMBES TRANCHÉES','#ff8a8a');jx({jfx:'st_bleed',ti:stI(e),x:e.x,y:e.y,t:1.5,m:1.5});fxBurst(e.x,e.y,'#c0142a',{u,z:12,n:7,sp:150,up:60,gr:400,w:2,len:.05,add:0})}
   fxSmoke(u.x+Math.cos(a)*70,u.y+Math.sin(a)*70,{u,col:'#c8b8a0',n:3,r:50,s:12,t:.6,al:.22,rise:6});
-  kenArc(u,a,115,1.9,{z:8,th:8,d:1,c:'#ffe0e0',c2:'#ff6a6a',tl:-.2})}),
+  kenArc(u,a,115,1.9,{z:8,th:12,d:1,c:'#ffe0e0',c2:'#ff6a6a',tl:-.2});jx({jfx:'ken_gash',x:u.x,y:u.y,a,R:115,w:1.9,t:1.1,m:1.1});for(const d of[-.7,0,.7])fxBurst(u.x+Math.cos(a+d)*100,u.y+Math.sin(a+d)*100,'#ffd0c0',{u,z:8,n:3,sp:220,a:a+d+1.57,arc:.8,gr:300,up:60,w:1.3,c2:'#ffffff',t:.35})}),
  // Tourbillon d'acier : toupie lame tendue (u.spin du moteur : coupes toutes les 0,25 s) et renvoi des tirs
  ken_kaiten:S_('Kaiten-giri : Tourbillon d\'acier','',10,{ai:SELF(110,.6)},(u,a)=>{const m=kenIai(u)?1.3:1;S('saber',u);u.spin={t:1,k:0,r:105,dmg:4*m,ex:EX};fxRing(u.x,u.y,{u,r0:30,r1:105,col:'#cfe0ff',c2:'#ffffff',w:4,t:.3});
   aux.push({type:'ken_spin',x:u.x,y:u.y,r:105,t:1,m:1,team:u.team,owner:u,ui:stI(u)})}),
@@ -1701,7 +1717,7 @@ Object.assign(NAT,{
  // Ashibarai : balayage bas, fait trébucher
  buk_sweep:S_('Ashibarai : Balayage','',5,{line:{len:115,w:200},ai:SELF(115,.6)},(u,a)=>{anim(u,'buk_sweep',.36);S('saber',u);
   for(const e of stIn(u,a,115,3.5))if(hit(e,u,12,{melee:1,slow:.8})&&e.unstop<=0){if(e.dash&&!e.dash.lock){e.dash=null;e.z=0}e.run=Math.min(e.run??100,10);say(e,'TRÉBUCHE','#e8c8a0')}
-  kenArc(u,a,115,3.5,{z:6,th:9,d:1,c:'#e8d0a8',c2:'#8a5a2a',blade:0,rr:.95});jx({jfx:'buk_dust',x:u.x,y:u.y,a,t:.5,m:.5});for(const d of[-1.2,0,1.2])fxSmoke(u.x+Math.cos(a+d)*90,u.y+Math.sin(a+d)*90,{u,col:'#d8c8a8',n:2,r:20,s:12,t:.6,al:.22,rise:8})}),
+  kenArc(u,a,115,3.5,{z:6,th:13,d:1,c:'#f0d8b0',c2:'#8a5a2a',blade:0,rr:.95});jx({jfx:'buk_dust',x:u.x,y:u.y,a,R:115,w:3.5,t:.75,m:.75});for(const d of[-1.2,0,1.2])fxSmoke(u.x+Math.cos(a+d)*95,u.y+Math.sin(a+d)*95,{u,col:'#d8c8a8',n:3,r:22,s:12,t:.7,al:.2,rise:10,dx:Math.cos(a+d)*30,dy:Math.sin(a+d)*30});fxDebris(u.x+Math.cos(a)*80,u.y+Math.sin(a)*80,{u,n:6,sp:150,col:'#8a6a48',c2:'#5a4028',s:2.6,t:.8})}),
  // Kusarigama : Harpon : la faucille au bout de sa chaîne ramène l'ennemi touché
  buk_hook:S_('Kusarigama : Harpon','',8,{line:{len:300,w:20},ai:RG(300,.6,90)},(u,a)=>{anim(u,'throw2',.3);S('blaster',u);u.thrT=.2;
   proj(u,a,{spd:950,r:9,dmg:18,life:.31,col:'#d8dde6',hook:1,kind:'buk_kama',o:{root:.4},onHit:(p,t)=>{fxBurst(t.x,t.y,'#eef2f8',{u:p.owner,z:32,n:7,sp:240,gr:0,up:20,w:1.4,c2:'#ffffff'});fxFlare(t.x,t.y,'#ffffff',{u:p.owner,z:32,r:16,t:.15})}});aux.push({type:'buk_chain',x:u.x,y:u.y,r:0,t:.7,m:.7,team:u.team,owner:u,ui:stI(u),p:projs[projs.length-1]})}),
@@ -1741,10 +1757,16 @@ AUXF.buk_mouli=(x,dt)=>{const u=x.owner;if(u.dead||u.stun>0){x.t=0;return}x.x=u.
  for(const p of projs){if(p.dead||p.life<=0||p.owner.team===u.team||p.rocket)continue;const d=Math.hypot(p.x-u.x,p.y-u.y);if(d<x.r+p.r&&angDiff(Math.atan2(p.y-u.y,p.x-u.x),x.a)<1.2){p.life=0;p.dead=1;if(near(p.x,p.y)){sparks(p.x,p.y,'#e8d0a8',6);S('deflect',u)}}}
  x.k-=dt;if(x.k<=0&&x.t>.15){x.k=.3;x.n++;for(const e of stIn(u,x.a,x.r,2.4))hit(e,u,4,{melee:1,silent:x.n%2?1:0})}
  if(x.t<=dt*1.01&&!x.fin){x.fin=1;S('heavy',u);for(const e of stIn(u,x.a,x.r+15,2.4))hit(e,u,12,{melee:1,kb:300,fx:u.x,fy:u.y});kenArc(u,x.a,x.r+20,2.4,{c:'#f0dcb8',c2:'#8a5a2a',blade:0,th:10,z:30});fxWind(u.x+Math.cos(x.a)*60,u.y+Math.sin(x.a)*60,x.a,{u,len:110,w:150,n:6,t:.35,col:'#f0dcb8'})}};
-AUXD.buk_mouli=(x,k,t)=>fxAlpha(fxA(x),()=>stMouliD(x,k,t));function stMouliD(x,k,t){const u=units[x.ui];if(!u||u.dead)return;const c=fwd(u,x.a,34),q=P(c.x,c.y,32),s=q.s,R=42*s,sp=t*26;g.save();g.globalCompositeOperation='lighter';
- g.fillStyle=rgba('#f0dcb8',.16);g.beginPath();g.ellipse(q.x,q.y,R*.55,R,0,0,7);g.fill();g.strokeStyle=rgba('#ffffff',.35);g.lineWidth=2;g.beginPath();g.ellipse(q.x,q.y,R*.55,R,0,sp,sp+2.4);g.stroke();g.restore();
- for(let i=0;i<2;i++){const b=sp+i*Math.PI;g.strokeStyle='#6a4a2a';g.lineWidth=3.2*s;g.lineCap='round';g.beginPath();g.moveTo(q.x-Math.cos(b)*R*.5,q.y-Math.sin(b)*R);g.lineTo(q.x+Math.cos(b)*R*.5,q.y+Math.sin(b)*R);g.stroke();
-  g.fillStyle='#e8c040';circ(q.x+Math.cos(b)*R*.5,q.y+Math.sin(b)*R,2.4*s,'#e8c040')}};
+AUXD.buk_mouli=(x,k,t)=>fxAlpha(fxA(x),()=>stMouliD(x,k,t));function stMouliD(x,k,t){const u=units[x.ui];if(!u||u.dead)return;const c=fwd(u,x.a,34),q=P(c.x,c.y,32),s=q.s,R=42*s,sp=t*26,in_=Math.min(1,(x.m-x.t)/.15);
+ // zone balayée au sol (rayon 95, arc 2,4 rad = hitbox des coups) : liseré discret, rayons qui tournent
+ {const g0=P(u.x,u.y),Rz=x.r*g0.s;g.save();g.strokeStyle=rgba('#f0dcb8',.35*in_);g.lineWidth=1.5;g.setLineDash([6,6]);g.lineDashOffset=-t*60;g.beginPath();g.ellipse(g0.x,g0.y,Rz,Rz*K,0,x.a-1.2,x.a+1.2);g.stroke();g.setLineDash([]);
+  g.globalCompositeOperation='lighter';for(let i=0;i<3;i++){const b=x.a-1.2+2.4*(((t*1.6+i/3)%1)),p1=P(u.x+Math.cos(b)*x.r*.35,u.y+Math.sin(b)*x.r*.35),p2=P(u.x+Math.cos(b)*x.r,u.y+Math.sin(b)*x.r);g.strokeStyle=rgba('#fff0d0',.22*in_);g.lineWidth=2;g.beginPath();g.moveTo(p1.x,p1.y);g.lineTo(p2.x,p2.y);g.stroke()}g.restore()}
+ g.save();g.globalCompositeOperation='lighter';fxGlowS(q.x,q.y,R*.9,'#f0dcb8',.28*in_,R*1.1,2);
+ for(let j=0;j<3;j++){const b0=sp-j*.5;g.strokeStyle=rgba(j?'#f0dcb8':'#ffffff',(j?.35:.7)*in_);g.lineWidth=(3-j*.7)*s;g.beginPath();g.ellipse(q.x,q.y,R*.55,R,0,b0,b0+1.9);g.stroke()} // disque de vitesse
+ g.restore();
+ for(let gh=3;gh>=0;gh--){const al=gh?.22/gh:1;g.save();g.globalAlpha*=al*in_;for(let i=0;i<2;i++){const b=sp-gh*.22+i*Math.PI;g.strokeStyle='#6a4a2a';g.lineWidth=3.2*s;g.lineCap='round';g.beginPath();g.moveTo(q.x-Math.cos(b)*R*.5,q.y-Math.sin(b)*R);g.lineTo(q.x+Math.cos(b)*R*.5,q.y+Math.sin(b)*R);g.stroke();
+  if(!gh)circ(q.x+Math.cos(b)*R*.5,q.y+Math.sin(b)*R,2.4*s,'#e8c040')}g.restore()}
+ if(((t*7)|0)%3===0){const b=sp+Math.PI*.5;fxGlowS(q.x+Math.cos(b)*R*.5,q.y+Math.sin(b)*R,5*s,'#ffe8b0',.6)}}
 // Tourbillon d'acier : renvoie les tirs autour du lanceur tant qu'il tournoie
 AUXF.ken_spin=x=>{const u=x.owner;if(u.dead||!u.spin){x.t=0;return}x.x=u.x;x.y=u.y;kenReflect(u,u.x,u.y,x.r+10,0,null)};
 AUXD.ken_spin=(x,k,t)=>fxAlpha(fxA(x),()=>stKenSpinD(x,k,t));function stKenSpinD(x,k,t){const u=units[x.ui];if(!u||u.dead)return;const q=P(u.x,u.y,26),R=x.r*q.s;g.save();g.globalCompositeOperation='lighter';for(let i=0;i<3;i++){const b=t*22+i*2.09;
@@ -1770,7 +1792,10 @@ JFXD.tai_rise=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x,u.y,(u.z||0)+20);
 JFXD.tai_shards=(f,k,e)=>{for(let i=0;i<12;i++){const b=i*.524+f.x*.01,d=(20+e*140)*(.6+(i%3)*.2),h=Math.sin(Math.PI*Math.min(1,e*1.3))*(50+(i%4)*20),q=P(f.x+Math.cos(b)*d,f.y+Math.sin(b)*d,h);
  g.fillStyle=i%2?'#7a5a3a':'#a8885a';g.save();g.translate(q.x,q.y);g.rotate(e*8+i);g.fillRect(-5*q.s,-4*q.s,10*q.s,8*q.s);g.restore()}};
 // poussière du balayage
-JFXD.buk_dust=(f,k,e)=>{for(let i=0;i<9;i++){const b=f.a+(i-4)*.38,d=60+e*70,q=P(f.x+Math.cos(b)*d,f.y+Math.sin(b)*d,4+e*16);g.fillStyle=rgba('#d8c8a8',.4*k);g.beginPath();g.ellipse(q.x,q.y,(8+e*12)*q.s,(5+e*7)*q.s,0,0,7);g.fill()}};
+// Ashibarai : sillon balayé au sol sur TOUT l'arc touché (rayon 115, 200°) : stries de terre arrachée + poussière douce qui roule vers l'extérieur
+JFXD.buk_dust=(f,k,e)=>{const R=f.R||115,w=f.w||3.5,sw=Math.min(1,e/.12),A=Math.min(1,k*1.6);g.save();g.lineCap='round';
+ for(let j=0;j<3;j++){const r=R*(.62+.17*j);g.strokeStyle=rgba(j===1?'#5a4028':'#8a6a48',.38*A);g.lineWidth=(3-j*.6)*P(f.x,f.y).s;g.beginPath();for(let i=0;i<=20;i++){const b=f.a-w/2+w*sw*i/20,q=P(f.x+Math.cos(b)*r,f.y+Math.sin(b)*r,0);i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y)}g.stroke()}
+ for(let i=0;i<9;i++){const b=f.a-w/2+w*(i+.5)/9;if((i+.5)/9>sw)continue;const d=R*(.8+.35*e),q=P(f.x+Math.cos(b)*d,f.y+Math.sin(b)*d,4+e*14);fxSoftS(q.x,q.y,(10+e*16)*q.s,'#d8c8a8',.3*k,(7+e*10)*q.s)}g.restore()};
 // arme dessinée au vol (Ruée des cent armes, Arsenal changeant) : w = kunai, tonfa, staff (bô), kama (faucille), mace (masse), axe (hache)
 function bukWeapon(w,s){g.lineCap='round';
  if(w==='staff'){g.strokeStyle='#6a4a2a';g.lineWidth=3.4*s;g.beginPath();g.moveTo(-30*s,0);g.lineTo(46*s,0);g.stroke();circ(46*s,0,2.6*s,'#e8c040');circ(-30*s,0,2.6*s,'#e8c040');return}
@@ -1808,6 +1833,22 @@ Object.assign(ANIM,{
  buk_nyoi:(P,e)=>{if(e<.47){const k=ezo(e/.47);pz(P,'armR',-1.55*k,0,0);pz(P,'armL',-1.4*k,0,.2);pz(P,'chest',.25*k);P.root.y=-5*k;pz(P,'thighL',-.8*k);pz(P,'shinL',1*k);pz(P,'thighR',.6*k)}
   else{const k=ezio(Math.min(1,(e-.47)/.35));P.rootR.y=tjSp(.9-1.8*k);pz(P,'armR',-1.55,0,0);pz(P,'armL',-1.4,0,.2);pz(P,'chest',.25,.4-.8*k);P.root.y=-5;pz(P,'thighL',-.8);pz(P,'shinL',1);pz(P,'thighR',.6)}},
 });
+
+// Iai : la lame jaillit le long de la ligne touchée (150 × 34 : la bande dessinée EST la hitbox), zone de la pointe (105-150, +50 %) plus vive, puis la coupe en croix qui « tombe » à la pointe
+JFXD.ken_iai2=(f,k,e,t)=>{const ca=Math.cos(f.a),sa=Math.sin(f.a),L=f.len,h=f.w/2,pr=Math.min(1,e/.09),A=Math.min(1,k*1.5),pt=(d,o,z)=>P(f.x+ca*d-sa*o,f.y+sa*d+ca*o,z??30);
+ const band=(d0,d1,al,col)=>{const a=pt(d0,-h,0),b=pt(d1,-h,0),c=pt(d1,h,0),d=pt(d0,h,0);g.fillStyle=rgba(col,al);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.lineTo(c.x,c.y);g.lineTo(d.x,d.y);g.closePath();g.fill()};
+ g.save();g.globalCompositeOperation='lighter';band(12,L*pr,.13*A,'#9ab8ff');if(pr>=1)band(105,L,.2*A,'#cfe0ff');
+ const a0=pt(10,0),a1=pt(L*pr,0),dx=a1.x-a0.x,dy=a1.y-a0.y,l=Math.hypot(dx,dy)||1,nx=-dy/l,ny=dx/l,W0=5*a0.s*(.4+.6*A);
+ g.fillStyle=rgba('#ffffff',.95*A);g.beginPath();g.moveTo(a0.x,a0.y);g.quadraticCurveTo((a0.x+a1.x)/2+nx*W0,(a0.y+a1.y)/2+ny*W0,a1.x,a1.y);g.quadraticCurveTo((a0.x+a1.x)/2-nx*W0*.4,(a0.y+a1.y)/2-ny*W0*.4,a0.x,a0.y);g.fill();
+ g.strokeStyle=rgba('#9ab8ff',.5*A);g.lineWidth=7*a0.s*A+1;g.lineCap='round';g.beginPath();g.moveTo(a0.x,a0.y);g.lineTo(a1.x,a1.y);g.stroke();
+ for(const o of[-h*.7,h*.7]){const lag=Math.max(0,pr-.25),b0=pt(L*lag*.3,o),b1=pt(L*lag,o);g.strokeStyle=rgba('#e4eeff',.45*A);g.lineWidth=1.2;g.beginPath();g.moveTo(b0.x,b0.y);g.lineTo(b1.x,b1.y);g.stroke()} // traits de vitesse
+ if(e>.16&&e<.8){const q=pt(128,0,32),c=Math.min(1,(e-.16)/.08),fd=1-Math.max(0,(e-.5)/.3),r=16*q.s;g.strokeStyle=rgba('#ffffff',.95*fd);g.lineWidth=2*q.s;g.beginPath();g.moveTo(q.x-r*c,q.y-r*.7*c);g.lineTo(q.x+r*c,q.y+r*.7*c);g.moveTo(q.x+r*c,q.y-r*.7*c);g.lineTo(q.x-r*c,q.y+r*.7*c);g.stroke();fxGlowS(q.x,q.y,r*1.2,'#9ab8ff',.5*fd)}
+ g.restore()};
+// Ashigiri : trois entailles basses arrachées au sol le long de l'arc touché (rayon 115, 1,9 rad), lueur rouge qui s'éteint
+JFXD.ken_gash=(f,k,e)=>{const sw=Math.min(1,e/.1),A=e<.6?1:(1-e)/.4,s0=P(f.x,f.y).s;g.save();g.lineCap='round';
+ for(let j=0;j<3;j++){const r=f.R*(.55+.2*j),pts=[];for(let i=0;i<=16;i++){const b=f.a-f.w/2+f.w*sw*i/16;pts.push(P(f.x+Math.cos(b)*r,f.y+Math.sin(b)*r,0))}
+  g.strokeStyle=rgba('#2a160c',.5*A);g.lineWidth=3.2*s0;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.stroke();
+  g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff6a5a',.5*A*Math.max(0,1-e*1.6));g.lineWidth=1.4*s0;g.stroke();g.globalCompositeOperation='source-over'}g.restore()};
 
 // ===== Subjutsu (ninjas sans clan) =====
 // Techniques universelles : outils ninja (kunai, parchemins, pièges, fumigènes), clones, téléportations, invocations, ninjutsu médical.
@@ -4136,7 +4177,7 @@ PROJD.su_dragon=(p,R,ra,t)=>{const sp=Math.hypot(p.vx,p.vy)||800,th=Math.atan2(p
  for(let i=0;i<4;i++){const b=t/80+i*1.6;circ(hx+Math.cos(b)*R*1.2,hy+Math.sin(b)*R*.6,R*.12,'rgba(232,246,255,.8)')}};
 // dôme d'eau en deux passes : arrière (sous les ninjas) puis avant (par-dessus, translucide)
 function su_drawDome(x,y,r,hf,gr,al,t,front,dark){if(gr<=0||al<=0)return;const q=P(x,y,0),rx=r*q.s,H=r*hf*q.s*gr,a0=front?0:Math.PI,a1=front?Math.PI:2*Math.PI;g.save();g.globalAlpha=al;
- g.fillStyle=rgba(dark?'#1a5ab0':'#3aa8ff',front?.13:.2);g.beginPath();g.ellipse(q.x,q.y,rx,H,0,Math.PI,2*Math.PI);g.ellipse(q.x,q.y,rx,rx*K,0,0,Math.PI);g.fill();
+ g.fillStyle=rgba(dark?'#1a5ab0':'#3aa8ff',front?.08:.13);g.beginPath();g.ellipse(q.x,q.y,rx,H,0,Math.PI,2*Math.PI);g.ellipse(q.x,q.y,rx,rx*K,0,0,Math.PI);g.fill();
  g.lineWidth=2.4*q.s;g.setLineDash([rx*.42,rx*.26]);
  for(let i=0;i<5;i++){const h=H*(.08+i*.19),w=rx*Math.sqrt(Math.max(0,1-(h/H)**2));if(w<6)continue;g.strokeStyle=rgba(i%2?'#bfe6ff':'#e8f6ff',front?.55:.32);g.lineDashOffset=(i%2?1:-1)*t*rx*1.4;g.beginPath();g.ellipse(q.x,q.y-h,w,w*K,0,a0,a1);g.stroke()}
  g.setLineDash([]);g.strokeStyle=rgba('#ffffff',front?.8:.4);g.lineWidth=3*q.s;g.beginPath();g.ellipse(q.x,q.y,rx,rx*K,0,a0,a1);g.stroke();
@@ -4147,7 +4188,7 @@ JFXD.su_wallF=(f,k,e,t)=>{const x=su_auxAt('su_wall',f);if(x)su_drawDome(x.x,x.y
 // dôme des requins : eau sombre, requins qui tournent (devant ou derrière les ninjas selon leur position)
 function su_domeSharks(x,t,front,al){for(let i=0;i<4;i++){const b=t*1.1+i*1.571,sb=Math.sin(b);if(front?sb<0:sb>=0)continue;const q=P(x.x+Math.cos(b)*x.r*.72,x.y+sb*x.r*.72,40+Math.sin(t*3+i)*12);
  g.save();g.globalAlpha=.8*al;g.translate(q.x,q.y);g.scale(q.s,q.s);su_sharkD(1.35,Math.atan2(Math.cos(b)*K,-Math.sin(b)),t*1000,0,0);g.restore()}}
-AUXD.su_dome=(x,k,t)=>{const gr=Math.min(1,(x.m-x.t)/.15),al=Math.min(1,x.t/.4);g.fillStyle=rgba('#1a5ab0',.28*al);gEll(x.x,x.y,x.r);g.fill();
+AUXD.su_dome=(x,k,t)=>{const gr=Math.min(1,(x.m-x.t)/.15),al=Math.min(1,x.t/.4);g.fillStyle=rgba('#1a5ab0',.15*al);gEll(x.x,x.y,x.r);g.fill(); // eau au sol légère : les ninjas pris dedans restent nets
  if(fxRel(x)===2){g.strokeStyle=rgba('#ff3b3b',.75*al);g.lineWidth=1.6;g.setLineDash([12,7]);g.lineDashOffset=-t*30;gEll(x.x,x.y,x.r-3);g.stroke();g.setLineDash([])} // paroi ennemie : liseré rouge
  su_dim(x,()=>{fxGlowG(x.x,x.y,x.r*.9,'#3aa8ff',.25*al);g.lineWidth=1.4;for(let i=0;i<3;i++){const s=(t*.5+i/3)%1;g.strokeStyle=rgba('#bfe6ff',.45*al*(1-s));gEll(x.x,x.y,x.r*(.2+.75*s));g.stroke()}});
  su_drawDome(x.x,x.y,x.r,.8,gr,al,t,0,1);su_domeSharks(x,t,0,al)};
@@ -4752,7 +4793,7 @@ Object.assign(NAT,{
  // ---- kirin : l'orage s'amasse, puis la foudre-dragon frappe l'ennemi le plus proche du centre
  ra_kirin:SP('Raiton : Kirin','Un orage couvre la zone ; peu après, Kirin foudroie l\'ennemi le plus au centre : énormes dégâts, étourdit',20,{tele:{r:200,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480);
   aux.push({type:'ra_kirin',x:p.x,y:p.y,r:200,t:.8,m:.8,team:u.team,owner:u,vfx:'kirin',k:0,danger:1});jx({jfx:'ra_cloud',x:p.x,y:p.y,r:200,kir:1,c:'#bfe6ff',t:.85,m:.85});
-  anim(u,'ra_kirin',.8);raS('zap',u);raS('wind',u);fxPillar(u.x,u.y,'#bfe6ff',{u,h:300,w:22,t:.6,al:.5});fxArcs(u.x,u.y,60,'#bfe6ff',{u,n:4,t:.4,z:60})}),
+  anim(u,'ra_kirin',.8);raS('zap',u);raS('wind',u);fxPillar(u.x,u.y,'#bfe6ff',{u,h:300,w:12,t:.5,al:.22});fxArcs(u.x,u.y,60,'#bfe6ff',{u,n:4,t:.4,z:60})}),
  // ---- armure de foudre (Raikage) : l'armure jaillit (étourdit autour), puis vitesse, force, réflexes, rien ne la retient
  ra_armor:SP('Raiton : Armure de foudre','Étourdit autour de toi, puis 5,5 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s',20,{ai:SELF(320,.8)},(u)=>{const D=5.5;
   u.haste=Math.max(u.haste,D);u.rage=Math.max(u.rage,D);u.slowImm=Math.max(u.slowImm,D);u.slow=0;u.root=0;u.dodge=Math.max(u.dodge,D);aoe(u,u.x,u.y,110,12,{stun:.5},'#bfe6ff');
@@ -4791,7 +4832,7 @@ AUXF.ra_kirin=x=>{const o=x.owner;
  if(near(x.tx,x.ty)){raS('boom',o);raS('chidori',o);fxShake(.4,x.tx,x.ty);fxImpact(x.tx,x.ty,'raiton',1.5,{u:o,r:110});fxDecal(x.tx,x.ty,'burn',{u:o,r:105,t:5}); // colonne : celle de flashsky suffit (empiler des lumières blanches masquait la cible)
   
   fxArcs(x.tx,x.ty,170,'#bfe6ff',{u:o,n:7,t:.45,z:10});fxSmoke(x.tx,x.ty,{u:o,col:'#c8d8ff',n:7,r:80,s:18,t:1.2,al:.22,rise:60});fxDebris(x.tx,x.ty,{u:o,n:8,sp:200,col:'#5a5a6a',c2:'#2a2a33'});
-  for(const e of enemies(o))if(Math.hypot(e.x-x.tx,e.y-x.ty)<110+e.r)fxHitStop(o,e,62,1)}if(o===player||(player&&Math.hypot(player.x-x.tx,player.y-x.ty)<130))hs=Math.max(hs,.08)};
+  for(const e of enemies(o))if(Math.hypot(e.x-x.tx,e.y-x.ty)<110+e.r)fxHitStop(o,e,62,1)}}; // arrêt sur coup : fxHitStop seul (vrai coup, jamais en ligne)
 // pas de l'éclair : la course foudroie chaque ennemi traversé (une fois)
 AUXF.ra_run=x=>{const u=x.owner;if(u.dead){x.t=0;return}for(const e of enemies(u))if(!x.hs.includes(e)&&Math.hypot(e.x-u.x,e.y-u.y)<u.r+e.r+14){x.hs.push(e);raHit(e,u,7,{melee:1,slow:.6});raPop(e.x,e.y,22);raImp(u,e.x,e.y,22,0)}if(!u.dash)x.t=0};
 // pas de l'éclair : la traînée ralentit les ennemis qui la touchent
@@ -4917,9 +4958,9 @@ JFXD.ra_cloud=(f,k,e,t)=>{const a=Math.min(1,e*f.m*4,k*f.m*3),Z=f.kir?185:170,c=
   raBolt(p0.x,p0.y,p1.x,p1.y,14*p0.s,5,c,1.5*p0.s,a*.85);circ((p0.x+p1.x)/2,(p0.y+p1.y)/2,34*p0.s,rgba('#bfe6ff',.12*a))}};
 // Kirin : le dragon de foudre plonge, puis éclat et ondes au sol
 JFXD.ra_kirinfx=(f,k,e,t)=>{const g0=P(f.x,f.y,0),s=g0.s,H=600,dsc=Math.min(1,e/.11),hd=P(f.x,f.y,H*(1-dsc)),top=P(f.x-70,f.y,H+60),fade=e<.11?1:Math.max(0,1-(e-.11)/.6);g.globalCompositeOperation='lighter';g.lineCap='round';g.lineJoin='round';
- if(fade>0)for(let j=0;j<3;j++){g.strokeStyle=j===0?rgba('#7fd0ff',.4*fade):j===1?rgba('#bfe6ff',.9*fade):rgba('#ffffff',fade);g.lineWidth=(j===0?30:j===1?12:4.5)*s;g.beginPath();
+ if(fade>0)for(let j=0;j<3;j++){g.strokeStyle=j===0?rgba('#7fd0ff',.3*fade):j===1?rgba('#bfe6ff',.7*fade):rgba('#ffffff',.85*fade);g.lineWidth=(j===0?24:j===1?9:3.5)*s;g.beginPath();
   for(let i=0;i<=18;i++){const v=i/18,x=top.x+(hd.x-top.x)*v+Math.sin(v*10+t*14)*44*s*(1-v*.75)+(j?(rnd()-.5)*6*s:0),y=top.y+(hd.y-top.y)*v;i?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}
- if(e<.34){const ha=e<.11?1:Math.max(0,1-(e-.11)/.23);g.save();g.translate(hd.x,hd.y-(e<.11?0:(e-.11)*120*s));g.scale(s*(1+(e<.11?0:(e-.11)*1.5)),s*(1+(e<.11?0:(e-.11)*1.5)));g.fillStyle=rgba('#e8f6ff',.95*ha);g.beginPath();g.moveTo(0,42);for(const [x,y] of[[-8,22],[-14,12],[-30,8],[-18,0],[-14,-12],[-32,-40],[-8,-20],[0,-28]])g.lineTo(x,y);for(const [x,y] of[[8,-20],[32,-40],[14,-12],[18,0],[30,8],[14,12],[8,22]])g.lineTo(x,y);g.closePath();g.fill();g.strokeStyle=rgba('#7fd0ff',.9*ha);g.lineWidth=1.5;g.beginPath();g.moveTo(-6,26);g.lineTo(0,20);g.lineTo(6,26);g.stroke();
+ if(e<.34){const ha=e<.11?1:Math.max(0,1-(e-.11)/.23);g.save();g.translate(hd.x,hd.y-(e<.11?0:(e-.11)*120*s));g.scale(s*(1+(e<.11?0:(e-.11)*1.5)),s*(1+(e<.11?0:(e-.11)*1.5)));g.fillStyle=rgba('#e8f6ff',.78*ha);g.beginPath();g.moveTo(0,42);for(const [x,y] of[[-8,22],[-14,12],[-30,8],[-18,0],[-14,-12],[-32,-40],[-8,-20],[0,-28]])g.lineTo(x,y);for(const [x,y] of[[8,-20],[32,-40],[14,-12],[18,0],[30,8],[14,12],[8,22]])g.lineTo(x,y);g.closePath();g.fill();g.strokeStyle=rgba('#7fd0ff',.9*ha);g.lineWidth=1.5;g.beginPath();g.moveTo(-6,26);g.lineTo(0,20);g.lineTo(6,26);g.stroke();
   circ(-8,2,3.4,rgba('#ffe14a',ha));circ(8,2,3.4,rgba('#ffe14a',ha));g.strokeStyle=rgba('#bfe6ff',.8*ha);g.lineWidth=2;g.beginPath();g.moveTo(-14,10);g.quadraticCurveTo(-34,14,-44,30);g.moveTo(14,10);g.quadraticCurveTo(34,14,44,30);g.stroke();g.restore()}
  if(e>.09){const ee=Math.min(1,(e-.09)/.9),R=f.r;g.fillStyle=rgba('#bfe6ff',.12*(1-ee));g.beginPath();g.ellipse(g0.x,g0.y,R*s*(.6+ee*.8),R*s*K*(.6+ee*.8),0,0,7);g.fill();
   g.strokeStyle=rgba('#bfe6ff',.9*(1-ee));g.lineWidth=7*s*(1-ee)+1;gEll(f.x,f.y,R*(.5+ee*1.6));g.stroke();g.strokeStyle=rgba('#ffe14a',.7*(1-ee));g.lineWidth=2;gEll(f.x,f.y,R*(.3+ee*1.2));g.stroke();
@@ -4968,8 +5009,8 @@ AUXD.ra_chid=AUXD.ra_armor=AUXD.ra_run=()=>{};
 const RACH={ra_chidori:[1,'#9fd8ff'],ra_spear:[.8,'#9fd8ff'],ra_senbon:[.55,'#bfe6ff'],ra_nagashi:[.6,'#bfe6ff'],ra_clone:[.45,'#bfe6ff'],ra_kirin:[.8,'#bfe6ff'],ra_armor:[.8,'#bfe6ff'],
  ra_bolt:[.45,'#ffe14a'],ra_chain:[.55,'#ffe14a'],ra_panther:[.6,'#ffe14a'],ra_storm:[.6,'#ffe14a']};
 STATD.push((u,p,S)=>{const c=u.cast;if(!c||u.dead)return;const ab=u.ch.abil[c.i],Q=ab&&RACH[ab.key];if(!Q)return;const k=c.t/c.dur;if(k<.25)return;
- const e=(k-.25)/.75,a=u.aim,h=P(u.x+Math.cos(a)*12,u.y+Math.sin(a)*12,30+(u.z||0)),R=(3+6*e)*S*Q[0];g.save();g.globalCompositeOperation='lighter';g.lineCap='round';
- circ(h.x,h.y,R*2,rgba(Q[1],.2));circ(h.x,h.y,R,rgba(Q[1],.7));circ(h.x,h.y,R*.45,'#ffffff');
+ const e=(k-.25)/.75,a=u.aim,h=P(u.x+Math.cos(a)*12,u.y+Math.sin(a)*12,30+(u.z||0)),R=(3+4*e)*S*Q[0];g.save();g.globalCompositeOperation='lighter';g.lineCap='round';
+ circ(h.x,h.y,R*1.8,rgba(Q[1],.14));circ(h.x,h.y,R,rgba(Q[1],.45));circ(h.x,h.y,R*.32,'#ffffff');
  for(let i=0;i<3+e*4*Q[0];i++){const b=rnd()*7,L=R*(1.6+rnd()*1.8);raPath(h.x,h.y,h.x+Math.cos(b)*L,h.y+Math.sin(b)*L*.8,L*.5,3);raStroke(i%2?'#ffffff':Q[1],1.2)}g.restore()});
 
 // ===== Doton (terre) =====
@@ -6412,7 +6453,7 @@ Object.assign(NAT,{
   u.giant=Math.max(u.giant,T+.4);u.unstop=Math.max(u.unstop,T);aux.push({type:'ak_quake',x:u.x,y:u.y,r:95*(1+.15*F),t:T,m:T,team:u.team,owner:u,ui:units.indexOf(u),k:.25,M:1+.2*F,vfx:'tai'});
   jx({jfx:'ak_grow',ui:units.indexOf(u),x:u.x,y:u.y,t:.8,m:.8});fxRing(u.x,u.y,{u,r0:20,r1:130,col:'#ffb04a',t:.5,w:6});fxSmoke(u.x,u.y,{u,col:'#d8c8b0',n:6,r:50,s:16,t:1,al:.24,rise:20});fxDecal(u.x,u.y,'crack',{u,r:60,t:3});const d0=td;later(u,.4,()=>{if(u.dead||u.stun>0&&!(u.unstop>0))return;ak_slamDo(u,u.aim,d0,F)})}),
  // Pilule rouge : Mode Papillon (v5, fusion) : soin + libération, puis le Papillon (les calories gardées allongent les ailes)
- ak_redbf:ULT('Pilule rouge : Mode Papillon','',{ai:SELF(320,.8)},(u,a,td,P)=>{heal(u,30);cleanse(u);anim(u,'ak_pill',.4);S('fire',u);jx({jfx:'ak_pill',ui:units.indexOf(u),x:u.x,y:u.y,col:'#ff3a2a',red:1,t:.9,m:.9});fxFlare(u.x,u.y,'#ff3a1a',{u,z:44,r:34,t:.3});
+ ak_redbf:ULT('Pilule rouge : Mode Papillon','',{ai:SELF(320,.8)},(u,a,td,P)=>{heal(u,30);cleanse(u);anim(u,'ak_pill',.4);S('fire',u);jx({jfx:'ak_pill',ui:units.indexOf(u),x:u.x,y:u.y,col:'#ff3a2a',red:1,t:.9,m:.9});fxFlare(u.x,u.y,'#ff3a1a',{u,z:44,r:22,t:.25});
   NAT.ak_butterfly.f(u,a,td,P)}),
  // dash : Boulet humain (pointes à 50 calories)
  ak_rollD:S_('Boulet humain','',7,{hero:'chewie',ai:{mode:'gap',min:130,max:360,p:.5}},(u,a)=>{const bl=(u.ak_cal||0)>=50;if(bl){u.ak_cal-=50;say(u,'BOULET À POINTES','#ffb04a')}S('dash',u);S(bl?'saber':'heavy',u);anim(u,'ak_ball',.7);
@@ -6567,7 +6608,7 @@ JFXD.ak_pill=(f,k,e,t,u)=>{if(!u||u.dead)return;const c=f.col,q=P(u.x,u.y,u.z||0
 JFXD.ak_fed=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x,u.y,u.z||0),s=q.s*1.3*(u.ch.look.scale||1);g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff9a3a',.8*k);g.lineWidth=3;g.beginPath();g.ellipse(q.x,q.y-36*s,(16+e*26)*s,(26+e*34)*s,0,0,7);g.stroke();
  for(let i=0;i<6;i++){const b=i*1.05+t*4,x=q.x+Math.cos(b)*16*s,y=q.y-(18+e*56+(i%3)*8)*s;g.fillStyle=rgba(i%2?'#ffd36a':'#ff7a2a',.75*k);g.beginPath();g.moveTo(x-3*s,y);g.quadraticCurveTo(x,y-12*s,x+3*s,y);g.fill()}};
 // éclosion du Mode Papillon : anneau et nuée de papillons de chakra
-JFXD.ak_bfburst=(f,k,e,t)=>{const q=P(f.x,f.y,40);g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff7ad8',.8*k);g.lineWidth=5*k+1;g.beginPath();g.ellipse(q.x,q.y+30*q.s,(30+e*150)*q.s,(30+e*150)*q.s*K,0,0,7);g.stroke();
+JFXD.ak_bfburst=(f,k,e,t)=>{const q=P(f.x,f.y,40);g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff7ad8',.55*k);g.lineWidth=4*k+1;g.beginPath();g.ellipse(q.x,q.y+30*q.s,(30+e*150)*q.s,(30+e*150)*q.s*K,0,0,7);g.stroke();
  for(let i=0;i<9;i++){const b=i*.7+.3,r=(20+e*140)*q.s,x=q.x+Math.cos(b)*r,y=q.y+Math.sin(b)*r*K-e*50*q.s,fl=Math.abs(Math.sin(t*18+i))*.8+.2,w=7*q.s;g.fillStyle=rgba(i%2?'#ff9ae8':'#a8f0ff',.85*k);
   g.beginPath();g.ellipse(x-w*fl*.6,y,w*fl,w*.8,-.5,0,7);g.fill();g.beginPath();g.ellipse(x+w*fl*.6,y,w*fl,w*.8,.5,0,7);g.fill()}};
 // Décuplement : anneaux d'expansion et flèches qui poussent vers l'extérieur
@@ -8487,7 +8528,7 @@ Object.assign(NAT,{
  // Konoha Senpû : coup de pied circulaire à 360°
  tj_senpu:S_('Konoha Senpû','',5,{hero:'maul',tele:{self:1,r:100},ai:SELF(105,.6)},(u,a)=>{S('wind',u);anim(u,'tj_senpu',.36);
   for(const e of enemies(u))if(dist(u,e)<100+e.r)hit(e,u,12,{melee:1,kb:280,slow:.7,fx:u.x,fy:u.y});
-  jx({jfx:'tj_whirl',ui:units.indexOf(u),x:u.x,y:u.y,r:100,t:.4,m:.4});sparks(u.x,u.y,'#5aa83a',4,'leaf');fxRing(u.x,u.y,{u,r0:30,r1:100,col:'#e8fff0',w:4,t:.3});tjLeaves(u,u.x,u.y,8,220)}),
+  jx({jfx:'tj_whirl',ui:units.indexOf(u),x:u.x,y:u.y,r:100,t:.4,m:.4});sparks(u.x,u.y,'#5aa83a',4,'leaf');fxRing(u.x,u.y,{u,r0:30,r1:100,col:'#e8fff0',w:5,t:.32});fxWind(u.x,u.y,0,{u,spin:1,w:100,n:9,t:.4,col:'#e8fff0',z:10});fxSmoke(u.x,u.y,{u,col:'#d8c8a8',n:5,r:70,s:12,t:.7,al:.22,rise:10});fxDecal(u.x,u.y,'leaf',{u,r:80,t:2.5});tjLeaves(u,u.x,u.y,8,220)}), // tourbillon : anneau = rayon réel (100), filets de vent qui tournent, poussière et feuilles au sol
  // Konoha Daisenpû : trois tours en avançant (on peut viser entre deux tours), le dernier projette en l'air
  tj_daisen:S_('Konoha Daisenpû','',10,{hero:'savage',line:{len:190,w:210},ai:RG(150,.6)},(u,a)=>{let i=0;
   const spin=(o,n)=>{S('wind',o);dash(o,o.aim,40,.17,{});jx({jfx:'tj_whirl',ui:units.indexOf(o),x:o.x,y:o.y,r:108,t:.3,m:.3,big:1});
@@ -8853,11 +8894,11 @@ JFXD.tj_foot=(f,k,e)=>{fxTele(f.x,f.y,68,e,'#e8fff0',f,.05);const h=(1-ezo(e))*1
  const top=q.y-170*q.s;g.fillStyle=rgba('#dff8ea',.08);g.beginPath();g.moveTo(q.x-R*.95,q.y);g.lineTo(q.x-R*.6,top);g.lineTo(q.x+R*.6,top);g.lineTo(q.x+R*.95,q.y);g.closePath();g.fill();
  g.fillStyle=rgba('#ffffff',.06);g.beginPath();g.moveTo(q.x-R*.55,q.y);g.lineTo(q.x-R*.35,top);g.lineTo(q.x-R*.05,top);g.lineTo(q.x+R*.05,q.y);g.closePath();g.fill();
  g.strokeStyle=rgba('#ffffff',.3);g.lineWidth=1.5;for(let i=1;i<4;i++){const w=R*(.95-.075*i);g.beginPath();g.ellipse(q.x,q.y-i*40*q.s,w,w*K*.45,0,.25,Math.PI-.25);g.stroke()}
- g.fillStyle=rgba('#dff8ea',.14);g.beginPath();g.ellipse(q.x,q.y,R*.96,R*.96*K,0,0,7);g.fill();g.strokeStyle=rgba('#ffffff',.75);g.lineWidth=3;g.stroke();
- g.strokeStyle=rgba('#ffffff',.35);g.lineWidth=1.5;g.beginPath();g.ellipse(q.x,q.y,R*.7,R*.7*K,0,0,7);g.stroke();g.fillStyle=rgba('#ffffff',.5);for(let i=0;i<4;i++){const b=1.57-.7+i*.47;g.beginPath();g.ellipse(q.x+Math.cos(b)*R*.82,q.y+Math.sin(b)*R*.82*K,R*.16,R*.1+1,0,0,7);g.fill()}};
-JFXD.tj_stomp=(f,k,e)=>{const q=P(f.x,f.y,0),R=f.r*q.s*(.6+e*.7);g.globalCompositeOperation='lighter';g.strokeStyle=rgba(f.last?'#ffe08a':'#e8fff0',.85*k);g.lineWidth=7*k+1;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();
- g.fillStyle=rgba(f.last?'#ffe08a':'#ffffff',.25*k);g.beginPath();g.ellipse(q.x,q.y,f.r*q.s*.8,f.r*q.s*.8*K,0,0,7);g.fill();g.globalCompositeOperation='source-over';
- g.fillStyle=rgba('#d8c8a8',.4*k);for(let i=0;i<7;i++){const b=i*.9,d=R*1.05;g.beginPath();g.ellipse(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*K-5*q.s,(8+e*10)*q.s,(5+e*4)*q.s,0,0,7);g.fill()}};
+ g.fillStyle=rgba('#dff8ea',.07);g.beginPath();g.ellipse(q.x,q.y,R*.96,R*.96*K,0,0,7);g.fill();g.strokeStyle=rgba('#ffffff',.5);g.lineWidth=2.4;g.stroke();
+ g.strokeStyle=rgba('#ffffff',.35);g.lineWidth=1.5;g.beginPath();g.ellipse(q.x,q.y,R*.7,R*.7*K,0,0,7);g.stroke();g.fillStyle=rgba('#ffffff',.28);for(let i=0;i<4;i++){const b=1.57-.7+i*.47;g.beginPath();g.ellipse(q.x+Math.cos(b)*R*.82,q.y+Math.sin(b)*R*.82*K,R*.16,R*.1+1,0,0,7);g.fill()}};
+JFXD.tj_stomp=(f,k,e)=>{const q=P(f.x,f.y,0),R=f.r*q.s*(.6+e*.7);g.globalCompositeOperation='lighter';g.strokeStyle=rgba(f.last?'#ffe08a':'#e8fff0',.62*k);g.lineWidth=5.5*k+1;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();
+ g.fillStyle=rgba(f.last?'#ffe08a':'#ffffff',.12*k);g.beginPath();g.ellipse(q.x,q.y,f.r*q.s*.8,f.r*q.s*.8*K,0,0,7);g.fill();g.globalCompositeOperation='source-over';
+ g.fillStyle=rgba('#d8c8a8',.26*k);for(let i=0;i<7;i++){const b=i*.9,d=R*1.05;g.beginPath();g.ellipse(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*K-5*q.s,(8+e*10)*q.s,(5+e*4)*q.s,0,0,7);g.fill()}};
 // Nuit de la mort : dragon de vapeur rouge sur toute la ligne
 JFXD.tj_dragon=(f,k,e,t)=>{const el=f.m-f.t,pr=Math.min(1,el/f.dur),L=f.len*pr,ca=Math.cos(f.a),sa=Math.sin(f.a),N=16,pts=[];
  for(let i=0;i<=N;i++){const d=L*i/N,w=Math.sin(i*.8-t*14)*26*(i/N)*(1.2-i/N);pts.push(P(clamp(f.x+ca*d-sa*w,B.x,B.x+B.w),clamp(f.y+sa*d+ca*w,B.y,B.y+B.h),36+Math.sin(i*.5+t*6)*8))}
@@ -10981,7 +11022,7 @@ const fmS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son « brut »
 const fmSay=(u,s,col,z)=>{if(near(u.x,u.y))txt.push({x:u.x,y:u.y,z:z||122,s,col,t:1})};
 const fm_h=i=>{const v=Math.sin(i*127.1+311.7)*43758.5453;return v-Math.floor(v)}; // hasard figé (dessins)
 // ---- VFX (boîte à outils nr_fx.js) : étincelles d'acier, fumée d'ombre, éclats rouges (décor atténué selon l'intensité / le camp)
-function fmSpark(u,e,a,s){if(!e||!near(e.x,e.y))return;fxFlare(e.x,e.y,'#ffffff',{u,z:32,r:14*s,t:.14,rot:a});fxBurst(e.x,e.y,'#e8ecf4',{u,n:6*s,sp:260*s,a,arc:1.5,c2:'#ffffff',w:1.4,len:.15,z:30,gr:80})}
+function fmSpark(u,e,a,s){if(!e||!near(e.x,e.y))return;fxFlare(e.x,e.y,'#ffffff',{u,z:32,r:18*s,t:.16,rot:a,c2:FM_RED});fxBurst(e.x,e.y,'#e8ecf4',{u,n:9*s,sp:300*s,a,arc:1.6,c2:'#ffffff',w:1.6,len:.18,z:30,gr:80});fxRing(e.x,e.y,{u,r0:4,r1:26*s,col:FM_RED,c2:'#ffffff',w:3,t:.24})}
 function fmShadow(u,x,y,s){fxSmoke(x,y,{u,col:'#1c1822',n:5*s,r:18*s,s:12*s,al:.3,rise:34,z:16,t:.7});fxBurst(x,y,'#8a5ac8',{u,n:6*s,sp:90*s,sh:'petal',w:2,gr:-60,up:40,z:30,add:0,c2:'#3a2a4a'})}
 // marque de l'assassin (objet aux qui suit la cible : synchronisé chez les invités)
 function fmMarkOf(e,u){for(const x of aux)if(x.type==='fm_mark'&&x.t>0&&x.tg===e&&x.owner===u)return x;return null}
@@ -11089,14 +11130,14 @@ function fmFuma(L,t,al){g.save();g.globalAlpha*=al==null?1:al;g.fillStyle=rgba('
  g.fillStyle='#8a1a2a';g.strokeStyle='#22232c';g.lineWidth=Math.max(1,L*.06);g.beginPath();g.arc(0,0,L*.26,0,7);g.fill();g.stroke();g.fillStyle='#22232c';g.beginPath();g.arc(0,0,L*.1,0,7);g.fill();g.restore()}
 PROJD.fm_shu=(p,R,ra,t)=>{g.save();g.rotate(ra);g.strokeStyle=rgba(FM_RED,.55);g.lineWidth=1.6;g.lineCap='round';g.beginPath();g.moveTo(-R*1.2,0);g.quadraticCurveTo(-R*2.6,Math.sin(t/50)*R*.8,-R*4,0);g.stroke();g.restore();
  g.scale(1,.62);g.rotate(t/34);fmStar(R*1.6,FM_STEEL,'#23232c',FM_RED)};
-PROJD.fm_trace=(p,R,ra,t)=>{g.save();g.rotate(ra);g.globalCompositeOperation='lighter';g.strokeStyle=rgba(FM_RED,.7);g.lineWidth=2.4;g.lineCap='round';g.beginPath();g.moveTo(-R,0);g.lineTo(-R*7,0);g.stroke();g.strokeStyle='rgba(255,255,255,.6)';g.lineWidth=1;g.stroke();g.restore();
- g.scale(1,.62);g.rotate(t/26);fmStar(R*1.5,'#f2f4f8',FM_RED,FM_RED)};
+PROJD.fm_trace=(p,R,ra,t)=>{const A0=p&&p.owner?fxA(p):1;g.save();g.rotate(ra);fxTailL(R*12,R*2.2,FM_RED,.6*A0);g.globalCompositeOperation='lighter';g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=1.2;g.lineCap='round';g.beginPath();g.moveTo(-R,0);g.lineTo(-R*8,0);g.stroke();g.restore();
+ fxGlowS(0,0,R*2.6,FM_RED,.5*A0);g.scale(1,.62);g.rotate(t/22);fmStar(R*1.8,'#f2f4f8',FM_RED,FM_RED)}; // traceur : étoile plus grande, longue traînée rouge (on suit le tir d'un bout à l'autre)
 PROJD.fm_big=(p,R,ra,t)=>{fxGlowS(0,0,R*2.4,'#cfd3dd',.25,R*1.5);g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#e8ecf4',.35);g.lineWidth=R*.5;g.lineCap='round';g.scale(1,.6);for(let i=0;i<2;i++){const b=t/40+i*Math.PI;g.beginPath();g.arc(0,0,R*1.7,b,b+1.1);g.stroke()}g.restore();g.scale(1,.6);fmFuma(R*1.9,t/40)};
 // Kage shuriken caché : à peine une ombre (il voyage juste derrière le 1er)
 PROJD.fm_kage=(p,R,ra,t)=>{g.save();g.globalAlpha=.22;g.scale(1,.62);g.rotate(t/34);fmStar(R*1.5,'#14121a','#14121a','#14121a');g.restore()};
 // l'ombre surgit : shuriken noir et violet, volutes d'ombre
-PROJD.fm_kage2=(p,R,ra,t)=>{g.save();g.rotate(ra);for(let i=0;i<3;i++){const y=(i-1)*R*.7;g.strokeStyle=rgba(i===1?'#8a5ac8':FM_SHD,.6);g.lineWidth=2;g.beginPath();g.moveTo(-R,y);g.quadraticCurveTo(-R*2.5,y+Math.sin(t/60+i)*R,-R*4.2,y*.4);g.stroke()}g.restore();
- g.scale(1,.62);g.rotate(t/30);fmStar(R*1.6,'#2c2436','#b070ff',FM_RED)};
+PROJD.fm_kage2=(p,R,ra,t)=>{g.save();g.rotate(ra);fxTailL(R*9,R*2.6,'#8a5ac8',.5*(p&&p.owner?fxA(p):1));fxSoftS(-R*2,0,R*3,FM_SHD,.3,R*1.6);for(let i=0;i<3;i++){const y=(i-1)*R*.7;g.strokeStyle=rgba(i===1?'#8a5ac8':FM_SHD,.6);g.lineWidth=2;g.beginPath();g.moveTo(-R,y);g.quadraticCurveTo(-R*2.5,y+Math.sin(t/60+i)*R,-R*4.2,y*.4);g.stroke()}g.restore();
+ fxGlowS(0,0,R*2.4,'#b070ff',.45);g.scale(1,.62);g.rotate(t/30);fmStar(R*1.8,'#2c2436','#b070ff',FM_RED)};
 PROJD.fm_wire=(p,R,ra,t)=>{g.scale(1,.62);g.rotate(t/30);fmStar(R*1.5,FM_STEEL,'#23232c');g.strokeStyle='#e8ecf4';g.lineWidth=1.4;g.beginPath();g.arc(0,0,R*.55,0,7);g.stroke()};
 // fil de chakra entre la main du lanceur et le shuriken (légère courbe)
 function fmWire(ax,ay,az,bx,by,bz,sag,al){const a=P(ax,ay,az),b=P(bx,by,bz),mx=(a.x+b.x)/2,my=(a.y+b.y)/2+sag;g.save();g.lineCap='round';
@@ -12448,7 +12489,7 @@ Object.assign(NAT,{
   const ins=new Set(enemies(u).filter(e=>Math.hypot(e.x-p.x,e.y-p.y)<110));aux.push({type:'bk_cage',x:p.x,y:p.y,r:110,t:4,m:4,team:u.team,owner:u,ins,done:new Set(),k:0});jx({jfx:'bk_fly8',x:u.x,y:u.y,x2:p.x,y2:p.y,t:.25,m:.25});
   later(u,.25,()=>{fxRing(p.x,p.y,{u,r0:20,r1:110,col:'#e8eef6',c2:'#ffffff',w:4,t:.35});for(let i=0;i<8;i++){const b=i*.785+.2;fxFlare(p.x+Math.cos(b)*110,p.y+Math.sin(b)*110,'#e8eef6',{u,z:8,r:10,t:.16,star:0})}})}),
  bk_hammer:S_('Ôtsuchi : Marteau écraseur','',11,{line:{len:150,w:170},ai:RG(130,.65)},(u,a)=>{const p=fwd(u,a,85);anim(u,'kj_hammer',.6);S('poof',u);S('heavy',u);const D=tjLock(u,.5);
-  jx({jfx:'bk_hammer',x:p.x,y:p.y,a,t:.62,m:.62});bkPuff(u,u.x,u.y,.8);later(u,.4,()=>{if(u.dead)return;for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<85+e.r&&hit(e,u,30,{melee:1,stun:.7,unblockable:1,fx:p.x,fy:p.y}))fxHitStop(u,e,30,1);
+  jx({jfx:'bk_hammer',x:p.x,y:p.y,a,t:.62,m:.62,tele:1});bkPuff(u,u.x,u.y,.8);later(u,.4,()=>{if(u.dead)return;for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<85+e.r&&hit(e,u,30,{melee:1,stun:.7,unblockable:1,fx:p.x,fy:p.y}))fxHitStop(u,e,30,1);
    jx({jfx:'tj_crater',x:p.x,y:p.y,r:85,t:.9,m:.9});jx({jfx:'shock',x:p.x,y:p.y,r:85,t:.4,m:.4,col:'#e8d0a8'});fxRing(p.x,p.y,{u,r0:14,r1:85,col:'#e8d0a8',c2:'#ffffff',w:8,t:.35});fxDebris(p.x,p.y,{u,n:12,sp:220,col:'#a07850',c2:'#5a4028',s:4.5});fxSmoke(p.x,p.y,{u,col:'#a08a70',n:7,r:60,s:15,al:.24,rise:26,t:1.1});fxDecal(p.x,p.y,'crack',{u,r:80,t:4.5});fxFlare(p.x,p.y,'#fff4d8',{u,z:20,r:34,t:.22});bkDrop(u,p.x,p.y,4);if(near(p.x,p.y)){S('boom',u);S('rock',u);shake=Math.max(shake,.35)}},{x:p.x,y:p.y,r:85})}),
  bk_barrage:S_('Buki Shôkan : Arsenal volant','',13,{line:{len:420,w:90},ai:RG(400,.7)},(u)=>{const D=tjLock(u,1.25);anim(u,'bk_barrage',1.2);let n=0;jx({jfx:'bk_scroll',ui:stI(u),x:u.x,y:u.y,t:1.2,m:1.2,big:1});
   bkPuff(u,u.x,u.y,1.2);fxGlyph(u.x,u.y,'#ffd36a',{ui:stI(u),u,r:46,t:1.25,al:.5});
@@ -12552,7 +12593,7 @@ JFXD.bk_scroll=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x,u.y,f.big?70:50)
 JFXD.bk_fly8=(f,k,e)=>{for(let i=0;i<8;i++){const b=i*.785+.2,tx=f.x2+Math.cos(b)*110,ty=f.y2+Math.sin(b)*110,x=lerp(f.x,tx,e),y=lerp(f.y,ty,e),q=P(x,y,30+Math.sin(Math.PI*e)*40);g.save();g.translate(q.x,q.y);g.rotate(Math.atan2(ty-f.y,tx-f.x));bukWeapon('kunai',q.s*.8);g.restore()}};
 JFXD.bk_snap=(f,k,e)=>{const q=P(f.x,f.y,20);g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ffffff',.9*k);g.lineWidth=2;for(let i=-1;i<=1;i++){const b=f.a+i*.5;g.beginPath();g.moveTo(q.x,q.y);g.lineTo(q.x+Math.cos(b)*30*q.s*e,q.y+Math.sin(b)*20*q.s*e);g.stroke()}g.restore()};
 // marteau géant qui s'abat
-JFXD.bk_hammer=(f,k,e)=>{const fall=e<.6?0:Math.min(1,(e-.6)/.05),h=e<.6?140+Math.sin(e*12)*6:140*(1-fall),q=P(f.x,f.y,h),g0=P(f.x,f.y,0),s=q.s;g.fillStyle=rgba('#000000',.25*Math.min(1,e*2));g.beginPath();g.ellipse(g0.x,g0.y,60*s,22*s,0,0,7);g.fill();
+JFXD.bk_hammer=(f,k,e)=>{const fall=e<.6?0:Math.min(1,(e-.6)/.05),h=e<.6?140+Math.sin(e*12)*6:140*(1-fall),q=P(f.x,f.y,h),g0=P(f.x,f.y,0),s=q.s;if(e<.66)fxTele(f.x,f.y,85,Math.min(1,e/.645),'#ffd36a',f,.08);g.fillStyle=rgba('#000000',.22*Math.min(1,e*2)*(e<.66?1:Math.max(0,(1-e)/.34)));g.beginPath();g.ellipse(g0.x,g0.y,60*s,22*s,0,0,7);g.fill(); // alerte = rayon EXACT du coup (85 + corps), jamais atténuée (tele:1)
  g.save();g.globalAlpha=Math.min(1,k*4);g.fillStyle='#6a4a2a';g.fillRect(q.x-4*s,q.y-80*s,8*s,70*s);g.fillStyle='#5a5f6a';g.strokeStyle='#2a2a33';g.lineWidth=2;g.beginPath();g.roundRect(q.x-46*s,q.y-28*s,92*s,40*s,6*s);g.fill();g.stroke();
  g.fillStyle='#8a909c';g.fillRect(q.x-42*s,q.y-24*s,84*s,8*s);g.fillStyle='#e8c040';g.fillRect(q.x-6*s,q.y-28*s,12*s,40*s);g.restore()};
 // deux dragons de parchemin qui montent du lanceur vers la zone
@@ -12670,8 +12711,8 @@ function gkBolt(pts,c1,c2,w,k,dark){g.save();g.lineCap='round';g.lineJoin='round
 // jx({jfx:'gk_boom',x,y,r,v (palette),s (style : 'blast' 'lava' 'steam' 'gold' 'dust' 'crys' 'iron' 'dry'),t,m})
 // l'onde s'arrête au rayon r : passer le rayon RÉEL du coup. Lumière en sprites additifs modérés (jamais un aplat blanc sur un ninja).
 JFXD.gk_boom=(f,k,e,t)=>{const C=GK[f.v]||{a:'#fff',b:'#fc6',c:'#a50',d:'#420'},q=P(f.x,f.y,0),s=q.s,R=f.r,st=f.s||'blast',hot=st==='blast'||st==='lava'||st==='dry',ee=1-Math.pow(1-e,3),soft=st==='steam'||st==='dust';g.save();
- const gr=R*s*(.45+.6*ee);fxGlowS(q.x,q.y,gr,C.b,(hot?.4:.26)*k,gr*K,0);
- if(hot){const b=P(f.x,f.y,16+34*ee),rr=Math.min(80,R*.5)*s*(.6+.7*ee);fxGlowS(b.x,b.y,rr,C.b,.36*k*k);fxGlowS(b.x,b.y,rr*.4,C.a,.28*k*k)}
+ const gr=R*s*(.45+.6*ee);fxGlowS(q.x,q.y,gr,C.b,(hot?.28:.2)*k,gr*K,0);
+ if(hot){const b=P(f.x,f.y,16+34*ee),rr=Math.min(80,R*.5)*s*(.6+.7*ee);fxGlowS(b.x,b.y,rr,C.b,.22*k*k,undefined,0);fxGlowS(b.x,b.y,rr*.4,C.a,.16*k*k)} // boule de feu sans voile : le lanceur au centre reste lisible
  // fumée, vapeur, poussière, poudre : bouffées douces (non additives, ≤ 0,3)
  const nS=gkN(soft?9:st==='crys'||st==='iron'?3:5,f),sc=st==='steam'?'#ffffff':st==='dust'?C.a:st==='gold'?C.b:st==='crys'?C.a:st==='iron'?C.c:'#4a3a36';
  for(let i=0;i<nS;i++){const b=i*2.399+f.x*.013,d=R*(.18+.72*ee)*(.55+.45*((i*.37)%1)),p=P(f.x+Math.cos(b)*d,f.y+Math.sin(b)*d,8+e*(st==='steam'?64:28)+(i%3)*7),rr=(9+e*18)*s*Math.min(1.7,R/80+.45);
@@ -12882,7 +12923,7 @@ Object.assign(NAT,{
   jx({jfx:'ft_build',x:c.x,y:c.y,r:R,t:D,m:D});fxCast(u,'ft_steam',.8,{n:14});
   later(u,D,()=>{gkAoe(u,c.x,c.y,R,50,{air:.8},'ft_steam',e=>ftCor(u,e,2));ftMist(u,c.x,c.y,R,3);jx({jfx:'ft_geyser',x:c.x,y:c.y,r:R,t:1.3,m:1.3});jx({jfx:'gk_boom',x:c.x,y:c.y,r:R,v:'ft_steam',s:'steam',t:.8,m:.8});
    fxRing(c.x,c.y,{u,r0:30,r1:R,col:'#ffffff',c2:FTC.b,t:.45,w:8});fxRing(c.x,c.y,{u,r0:10,r1:R*.7,col:FTC.b,t:.6,w:4});fxFlare(c.x,c.y,FTC.b,{u,z:40,r:30,t:.25,al:.6});fxLight(c.x,c.y,R*1.2,FTC.b,{u,t:.6,a:.25});
-   fxSmoke(c.x,c.y,{u,col:'#ffffff',n:10,r:R*.7,s:28,t:2,al:.28,rise:170});fxBurst(c.x,c.y,FTC.b,{u,z:20,n:14,sp:330,up:260,gr:420,w:2.2,len:.06,c2:'#ffffff',t:.9});fxDecal(c.x,c.y,'puddle',{u,r:R*.8,t:3.5,col:'#a8b878'});
+   fxSmoke(c.x,c.y,{u,col:'#ffffff',n:8,r:R*.7,s:26,t:1.8,al:.2,rise:170});fxBurst(c.x,c.y,FTC.b,{u,z:20,n:14,sp:330,up:260,gr:420,w:2.2,len:.06,c2:'#ffffff',t:.9});fxDecal(c.x,c.y,'puddle',{u,r:R*.8,t:3.5,col:'#a8b878'});
    for(const e of enemies(u))if(gkIn(e,c.x,c.y,R))fxHitStop(u,e,50,1);fxShake(.38,c.x,c.y);if(near(c.x,c.y)){gkS('boom',u);gkS('water',u)}},{x:c.x,y:c.y,r:R})}),
  // ---------- dash : Propulsion de vapeur ----------
  ft_dash:SP('Propulsion de vapeur',FT_D.dash,7,{ai:ESC},(u,a,td)=>{const x0=u.x,y0=u.y;gkS('water',u);gkS('dash',u);anim(u,'lunge',.3);
@@ -12911,11 +12952,21 @@ GKPOOL.ft=(x,k,t)=>{const R=x.r,q=P(x.x,x.y,0),s=q.s;fxSoftS(q.x,q.y,R*s*1.02,'#
  if(!x.strip){g.save();g.lineWidth=1.2;const m=gkN(5,x.owner||x);for(let i=0;i<m;i++){const ph=(t*.7+i*.31)%1,b=i*1.9+Math.floor(t*.7+i*.31)*2.3,d=R*.75*((i*.43+Math.floor(t*.7+i*.31)*.37)%1),p=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,1);
   g.strokeStyle=rgba('#d8f080',.8*k*(1-ph));g.beginPath();g.ellipse(p.x,p.y-ph*3,(1.5+ph*5)*p.s,(1.5+ph*5)*p.s*.7,0,0,7);g.stroke()}g.restore()}};
 // jet de vapeur : cône de bouffées qui remplit EXACTEMENT le secteur touché (rayon r, demi-ouverture arc) ; cœur brûlant additif
-JFXD.ft_cone=(f,k,e,t,u)=>{const x0=u&&!u.dead?u.x:f.x,y0=u&&!u.dead?u.y:f.y,arc=f.arc??.5,n=gkN(18,f),m0=Math.min(1,e*1.7);
- if(e<.35){const a0=Math.min(1,(.35-e)/.2);g.save();g.globalCompositeOperation='lighter';g.globalAlpha=.35*a0;g.fillStyle=FTC.b;g.beginPath();const p0=P(x0,y0,2);g.moveTo(p0.x,p0.y);for(let i=0;i<=12;i++){const b=f.a-arc+2*arc*i/12,q=P(x0+Math.cos(b)*f.r*m0,y0+Math.sin(b)*f.r*m0,2);g.lineTo(q.x,q.y)}g.closePath();g.fill();g.restore()}
- for(let i=0;i<n;i++){const m=m0*(.3+((i*.37)%1)*.7),b=f.a+(((i*.618)%1)*2-1)*arc*.92,d=f.r*m,q=P(x0+Math.cos(b)*d,y0+Math.sin(b)*d,26+m*18),r=(8+m*22)*q.s;
-  fxSoftS(q.x,q.y,r*1.25,i%3?'#ffffff':FTC.a,.42*k)}
- const h=P(x0+Math.cos(f.a)*f.r*.35*m0,y0+Math.sin(f.a)*f.r*.35*m0,32);fxGlowS(h.x,h.y,f.r*.32*h.s,FTC.b,.5*k)};
+// jet de vapeur : le cône dessiné = hitbox (rayon r, demi-ouverture arc) ; front qui jaillit en 0,2 s, filets brûlants, bouffées qui s'enflent en avançant, nuage qui reste au bout
+JFXD.ft_cone=(f,k,e,t,u)=>{const x0=u&&!u.dead?u.x:f.x,y0=u&&!u.dead?u.y:f.y,arc=f.arc??.5,n=gkN(20,f),fr=Math.min(1,e*2.6),A=Math.min(1,k*2),o=P(x0,y0,0),s=o.s;
+ // bord du cône (hitbox exacte), net mais fin
+ g.save();g.strokeStyle=rgba(FTC.b,.45*A);g.lineWidth=1.4;g.beginPath();g.moveTo(o.x,o.y);for(let i=0;i<=14;i++){const b=f.a-arc+2*arc*i/14,q=P(x0+Math.cos(b)*f.r*fr,y0+Math.sin(b)*f.r*fr,0);g.lineTo(q.x,q.y)}g.closePath();g.stroke();
+ g.fillStyle=rgba(FTC.a,.07*A);g.fill();
+ // filets de vapeur brûlante (additifs) depuis la bouche
+ g.globalCompositeOperation='lighter';g.lineCap='round';const h0=P(x0+Math.cos(f.a)*14,y0+Math.sin(f.a)*14,30);
+ for(let i=0;i<9;i++){const b=f.a+((i/8)*2-1)*arc*.8,d1=f.r*fr*(.75+.25*((i*.53)%1)),d0=d1*Math.max(.1,e*.9),q0=P(x0+Math.cos(b)*d0,y0+Math.sin(b)*d0,30-d0*.06),q1=P(x0+Math.cos(b)*d1,y0+Math.sin(b)*d1,30-d1*.06);
+  g.strokeStyle=rgba(i%3?'#ffffff':FTC.b,.42*A);g.lineWidth=(2.6-i%2)*s;g.beginPath();g.moveTo(i===4?h0.x:q0.x,i===4?h0.y:q0.y);g.lineTo(q1.x,q1.y);g.stroke()}
+ g.restore();
+ // bouffées qui coulent vers l'avant et grossissent (source-over, jamais opaques)
+ for(let i=0;i<n;i++){const ph=((i*.37)+e*1.5)%1,m=ph*fr,b=f.a+(((i*.618)%1)*2-1)*arc*.85*Math.min(1,.4+m),d=f.r*m,q=P(x0+Math.cos(b)*d,y0+Math.sin(b)*d,24+m*20),r=(7+m*24)*q.s;
+  fxSoftS(q.x,q.y,r*1.2,i%3?'#ffffff':FTC.a,.32*k*Math.min(1,ph*4))}
+ const tip=P(x0+Math.cos(f.a)*f.r*.85*fr,y0+Math.sin(f.a)*f.r*.85*fr,30);fxSoftS(tip.x,tip.y,f.r*.32*tip.s*(.6+e*.6),'#ffffff',.3*k*fr);
+ fxGlowS(h0.x,h0.y,14*s,FTC.b,.7*A);fxGlowS(h0.x,h0.y,5*s,'#ffffff',.5*A)};
 // traînée de la charge : vapeur qui s'échappe derrière le lanceur
 JFXD.ft_trail=(f,k,e,t,u)=>{if(!u||u.dead)return;const n=gkN(7,f);for(let i=0;i<n;i++){const q=P(u.x-Math.cos(u.aim)*(14+i*14),u.y-Math.sin(u.aim)*(14+i*14),20+i*4);fxSoftS(q.x,q.y,(12+i*5)*q.s,i%2?'#ffffff':FTC.a,.4*k*(1-i/(n+1)))}};
 // chaudron (télégraphe, jamais atténué) : le sol bouillonne, l'anneau se resserre, des jets de vapeur montent de plus en plus haut
@@ -12925,8 +12976,8 @@ JFXD.ft_build=(f,k,e,t)=>{const q=P(f.x,f.y,0),s=q.s;fxSoftS(q.x,q.y,f.r*s,FTC.b
  fxGlowS(q.x,q.y,f.r*s*.5*(.5+e),FTC.b,.3*e,f.r*s*.5*(.5+e)*K,0)};
 // geyser : colonne brûlante (lumière additive) et grandes bouffées de vapeur douces (≤ 0,3) qui montent
 JFXD.ft_geyser=(f,k,e,t)=>{const q=P(f.x,f.y,0),s=q.s,up=Math.sin(Math.PI*Math.min(1,e*1.5)),h=up*230*s,w=f.r*.38*s;
- if(h>2){const o=g.globalCompositeOperation,ga=g.globalAlpha;g.globalCompositeOperation='lighter';g.globalAlpha=ga*.24*k;g.drawImage(fxSpr(FTC.b,0),q.x-w,q.y-h,w*2,h*2);g.globalAlpha=ga*.16*k;g.drawImage(fxSpr('#ffffff',0),q.x-w*.4,q.y-h*.9,w*.8,h*1.8);g.globalAlpha=ga;g.globalCompositeOperation=o}
- const n=gkN(18,f);for(let i=0;i<n;i++){const b=i*.35,d=f.r*.6*((i*.29)%1),m=Math.min(1,e*1.3),z=m*(150+(i%4)*30),p=P(f.x+Math.cos(b)*d*(1+m),f.y+Math.sin(b)*d*(1+m),z),r=(14+m*26)*p.s;fxSoftS(p.x,p.y,r*1.2,i%3?'#ffffff':FTC.a,.28*k)}};
+ if(h>2){const o=g.globalCompositeOperation,ga=g.globalAlpha;g.globalCompositeOperation='lighter';g.globalAlpha=ga*.18*k;g.drawImage(fxSpr(FTC.b,0),q.x-w,q.y-h,w*2,h*2);g.globalAlpha=ga*.16*k;g.drawImage(fxSpr('#ffffff',0),q.x-w*.4,q.y-h*.9,w*.8,h*1.8);g.globalAlpha=ga;g.globalCompositeOperation=o}
+ const n=gkN(18,f);for(let i=0;i<n;i++){const b=i*.35,d=f.r*.6*((i*.29)%1),m=Math.min(1,e*1.3),z=m*(150+(i%4)*30),p=P(f.x+Math.cos(b)*d*(1+m),f.y+Math.sin(b)*d*(1+m),z),r=(14+m*26)*p.s;fxSoftS(p.x,p.y,r*1.2,i%3?'#ffffff':FTC.a,.18*k)}}; // vapeur légère : la cible projetée reste visible
 
 // ===== Kekkei genkai g2 : Jiton, le sable de fer et le magnétisme (préfixe ji_) — façon Troisième Kazekage =====
 // Identité : la traque. Tes jutsu AIMANTENT la cible (trait, 4 s) ; sur une cible aimantée, le sable de fer revient vers elle :
@@ -13055,10 +13106,10 @@ function btBoom(u,x,y,r,d,o,sz){const n=gkAoe(u,x,y,r,d,Object.assign({kb:260},o
  if(near(x,y))gkS('boom',u);return n}
 Object.assign(NAT,{
  // ---------- Jiraiken (D) : poing mine ----------
- bt_fist:SP('Bakuton : Jiraiken',BT_D.fist,5,{ai:{mode:'gap',min:40,max:170,p:.8},line:{len:150,w:50}},(u,a)=>{gkS('dash',u);anim(u,'lunge',.4);let done=0;fxCharge(u,BTC.b,{t:.2,n:8,z:34,hd:18,c2:'#ffffff'});gkTrail(u,'bt_blast',.22,{w:14,z:30});
+ bt_fist:SP('Bakuton : Jiraiken',BT_D.fist,5,{ai:{mode:'gap',min:40,max:170,p:.8},line:{len:150,w:50}},(u,a)=>{gkS('dash',u);anim(u,'lunge',.4);let done=0;fxCharge(u,BTC.b,{t:.2,n:8,z:34,hd:18,c2:'#ffffff'});gkTrail(u,'bt_blast',.22,{w:14,z:30});jx({jfx:'bt_fistg',ui:gkI(u),x:u.x,y:u.y,a,t:.3,m:.3});
   const chk=()=>{if(done||u.dead)return;for(const e of enemies(u))if(dist(u,e)<u.r+e.r+22&&angDiff(ang(u,e),a)<1.2){done=1;u.dash=null;if(gkHit(e,u,10,{melee:1},'bt_blast')){btCh(u,e);
-     const ti=gkI(e);jx({jfx:'bt_tag',ti,x:e.x,y:e.y,t:.6,m:.6});fxFlare(e.x,e.y,BTC.b,{u,z:34,r:22,t:.15});fxBurst(e.x,e.y,BTC.a,{u,z:32,n:6,sp:220,a,arc:1.4,w:1.6,t:.3});later(u,.6,()=>{if(!e.dead)btBoom(u,e.x,e.y,55,8,{})})}if(near(e.x,e.y))gkS('hit',e);return}};
-  dash(u,a,120,.16,{end:chk});aux.push({type:'gk_chk',x:u.x,y:u.y,r:0,t:.2,m:.2,team:u.team,owner:u,f:chk})}),
+     const ti=gkI(e);jx({jfx:'bt_tag',ti,x:e.x,y:e.y,t:.6,m:.6});jx({jfx:'bt_punch',x:e.x-Math.cos(a)*e.r,y:e.y-Math.sin(a)*e.r,a,t:.42,m:.42});fxRing(e.x,e.y,{u,r0:6,r1:40,col:BTC.b,c2:'#ffffff',w:4,t:.26});fxSmoke(e.x,e.y,{u,col:'#5a4a40',n:3,r:18,s:10,t:.8,al:.22,rise:22,dx:Math.cos(a)*30,dy:Math.sin(a)*30});fxFlare(e.x,e.y,BTC.b,{u,z:34,r:22,t:.15});fxBurst(e.x,e.y,BTC.a,{u,z:32,n:6,sp:220,a,arc:1.4,w:1.6,t:.3});later(u,.6,()=>{if(!e.dead)btBoom(u,e.x,e.y,55,8,{})})}if(near(e.x,e.y))gkS('hit',e);return}};
+  dash(u,a,120,.16,{end:()=>{chk();if(!done&&!u.dead&&near(u.x,u.y)){const f=fwd(u,a,22);jx({jfx:'bt_punch',x:f.x,y:f.y,a,t:.3,m:.3,sm:1,oi:gkI(u)})}}});aux.push({type:'gk_chk',x:u.x,y:u.y,r:0,t:.2,m:.2,team:u.team,owner:u,f:chk})}), // dans le vide : petite détonation au poing (décor)
  // ---------- Mine (C) ----------
  bt_mine:SP('Bakuton : Mine',BT_D.mine,8,{ai:RG(320,.5)},(u,a,td)=>{const c=atP(u,a,td,320);gkS('deflect',u);anim(u,'stomp',.4);for(const x of aux)if(x.type==='bt_mine'&&x.owner===u)x.t=Math.min(x.t,.01);
   aux.push({type:'bt_mine',x:c.x,y:c.y,r:30,t:12,m:12,team:u.team,owner:u,k:.5,arm:.5});fxRing(c.x,c.y,{u,r0:6,r1:30,col:BTC.b,t:.3,w:3});fxSmoke(c.x,c.y,{u,col:'#9a8268',n:3,r:16,s:9,t:.7,al:.22,rise:10})}),
@@ -13092,9 +13143,9 @@ AUXF.bt_big=(x,dt)=>{const u=x.owner;if(x.done||!u)return;if(u.dead){x.done=1;x.
   fxBurst(u.x,u.y,BTC.a,{u,z:30,n:26,sp:520,up:160,gr:260,w:2.6,len:.14,c2:'#ffffff',t:.8});fxDecal(u.x,u.y,'scorch',{u,r:150,t:5});fxShake(.5,u.x,u.y);
   if(near(u.x,u.y)){gkS('boom',u);gkS('heavy',u)}}};
 // charge : télégraphe net au rayon réel (210, liseré rouge si ennemi), anneau qui se resserre, lumière qui monte DERRIÈRE le ninja (couche du sol), étincelles aspirées
-AUXD.bt_big=(x,k,t)=>{const u=units[x.ui];if(!u||x.done)return;const e=1-x.t/x.m,q=P(u.x,u.y,40),s=q.s,g0=P(u.x,u.y,0);fxTele(u.x,u.y,x.r,e,BTC.b,u,.08+.1*e);
+AUXD.bt_big=(x,k,t)=>{const u=units[x.ui];if(!u||x.done)return;const e=1-x.t/x.m,q=P(u.x,u.y,40),s=q.s,g0=P(u.x,u.y,0);fxTele(u.x,u.y,x.r,e,BTC.b,u,.06+.06*e);
  g.save();g.strokeStyle=rgba(BTC.b,.5+.5*e);g.lineWidth=2+e*4;gEll(u.x,u.y,x.r*(1-e*.85));g.stroke();g.restore();
- gkDim(u,()=>{fxGlowS(g0.x,g0.y,(40+e*90)*s,BTC.b,.3+.4*e,(40+e*90)*s*K,0);fxGlowS(q.x,q.y,(24+e*34)*s,BTC.b,.35+.3*e);
+ gkDim(u,()=>{fxGlowS(g0.x,g0.y,(40+e*90)*s,BTC.b,.18+.22*e,(40+e*90)*s*K,0);fxGlowS(q.x,q.y,(18+e*20)*s,BTC.b,.16+.16*e,undefined,0); // lueur sans cœur blanc : le lanceur reste lisible
   g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ffffff',.6*e);g.lineWidth=2;const n=gkN(10,u);for(let i=0;i<n;i++){const b=i*.628+t*2,ph=(t*2.2+i*.37)%1,r0=(14+(1-ph)*80)*s;g.beginPath();g.moveTo(q.x+Math.cos(b)*r0,q.y+Math.sin(b)*r0*.7);g.lineTo(q.x+Math.cos(b)*(r0+10*s),q.y+Math.sin(b)*(r0+10*s)*.7);g.stroke()}g.restore()})};
 // ---- trait : Détonateur
 GKST.push({key:'bt_ch',max:BT_MAX,col:'#ffb030',c2:'#5a2a06'});
@@ -13120,7 +13171,17 @@ JFXD.bt_fuse=(f,k,e,t)=>{const L=f.len*Math.min(1,e*1.25),A=P(f.x,f.y,0),Bq=P(f.
  fxGlowS(Bq.x,Bq.y,(10+3*Math.sin(t*40))*Bq.s,BTC.b,.9*k);fxGlowS(Bq.x,Bq.y,4*Bq.s,'#ffffff',k);
  g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(BTC.a,k);const n=gkN(6,f);for(let i=0;i<n;i++){const ph=(t*4+i*.17)%1,b=f.a+Math.PI+(((i*.618)%1)-.5)*2,p=P(f.x+Math.cos(f.a)*L+Math.cos(b)*ph*22,f.y+Math.sin(f.a)*L+Math.sin(b)*ph*22,ph*(1-ph)*40);g.fillRect(p.x-1,p.y-1,2,2)}g.restore()};
 // grande détonation : lumière LOCALE (plus jamais de voile plein écran) : boule de lumière au sol au rayon de l'explosion, qui s'éteint vite
-JFXD.bt_flash=(f,k)=>{const q=P(f.x,f.y,0),R=(f.r||210)*q.s;fxGlowS(q.x,q.y,R*1.2,'#fff4c0',.45*k*k,R*1.2*K,0)};
+JFXD.bt_flash=(f,k)=>{const q=P(f.x,f.y,0),R=(f.r||210)*q.s;fxGlowS(q.x,q.y,R*1.2,'#fff4c0',.26*k*k,R*1.2*K,0)};
+
+// Jiraiken : poing chargé d'argile explosive pendant la ruée (lueur qui crépite), puis détonation en éventail VERS L'AVANT au contact
+JFXD.bt_fistg=(f,k,e,t,u)=>{if(!u||u.dead)return;const a=u.aim,h=P(u.x+Math.cos(a)*18,u.y+Math.sin(a)*18,32),s=h.s,fl=.6+.4*Math.sin(t*60);
+ fxGlowS(h.x,h.y,(10+6*fl)*s,BTC.b,.75*Math.min(1,k*3));fxGlowS(h.x,h.y,4*s,'#ffffff',.6*Math.min(1,k*3));g.globalCompositeOperation='lighter';g.strokeStyle=rgba(BTC.a,.8*k);g.lineWidth=1.3*s;
+ for(let i=0;i<3;i++){const b=fxH((t*20|0),i,1)*6.28,r=(6+8*fxH((t*20|0),i,2))*s;g.beginPath();g.moveTo(h.x,h.y);g.lineTo(h.x+Math.cos(b)*r,h.y+Math.sin(b)*r*.8);g.stroke()}};
+JFXD.bt_punch=(f,k,e,t)=>{const q=P(f.x,f.y,30),s=q.s*(f.sm?.6:1),ee=1-Math.pow(1-e,3),ca=Math.cos(f.a),sa=Math.sin(f.a)*K,an=Math.atan2(sa,ca);g.save();g.translate(q.x,q.y);g.rotate(an);g.globalCompositeOperation='lighter';
+ const R=(14+44*ee)*s,A=Math.max(0,1-e*1.15);g.globalAlpha=A;g.drawImage(fxSpr(BTC.b,1),-R*.4,-R*.8,R*1.6,R*1.6); // boule de feu poussée vers l'avant (cœur blanc bref)
+ g.strokeStyle=BTC.a;g.lineWidth=Math.max(1,4*s*(1-e));g.beginPath();g.ellipse(R*.25,0,R*.55,R*.95,0,-1.2,1.2);g.stroke(); // onde en croissant
+ g.strokeStyle=BTC.b;g.lineCap='round';for(let i=0;i<7;i++){const b=(i-3)*.32,r0=R*.3,r1=R*(1+.25*fxH(f.x|0,i,1));g.lineWidth=Math.max(.8,2.2*s*(1-e));g.beginPath();g.moveTo(Math.cos(b)*r0,Math.sin(b)*r0);g.lineTo(Math.cos(b)*r1,Math.sin(b)*r1);g.stroke()}
+ g.restore()};
 
 // ===== Kekkei genkai g4 : Shakuton, l'incandescence (préfixe sk_) — Katon + Fûton (Pakura de Suna) =====
 // Identité : la pression qui assèche. Des sphères de chaleur flottent, traquent et collent ; chaque touche DESSÈCHE (trait, 3 cumuls) :
@@ -13295,7 +13356,12 @@ AFTER.push(()=>UK.push('rt_gr'));
 // ---- visuels
 // rayon courbe / laser du cirque : trait lumineux
 // rayon courbe / laser du cirque : trait lumineux, traînée effilée, éclat à la pointe
-PROJD.rt_bolt=(p,R,ra,t)=>{g.rotate(ra);fxTailL(R*9,R*2.6,RTC.b,.55*(p&&p.owner?fxA(p):1));g.globalCompositeOperation='lighter';g.strokeStyle=rgba(RTC.b,.55);g.lineWidth=R*2;g.lineCap='round';g.beginPath();g.moveTo(-R*5,0);g.lineTo(R,0);g.stroke();g.strokeStyle=rgba(RTC.a,.95);g.lineWidth=R*.9;g.stroke();g.strokeStyle='#ffffff';g.lineWidth=R*.35;g.stroke();fxGlowS(R*.6,0,R*2.2,RTC.b,.6)};
+// rayon courbe : le chemin parcouru reste dessiné (ruban de foudre qui suit la vraie trajectoire, courbes du pilote comprises) + tête crépitante
+PROJD.rt_bolt=(p,R,ra,t)=>{const H=p._rth||(p._rth=[]),now=isGuest()?performance.now()/1000:SIMT;if(!H.length||H[H.length-1][2]!==now)H.push([p.x,p.y,now]);while(H.length>14||(H.length&&now-H[0][2]>.18))H.shift();const A0=p&&p.owner?fxA(p):1;
+ if(H.length>1){const c=P(p.x,p.y,28);g.save();g.globalCompositeOperation='lighter';g.lineCap='round';g.lineJoin='round';for(const [w,col,al] of[[R*2.4,RTC.b,.3],[R*.9,RTC.a,.85]]){g.strokeStyle=rgba(col,al*A0);g.lineWidth=w;g.beginPath();
+   H.forEach((h,i)=>{const q=P(h[0],h[1],28),jx=i&&i<H.length-1?(fxH(i,(performance.now()/50|0),1)-.5)*R*1.4:0;const X=(q.x-c.x)/c.s,Y=(q.y-c.y+jx)/c.s;i?g.lineTo(X,Y):g.moveTo(X,Y)});g.lineTo(0,0);g.stroke()}g.restore()}
+ g.rotate(ra);g.globalCompositeOperation='lighter';fxGlowS(0,0,R*3,RTC.b,.6*A0);g.strokeStyle=rgba(RTC.a,.95);g.lineWidth=R*.7;g.lineCap='round';g.beginPath();g.moveTo(-R*2.5,0);g.lineTo(R,0);g.stroke();
+ const sd=(t/45|0)+(p.x|0);for(let i=0;i<3;i++){const b=(fxH(sd,i,1)-.5)*2.4+Math.PI,l=R*(2+2*fxH(sd,i,2));fxBoltS(0,0,Math.cos(b)*l,Math.sin(b)*l,RTC.b,1,sd+i,.35,3)}};
 // éclair qui tombe du nuage sur un ennemi : éclair brisé, lueur au sol, onde
 JFXD.rt_strike=(f,k,e,t,u,tg)=>{const o=tg&&!tg.dead?tg:f,A=P(o.x,o.y,140),Bq=P(o.x,o.y,10),gq=P(o.x,o.y,0);fxBoltS(A.x,A.y,Bq.x,Bq.y,RTC.b,3.2*A.s*k,(f.x|0)+Math.floor(t*18),.22,8);
  fxGlowS(gq.x,gq.y,30*gq.s,RTC.a,.6*k,30*gq.s*K,0);g.save();g.strokeStyle=rgba(RTC.a,.7*k);g.lineWidth=2;gEll(o.x,o.y,10+e*24);g.stroke();g.restore()};
@@ -13520,7 +13586,7 @@ Object.assign(NAT,{
   for(const e of enemies(u))if(dist(u,e)<260+e.r&&angDiff(ang(u,e),a)<.6&&gkHit(e,u,18,{slow:.8,unblockable:1},'kn_black')){fxArc(u.x,u.y,e.x,e.y,KNC.a,{u,z:34,t:.22,w:2.2});knHitFx(u,e.x,e.y,30,a)}jx({jfx:'kn_arc',ui:gkI(u),x:u.x,y:u.y,a,r:260,arc:.6,t:.3,m:.3})}),
  // ---------- Éclair fourchu (B) ----------
  kn_fork:SP('Kiminari : Éclair fourchu',KN_D.fork,10,{ai:RG(470,.65),line:{len:480,w:30}},(u,a,td)=>{const L=clamp(td||480,120,480);gkS('zap',u);anim(u,'stomp',.4);
-  proj(u,a,{spd:950,r:12,dmg:18,life:L/950,col:KNC.b,kind:'kn_bolt',vfx:'kn_black',o:{stun:.5,unblockable:1},onHit:(p,t)=>{knHitFx(p.owner,t.x,t.y,36,a);fxHitStop(p.owner,t,18)}});const p=projs[projs.length-1];aux.push({type:'kn_fork',x:p.x,y:p.y,r:0,t:p.life+.1,m:p.life+.1,team:u.team,owner:u,p,a})}),
+  proj(u,a,{spd:950,r:12,dmg:18,life:L/950,col:KNC.b,kind:'kn_bolt',vfx:'kn_black',o:{stun:.5,unblockable:1},onHit:(p,t)=>{knHitFx(p.owner,t.x,t.y,36,a);for(const d of[-.6,0,.6])fxArc(t.x,t.y,t.x+Math.cos(a+d)*48,t.y+Math.sin(a+d)*48,KNC.a,{u:p.owner,z:32,z2:20,w:2.2,t:.22,j:.3});fxHitStop(p.owner,t,18)}});const p=projs[projs.length-1];aux.push({type:'kn_fork',x:p.x,y:p.y,r:0,t:p.life+.1,m:p.life+.1,team:u.team,owner:u,p,a})}),
  // ---------- Ruée noire (A) ----------
  kn_rush:SP('Kiminari : Ruée noire',KN_D.rush,12,{ai:{mode:'gap',min:60,max:330,p:.7},line:{len:340,w:50}},(u,a)=>{const x0=u.x,y0=u.y;gkS('zap',u);gkS('dash',u);anim(u,'lunge',.35);u.phase=Math.max(u.phase||0,.22);
   const ex=clamp(u.x+Math.cos(a)*340,B.x+u.r,B.x+B.w-u.r),ey=clamp(u.y+Math.sin(a)*340,B.y+u.r,B.y+B.h-u.r),L=Math.hypot(ex-x0,ey-y0);
@@ -13560,7 +13626,10 @@ KGTRAITS[8]={nom:'Foudre noire',desc:'Tes éclairs noirs traversent la garde. Ch
 AFTER.push(()=>UK.push('kn_hs'));
 // ---- visuels
 // trait noir : éclair sombre à cœur violet, traînée effilée
-PROJD.kn_bolt=(p,R,ra,t)=>{g.rotate(ra);const L=R*6;fxTailL(L*1.4,R*2.4,KNC.b,.5*(p&&p.owner?fxA(p):1));gkBolt(gkZig(-L,0,R,0,6,R*1.4,Math.floor(t/50)+(p.x|0)*.01),KNC.a,KNC.c,R*.9,1,1);fxGlowS(R*.6,0,R*1.8,KNC.b,.7)};
+PROJD.kn_bolt=(p,R,ra,t)=>{g.rotate(ra);const L=R*6,A0=p&&p.owner?fxA(p):1,sd=Math.floor(t/50)+(p.x|0)*.01;fxTailL(L*1.6,R*3,KNC.b,.55*A0);fxSoftS(-L*.5,0,L*.7,KNC.c,.35*A0,R*1.6); // halo sombre (foudre noire)
+ gkBolt(gkZig(-L,0,R,0,6,R*1.4,sd),KNC.a,KNC.c,R*.9,1,1);
+ for(const sg of[-1,1]){const x0=-L*(.3+.2*fxH(sd|0,sg+1,1)),pts=gkZig(x0,0,x0-L*.55,sg*R*(1.6+fxH(sd|0,sg+1,2)),3,R*.7,sd+sg);gkBolt(pts,KNC.a,KNC.c,R*.45,.8,1)} // fourches qui crépitent le long du trait
+ fxGlowS(R*.6,0,R*2.2,KNC.b,.8);fxGlowS(R*.6,0,R*.7,'#ffffff',.5)};
 // arc noir : 6 éclairs qui couvrent EXACTEMENT le secteur touché (rayon r, demi-ouverture arc) + voile sombre bref sur ce secteur
 JFXD.kn_arc=(f,k,e,t,u)=>{const x0=u&&!u.dead?u.x:f.x,y0=u&&!u.dead?u.y:f.y,R=f.r||260,arc=f.arc||.6,A=P(x0,y0,36);
  if(e<.5){g.save();g.globalAlpha=.3*(1-e*2);g.fillStyle=KNC.c;g.beginPath();const p0=P(x0,y0,2);g.moveTo(p0.x,p0.y);for(let i=0;i<=12;i++){const b=f.a-arc+2*arc*i/12,q=P(x0+Math.cos(b)*R,y0+Math.sin(b)*R,2);g.lineTo(q.x,q.y)}g.closePath();g.fill();g.globalCompositeOperation='lighter';g.strokeStyle=KNC.b;g.lineWidth=1.5;g.stroke();g.restore()}
@@ -13838,7 +13907,7 @@ Object.assign(NAT,{
  ot_bone:SP('Haikotsu : Os des cendres',OT_D.bone,12,{ai:RG(540,.65),line:{len:560,w:22}},(u,a)=>{gkS('bone',u);gkS('blaster',u);anim(u,'throw2',.45);
   fxFlare(u.x+Math.cos(a)*26,u.y+Math.sin(a)*26,'#f4f0e8',{u,z:36,r:20,t:.16});fxSmoke(u.x+Math.cos(a)*26,u.y+Math.sin(a)*26,{u,col:'#bcb6ac',n:3,r:14,s:9,al:.25,dx:Math.cos(a)*40,dy:Math.sin(a)*40});
   proj(u,a,{spd:1050,r:9,dmg:30,life:.53,col:'#f4f0e8',kind:'ot_bone',vfx:'ot_void',pierce:1,o:{slow:1,dot:{dps:4,dur:3}},onHit:(p,t)=>{if(!near(t.x,t.y))return;const o=p.owner;sparks(t.x,t.y,'#d8d4cc',6,'smoke');fxFlare(t.x,t.y,'#ffffff',{u:o,z:32,r:20,t:.16});
-   fxBurst(t.x,t.y,'#9a948a',{u:o,n:12,sp:180,sh:'dot',w:1.8,gr:-20,up:40,add:0,c2:'#5a544c',a:Math.atan2(p.vy,p.vx),arc:1.6});fxSmoke(t.x,t.y,{u:o,col:'#bcb6ac',n:4,r:16,s:10,al:.26,rise:30,t:1.4});fxHitStop(o,t,30)}})}),
+   fxBurst(t.x,t.y,'#9a948a',{u:o,n:12,sp:180,sh:'dot',w:1.8,gr:-20,up:40,add:0,c2:'#5a544c',a:Math.atan2(p.vy,p.vx),arc:1.6});fxSmoke(t.x,t.y,{u:o,col:'#bcb6ac',n:5,r:18,s:11,al:.26,rise:36,t:1.5});fxRing(t.x,t.y,{u:o,r0:6,r1:34,col:'#d8d0f0',c2:'#ffffff',w:3,t:.3});fxDecal(t.x,t.y,'x',{u:o,r:20,t:2.5,col:'#6a645a',al:.35});fxEmbers(t.x,t.y,16,'#d8d2c8',{u:o,n:8,h:60,t:1.4,c2:'#8a84a0',w:1.6});fxHitStop(o,t,30)}})}),
  // ---------- Kyûkyoku Kôdô Kyûdama (S) : l'orbe tombe, s'étend puis éclate ----------
  ot_ball:ULT('Kyûkyoku Kôdô Kyûdama',OT_D.ball,{ai:RG(380,.85),tele:{r:170,max:380}},(u,a,td)=>{const c=atP(u,a,td,380),D=1.3;gkS('rasengan',u);gkS('roar',u);anim(u,'gk_call',1.1);jx({jfx:'ot_grow',x:c.x,y:c.y,r:170,d:D,t:D+.05,m:D+.05});fxCast(u,'jinton',D,{glyph:1,n:14,c2:'#ffffff'});fxPillar(u.x,u.y,OTC.b,{u,h:180,w:22,t:D,al:.35});
   later(u,D,()=>{gkAoe(u,c.x,c.y,170,55,{kb:200},'ot_void',e=>{otDrain(u,e,15);fxHitStop(u,e,55,1)});jx({jfx:'ot_burst',x:c.x,y:c.y,r:170,t:.8,m:.8});
@@ -13874,8 +13943,11 @@ PROJD.ot_orb=(p,R,ra,t)=>{g.save();g.globalCompositeOperation='lighter';g.fillSt
 PROJD.ot_pull=(p,R,ra,t)=>{g.rotate(ra);g.strokeStyle=rgba(OTC.b,.85);for(let i=0;i<3;i++){const k=((t/160+i/3)%1);g.lineWidth=2*(1-k)+.5;g.beginPath();g.ellipse(-k*R*2,0,R*(.5+k*.8),R*(1+k*1.2),0,0,7);g.stroke()}
  g.fillStyle=rgba('#ffffff',.85);g.beginPath();g.arc(0,0,R*.35,0,7);g.fill()};
 // os des cendres : os blanc effilé, cendres qui s'en détachent
-PROJD.ot_bone=(p,R,ra,t)=>{g.rotate(ra);g.fillStyle=rgba('#bcb6ac',.55);for(let i=1;i<6;i++)g.fillRect(-14-i*8,Math.sin(t/50+i*2)*3-1,2.5,2.5);
- g.fillStyle='#f4f0e8';g.strokeStyle='#6a645a';g.lineWidth=.9;g.beginPath();g.moveTo(R*2.2,0);g.lineTo(R*.6,-R*.45);g.lineTo(-R*1.6,-R*.35);g.arc(-R*1.8,-R*.35,R*.4,0,7);g.moveTo(-R*1.6,R*.35);g.arc(-R*1.8,R*.35,R*.4,0,7);g.lineTo(-R*1.6,R*.35);g.lineTo(R*.6,R*.45);g.closePath();g.fill();g.stroke()};
+// os des cendres : pieu d'os pâle à aura du vide, qui s'effrite en cendres derrière lui
+PROJD.ot_bone=(p,R,ra,t)=>{const A0=p&&p.owner?fxA(p):1;g.rotate(ra);fxTailL(R*10,R*2.6,'#d8d0f0',.5*A0);fxGlowS(0,0,R*2.6,'#b8b0d8',.45*A0);
+ g.fillStyle=rgba('#bcb6ac',.7);for(let i=1;i<8;i++){const x=-R*1.8-i*R*1.1,y=Math.sin(t/45+i*2)*R*.5*(1+i*.15),s=R*.32*(1-i/9);g.fillRect(x-s,y-s,s*2,s*2)}
+ const S=1.35;g.scale(S,S);g.fillStyle='#f6f2ea';g.strokeStyle='#5a544a';g.lineWidth=.9/S;g.beginPath();g.moveTo(R*2.4,0);g.lineTo(R*.6,-R*.5);g.lineTo(-R*1.6,-R*.38);g.arc(-R*1.85,-R*.38,R*.42,0,7);g.moveTo(-R*1.6,R*.38);g.arc(-R*1.85,R*.38,R*.42,0,7);g.lineTo(-R*1.6,R*.38);g.lineTo(R*.6,R*.5);g.closePath();g.fill();g.stroke();
+ g.strokeStyle=rgba('#8a84a0',.7);g.lineWidth=.8/S;g.beginPath();g.moveTo(R*.2,-R*.3);g.lineTo(-R*.6,R*.1);g.lineTo(-R*1.2,-R*.2);g.stroke()}; // fêlures
 // onde du Shinra Tensei : sphère d'air déformé, sol balayé
 JFXD.ot_wave=(f,k,e,t)=>{const q=P(f.x,f.y,30),s=q.s,R=f.r*(.2+.8*(1-Math.pow(1-e,2.5)));g.save();g.strokeStyle=rgba('#ffffff',.85*k);g.lineWidth=(6*k+1)*s;g.beginPath();g.ellipse(q.x,q.y,R*s,R*s*.75,0,0,7);g.stroke();
  g.strokeStyle=rgba(OTC.b,.6*k);g.lineWidth=3*s;g.beginPath();g.ellipse(q.x,q.y,R*.8*s,R*.6*s,0,0,7);g.stroke();g.strokeStyle=rgba(OTC.b,.5*k);g.lineWidth=2;gEll(f.x,f.y,R);g.stroke();if(f.r2){g.strokeStyle=rgba('#ffffff',.3*k);g.setLineDash([6,6]);gEll(f.x,f.y,f.r2*(R/f.r));g.stroke();g.setLineDash([])}
@@ -15016,9 +15088,12 @@ function drawAura(u,p,S,sk,front){const v=u.auraV,t=performance.now()/1000,cx=p.
 // ---------- Ultime : bandeau d'annonce façon jeux de combat ----------
 let cutin=null;
 function drawCutin(){if(!cutin)return;cutin.t-=1.25/60; // environ 1,1 s à l'écran
-if(cutin.t<=0){cutin=null;return}const k=cutin.t,in_=Math.min(1,(1.4-k)*6),out=Math.min(1,k*4),a=Math.min(in_,out),y=H*.22; // haut de l'écran : l'attaque annoncée au sol reste visible
- g.save();g.globalAlpha=a;g.translate((1-in_)*-300,0);g.fillStyle='rgba(10,6,4,.78)';g.beginPath();g.moveTo(0,y-40);g.lineTo(W,y-62);g.lineTo(W,y+22);g.lineTo(0,y+44);g.fill();
- g.fillStyle=cutin.col;g.fillRect(0,y+38,W,3);g.save();g.translate(W*.5,y);g.rotate(-.018);g.shadowColor=cutin.col;g.shadowBlur=24;text(cutin.s,0,6,46,'#fff4d8');g.restore();text(cutin.who,W*.5,y+30,15,cutin.col,'center');g.restore()}
+if(cutin.t<=0){cutin=null;return}const k=cutin.t,in_=Math.min(1,(1.4-k)*6),out=Math.min(1,k*4),a=Math.min(in_,out);
+ // plaque compacte en haut au centre (pas de bande sur toute la largeur) : le nom du jutsu S sans cacher le combat
+ g.save();g.font='bold 24px "Trebuchet MS",system-ui,sans-serif';const tw=Math.min(W*.6,g.measureText(cutin.s).width),w=tw+64,h=40,x=W*.5-w/2+(1-in_)*-60,y=Math.round(H*.14);
+ g.globalAlpha=a*.9;g.fillStyle='rgba(10,6,4,.6)';g.beginPath();g.moveTo(x+10,y);g.lineTo(x+w,y);g.lineTo(x+w-10,y+h);g.lineTo(x,y+h);g.closePath();g.fill();
+ g.fillStyle=cutin.col;g.fillRect(x+6,y+h-3,w-12,2.5);g.globalAlpha=a;g.save();g.shadowColor=cutin.col;g.shadowBlur=10;text(cutin.s,W*.5+(1-in_)*-60,y+27,24,'#fff4d8');g.restore();
+ text(cutin.who,W*.5+(1-in_)*-60,y-5,12,cutin.col,'center');g.restore()}
 // ---------- Persos de l'anime : kits préfaits (apparence + build fidèles au personnage) ----------
 // n nom court (aussi le nom du bot), full nom complet, g groupe (GALG : groupe affiché sur la ligne d'identité de la fiche), sec section de la liste (sinon d'après le clan ou g, voir rosSec),
 // side camp du bot (0 Alliance, 1 Akatsuki), nat nature, clan (-1 sans), sty style de combat (Clic G), st arbre de style, fam familles de sub, dsh dash, k jutsu appris (noms), bar barre de départ (6 noms), al alias, l apparence {v village,t tenue,c coiffure,h cheveux,p peau,k chakra,a accessoire,f visage,b bandeau,d dos, e yeux,o/s couleurs de tenue,z taille,w carrure,r bras,n cou}, d jeu en une ligne
@@ -15295,7 +15370,7 @@ function hit(t,src,dmg,o={}){
  if(d>0){const real=Math.min(d,Math.max(0,t.hp));stOf(t).tk+=real;if(src&&src!==t&&src.team!==t.team){stOf(src).dmg+=real;(t.dmgBy||(t.dmgBy={}))[src.c+'|'+src.team]=SIMT}}
  t.hp-=d;if(ps==='lifesteal'&&d>0)gain(src,d*.3,src);if(src&&src.lsB>0&&d>0)gain(src,d*.35,src);
  if(src&&o.melee&&!o.thorn){if(t.thorns>0)hit(src,t,dmg*.3,{silent:1,thorn:1});if(t.thornSlow>0)src.slow=Math.max(src.slow,1)}
- if(!o.silent){t.flash=.12;ckHit(t,src,dmg,o);
+ if(!o.silent){t.flash=.12;t.fxHT=SIMT;ckHit(t,src,dmg,o);
   if(near(t.x,t.y)){if(Math.round(d)>0)say(t,'-'+Math.round(d),d<dmg?'#fc6':o.ex?'#ffe81f':'#fff');sparks(t.x,t.y,t.team?'#f66':'#6cf',6);sparks(t.x,t.y,VFX&&VP[VFX]?VP[VFX][0]:'#ffffff',d>18?2:1,'imp');if(t===player||src===player)shake=Math.max(shake,.08);S('hit',t)}}
  const hard=t.unstop<=0,xm=o.ex?1.4:1;
  if(o.stun&&hard){t.stun=Math.max(t.stun,o.stun*xm);say(t,'ÉTOURDI','#b8f')}
@@ -15332,8 +15407,8 @@ function explode(p){const V0=VFX,O0=FXO;FXO=p.owner||O0;VFX=p.vfx||V0;const fi0=
  if(near(p.x,p.y)){sparks(p.x,p.y,p.col,24);shake=Math.max(shake,.2);SFX.boom();detoFx(p.x,p.y,p.ar||80,p.vfx);fxDeto(p.x,p.y,p.ar||80,p.vfx,p.owner)}for(let i=fi0;i<fields.length;i++)fields[i].vfx=fields[i].vfx||VFX;VFX=V0;FXO=O0}
 
 // ---------- Effets ----------
-function say(u,s,col){if(near(u.x,u.y))txt.push({x:u.x+(rnd()-.5)*20,y:u.y,z:95,s,col,t:1})}
-function sparks(x,y,col,n,v){v=v||VFX;if(net.role==='host'&&coop()){if(net.ev.sp.length<200)net.ev.sp.push([Math.round(x),Math.round(y),col,n,v]);}const oi=fxOI();if(v==='imp'){fx.push({x,y,z:34,imp:1,t:.18,m:.18,vx:0,vy:0,col,r:n>1?1.6:1,a:rnd()*7});return}for(let i=0,N=fxN(n,oi);i<N;i++){const a=rnd()*7,s=(v==='smoke'||v==='leaf'?40:80)+rnd()*(v==='smoke'||v==='leaf'?120:260);fx.push({x,y,z:20+rnd()*20,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:v?.7:.5,m:v?.7:.5,col,r:2+rnd()*2,vfx:v,oi})}}
+function say(u,s,col){if(near(u.x,u.y))txt.push({x:u.x+(fxR()-.5)*20,y:u.y,z:95,s,col,t:1})}
+function sparks(x,y,col,n,v){v=v||VFX;if(net.role==='host'&&coop()){if(net.ev.sp.length<200)net.ev.sp.push([Math.round(x),Math.round(y),col,n,v]);}const oi=fxOI();if(v==='imp'){fx.push({x,y,z:34,imp:1,t:.18,m:.18,vx:0,vy:0,col,r:n>1?1.6:1,a:fxR()*7,oi});return}for(let i=0,N=fxN(n,oi);i<N;i++){const a=fxR()*7,s=(v==='smoke'||v==='leaf'?40:80)+fxR()*(v==='smoke'||v==='leaf'?120:260);fx.push({x,y,z:20+fxR()*20,vx:Math.cos(a)*s,vy:Math.sin(a)*s,t:v?.7:.5,m:v?.7:.5,col,r:2+fxR()*2,vfx:v,oi})}}
 function ring(x,y,r,col){if(near(x,y))fx.push({x,y,ring:r,t:.35,m:.35,col,vfx:VFX,oi:fxOI()})}
 
 // ---------- IA générique (lit les indices "ai" de chaque capacité) ----------
@@ -16302,8 +16377,9 @@ function headAcc2D(h,hx,hy,R,ex,back,fl){const a=h.acc,c=v=>fl?'#fff':v;
  if(a==='kabuto'){outlined(()=>{g.arc(hx,hy-1.5,R+1.6,Math.PI,2*Math.PI)},c('#3a3a48'));g.fillStyle=c('#2a2a34');g.fillRect(hx-R-3,hy-2.5,2*R+6,3);if(!back){g.strokeStyle=c('#e8c040');g.lineWidth=1.8;g.beginPath();g.moveTo(ex,hy-10);g.lineTo(ex-6,hy-22);g.moveTo(ex,hy-10);g.lineTo(ex+6,hy-22);g.stroke()}}
  if(a==='paille'){outlined(()=>{g.moveTo(hx-21,hy-5);g.lineTo(hx,hy-27);g.lineTo(hx+21,hy-5);g.quadraticCurveTo(hx,hy-1,hx-21,hy-5)},c('#c8a860'));g.strokeStyle=c('#8a6a3a');g.lineWidth=.7;for(let i=-2;i<=2;i++){g.beginPath();g.moveTo(hx,hy-26);g.lineTo(hx+i*8,hy-4.6);g.stroke()}
   g.fillStyle=c('#f0ece0');for(const x of back?[-14,-7,0,7,14]:[-17,-12,12,17])g.fillRect(hx+x-1,hy-4,2,9);if(!back)for(const s of[-1,1]){g.fillStyle=c('#c02a2a');g.fillRect(hx+s*15-.5,hy-3,1,5);blob(hx+s*15,hy+3,1.8,c('#f0c840'))}}}
-// éclair blanc du coup reçu : court (130 ms au plus par rafale), pour que les coups répétés (broyage, dôme) ne blanchissent pas la cible en continu
-function hitFl(u){if(!(u.flash>0)||u.dead){u._fl0=0;return 0}const n=performance.now();if(!u._fl0||n-(u._flL||0)>90)u._fl0=n;u._flL=n;return n-u._fl0<130?Math.min(1,u.flash/.12):0}
+// éclair blanc du coup reçu : 90 ms au plus, puis 650 ms sans nouvel éclair même si les coups continuent (broyage, dôme, rafales) :
+// la cible n'est jamais blanche plus de ~12 % du temps, elle garde ses couleurs et ses détails pendant un jutsu à coups répétés
+function hitFl(u){if(!(u.flash>0)||u.dead)return 0;const n=performance.now();if(!u._fl0||(n-(u._flL||0)>90&&n-u._fl0>650))u._fl0=n;u._flL=n;return n-u._fl0<90?1:0}
 // dessin d'un ninja : rig 2D (nr_pose.js) → jambes, torse, tête, bras et arme tracés sur les points de la pose (style chibi, contour, ombrage)
 function drawNinja(u,bx,by,s,ghost,al){
  const L=u.ch.look,h=L.head,W=L.weapon,k=W.k||'fist',t=performance.now()/1000;
@@ -16394,7 +16470,7 @@ function drawNinja(u,bx,by,s,ghost,al){
 }
 // mudras : doigts du signe, chakra qui monte à chaque signe ; s'efface quand les mains quittent le signe (préparation propre à l'élément)
 function mudraFx(u,hf,hb,fx,t,c){const md=mudraOf(u);if(!md)return;const [f,b]=[hf,hb],mx=(f[0]+b[0])/2,my=(f[1]+b[1])/2,fs=fx>=0?1:-1,st=md.sg[3],pw=(md.i+md.q)/md.n;
-  const kc=u.cast.dur?Math.min(1,u.cast.t/u.cast.dur):1,f0=1-Math.min(.3,.9/md.n),fd=kc<f0?1:Math.max(0,1-(kc-f0)/(1-f0)*1.6);if(fd<=0)return;g.save();g.globalAlpha*=fd;
+  const kc=u.cast.dur?Math.min(1,u.cast.t/u.cast.dur):1,f0=mdEnd(md),fd=kc<f0?1:Math.max(0,1-(kc-f0)/(1-f0)*1.6);if(fd<=0)return;g.save();g.globalAlpha*=fd;
   // doigts du signe
   g.strokeStyle=OUT;g.lineWidth=2.6;g.lineCap='round';const fing=(x,y,dx,dy)=>{g.strokeStyle=OUT;g.lineWidth=2.6;g.beginPath();g.moveTo(x,y);g.lineTo(x+dx,y+dy);g.stroke();g.strokeStyle=u.ch.look.head.skin;g.lineWidth=1.4;g.stroke()};
   if(st==='up'||st==='tri'){fing(mx,my-2,0,-7);if(st==='tri'){fing(mx-1.5,my-1,-2,-6);fing(mx+1.5,my-1,2,-6)}}
@@ -16402,8 +16478,8 @@ function mudraFx(u,hf,hb,fx,t,c){const md=mudraOf(u);if(!md)return;const [f,b]=[
   else if(st==='down'){fing(mx,my+2,0,6)}else if(st==='cross'){fing(f[0],f[1],-3,-5);fing(b[0],b[1],3,-5)}else if(st==='flat'){fing(f[0],f[1],fs*5,0)}
   blob(f[0],f[1],2.7,u.ch.look.head.skin);blob(b[0],b[1],2.7,u.ch.look.head.skin);
   // chakra qui monte à chaque signe, éclair au changement de signe
-  g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.25+.45*pw);g.beginPath();g.arc(mx,my,4+6*pw+rnd()*1.5,0,7);g.fill();
-  if(md.q<.3){const k2=md.q/.3;g.strokeStyle=rgba('#ffffff',.9*(1-k2));g.lineWidth=1.6;g.beginPath();g.arc(mx,my,5+14*k2,0,7);g.stroke();
+  g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.16+.28*pw);g.beginPath();g.arc(mx,my,3+4*pw+fxR(),0,7);g.fill(); // chakra discret : les mains et le signe restent lisibles
+  if(md.q<.3){const k2=md.q/.3;g.strokeStyle=rgba('#ffffff',.55*(1-k2));g.lineWidth=1.6;g.beginPath();g.arc(mx,my,5+14*k2,0,7);g.stroke();
    for(let q=0;q<6;q++){const b2=q*1.047+md.i;g.beginPath();g.moveTo(mx+Math.cos(b2)*(6+8*k2),my+Math.sin(b2)*(6+8*k2));g.lineTo(mx+Math.cos(b2)*(10+12*k2),my+Math.sin(b2)*(10+12*k2));g.stroke()}}
   g.strokeStyle=rgba(c,.7);g.lineWidth=1.2;g.beginPath();g.arc(mx,my,11+3*pw,t*7,t*7+1.5+3*pw);g.stroke();g.restore()}
 // gestes d'incantation lisibles en 2D : paumes médicales qui luisent, foudre qui crépite dans la main, braise aux lèvres (Katon),
@@ -16459,6 +16535,9 @@ function drawNinjaHead(u,h,fx,fy,back,fl,t,run){const hx=fx*1.5,hy=-53,ex=hx+fx*
   if(L.hood==='chat')for(const s of[-1,1])outlined(()=>{g.moveTo(hx+s*5,hy-14);g.lineTo(hx+s*10,hy-23);g.lineTo(hx+s*12,hy-10)},fl?'#fff':L.hoodC||L.torso)}
  else{
  if(h.style!=='chauve'&&!(HS&&HS.cap===0)){g.beginPath();if(back)g.arc(hx,hy,R+.6,0,7);else g.arc(hx,hy-1,R+.6,Math.PI*1.04,Math.PI*1.96);g.fill()}
+ if(back&&h.style!=='chauve'&&!(HS&&HS.cap===0)){ // vu de dos : mèches dessinées sur le crâne et pointes de la nuque (plus de « crâne lisse »)
+  g.strokeStyle=fl?'#ddd':shade(hc,.7);g.lineWidth=1.3;g.lineCap='round';for(let i=-2;i<=2;i++){g.beginPath();g.moveTo(hx+i*3.6,hy-R*.8);g.quadraticCurveTo(hx+i*5.2,hy-1,hx+i*4,hy+R*.72);g.stroke()}
+  if(h.style!=='lisse'){g.fillStyle=hc;g.beginPath();g.moveTo(hx-R*.85,hy+R*.4);for(let i=0;i<4;i++){const x=hx-R*.85+i*R*.425;g.lineTo(x+R*.21,hy+R*1.08);g.lineTo(x+R*.425,hy+R*.45)}g.closePath();g.fill()}}
  if(h.style==='pics')for(let i=-3;i<=3;i++){const a=-Math.PI/2+i*.38;outlined(()=>{g.moveTo(hx+Math.cos(a-.25)*R*.8,hy+Math.sin(a-.25)*R*.8);g.lineTo(hx+Math.cos(a)*(R+9-Math.abs(i)),hy+Math.sin(a)*(R+9-Math.abs(i))-1);g.lineTo(hx+Math.cos(a+.25)*R*.8,hy+Math.sin(a+.25)*R*.8)},hc)}
  if(h.style==='courts'){g.beginPath();g.arc(hx,hy-3,R+1,Math.PI*1.1,Math.PI*1.9);g.fill()}
  if(h.style==='chignons'){blob(hx-12,hy-10,5.5,hc);blob(hx+12,hy-10,5.5,hc)}
@@ -16533,7 +16612,7 @@ function drawNinjaWeapon(u,L,W,k,hf,hb,fx,fy,back,fl,t,R){const [x,y]=hf,a=R?R.w
    g.fillStyle=act?c:'#d3d8e2';g.beginPath();g.moveTo(1,-3.6);g.lineTo(15,0);g.lineTo(1,3.6);g.fill();g.restore()}}
  // mudras : chakra entre les mains pendant l'incantation
  const md=mudraOf(u);if(md)mudraFx(u,hf,hb,fx,t,c)
- else if(u.cast&&!(R&&CH2D.has(R.A.cs))){g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.45+rnd()*.3);g.beginPath();g.arc(hf[0],hf[1],6+rnd()*3,0,7);g.fill();g.strokeStyle=rgba(c,.85);g.lineWidth=1.2;g.beginPath();g.arc(hf[0],hf[1],11,t*7,t*7+4.5);g.stroke();g.restore()}
+ else if(u.cast&&!(R&&CH2D.has(R.A.cs))){g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.28+fxR()*.18);g.beginPath();g.arc(hf[0],hf[1],4+fxR()*2,0,7);g.fill();g.strokeStyle=rgba(c,.85);g.lineWidth=1.2;g.beginPath();g.arc(hf[0],hf[1],11,t*7,t*7+4.5);g.stroke();g.restore()}
 }
 // chien ninja (Inuzuka) : suit son maître et bondit quand il attaque
 function drawDog(u){if(u.dead||!u.ch.look.dog)return;const t=performance.now()/1000,a=u.aim,atk=u.swing>0,d=atk?30:-22,ox=u.x+Math.cos(a+(atk?0:1.9))*Math.abs(d)*(atk?1:1),oy=u.y+Math.sin(a+(atk?0:1.9))*Math.abs(d)+6,p=P(ox,oy),s=p.s*1.25,f=Math.cos(a)>=0?1:-1,run=u.moving?Math.sin(t*16):0;
@@ -16668,8 +16747,10 @@ const CSP={
  chakra:(P,k,b,s,t)=>{legsW(P,s);const o=.3*k; // deux mains qui rassemblent le chakra puis s'écartent
   pzl(P,'armL',-1.2,0,-.3+o,b);pzl(P,'foreL',-1.2,0,0,b);pzl(P,'armR',-1.2,0,.3-o,b);pzl(P,'foreR',-1.2,0,0,b);pzl(P,'chest',.1,0,0,s)},
 };
+// fin des mudras : au plus tard à 62 % de l'incantation, pour que la préparation propre à l'élément (bras levés du Doton, souffle du Katon…) se voie vraiment
+const mdEnd=md=>Math.min(1-Math.min(.3,.9/md.n),.62);
 function castPose(u,P,t,A){const c=u.cast,ab=castAb(u,c),k=c01(c.t/(c.dur||1)),st=A.cs||anStyle(ab),S=ab&&ab.rank==='S'?1:0,md=typeof mudraOf==='function'?mudraOf(u):null,s=ezo(c01(k/.22));
- let b;if(md){mudraPose(P,md,t);b=smt(1-Math.min(.3,.9/md.n),1,k);legsW(P,s,.8)}else{b=ezo(c01(k/.35));pz(P,'armL',-.5,0,.2);pz(P,'armR',-.5,0,-.2)}
+ let b;if(md){mudraPose(P,md,t);b=smt(mdEnd(md),1,k);legsW(P,s,.8)}else{b=ezo(c01(k/.35));pz(P,'armL',-.5,0,.2);pz(P,'armR',-.5,0,-.2)}
  (CSP[st]||CSP.chakra)(P,k,b,s,t,u);
  if(S){const f=smt(.5,1,k);P.root.y-=2.5*s;P.root.x+=Math.sin(t*53)*.35*f;padd(P,'head',-.15*f);padd(P,'chest',-.1*f)}} // rang S : posture plus basse et frémissement qui monte
 // ---- libération du jutsu (0,3 s après le lancer) quand le kit n'a pas sa propre animation
@@ -16700,7 +16781,7 @@ function basePose(u,t,rec,P,A){A=A||rec.A||{ph:0};const mv=u.moving&&!u.dead,air
  if(run){const back=fw<-.35,nin=run>1&&fw>.3,spr=nin&&u.sprint,w=back?-(u.walk||0):(u.walk||0),a=nin?(spr?1.22:1.08):back?.6:.8,s=Math.sin(w),c=Math.cos(w);
   pz(P,'thighL',-s*a,0,0);pz(P,'thighR',s*a,0,0);pz(P,'shinL',.25+Math.max(0,Math.sin(w-1.1))*(nin?1.45:1.25));pz(P,'shinR',.25+Math.max(0,Math.sin(w+Math.PI-1.1))*(nin?1.45:1.25));
   pz(P,'footL',-.2*s);pz(P,'footR',.2*s);P.root.y=Math.abs(c)*(nin?1.3:1.6)-(nin?2:.6);pz(P,'hips',0,s*.16);
-  if(nin){const L=spr?.74:.56;pz(P,'chest',L,-s*.1);pz(P,'spine',.2);pz(P,'head',-L*.8);pz(P,'armL',1.18+.08*s,0,.24);pz(P,'armR',1.18-.08*s,0,-.24);pz(P,'foreL',-.08);pz(P,'foreR',-.08);pz(P,'handL',.4);pz(P,'handR',.4);pz(P,'cape',-1.15);pz(P,'cape2',-.4)} // course ninja : buste couché, bras tendus en arrière
+  if(nin){const L=spr?.74:.56;pz(P,'chest',L,-s*.1);pz(P,'spine',.2);pz(P,'head',-L*.8);pz(P,'armL',.62+.06*s,0,.5);pz(P,'armR',.62-.06*s,0,-.5);pz(P,'foreL',-.05);pz(P,'foreR',-.05);pz(P,'handL',.5);pz(P,'handR',.5);pz(P,'cape',-1.15);pz(P,'cape2',-.4)} // course ninja : buste couché, bras tendus en arrière
   else if(back){pz(P,'chest',-.12,-s*.08);pz(P,'head',.08);pz(P,'armL',-.7+s*.25,0,.15);pz(P,'armR',-.7-s*.25,0,-.15);pz(P,'foreL',-1.5);pz(P,'foreR',-1.5);pz(P,'cape',-.15)} // recule en gardant la garde
   else{pz(P,'chest',.16+(run>1?.12:0),-s*.14);pz(P,'armL',s*.68,0,.12);pz(P,'armR',-s*.68,0,-.12);pz(P,'foreL',-.75-.3*Math.max(0,-s));pz(P,'foreR',-.75-.3*Math.max(0,s));pz(P,'cape',-.35-Math.abs(s)*.1);pz(P,'cape2',-.2)}
   if(!nin&&Math.abs(sd)>.45){const q=sd*(Math.abs(sd)-.45)/.55;P.rootR.z-=.14*q;padd(P,'thighL',0,0,.22*q*s);padd(P,'thighR',0,0,.22*q*s);padd(P,'chest',0,0,.1*q);padd(P,'head',0,0,-.1*q)} // pas chassés
@@ -16832,7 +16913,7 @@ function deathPose(u,P,t,A){const d=u.deadT||0,sg=A.dS||1,b=c01(d/.16),f=c01((d-
  pz(P,'head',-.45*sg*b*(1-f)+(-.2*sg)*f);pz(P,'chest',-.3*sg*b);pz(P,'shinL',.9*b*(1-f)+.4*f);pz(P,'shinR',.8*b*(1-f)+.1*f);pz(P,'thighL',-.3*f);
  pz(P,'armL',-.9*b*(1-f)-.4*f,0,.6*b+.6*f);pz(P,'armR',-.8*b*(1-f)-.5*f,0,-.6*b-.5*f);pz(P,'foreL',-.3*f);pz(P,'cape',-.6*f)}
 // ---- état d'animation propre à chaque ninja (détecte les événements à partir des champs synchronisés)
-function anNew(){return{ph:Math.random()*6.28,fl:0,hp:-1,hT:9,hK:0,hZ:1,hX:0,hs:0,vic:0,sq:0,kd:0,kT:0,kS:1,kX:0,lT:9,air:false,cs:null,csT:9,rl:0,rs:null,dd:0,dS:1,dX:0}}
+function anNew(){return{ph:fxR()*6.28,fl:0,hp:-1,hT:9,hK:0,hZ:1,hX:0,hs:0,vic:0,sq:0,kd:0,kT:0,kS:1,kX:0,lT:9,air:false,cs:null,csT:9,rl:0,rs:null,dd:0,dS:1,dX:0}}
 function anEvents(u,A,dt){const fl=u.flash||0,hp=u.hp||0,mx=u.max||300;
  if(fl>A.fl+.03&&!u.dead&&A.hp>=0){const d=Math.max(0,A.hp-hp);A.hK=Math.min(1,.42+d/(mx*.11));A.hT=0;
   // d'où vient le coup : élan de recul (hôte) sinon l'ennemi le plus proche
@@ -16843,7 +16924,7 @@ function anEvents(u,A,dt){const fl=u.flash||0,hp=u.hp||0,mx=u.max||300;
  if(u.fxHS>0&&A.hs<=0){A.hs=Math.min(.08,u.fxHS);A.vic=A.hT<.05?1:0}
  A.fl=fl;A.hp=hp;A.hT+=dt;
  if(u.airT>0&&!A.kd&&!u.dead){A.kd=1;A.kT=0;A.kS=A.hT<.4&&A.hZ<-.2?-1:1;A.kX=A.hT<.4?A.hX:0}
- if(A.kd){A.kT+=dt;if(u.dead)A.kd=0;else if(A.kd===1&&!(u.airT>0)){A.kd=2;A.kT=0;A.lT=9}else if(A.kd===2&&((!(u.stun>0)&&A.kT>.22)||A.kT>1.4||u.moving&&A.kT>.15)){A.kd=3;A.kT=0}else if(A.kd===3&&A.kT>.45)A.kd=0}
+ if(A.kd){A.kT+=dt;if(u.dead)A.kd=0;else if(A.kd===1&&!(u.airT>0)){A.kd=2;A.kT=0;A.lT=9}else if(A.kd===2&&((!(u.stun>0)&&A.kT>.22)||A.kT>1.4||u.moving&&!(u.stun>0)&&!(Math.hypot(u.kx||0,u.ky||0)>40)&&A.kT>.15)){A.kd=3;A.kT=0}else if(A.kd===3&&A.kT>.45)A.kd=0}
  const inAir=(u.z||0)>5||u.airT>0||!!(u.dash&&u.dash.jump);if(A.air&&!inAir&&!u.dead&&!A.kd)A.lT=0;A.air=inAir;A.lT+=dt;
  if(u.cast){A.cs=anStyle(castAb(u,u.cast));A.csT=0}else A.csT+=dt;
  // jutsu instantané (sans incantation) : repéré par sa recharge qui repart (hôte, et le joueur chez un invité) → libération propre à sa catégorie
@@ -16926,7 +17007,7 @@ const RT9=new Float64Array(9),LEGS2=[[BI.thighL,BI.shinL,BI.footL,-1],[BI.thighR
 function rigOf(u){return u._rg||(u._rg={P:poseNew(),C:poseNew(),A:anNew(),rP:{x:0,y:0,z:0},rR:{x:0,y:0,z:0},last:0,M:new Float64Array(NBONE*9),J:new Float64Array(NBONE*3),S:new Float64Array(NBONE*2),
  off:null,offL:null,flip:false,fs:1,ax:1,ay:0,hL:[0,0],hR:[0,0],hc:[0,0],wa:0,wd:0,zL:0,zR:0})}
 // pose de l'image (une seule mise à jour par image, même si le ninja est dessiné plusieurs fois : images rémanentes, teinte, cartes)
-function rigUpd(u,R,t){const now=performance.now();let dt=(now-R.last)/1000;if(R.last&&dt<.003)return R;const first=!R.last;R.last=now;dt=Math.min(.05,Math.max(0,dt))||1/60;
+function rigUpd(u,R,t){const sim=typeof SIMT!=='undefined'&&state==='fight'&&!isGuest(),now=sim?SIMT*1000:performance.now();if(sim!==R.sim){R.sim=sim;R.last=0}let dt=(now-R.last)/1000;if(R.last&&dt>=0&&dt<.003)return R;const first=!R.last;R.last=now;dt=Math.min(.05,Math.max(0,dt));if(!sim)dt=dt||1/60; // en combat (hôte, hors ligne) : temps du JEU (pause, arrêt sur coup, ralenti suivis) ; invité et menus : temps réel
  const A=R.A,P=poseClr(R.P);try{anEvents(u,A,dt);if(u.dead)deathPose(u,P,t,A);else{basePose(u,t,R,P,A);actionPose(u,t,R,P,A);if(A.kd)downPose(u,P,t,A)}}catch(e){}
  // arrêt sur image : les os ne bougent plus pendant ~75 ms ; juste après un coup, le buste répond plus sec
  let pdt=dt,bo=1;if(A.hs>0){A.hs-=dt;pdt=0}else if(A.hT<.12)bo=2.3;
@@ -17046,7 +17127,7 @@ const DARKV={shadow:1,bugs:1,black:1};
 const vcol=(v,col,i=0)=>v&&VP[v]?VP[v][i%VP[v].length]:col;
 // particules
 function drawPart(f,p){if(f.fk){if(!f.gd&&FXK[f.fk])FXK[f.fk](f,f.t/f.m,1-f.t/f.m);return} // effets analytiques (nr_fx.js)
- {const kk=fxK(f);if(kk<.8&&(f.sd??(f.sd=Math.random()))>kk/.8)return;const am=fxA(f);if(am<1)g.globalAlpha*=am} // intensité, foule, camp
+ {const kk=fxK(f);if(kk<.8&&(f.sd??(f.sd=fxR()))>kk/.8)return;const am=fxA(f);if(am<1)g.globalAlpha*=am} // intensité, foule, camp
  const v=f.vfx,k=f.t/f.m,s=p.s;
  if(f.imp){const e=1-k,R=(10+18*e)*s*(f.r||1);g.save();g.globalCompositeOperation='lighter';g.translate(p.x,p.y);g.rotate(f.a||0);g.fillStyle=rgba(f.col,.9*k);g.beginPath();for(let i=0;i<8;i++){const b=i*Math.PI/4,L=i%2?R*.45:R*(i%4?1:1.5);g.lineTo(Math.cos(b)*L,Math.sin(b)*L*.75)}g.closePath();g.fill();circ(0,0,R*.35*k,'#fff');g.restore();return}
  if(!v||!VP[v]&&v!=='chakra'){g.fillStyle=f.col;g.beginPath();g.arc(p.x,p.y,f.r*s,0,7);g.fill();return}
@@ -17185,7 +17266,7 @@ function drawJfx0(f){const k=f.t/f.m,e=1-k,t=performance.now()/1000,u=UI(f),tg=T
   case'slugs':{if(!u)break;for(let i=0;i<4;i++){const a=i*1.57+t*.6,q=P(u.x+Math.cos(a)*50,u.y+Math.sin(a)*40,6);g.fillStyle='#e8eef8';g.beginPath();g.ellipse(q.x,q.y,11*q.s,6*q.s,a,0,7);g.fill();g.fillStyle='#4a6aa8';g.fillRect(q.x-6*q.s,q.y-2*q.s,12*q.s,2*q.s)}break}
   case'flashsky':{const q=P(f.x,f.y,0),top=P(f.x,f.y,520); // Kirin : lueur d'orage LOCALE (colonne de ciel + lumière au sol), plus de flash plein écran
    fxGlowS(q.x,q.y,200*q.s,'#cfe8ff',.3*k,200*q.s*K,0);const hh=q.y-top.y;g.globalCompositeOperation='lighter';g.globalAlpha=.26*k;g.drawImage(fxSpr('#cfe8ff',0),q.x-55*q.s,top.y,110*q.s,hh*2);break}
-  case'spikes':{const q0=P(f.x,f.y,0),n=f.bone?10:7;for(let i=0;i<n;i++){const a=i*2.4,d=(i%3)*f.r*.28,q=P(f.x+Math.cos(a)*d,f.y+Math.sin(a)*d*.8,0),h=(f.bone?46:38)*q.s*Math.min(1,e*4)*k*1.4;
+  case'spikes':{g.globalAlpha*=fxOcc(f.x,f.y,f.r,60);const q0=P(f.x,f.y,0),n=f.bone?10:7;for(let i=0;i<n;i++){const a=i*2.4,d=(i%3)*f.r*.28,q=P(f.x+Math.cos(a)*d,f.y+Math.sin(a)*d*.8,0),h=(f.bone?46:38)*q.s*Math.min(1,e*4)*k*1.4;
     g.fillStyle=f.bone?'#f2efe6':'#8a6a48';g.strokeStyle=f.bone?'#b8b0a0':'#4a3424';g.lineWidth=1.2;g.beginPath();g.moveTo(q.x-6*q.s,q.y);g.lineTo(q.x+(i%2?2:-2)*q.s,q.y-h);g.lineTo(q.x+6*q.s,q.y);g.closePath();g.fill();g.stroke()}break}
   case'pillar':{const q=P(f.x,f.y,0),h=140*q.s*Math.min(1,e*4),w=f.r*.6*q.s*k;g.globalCompositeOperation=f.v==='black'?'source-over':'lighter';const gr=g.createLinearGradient(0,q.y-h,0,q.y);
    if(f.v==='black'){gr.addColorStop(0,'rgba(20,10,24,0)');gr.addColorStop(1,'rgba(20,10,24,.9)')}else{gr.addColorStop(0,'rgba(255,120,40,0)');gr.addColorStop(.5,rgba('#ff8a2a',.6*k));gr.addColorStop(1,rgba('#fff3c0',.9*k))}g.fillStyle=gr;g.beginPath();g.ellipse(q.x,q.y-h/2,w,h/2,0,0,7);g.fill();break}
@@ -17202,13 +17283,13 @@ function drawStatusN(u,p,S,sk){const t=performance.now()/1000;
  if(u.root>0&&u.rootV){const v=u.rootV,R=20*S;if(v==='shadow'){g.fillStyle='rgba(8,8,12,.8)';g.beginPath();g.ellipse(p.x,p.y,R*1.3,R*.55,0,0,7);g.fill()}else if(v==='sand'||v==='sandcoffin'){g.fillStyle='#c8a060';g.beginPath();g.ellipse(p.x,p.y-6*S,R,R*.6,0,0,7);g.fill()}else if(v==='water'){g.strokeStyle='rgba(191,230,255,.8)';g.lineWidth=2;g.beginPath();g.ellipse(p.x,p.y,R*1.2,R*.5,0,0,7);g.stroke()}}}
 
 function drawProj(p){const v=p.vfx;if(!v)return drawProjOld(p);
- if(!p.grenade&&!NOTRAIL[v]&&rnd()<(p.big||p.r>10?.9:.45)*fxK(p)/.8)fx.push({oi:fxOI(p.owner),x:p.x-p.vx*.015,y:p.y-p.vy*.015,z:28+(rnd()-.5)*6,vx:-p.vx*.1+(rnd()-.5)*40,vy:-p.vy*.1+(rnd()-.5)*40,t:.3,m:.3,col:p.col,r:(p.big||p.r>10?3.6:2.2)*(.7+rnd()*.6),vfx:v});
+ if(!p.grenade&&!NOTRAIL[v]&&fxR()<(p.big||p.r>10?.9:.45)*fxK(p)/.8)fx.push({oi:fxOI(p.owner),x:p.x-p.vx*.015,y:p.y-p.vy*.015,z:28+(fxR()-.5)*6,vx:-p.vx*.1+(fxR()-.5)*40,vy:-p.vy*.1+(fxR()-.5)*40,t:.3,m:.3,col:p.col,r:(p.big||p.r>10?3.6:2.2)*(.7+fxR()*.6),vfx:v}); // hasard visuel (fxR) : le nombre de traînées dépend des réglages
  if(v==='shadow'&&p.owner&&!p.owner.dead){const a=P(p.owner.x,p.owner.y,0),b=P(p.x,p.y,0);g.strokeStyle='rgba(8,8,12,.75)';g.lineWidth=7*b.s;g.lineCap='round';g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()}
  if(p.hook&&p.ox!=null){const a=P(p.ox,p.oy,30),b=P(p.x,p.y,28);g.strokeStyle=v==='shadow'?'#141418':v==='chain'?'#e8c860':'#888';g.lineWidth=v==='shadow'?5:2.5;if(v==='chain')g.setLineDash([6,3]);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.setLineDash([])}
  const z=p.grenade?Math.sin(Math.PI*(1-p.life/p.life0))*70+15:28,q=P(p.x,p.y,z),t=performance.now();
  g.fillStyle='rgba(0,0,0,.35)';gEll(p.x,p.y,p.r*.9);g.fill();
  if(p.tail!==0&&!p.grenade&&(p.tail||FXTAIL[v])&&!(p.kind&&FXNOTAIL[p.kind])){const sp=Math.hypot(p.vx,p.vy);if(sp>60){const L=Math.min(110,sp*.075)*(p.big?1.5:1),R0=p.r*(p.big?1.6:1);fxTrailW(p.x,p.y,z,p.vx,p.vy,L,R0*2.4,vcol(v==='chakra'?null:v,p.col),.5*fxA(p))}}
- g.save();g.translate(q.x,q.y);g.scale(q.s,q.s);const ra=Math.atan2(p.vy*K,p.vx),R=p.r*(p.big?1.6:1),c=vcol(v,p.col),ex=p.ex;if(p.kind&&PROJD[p.kind]){PROJD[p.kind](p,R,ra,t);g.restore();return}
+ g.save();g.translate(q.x,q.y);g.scale(q.s,q.s);const ra=Math.atan2(p.vy*K,p.vx),R=p.r*(p.big?1.6:1),c=vcol(v,p.col),ex=p.ex;if(p.kind&&PROJD[p.kind]){if(p.vfx==='do_prop')g.globalAlpha*=fxOcc(p.x,p.y,(p.r||8)*2,75);PROJD[p.kind](p,R,ra,t);g.restore();return}
  switch(v){
   case'kunai':g.rotate(ra);g.fillStyle='#3a3a44';g.fillRect(-14,-1.5,8,3);g.strokeStyle='#3a3a44';g.lineWidth=1.2;g.beginPath();g.arc(-16,0,2.4,0,7);g.stroke();g.fillStyle=ex?'#ffe81f':'#d8dde6';g.beginPath();g.moveTo(-6,-4);g.lineTo(10,0);g.lineTo(-6,4);g.fill();break;
   case'shuriken':{g.rotate(t/40);const L=p.saber||p.big?22:9;g.fillStyle=ex?'#ffe81f':'#b8bcc6';g.beginPath();for(let i=0;i<4;i++){const a=i*Math.PI/2;g.lineTo(Math.cos(a)*L,Math.sin(a)*L);g.lineTo(Math.cos(a+.785)*L*.3,Math.sin(a+.785)*L*.3)}g.closePath();g.fill();circ(0,0,L*.18,'#3a3a44');break}
@@ -17248,7 +17329,8 @@ function drawFieldN(f,t){const v=f.vfx;if(!v||f.pet||f.spinner||f.dome)return fa
    default:g.fillStyle=vcol(v,f.col,i);g.fillRect(q.x,q.y,2.5*q.s,2.5*q.s)}}
  return true}
 
-function drawWallN(w){const p=P(w.x,w.y),rx=w.r*p.s,h=60*p.s,t=performance.now()/1000;
+function drawWallN(w){const oc=fxOcc(w.x,w.y,w.r,80);if(oc>=1)return drawWallN0(w);g.save();g.globalAlpha*=oc;try{return drawWallN0(w)}finally{g.restore()}} // un ninja derrière le mur reste visible
+function drawWallN0(w){const p=P(w.x,w.y),rx=w.r*p.s,h=60*p.s,t=performance.now()/1000;
  if(w.vfx&&WALLD[w.vfx]){WALLD[w.vfx](w,p,rx,h,t);return true}
  if(w.vfx==='fire'||w.burn){g.save();g.globalCompositeOperation='lighter';for(let i=0;i<4;i++){const x=p.x+(i-1.5)*rx*.6,hh=h*(.6+Math.sin(t*9+i+w.x)*.25);const gr=g.createLinearGradient(0,p.y-hh,0,p.y);gr.addColorStop(0,'rgba(255,120,40,0)');gr.addColorStop(.6,'rgba(255,140,40,.7)');gr.addColorStop(1,'rgba(255,240,180,.9)');g.fillStyle=gr;g.beginPath();g.moveTo(x-rx*.45,p.y);g.quadraticCurveTo(x,p.y-hh*1.4,x+rx*.45,p.y);g.fill()}g.restore();return true}
  if(w.vfx==='wind'||w.wind){g.save();g.strokeStyle='rgba(220,255,245,.65)';g.lineWidth=2;for(let i=0;i<4;i++){const y=p.y-h*(i/4)-((t*60+i*11)%15)*p.s;g.beginPath();g.ellipse(p.x,y,rx*1.1,4*p.s,0,t*6+i,t*6+i+4);g.stroke()}g.fillStyle='rgba(200,255,240,.12)';g.fillRect(p.x-rx,p.y-h,rx*2,h);g.restore();return true}
@@ -17322,7 +17404,7 @@ function drawLights(){
  g.save();g.globalCompositeOperation='lighter';
  for(const u of units){if(u.dead||!near(u.x,u.y))continue;const w=u.ch.look.weapon;if(w.t==='saber'&&u.saberOut<=0)glow(u.x+Math.cos(u.aim)*20,u.y+Math.sin(u.aim)*20,85,w.col,.22);if(w.two)glow(u.x,u.y,60,w.two,.15);if(u.haste>0)glow(u.x,u.y,60,u.rage>0?'#f33':'#fc6',.2);if(u.flame)glow(u.x+Math.cos(u.aim)*90,u.y+Math.sin(u.aim)*90,120,'#f93',.3)}
  for(const p of projs)if(near(p.x,p.y)&&!DARKV[p.vfx])glow(p.x,p.y,p.rocket?90:45,p.vfx&&p.vfx!=='chakra'?vcol(p.vfx,p.col):p.col,.3);
- for(const f of fx)if(f.light){const a=(f.a??.45)*f.t/f.m*fxA(f)*(f.oi!=null?Math.min(1,fxK(f)/.8):1);if(a>.03)glow(f.x,f.y,f.r,f.col,a)}
+ {const lo=(OPT.fxi??1)===0,cr=FXF.alive>10;let nL=0;for(const f of fx)if(f.light){const r=fxRel(f);if(lo&&r!==0&&(cr||r===2))continue;if(cr&&r!==0&&++nL>(lo?0:24))continue;const a=(f.a??.45)*f.t/f.m*fxA(f)*(f.oi!=null?Math.min(1,fxK(f)/.8):1);if(a>.03)glow(f.x,f.y,lo?f.r*.75:f.r,f.col,a)}}
  if(orb)glow(orb.x,orb.y,90,'#6f9',.25);
  g.restore();
 }
@@ -18429,7 +18511,7 @@ function draw(){
  g.restore();g.globalAlpha=1;
  for(const f of fx){if(f.ring||f.swing||f.bolt||f.light||f.beam||f.jfx)continue;const p=P(f.x,f.y,f.z??20);if(p.x<-100||p.x>W+100||p.y<-100||p.y>H+100)continue; // hors écran (et rayon négatif loin au nord)
  g.globalAlpha=f.t/f.m;drawPart(f,p)}g.globalAlpha=1;
- txtLay();for(const t of txt){const p=P(t.x,t.y,t.z);g.globalAlpha=Math.min(1,t.t*2);const big=t.s[0]==='-'&&+t.s.slice(1)>=20,fs=Math.round((big?19:15)*(1+Math.max(0,t.t-.86)*4.5));g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)';g.font=`bold ${fs}px "Trebuchet MS",system-ui,sans-serif`;g.textAlign='center';g.strokeText(t.s,p.x,p.y);text(t.s,p.x,p.y,fs,t.col)}g.globalAlpha=1;
+ txtLay();for(const t of txtVis()){const p=P(t.x,t.y,t.z),S=t._v||t.s;g.globalAlpha=Math.min(1,t.t*2)*(t._f<1?.6:1);const big=S[0]==='-'&&+S.slice(1)>=20,fs=Math.round((big?19:15)*(t._f||1)*(1+Math.max(0,t.t-.86)*4.5));g.lineWidth=3;g.strokeStyle='rgba(0,0,0,.6)';g.font=`bold ${fs}px "Trebuchet MS",system-ui,sans-serif`;g.textAlign='center';g.strokeText(S,p.x,p.y);text(S,p.x,p.y,fs,t.col)}g.globalAlpha=1;
  g.restore();
  const vg=g.createRadialGradient(W/2,H/2,H*.45,W/2,H/2,H*.95);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(0,0,0,.55)');g.fillStyle=vg;g.fillRect(0,0,W,H);
  drawAmbient();drawHud();drawCutin();
@@ -18509,7 +18591,7 @@ const PK=['vfx','jn','dragon','shuri','kind','x','y','vx','vy','r','col','saber'
 function pickK(o,ks){const r={};for(const k of ks){const v=o[k];r[k]=Array.isArray(v)?v.map(rd):v===undefined?null:rd(v)}return r}
 function snapU(u){const a=UK.map(k=>u[k]===undefined?null:rd(u[k]));const fi=UK.indexOf('flash');if(a[fi]<0)a[fi]=0; // flash négatif = pas d'éclair (toujours testé >0) : 0 évite une différence à chaque envoi
  a.push(u.cast?{i:u.cast.i,t:rd(u.cast.t),dur:u.cast.dur,td:rd(u.cast.td),aimOv:u.cast.aimOv??null,ex:u.cast.ex,j:u.cast.ab&&u.cast.ab.jid!=null?u.cast.ab.jid:null}:null,u.spin?{r:u.spin.r}:null,!!u.flame,!!u.dash);return a}
-function netCapture(fx0,tx0){if(net.role!=='host'||!coop())return;for(let i=fx0;i<fx.length&&net.ev.fx.length<150;i++){if(fx[i].vx!==undefined)continue;const f=Object.assign({},fx[i]);if(f.u)f.u=units.indexOf(f.u);for(const k in f)f[k]=rd(f[k]);net.ev.fx.push(f)}for(let i=tx0;i<txt.length;i++)net.ev.txt.push(Object.assign({},txt[i]))}
+function netCapture(fx0,tx0){if(net.role!=='host'||!coop())return;for(let i=fx0;i<fx.length&&net.ev.fx.length<220;i++){if(fx[i].vx!==undefined)continue;{const q=fx[i],tl=q.tele||q.danger||(q.jfx&&(FXTELE.has(q.jfx)||FXTELER.test(q.jfx)));if(!tl&&(net.ev.fx.length>=150||(net.ev.fx.length>=90&&(q.light||FXSMALL[q.fk]))))continue}const f=Object.assign({},fx[i]);if(f.u)f.u=units.indexOf(f.u);for(const k in f)f[k]=rd(f[k]);net.ev.fx.push(f)}for(let i=tx0;i<txt.length;i++)net.ev.txt.push(Object.assign({},txt[i]))}
 function makeSnap(){if(state==='menu')return{t:'snap',st:'menu',mode,cfg:CFG};
  net.stc=(net.stc||0)+1;const SS=net.stc%10===0||state!=='fight'?Object.values(STATS).map(x=>[x.c,x.team,x.k,x.d,x.a,Math.round(x.dmg),Math.round(x.tk),Math.round(x.heal),Math.round(x.sh||0)]):undefined;
  return{t:'snap',SS,st:state,stT:rd(stateT),mode,cfg:CFG,score,round,timer:rd(timer),tickets,kf:killfeed,banner,orb,pk:pickups.map(p=>({x:p.x,y:p.y,t:rd(p.t)})),win:winner,

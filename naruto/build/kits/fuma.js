@@ -38,7 +38,7 @@ const fmS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son « brut »
 const fmSay=(u,s,col,z)=>{if(near(u.x,u.y))txt.push({x:u.x,y:u.y,z:z||122,s,col,t:1})};
 const fm_h=i=>{const v=Math.sin(i*127.1+311.7)*43758.5453;return v-Math.floor(v)}; // hasard figé (dessins)
 // ---- VFX (boîte à outils nr_fx.js) : étincelles d'acier, fumée d'ombre, éclats rouges (décor atténué selon l'intensité / le camp)
-function fmSpark(u,e,a,s){if(!e||!near(e.x,e.y))return;fxFlare(e.x,e.y,'#ffffff',{u,z:32,r:14*s,t:.14,rot:a});fxBurst(e.x,e.y,'#e8ecf4',{u,n:6*s,sp:260*s,a,arc:1.5,c2:'#ffffff',w:1.4,len:.15,z:30,gr:80})}
+function fmSpark(u,e,a,s){if(!e||!near(e.x,e.y))return;fxFlare(e.x,e.y,'#ffffff',{u,z:32,r:18*s,t:.16,rot:a,c2:FM_RED});fxBurst(e.x,e.y,'#e8ecf4',{u,n:9*s,sp:300*s,a,arc:1.6,c2:'#ffffff',w:1.6,len:.18,z:30,gr:80});fxRing(e.x,e.y,{u,r0:4,r1:26*s,col:FM_RED,c2:'#ffffff',w:3,t:.24})}
 function fmShadow(u,x,y,s){fxSmoke(x,y,{u,col:'#1c1822',n:5*s,r:18*s,s:12*s,al:.3,rise:34,z:16,t:.7});fxBurst(x,y,'#8a5ac8',{u,n:6*s,sp:90*s,sh:'petal',w:2,gr:-60,up:40,z:30,add:0,c2:'#3a2a4a'})}
 // marque de l'assassin (objet aux qui suit la cible : synchronisé chez les invités)
 function fmMarkOf(e,u){for(const x of aux)if(x.type==='fm_mark'&&x.t>0&&x.tg===e&&x.owner===u)return x;return null}
@@ -146,14 +146,14 @@ function fmFuma(L,t,al){g.save();g.globalAlpha*=al==null?1:al;g.fillStyle=rgba('
  g.fillStyle='#8a1a2a';g.strokeStyle='#22232c';g.lineWidth=Math.max(1,L*.06);g.beginPath();g.arc(0,0,L*.26,0,7);g.fill();g.stroke();g.fillStyle='#22232c';g.beginPath();g.arc(0,0,L*.1,0,7);g.fill();g.restore()}
 PROJD.fm_shu=(p,R,ra,t)=>{g.save();g.rotate(ra);g.strokeStyle=rgba(FM_RED,.55);g.lineWidth=1.6;g.lineCap='round';g.beginPath();g.moveTo(-R*1.2,0);g.quadraticCurveTo(-R*2.6,Math.sin(t/50)*R*.8,-R*4,0);g.stroke();g.restore();
  g.scale(1,.62);g.rotate(t/34);fmStar(R*1.6,FM_STEEL,'#23232c',FM_RED)};
-PROJD.fm_trace=(p,R,ra,t)=>{g.save();g.rotate(ra);g.globalCompositeOperation='lighter';g.strokeStyle=rgba(FM_RED,.7);g.lineWidth=2.4;g.lineCap='round';g.beginPath();g.moveTo(-R,0);g.lineTo(-R*7,0);g.stroke();g.strokeStyle='rgba(255,255,255,.6)';g.lineWidth=1;g.stroke();g.restore();
- g.scale(1,.62);g.rotate(t/26);fmStar(R*1.5,'#f2f4f8',FM_RED,FM_RED)};
+PROJD.fm_trace=(p,R,ra,t)=>{const A0=p&&p.owner?fxA(p):1;g.save();g.rotate(ra);fxTailL(R*12,R*2.2,FM_RED,.6*A0);g.globalCompositeOperation='lighter';g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=1.2;g.lineCap='round';g.beginPath();g.moveTo(-R,0);g.lineTo(-R*8,0);g.stroke();g.restore();
+ fxGlowS(0,0,R*2.6,FM_RED,.5*A0);g.scale(1,.62);g.rotate(t/22);fmStar(R*1.8,'#f2f4f8',FM_RED,FM_RED)}; // traceur : étoile plus grande, longue traînée rouge (on suit le tir d'un bout à l'autre)
 PROJD.fm_big=(p,R,ra,t)=>{fxGlowS(0,0,R*2.4,'#cfd3dd',.25,R*1.5);g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#e8ecf4',.35);g.lineWidth=R*.5;g.lineCap='round';g.scale(1,.6);for(let i=0;i<2;i++){const b=t/40+i*Math.PI;g.beginPath();g.arc(0,0,R*1.7,b,b+1.1);g.stroke()}g.restore();g.scale(1,.6);fmFuma(R*1.9,t/40)};
 // Kage shuriken caché : à peine une ombre (il voyage juste derrière le 1er)
 PROJD.fm_kage=(p,R,ra,t)=>{g.save();g.globalAlpha=.22;g.scale(1,.62);g.rotate(t/34);fmStar(R*1.5,'#14121a','#14121a','#14121a');g.restore()};
 // l'ombre surgit : shuriken noir et violet, volutes d'ombre
-PROJD.fm_kage2=(p,R,ra,t)=>{g.save();g.rotate(ra);for(let i=0;i<3;i++){const y=(i-1)*R*.7;g.strokeStyle=rgba(i===1?'#8a5ac8':FM_SHD,.6);g.lineWidth=2;g.beginPath();g.moveTo(-R,y);g.quadraticCurveTo(-R*2.5,y+Math.sin(t/60+i)*R,-R*4.2,y*.4);g.stroke()}g.restore();
- g.scale(1,.62);g.rotate(t/30);fmStar(R*1.6,'#2c2436','#b070ff',FM_RED)};
+PROJD.fm_kage2=(p,R,ra,t)=>{g.save();g.rotate(ra);fxTailL(R*9,R*2.6,'#8a5ac8',.5*(p&&p.owner?fxA(p):1));fxSoftS(-R*2,0,R*3,FM_SHD,.3,R*1.6);for(let i=0;i<3;i++){const y=(i-1)*R*.7;g.strokeStyle=rgba(i===1?'#8a5ac8':FM_SHD,.6);g.lineWidth=2;g.beginPath();g.moveTo(-R,y);g.quadraticCurveTo(-R*2.5,y+Math.sin(t/60+i)*R,-R*4.2,y*.4);g.stroke()}g.restore();
+ fxGlowS(0,0,R*2.4,'#b070ff',.45);g.scale(1,.62);g.rotate(t/30);fmStar(R*1.8,'#2c2436','#b070ff',FM_RED)};
 PROJD.fm_wire=(p,R,ra,t)=>{g.scale(1,.62);g.rotate(t/30);fmStar(R*1.5,FM_STEEL,'#23232c');g.strokeStyle='#e8ecf4';g.lineWidth=1.4;g.beginPath();g.arc(0,0,R*.55,0,7);g.stroke()};
 // fil de chakra entre la main du lanceur et le shuriken (légère courbe)
 function fmWire(ax,ay,az,bx,by,bz,sag,al){const a=P(ax,ay,az),b=P(bx,by,bz),mx=(a.x+b.x)/2,my=(a.y+b.y)/2+sag;g.save();g.lineCap='round';

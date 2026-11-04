@@ -190,7 +190,13 @@ Boîte à outils commune (`nr_fx.js`, chargée avant les kits ; utilisable dans 
 - **Secousse** : seulement les jutsu S (une fenêtre de 3 s s'ouvre au lancement d'un S près de la caméra, `fxSCast`) et les gros coups reçus par le joueur (≥ 9 % de ses PV, automatique). Ailleurs, `shake=` n'a plus d'effet. Pour une secousse voulue (impact d'un S) : `fxShake(.3,x,y)`. Aucune en « Faible ».
 - **Intensité** (`OPT.fxi`, option « Intensité des effets » : 0 Faible, 1 Normal, 2 Fort), **foule** (au-delà de 8 ninjas vivants, le décor baisse : 20c20 ≈ 0,56 → Normal ≈ Faible) et **camp** (effets ENNEMIS atténués en nombre et en opacité, alliés un peu) sont appliqués **au dessin, chez chaque joueur**. Les effets du joueur restent pleins.
 - **Télégraphes / zones de danger : jamais atténués** (utiliser `fxTele*`, ou `tele:1` sur un `jx`).
-- Budget : particules dessinées par image plafonnées (`fxNB`), anciennes particules du moteur coupées au-delà du plafond (`fxCull`), ≤ 36 traces au sol.
+- Budget : particules dessinées par image plafonnées (`fxNB` ; les effets des autres s'arrêtent à 70 % du budget, le reste est réservé à MES jutsu ; 10 éclats `fxFlare` par image + 6 réservés aux miens), anciennes particules du moteur coupées au-delà du plafond (`fxCull`), ≤ 36 traces au sol. En Faible : pas de lumières au sol des autres en mêlée ni des ennemis ; en mêlée (> 10 ninjas) 24 lumières des autres au plus.
+- **Effet ennemi posé sur MON ninja** : `fxA` baisse encore l'opacité jusqu'à moitié moins à moins de 110 px de moi (on se voit toujours dans un Kirin ennemi). Les télégraphes ne passent pas par `fxA` : intacts.
+- **Objets solides** (murs `drawWallN`, accessoires `do_prop`, pics `spikes`) : `fxOcc(x,y,r,h)` → 0,42 quand un ninja vivant se tient juste derrière. À utiliser pour tout décor haut et opaque d'un kit (`g.globalAlpha*=fxOcc(...)`).
+- **Hasard visuel** : `fxR()` (pas `rnd()` ni `Math.random()`) pour tout ce qui dépend de l'affichage (nombre de particules, graines, décalages de texte) : le hasard du jeu ne dépend ni des options, ni de la caméra, ni du dessin.
+- **Textes flottants en grande mêlée** (> 10 ninjas vivants, au dessin chez chaque joueur, `txtVis` dans `nr_kits.js`) : les dégâts proches et récents s'additionnent en un seul chiffre, les mots d'état à plus de 300 px de moi disparaissent, les textes lointains sont plus petits, 22 au plus, empilement limité à 2 lignes.
+- **Réseau** : les alertes (`tele`, `danger`, `FXTELE`, nom `warn|tele|alert|danger`) passent toujours (jusqu'à 220 effets par envoi) ; au-delà de 90, le petit décor (`FXSMALL` : étincelles, fumée, éclats, braises, lumières) n'est plus envoyé.
+- Bandeau d'un jutsu S : plaque compacte en haut au centre (plus de bande sur toute la largeur).
 
 ### Échelles (à appeler AU DESSIN, dans `JFXD` / `AUXD` / `PROJD` / `STATD`)
 - `fxK(o)` : échelle du décor 0..1 (0,8 = Normal, 1c1, ton jutsu). `o` = le lanceur (unité), un indice d'unité, ou l'objet dessiné (`f` d'un jx, `x` d'un aux, projectile : il lit `oi`, `owner`, `ui`, `team`).
@@ -225,7 +231,7 @@ Combinés :
 - `fxImpact(x,y,vfx,s,o)` : impact complet selon la famille de l'élément (éclat + lumière + onde + particules + trace au sol) ; `s` taille (1 ≈ 44 px), `o.r` rayon de l'onde (mets le rayon réel), `o.dec:0` sans trace, `o.ring:0` sans onde, `o.a` direction (vent).
 - `fxCast(u,vfx,durée,o)` : préparation (charge aux mains ; `o.mouth:1` pour un souffle Katon, `o.glyph:1` cercle au sol).
 - `fxDeto(x,y,r,vfx,u)` : décor d'explosion (déjà appelé par le moteur pour les zones et projectiles qui explosent).
-- `fxHitStop(src,cible,dégâts,gros)` : gros coup (≥ 16 ou 7 % des PV, ou `gros`) → gel visuel des deux ninjas (`u.fxHS`, secondes, lu par l'animation) ; une vraie pause de 35-75 ms seulement hors ligne et si le joueur local donne/reçoit le coup (jamais en ligne : la simulation de l'hôte n'est jamais arrêtée).
+- `fxHitStop(src,cible,dégâts,gros)` : **seulement si le coup a vraiment porté à ce pas** (`hit()` pose `t.fxHT=SIMT` ; rien sur une esquive, une parade, un Kawarimi, un ninja intangible : on peut donc l'appeler après une boucle géométrique). Gros coup (≥ 16 ou 7 % des PV, ou `gros`) → gel visuel des deux ninjas (`u.fxHS`, secondes, lu par l'animation) ; une vraie pause de 35-75 ms seulement hors ligne et si le joueur local donne/reçoit le coup (jamais en ligne : la simulation de l'hôte n'est jamais arrêtée).
 - `fxShake(a,x,y)` : secousse (voir règles).
 ```js
 // Katon : Grande boule de feu — préparation, tir, impact
@@ -252,7 +258,7 @@ for(const e of hit)fxArc(u.x,u.y,e.x,e.y,'#bfe6ff',{u,z:34,t:.2});
 `gkDim(o,fn)` décor atténué si `o` est ennemi · `gkImp(u,x,y,v,r,o)` impact complet à éclat plafonné (ne délave pas la cible) · `gkEdge(x,y,r,col,a,o)` / `gkEdgeL` bord net d'une zone durable (liseré rouge si ennemie, jamais atténué) · `gkTrail` sillage de dash · `gkN(n,o)` nombre de particules selon le budget · `GKPOOLC[kind]` couleur de bord d'une nappe. Poses : `gk_lob` (lancer par-dessus l'épaule), `gk_slam` (deux poings au sol), `gk_sweep` (balayage du bras).
 
 ### Éclair du coup reçu (moteur, `hitFl(u)` dans `nr_char.js`)
-Le blanc d'un ninja touché (`u.flash`) dure au plus 130 ms par rafale de coups (`hitFl`) : un broyage ou un dôme qui frappe à chaque image ne blanchit plus la cible en continu. Ne pas remettre `flash` à la main pour « faire briller » une cible : utiliser `fxFlare` / `fxLight`.
+Le blanc d'un ninja touché (`u.flash`) dure au plus 90 ms, puis plus aucun blanc pendant 650 ms même si les coups continuent (`hitFl`) : un broyage, un dôme ou une rafale ne blanchit jamais la cible plus de ~12 % du temps. Ne pas remettre `flash` à la main pour « faire briller » une cible : utiliser `fxFlare` / `fxLight`.
 
 ### Restes (passe de fondations, mis à jour à l'intégration)
 - Faits : `bt_flash` (Bakuton) est une lueur au sol locale ; le `flashS` de `fam_fuin.js` est retiré ; l'éclair lointain de la carte d'orage (`nr_maps.js`) n'éclaire plus que le haut du ciel et disparaît en Faible.

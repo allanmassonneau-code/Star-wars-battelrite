@@ -47,7 +47,7 @@ Object.assign(NAT,{
   jx({jfx:'ft_build',x:c.x,y:c.y,r:R,t:D,m:D});fxCast(u,'ft_steam',.8,{n:14});
   later(u,D,()=>{gkAoe(u,c.x,c.y,R,50,{air:.8},'ft_steam',e=>ftCor(u,e,2));ftMist(u,c.x,c.y,R,3);jx({jfx:'ft_geyser',x:c.x,y:c.y,r:R,t:1.3,m:1.3});jx({jfx:'gk_boom',x:c.x,y:c.y,r:R,v:'ft_steam',s:'steam',t:.8,m:.8});
    fxRing(c.x,c.y,{u,r0:30,r1:R,col:'#ffffff',c2:FTC.b,t:.45,w:8});fxRing(c.x,c.y,{u,r0:10,r1:R*.7,col:FTC.b,t:.6,w:4});fxFlare(c.x,c.y,FTC.b,{u,z:40,r:30,t:.25,al:.6});fxLight(c.x,c.y,R*1.2,FTC.b,{u,t:.6,a:.25});
-   fxSmoke(c.x,c.y,{u,col:'#ffffff',n:10,r:R*.7,s:28,t:2,al:.28,rise:170});fxBurst(c.x,c.y,FTC.b,{u,z:20,n:14,sp:330,up:260,gr:420,w:2.2,len:.06,c2:'#ffffff',t:.9});fxDecal(c.x,c.y,'puddle',{u,r:R*.8,t:3.5,col:'#a8b878'});
+   fxSmoke(c.x,c.y,{u,col:'#ffffff',n:8,r:R*.7,s:26,t:1.8,al:.2,rise:170});fxBurst(c.x,c.y,FTC.b,{u,z:20,n:14,sp:330,up:260,gr:420,w:2.2,len:.06,c2:'#ffffff',t:.9});fxDecal(c.x,c.y,'puddle',{u,r:R*.8,t:3.5,col:'#a8b878'});
    for(const e of enemies(u))if(gkIn(e,c.x,c.y,R))fxHitStop(u,e,50,1);fxShake(.38,c.x,c.y);if(near(c.x,c.y)){gkS('boom',u);gkS('water',u)}},{x:c.x,y:c.y,r:R})}),
  // ---------- dash : Propulsion de vapeur ----------
  ft_dash:SP('Propulsion de vapeur',FT_D.dash,7,{ai:ESC},(u,a,td)=>{const x0=u.x,y0=u.y;gkS('water',u);gkS('dash',u);anim(u,'lunge',.3);
@@ -76,11 +76,21 @@ GKPOOL.ft=(x,k,t)=>{const R=x.r,q=P(x.x,x.y,0),s=q.s;fxSoftS(q.x,q.y,R*s*1.02,'#
  if(!x.strip){g.save();g.lineWidth=1.2;const m=gkN(5,x.owner||x);for(let i=0;i<m;i++){const ph=(t*.7+i*.31)%1,b=i*1.9+Math.floor(t*.7+i*.31)*2.3,d=R*.75*((i*.43+Math.floor(t*.7+i*.31)*.37)%1),p=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,1);
   g.strokeStyle=rgba('#d8f080',.8*k*(1-ph));g.beginPath();g.ellipse(p.x,p.y-ph*3,(1.5+ph*5)*p.s,(1.5+ph*5)*p.s*.7,0,0,7);g.stroke()}g.restore()}};
 // jet de vapeur : cône de bouffées qui remplit EXACTEMENT le secteur touché (rayon r, demi-ouverture arc) ; cœur brûlant additif
-JFXD.ft_cone=(f,k,e,t,u)=>{const x0=u&&!u.dead?u.x:f.x,y0=u&&!u.dead?u.y:f.y,arc=f.arc??.5,n=gkN(18,f),m0=Math.min(1,e*1.7);
- if(e<.35){const a0=Math.min(1,(.35-e)/.2);g.save();g.globalCompositeOperation='lighter';g.globalAlpha=.35*a0;g.fillStyle=FTC.b;g.beginPath();const p0=P(x0,y0,2);g.moveTo(p0.x,p0.y);for(let i=0;i<=12;i++){const b=f.a-arc+2*arc*i/12,q=P(x0+Math.cos(b)*f.r*m0,y0+Math.sin(b)*f.r*m0,2);g.lineTo(q.x,q.y)}g.closePath();g.fill();g.restore()}
- for(let i=0;i<n;i++){const m=m0*(.3+((i*.37)%1)*.7),b=f.a+(((i*.618)%1)*2-1)*arc*.92,d=f.r*m,q=P(x0+Math.cos(b)*d,y0+Math.sin(b)*d,26+m*18),r=(8+m*22)*q.s;
-  fxSoftS(q.x,q.y,r*1.25,i%3?'#ffffff':FTC.a,.42*k)}
- const h=P(x0+Math.cos(f.a)*f.r*.35*m0,y0+Math.sin(f.a)*f.r*.35*m0,32);fxGlowS(h.x,h.y,f.r*.32*h.s,FTC.b,.5*k)};
+// jet de vapeur : le cône dessiné = hitbox (rayon r, demi-ouverture arc) ; front qui jaillit en 0,2 s, filets brûlants, bouffées qui s'enflent en avançant, nuage qui reste au bout
+JFXD.ft_cone=(f,k,e,t,u)=>{const x0=u&&!u.dead?u.x:f.x,y0=u&&!u.dead?u.y:f.y,arc=f.arc??.5,n=gkN(20,f),fr=Math.min(1,e*2.6),A=Math.min(1,k*2),o=P(x0,y0,0),s=o.s;
+ // bord du cône (hitbox exacte), net mais fin
+ g.save();g.strokeStyle=rgba(FTC.b,.45*A);g.lineWidth=1.4;g.beginPath();g.moveTo(o.x,o.y);for(let i=0;i<=14;i++){const b=f.a-arc+2*arc*i/14,q=P(x0+Math.cos(b)*f.r*fr,y0+Math.sin(b)*f.r*fr,0);g.lineTo(q.x,q.y)}g.closePath();g.stroke();
+ g.fillStyle=rgba(FTC.a,.07*A);g.fill();
+ // filets de vapeur brûlante (additifs) depuis la bouche
+ g.globalCompositeOperation='lighter';g.lineCap='round';const h0=P(x0+Math.cos(f.a)*14,y0+Math.sin(f.a)*14,30);
+ for(let i=0;i<9;i++){const b=f.a+((i/8)*2-1)*arc*.8,d1=f.r*fr*(.75+.25*((i*.53)%1)),d0=d1*Math.max(.1,e*.9),q0=P(x0+Math.cos(b)*d0,y0+Math.sin(b)*d0,30-d0*.06),q1=P(x0+Math.cos(b)*d1,y0+Math.sin(b)*d1,30-d1*.06);
+  g.strokeStyle=rgba(i%3?'#ffffff':FTC.b,.42*A);g.lineWidth=(2.6-i%2)*s;g.beginPath();g.moveTo(i===4?h0.x:q0.x,i===4?h0.y:q0.y);g.lineTo(q1.x,q1.y);g.stroke()}
+ g.restore();
+ // bouffées qui coulent vers l'avant et grossissent (source-over, jamais opaques)
+ for(let i=0;i<n;i++){const ph=((i*.37)+e*1.5)%1,m=ph*fr,b=f.a+(((i*.618)%1)*2-1)*arc*.85*Math.min(1,.4+m),d=f.r*m,q=P(x0+Math.cos(b)*d,y0+Math.sin(b)*d,24+m*20),r=(7+m*24)*q.s;
+  fxSoftS(q.x,q.y,r*1.2,i%3?'#ffffff':FTC.a,.32*k*Math.min(1,ph*4))}
+ const tip=P(x0+Math.cos(f.a)*f.r*.85*fr,y0+Math.sin(f.a)*f.r*.85*fr,30);fxSoftS(tip.x,tip.y,f.r*.32*tip.s*(.6+e*.6),'#ffffff',.3*k*fr);
+ fxGlowS(h0.x,h0.y,14*s,FTC.b,.7*A);fxGlowS(h0.x,h0.y,5*s,'#ffffff',.5*A)};
 // traînée de la charge : vapeur qui s'échappe derrière le lanceur
 JFXD.ft_trail=(f,k,e,t,u)=>{if(!u||u.dead)return;const n=gkN(7,f);for(let i=0;i<n;i++){const q=P(u.x-Math.cos(u.aim)*(14+i*14),u.y-Math.sin(u.aim)*(14+i*14),20+i*4);fxSoftS(q.x,q.y,(12+i*5)*q.s,i%2?'#ffffff':FTC.a,.4*k*(1-i/(n+1)))}};
 // chaudron (télégraphe, jamais atténué) : le sol bouillonne, l'anneau se resserre, des jets de vapeur montent de plus en plus haut
@@ -90,5 +100,5 @@ JFXD.ft_build=(f,k,e,t)=>{const q=P(f.x,f.y,0),s=q.s;fxSoftS(q.x,q.y,f.r*s,FTC.b
  fxGlowS(q.x,q.y,f.r*s*.5*(.5+e),FTC.b,.3*e,f.r*s*.5*(.5+e)*K,0)};
 // geyser : colonne brûlante (lumière additive) et grandes bouffées de vapeur douces (≤ 0,3) qui montent
 JFXD.ft_geyser=(f,k,e,t)=>{const q=P(f.x,f.y,0),s=q.s,up=Math.sin(Math.PI*Math.min(1,e*1.5)),h=up*230*s,w=f.r*.38*s;
- if(h>2){const o=g.globalCompositeOperation,ga=g.globalAlpha;g.globalCompositeOperation='lighter';g.globalAlpha=ga*.24*k;g.drawImage(fxSpr(FTC.b,0),q.x-w,q.y-h,w*2,h*2);g.globalAlpha=ga*.16*k;g.drawImage(fxSpr('#ffffff',0),q.x-w*.4,q.y-h*.9,w*.8,h*1.8);g.globalAlpha=ga;g.globalCompositeOperation=o}
- const n=gkN(18,f);for(let i=0;i<n;i++){const b=i*.35,d=f.r*.6*((i*.29)%1),m=Math.min(1,e*1.3),z=m*(150+(i%4)*30),p=P(f.x+Math.cos(b)*d*(1+m),f.y+Math.sin(b)*d*(1+m),z),r=(14+m*26)*p.s;fxSoftS(p.x,p.y,r*1.2,i%3?'#ffffff':FTC.a,.28*k)}};
+ if(h>2){const o=g.globalCompositeOperation,ga=g.globalAlpha;g.globalCompositeOperation='lighter';g.globalAlpha=ga*.18*k;g.drawImage(fxSpr(FTC.b,0),q.x-w,q.y-h,w*2,h*2);g.globalAlpha=ga*.16*k;g.drawImage(fxSpr('#ffffff',0),q.x-w*.4,q.y-h*.9,w*.8,h*1.8);g.globalAlpha=ga;g.globalCompositeOperation=o}
+ const n=gkN(18,f);for(let i=0;i<n;i++){const b=i*.35,d=f.r*.6*((i*.29)%1),m=Math.min(1,e*1.3),z=m*(150+(i%4)*30),p=P(f.x+Math.cos(b)*d*(1+m),f.y+Math.sin(b)*d*(1+m),z),r=(14+m*26)*p.s;fxSoftS(p.x,p.y,r*1.2,i%3?'#ffffff':FTC.a,.18*k)}}; // vapeur légère : la cible projetée reste visible

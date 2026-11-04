@@ -104,7 +104,7 @@ Object.assign(NAT,{
  // ---- kirin : l'orage s'amasse, puis la foudre-dragon frappe l'ennemi le plus proche du centre
  ra_kirin:SP('Raiton : Kirin','Un orage couvre la zone ; peu après, Kirin foudroie l\'ennemi le plus au centre : énormes dégâts, étourdit',20,{tele:{r:200,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480);
   aux.push({type:'ra_kirin',x:p.x,y:p.y,r:200,t:.8,m:.8,team:u.team,owner:u,vfx:'kirin',k:0,danger:1});jx({jfx:'ra_cloud',x:p.x,y:p.y,r:200,kir:1,c:'#bfe6ff',t:.85,m:.85});
-  anim(u,'ra_kirin',.8);raS('zap',u);raS('wind',u);fxPillar(u.x,u.y,'#bfe6ff',{u,h:300,w:22,t:.6,al:.5});fxArcs(u.x,u.y,60,'#bfe6ff',{u,n:4,t:.4,z:60})}),
+  anim(u,'ra_kirin',.8);raS('zap',u);raS('wind',u);fxPillar(u.x,u.y,'#bfe6ff',{u,h:300,w:12,t:.5,al:.22});fxArcs(u.x,u.y,60,'#bfe6ff',{u,n:4,t:.4,z:60})}),
  // ---- armure de foudre (Raikage) : l'armure jaillit (étourdit autour), puis vitesse, force, réflexes, rien ne la retient
  ra_armor:SP('Raiton : Armure de foudre','Étourdit autour de toi, puis 5,5 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s',20,{ai:SELF(320,.8)},(u)=>{const D=5.5;
   u.haste=Math.max(u.haste,D);u.rage=Math.max(u.rage,D);u.slowImm=Math.max(u.slowImm,D);u.slow=0;u.root=0;u.dodge=Math.max(u.dodge,D);aoe(u,u.x,u.y,110,12,{stun:.5},'#bfe6ff');
@@ -143,7 +143,7 @@ AUXF.ra_kirin=x=>{const o=x.owner;
  if(near(x.tx,x.ty)){raS('boom',o);raS('chidori',o);fxShake(.4,x.tx,x.ty);fxImpact(x.tx,x.ty,'raiton',1.5,{u:o,r:110});fxDecal(x.tx,x.ty,'burn',{u:o,r:105,t:5}); // colonne : celle de flashsky suffit (empiler des lumières blanches masquait la cible)
   
   fxArcs(x.tx,x.ty,170,'#bfe6ff',{u:o,n:7,t:.45,z:10});fxSmoke(x.tx,x.ty,{u:o,col:'#c8d8ff',n:7,r:80,s:18,t:1.2,al:.22,rise:60});fxDebris(x.tx,x.ty,{u:o,n:8,sp:200,col:'#5a5a6a',c2:'#2a2a33'});
-  for(const e of enemies(o))if(Math.hypot(e.x-x.tx,e.y-x.ty)<110+e.r)fxHitStop(o,e,62,1)}if(o===player||(player&&Math.hypot(player.x-x.tx,player.y-x.ty)<130))hs=Math.max(hs,.08)};
+  for(const e of enemies(o))if(Math.hypot(e.x-x.tx,e.y-x.ty)<110+e.r)fxHitStop(o,e,62,1)}}; // arrêt sur coup : fxHitStop seul (vrai coup, jamais en ligne)
 // pas de l'éclair : la course foudroie chaque ennemi traversé (une fois)
 AUXF.ra_run=x=>{const u=x.owner;if(u.dead){x.t=0;return}for(const e of enemies(u))if(!x.hs.includes(e)&&Math.hypot(e.x-u.x,e.y-u.y)<u.r+e.r+14){x.hs.push(e);raHit(e,u,7,{melee:1,slow:.6});raPop(e.x,e.y,22);raImp(u,e.x,e.y,22,0)}if(!u.dash)x.t=0};
 // pas de l'éclair : la traînée ralentit les ennemis qui la touchent
@@ -269,9 +269,9 @@ JFXD.ra_cloud=(f,k,e,t)=>{const a=Math.min(1,e*f.m*4,k*f.m*3),Z=f.kir?185:170,c=
   raBolt(p0.x,p0.y,p1.x,p1.y,14*p0.s,5,c,1.5*p0.s,a*.85);circ((p0.x+p1.x)/2,(p0.y+p1.y)/2,34*p0.s,rgba('#bfe6ff',.12*a))}};
 // Kirin : le dragon de foudre plonge, puis éclat et ondes au sol
 JFXD.ra_kirinfx=(f,k,e,t)=>{const g0=P(f.x,f.y,0),s=g0.s,H=600,dsc=Math.min(1,e/.11),hd=P(f.x,f.y,H*(1-dsc)),top=P(f.x-70,f.y,H+60),fade=e<.11?1:Math.max(0,1-(e-.11)/.6);g.globalCompositeOperation='lighter';g.lineCap='round';g.lineJoin='round';
- if(fade>0)for(let j=0;j<3;j++){g.strokeStyle=j===0?rgba('#7fd0ff',.4*fade):j===1?rgba('#bfe6ff',.9*fade):rgba('#ffffff',fade);g.lineWidth=(j===0?30:j===1?12:4.5)*s;g.beginPath();
+ if(fade>0)for(let j=0;j<3;j++){g.strokeStyle=j===0?rgba('#7fd0ff',.3*fade):j===1?rgba('#bfe6ff',.7*fade):rgba('#ffffff',.85*fade);g.lineWidth=(j===0?24:j===1?9:3.5)*s;g.beginPath();
   for(let i=0;i<=18;i++){const v=i/18,x=top.x+(hd.x-top.x)*v+Math.sin(v*10+t*14)*44*s*(1-v*.75)+(j?(rnd()-.5)*6*s:0),y=top.y+(hd.y-top.y)*v;i?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}
- if(e<.34){const ha=e<.11?1:Math.max(0,1-(e-.11)/.23);g.save();g.translate(hd.x,hd.y-(e<.11?0:(e-.11)*120*s));g.scale(s*(1+(e<.11?0:(e-.11)*1.5)),s*(1+(e<.11?0:(e-.11)*1.5)));g.fillStyle=rgba('#e8f6ff',.95*ha);g.beginPath();g.moveTo(0,42);for(const [x,y] of[[-8,22],[-14,12],[-30,8],[-18,0],[-14,-12],[-32,-40],[-8,-20],[0,-28]])g.lineTo(x,y);for(const [x,y] of[[8,-20],[32,-40],[14,-12],[18,0],[30,8],[14,12],[8,22]])g.lineTo(x,y);g.closePath();g.fill();g.strokeStyle=rgba('#7fd0ff',.9*ha);g.lineWidth=1.5;g.beginPath();g.moveTo(-6,26);g.lineTo(0,20);g.lineTo(6,26);g.stroke();
+ if(e<.34){const ha=e<.11?1:Math.max(0,1-(e-.11)/.23);g.save();g.translate(hd.x,hd.y-(e<.11?0:(e-.11)*120*s));g.scale(s*(1+(e<.11?0:(e-.11)*1.5)),s*(1+(e<.11?0:(e-.11)*1.5)));g.fillStyle=rgba('#e8f6ff',.78*ha);g.beginPath();g.moveTo(0,42);for(const [x,y] of[[-8,22],[-14,12],[-30,8],[-18,0],[-14,-12],[-32,-40],[-8,-20],[0,-28]])g.lineTo(x,y);for(const [x,y] of[[8,-20],[32,-40],[14,-12],[18,0],[30,8],[14,12],[8,22]])g.lineTo(x,y);g.closePath();g.fill();g.strokeStyle=rgba('#7fd0ff',.9*ha);g.lineWidth=1.5;g.beginPath();g.moveTo(-6,26);g.lineTo(0,20);g.lineTo(6,26);g.stroke();
   circ(-8,2,3.4,rgba('#ffe14a',ha));circ(8,2,3.4,rgba('#ffe14a',ha));g.strokeStyle=rgba('#bfe6ff',.8*ha);g.lineWidth=2;g.beginPath();g.moveTo(-14,10);g.quadraticCurveTo(-34,14,-44,30);g.moveTo(14,10);g.quadraticCurveTo(34,14,44,30);g.stroke();g.restore()}
  if(e>.09){const ee=Math.min(1,(e-.09)/.9),R=f.r;g.fillStyle=rgba('#bfe6ff',.12*(1-ee));g.beginPath();g.ellipse(g0.x,g0.y,R*s*(.6+ee*.8),R*s*K*(.6+ee*.8),0,0,7);g.fill();
   g.strokeStyle=rgba('#bfe6ff',.9*(1-ee));g.lineWidth=7*s*(1-ee)+1;gEll(f.x,f.y,R*(.5+ee*1.6));g.stroke();g.strokeStyle=rgba('#ffe14a',.7*(1-ee));g.lineWidth=2;gEll(f.x,f.y,R*(.3+ee*1.2));g.stroke();
@@ -320,6 +320,6 @@ AUXD.ra_chid=AUXD.ra_armor=AUXD.ra_run=()=>{};
 const RACH={ra_chidori:[1,'#9fd8ff'],ra_spear:[.8,'#9fd8ff'],ra_senbon:[.55,'#bfe6ff'],ra_nagashi:[.6,'#bfe6ff'],ra_clone:[.45,'#bfe6ff'],ra_kirin:[.8,'#bfe6ff'],ra_armor:[.8,'#bfe6ff'],
  ra_bolt:[.45,'#ffe14a'],ra_chain:[.55,'#ffe14a'],ra_panther:[.6,'#ffe14a'],ra_storm:[.6,'#ffe14a']};
 STATD.push((u,p,S)=>{const c=u.cast;if(!c||u.dead)return;const ab=u.ch.abil[c.i],Q=ab&&RACH[ab.key];if(!Q)return;const k=c.t/c.dur;if(k<.25)return;
- const e=(k-.25)/.75,a=u.aim,h=P(u.x+Math.cos(a)*12,u.y+Math.sin(a)*12,30+(u.z||0)),R=(3+6*e)*S*Q[0];g.save();g.globalCompositeOperation='lighter';g.lineCap='round';
- circ(h.x,h.y,R*2,rgba(Q[1],.2));circ(h.x,h.y,R,rgba(Q[1],.7));circ(h.x,h.y,R*.45,'#ffffff');
+ const e=(k-.25)/.75,a=u.aim,h=P(u.x+Math.cos(a)*12,u.y+Math.sin(a)*12,30+(u.z||0)),R=(3+4*e)*S*Q[0];g.save();g.globalCompositeOperation='lighter';g.lineCap='round';
+ circ(h.x,h.y,R*1.8,rgba(Q[1],.14));circ(h.x,h.y,R,rgba(Q[1],.45));circ(h.x,h.y,R*.32,'#ffffff');
  for(let i=0;i<3+e*4*Q[0];i++){const b=rnd()*7,L=R*(1.6+rnd()*1.8);raPath(h.x,h.y,h.x+Math.cos(b)*L,h.y+Math.sin(b)*L*.8,L*.5,3);raStroke(i%2?'#ffffff':Q[1],1.2)}g.restore()});

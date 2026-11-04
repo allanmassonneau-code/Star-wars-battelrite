@@ -81,7 +81,12 @@ AFTER.push(()=>UK.push('rt_gr'));
 // ---- visuels
 // rayon courbe / laser du cirque : trait lumineux
 // rayon courbe / laser du cirque : trait lumineux, traînée effilée, éclat à la pointe
-PROJD.rt_bolt=(p,R,ra,t)=>{g.rotate(ra);fxTailL(R*9,R*2.6,RTC.b,.55*(p&&p.owner?fxA(p):1));g.globalCompositeOperation='lighter';g.strokeStyle=rgba(RTC.b,.55);g.lineWidth=R*2;g.lineCap='round';g.beginPath();g.moveTo(-R*5,0);g.lineTo(R,0);g.stroke();g.strokeStyle=rgba(RTC.a,.95);g.lineWidth=R*.9;g.stroke();g.strokeStyle='#ffffff';g.lineWidth=R*.35;g.stroke();fxGlowS(R*.6,0,R*2.2,RTC.b,.6)};
+// rayon courbe : le chemin parcouru reste dessiné (ruban de foudre qui suit la vraie trajectoire, courbes du pilote comprises) + tête crépitante
+PROJD.rt_bolt=(p,R,ra,t)=>{const H=p._rth||(p._rth=[]),now=isGuest()?performance.now()/1000:SIMT;if(!H.length||H[H.length-1][2]!==now)H.push([p.x,p.y,now]);while(H.length>14||(H.length&&now-H[0][2]>.18))H.shift();const A0=p&&p.owner?fxA(p):1;
+ if(H.length>1){const c=P(p.x,p.y,28);g.save();g.globalCompositeOperation='lighter';g.lineCap='round';g.lineJoin='round';for(const [w,col,al] of[[R*2.4,RTC.b,.3],[R*.9,RTC.a,.85]]){g.strokeStyle=rgba(col,al*A0);g.lineWidth=w;g.beginPath();
+   H.forEach((h,i)=>{const q=P(h[0],h[1],28),jx=i&&i<H.length-1?(fxH(i,(performance.now()/50|0),1)-.5)*R*1.4:0;const X=(q.x-c.x)/c.s,Y=(q.y-c.y+jx)/c.s;i?g.lineTo(X,Y):g.moveTo(X,Y)});g.lineTo(0,0);g.stroke()}g.restore()}
+ g.rotate(ra);g.globalCompositeOperation='lighter';fxGlowS(0,0,R*3,RTC.b,.6*A0);g.strokeStyle=rgba(RTC.a,.95);g.lineWidth=R*.7;g.lineCap='round';g.beginPath();g.moveTo(-R*2.5,0);g.lineTo(R,0);g.stroke();
+ const sd=(t/45|0)+(p.x|0);for(let i=0;i<3;i++){const b=(fxH(sd,i,1)-.5)*2.4+Math.PI,l=R*(2+2*fxH(sd,i,2));fxBoltS(0,0,Math.cos(b)*l,Math.sin(b)*l,RTC.b,1,sd+i,.35,3)}};
 // éclair qui tombe du nuage sur un ennemi : éclair brisé, lueur au sol, onde
 JFXD.rt_strike=(f,k,e,t,u,tg)=>{const o=tg&&!tg.dead?tg:f,A=P(o.x,o.y,140),Bq=P(o.x,o.y,10),gq=P(o.x,o.y,0);fxBoltS(A.x,A.y,Bq.x,Bq.y,RTC.b,3.2*A.s*k,(f.x|0)+Math.floor(t*18),.22,8);
  fxGlowS(gq.x,gq.y,30*gq.s,RTC.a,.6*k,30*gq.s*K,0);g.save();g.strokeStyle=rgba(RTC.a,.7*k);g.lineWidth=2;gEll(o.x,o.y,10+e*24);g.stroke();g.restore()};
