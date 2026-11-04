@@ -47,7 +47,26 @@ const SPD_K=1,SPRINT_K=1.45,SPRINT_COST=22,RUN_REGEN=26;
 // mémoire des touches : un jutsu demandé pendant un coup, une incantation ou une fin de recharge part dès que possible
 function tryUse(u,i,td,ex){if(use(u,i,td,undefined,ex)){u.buf=null;return true}const ab=u.ch.abil[i];
  if(ab&&u.energy>=jcost(ab)&&!(u.silence>0)&&(u.cast||u.dash||u.swing>0||u.spin||u.stun>0&&u.stun<.25||(u.cds[i]>0&&u.cds[i]<.35)))u.buf={i,t:.35,ex};return false}
-function bufTick(u,dt,td,I){if(I.l||I.p.lmb){if(!use(u,0,td)&&I.p.lmb&&u.stam>=(meleeU(u)?20:10)-.01)u.bufL=.28}else if(u.bufL>0){u.bufL-=dt;if(use(u,0,td))u.bufL=0}
+function bufTick(u,dt,td,I){if(I.l||I.p.lmb){if(!use(u,0,td)&&I.p.lmb)u.bufL=.28}else if(u.bufL>0){u.bufL-=dt;if(use(u,0,td))u.bufL=0}
  if(!u.buf)return;u.buf.t-=dt;const ab=u.ch.abil[u.buf.i];if(u.buf.t<=0||!ab||u.energy<jcost(ab)){u.buf=null;return}if(use(u,u.buf.i,td,undefined,u.buf.ex))u.buf=null}
 // parade parfaite : durée de la fenêtre, étourdissement infligé, garde indisponible ensuite
 const PARRY_WIN=.3,PARRY_STUN=1.3,PARRY_LOCK=5;
+
+// ---------- Combo break : pas d'étourdissement en boucle ----------
+// Chaque étourdissement reçu (quelle qu'en soit la source : coups, jutsu, garde brisée, projection) s'ajoute à une jauge.
+// Quand un nouvel étourdissement porte la jauge au-delà de CB.max secondes enchaînées, le ninja se libère (COMBO BREAK) : étourdissement coupé,
+// petite onde qui repousse les ennemis au contact, puis CB.imm secondes d'immunité aux étourdissements (halo doré).
+// La jauge se vide quand on n'a plus été étourdi depuis CB.reset secondes. Secondes de jeu (GSPEED .8 : 1,8 = 2,25 s réelles).
+const CB={max:1.8,reset:1.5,drain:1.2,imm:2.4,r:95,kb:240};
+function cbPre(u,dt){const prev=u.cbPrev||0;if(u.dead){u.cbAcc=0;u.cbImm=0;u.cbPrev=0;return}
+ if(u.cbImm>0)u.cbImm=Math.max(0,u.cbImm-dt);
+ if(u.stun>20){u.cbAcc=0;return} // gel volontaire (mannequins, outils) : hors jauge
+ const add=u.stun-prev;
+ if(add>.005){
+  if(u.cbImm>0){u.stun=prev;return} // immunité : le nouvel étourdissement est ignoré
+  const before=u.cbAcc||0;u.cbAcc=before+add;u.cbT=0;
+  if(before>0&&u.cbAcc>=CB.max)cbBreak(u) // un seul long étourdissement ne déclenche rien : seul l'enchaînement est coupé
+ }else{u.cbT=(u.cbT||0)+dt;if(u.stun<=0&&u.cbT>CB.reset&&u.cbAcc>0)u.cbAcc=Math.max(0,u.cbAcc-CB.drain*dt)}}
+function cbBreak(u){u.stun=0;u.cbAcc=0;u.cbImm=CB.imm;u.airT=0;u.root=0;u.blockLock=0;
+ for(const e of enemies(u))if(!e.dead&&dist(u,e)<CB.r+e.r){const a=ang(u,e);e.kx=(e.kx||0)+Math.cos(a)*CB.kb;e.ky=(e.ky||0)+Math.sin(a)*CB.kb}
+ if(near(u.x,u.y)){ring(u.x,u.y,CB.r,'#ffd84a');S('deflect',u)}say(u,'COMBO BREAK','#ffd84a')}

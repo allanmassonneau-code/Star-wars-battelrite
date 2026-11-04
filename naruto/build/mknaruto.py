@@ -527,5 +527,10 @@ rep("if(!o.silent){t.flash=.12;ckHit(t,src,dmg,o);","if(!o.silent){t.flash=.12;t
 rep(' <h2 style="margin-top:14px">Affichage</h2>\n',' <h2 style="margin-top:14px">Affichage</h2>\n <label title="Faible : moins de particules, aucune secousse. En grande bataille les effets sont adoucis automatiquement ; ceux des ennemis restent discrets, leurs zones de danger toujours nettes.">Intensité des effets <select id="oFxI"><option value="0">Faible</option><option value="1">Normal</option><option value="2">Fort</option></select></label>\n')
 rep("$('oSpat').checked=OPT.spat;$('oMute').checked=muted}","$('oSpat').checked=OPT.spat;$('oMute').checked=muted;$('oFxI').value=String(OPT.fxi==null?1:OPT.fxi)}")
 rep("$('oMute').onchange=e=>{muted=e.target.checked};","$('oMute').onchange=e=>{muted=e.target.checked};$('oFxI').onchange=e=>{OPT.fxi=clamp(+e.target.value|0,0,2);applyOpt()};")
+# attaque de base sans endurance : l'endurance ne sert plus qu'à la garde (F) et à la parade
+rep("if(i===0){const ml=meleeU(u),sc=ml?20:10;if(u.stam<sc-.01){if(u===player)say(u,'ENDURANCE !','#7df');return false}u.stam-=sc;u.stamT=Math.max(u.stamT||0,.6);","if(i===0){const ml=meleeU(u);")
+# combo break (nr_flow.js) : la jauge d'étourdissement est lue avant que les minuteurs baissent, puis la valeur restante est notée
+rep("function updUnit(u,dt,active){hlTick(u,dt,active);","function updUnit(u,dt,active){cbPre(u,dt);hlTick(u,dt,active);")
+rep("'stealth','ambush','wet'])u[k]=Math.max(0,u[k]-dt);u.flash-=dt;","'stealth','ambush','wet'])u[k]=Math.max(0,u[k]-dt);u.flash-=dt;u.cbPrev=u.stun;")
 open(ROOT+'naruto/index.html','w').write(s)
 print('ok',len(s))
