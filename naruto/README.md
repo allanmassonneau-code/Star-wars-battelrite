@@ -78,7 +78,12 @@ La création est un **assistant plein écran en 8 étapes** : **Identité → Or
 - Clic gauche : **combo de 5 coups**, toujours au corps à corps (allonge d'une arme de mêlée au plus) ; le 5e étourdit, l'attaque de base ne coûte plus d'endurance (elle ne sert qu'à la garde F et à la parade F + clic). **Combo break** : un ninja étourdi en chaîne (plus de 2 s réelles d'étourdissements enchaînés) se libère, repousse les ennemis au contact et reste 3 s insensible aux étourdissements (halo doré). Le jeu à distance passe par les jutsu.
 - Prise en main fluide : déplacements vifs, **Maj maintenue = sprint** (consomme l'endurance), touches mémorisées pendant un coup ou une incantation, caméra rapprochée qui regarde devant.
 - Sons synthétisés par élément, annonce plein écran de tes jutsu de rang S.
-- Cartes : Terrain d'entraînement, Vallée de la Fin, Désert de Suna (⚙ Partie), avec feuilles, sable ou brume.
+- Cartes (⚙ Partie, ou « Au hasard » : une carte tirée à chaque partie) : Terrain d'entraînement, Vallée de la Fin, Désert de Suna, Pont du Pays des Vagues, Forêt de la Mort, Arène de l'examen Chûnin, Village caché de la Pluie, Pays du Fer, Repaire d'Orochimaru, et :
+  - **Mont Myôboku** : pays des crapauds, statues de crapaud, aiguilles rocheuses coiffées de mousse, rochers moussus, bassins et flaques d'huile, cercle de pierres plates ;
+  - **Village caché de Kiri** : on se bat sur l'eau dans la brume, entre quais de pierre et pontons de bois ; pieux d'amarrage, îlots de roseaux, tombe de Zabuza (Kubikiribôchô plantée) ;
+  - **Village caché de Kumo** : plateau dallé au-dessus de la mer de nuages, pics rocheux stratifiés, maisons-dômes, paratonnerres qui crépitent ;
+  - **Quatrième Guerre ninja** : terre craquelée, cratères, armes abandonnées, dalles de terre fracturées, pieux de Mokuton, bannières de l'Alliance, lune rouge et arbre-dieu à l'horizon.
+  Les cartes supplémentaires sont dans `nr_maps.js` (disposition symétrique, obstacles qui s'estompent quand un ninja est derrière, ciel pré-rendu). En ligne, un joueur d'une version plus ancienne ne reçoit que des cartes qu'il connaît.
 
 ## Technique
 `naruto/index.html` est généré à partir du jeu Star Wars : `python3 naruto/build/mknaruto.py` (modules dans `naruto/build/`). Le jeu est entièrement dessiné en 2D sur canvas : les poses des ninjas sont calculées sur un squelette (`nr_pose.js` : poses par état, animations nommées `ANIM` des kits) puis tracées par `nr_char.js`.

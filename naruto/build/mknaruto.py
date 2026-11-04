@@ -532,5 +532,13 @@ rep("if(i===0){const ml=meleeU(u),sc=ml?20:10;if(u.stam<sc-.01){if(u===player)sa
 # combo break (nr_flow.js) : la jauge d'étourdissement est lue avant que les minuteurs baissent, puis la valeur restante est notée
 rep("function updUnit(u,dt,active){hlTick(u,dt,active);","function updUnit(u,dt,active){cbPre(u,dt);hlTick(u,dt,active);")
 rep("'stealth','ambush','wet'])u[k]=Math.max(0,u[k]-dt);u.flash-=dt;","'stealth','ambush','wet'])u[k]=Math.max(0,u[k]-dt);u.flash-=dt;u.cbPrev=u.stun;")
+# bataille : la perspective suivait la caméra, donc le sol s'étirait et glissait quand on bougeait (deux points fixes : 650 px d'écart puis 446 px).
+# En bataille, échelle fixe : le décor ne bouge plus avec le joueur (l'arène garde sa perspective, caméra quasi fixe).
+rep("const PV=()=>mode==='battle'?cam:{x:CX,y:CY},scl=y=>.97+.3*(y-PV().y)/555;","const PV=()=>mode==='battle'?cam:{x:CX,y:CY},scl=y=>mode==='battle'?1:.97+.3*(y-PV().y)/555;")
+# carte de bataille agrandie : 6000×2800 → 7200×3400 (obstacles, bonus, apparitions et centre suivent)
+rep("const MAP={x:0,y:0,w:6000,h:2800};","const MAP={x:0,y:0,w:7200,h:3400};")
+rep("y:MAP.h/2+(rnd()-.5)*1500})","y:MAP.h/2+(rnd()-.5)*1800})")
+rep("pickups=[[1570,700],[1570,2100],[3000,1400],[4430,700],[4430,2100],[3000,420],[3000,2380]]","pickups=[[1885,850],[1885,2550],[3600,1700],[5315,850],[5315,2550],[3600,510],[3600,2890]]")
+rep("for(let i=0;i<170&&o.length<95;i++){const x=600+r()*4800,y=160+r()*2480;if(o.some(p=>Math.hypot(p.x-x,p.y-y)<190)||Math.hypot(x-3000,y-1400)<140)continue;","for(let i=0;i<260&&o.length<138;i++){const x=600+r()*6000,y=170+r()*3060;if(o.some(p=>Math.hypot(p.x-x,p.y-y)<190)||Math.hypot(x-3600,y-1700)<140)continue;")
 open(ROOT+'naruto/index.html','w').write(s)
 print('ok',len(s))
