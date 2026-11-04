@@ -293,7 +293,7 @@ STATD.push((u,p,S)=>{const t=performance.now()/1000;
  if(u.cast&&!u.dead){const ab=u.ch.abil[u.cast.i];if(ab&&ab.key==='ka_breath'){const a=u.cast.aimOv??u.aim,kk=Math.min(1,u.cast.t/u.cast.dur),col=u.team?'#ff5050':'#5ab8ff';g.save();
   const cone=(r,al)=>{g.beginPath();const c=P(u.x+Math.cos(a)*24,u.y+Math.sin(a)*24,0);g.moveTo(c.x,c.y);for(let i=0;i<=10;i++){const b=a-.88+1.76*i/10,w=P(u.x+Math.cos(b)*r,u.y+Math.sin(b)*r,0);g.lineTo(w.x,w.y)}g.closePath();g.fillStyle=rgba(col,al);g.fill()};
   cone(330,.1);cone(24+306*kk,.18);g.restore()}}});
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // Flamme : signe du tigre à la bouche (fin des mudras), le buste jaillit et la main droite désigne la cible
  ka_spit:(P,e)=>{const a=1,b=ezo(Math.min(1,e/.3)),r=a*(1-b);pz(P,'armL',-1.35,0,-.35);pz(P,'foreL',-2.3);pz(P,'armR',-1.35-.25*b,0,.35-.45*b);pz(P,'foreR',-2.3+2.15*b);

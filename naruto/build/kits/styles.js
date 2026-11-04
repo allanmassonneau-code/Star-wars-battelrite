@@ -2,7 +2,7 @@
 // [nom, description, mécanique (x.clé = NAT[clé]), vfx, arme, clans autorisés (-1 = sans clan), modif. PV, modif. puissance]
 // Règle : une attaque de base est TOUJOURS au corps à corps (allonge max ≈ 130). Combo de 5 coups du moteur (20 d'endurance par coup, parade F+clic, le 5e étourdit) ;
 //  chaque style a sa chorégraphie (ANIM.st_<style>1…5), son rythme (recharge propre à chaque coup), sa traînée aux couleurs du clan et une petite mécanique liée au clan.
-// Arme (look.weapon.k) : objet tenu en 3D et en 2D (fist bigfist palm claws bone sword kunai shadow bugs chain senbon sand puppet vine fan gold paper shuriken ice), toutes de mêlée (MELEEK).
+// Arme (look.weapon.k) : objet tenu en main (fist bigfist palm claws bone sword kunai shadow bugs chain senbon sand puppet vine fan gold paper shuriken ice), toutes de mêlée (MELEEK).
 // Les indices sont figés (sauvegardes, PRESETS) : les anciens styles à distance ont été remplacés EN PLACE par un style de mêlée du même clan.
 const STYLES=[
  ['Taijutsu','Deux directs, un uppercut, un coup de pied circulaire large, puis un coup de pied sauté qui fond sur la cible','x.st_tai','tai','fist',[-1,6],1.12,1.07],
@@ -319,7 +319,7 @@ JFXD.st_bloom=(f,k,e,t)=>{const q=P(f.x,f.y,32),s=q.s,o=ezo(Math.min(1,e*2.2)),R
  for(let i=0;i<6;i++){g.save();g.rotate(i*1.047+e*1.2);g.fillStyle=i%2?'#ff9ac8':'#ffd0e4';g.strokeStyle='#c8467a';g.lineWidth=1;g.beginPath();g.ellipse(R*.55,0,R*.55,R*.26,0,0,7);g.fill();g.stroke();g.restore()}
  circ(0,0,R*.22,'#ffe08a');g.restore();if(e<.4){g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff9ac8',(1-e/.4)*.9);g.lineWidth=2.5*s;g.beginPath();g.arc(q.x,q.y,(10+e*90)*s,0,7);g.stroke();g.globalCompositeOperation='source-over'}};
 
-// ---------- poses 3D (ANIM.st_*) ----------
+// ---------- poses du squelette (ANIM.st_*) ----------
 // repères : bras devant armX.x = -1.57, levé -3.1 ; armR.z < 0 / armL.z > 0 écarte ; puis y ramène le bras écarté vers l'avant (R : +, L : -)
 // chest.y > 0 = épaule droite en avant ; thighX.x < 0 jambe devant ; shinX.x > 0 plie le genou ; P.root.z avance le corps, P.rootR.y le fait tourner
 const stH=(e,a=.2,b=.55)=>e<a?ezo(e/a):e<b?1:1-ezio((e-b)/(1-b))*.85; // élan : vite à fond, tient, puis revient

@@ -231,10 +231,10 @@ PROJD.ab_nueed=(p,R,ra,t)=>{ab_scr();const T=t/1000,q=P(p.x,p.y,0),Rr=(p.ar||125
 PROJD.ab_wallc=(p,R,ra,t)=>{ab_scr();const T=t/1000,q=P(p.x,p.y,0),sd=p.ar||1,gr=Math.min(1,(p.life0-p.life)/.35),fd=Math.min(1,p.life/.4);g.globalAlpha=fd;const C=[];
  for(let i=0;i<3;i++){const h=(10+i*19)*gr*q.s,r=(13.5-i*2)*q.s*(.6+.4*gr);C.push([q.x+Math.sin(T*2.2+sd+i*1.4)*3.5*q.s,q.y-h-r*.4,r])}ab_blob(C,q.s);
  ab_dots(q.x,q.y-34*gr*q.s,15*q.s,32*q.s*gr,8,T*1.8,sd,q.s,ABK);if((sd|0)%3===0)ab_glints(q.x,q.y-30*q.s*gr,8*q.s,20*q.s,1,T+sd,q.s)};
-// clone d'insectes (décor) : copie du ninja (rendu 3D), insectes qui grouillent sur le corps
+// clone d'insectes (décor) : copie du ninja, insectes qui grouillent sur le corps
 PROJD.ab_cloned=(p,R,ra,t)=>{ab_scr();const o=units[+String(p.col).slice(2)];if(!o||!o.ch)return;const T=t/1000,q=P(p.x,p.y,0),S2=q.s*1.3,sk=o.ch.look.scale||1,k=Math.min(1,p.life/.3,(p.life0-p.life)/.15);
  let f=o._abF;if(!f||f.c!==o.c){f=o._abF=mkUnit(o.c,p.x,p.y,o.team);f.anim={k:'ab_still',t:99,m:99}}f.x=p.x;f.y=p.y;f.aim=p.rotA!=null?p.rotA:o.aim;f.moving=0;
- g.globalAlpha=.9*k;drawChar3(f,q.x,q.y,S2);g.globalAlpha=k;ab_dots(q.x,q.y-38*S2*sk,10*S2,30*S2*sk,30,T*.9,6,q.s,ABK);ab_dots(q.x,q.y-30*S2*sk,9*S2,24*S2*sk,10,T*1.1,3,q.s,ABM)};
+ g.globalAlpha=.9*k;drawChar(f,q.x,q.y,S2);g.globalAlpha=k;ab_dots(q.x,q.y-38*S2*sk,10*S2,30*S2*sk,30,T*.9,6,q.s,ABK);ab_dots(q.x,q.y-30*S2*sk,9*S2,24*S2*sk,10,T*1.1,3,q.s,ABM)};
 // éclat de lunettes (le geste de Shino)
 JFXD.ab_glint=(f,k,e,t,u)=>{if(!u)return;const q=P(u.x+Math.cos(u.aim)*6,u.y+Math.sin(u.aim)*6,60),s=q.s*(3+6*Math.sin(Math.PI*e));g.globalCompositeOperation='lighter';g.fillStyle=rgba('#ffffff',.9*k);
  g.beginPath();g.moveTo(q.x,q.y-s*1.6);g.lineTo(q.x+s*.3,q.y);g.lineTo(q.x,q.y+s*1.6);g.lineTo(q.x-s*.3,q.y);g.closePath();g.moveTo(q.x-s*1.6,q.y);g.lineTo(q.x,q.y+s*.3);g.lineTo(q.x+s*1.6,q.y);g.lineTo(q.x,q.y-s*.3);g.closePath();g.fill();circ(q.x,q.y,s*.6,rgba('#c8f0ff',.5*k))};
@@ -300,7 +300,7 @@ STATD.push((u,p,S,sk)=>{const c=u.ab_col||0,sp=u.ab_spyT>0,vd=u.ab_vd||0,sph=u.a
  if(sp){const h=P(u.x,u.y,0),pl=(t*1.3)%1;g.strokeStyle=rgba('#c8e07a',.5*(1-pl));g.lineWidth=1.5;g.beginPath();g.ellipse(h.x,h.y,(16+20*pl)*ps,(16+20*pl)*ps*K,0,0,7);g.stroke();
   const hx=p.x+Math.sin(t*2)*5*S,hy=p.y-(76+Math.sin(t*4)*3)*H;g.save();g.globalCompositeOperation='lighter';circ(hx,hy,3.5*S,'rgba(200,240,120,.35)');circ(hx,hy,1.6*S,'#e8ffb0');g.restore()}
  if(vd){g.fillStyle='#a060e0';for(let i=0;i<vd;i++){const xx=p.x-29*ps-4-i*6*ps,yy=top+3;g.beginPath();g.moveTo(xx,yy-3.5*ps);g.quadraticCurveTo(xx+3*ps,yy+1*ps,xx,yy+2.5*ps);g.quadraticCurveTo(xx-3*ps,yy+1*ps,xx,yy-3.5*ps);g.fill()}}});
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // remonte ses lunettes, puis d'une pichenette lâche l'insecte
  ab_flick:(P,e)=>{if(e<.4){const k=ezo(e/.4);pz(P,'armR',-2.2*k,0,.55*k);pz(P,'foreR',-2.4*k);pz(P,'head',.1*k)}else{const k=ezo(Math.min(1,(e-.4)/.22));pz(P,'armR',-2.2+.6*k,0,.55-.6*k);pz(P,'foreR',-2.4+2.3*k);pz(P,'chest',.08,.25*k)}pz(P,'armL',.1,0,.25);pz(P,'foreL',-.5)},

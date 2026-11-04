@@ -145,16 +145,10 @@ AFTER.push(()=>{
  const DU=drawUnit;drawUnit=u=>{if(u.sub_eat>0&&!u.dead)return;DU(u)};
  // le Rasenshuriken a son propre lancement (pas la sphère générique dans la main)
  const JR=JFX.rasenshuriken;JFX.rasenshuriken=(u,a,td,pre,ab)=>{if(ab&&ab.key==='sub_rsk')return;if(JR)JR(u,a,td,pre,ab)};
- // losange du Byakugô sur le front : visage 2D…
+ // losange du Byakugô sur le front
  if(typeof drawNinjaHead==='function'){const DH=drawNinjaHead;drawNinjaHead=(u,h,fx,fy,back,fl,t,run)=>{DH(u,h,fx,fy,back,fl,t,run);if(back||!(u.sub_byk>0))return;const ex=fx*1.5+fx*3.5,hy=-53;
   g.save();g.globalCompositeOperation='lighter';circ(ex,hy-1.4,3.2,'rgba(200,120,255,.35)');g.restore();subBDiamond(ex,hy-1.4,1.25,1.8,'#a050e0','#3a1050',.6)}}
- // … et visage 3D (décalque du visage redessiné avec le losange)
- if(typeof poseModel==='function'){const PM=poseModel,cache=new Map();
-  const bykTex=(L,md)=>{const base=faceTexture(L,md),key=base.uuid;if(cache.has(key))return cache.get(key);const c=document.createElement('canvas');c.width=256;c.height=200;const x=c.getContext('2d');x.drawImage(base.image,0,0);
-   const U=9.7,ex=128,hy=100,y=hy-1.5*U;x.fillStyle='rgba(200,120,255,.35)';x.beginPath();x.arc(ex,y,2*U,0,7);x.fill();x.fillStyle='#a050e0';x.strokeStyle='#3a1050';x.lineWidth=3;x.beginPath();x.moveTo(ex,y-1.25*U);x.lineTo(ex+.85*U,y);x.lineTo(ex,y+1.25*U);x.lineTo(ex-.85*U,y);x.closePath();x.fill();x.stroke();
-   const t=new THREE.CanvasTexture(c);t.colorSpace=THREE.SRGBColorSpace;cache.set(key,t);return t};
-  poseModel=(u,rec,dt,t)=>{PM(u,rec,dt,t);if(!rec.face||!rec.face.material||!u.ch)return;const want=u.sub_byk>0&&!u.dead,key=(rec.fm||'o')+(want?'+b':'');if(rec.sbB===key)return;rec.sbB=key;
-   rec.face.material.map=want?bykTex(u.ch.look,rec.fm||'o'):faceTexture(u.ch.look,rec.fm||'o');rec.face.material.needsUpdate=true}}});
+});
 // ---------- visuels ----------
 // serpents (au sol, sous les ninjas : ils sortent de la manche)
 PROJD.sub_snkh=()=>{};
@@ -205,7 +199,7 @@ STATD.push((u,p,S,sk)=>{if(!(u.sub_byk>0))return;const t=performance.now()/1000,
  g.strokeStyle=rgba('#c080ff',.55*a);g.lineWidth=2;g.beginPath();g.ellipse(p.x,p.y,26*S/1.3,10*S/1.3,0,0,7);g.stroke();
  for(let i=0;i<4;i++){const b=t*1.6+i*Math.PI/2,x=p.x+Math.cos(b)*26*S/1.3,y=p.y+Math.sin(b)*10*S/1.3;subBDiamond(x,y,2.6*S/1.3,3.6*S/1.3,rgba('#d8a8ff',.8*a))}
  for(let i=0;i<5;i++){const h=((t*.8+i/5)%1),x=p.x+Math.sin(i*2.4+t)*14*S/1.3,y=p.y-(10+h*60)*S*s2/1.3;subBDiamond(x,y,1.6*S/1.3,2.2*S/1.3,rgba(i%2?'#b8ffb0':'#d8a8ff',.7*(1-h)*a))}
- if(Math.sin(u.aim)>-.3){const fx=Math.cos(u.aim),d3=N3.ok&&N3.tile.get(u);circ(p.x+fx*(d3?3:5)*S,p.y-(d3?47:52.5)*S*s2,(2.6+Math.sin(t*6)*.6)*S,rgba('#c070ff',.45*a))}g.restore()});
+ if(Math.sin(u.aim)>-.3){const fx=Math.cos(u.aim);circ(p.x+fx*5*S,p.y-52.5*S*s2,(2.6+Math.sin(t*6)*.6)*S,rgba('#c070ff',.45*a))}g.restore()});
 JFXD.sub_bykon=(f,k,e,t,u)=>{if(!u)return;const q=P(u.x,u.y,0),s=q.s*1.3,sk=u.ch.look.scale||1,hx=q.x+Math.cos(u.aim)*5*s,hy=q.y-55.5*s*sk;g.save();g.globalCompositeOperation='lighter';
  const R=(6+e*40)*s;subBDiamond(hx,hy,R*.7,R,rgba('#d8a8ff',.5*k),rgba('#ffffff',.8*k),2);
  g.strokeStyle=rgba('#c080ff',.7*k);g.lineWidth=2*s;for(let i=0;i<10;i++){const b=i*.628+.3,L=(10+e*46)*s;g.beginPath();g.moveTo(hx+Math.cos(b)*L*.3,hy+Math.sin(b)*L*.3);g.lineTo(hx+Math.cos(b)*L,hy+Math.sin(b)*L);g.stroke()}
@@ -273,7 +267,7 @@ JFXD.sub_ckdrain=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;const q=P(tg.x,tg.y,0),
 STATD.push((u,p,S,sk)=>{if(!(u.sub_ckc>0))return;const t=performance.now()/1000,a=Math.min(1,u.sub_ckc*2),y=p.y-30*S*(sk||1);g.save();g.lineWidth=2.2;
  for(let i=0;i<5;i++){const b0=t*2+i*1.2566;g.strokeStyle=rgba(i%2?'#4ab0ff':'#9fd8ff',.75*a);g.beginPath();g.ellipse(p.x,y,22*S/1.3,8*S/1.3,0,b0,b0+.75);g.stroke()}
  g.strokeStyle=rgba('#ffffff',.8*a);g.lineWidth=1.4;for(let i=0;i<2;i++){const b=t*2+i*Math.PI+.9,x=p.x+Math.cos(b)*22*S/1.3,yy=y+Math.sin(b)*8*S/1.3;g.beginPath();g.moveTo(x-3*S,yy-3*S);g.lineTo(x+3*S,yy+3*S);g.stroke()}g.restore()});
-// ---------- animations 3D ----------
+// ---------- animations (poses du squelette, dessinées en 2D) ----------
 Object.assign(ANIM,{
  // serpents : le bras gauche se tend, manche en avant ; la main droite tient le poignet
  sub_jashu:(P,e)=>{const k=ezo(Math.min(1,e/.18))*(e>.75?1-(e-.75)/.25:1);pz(P,'armL',-1.62*k,0,-.12*k);pz(P,'foreL',-.05);pz(P,'armR',-1.25*k,0,.55*k);pz(P,'foreR',-1.2*k);pz(P,'chest',.22*k,-.4*k);pz(P,'head',.1*k,.25*k);P.root.z=5*k;pz(P,'thighL',-.55*k);pz(P,'shinL',.5*k);pz(P,'thighR',.35*k);pz(P,'shinR',.4*k)},

@@ -295,7 +295,7 @@ STATD.push((u,p,S,sk)=>{if(u.dead)return;const t=performance.now()/1000;
    for(let i=0;i<5;i++){const b=t*9+i*1.26;g.strokeStyle=rgba(c,.7);g.lineWidth=1.5;g.beginPath();g.moveTo(q.x+Math.cos(b)*6*q.s,q.y+Math.sin(b)*6*q.s);g.lineTo(q.x+Math.cos(b)*(12+8*k)*q.s,q.y+Math.sin(b)*(12+8*k)*q.s);g.stroke()}g.restore()}}
  // contre préparé : deux images du clone tremblent autour du ninja
  if(u.sub_ctr>0){g.save();g.strokeStyle=rgba('#7dff8a',.75);g.lineWidth=2;g.setLineDash([4,4]);g.lineDashOffset=-t*30;g.beginPath();g.ellipse(p.x,p.y,30*S/1.3,11*S/1.3,0,0,7);g.stroke();g.setLineDash([]);
-  if(N3.ok&&N3.tile.get(u)){const o=Math.sin(t*30)*5*S;g.globalAlpha=.24;drawChar3(u,p.x-7*S+o,p.y,S);drawChar3(u,p.x+7*S-o,p.y,S)}g.restore()}
+  {const o=Math.sin(t*30)*5*S;g.globalAlpha=.24;drawChar(u,p.x-7*S+o,p.y,S);drawChar(u,p.x+7*S-o,p.y,S)}g.restore()}
  // Mode Ermite : énergie naturelle qui tourne et monte, pigments orange
  if(u.sub_sage>0){const sk2=sk||1;g.save();g.globalCompositeOperation='lighter';for(let i=0;i<7;i++){const b=t*2.4+i*.9,h=((t*.7+i/7)%1),x=p.x+Math.cos(b)*20*S,y=p.y-(8+h*70)*S*sk2;circ(x,y,(3.2-h*2)*S,rgba(i%2?'#8ad05a':'#e8a020',.75*(1-h)))}
   g.strokeStyle=rgba('#e8a020',.5+.2*Math.sin(t*6));g.lineWidth=2;g.beginPath();g.ellipse(p.x,p.y,24*S,9*S,0,0,7);g.stroke();g.restore()}
@@ -313,7 +313,7 @@ PROJD.sub_tagk=(p,R,ra,t)=>{g.rotate(ra);const w=Math.sin(t/38)*3;g.fillStyle='#
 PROJD.sub_hkunai=(p,R,ra,t)=>{g.rotate(ra);g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ffe14a',.5);g.lineWidth=5;g.lineCap='round';g.beginPath();g.moveTo(-34,0);g.lineTo(-8,0);g.stroke();g.restore();
  g.fillStyle='#f4f4f0';g.fillRect(-15,-2.2,9,4.4);g.fillStyle='#2a2a30';for(let i=0;i<3;i++)g.fillRect(-14+i*3,-1.6,1.2,3.2);subKunai(18,'#e8ecf2');g.fillStyle='#e8ecf2';g.beginPath();g.moveTo(-1,-3);g.lineTo(5,-7);g.lineTo(3,-2);g.moveTo(-1,3);g.lineTo(5,7);g.lineTo(3,2);g.fill()};
 PROJD.sub_wirek=(p,R,ra,t)=>{g.rotate(ra);subKunai(19);g.fillStyle='rgba(255,255,255,.9)';g.fillRect(6+((t/20)%10)-5,-.6,3,1.2)};
-// clone : un vrai ninja en 3D (même modèle que le lanceur), trié en profondeur grâce à son porteur
+// clone : un vrai ninja (même dessin et même pose que le lanceur), trié en profondeur grâce à son porteur
 PROJD.sub_clone=(p,R,ra,t)=>{const z=Math.sin(Math.PI*(1-p.life/p.life0))*70+15,q0=P(p.x,p.y,z);g.scale(1/q0.s,1/q0.s);g.translate(-q0.x,-q0.y);
  const o=units[p.oy];if(!o||!o.ch)return;const id=p.life0,now=t/1000;let f=SUBF.get(id);
  if(!f||f.c!==o.c){f=mkUnit(o.c,p.x,p.y,o.team);f.cmbH=0;f._sp=p.spear||0;f._t=now;SUBF.set(id,f);if(SUBF.size>24)for(const [k,v] of SUBF)if(now-(v._seen||0)>3)SUBF.delete(k)}
@@ -322,7 +322,7 @@ PROJD.sub_clone=(p,R,ra,t)=>{const z=Math.sin(Math.PI*(1-p.life/p.life0))*70+15,
  f.swing=Math.max(0,f.swing-dt);f.thrT=Math.max(0,(f.thrT||0)-dt);f.cmbT=Math.max(0,(f.cmbT||0)-dt);
  const q=P(p.x,p.y,0),a=Math.min(1,(6-p.life)/.15+.3,p.life/.2+.2);
  if(p.rock){const fz=p.zapP===2,bl=Math.sin(t/(fz?25:90))>0;g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(fz&&bl?'#ffffff':'#ff7a2a',fz?.5:.22);g.beginPath();g.ellipse(q.x,q.y,26*q.s,10*q.s,0,0,7);g.fill();g.restore()}
- g.save();g.globalAlpha*=Math.min(1,a);drawChar3(f,q.x,q.y,q.s*1.3);g.restore();
+ g.save();g.globalAlpha*=Math.min(1,a);drawChar(f,q.x,q.y,q.s*1.3);g.restore();
  if(p.rock){const fz=p.zapP===2;for(const [dx,dy,r] of[[-6,46,.3],[7,40,-.25]]){g.save();g.translate(q.x+dx*q.s,q.y-dy*q.s);g.rotate(r);g.fillStyle='#f0e0b0';g.fillRect(-4*q.s,-6*q.s,8*q.s,12*q.s);g.fillStyle='#c0302a';g.fillRect(-1*q.s,-4*q.s,2*q.s,8*q.s);g.restore()}
   if((t/(fz?30:70)|0)%2){circ(q.x-6*q.s,q.y-53*q.s,(fz?3.5:2.4)*q.s,'#ffd36a');circ(q.x+7*q.s,q.y-47*q.s,(fz?3:2)*q.s,'#ff9a3a')}}};
 // Gamabunta (assis ou en chute) : dessin à plat avec gros contour sombre, comme les ninjas
@@ -450,7 +450,7 @@ JFXD.sub_hbeam=(f,k,e,t,u,tg)=>{if(!u||!tg)return;const a=P(u.x+Math.cos(u.aim)*
 JFXD.sub_scalpel=(f,k,e,t,u)=>{if(!u)return;const c=f.col;g.globalCompositeOperation='lighter';g.lineCap='round';for(const s of[-1,1]){const a0=f.a-.85*s,a1=f.a+.85*s*(-1+2*Math.min(1,e*2.5));g.strokeStyle=rgba(c,.9*k);g.lineWidth=4;gEll(u.x,u.y,92,Math.min(a0,a1),Math.max(a0,a1));g.stroke();g.strokeStyle=rgba('#ffffff',.9*k);g.lineWidth=1.5;gEll(u.x,u.y,88,Math.min(a0,a1),Math.max(a0,a1));g.stroke()}
  for(const s of['L','R']){const b=u.aim+(s==='L'?-.6:.6),q=P(u.x+Math.cos(b)*18,u.y+Math.sin(b)*18,32);g.strokeStyle=rgba(c,.8*k);g.lineWidth=3;g.beginPath();g.moveTo(q.x,q.y);g.lineTo(q.x+Math.cos(u.aim)*14*q.s,q.y+Math.sin(u.aim)*10*q.s);g.stroke()}};
 // --- contre du clone : l'image du clone frappé s'efface dans la fumée ; entaille derrière l'attaquant
-JFXD.sub_cghost=(f,k,e,t,u)=>{if(!u||!N3.ok||!N3.tile.get(u))return;const q=P(f.x,f.y,0);g.globalAlpha=.6*k;drawChar3(u,q.x,q.y+e*6,q.s*1.3)};
+JFXD.sub_cghost=(f,k,e,t,u)=>{if(!u)return;const q=P(f.x,f.y,0);g.globalAlpha=.6*k;drawChar(u,q.x,q.y+e*6,q.s*1.3)};
 JFXD.sub_slash=(f,k,e,t,u)=>{const c=f.col||'#ffffff',q=P(f.x,f.y,34);g.globalCompositeOperation='lighter';g.lineCap='round';g.strokeStyle=rgba(c,.95*k);g.lineWidth=4*k+1;const b=f.a,L=34*q.s;
  g.beginPath();g.moveTo(q.x+Math.cos(b-1)*L,q.y+Math.sin(b-1)*L*.7);g.quadraticCurveTo(q.x+Math.cos(b)*L*1.5,q.y+Math.sin(b)*L,q.x+Math.cos(b+1)*L,q.y+Math.sin(b+1)*L*.7);g.stroke()};
 // --- pilule : la pilule saute à la bouche, puis bouffée d'énergie rouge orangé
@@ -503,7 +503,7 @@ JFXD.sub_slugjump=(f,k,e,t,u,tg)=>{if(!u||!tg)return;const x=lerp(u.x,tg.x,e),y=
 // --- Nindô (trait) : flamme de volonté
 JFXD.sub_nindo=(f,k,e,t,u)=>{if(!u)return;const q=P(u.x,u.y,0);g.globalCompositeOperation='lighter';for(let i=0;i<9;i++){const b=i*.7+t*3,x=q.x+Math.cos(b)*(14+e*10)*q.s,y=q.y-((t*90+i*23)%80)*q.s;g.fillStyle=rgba(i%2?'#ff9a3a':'#ffd36a',.7*k);g.beginPath();g.moveTo(x-4*q.s,y);g.quadraticCurveTo(x,y-14*q.s,x+4*q.s,y);g.fill()}
  g.strokeStyle=rgba('#ff9a3a',.8*k);g.lineWidth=3;gEll(u.x,u.y,24+e*40);g.stroke()};
-// ---------- animations 3D ----------
+// ---------- animations (poses du squelette, dessinées en 2D) ----------
 Object.assign(ANIM,{
  // Rasengan : la main droite porte la sphère, la gauche la façonne par-dessus ; puis poussée en fente avant
  sub_rasw:(P)=>{pz(P,'armR',-1.25,0,.18);pz(P,'foreR',-.55);pz(P,'armL',-1.45,0,-.62);pz(P,'foreL',-1.25);pz(P,'chest',.18,-.3);pz(P,'head',.18,-.2);P.root.y=-2.5;pz(P,'thighL',-.45);pz(P,'shinL',.6);pz(P,'thighR',.25);pz(P,'shinR',.45)},

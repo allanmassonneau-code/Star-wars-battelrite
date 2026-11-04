@@ -234,15 +234,11 @@ function do_cube(x,y,s,rot,col,ol){const pts=[];for(let i=0;i<6;i++){const b=rot
  // face du dessus plus claire
  g.fillStyle=rgba('#fff8e0',ol?.35:.2);g.beginPath();g.moveTo(x,y);g.lineTo(...pts[5]);g.lineTo(...pts[4]);g.lineTo(...pts[3]);g.closePath();g.fill();
  g.strokeStyle='rgba(255,248,224,.95)';g.lineWidth=1.8;g.beginPath();pts.forEach(([a,b],i)=>i?g.lineTo(a,b):g.moveTo(a,b));g.closePath();for(const i of[1,3,5]){g.moveTo(x,y);g.lineTo(pts[i][0],pts[i][1])}g.stroke()}
-// Kyôka : la peau devient roche (silhouette 3D du ninja recolorée en pierre, grain et fissures)
-let do_tc=null;
-function do_stone(u,p,S,f){const tl=typeof N3!=='undefined'&&N3.ok&&N3.tile.get(u);
- // sans 3D (ordinateur lent) : voile de pierre sur le corps du dessin 2D
- if(!tl){const sk=u.ch.look.scale||1;g.save();g.globalAlpha=f*.42;g.fillStyle='#7a6a58';g.beginPath();g.ellipse(p.x,p.y-20*S*sk,11*S*sk,17*S*sk,0,0,7);g.fill();g.globalAlpha=f*.25;g.beginPath();g.ellipse(p.x,p.y-44*S*sk,13*S*sk,12*S*sk,0,0,7);g.fill();g.restore();return}if(!do_tc)do_tc=document.createElement('canvas');const c=do_tc;if(c.width!==TPW||c.height!==TPH){c.width=TPW;c.height=TPH}const x=c.getContext('2d');
- x.globalCompositeOperation='copy';x.drawImage(N3.cv,tl.sx,tl.sy,TPW,TPH,0,0,TPW,TPH);x.globalCompositeOperation='source-atop';x.fillStyle='rgba(118,100,82,.74)';x.fillRect(0,0,TPW,TPH);
- x.fillStyle='rgba(176,150,120,.45)';x.fillRect(0,0,TPW*.42,TPH);x.fillStyle='rgba(54,40,28,.55)';for(let i=0;i<30;i++)x.fillRect(do_h(i*3)*TPW,do_h(i*7+1)*TPH,3,2);
- x.strokeStyle='rgba(36,26,16,.8)';x.lineWidth=2;x.beginPath();for(let i=0;i<6;i++){const a=(.3+do_h(i*11)*.4)*TPW,b=(.25+do_h(i*13)*.55)*TPH;x.moveTo(a,b);x.lineTo(a+7,b+9);x.lineTo(a+2,b+19)}x.stroke();x.globalCompositeOperation='source-over';
- const sk=u.ch.look.scale||1,w=TWU*S*sk,h=THU*S*sk;g.save();g.globalAlpha=f;g.drawImage(c,p.x-w/2,p.y-h+FOOT*S*sk,w,h);g.restore()}
+// Kyôka : la peau devient roche (silhouette du ninja recolorée en pierre, grain et fissures)
+// la silhouette 2D du ninja recolorée en pierre (charTint, nr_char.js), avec grain clair à gauche, taches et fissures
+function do_stone(u,p,S,f){charTint(u,p,S,'rgba(118,100,82,.74)',f,(x,w,h)=>{x.fillStyle='rgba(176,150,120,.45)';x.fillRect(0,0,w*.42,h);x.fillStyle='rgba(54,40,28,.55)';const r=Math.max(1.2,w/80);
+ for(let i=0;i<30;i++)x.fillRect((.25+do_h(i*3)*.5)*w,(.2+do_h(i*7+1)*.75)*h,r*1.5,r);x.strokeStyle='rgba(36,26,16,.8)';x.lineWidth=r;x.beginPath();
+ for(let i=0;i<6;i++){const a=(.35+do_h(i*11)*.3)*w,b=(.3+do_h(i*13)*.5)*h;x.moveTo(a,b);x.lineTo(a+r*3.5,b+r*4.5);x.lineTo(a+r,b+r*9.5)}x.stroke()})}
 PROJD.do_kaju=(p,R,ra,t)=>{g.globalCompositeOperation='lighter';fxGlowS(0,0,R*3,'#f0d890',.4*fxA(p));g.strokeStyle=rgba('#f0d890',.55);g.lineWidth=2;const c=Math.cos(ra),s=Math.sin(ra);
  g.beginPath();for(const o of[-4,4]){g.moveTo(-c*R*1.2-s*o,-s*R*1.2+c*o);g.lineTo(-c*R*3.4-s*o*.6,-s*R*3.4+c*o*.6)}g.stroke();g.globalCompositeOperation='source-over';do_cube(0,0,R*1.15,t/160,'#f6e6b0')};
 // boulet de boue (en cloche) avec ses gouttes
@@ -371,7 +367,7 @@ const DO_WD={
   g.strokeStyle='#3a5a24';g.lineWidth=1.4;g.beginPath();for(let i=0;i<3;i++){const q=V.c((i-1)*V.hl*.6,V.hw*.9,H);g.moveTo(q.x,q.y);g.lineTo(q.x+(i%2?2:-2)*q.s,q.y-7*q.s)}g.stroke();
   if(a<.3){g.fillStyle=rgba('#b8a080',.55*(1-a/.3));g.beginPath();g.ellipse(p.x,p.y-a*30*p.s,(9+a*36)*p.s,(4+a*12)*p.s,0,0,7);g.fill()}},
 };
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // à genoux, les deux paumes plaquées au sol (Doryûheki)
  do_palms:(P,e)=>{const q=ezo(Math.min(1,e/.25))*(e>.75?1-(e-.75)/.25:1);P.root.y=-8*q;pz(P,'thighL',-1.05*q);pz(P,'shinL',1.85*q);pz(P,'thighR',-.25*q,0,-.12*q);pz(P,'shinR',1.6*q);pz(P,'chest',.8*q);pz(P,'head',-.4*q);pz(P,'armL',-1.05*q,0,-.1*q);pz(P,'armR',-1.05*q,0,.1*q);pz(P,'foreL',-.1);pz(P,'foreR',-.1)},

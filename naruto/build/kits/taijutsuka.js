@@ -45,13 +45,9 @@ const tjLock=(u,d,jump)=>u.dash={sx:u.x,sy:u.y,tx:u.x,ty:u.y,t:0,dur:d,jump:jump
 // projeter (air) n'interrompt pas une incantation dans le moteur : on la coupe à la main (sauf cible inarrêtable)
 const tjCut=e=>{if(!e||e.dead||e.unstop>0)return;if(e.cast||e.spin||e.flame)say(e,'INTERROMPU','#fc6');e.cast=null;e.spin=null;e.flame=null;e.dash=null};
 // silhouette fantôme du ninja (images rémanentes)
-function tjGhost(u,x,y,z,a){if(!u||a<=.01)return;const q=P(x,y,z||0);g.save();g.globalAlpha=a;drawChar3(u,q.x,q.y,q.s*1.3*(u.giant>0?1.35:1));g.restore()}
-// teinte du modèle 3D (peau rougie des portes) : copie de sa case recolorée par-dessus
-let TJC=null;
-function tjTint(u,p,S,col,a){if(!N3.ok||typeof TPW==='undefined')return;const tl=N3.tile.get(u);if(!tl)return;const sk=u.ch.look.scale||1;
- if(!TJC)TJC=document.createElement('canvas');if(TJC.width!==TPW||TJC.height!==TPH){TJC.width=TPW;TJC.height=TPH}const c=TJC.getContext('2d');
- c.globalCompositeOperation='copy';c.drawImage(N3.cv,tl.sx,tl.sy,TPW,TPH,0,0,TPW,TPH);c.globalCompositeOperation='source-atop';c.fillStyle=col;c.fillRect(0,0,TPW,TPH);
- const w=TWU*S*sk,h=THU*S*sk;g.save();g.globalAlpha=a;g.drawImage(TJC,p.x-w/2,p.y-h+FOOT*S*sk,w,h);g.restore()}
+function tjGhost(u,x,y,z,a){if(!u||a<=.01)return;const q=P(x,y,z||0);g.save();g.globalAlpha=a;drawChar(u,q.x,q.y,q.s*1.3*(u.giant>0?1.35:1));g.restore()}
+// teinte du ninja (peau rougie des portes) : sa silhouette 2D recolorée par-dessus (charTint, nr_char.js)
+function tjTint(u,p,S,col,a){charTint(u,p,S,col,a)}
 
 // ---------- mécaniques ----------
 Object.assign(NAT,{
@@ -255,7 +251,7 @@ TRAITS[10]={nom:'Huit Portes',desc:'Frapper et encaisser ouvre peu à peu les po
   const f=(u.tj_g||0)-n;if(n<8&&f>0){g.fillStyle='rgba(255,255,255,.45)';g.fillRect(X+n*13,Y+15-15*f,11,15*f)}}};
 AFTER.push(()=>{UK.push('tj_g','tj_esq','tj_red','tj_8');FXTELE.add('tj_foot')});
 
-// ---------- animations 3D ----------
+// ---------- animations (poses du squelette, dessinées en 2D) ----------
 Object.assign(ANIM,{
  // garde du fauve : main droite tendue paume ouverte, main gauche dans le dos
  tj_stance:(P,e,u,t)=>{const k=u&&u.cast?Math.min(1,u.cast.t/.12):Math.min(1,e*4);P.root.y=-3*k+Math.sin(t*9)*.4;pz(P,'chest',.1*k,.35*k);pz(P,'head',0,-.3*k);

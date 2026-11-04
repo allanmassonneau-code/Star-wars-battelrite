@@ -206,7 +206,7 @@ rep("ex=!!(ex&&i>0&&!ab.ult&&u.energy>=25);","ex=false;")
 rep("exOn=(keys.ShiftLeft||keys.ShiftRight)&&p.energy>=25","exOn=false")
 s=s.replace("Maj + jutsu = version EX (25 chakra) · ","")
 # nouveaux ninjas : dessin, animations, arme selon le style, chien Inuzuka
-rep("function drawChar(u,bx,by,s){",open(SP+'nr_char.js').read()+open(SP+'nr_3d.js').read()+"\nfunction drawChar(u,bx,by,s){if(u.ch.look.head.t==='ninja')return drawNinja(u,bx,by,s);")
+rep("function drawChar(u,bx,by,s){",open(SP+'nr_char.js').read()+open(SP+'nr_pose.js').read()+"\nfunction drawChar(u,bx,by,s,al){if(u.ch.look.head.t==='ninja')return drawNinja(u,bx,by,s,0,al);")
 rep(" const aur=u.auraV&&auraOn(u);if(aur)drawAura(u,p,S2,sk);drawChar(u,p.x,p.y,S2);"," const aur=u.auraV&&auraOn(u);if(aur)drawAura(u,p,S2,sk);if(u.ch.look.dog&&Math.sin(u.aim)<0)drawDog(u);drawChar(u,p.x,p.y,S2);if(u.ch.look.dog&&Math.sin(u.aim)>=0)drawDog(u);")
 # jutsu signature : effets au lancement et à l'explosion, états visibles
 rep("function drawProj(p){const v=p.vfx;",open(SP+'nr_jfx.js').read()+"\nfunction drawProj(p){const v=p.vfx;")
@@ -340,26 +340,18 @@ rep(" for(const p of projs){VFX=p.vfx||null;if(p.steer"," clashProjs();\n for(co
 rep("  p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;p.rot+=dt*25;","  p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;p.rot+=dt*25;if(!p.windB&&ELM[p.vfx]===0&&inWind(p))boostFire(p);")
 rep("drawStatusN(u,p,S2,sk);drawFlowN(u,p,S2,sk);","drawStatusN(u,p,S2,sk);drawFlowN(u,p,S2,sk);drawExtraN(u,p,S2,sk);")
 rep("eBar(30,59,360,p.energy/100);","eBar(30,59,360,p.energy/100);{const T=trait(p);if(T&&T.hud)try{T.hud(p,30,96)}catch(e){}}")
-# ninjas en 3D : Three.js chargé à côté du jeu, rendu de l'atlas au début de chaque image, cases collées à la place du dessin 2D
-rep('<script src="peerjs.min.js','<script src="three.min.js"></script>\n<script src="peerjs.min.js')
-rep("function draw(){\n fit();g.setTransform(RS,0,0,RS,0,0);g.imageSmoothingEnabled=true;","function draw(){\n fit();g.setTransform(RS,0,0,RS,0,0);g.imageSmoothingEnabled=true;render3D();")
 # barre de vie et nom au-dessus des persos : suit la taille choisie (bh)
 # ellipse au sol : rayon borné à 0 (un cercle d'alerte qui rétrécit, ou une projection à échelle négative, levait « radius is negative » et coupait l'image)
 rep("function gEll(x,y,r,a0=0,a1=7){const p=P(x,y);g.beginPath();g.ellipse(p.x,p.y,r*p.s,r*p.s*K,0,a0,a1)}","function gEll(x,y,r,a0=0,a1=7){const p=P(x,y),R=Math.max(0,r*p.s)||0;g.beginPath();g.ellipse(p.x,p.y,R,R*K,0,a0,a1)}")
 rep("const top=p.y-(100*sk)*p.s;","const top=p.y-(100*sk*(u.ch.look&&u.ch.look.bh||1)*(u.giant>0?1.32:1))*p.s;") # géant : la barre de PV passe au-dessus de la tête agrandie
-rep("drawChar(u,p.x,p.y,S2)","drawChar3(u,p.x,p.y,S2)")
 # textes flottants : un nouveau texte qui chevauche un texte récent du même endroit monte d'une ligne (« ENTRAVÉ » puis « COLLÉ » lisibles)
 rep(" for(const t of txt){const p=P(t.x,t.y,t.z);"," txtLay();for(const t of txt){const p=P(t.x,t.y,t.z);")
 # HUD : nom du jutsu ajusté à sa case (rétréci, sans le préfixe « Katon : » si besoin, sinon coupé)
 rep("text(exS&&ab.ex?ab.ex.n:ab.n,x+s/2,y+sh+13,10,exS&&ab.ex?'#ffe81f':'#9fb3d9','center','normal')});","hudAbN(exS&&ab.ex?ab.ex.n:ab.n,x+s/2,y+sh+13,exS&&ab.ex?'#ffe81f':'#9fb3d9',s+gap-4)});")
-rep("drawDog(u);drawChar3(u,p.x,p.y,S2);if(u.ch.look.dog","drawDog(u);drawBackN(u,p,S2,sk);drawChar3(u,p.x,p.y,S2);if(u.ch.look.dog")
-# option d'affichage : ninjas en 3D (activés par défaut, coupés automatiquement si l'ordinateur rame)
-rep(' <button id="oClose">Fermer</button>',' <h2 style="margin-top:14px">Affichage</h2>\n <label>Ninjas en 3D <input type="checkbox" id="o3d"></label>\n <button id="oClose">Fermer</button>')
-rep("const OPT={master:60,fx:80,voice:80,voiceOn:true,wil:true,spat:true};","const OPT={master:60,fx:80,voice:80,voiceOn:true,wil:true,spat:true,p3d:true};")
-rep("$('oSpat').checked=OPT.spat;$('oMute').checked=muted}","$('oSpat').checked=OPT.spat;$('oMute').checked=muted;$('o3d').checked=OPT.p3d!==false}")
-rep("$('oMute').onchange=e=>{muted=e.target.checked};","$('oMute').onchange=e=>{muted=e.target.checked};$('o3d').onchange=e=>{OPT.p3d=e.target.checked;N3.on=true;N3.slow=0;applyOpt()};")
-# clones (Multiclonage, nuées…) dessinés comme les ninjas : en 3D si disponible
-rep("drawChar(f,p.x,p.y,p.s*1.15*(tu.big?1.2:1))","drawChar3(f,p.x,p.y,p.s*1.15*(tu.big?1.2:1))")
+rep("drawDog(u);drawChar(u,p.x,p.y,S2);if(u.ch.look.dog","drawDog(u);drawBackN(u,p,S2,sk);drawChar(u,p.x,p.y,S2);if(u.ch.look.dog")
+# options d'affichage (Partie & options) : le jeu est entièrement en 2D ; une ancienne option « ninjas en 3D » gardée dans nrOpt est oubliée au chargement
+rep(' <button id="oClose">Fermer</button>',' <h2 style="margin-top:14px">Affichage</h2>\n <button id="oClose">Fermer</button>')
+rep("try{Object.assign(OPT,JSON.parse(localStorage.getItem('nrOpt')||'{}'))}catch(e){}","try{Object.assign(OPT,JSON.parse(localStorage.getItem('nrOpt')||'{}'))}catch(e){}delete OPT.p3d;")
 # clan Shirogane : la marionnette est triée en profondeur avec les ninjas (sgList dans kits/shirogane.js)
 rep("for(const tu of turrets)if(near(tu.x,tu.y))list.push({y:tu.y,d:()=>drawTurret(tu)});","for(const tu of turrets)if(near(tu.x,tu.y))list.push({y:tu.y,d:()=>drawTurret(tu)});sgList(list);")
 # déplacement plus léger + sprint (Maj maintenue) : plus rapide, consomme l'endurance ; les bots sprintent pour rejoindre leur cible
@@ -413,8 +405,7 @@ rep("if(u.energy<ck){ckLack(u,i);return false}","if(u.energy<ck){ckLack(u,i);ret
 rep("u.energy-=ck;if(ab.ult&&ck){","u.energy-=ck;if(hpc)hpPay(u,hpc,ab);if(ab.rank==='S'&&i>0&&!rec){") # clan Chinoike (un ultime payé en PV garde son cri et sa secousse) ; arbres martiaux à 0 chakra : le rang S garde aussi cri, flash et secousse (pas à la relance)
 rep("if(!h||u.cds[i]>0||u.energy<jcost(ab)||aiSave(u,i,h))continue;","if(!h||u.cds[i]>0||u.energy<jcost(ab)||aiSave(u,i,h)||(ab.hpc&&u.hp<u.max*.3+hpcost(u,ab)))continue;") # clan Chinoike
 rep("function hudCost(p,ab,i,x,y,s,sh){if(!i)return;","function hudCost(p,ab,i,x,y,s,sh){if(!i)return;if(ab&&ab.hpc){hudHpc(p,ab,x,y,s,sh);return}") # clan Chinoike
-# clan Chinoike : lame de couleur (look.weapon.blade, ex. sabre de sang cristallisé) en 3D et en 2D ; sans blade, lame acier inchangée
-rep("add(box(1.2,.5,32),'handR','#e8ecf2',[0,-1,22])","add(box(1.2,.5,32),'handR',W.blade||'#e8ecf2',[0,-1,22])") # clan Chinoike
+# clan Chinoike : lame de couleur (look.weapon.blade, ex. sabre de sang cristallisé) ; sans blade, lame acier inchangée
 rep("g.fillStyle='#e8ecf2';g.beginPath();g.moveTo(3,-1.4);","g.fillStyle=u.ch.look.weapon.blade||'#e8ecf2';g.beginPath();g.moveTo(3,-1.4);") # clan Chinoike
 # mort subite plus tardive : les duels durent plus longtemps
 rep("const SD_START=45,SD_LEN=35;","const SD_START=90,SD_LEN=55;")
@@ -526,8 +517,8 @@ rep("""function glow(x,y,r,col,a){const p=P(x,y),R0=r*p.s;if(!(R0>0)||p.x+R0<-16
 rep("for(const f of fx)if(f.light)glow(f.x,f.y,f.r,f.col,.45*f.t/f.m);","for(const f of fx)if(f.light){const a=(f.a??.45)*f.t/f.m*fxA(f)*(f.oi!=null?Math.min(1,fxK(f)/.8):1);if(a>.03)glow(f.x,f.y,f.r,f.col,a)}")
 rep("fx=fx.filter(f=>f.t>0);for(const t of txt)","fx=fx.filter(f=>f.t>0);fxCull();for(const t of txt)")
 # option « Intensité des effets » (Partie & options → Affichage), gardée dans nrOpt comme les autres options d'affichage ; propre à chaque joueur (rien n'est envoyé en ligne)
-rep(' <label>Ninjas en 3D <input type="checkbox" id="o3d"></label>\n',' <label>Ninjas en 3D <input type="checkbox" id="o3d"></label>\n <label title="Faible : moins de particules, aucune secousse. En grande bataille les effets sont adoucis automatiquement ; ceux des ennemis restent discrets, leurs zones de danger toujours nettes.">Intensité des effets <select id="oFxI"><option value="0">Faible</option><option value="1">Normal</option><option value="2">Fort</option></select></label>\n')
-rep("$('o3d').checked=OPT.p3d!==false}","$('o3d').checked=OPT.p3d!==false;$('oFxI').value=String(OPT.fxi==null?1:OPT.fxi)}")
-rep("$('o3d').onchange=e=>{OPT.p3d=e.target.checked;N3.on=true;N3.slow=0;applyOpt()};","$('o3d').onchange=e=>{OPT.p3d=e.target.checked;N3.on=true;N3.slow=0;applyOpt()};$('oFxI').onchange=e=>{OPT.fxi=clamp(+e.target.value|0,0,2);applyOpt()};")
+rep(' <h2 style="margin-top:14px">Affichage</h2>\n',' <h2 style="margin-top:14px">Affichage</h2>\n <label title="Faible : moins de particules, aucune secousse. En grande bataille les effets sont adoucis automatiquement ; ceux des ennemis restent discrets, leurs zones de danger toujours nettes.">Intensité des effets <select id="oFxI"><option value="0">Faible</option><option value="1">Normal</option><option value="2">Fort</option></select></label>\n')
+rep("$('oSpat').checked=OPT.spat;$('oMute').checked=muted}","$('oSpat').checked=OPT.spat;$('oMute').checked=muted;$('oFxI').value=String(OPT.fxi==null?1:OPT.fxi)}")
+rep("$('oMute').onchange=e=>{muted=e.target.checked};","$('oMute').onchange=e=>{muted=e.target.checked};$('oFxI').onchange=e=>{OPT.fxi=clamp(+e.target.value|0,0,2);applyOpt()};")
 open(ROOT+'naruto/index.html','w').write(s)
 print('ok',len(s))

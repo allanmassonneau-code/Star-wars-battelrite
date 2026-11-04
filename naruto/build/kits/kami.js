@@ -265,7 +265,7 @@ AUXD.km_wings=(x,k,t)=>{const u=x.ui!=null?units[x.ui]:null;if(!u||u.dead)return
   if(i<2){g.strokeStyle=rgba(KMC.b,.8);g.beginPath();g.moveTo(rx+(tx-rx)*.3,ry+(ty-ry)*.3);g.lineTo(tx,ty);g.stroke()}}
  if(big){g.globalCompositeOperation='lighter';g.fillStyle=rgba(KMC.l,.08);g.beginPath();g.ellipse(q.x,q.y-14*s,34*s,22*s,0,0,7);g.fill()}g.restore()};
 
-// ---------- poses 3D ----------
+// ---------- poses du squelette ----------
 Object.assign(ANIM,{
  // Shuriken : bras croisés devant, puis les deux mains lancent en éventail
  km_flick:(P,e)=>{if(e<.35){const k=ezo(e/.35);pz(P,'armL',-1.3*k,0,-.5*k);pz(P,'foreL',-1.7*k);pz(P,'armR',-1.3*k,0,.5*k);pz(P,'foreR',-1.7*k);pz(P,'chest',-.1*k)}

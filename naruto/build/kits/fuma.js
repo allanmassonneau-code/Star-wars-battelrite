@@ -159,7 +159,7 @@ PROJD.fm_wire=(p,R,ra,t)=>{g.scale(1,.62);g.rotate(t/30);fmStar(R*1.5,FM_STEEL,'
 function fmWire(ax,ay,az,bx,by,bz,sag,al){const a=P(ax,ay,az),b=P(bx,by,bz),mx=(a.x+b.x)/2,my=(a.y+b.y)/2+sag;g.save();g.lineCap='round';
  g.strokeStyle=rgba('#1a1820',.5*al);g.lineWidth=2.6;g.beginPath();g.moveTo(a.x,a.y);g.quadraticCurveTo(mx,my,b.x,b.y);g.stroke();g.strokeStyle=rgba('#e8f2ff',.9*al);g.lineWidth=1.1;g.stroke();g.restore()}
 AUXD.fm_wl=(x,k,t)=>{const o=units[x.ui];if(!o||o.dead)return;fmWire(o.x,o.y,32,x.x,x.y,28,4,1)};
-// ligoté : fil tendu jusqu'au lanceur (les spires autour de la cible sont dans STATD, par-dessus le modèle 3D)
+// ligoté : fil tendu jusqu'au lanceur (les spires autour de la cible sont dans STATD, par-dessus le ninja)
 AUXD.fm_bind=(x,k,t)=>{const e=units[x.ti],o=units[x.ui];if(!e||e.dead)return;const al=Math.min(1,x.t/.25);if(o&&!o.dead&&dist(o,e)<520)fmWire(o.x,o.y,32,e.x,e.y,30,2,al*.8)};
 // spires de fil autour du corps (p = pieds à l'écran, H = hauteur de la tête)
 function fmBindDraw(x,p,S,H,t){const al=Math.min(1,x.t/.25);g.save();g.lineCap='round';for(let i=0;i<4;i++){const y=p.y-H*(.13+i*.115),rx=(17-i*1.2)*S,ry=5*S,a0=t*6+i*1.7;
@@ -257,7 +257,7 @@ TRAITS[17]={nom:'Marque de l\'assassin',desc:'Tes shuriken marquent la cible 4 s
   text((rd?'Dans le dos : prêt':'Dans le dos')+(n?' · '+n+' marqué'+(n>1?'s':''):''),x+w+24,yy+7,11,'#f0c8cc','left','normal')}};
 // apparence : le grand Fûma shuriken dans le dos (si aucun objet n'est choisi)
 CLOOK[17]=(look,l)=>{if(!(l.d|0)&&!look.gourd)look.back='fuma'};
-// ---------- poses 3D ----------
+// ---------- poses du squelette ----------
 const fmH=(e,a,b)=>e<a?ezo(e/a):e<b?1:1-ezio((e-b)/(1-b))*.85;
 Object.assign(ANIM,{
  // lancer de revers, bras droit puis gauche

@@ -6,7 +6,7 @@
 // Simulateur : une iframe cachée charge le même jeu avec ?sim=1 (ni rendu ni boucle de jeu) et joue les duels par tranches, pilotée par messages :
 // l'état de la partie et du menu du joueur n'est jamais touché, et rien ne tourne quand le panneau est fermé.
 // L'iframe est en bac à sable (sandbox) : elle n'a pas accès aux sauvegardes du joueur. Elle tourne souvent dans le MÊME processus que la page
-// (pas d'isolation des iframes en bac à sable partout) : les tranches sont donc courtes (10 ms, temps vérifié après chaque image simulée) pour garder l'interface fluide. En file:// le bac à sable bloquerait les scripts locaux (three.js, PeerJS) : iframe ordinaire.
+// (pas d'isolation des iframes en bac à sable partout) : les tranches sont donc courtes (10 ms, temps vérifié après chaque image simulée) pour garder l'interface fluide. En file:// le bac à sable bloquerait les scripts locaux (PeerJS) : iframe ordinaire.
 const BLSIM=/[?&]sim=1(&|$)/.test(location.search);
 const BLC={gm:1,jm:1,m1:1,jcd:1,ult:22,hp:1,spd:1,cur:null,saved:{},host:null,open:false,drawn:0,dirty:false,D:null,sig:'',tab:'g',jf:{q:'',cat:'',rk:'',mod:false},lm:null,ro:false};
 let BLJ=1,BLU=null; // contexte : multiplicateur de dégâts du jutsu en cours et son lanceur (BLU)
@@ -136,7 +136,7 @@ function blSimStep(ms){const X=BLX;if(!X)return true;const t0=performance.now();
  while(performance.now()-t0<ms){if(!X.cur){if(X.i>=X.q.length)return true;const [c,i]=X.q[X.i++];blDuelSetup(c,i)}
   for(let n=0;n<400&&X.cur;n++){update(1/30);X.cur.k++;if(state!=='fight'||X.cur.k>=30*150)blDuelEnd();else if(performance.now()-t0>=ms)break}}
  return X.i>=X.q.length&&!X.cur}
-function blSimMain(){draw=()=>{};loop=()=>{};OPT.p3d=false;try{N3.on=false}catch(e){}muted=true;
+function blSimMain(){draw=()=>{};loop=()=>{};muted=true;
  addEventListener('message',e=>{const d=e.data;if(!d||!d.bl)return;try{
   if(d.bl==='job'){blSimJob(d.job);parent.postMessage({blsim:'prog',res:BLX.res},'*')}
   else if(d.bl==='step'){const fin=blSimStep(d.ms||30);parent.postMessage({blsim:fin?'done':'prog',res:BLX.res},'*');if(fin)BLX=null}

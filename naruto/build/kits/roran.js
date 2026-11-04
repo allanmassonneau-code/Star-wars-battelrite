@@ -175,7 +175,7 @@ AFTER.push(()=>{const A0=ai;ai=function(u,dt){if(u.ch.clan===12){const L=u.ch.ab
 
 // ---- apparence : l'éventail géant dans le dos
 CLOOK[12]=(look,l)=>{if(!(l.d|0)&&!look.gourd)look.back='eventail'}; // éventail dans le dos, sauf si le créateur choisit un autre « Dos »
-// l'éventail fermé dépasse au-dessus de l'épaule (3D et 2D) ; de dos, on le voit en entier ; il disparaît quand il est dans les mains (gestes rr_) ou sous les pieds
+// l'éventail fermé dépasse au-dessus de l'épaule ; de dos, on le voit en entier ; il disparaît quand il est dans les mains (gestes rr_) ou sous les pieds
 function rrBackFan(x0,y0,x1,y1,w,lit){const a=Math.atan2(y1-y0,x1-x0),L=Math.hypot(x1-x0,y1-y0);g.save();g.translate(x0,y0);g.rotate(a);g.lineJoin='round';
  g.fillStyle=RRC.rib;g.strokeStyle='#1a120c';g.lineWidth=1.2;g.beginPath();g.moveTo(0,-w*.35);g.lineTo(L,-w*.55);g.quadraticCurveTo(L+w*.45,0,L,w*.55);g.lineTo(0,w*.35);g.closePath();g.fill();g.stroke();
  g.fillStyle='#5a4230';g.fillRect(L*.08,-w*.2,L*.86,w*.12);
@@ -187,7 +187,7 @@ STATD.push((u,p,S,sk)=>{if(u.ch.clan!==12||u.dead||u.ch.look.back!=='eventail'||
  const k=S*(sk||1),fy=Math.sin(u.aim||0),side=Math.cos(u.aim||0)>=0?-1:1,z=(u.z||0)*S,lit=u.rr_mn|0;
  if(fy<-.3)rrBackFan(p.x-9*k,p.y-z-22*k,p.x+13*k,p.y-z-90*k,9*k,lit);else rrBackFan(p.x+side*12*k,p.y-z-46*k,p.x+side*24*k,p.y-z-94*k,9*k,lit)});
 
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // Kamaitachi : éventail levé derrière l'épaule, puis taillé en diagonale
  rr_swing:(P,e)=>{const w=e<.3,k=w?ezo(e/.3):ezo(Math.min(1,(e-.3)/.3));

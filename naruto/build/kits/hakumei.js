@@ -201,7 +201,7 @@ TRAITS[13]={nom:'Soie d\'araignée',desc:'Tes jutsu posent des fils sur l\'ennem
 // ---------- apparence : yeux violets ----------
 CLOOK[13]=(look)=>{look.head.eye=look.head.eye||'#9a5ad0'};
 
-// ---------- animations 3D ----------
+// ---------- animations (poses du squelette, dessinées en 2D) ----------
 Object.assign(ANIM,{
  // la tête se projette, la soie jaillit de la bouche (Kumo Nenkin)
  // lancer à deux mains du filet, bras ouverts

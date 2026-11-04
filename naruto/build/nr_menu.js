@@ -90,8 +90,8 @@ const FNT=(z,w='normal')=>`${w} ${z}px "Trebuchet MS",system-ui,sans-serif`;
 function fitT(s,x,y,size,col,w,weight='normal',min=11,align='left'){s=String(s);let z=size;g.font=FNT(z,weight);while(z>min&&g.measureText(s).width>w){z-=.5;g.font=FNT(z,weight)}if(g.measureText(s).width>w){while(s.length>2&&g.measureText(s+'…').width>w)s=s.slice(0,-1);s=s.trimEnd()+'…'}g.textAlign=align;g.fillStyle=col;g.fillText(s,x,y);return g.measureText(s).width}
 function wrapL(s,w,font){g.font=font;const out=[];let cur='';for(const wd of String(s||'').split(' ')){const t=cur?cur+' '+wd:wd;if(cur&&g.measureText(t).width>w){out.push(cur);cur=wd}else cur=t}if(cur)out.push(cur);return out}
 const rr=(R,r,fill,stroke,lw=1)=>{g.beginPath();g.roundRect(R.x,R.y,R.w,R.h,r);if(fill){g.fillStyle=fill;g.fill()}if(stroke){g.strokeStyle=stroke;g.lineWidth=lw;g.stroke()}};
-// ninja d'aperçu du créateur : gardé d'une image à l'autre (son modèle 3D n'est refait que si l'apparence change)
-let MF=null;const menuFake=ch=>{if(!MF||MF.src!==ch){const o=CH.p0;CH.p0=ch;MF=mkUnit('p0',0,0,ch.side);MF.src=ch;CH.p0=o}return MF}; // même ninja d'une image à l'autre (u.ch est une copie : comparer à la source, sinon l'aperçu 3D n'a jamais sa case et retombe en 2D)
+// ninja d'aperçu du créateur : gardé d'une image à l'autre (sa pose animée continue d'une image à l'autre)
+let MF=null;const menuFake=ch=>{if(!MF||MF.src!==ch){const o=CH.p0;CH.p0=ch;MF=mkUnit('p0',0,0,ch.side);MF.src=ch;CH.p0=o}return MF}; // même ninja d'une image à l'autre (u.ch est une copie : comparer à la source, sinon la pose repartirait de zéro à chaque image)
 // perso joué (MY) : gardé dans « Mes ninjas » (nrRoster2, champ last.me) ; en ligne, envoyé à l'hôte (invité) ou diffusé dans le salon (hôte)
 // aide des touches (ZQSD en AZERTY : libellés lbl suivant la disposition du clavier)
 const HELPK=()=>`${lbl.KeyW}${lbl.KeyA}${lbl.KeyS}${lbl.KeyD} bouger · Clic G frapper · 1-6 jutsu · ${lbl.Space} dash · ${lbl.KeyQ} Kawarimi · ${lbl.KeyB} maintenu + molette : barres · ${lbl.KeyF} parade · ${lbl.KeyR} maintenu = chakra · ${lbl.KeyH} soin · Maj sprint · Tab scores · ${lbl.KeyM} son`;

@@ -203,7 +203,7 @@ AUXD.kg_drill=()=>{};
 JFXD.kg_ringfx=(f,k,e)=>{g.strokeStyle=rgba('#e8e2d0',.7*k);g.lineWidth=5*k+1;gEll(f.x,f.y,f.r*(.85+e*.3));g.stroke();g.fillStyle=rgba('#c8c2b0',.8*k);
  for(let i=0;i<f.n;i++){const b=i*Math.PI*2/f.n+f.w*.45,q=P(f.x+Math.cos(b)*f.r,f.y+Math.sin(b)*f.r*.9,0);for(let j=0;j<3;j++){const c=b+j*2.1;circ(q.x+Math.cos(c)*e*22*q.s,q.y-Math.sin(Math.PI*e)*(14+j*6)*q.s+Math.sin(c)*e*8*q.s,(2.4-j*.5)*q.s,rgba('#e8e2d0',.9*k))}}};
 
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // Doigts-balles : bras tendu, doigts pointés, petit recul à chaque balle
  kg_finger:(P,e)=>{const k=ezo(Math.min(1,e/.15)),rc=[0,.2,.4].reduce((s,t0)=>s+Math.max(0,1-Math.abs(e-t0-.04)/.07),0);

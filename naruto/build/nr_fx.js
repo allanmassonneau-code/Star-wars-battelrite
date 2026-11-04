@@ -176,7 +176,7 @@ function fxCast(u,v,dur=.6,o={}){const C=fxPal(v);fxCharge(u,C.a,Object.assign({
 // lancement d'un jutsu de rang S (moteur, use()) : lumière locale autour du lanceur + fenêtre de secousse (3 s) si c'est moi ou tout près
 function fxSCast(u,ab){if(!near(u.x,u.y))return;const own=u===player,d=player?Math.hypot(u.x-player.x,u.y-player.y):1e9,C=fxPal(ab&&ab.vfx),col=ab&&ab.vfx&&ab.vfx!=='chakra'?C.a:(u.ch.look.weapon.col||C.a);
  if(own||d<520){FXF.shW=Math.max(FXF.shW,3);shake=Math.max(shake,own?.26:.12)}
- fxFlare(u.x,u.y,col,{u,z:40,r:54,t:.32});fxRing(u.x,u.y,{u,r0:16,r1:120,col,t:.5,w:6});fxLight(u.x,u.y,200,col,{u,t:.6,a:.5});fxPillar(u.x,u.y,col,{u,h:200,w:34,t:.55,al:.45})}
+ fxFlare(u.x,u.y,col,{u,z:40,r:36,t:.24});fxRing(u.x,u.y,{u,r0:16,r1:120,col,t:.5,w:6});fxLight(u.x,u.y,200,col,{u,t:.6,a:.5});fxPillar(u.x,u.y,col,{u,h:200,w:17,t:.5,al:.32})} // colonne fine et éclat réduit : le ninja 2D reste lisible dedans
 // explosion d'une zone / d'un projectile du moteur (cercle déjà dessiné au bon rayon) : lumière + trace au sol de l'élément
 function fxDeto(x,y,r,v,u){if(!near(x,y))return;const C=fxPal(v),e=C.e,s=clamp(r/80,.6,1.8);fxFlare(x,y,C.a,{u,z:30,r:22*s,t:.22,c2:C.h,al:.75});fxLight(x,y,r*1.2,C.a,{u,t:.35,a:.35});
  const d={fire:'scorch',lightning:'burn',earth:'crack',water:'puddle',ice:'ice',sand:'sand',seal:'seal'}[e];if(d)fxDecal(x,y,d,{u,r:r*.75,t:3.2,col:C.a});

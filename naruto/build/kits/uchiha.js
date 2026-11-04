@@ -268,7 +268,7 @@ AUXD.uc_iza=(x,k,t)=>{const u=x.ui!=null?units[x.ui]:null,q=P(x.x,x.y,0),fr=Math
  g.strokeStyle='#ff3a4a';g.lineWidth=3;g.beginPath();g.ellipse(q.x,q.y,30*q.s,30*q.s*K,0,-Math.PI/2,-Math.PI/2+fr*Math.PI*2);g.stroke();g.strokeStyle=rgba('#ff9ab0',.5);g.lineWidth=1;
  for(let i=0;i<12;i++){const b=i*.5236,c=Math.cos(b),s=Math.sin(b);g.beginPath();g.moveTo(q.x+c*24*q.s,q.y+s*24*q.s*K);g.lineTo(q.x+c*28*q.s,q.y+s*28*q.s*K);g.stroke()}
  if(u&&!u.dead){const a=P(x.x,x.y,34),b=P(u.x,u.y,34);g.strokeStyle=rgba('#ff3a4a',.45);g.setLineDash([5,6]);g.lineDashOffset=-t*30;g.lineWidth=1.5;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.setLineDash([]);
-  g.globalAlpha=(.24+.08*Math.sin(t*6))*k;drawChar3(u,q.x,q.y,q.s*1.3);g.globalAlpha=1}};
+  g.globalAlpha=(.24+.08*Math.sin(t*6))*k;drawChar(u,q.x,q.y,q.s*1.3);g.globalAlpha=1}};
 // Izanagi actif : la réalité « grésille » autour du ninja (tranches rouges) et un œil se ferme peu à peu au-dessus de lui
 JFXD.uc_izaon=(f,k,e,t,u)=>{if(!u||u.dead||!(u.izT>0))return;const q=P(u.x,u.y,0),s=q.s*1.3,al=Math.min(1,e*8);g.globalAlpha=al;g.globalCompositeOperation='lighter';
  for(let i=0;i<3;i++){const ph=(t*2.3+i*.37)%1;if(ph>.55)continue;const y=q.y-(8+((i*37+Math.floor(t*9)*13)%56))*s,w=(16+((i*23+Math.floor(t*9)*7)%14))*s;g.fillStyle=rgba(i%2?'#ff3a4a':'#ff9ab0',.35);g.fillRect(q.x-w+(i-1)*4*s,y,w*2,1.6*s)}
@@ -342,11 +342,11 @@ JFXD.uc_totsuka=(f,k,e,t,u)=>{const o=u&&!u.dead?u:f,c=f.col||'#a5f',sw=ezo(Math
  if(f.last&&e>.35){const p=P(o.x+Math.cos(f.a)*120,o.y+Math.sin(f.a)*120,24),R=(16+e*36)*s;g.strokeStyle=rgba('#ffe8a0',.85*k);g.lineWidth=2;g.beginPath();g.ellipse(p.x,p.y,R,R*K,0,0,7);g.stroke();
   for(let i=0;i<6;i++){const cc=i*1.047+t*2;g.fillStyle=rgba('#2a2a33',.9*k);g.fillRect(p.x+Math.cos(cc)*R*.8-2,p.y+Math.sin(cc)*R*.8*K-3,4,6)}}};
 // lecture du Sharingan : reflet rouge laissé à l'endroit du coup esquivé
-JFXD.uc_read=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(f.x,f.y,0);g.globalAlpha=.5*k;drawChar3(u,q.x,q.y,q.s*1.3);g.globalAlpha=1;g.globalCompositeOperation='lighter';
+JFXD.uc_read=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(f.x,f.y,0);g.globalAlpha=.5*k;drawChar(u,q.x,q.y,q.s*1.3);g.globalAlpha=1;g.globalCompositeOperation='lighter';
  g.strokeStyle=rgba('#ff2a3a',.8*k);g.lineWidth=2;g.beginPath();g.ellipse(q.x,q.y-40*q.s,(22+e*18)*q.s,(44+e*18)*q.s,0,0,7);g.stroke();
  for(let i=0;i<3;i++){const b=t*6+i*2.094;ucTomoe(q.x+Math.cos(b)*16*q.s,q.y-40*q.s+Math.sin(b)*16*q.s,2.6*q.s,b+1.57,rgba('#ff2a3a',.9*k))}};
 
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // estoc allongé de Kusanagi : fente profonde, bras d'épée tendu
  uc_thrust:(P,e)=>{const k=e<.22?ezo(e/.22):1-.7*ezo((e-.22)/.78);P.root.z=15*k;P.root.y=-5*k;pz(P,'armR',-1.6*k-.05,0,.08*k);pz(P,'foreR',-.04);pz(P,'armL',.55*k,0,.45*k);pz(P,'foreL',-.5);

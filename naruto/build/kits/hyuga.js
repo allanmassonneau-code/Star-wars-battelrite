@@ -291,7 +291,7 @@ STATD.push((u,p,S,sk)=>{if(u.dead)return;let n;if(net.role==='guest')n=u.hy_tkN|
  if(!n)return;const t=performance.now()/1000,al=n>=6?.7+.3*Math.sin(t*14):.95,z=S*sk;
  g.save();g.globalCompositeOperation='lighter';for(let i=0;i<HYMAX;i++){const x=p.x+HYNET[i][0]*z,y=p.y-HYNET[i][1]*z;if(i<n){circ(x,y,4*z*.6,rgba('#8ab0ff',.6*al));circ(x,y,2*z*.6,rgba('#ffffff',al))}else circ(x,y,1.3*z*.6,rgba('#8ab0ff',.45))}g.restore()});
 AFTER.push(()=>UK.push('hy_tkN','hy_byak','hy_stepB'));
-// ---------- animations 3D ----------
+// ---------- animations (poses du squelette, dessinées en 2D) ----------
 Object.assign(ANIM,{
  // paume à une main : frappe sèche, léger retour
  hy_palm:(P,e)=>{const k=e<.2?ezo(e/.2):1-.3*ezo((e-.2)/.8);pz(P,'armR',-1.62*k,0,.08);pz(P,'foreR',-.08);pz(P,'armL',.5*k,0,.3);pz(P,'foreL',-1.3*k);pz(P,'chest',.24*k,-.35*k);pz(P,'head',0,.2*k);P.root.y=-4*k;P.root.z=9*k;pz(P,'thighR',-.8*k);pz(P,'shinR',.75*k);pz(P,'thighL',.45*k);pz(P,'shinL',.5*k)},

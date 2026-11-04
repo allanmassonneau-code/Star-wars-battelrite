@@ -152,7 +152,7 @@ CLOOK[18]=(look,l,S)=>{const h=look.head;h.skin=HS_SKIN[l.p|0]||'#86a4ba';if(loo
  if(S&&S[0]==='Samehada'){look.weapon.same=1;if(look.back==='samehada')look.back=''}else if(!look.back&&!look.gourd)look.back='samehada'}; // pas de seconde Samehada dans le dos quand elle est en main
 function T_isSkin(look,l){const T=TENUES[l.t];return T&&T[1].arm==='skin'}
 
-// ---- animations 3D (le sabre est tenu à deux mains : la main gauche rejoint la poignée)
+// ---- animations (poses du squelette, dessinées en 2D ; le sabre est tenu à deux mains : la main gauche rejoint la poignée)
 const hs_two=(P,k)=>{pz(P,'armL',-1.1*k-.4,0,-.35*k);pz(P,'foreL',-1.3*k)};
 Object.assign(ANIM,{
  // coups du style : diagonale descendante, revers montant, grand balayage, estoc d'épaule, morsure sautée

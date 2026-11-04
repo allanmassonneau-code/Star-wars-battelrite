@@ -196,13 +196,13 @@ AFTER.push(()=>{UK.push('yu_gv','yu_frz','yu_mk');Object.assign(VP,{yu_ice:['#bf
 
 // ---- apparence : chakra bleu glacé, yeux gris-bleu ; le masque Anbu devient le masque de chasseur de déserteurs de Kiri
 CLOOK[20]=(look,l,S)=>{const h=look.head;if(h.acc==='anbu')h.acc='oinin';if(!h.eye)h.eye='#4a6a8a';if((l.k|0)===0&&look.weapon)look.weapon.col='#9fe0ff'};
-// masque de chasseur (appelé par nr_char.js en 2D, U=1, et nr_3d.js dans la texture du visage, U≈9,7)
+// masque de chasseur (appelé par nr_char.js, U = 1)
 function yu_mask(c,ex,hy,U,lw){c.save();c.fillStyle='#f4f6fa';c.strokeStyle='#1a1410';c.lineWidth=lw;c.beginPath();c.ellipse(ex,hy+1.8*U,10.4*U,9.8*U,0,0,7);c.fill();c.stroke();
  c.fillStyle='#14161c';for(const s of[-1,1]){c.beginPath();c.moveTo(ex+s*1.5*U,hy+1.7*U);c.quadraticCurveTo(ex+s*4.2*U,hy-.3*U,ex+s*7*U,hy+.7*U);c.quadraticCurveTo(ex+s*4.4*U,hy+2.7*U,ex+s*1.5*U,hy+1.7*U);c.fill()}
  c.strokeStyle='#5a7a9a';c.lineWidth=Math.max(.8,lw*.55);c.lineCap='round';for(let i=0;i<3;i++){const y=hy-6*U+i*1.5*U;c.beginPath();c.moveTo(ex-2.8*U,y);c.quadraticCurveTo(ex-1.4*U,y-.9*U,ex,y);c.quadraticCurveTo(ex+1.4*U,y+.9*U,ex+2.8*U,y);c.stroke()}
  c.strokeStyle='#c02a3a';c.lineWidth=Math.max(.8,lw*.6);for(const s of[-1,1]){c.beginPath();c.moveTo(ex+s*4.3*U,hy+3.7*U);c.lineTo(ex+s*4.7*U,hy+6.3*U);c.stroke()}c.restore()}
 
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // signe d'une seule main (comme Haku) devant le visage
  yu_seal:(P,e)=>{const k=ezo(Math.min(1,e/.25))*(e>.8?1-(e-.8)/.2:1);pz(P,'armR',-1.95*k,0,.25*k);pz(P,'foreR',-1.7*k);pz(P,'handR',.3*k);pz(P,'armL',.3*k,0,.2*k);pz(P,'chest',.08*k,-.2*k);pz(P,'head',.1*k);P.root.y=-1*k},

@@ -328,7 +328,7 @@ JFXD.fu_gust=(f,k,e)=>{const q=P(f.x,f.y,0),R=f.r*q.s;g.globalCompositeOperation
 // tornade : moitié avant de l'entonnoir, dessinée après les ninjas (ils paraissent pris dedans)
 JFXD.fu_tornf=(f,k,e,t)=>{for(const x of aux)if(x.type==='fu_tornado'&&x.n===f.n){if(near(x.x,x.y))fuTorn(x,1,t);break}};
 
-// ---- gestes 3D
+// ---- gestes (poses du squelette)
 Object.assign(ANIM,{
  // mur : bras croisés devant puis écartés d'un balayage (le mur se lève)
  fu_wall:(P,e)=>{const k=ezo(Math.min(1,e/.45));pz(P,'armL',-1.45,0,-.5+1.5*k);pz(P,'armR',-1.45,0,.5-1.5*k);pz(P,'foreL',-.15);pz(P,'foreR',-.15);pz(P,'chest',.12);P.root.y=-2*k;pz(P,'thighL',-.25*k,0,.25*k);pz(P,'thighR',.15*k,0,-.25*k);pz(P,'shinL',.4*k);pz(P,'shinR',.4*k)},

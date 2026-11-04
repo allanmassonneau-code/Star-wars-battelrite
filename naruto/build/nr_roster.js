@@ -101,18 +101,13 @@ function rosChanged(){RL=RLAY=null;rosSave()}
 // recherche par nom (sans accents ni majuscules) : nom, nom complet, village, clan, nature
 const fold=s=>String(s).normalize('NFD').replace(/[̀-ͯ]/g,'').toLowerCase();
 const rosMatch=E=>!RQ||fold([E.b.name,E.P?E.P.full:'',SECS[E.sec][0],E.b.clan>=0?CLANS[E.b.clan][0]:'sans clan '+(kgOk(E.b.kg)?KGS[E.b.kg].n+' kekkei genkai':''),E.b.nat>=0?NATURES[E.b.nat][0]:''].join(' ')).includes(RQ);
-// ninjas d'aperçu : un par perso, refait quand sa build change (modèle 3D gardé tant qu'il s'affiche) ; stats recalculées si le profil d'équilibrage change
+// ninjas d'aperçu : un par perso, refait quand sa build change (pose animée gardée tant qu'il s'affiche) ; stats recalculées si le profil d'équilibrage change
 const RF=new Map(),blVer=()=>{try{return BLC.sig||''}catch(e){return''}};
 function rosFake(E){let F=RF.get(E.k);const v=blVer();
  if(!F||F.b!==E.b){const ch=mkNinja(E.b),o=CH.p0;CH.p0=ch;const u=mkUnit('p0',0,0,ch.side);CH.p0=o;F={b:E.b,ch,u,v};RF.set(E.k,F)}
  else if(F.v!==v){const n=mkNinja(E.b);for(const f of['hp','spd','pw','abil','desc'])F.ch[f]=n[f];F.v=v}return F}
-// ninja d'une carte en 3D : la case de l'atlas est copiée dans une image propre à la carte ; le ninja n'est rendu en 3D que survolé (il pivote et marche),
-// à son apparition et un instant après le survol (le temps que la pose se pose) : au repos, la carte redessine son image (une liste de 40 ninjas ≈ 1 à 3 rendus 3D par image)
-function cardChar(F,x,y,s,hov,t){const u=F.u;if(!(N3.ok&&N3.on&&OPT.p3d!==false))return drawChar3(u,x,y,s);
- if(hov||F.liveT==null)F.liveT=t+(hov?.8:.7);const tl=N3.tile.get(u),sk=u.ch.look.scale||1,w=TWU*s*sk,h=THU*s*sk;
- if(tl&&(t<F.liveT||!F.ok)){if(!F.snap||F.snap.width!==TPW||F.snap.height!==TPH){F.snap=document.createElement('canvas');F.snap.width=TPW;F.snap.height=TPH}const c=F.snap.getContext('2d');c.clearRect(0,0,TPW,TPH);c.drawImage(N3.cv,tl.sx,tl.sy,TPW,TPH,0,0,TPW,TPH);F.ok=1;F.snapV=(F.snapV|0)+1}
- if(t<F.liveT||!F.ok)N3.req.add(u);
- if(F.ok)g.drawImage(F.snap,0,0,F.snap.width,F.snap.height,x-w/2,y-h+FOOT*s*sk,w,h);else drawChar(u,x,y,s)}
+// ninja d'une carte : dessiné en 2D (la carte au repos garde son image, voir rosCardC)
+function cardChar(F,x,y,s,hov,t){drawChar(F.u,x,y,s)}
 const FFK={},fakeFor=(s,ch)=>{let f=FFK[s];if(!f||f.ch!==ch){const o=CH.p0;CH.p0=ch;f=FFK[s]={ch,u:mkUnit('p0',0,0,ch.side)};CH.p0=o}return f.u}; // ninjas de la fiche (animés à part des cartes)
 // ----- disposition : onglets, grille (bandes de sections : les petites sections partagent une rangée), fiche, barre du bas
 const RGX=30,RGY=174,RGW=1220,RGH=290,RCH=116,NCOL=10,RCW=(RGW-14-(NCOL-1)*8)/NCOL,RGAP=18;
@@ -226,11 +221,11 @@ function cachedDraw(id,R,key,fn){const dx=R.x*RS,dy=R.y*RS,ix=Math.floor(dx)-4,i
  let c=DC.get(id);if(!c){c={cv:document.createElement('canvas'),key:null};DC.set(id,c)}
  if(c.key!==k){c.key=null;if(c.cv.width!==cw||c.cv.height!==chh){c.cv.width=cw;c.cv.height=chh}const og=g;try{g=c.cv.getContext('2d');g.setTransform(1,0,0,1,0,0);g.clearRect(0,0,cw,chh);g.setTransform(RS,0,0,RS,-ix,-iy);g.imageSmoothingEnabled=true;fn()}finally{g=og}c.key=k}
  g.drawImage(c.cv,ix/RS,iy/RS,cw/RS,chh/RS)}
-// carte au repos : dans son image (cachedDraw), refaite si son état change (build, pose du ninja 3D, badges, carte de la fiche, échelle) ;
-// survolée, en train de poser son ninja 3D, en flash ou pendant un défilement, elle est dessinée en direct
-function rosCardC(E,R,t){const F=rosFake(E),d3=!!(N3.ok&&N3.on&&OPT.p3d!==false);
- if(d3&&(F.liveT==null||t<F.liveT||!F.ok)||RFL&&RFL.k===E.k&&performance.now()-RFL.t<1600||rosScroll!==rosTarget)return rosCard(E,R,false,t);
- cachedDraw('c:'+E.k,R,[oid(F.b),F.snapV|0,d3,E.k===MEK,E.k===FK,E.mod,rosOver(E),scr,coop()].join(),()=>rosCard(E,R,false,t))}
+// carte au repos : dans son image (cachedDraw), refaite si son état change (build, badges, carte de la fiche, échelle) ;
+// en flash ou pendant un défilement, elle est dessinée en direct
+function rosCardC(E,R,t){const F=rosFake(E);
+ if(RFL&&RFL.k===E.k&&performance.now()-RFL.t<1600||rosScroll!==rosTarget)return rosCard(E,R,false,t);
+ cachedDraw('c:'+E.k,R,[oid(F.b),E.k===MEK,E.k===FK,E.mod,rosOver(E),scr,coop()].join(),()=>rosCard(E,R,false,t))}
 function plusCard(R,hov,t){g.save();g.setLineDash([6,5]);rr(R,10,hov?'rgba(72,48,24,.95)':'rgba(30,20,12,.6)',hov?'#ffb347':'#a8703a',hov?2:1.4);g.restore();
  const cx=R.x+R.w/2,cy=R.y+44;g.save();if(hov){g.shadowColor='#ffb347';g.shadowBlur=14}rr({x:cx-22,y:cy-22,w:44,h:44},22,hov?'#ffb347':'rgba(255,154,58,.18)','#ffb347',2);g.restore();uiIcon('plus',cx,cy,14,hov?'#1a1008':'#ffb347');
  text('Créer un perso',cx,R.y+R.h-28,13,hov?'#ffe0a0':'#ffd38a');text('apparence + kit',cx,R.y+R.h-13,10.5,'#a88a68','center','normal')}
@@ -283,7 +278,7 @@ function drawFiche(E,t){const opp=scr==='opp',me=rosGet(MEK);if(!E)return;const 
  // aperçu : le ninja (en arène, ton perso contre l'adversaire)
  {const P0={x:FI.x+8,y:FI.y+8,w:196,h:FI.h-16};g.save();g.beginPath();g.roundRect(P0.x,P0.y,P0.w,P0.h,9);g.clip();const gr=g.createLinearGradient(0,P0.y,0,P0.y+P0.h);gr.addColorStop(0,rgba(col,.22));gr.addColorStop(1,'rgba(0,0,0,.1)');g.fillStyle=gr;g.fillRect(P0.x,P0.y,P0.w,P0.h);
   const one=(u,x,sc,a,c2)=>{const fy=P0.y+P0.h-24;g.fillStyle='rgba(0,0,0,.35)';g.beginPath();g.ellipse(x,fy-2,34*sc/1.4,9,0,0,7);g.fill();g.save();g.globalCompositeOperation='lighter';const r=g.createRadialGradient(x,fy-50,0,x,fy-50,80);r.addColorStop(0,rgba(c2,.18));r.addColorStop(1,rgba(c2,0));g.fillStyle=r;g.fillRect(x-90,P0.y,180,P0.h);g.restore();
-   u.aim=a;u.swing=0;const s2=sc*(u.ch.look.scale>1?.9:1);drawPrevN(u,x,fy,s2,0);drawChar3(u,x,fy,s2);drawPrevN(u,x,fy,s2,1)};
+   u.aim=a;u.swing=0;const s2=sc*(u.ch.look.scale>1?.9:1);drawPrevN(u,x,fy,s2,0);drawChar(u,x,fy,s2);drawPrevN(u,x,fy,s2,1)};
   if(opp&&me){const mc=rosFake(me).ch,um=fakeFor('me',mc);um.moving=false;one(um,P0.x+50,1.32,Math.PI*.12+Math.sin(t*.7)*.15,mc.look.weapon.col);
    const self=E.k===me.k,ox=P0.x+P0.w-50;
    if(self){const cy=P0.y+P0.h-84,a=.55+Math.sin(t*3)*.2;g.save();g.setLineDash([5,4]);g.strokeStyle=rgba('#ff9a3a',a+.2);g.lineWidth=2;g.beginPath();g.ellipse(ox,cy,30,44,0,0,7);g.stroke();g.restore();text('?',ox,cy+14,40,rgba('#ffb347',a+.25))}

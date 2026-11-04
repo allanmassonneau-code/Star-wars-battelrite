@@ -141,7 +141,7 @@ TRAITS[2]={nom:'Ombre tenace',desc:'Tes contrôles (entrave, étourdissement, si
   if(!u.na_dk||aux.indexOf(u.na_dk)<0){u.na_dk={type:'na_dusk',x:u.x,y:u.y,r:0,t:1e9,m:1e9,team:u.team,owner:u,ui:naI(u),vfx:'shadow',k:0};aux.push(u.na_dk)}},
 };
 AFTER.push(()=>{UK.push('na_sh','na_pl');JFX.shadow=()=>{}}); // les signatures « shadow » génériques sont remplacées par celles de ce fichier
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // signe du Rat (Ne), mains jointes devant la poitrine : la pose de la possession (aussi imitée par la cible)
  na_ne:(P,e,u)=>{const k=Math.min(1,e*8+.15);pz(P,'armL',-1.3*k,0,-.62*k);pz(P,'foreL',-1.85*k);pz(P,'armR',-1.3*k,0,.62*k);pz(P,'foreR',-1.85*k);pz(P,'chest',.16*k);pz(P,'head',.14*k);

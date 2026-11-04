@@ -316,7 +316,7 @@ JFXD.ya_shatter=(f,k,e,t,u,tg)=>{const X=tg?tg.x:f.x,Y=tg?tg.y:f.y,q=P(X,Y,70),s
   g.fillStyle=rgba(i%3?'#e8d0ff':'#ffffff',.9*k);g.beginPath();g.moveTo(x+Math.cos(rot)*L,y+Math.sin(rot)*L);g.lineTo(x+Math.cos(rot+2.4)*L*.6,y+Math.sin(rot+2.4)*L*.6);g.lineTo(x+Math.cos(rot-2.4)*L*.6,y+Math.sin(rot-2.4)*L*.6);g.closePath();g.fill()}};
 // réveil en sursaut
 JFXD.ya_wake=(f,k,e,t,u,tg)=>{if(!tg)return;const q=P(tg.x+12,tg.y,70),s=q.s;g.strokeStyle=rgba('#dcebff',.9*k);g.lineWidth=1.5;for(let i=0;i<6;i++){const b=i*1.047,r=(4+e*14)*s;g.beginPath();g.moveTo(q.x+Math.cos(b)*r*.5,q.y+Math.sin(b)*r*.5);g.lineTo(q.x+Math.cos(b)*r,q.y+Math.sin(b)*r);g.stroke()}text('!',q.x,q.y-14*s-e*8,16,rgba('#ffd8e8',k))};
-// ---------- animations 3D ----------
+// ---------- animations (poses du squelette, dessinées en 2D) ----------
 Object.assign(ANIM,{
  // lancer de kunai d'une main : armé derrière la tête, fouetté, bras gauche en balancier
  ya_throw:(P,e)=>{const w=Math.min(1,e/.3),f=e<.3?0:ezo(Math.min(1,(e-.3)/.22));

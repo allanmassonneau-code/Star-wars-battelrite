@@ -153,7 +153,7 @@ AUXF.ra_trail=x=>{if(x.k>0)return;x.k=.2;const c=Math.cos(x.a),s=Math.sin(x.a);f
 AUXF.ra_armor=x=>{const u=x.owner;if(u.dead){x.t=0;return}x.x=u.x;x.y=u.y;if(u.dodge>0)x.k=2;else if(x.k<=0){u.dodge=Math.max(.1,x.t);x.k=2;if(near(u.x,u.y)){say(u,'RÉFLEXES','#bfe6ff');raPop(u.x,u.y,24,'#bfe6ff')}}};
 AUXF.ra_scorch=()=>{};
 
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // deux doigts pointés, coup sec (Éclair)
  ra_flick:(P,e)=>{const k=e<.25?ezo(e/.25):1-.3*ezo((e-.25)/.75);pz(P,'armR',-1.62*k,0,.12*(1-k));pz(P,'foreR',-.15*(1-k));pz(P,'chest',.1*k,.3*k);pz(P,'armL',-.5,0,.35);pz(P,'foreL',-1.2);P.root.z=3*k},
@@ -297,7 +297,7 @@ DETO.lightning=(x,y,r)=>jx({jfx:'ra_strike',x,y,r:r*.8,t:.4,m:.4});
 // clone de foudre : silhouette translucide parcourue d'arcs, cercle de déclenchement
 AUXD.ra_clone=(x,k,t)=>{const u=x.ui!=null?units[x.ui]:null,q=P(x.x,x.y,0),s=q.s,fl=x.t<.6&&Math.sin(t*40)>0?.45:1;
  g.globalCompositeOperation='lighter';g.fillStyle=rgba('#bfe6ff',.16*k);g.beginPath();g.ellipse(q.x,q.y-44*s,28*s,52*s,0,0,7);g.fill();g.strokeStyle=rgba('#bfe6ff',.55*k);g.lineWidth=1.5;g.setLineDash([4,4]);gEll(x.x,x.y,x.r+18);g.stroke();g.setLineDash([]);
- g.globalCompositeOperation='source-over';if(u&&!u.dead)drawChar3(u,q.x,q.y,s*1.3,.6*k*fl);
+ g.globalCompositeOperation='source-over';if(u&&!u.dead)drawChar(u,q.x,q.y,s*1.3,.6*k*fl);
  g.globalCompositeOperation='lighter';g.fillStyle=rgba('#7fd0ff',.22*k*fl);g.beginPath();g.ellipse(q.x,q.y-46*s,20*s,46*s,0,0,7);g.fill();
  for(let i=0;i<5;i++){const b=rnd()*7,c=P(x.x,x.y,10+rnd()*70);raPath(c.x+Math.cos(b)*16*s,c.y+Math.sin(b)*10*s,c.x+Math.cos(b+2.4)*18*s,c.y+(rnd()-.5)*34*s,10*s,4);raStroke(rgba(i%2?'#bfe6ff':'#ffffff',.9*k*fl),1.5*s)}};
 // sol détrempé sous le nuage d'orage : ronds de pluie

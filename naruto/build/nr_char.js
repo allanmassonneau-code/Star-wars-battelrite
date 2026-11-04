@@ -4,7 +4,6 @@ const OUT='rgba(20,12,8,.85)';
 function limb(x0,y0,x1,y1,x2,y2,w,col){g.lineCap='round';g.lineJoin='round';g.strokeStyle=OUT;g.lineWidth=w+2;g.beginPath();g.moveTo(x0,y0);g.lineTo(x1,y1);g.lineTo(x2,y2);g.stroke();g.strokeStyle=col;g.lineWidth=w;g.stroke()}
 function blob(x,y,r,col){g.fillStyle=OUT;g.beginPath();g.arc(x,y,r+1,0,7);g.fill();g.fillStyle=col;g.beginPath();g.arc(x,y,r,0,7);g.fill()}
 function outlined(path,col){g.fillStyle=col;g.strokeStyle=OUT;g.lineWidth=1.6;g.beginPath();path();g.closePath();g.fill();g.stroke()}
-// pose des mains selon l'action : renvoie [main avant, main arrière] en coordonnées locales
 // mudras : les 12 signes (nom, main avant, main arrière, doigts) ; chaque jutsu a sa propre suite de signes
 const SIGNS=[['Tigre',[1,-37],[-1,-33],'up'],['Bélier',[2,-35],[-2,-32],'up1'],['Serpent',[0,-31],[0,-30],'clasp'],['Dragon',[-3,-36],[3,-31],'side'],
  ['Rat',[2,-33],[-2,-35],'fist'],['Oiseau',[-4,-30],[4,-30],'wing'],['Chien',[1,-29],[2,-25],'flat'],['Sanglier',[-1,-31],[1,-31],'down'],
@@ -17,24 +16,8 @@ function mudraOf(u){if(!u.cast)return null;const ab=castAb(u,u.cast),n=ab&&ab.mu
 // courbe de frappe : sortie très rapide puis retour lent
 const punchK=sw=>{const p=1-sw;return p<.3?1-(1-p/.3)**2:1-(p-.3)/.7*.85};
 const cmbStep=u=>u.swing>0&&u.cmbH&&MELEEK.has(u.ch.look.weapon.k)?u.cmbH:0;
-function ninjaHands(u,fx,fy,run,t){const sw=u.swing>0?u.swing/.18:0,ax=Math.cos(u.aim),ay=Math.sin(u.aim)*K*.6;
- const md=mudraOf(u);if(md){const fs=fx>=0?1:-1,k=Math.min(1,md.q/.3),e=1-(1-k)*(1-k),pop=md.q<.3?Math.sin(k*Math.PI)*2.5:0,A=md.pv||[0,[0,-30],[0,-30]],Bs=md.sg;
-  const mix=(a,b)=>[fx*3+(a[0]+(b[0]-a[0])*e)*fs,a[1]+(b[1]-a[1])*e-pop];return[mix(A[1],Bs[1]),mix(A[2],Bs[2])]}
- if(u.cast)return[[fx*4,-30+Math.sin(t*14)],[fx*4-1,-30-Math.sin(t*14)]];
- if(u.block)return[[ax*9-3,-34],[ax*9+3,-34]];
- if(sw>0){const ph=punchK(sw),ext=10+19*ph;switch(cmbStep(u)){
-  case 2:return[[ax*4,-31],[ax*(ext+3),-33+ay*ext]]; // direct du bras arrière
-  case 3:return[[ax*(6+9*ph),-22-20*ph],[-ax*5,-27]]; // uppercut
-  case 4:return[[ax*7,-33],[ax*2,-35]]; // garde pendant le coup de pied
-  case 5:return[[ax*(ext+4),-30+ay*ext],[ax*(ext+1),-25+ay*ext]]; // double paume du final
-  default:return[[ax*ext,-30+ay*ext],[-ax*6,-26]]}} // jab
- if(u.thrT>0){const k=1-u.thrT/.2,e=k<.35?k/.35:1-(k-.35)/.65*.5;return[[ax*(-9+30*e),-40+12*e+ay*18*e],[-ax*6,-27]]} // lancer
- if(u.relT>0){const k=1-u.relT/.3,ph=k<.25?k/.25:1-(k-.25)/.75*.7;return[[ax*(8+16*ph),-33+ay*14*ph],[ax*(6+13*ph),-28+ay*14*ph]]} // libération du jutsu, deux mains en avant
- if(run>1)return[[-fx*13,-24],[-fx*15,-22]];
- if(u.cmbT>0&&MELEEK.has(u.ch.look.weapon.k))return[[ax*9,-33+Math.sin(t*6)],[ax*3,-35-Math.sin(t*6)]]; // garde
- const sv=u.moving?Math.sin(u.walk)*7:Math.sin(t*2)*.6;return[[ax*7+sv*fy*.3,-22+sv*.5],[-ax*4-sv*.6,-22-sv*.4]]}
-// ---------- Coiffures des ninjas célèbres : une seule description pour la 3D et le 2D ----------
-// repère de la tête 3D (centre du crâne en [0,8,0], rayon ≈ 12,6 ; +z = visage, +x = gauche du ninja) ; le 2D projette les mêmes pièces
+// ---------- Coiffures des ninjas célèbres : décrites dans le repère de la tête du squelette, projetées en 2D ----------
+// repère de la tête (centre du crâne en [0,8,0], rayon ≈ 12,6 ; +z = visage, +x = gauche du ninja) ; le 2D projette les mêmes pièces
 // ['s',élévation,tour,long.,rayon] pic qui sort du crâne · ['c',[x,y,z],rayon,long.,[rx,ry,rz],[sx,sy,sz],fl] mèche (capsule) · ['k',[x,y,z],rayon,long.,[rx,ry,rz],fl] cône
 // ['o',[x,y,z],rayon,[sx,sy,sz],fl,couleur] boule · ['sh',rayon,fin (0 = sommet),ouverture du visage] coque ; fl : h = suit l'os des cheveux (balancement), f = devant les yeux en 2D
 // f = frange 2D : zig (pointes), part (raie au milieu), flat (droite), none ; cap:0 = pas de calotte de base
@@ -95,7 +78,7 @@ function rotE(v,r){let [x,y,z]=v;if(r[2]){const c=Math.cos(r[2]),s=Math.sin(r[2]
 const spikeDir=(el,az)=>[Math.sin(el)*Math.sin(az),Math.cos(el),Math.sin(el)*Math.cos(az)];
 // pièces de coiffure en 2D : chaque pièce est tournée comme la tête 2D (un léger quart de tour, ou de dos), puis dessinée de face
 // layer -1 = derrière le corps (longs cheveux), 0 = derrière la tête, 1 = sur la calotte, 2 = devant les yeux
-function hairPieces2D(u,HS){const fx=Math.cos(u.aim||0),bk=Math.sin(u.aim||0)<-.3,tq=Math.asin(.28*fx),yw=bk?Math.PI-tq:tq,cy=Math.cos(yw),sy=Math.sin(yw);
+function hairPieces2D(u,HS,bk0){const fx=Math.cos(u.aim||0),bk=bk0!=null?!!bk0:Math.sin(u.aim||0)<-.3,tq=Math.asin(.28*fx),yw=bk?Math.PI-tq:tq,cy=Math.cos(yw),sy=Math.sin(yw);
  const pr=v=>[v[0]*cy+v[2]*sy,8-v[1],-v[0]*sy+v[2]*cy];const out=[];
  for(const q of HS.p){const t=q[0];let o;
   if(t==='s'||t==='k'){const d=t==='s'?spikeDir(q[1],q[2]):rotE([0,1,0],q[4]),len=q[3],c=t==='s'?d.map((x,i)=>(i===1?8:0)+x*(10.6+len*.45)):q[1];
@@ -110,7 +93,7 @@ function drawHair2D(P,L,hx,hy,hc,fl,back){for(const o of P){if(o.L!==L||(L===2&&
  else if(o.t==='c')limb(hx+o.a[0],hy+o.a[1],hx+(o.a[0]+o.b[0])/2,hy+(o.a[1]+o.b[1])/2,hx+o.b[0],hy+o.b[1],o.r*2,c);
  else if(o.t==='o')outlined(()=>{g.ellipse(hx+o.a[0],hy+o.a[1],o.rx,o.ry,0,0,7)},c);
  else{const yc=-o.r*Math.cos(o.th),al=Math.asin(Math.max(-1,Math.min(1,yc/o.r)));outlined(()=>{g.arc(hx,hy,o.r,Math.PI-al,2*Math.PI+al)},c)}}}
-// marques du visage, communes au 2D (U = 1) et au visage 3D (U ≈ 9,7 px par unité) ; layer 0 = sous les yeux, 1 = par-dessus
+// marques du visage, (U = échelle, 1 sur le ninja) ; layer 0 = sous les yeux, 1 = par-dessus
 function faceMarks(x,h,ex,hy,ey,U,lw,layer){const f=h.face;if(!f)return;const ln=(a,b,c,d)=>{x.beginPath();x.moveTo(a,b);x.lineTo(c,d);x.stroke()};x.lineCap='round';
  if(layer===0){
   if(f==='moust'){x.strokeStyle='#5a3a22';x.lineWidth=.95*lw;for(const s of[-1,1])for(let q=0;q<3;q++)ln(ex+s*5*U,hy+(4.6+q*1.6)*U,ex+s*9.6*U,hy+(4+q*2.2)*U)}
@@ -140,7 +123,7 @@ function faceMarks(x,h,ex,hy,ey,U,lw,layer){const f=h.face;if(!f)return;const ln
   if(f==='cage'&&!(x===g&&h.style&&HAIRS[h.style]&&!['none','part'].includes(HAIRS[h.style].f))&&!(x===g&&h.style==='pics')){x.strokeStyle='#3a9a4a';x.lineWidth=.9*lw;ln(ex-2.4*U,hy-8.4*U,ex+2.4*U,hy-5*U);ln(ex+2.4*U,hy-8.4*U,ex-2.4*U,hy-5*U);for(const s of[-1,1])ln(ex+s*2.4*U,hy-8.4*U,ex+s*2.4*U,hy-5*U)}
   if(f==='levres'){x.strokeStyle='#c8283a';x.lineWidth=1.4*lw;x.beginPath();x.moveTo(ex-1.9*U,hy+6.8*U);x.quadraticCurveTo(ex,hy+7.8*U,ex+1.9*U,hy+6.8*U);x.stroke()}
   if(f==='kaguya'&&!h.kaguya){x.fillStyle='#c22';for(const s of[-1,1]){x.beginPath();x.arc(ex+s*3*U,hy-4.4*U,.8*U,0,7);x.fill()}}}}
-// accessoires dessinés sur le visage (2D, U = 1, et visage 3D) : cache-œil, bandages, masque à spirale, masque de renard, lunettes rondes
+// accessoires dessinés sur le visage (U = 1) : cache-œil, bandages, masque à spirale, masque de renard, lunettes rondes
 function accFace(x,h,ex,hy,ey,U,lw){const a=h.acc;if(!a)return;x.save();x.lineCap='round';
  if(a==='cacheoeil'){x.strokeStyle='#1a1410';x.lineWidth=.9*lw;x.beginPath();x.moveTo(ex-10*U,hy-5*U);x.lineTo(ex+10*U,hy+1.4*U);x.stroke();x.fillStyle='#1c1c24';x.beginPath();x.ellipse(ex+4.2*U,ey,3.2*U,3.6*U,0,0,7);x.fill()}
  if(a==='bandvis'){x.fillStyle='#ece8de';x.strokeStyle='#1a1410';x.lineWidth=.9*lw;x.beginPath();x.moveTo(ex-10.6*U,hy+3*U);x.lineTo(ex+10.6*U,hy+3*U);x.lineTo(ex+8.6*U,hy+11*U);x.lineTo(ex-8.6*U,hy+11*U);x.closePath();x.fill();x.stroke();
@@ -164,7 +147,7 @@ function eyeSpecial(x,h,cx,cy,U,lw){const t=h.eye?null:h.eyeT;if(!t)return false
  if(t==='toad'){x.fillStyle='#f0c020';x.beginPath();x.ellipse(cx,cy,2.7*U,3.1*U,0,0,7);x.fill();x.stroke();x.fillStyle='#111';x.fillRect(cx-1.7*U,cy-.35*U,3.4*U,.8*U);x.fillStyle='#d8601a';x.fillRect(cx-2.7*U,cy-4.6*U,5.4*U,1.2*U);return true}
  if(t==='closed'){x.beginPath();x.arc(cx,cy-.4*U,2.4*U,.25,Math.PI-.25);x.stroke();return true}
  return false}
-// symbole dans le dos (2D et texture 3D) : x contexte, (cx, cy) centre, R rayon, lw épaisseur des traits
+// symbole dans le dos  : x contexte, (cx, cy) centre, R rayon, lw épaisseur des traits
 function drawSign(x,k,cx,cy,R,lw=1){x.save();x.lineJoin='round';x.lineCap='round';const O='#1a1410',txt=(t,c,f=1.5)=>{x.fillStyle=c;x.font=`bold ${R*f}px serif`;x.textAlign='center';x.textBaseline='middle';x.fillText(t,cx,cy+R*.06)};
  if(k==='uchiha'){x.fillStyle='#f4f2ee';x.strokeStyle=O;x.lineWidth=1.2*lw;x.fillRect(cx-R*.16,cy+R*.2,R*.32,R*.78);x.strokeRect(cx-R*.16,cy+R*.2,R*.32,R*.78);x.beginPath();x.ellipse(cx,cy-R*.08,R*.78,R*.66,0,0,7);x.fillStyle='#f4f2ee';x.fill();x.stroke();
   x.fillStyle='#d0242a';x.beginPath();x.ellipse(cx,cy-R*.08,R*.78,R*.66,0,Math.PI,0);x.closePath();x.fill();x.stroke()}
@@ -196,7 +179,7 @@ function backItem2D(k,ox,col){g.save();g.translate(ox,0);
  g.restore()}
 // images rémanentes : silhouettes qui s'effacent derrière un ninja qui file
 function drawGhosts(u){const T=u._tr||(u._tr=[]),fast=!u.dead&&(u.dash||u.phase>0||(u===player&&(u.haste>0||u.sprint)&&u.moving));if(fast)T.push({x:u.x,y:u.y,z:u.z||0});else if(T.length)T.shift();while(T.length>7)T.shift();
- if(T.length<3||u.ch.look.head.t!=='ninja')return;const S2=1.3*(u.giant>0?1.35:1);for(let i=0;i<T.length-2;i+=2){const o=T[i],q=P(o.x,o.y,o.z);g.save();g.globalAlpha=.1+.18*i/T.length;(N3.ok&&N3.tile.get(u)?drawChar3(u,q.x,q.y,q.s*S2):drawNinja(u,q.x,q.y,q.s*S2,1));g.restore()}}
+ if(T.length<3||u.ch.look.head.t!=='ninja')return;const S2=1.3*(u.giant>0?1.35:1);for(let i=0;i<T.length-2;i+=2){const o=T[i],q=P(o.x,o.y,o.z);g.save();g.globalAlpha=.1+.18*i/T.length;drawNinja(u,q.x,q.y,q.s*S2,1);g.restore()}}
 // détails de tenue (2D) : épaules sombres, col en V, manteau ouvert (haori), écharpe, col de fourrure, capuche baissée, corde à nœud
 function outfit2D(L,back,step,col){const hy2=L.hlong?-1:-9;
  if(L.yoke){g.fillStyle=col(L.yoke);g.fillRect(-10.5,-42,21,7)}
@@ -215,7 +198,7 @@ function outfit2D(L,back,step,col){const hy2=L.hlong?-1:-9;
  if(L.vband&&L.vest&&!back){g.fillStyle=col(shade(L.vest,.72));for(const y of[-38,-33,-28])g.fillRect(-10,y,20,1.6)}
  if(L.spiral&&back){g.strokeStyle=col('#c0302a');g.lineWidth=2;g.beginPath();g.arc(0,-31,4.5,0,7);g.stroke();g.beginPath();g.arc(0,-31,1.8,0,5);g.stroke()}
  if(L.rope){g.strokeStyle=col(L.rope);g.lineWidth=2.6;g.beginPath();g.moveTo(-10.5,-21.5);g.lineTo(10.5,-21.5);g.stroke();if(back){blob(-4,-22,3,col(L.rope));blob(4,-22,3,col(L.rope));blob(0,-21.5,1.8,col(L.rope))}}}
-// proportions du dessin 2D (comme la 3D) : grosse tête (chibi) ; HS2 = échelle de la tête autour du cou
+// proportions du dessin 2D : grosse tête (chibi) ; HS2 = échelle de la tête autour du cou
 const HS2=1;function headT(){g.translate(0,-42);g.scale(HS2,HS2);g.translate(0,42)}
 // cou (2D, repère du torse : base du cou en 0,-42)
 function neck2D(L,back,col){const k=L.neck;if(!k)return;
@@ -244,48 +227,52 @@ function headAcc2D(h,hx,hy,R,ex,back,fl){const a=h.acc,c=v=>fl?'#fff':v;
   g.fillStyle=c('#f0ece0');for(const x of back?[-14,-7,0,7,14]:[-17,-12,12,17])g.fillRect(hx+x-1,hy-4,2,9);if(!back)for(const s of[-1,1]){g.fillStyle=c('#c02a2a');g.fillRect(hx+s*15-.5,hy-3,1,5);blob(hx+s*15,hy+3,1.8,c('#f0c840'))}}}
 // éclair blanc du coup reçu : court (130 ms au plus par rafale), pour que les coups répétés (broyage, dôme) ne blanchissent pas la cible en continu
 function hitFl(u){if(!(u.flash>0)||u.dead){u._fl0=0;return 0}const n=performance.now();if(!u._fl0||n-(u._flL||0)>90)u._fl0=n;u._flL=n;return n-u._fl0<130?Math.min(1,u.flash/.12):0}
-function drawNinja(u,bx,by,s,ghost){
+// dessin d'un ninja : rig 2D (nr_pose.js) → jambes, torse, tête, bras et arme tracés sur les points de la pose (style chibi, contour, ombrage)
+function drawNinja(u,bx,by,s,ghost,al){
  const L=u.ch.look,h=L.head,W=L.weapon,k=W.k||'fist',t=performance.now()/1000;
- const fx=Math.cos(u.aim),fy=Math.sin(u.aim),back=fy<-.3,fl=hitFl(u)>0,sk=L.scale||1;
+ const fx=Math.cos(u.aim),fy=Math.sin(u.aim),fl=hitFl(u)>0,sk=L.scale||1;
  const run=u.dash?2:(u.haste>0||u.sprint)&&u.moving?2:u.moving?1:0;
- g.save();g.translate(bx,by);g.scale(s*sk,s*sk);if(u.phase>0)g.globalAlpha*=.35+Math.sin(t*30)*.1;
- if(u.dead){g.globalAlpha=Math.max(0,1-u.deadT*.6);g.rotate(Math.min(1.4,u.deadT*6)*(fx<0?-1:1))}
- if(u.stun>0)g.rotate(Math.sin(t*12)*.06);
- // projeté (airT) : renversé en l'air, puis couché tant qu'il est étourdi (2D sans WebGL)
- if(u.airT>0&&!u.dead){u._kd2=1;g.translate(0,-6);g.rotate(-(fx>=0?1:-1)*.85)}else if(u._kd2&&u.stun>0&&!u.dead){g.translate(0,-2);g.rotate(-(fx>=0?1:-1)*1.35)}else u._kd2=0;
- const sw=u.swing>0?u.swing/.18:0,cs=cmbStep(u),cph=sw>0?punchK(sw):0,fs=Math.cos(u.aim)>=0?1:-1;if(sw>0)g.translate(Math.cos(u.aim)*[4,6,10,5,7,12][cs]*cph,Math.sin(u.aim)*3*cph);
- if(cs===5){g.translate(0,-16*cph);g.rotate(fs*.38*cph)}else if(cs===3){g.translate(0,-6*cph);g.rotate(-fs*.12*cph)}else if(cs===4)g.rotate(-fs*.26*cph);else if(cs===2)g.rotate(fs*.14*cph);else if(cs===1)g.rotate(fs*.07*cph);
+ const R=rig2D(u,t),S=R.S,A=R.A,fs=R.fs,back=(fy<-.3)!==R.flip;
+ g.save();g.translate(bx,by);g.scale(s*sk,s*sk);if(u.phase>0)g.globalAlpha*=.35+Math.sin(t*30)*.1;if(al!=null)g.globalAlpha*=al;
+ if(u.dead)g.globalAlpha*=Math.max(0,1-Math.max(0,u.deadT-.9)*1.5); // la chute se voit, puis le corps s'efface
+ if(A.sq>.002)g.scale(1+.07*A.sq,1-.1*A.sq); // écrasement : gros coup, réception
+ const sw=u.swing>0?u.swing/.18:0,cs=cmbStep(u),cph=sw>0?punchK(sw):0;
+ const step=u.moving?Math.sin(u.walk):0;
+ const col=c=>fl?'#fff':c,skin=col(h.skin),LG=col(L.legs),TO=col(L.torso),AR=col(L.arm||L.torso),LY=L.bh||1,bw=(L.bw||1)*(L.belly?1.12:1);
+ const X=i=>S[i*2],Y=i=>S[i*2+1];
+ // repère du torse : hanches → cou de la pose (le buste se penche, bascule, tombe) ; repère de la tête : centre du crâne, inclinaison du cou
+ const hx0=X(BI.hips),hy0=Y(BI.hips),vx=X(BI.neck)-hx0,vy=Y(BI.neck)-hy0,th=Math.atan2(vx,-vy),ls=clamp((Math.hypot(vx,vy)||1)/(21*LY),.72,1.12);
+ const nkx=hx0+Math.sin(th)*22*ls,nky=hy0-Math.cos(th)*22*ls,hcx=nkx+R.hc[0]-X(BI.neck),hcy=nky+R.hc[1]-Y(BI.neck),th2=Math.atan2(R.hc[0]-X(BI.neck),-(R.hc[1]-Y(BI.neck)));
+ const torsoT=()=>{g.translate(hx0,hy0);g.rotate(th);g.scale(1,ls);g.translate(0,20)},headF=()=>{g.translate(hcx,hcy);g.rotate(th2);g.translate(-fx*1.5,53)};
  // image rémanente du coup final
- if(cs===5&&cph>.3){g.save();g.globalAlpha=.25*cph;g.translate(-fs*14,8);g.fillStyle=rgba(u.ch.look.weapon.col||'#ffd36a',.8);g.beginPath();g.ellipse(0,-30,12,22,0,0,7);g.fill();g.restore()}
- if(fl&&!u.dead){const fk=u.flash/.12;g.translate(-fx*4*fk,0);g.rotate(-(fx>=0?1:-1)*.16*fk)}
- {const zl=u.z||0;if((u._pz||0)>8&&zl<=1)u._land=.16;u._pz=zl;if(u._land>0){u._land-=1/60;const q=Math.max(0,u._land/.16);g.scale(1+.2*q,1-.18*q)}else if(zl>10)g.scale(.94,1.07)}
- if(u.dash&&!u.dead)g.rotate((fx>=0?1:-1)*.22);
- const step=u.moving?Math.sin(u.walk):0,bob=u.moving?Math.abs(Math.cos(u.walk))*1.8:Math.sin(t*2.2)*.5,lean=run>1?fx*5:run?fx*1.5:0;
- const col=c=>fl?'#fff':c,skin=col(h.skin),LG=col(L.legs),TO=col(L.torso),AR=col(L.arm||L.torso),LY=L.bh||1,SH2=20*LY-20,bw=(L.bw||1)*(L.belly?1.12:1);
- // cape vue de face : derrière le corps (dessinée avant les jambes, elle ne passe plus devant comme un tablier)
- if(L.cape&&!back){g.save();g.translate(lean*.4,-bob-SH2);outlined(()=>{g.moveTo(-11,-40);g.lineTo(11,-40);g.lineTo(16-step,-4);g.lineTo(-16-step,-4)},col(L.cape));g.restore()}
- // jambes (genou plié) et sandales
- for(const side of[-1,1]){const kick=(cs===4||cs===5)&&side===fs,ph=step*side,hx=side*4;let kx=hx+ph*4+lean*.3,ky=-10+Math.abs(ph)*-2,fxx=hx+ph*6,fyy=-2-Math.max(0,ph)*2;
-  if(kick){kx=hx+fs*12*cph;ky=-17-9*cph;fxx=hx+fs*(6+25*cph);fyy=-6-(cs===5?26:19)*cph}
-  else if(!u.moving&&(u.cmbT>0||cs)&&MELEEK.has(k)){kx=hx*1.6+side*fs*3;fxx=hx*2+side*fs*5;ky=-9}
-  ky*=LY;fyy=-2+(fyy+2)*LY;limb(hx,-20*LY,kx,ky,fxx,fyy,5.2*Math.sqrt(bw),LG);
+ if(cs===5&&cph>.3){g.save();g.globalAlpha*=.25*cph;g.translate(-fs*14,8);g.fillStyle=rgba(W.col||'#ffd36a',.8);g.beginPath();g.ellipse(0,-30,12,22,0,0,7);g.fill();g.restore()}
+ // cape : flotte vers l'arrière quand on court (os de la cape)
+ const cpx=fs*Math.sin(R.C.cape.x)*13,cpy=-(1-Math.cos(R.C.cape.x))*9;
+ if(L.cape&&!back){g.save();torsoT();outlined(()=>{g.moveTo(-11,-40);g.lineTo(11,-40);g.lineTo(16-step+cpx,-4+cpy);g.lineTo(-16-step+cpx,-4+cpy)},col(L.cape));g.restore()}
+ // jambes (hanche, genou, cheville de la pose) et sandales
+ for(const [ti,si,fi,side] of LEGS2){const x0=X(ti),y0=Y(ti),kx=X(si),ky=Y(si),fxx=X(fi),fyy=Y(fi),sd=side*fs;
+  limb(x0,y0,kx,ky,fxx,fyy,5.2*Math.sqrt(bw),LG);
   if(L.armAcc==='bandall'){const a=.35,b=.85;limb(kx+(fxx-kx)*a,ky+(fyy-ky)*a,kx+(fxx-kx)*(a+b)/2,ky+(fyy-ky)*(a+b)/2,kx+(fxx-kx)*b,ky+(fyy-ky)*b,5.6,col('#f0ece0'))}
-  if(L.stripes)for(const q of[.5]){circ(hx+(kx-hx)*q,-20*LY+(ky+20*LY)*q,2.7,col(L.stripes));circ(kx+(fxx-kx)*q,ky+(fyy-ky)*q,2.5,col(L.stripes))}
+  if(L.stripes){circ(x0+(kx-x0)*.5,y0+(ky-y0)*.5,2.7,col(L.stripes));circ(kx+(fxx-kx)*.5,ky+(fyy-ky)*.5,2.5,col(L.stripes))}
   if(L.warm)limb(kx+(fxx-kx)*.3,ky+(fyy-ky)*.3,kx+(fxx-kx)*.6,ky+(fyy-ky)*.6,fxx,fyy-1.5,6.2,col(L.warm));if(L.legs!=='#d8d0c0'&&L.torso==='#4a8a3a'){g.strokeStyle='#e8e0d0';g.lineWidth=1;g.beginPath();g.moveTo(kx-2,ky+3);g.lineTo(kx+2,ky+5);g.stroke()}
-  if((L.gear==='holster'||L.gear==='both')&&side===(fx>=0?-1:1)){const qx=hx+(kx-hx)*.45,qy=-20*LY+(ky+20*LY)*.45;g.fillStyle=col('#f0ece0');g.fillRect(qx-3.4,qy-2.6,6.8,1.6);outlined(()=>{g.roundRect(qx-2.6,qy-2,5.2,6.4,1.2)},col('#3a3a44'))}
+  if((L.gear==='holster'||L.gear==='both')&&sd<0){const qx=x0+(kx-x0)*.45,qy=y0+(ky-y0)*.45;g.fillStyle=col('#f0ece0');g.fillRect(qx-3.4,qy-2.6,6.8,1.6);outlined(()=>{g.roundRect(qx-2.6,qy-2,5.2,6.4,1.2)},col('#3a3a44'))}
   g.fillStyle=OUT;g.fillRect(fxx-4,fyy-1,9,4);g.fillStyle=col(L.boot||'#222');g.fillRect(fxx-3.5,fyy-.5,8,2.5);g.fillStyle=skin;g.fillRect(fxx+(fx>0?2:-3),fyy-2.5,3,2)}
- g.translate(lean*.4,-bob);g.translate(0,-SH2);
- const [hf,hb]=ninjaHands(u,fx,fy,run,t);
+ // profondeur des bras : une main passée devant le buste (mudras, deux mains) est dessinée par-dessus, une main rejetée en arrière (course ninja, élan) derrière le corps ;
+ // une main levée devant le visage (genjutsu, souffle) aussi ; vu de dos, c'est l'inverse (0 : derrière le buste, 1 : par-dessus la tête)
+ const hf=R.hR,hb=R.hL,lay=(z,hy)=>back?(z>4?0:1):z<-3?0:z>5||z>1.5&&hy<Y(BI.neck)?1:-1,lL=lay(R.zL,hb[1]),lR=lay(R.zR,hf[1]),lFwd=lL===1,rBk=lR===0;
  // gourde de sable, cape et manteau à l'arrière
  const gourd=()=>{g.save();g.translate(back?0:-fx*3,-30);outlined(()=>{g.ellipse(0,4,11,12,0,0,7)},col('#c8945a'));outlined(()=>{g.ellipse(0,-11,7,7,0,0,7)},col('#c8945a'));g.fillStyle='#7a4a2a';g.fillRect(-2,-20,4,4);g.strokeStyle='#8a3a2a';g.lineWidth=2;g.beginPath();g.moveTo(-10,-4);g.lineTo(10,-14);g.stroke();g.restore()};
- if(!back&&HAIRS[h.style]&&!(L.hood==='up'||L.hood==='chat')){g.save();headT();drawHair2D(hairPieces2D(u,HAIRS[h.style]),-1,fx*1.5,-53,fl?'#fff':h.hair,fl,back);g.restore()}
- if(L.gourd&&!back)gourd();if(L.back&&!back)backItem2D(L.back,-fx*3,col);
- if(L.neck==='echlong'&&!back)neck2D({neck:'echlong',maskC:L.maskC},true,col);
- // bras arrière
- const shoulder=side=>[side*9*bw,-37];const armB=()=>{const [sx,sy]=shoulder(-fx>=0?1:-1),e=[(sx+hb[0])/2-2,(sy+hb[1])/2+2];limb(sx,sy,e[0],e[1],hb[0],hb[1],4.4,AR);if(L.stripes)circ((sx+e[0])/2,(sy+e[1])/2,2.4,col(L.stripes));arm2D(L,sx,sy,e,hb,col,0);
+ if(!back&&HAIRS[h.style]&&!(L.hood==='up'||L.hood==='chat')){g.save();headF();headT();drawHair2D(hairPieces2D(u,HAIRS[h.style],back),-1,fx*1.5,-53,fl?'#fff':h.hair,fl,back);g.restore()}
+ if(!back&&(L.gourd||L.back||L.neck==='echlong')){g.save();torsoT();if(L.gourd)gourd();if(L.back)backItem2D(L.back,-fx*3,col);if(L.neck==='echlong')neck2D({neck:'echlong',maskC:L.maskC},true,col);g.restore()}
+ // bras arrière (épaule, coude, main de la pose)
+ const armB=()=>{const sx=X(BI.armL),sy=Y(BI.armL),e=[X(BI.foreL),Y(BI.foreL)];limb(sx,sy,e[0],e[1],hb[0],hb[1],4.4,AR);if(L.stripes)circ((sx+e[0])/2,(sy+e[1])/2,2.4,col(L.stripes));arm2D(L,sx,sy,e,hb,col,0);
   blob(hb[0],hb[1],2.6,L.armAcc==='gants'?col('#3a3f50'):L.armAcc==='gantelets'?col('#7a828e'):k==='fist'||k==='bigfist'?col('#f0ebe0'):skin)};
- if(!back)armB();
+ if(lL<1)armB();const armF=()=>{const sx=X(BI.armR),sy=Y(BI.armR),e=[X(BI.foreR),Y(BI.foreR)];limb(sx,sy,e[0],e[1],hf[0],hf[1],4.6,AR);if(L.stripes)circ((sx+e[0])/2,(sy+e[1])/2,2.5,col(L.stripes));arm2D(L,sx,sy,e,hf,col,1);
+  if(h.bs==='bras'){const bx=sx+(e[0]-sx)*.45,by=sy+(e[1]-sy)*.45;g.fillStyle=h.band;g.beginPath();g.arc(bx,by,3.1,0,7);g.fill();g.fillStyle='#d3d8e2';g.fillRect(bx-1.6,by-1.4,3.2,2.8)}
+  drawNinjaWeapon(u,L,W,k,hf,hb,fx,fy,back,fl,t,R)};
+ if(rBk)armF();
  // torse et tenue
+ g.save();torsoT();const SH2=20*LY-20;
  if(L.robe){const rb=L.rshort?-17:SH2-7,rw=L.rshort?14.5:16;outlined(()=>{g.moveTo(-12,-41);g.lineTo(12,-41);g.lineTo(rw+step*2,rb);g.lineTo(-rw+step*2,rb)},col(L.robe));if(L.trim){g.fillStyle=col(L.trim);g.fillRect(-15.4+step*2,rb-4,30.8,3.2)}}
  const tg=g.createLinearGradient(-11,0,11,0);tg.addColorStop(0,col(shade(L.torso,1.12)));tg.addColorStop(1,col(shade(L.torso,.82)));
  outlined(()=>{g.roundRect(-10.5*bw,-42,21*bw,24,5)},tg);if(L.belly)outlined(()=>{g.ellipse(0,-27,12.5*bw*.92,10.5,0,0,7)},tg);
@@ -298,7 +285,7 @@ function drawNinja(u,bx,by,s,ghost){
  }else{
   if(L.tunic){g.fillStyle=col('#ffffff');g.beginPath();g.arc(0,-31,5,Math.PI,0);g.fill();g.fillStyle=col('#d02a2a');g.beginPath();g.arc(0,-31,5,0,Math.PI);g.fill()}
   if(L.clouds&&L.robe&&!L.hov&&!fl){g.fillStyle=L.cloudC||'#c0202a';g.beginPath();g.ellipse(0,-28,5,3,0,0,7);g.fill()}
-  if(L.cape)outlined(()=>{g.moveTo(-12,-41);g.lineTo(12,-41);g.lineTo(15-step,-6);g.lineTo(-15-step,-6)},col(L.cape));
+  if(L.cape)outlined(()=>{g.moveTo(-12,-41);g.lineTo(12,-41);g.lineTo(15-step-cpx,-6+cpy);g.lineTo(-15-step-cpx,-6+cpy)},col(L.cape));
   if(L.disc&&!fl){g.strokeStyle=L.disc;g.lineWidth=2.2;g.beginPath();g.arc(0,-31,5,0,7);g.stroke()}
   if(L.fan&&!fl){g.fillStyle='#ffffff';g.beginPath();g.arc(0,-31,5,Math.PI,0);g.fill();g.fillStyle='#d02a2a';g.beginPath();g.arc(0,-31,5,0,Math.PI);g.fill()}
  }
@@ -310,14 +297,13 @@ function drawNinja(u,bx,by,s,ghost){
   if(L.gourd)gourd();if(L.back&&!L.gourd)backItem2D(L.back,0,col)} // vu de dos : symbole, pochette puis objet porté dans le dos, par-dessus le haori ou la cape
  if(h.bs==='taille'){g.fillStyle=h.band;g.fillRect(-10.5,-24,21,3.6);if(!back)bandPlate(h,0,-22.2,.7,0)}
  if(k==='kunai'||k==='senbon'){g.fillStyle=col('#3a3a44');g.fillRect(fx>0?-10:6,-17,5,6)}
+ g.restore();
  // tête
- g.save();headT();drawNinjaHead(u,h,fx,fy,back,fl,t,run);g.restore();
+ g.save();headF();headT();drawNinjaHead(u,h,fx,fy,back,fl,t,run);g.restore();
  // bras avant + arme
- const [sx,sy]=shoulder(fx>=0?1:-1);
- if(back)armB();
- {const e=[(sx+hf[0])/2+1,(sy+hf[1])/2+2];limb(sx,sy,e[0],e[1],hf[0],hf[1],4.6,AR);if(L.stripes)circ((sx+e[0])/2,(sy+e[1])/2,2.5,col(L.stripes));arm2D(L,sx,sy,e,hf,col,1)}
- if(h.bs==='bras'){const bx=sx+((sx+hf[0])/2+1-sx)*.45,by=sy+((sy+hf[1])/2+2-sy)*.45;g.fillStyle=h.band;g.beginPath();g.arc(bx,by,3.1,0,7);g.fill();g.fillStyle='#d3d8e2';g.fillRect(bx-1.6,by-1.4,3.2,2.8)}
- drawNinjaWeapon(u,L,W,k,hf,hb,fx,fy,back,fl,t);
+ if(lL===1)armB();
+ if(!rBk)armF();
+ castHands2D(u,R,hf,hb,fl,t);
  // traits d'impact propres à chaque coup du combo
  if(cs&&!fl){const sw2=1-u.swing/.18;if(sw2<.55){const al=.55*(1-sw2/.55);g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ffffff',al);g.lineCap='round';
    if(cs===1||cs===2){const hp=cs===1?hf:hb;g.lineWidth=2.4;for(let q=-1;q<=1;q++){g.beginPath();g.moveTo(hp[0]-fs*(10+8*(1-Math.abs(q))),hp[1]+q*3);g.lineTo(hp[0]-fs*3,hp[1]+q*2);g.stroke()}}
@@ -329,6 +315,43 @@ function drawNinja(u,bx,by,s,ghost){
   g.stroke();g.restore()}
  g.restore();
 }
+// mudras : doigts du signe, chakra qui monte à chaque signe ; s'efface quand les mains quittent le signe (préparation propre à l'élément)
+function mudraFx(u,hf,hb,fx,t,c){const md=mudraOf(u);if(!md)return;const [f,b]=[hf,hb],mx=(f[0]+b[0])/2,my=(f[1]+b[1])/2,fs=fx>=0?1:-1,st=md.sg[3],pw=(md.i+md.q)/md.n;
+  const kc=u.cast.dur?Math.min(1,u.cast.t/u.cast.dur):1,f0=1-Math.min(.3,.9/md.n),fd=kc<f0?1:Math.max(0,1-(kc-f0)/(1-f0)*1.6);if(fd<=0)return;g.save();g.globalAlpha*=fd;
+  // doigts du signe
+  g.strokeStyle=OUT;g.lineWidth=2.6;g.lineCap='round';const fing=(x,y,dx,dy)=>{g.strokeStyle=OUT;g.lineWidth=2.6;g.beginPath();g.moveTo(x,y);g.lineTo(x+dx,y+dy);g.stroke();g.strokeStyle=u.ch.look.head.skin;g.lineWidth=1.4;g.stroke()};
+  if(st==='up'||st==='tri'){fing(mx,my-2,0,-7);if(st==='tri'){fing(mx-1.5,my-1,-2,-6);fing(mx+1.5,my-1,2,-6)}}
+  else if(st==='up1'){fing(f[0],f[1]-2,0,-6)}else if(st==='side'){fing(f[0],f[1],fs*6,-2)}else if(st==='wing'){fing(f[0],f[1],-4,-5);fing(b[0],b[1],4,-5)}
+  else if(st==='down'){fing(mx,my+2,0,6)}else if(st==='cross'){fing(f[0],f[1],-3,-5);fing(b[0],b[1],3,-5)}else if(st==='flat'){fing(f[0],f[1],fs*5,0)}
+  blob(f[0],f[1],2.7,u.ch.look.head.skin);blob(b[0],b[1],2.7,u.ch.look.head.skin);
+  // chakra qui monte à chaque signe, éclair au changement de signe
+  g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.25+.45*pw);g.beginPath();g.arc(mx,my,4+6*pw+rnd()*1.5,0,7);g.fill();
+  if(md.q<.3){const k2=md.q/.3;g.strokeStyle=rgba('#ffffff',.9*(1-k2));g.lineWidth=1.6;g.beginPath();g.arc(mx,my,5+14*k2,0,7);g.stroke();
+   for(let q=0;q<6;q++){const b2=q*1.047+md.i;g.beginPath();g.moveTo(mx+Math.cos(b2)*(6+8*k2),my+Math.sin(b2)*(6+8*k2));g.lineTo(mx+Math.cos(b2)*(10+12*k2),my+Math.sin(b2)*(10+12*k2));g.stroke()}}
+  g.strokeStyle=rgba(c,.7);g.lineWidth=1.2;g.beginPath();g.arc(mx,my,11+3*pw,t*7,t*7+1.5+3*pw);g.stroke();g.restore()}
+// gestes d'incantation lisibles en 2D : paumes médicales qui luisent, foudre qui crépite dans la main, braise aux lèvres (Katon),
+// lueur des deux doigts (genjutsu), goutte de sang puis cercle d'encre sous la paume (invocation) ; petits, additifs, jamais sur le corps entier
+const CH2D=new Set(['heal','gen','summon','raiton','kirin']);
+function castHands2D(u,R,hf,hb,fl,t){if(fl||!u.cast)return;const st=R.A.cs;if(!st)return;const c=u.cast,k=c.dur?Math.min(1,c.t/c.dur):1;
+ g.save();g.globalCompositeOperation='lighter';
+ if(st==='heal'){for(const p of[hf,hb]){g.fillStyle=rgba('#7dffa8',.28+.12*Math.sin(t*9));g.beginPath();g.arc(p[0],p[1]+1,5.5,0,7);g.fill();g.fillStyle=rgba('#d8ffe6',.5);g.beginPath();g.arc(p[0],p[1]+1,2.2,0,7);g.fill()}
+  const q=(t*1.4)%1;g.strokeStyle=rgba('#9dffbf',.6*(1-q));g.lineWidth=1.2;g.beginPath();const mx=(hf[0]+hb[0])/2,my=(hf[1]+hb[1])/2-q*14;g.moveTo(mx-2,my);g.lineTo(mx+2,my);g.moveTo(mx,my-2);g.lineTo(mx,my+2);g.stroke()}
+ else if(st==='raiton'||st==='kirin'){g.strokeStyle=rgba('#cfe8ff',.75);g.lineWidth=1.1;g.beginPath();for(let i=0;i<3;i++){const b=t*37+i*2.1;let x=hf[0],y=hf[1];g.moveTo(x,y);for(let j=0;j<3;j++){x+=Math.cos(b+j*1.7)*3.4;y+=Math.sin(b*1.3+j)*3.4;g.lineTo(x,y)}}g.stroke();
+  g.fillStyle=rgba('#9fd0ff',.3);g.beginPath();g.arc(hf[0],hf[1],5+Math.sin(t*50)*1.2,0,7);g.fill()}
+ else if(st==='katon'&&k>.6){const mx=R.hc[0]+R.ax*11,my=R.hc[1]+4+R.ay*6,e=(k-.6)/.4;g.fillStyle=rgba('#ff9a3a',.35*e);g.beginPath();g.arc(mx,my,3+3*e,0,7);g.fill();g.fillStyle=rgba('#ffe0a0',.55*e);g.beginPath();g.arc(mx,my,1.6+e,0,7);g.fill()}
+ else if(st==='gen'){g.fillStyle=rgba('#d68cff',.45+.2*Math.sin(t*7));g.beginPath();g.arc(hb[0],hb[1]-4,2.6,0,7);g.fill();g.strokeStyle=rgba('#e8b8ff',.5);g.lineWidth=.9;g.beginPath();g.arc(hb[0],hb[1]-4,5+2*Math.sin(t*5),0,7);g.stroke()}
+ else if(st==='summon'){g.globalCompositeOperation='source-over';if(k<.45){g.fillStyle='#c0141a';g.beginPath();g.arc(hf[0],hf[1]-1.5,1.3,0,7);g.fill()}
+  else{const e=Math.min(1,(k-.45)/.25);g.strokeStyle=rgba('#1a1010',.7*e);g.lineWidth=1.2;g.beginPath();g.ellipse(hf[0],hf[1]+2,7+9*e,(7+9*e)*.4,0,0,7);g.stroke();
+   for(let i=0;i<5;i++){const b=i*1.257+t;g.beginPath();g.moveTo(hf[0]+Math.cos(b)*4,hf[1]+2+Math.sin(b)*1.6);g.lineTo(hf[0]+Math.cos(b)*(7+9*e),hf[1]+2+Math.sin(b)*(7+9*e)*.4);g.stroke()}}}
+ g.restore()}
+// silhouette 2D du ninja recolorée (Kyôka : peau de roche, Huit Portes : corps rougi…) : le ninja est redessiné dans une petite toile gardée,
+// la couleur n'est posée que sur ses pixels (source-atop), deco(x, w, h) y ajoute grain ou fissures, puis l'image est collée par-dessus le ninja
+let CTC=null;
+function charTint(u,p,S,col,a,deco){if(!(a>.01)||!u||!u.ch||u.ch.look.head.t!=='ninja')return;const U=S*(u.ch.look.scale||1),w=Math.ceil(100*U),h=Math.ceil(108*U),r=Math.min(2,RS||1),ft=14*U;
+ if(!CTC)CTC=document.createElement('canvas');const c=CTC;if(c.width<w*r||c.height<h*r){c.width=Math.ceil(w*r);c.height=Math.ceil(h*r)}
+ const x=c.getContext('2d'),og=g;g=x;try{x.setTransform(r,0,0,r,0,0);x.globalCompositeOperation='source-over';x.globalAlpha=1;x.clearRect(0,0,w+1,h+1);drawNinja(u,w/2,h-ft,S);
+  x.globalCompositeOperation='source-atop';x.fillStyle=col;x.fillRect(0,0,w,h);if(deco)deco(x,w,h);x.globalCompositeOperation='source-over'}finally{g=og}
+ g.save();g.globalAlpha*=a;g.drawImage(c,0,0,w*r,h*r,p.x-w/2,p.y-h+ft,w,h);g.restore()}
 // plaque du bandeau (village, rayure des renégats, kanji « huile » de l'ermite)
 function bandPlate(h,px,py,sc,rot){g.save();g.translate(px,py);g.rotate(rot||0);g.scale(sc,sc);g.fillStyle='#d3d8e2';g.strokeStyle='#5a6070';g.lineWidth=1;g.beginPath();g.roundRect(-7,-3.75,14,7.5,1.5);g.fill();g.stroke();
  g.strokeStyle='#4a4f5a';g.lineWidth=1;g.beginPath(); // repère : centre de la plaque
@@ -344,7 +367,7 @@ function bandPlate(h,px,py,sc,rot){g.save();g.translate(px,py);g.rotate(rot||0);
 // chapeau de Kage (2D)
 function kageHat(hx,hy,fl,L){const hc=L&&L.hatC||'#c0202a',hk=L&&L.hatK||'火';outlined(()=>{g.ellipse(hx,hy-11,21,6,0,0,7)},fl?'#fff':'#f0eee6');outlined(()=>{g.moveTo(hx-13,hy-13);g.quadraticCurveTo(hx,hy-30,hx+13,hy-13)},fl?'#fff':'#f0eee6');
  outlined(()=>{g.moveTo(hx-6,hy-13);g.quadraticCurveTo(hx,hy-27,hx+6,hy-13)},fl?'#fff':hc);g.fillStyle='#fff';g.font='bold 6px serif';g.textAlign='center';g.textBaseline='middle';g.fillText(hk,hx,hy-17.5)}
-function drawNinjaHead(u,h,fx,fy,back,fl,t,run){const hx=fx*1.5,hy=-53,ex=hx+fx*3.5,R=12.5,hc=fl?'#fff':h.hair,L=u.ch.look,HS=HAIRS[h.style],bs0=h.bs==null?'front':h.bs,bs=['kage','paille','kabuto','bandana'].includes(h.acc)&&['front','barre','cornes','oblique','tete'].includes(bs0)?'':bs0,hood=L.hood==='up'||L.hood==='chat',HP=HS&&!hood?hairPieces2D(u,HS):null;
+function drawNinjaHead(u,h,fx,fy,back,fl,t,run){const hx=fx*1.5,hy=-53,ex=hx+fx*3.5,R=12.5,hc=fl?'#fff':h.hair,L=u.ch.look,HS=HAIRS[h.style],bs0=h.bs==null?'front':h.bs,bs=['kage','paille','kabuto','bandana'].includes(h.acc)&&['front','barre','cornes','oblique','tete'].includes(bs0)?'':bs0,hood=L.hood==='up'||L.hood==='chat',HP=HS&&!hood?hairPieces2D(u,HS,back):null;
  g.save();
  // bandeau : pans qui flottent
  if(bs==='front'||bs==='oblique'||bs==='barre'||bs==='cornes'||bs==='tete'){const flap=Math.sin(t*9+u.x*.01)*(u.moving?3:1),by=bs==='tete'?-6:0;g.strokeStyle=h.band;g.lineWidth=2.4;g.lineCap='round';g.beginPath();g.moveTo(hx-fx*10,hy-6+by);g.quadraticCurveTo(hx-fx*17,hy-4+flap+by,hx-fx*(22+run*3),hy-1+flap*1.5+by);g.moveTo(hx-fx*10,hy-5+by);g.quadraticCurveTo(hx-fx*15,hy+1-flap+by,hx-fx*(19+run*3),hy+4-flap+by);g.stroke()}
@@ -398,7 +421,7 @@ function drawNinjaHead(u,h,fx,fy,back,fl,t,run){const hx=fx*1.5,hy=-53,ex=hx+fx*
  if(HP)drawHair2D(HP,2,hx,hy,hc,fl,back);
  if(h.acc==='kage')kageHat(hx,hy,fl,L);
  g.restore()}
-function drawNinjaWeapon(u,L,W,k,hf,hb,fx,fy,back,fl,t){const [x,y]=hf,a=Math.atan2(Math.sin(u.aim)*K,Math.cos(u.aim)),act=u.swing>0||u.block||u.cast,c=W.col;
+function drawNinjaWeapon(u,L,W,k,hf,hb,fx,fy,back,fl,t,R){const [x,y]=hf,a=R?R.wa:Math.atan2(Math.sin(u.aim)*K,Math.cos(u.aim)),act=u.swing>0||u.block||u.cast,c=W.col;
  const AA=L.armAcc,glv=AA==='gants'?'#3a3f50':AA==='gantelets'?'#7a828e':null,fist=(px,py,r,cc)=>{blob(px,py,r,glv&&!fl&&(cc==='#f0ebe0'||cc===L.head.skin)?glv:cc);if(AA==='bague'&&!fl)circ(px+r*.5,py-r*.2,r*.3,'#f0c840')}; // gants, gantelets, vernis et bague : aussi sur la main qui tient l'arme
  switch(k){
   case'fist':fist(x,y,3.2,fl?'#fff':'#f0ebe0');if(!glv){g.strokeStyle='#c8c0b0';g.lineWidth=.8;g.beginPath();g.moveTo(x-2.5,y);g.lineTo(x+2.5,y-1);g.stroke()}break;
@@ -432,24 +455,11 @@ function drawNinjaWeapon(u,L,W,k,hf,hb,fx,fy,back,fl,t){const [x,y]=hf,a=Math.at
   default:{fist(x,y,3,u.ch.look.head.skin);if(u.saberOut>0)break;g.save();g.translate(x,y);g.rotate(a+(u.block?-1.2:0));if(act){g.shadowColor=c;g.shadowBlur=10*RS}g.fillStyle='#3a3a44';g.fillRect(-7,-1.5,8,3);g.strokeStyle='#3a3a44';g.lineWidth=1.2;g.beginPath();g.arc(-9,0,2.4,0,7);g.stroke();
    g.fillStyle=act?c:'#d3d8e2';g.beginPath();g.moveTo(1,-3.6);g.lineTo(15,0);g.lineTo(1,3.6);g.fill();g.restore()}}
  // mudras : chakra entre les mains pendant l'incantation
- const md=mudraOf(u);if(md){const [f,b]=[hf,hb],mx=(f[0]+b[0])/2,my=(f[1]+b[1])/2,fs=fx>=0?1:-1,st=md.sg[3],pw=(md.i+md.q)/md.n;
-  // doigts du signe
-  g.strokeStyle=OUT;g.lineWidth=2.6;g.lineCap='round';const fing=(x,y,dx,dy)=>{g.strokeStyle=OUT;g.lineWidth=2.6;g.beginPath();g.moveTo(x,y);g.lineTo(x+dx,y+dy);g.stroke();g.strokeStyle=u.ch.look.head.skin;g.lineWidth=1.4;g.stroke()};
-  if(st==='up'||st==='tri'){fing(mx,my-2,0,-7);if(st==='tri'){fing(mx-1.5,my-1,-2,-6);fing(mx+1.5,my-1,2,-6)}}
-  else if(st==='up1'){fing(f[0],f[1]-2,0,-6)}else if(st==='side'){fing(f[0],f[1],fs*6,-2)}else if(st==='wing'){fing(f[0],f[1],-4,-5);fing(b[0],b[1],4,-5)}
-  else if(st==='down'){fing(mx,my+2,0,6)}else if(st==='cross'){fing(f[0],f[1],-3,-5);fing(b[0],b[1],3,-5)}else if(st==='flat'){fing(f[0],f[1],fs*5,0)}
-  blob(f[0],f[1],2.7,u.ch.look.head.skin);blob(b[0],b[1],2.7,u.ch.look.head.skin);
-  // chakra qui monte à chaque signe, éclair au changement de signe
-  g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.25+.45*pw);g.beginPath();g.arc(mx,my,4+6*pw+rnd()*1.5,0,7);g.fill();
-  if(md.q<.3){const k2=md.q/.3;g.strokeStyle=rgba('#ffffff',.9*(1-k2));g.lineWidth=1.6;g.beginPath();g.arc(mx,my,5+14*k2,0,7);g.stroke();
-   for(let q=0;q<6;q++){const b2=q*1.047+md.i;g.beginPath();g.moveTo(mx+Math.cos(b2)*(6+8*k2),my+Math.sin(b2)*(6+8*k2));g.lineTo(mx+Math.cos(b2)*(10+12*k2),my+Math.sin(b2)*(10+12*k2));g.stroke()}}
-  g.strokeStyle=rgba(c,.7);g.lineWidth=1.2;g.beginPath();g.arc(mx,my,11+3*pw,t*7,t*7+1.5+3*pw);g.stroke();g.restore()}
- else if(u.cast){g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.45+rnd()*.3);g.beginPath();g.arc(hf[0],hf[1],6+rnd()*3,0,7);g.fill();g.strokeStyle=rgba(c,.85);g.lineWidth=1.2;g.beginPath();g.arc(hf[0],hf[1],11,t*7,t*7+4.5);g.stroke();g.restore()}
+ const md=mudraOf(u);if(md)mudraFx(u,hf,hb,fx,t,c)
+ else if(u.cast&&!(R&&CH2D.has(R.A.cs))){g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.45+rnd()*.3);g.beginPath();g.arc(hf[0],hf[1],6+rnd()*3,0,7);g.fill();g.strokeStyle=rgba(c,.85);g.lineWidth=1.2;g.beginPath();g.arc(hf[0],hf[1],11,t*7,t*7+4.5);g.stroke();g.restore()}
 }
 // chien ninja (Inuzuka) : suit son maître et bondit quand il attaque
 function drawDog(u){if(u.dead||!u.ch.look.dog)return;const t=performance.now()/1000,a=u.aim,atk=u.swing>0,d=atk?30:-22,ox=u.x+Math.cos(a+(atk?0:1.9))*Math.abs(d)*(atk?1:1),oy=u.y+Math.sin(a+(atk?0:1.9))*Math.abs(d)+6,p=P(ox,oy),s=p.s*1.25,f=Math.cos(a)>=0?1:-1,run=u.moving?Math.sin(t*16):0;
- // chien en 3D si disponible (même place, même échelle)
- {const dg=u._dog3,tl=dg&&N3.ok&&N3.tile.get(dg);if(tl){dg.aim=a;g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(p.x,p.y,13*s,4*s,0,0,7);g.fill();const w=TWU*s,h=THU*s;g.drawImage(N3.cv,tl.sx,tl.sy,TPW,TPH,p.x-w/2,p.y-h+FOOT*s,w,h);return}}
  g.save();g.translate(p.x,p.y);g.scale(s*f,s);g.fillStyle='rgba(0,0,0,.3)';g.beginPath();g.ellipse(0,0,13,4,0,0,7);g.fill();
  g.strokeStyle=OUT;g.lineWidth=3;for(const [lx,ph] of[[-7,1],[-3,-1],[5,1],[9,-1]]){g.beginPath();g.moveTo(lx,-8);g.lineTo(lx+run*ph*2,-1);g.stroke()}
  outlined(()=>{g.ellipse(0,-11,12,6.5,0,0,7)},'#f4f0e8');outlined(()=>{g.ellipse(11,-17-(atk?2:0),6,5.5,0,0,7)},'#f4f0e8');

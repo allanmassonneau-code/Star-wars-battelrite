@@ -106,14 +106,14 @@ function wzHead(){const E=ED&&ED.k?rosGet(ED.k):null,s=E?(E.P?`MODIFIER · ${E.P
   fitT(WZS[i][0],R.x+38,cy+5,13.5,cur?'#1a1008':open?'#f3d9b0':'#6a5440',R.w-46,'bold',9,'left');
   if(rev||err){g.beginPath();g.arc(R.x+R.w-10,R.y+9,5,0,7);g.fillStyle=err?'#ff5a4a':'#ffb347';g.fill()}
   if(wzFree()&&inRect(mouse,R))hoverTip('wzs'+i,()=>({t:`${i+1}. ${WZS[i][0]}`,col:'#ffd38a',l:err?[[err,'#ff8a7a']]:rev?[['À revoir : ton origine a changé','#ffb347']]:[],d:WZS[i][1],f:cur?'Étape affichée':open?'Clic : aller à cette étape':'Pas encore ouverte : « Suivant ▶ »'}))}}
-// ---------- aperçu à droite : le ninja en 3D, son origine, ses stats, son trait, sa barre de départ ----------
+// ---------- aperçu à droite : le ninja animé, son origine, ses stats, son trait, sa barre de départ ----------
 function wzPreview(t){const P=WZP,ch=EBCH,o=wzOrig(EB),col=wzOrigCol(o),T=traitOfB(EB);
  g.save();g.shadowColor='rgba(0,0,0,.5)';g.shadowBlur=14;rr(P,12,'rgba(18,12,8,.94)',rgba(col,.7),1.5);g.restore();
  {g.save();g.beginPath();g.roundRect(P.x,P.y,P.w,P.h,12);g.clip();const gr=g.createLinearGradient(0,P.y,0,P.y+340);gr.addColorStop(0,rgba(col,.28));gr.addColorStop(1,'rgba(0,0,0,0)');g.fillStyle=gr;g.fillRect(P.x,P.y,P.w,340);
   g.globalCompositeOperation='lighter';const cx=P.x+P.w/2,r=g.createRadialGradient(cx,P.y+220,0,cx,P.y+220,170);r.addColorStop(0,rgba(ch.look.weapon.col||col,.2));r.addColorStop(1,rgba(ch.look.weapon.col||col,0));g.fillStyle=r;g.fillRect(P.x,P.y,P.w,360);g.restore()}
  const cx=P.x+P.w/2,fy=P.y+330,fake=menuFake(ch);fake.aim=WZ.s===6&&LTAB===3?Math.PI/2+t*.9:Math.PI/2+Math.sin(t*.8)*1.1;fake.moving=Math.sin(t*.5)>.3;fake.walk=t*13;fake.swing=0;
  g.fillStyle='rgba(0,0,0,.4)';g.beginPath();g.ellipse(cx,fy-2,62,15,0,0,7);g.fill();
- const sc=2.15*(ch.look.scale>1?.9:1);drawPrevN(fake,cx,fy,sc,0);drawChar3(fake,cx,fy,sc);drawPrevN(fake,cx,fy,sc,1);
+ const sc=2.15*(ch.look.scale>1?.9:1);drawPrevN(fake,cx,fy,sc,0);drawChar(fake,cx,fy,sc);drawPrevN(fake,cx,fy,sc,1);
  fitT(EB.name,cx,P.y+28,21,ch.side?'#ff9a9a':'#ffd38a',P.w-30,'bold',12,'center');fitT(CAMPS[EB.side],cx,P.y+46,11.5,ch.side?'#ff7a7a':'#8fc8ff',P.w-30,'normal',9,'center');
  let y=fy+26;fitT(ch.desc,cx,y,13,liftC(col,.6),P.w-24,'bold',9,'center');y+=19;
  fitT(`${ch.hp} PV · vitesse ${ch.spd} · puissance ×${ch.pw.toFixed(2).replace('.',',')}`,cx,y,12,'#e8cfa8',P.w-24,'normal',9,'center');y+=12;

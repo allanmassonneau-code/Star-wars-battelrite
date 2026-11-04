@@ -257,7 +257,7 @@ JFXD.in_nose=(f,k,e,t,u,tg)=>{const c=tg||u||f;if(c.dead)return;const q=P(c.x,c.
 // Shikyaku : flambée de chakra bestial
 JFXD.in_feral=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x,u.y,0),s=q.s,n=fxNB(9,f);fxGlowS(q.x,q.y-20*s,44*s,'#ff5a3a',.2*k,36*s);g.save();g.globalCompositeOperation='lighter';for(let i=0;i<n;i++){const b=i*.7+t*4,x=q.x+Math.cos(b)*(14+e*10)*s,h=(30+(i%3)*14)*s*(1-e*.4),y=q.y-6*s;g.fillStyle=rgba(i%2?'#c0402a':'#ff7a4a',.55*k);g.beginPath();g.moveTo(x-5*s,y);g.quadraticCurveTo(x+Math.sin(t*20+i)*4*s,y-h,x+5*s,y);g.fill()}
  g.strokeStyle=rgba('#ff7a4a',.8*k);g.lineWidth=3;g.beginPath();g.ellipse(q.x,q.y,(20+e*40)*s,(20+e*40)*s*K,0,0,7);g.stroke();g.restore()};
-// ---------- poses 3D ----------
+// ---------- poses du squelette ----------
 Object.assign(ANIM,{
  // vrille : roulé en boule, tourne sur lui-même
  in_drill:(P,e,u,t)=>{P.rootR.y=t*38;P.root.y=7;pz(P,'spine',.35);pz(P,'chest',.75);pz(P,'head',.45);pz(P,'armL',-1.9,0,.3);pz(P,'foreL',-1.6);pz(P,'armR',-1.9,0,-.3);pz(P,'foreR',-1.6);pz(P,'thighL',-1.5);pz(P,'shinL',2.1);pz(P,'thighR',-1.4);pz(P,'shinR',2);pz(P,'hair',.6);pz(P,'band',1)},
@@ -323,4 +323,4 @@ AFTER.push(()=>{UK.push('in_bcd','in_four','in_flair','in_wolf');
  // avant chaque ninja : les ninken qui sont derrière lui (ordre d'affichage)
  if(typeof drawDust==='function'){const D1=drawDust;drawDust=u=>{D1(u);in_dogsOf(u,false)}}
  // Loup bicéphale : le ninja est dessiné en loup géant à deux têtes
- if(typeof drawChar3==='function'){const D2=drawChar3;drawChar3=(u,bx,by,s,al)=>{if(u.in_wolf>0&&u.giant>0&&!u.dead){g.save();if(al!=null)g.globalAlpha*=al;in_wolfAt(u,bx,by,s);g.restore();return}D2(u,bx,by,s,al)}}});
+ if(typeof drawChar==='function'){const D2=drawChar;drawChar=(u,bx,by,s,al)=>{if(u.in_wolf>0&&u.giant>0&&!u.dead){g.save();if(al!=null)g.globalAlpha*=al;in_wolfAt(u,bx,by,s);g.restore();return}D2(u,bx,by,s,al)}}});

@@ -168,26 +168,11 @@ AFTER.push(()=>{
  // 2D : dents pointues (sourire de requin) par-dessus la bouche
  if(typeof drawNinjaHead==='function'){const DH=drawNinjaHead;drawNinjaHead=function(u,h,fx,fy,back,fl,t,run){DH.apply(this,arguments);if(!h||!h.hz_teeth||back||h.acc==='masque'||h.acc==='anbu'||u.ch.look.collar)return;
   const ex=fx*5,y=-46;g.fillStyle='#4a1820';g.beginPath();g.moveTo(ex-3.2,y-.6);g.quadraticCurveTo(ex,y+2.6,ex+3.2,y-.6);g.closePath();g.fill();g.fillStyle='#ffffff';g.beginPath();for(let i=0;i<4;i++){const x0=ex-3+i*1.5;g.moveTo(x0,y-.5);g.lineTo(x0+.75,y+1.1);g.lineTo(x0+1.5,y-.5)}g.fill()}}
- // 3D : même sourire peint sur la texture du visage (copie mise en cache par texture d'origine)
- if(typeof faceTexture==='function'){const FT=faceTexture,C=new Map();faceTexture=function(L,mode){const b=FT.apply(this,arguments);if(!L||!L.head||!L.head.hz_teeth||!b||!b.image)return b;if(C.has(b.uuid))return C.get(b.uuid);
-  const c=document.createElement('canvas');c.width=b.image.width;c.height=b.image.height;const x=c.getContext('2d'),U=9.7,ex=128,my=100+7*U;x.drawImage(b.image,0,0);
-  x.fillStyle='#4a1820';x.strokeStyle='#1a1410';x.lineWidth=2.5;x.beginPath();x.moveTo(ex-3.4*U,my-.8*U);x.quadraticCurveTo(ex,my+2.8*U,ex+3.4*U,my-.8*U);x.closePath();x.fill();x.stroke();
-  x.fillStyle='#ffffff';x.beginPath();for(let i=0;i<5;i++){const x0=ex-3.1*U+i*1.24*U;x.moveTo(x0,my-.7*U);x.lineTo(x0+.62*U,my+.9*U);x.lineTo(x0+1.24*U,my-.7*U)}x.fill();
-  const tx=new THREE.CanvasTexture(c);tx.colorSpace=THREE.SRGBColorSpace;C.set(b.uuid,tx);return tx}}
  // 2D : le Kubikiribôchô (grande lame carrée, trou rond, encoche au dos)
- if(typeof drawNinjaWeapon==='function'){const DW=drawNinjaWeapon;drawNinjaWeapon=function(u,L,W,k,hf,hb,fx,fy,back,fl,t){if(!W||!W.hz||k!=='sword')return DW.apply(this,arguments);
-  const [x,y]=hf,a=Math.atan2(Math.sin(u.aim)*K,Math.cos(u.aim));blob(x,y,3,fl?'#fff':u.ch.look.head.skin);g.save();g.translate(x,y);g.rotate(u.block?a-1.3:a+(u.swing>0?0:.75));
+ if(typeof drawNinjaWeapon==='function'){const DW=drawNinjaWeapon;drawNinjaWeapon=function(u,L,W,k,hf,hb,fx,fy,back,fl,t,R){if(!W||!W.hz||k!=='sword')return DW.apply(this,arguments);
+  const [x,y]=hf,a=R?R.wa:Math.atan2(Math.sin(u.aim)*K,Math.cos(u.aim));blob(x,y,3,fl?'#fff':u.ch.look.head.skin);g.save();g.translate(x,y);g.rotate(R?a:u.block?a-1.3:a+(u.swing>0?0:.75));
   g.fillStyle=fl?'#fff':'#2a3a48';g.fillRect(-9,-1.8,11,3.6);g.strokeStyle='#8aa0b0';g.lineWidth=.7;g.beginPath();for(let i=-8;i<1;i+=2.5){g.moveTo(i,-1.8);g.lineTo(i+1.5,1.8)}g.stroke();g.translate(2,0);hzBlade(34,10.5,fl);g.restore()}}
- // 3D : la lame (boîte large, trou rond et encoche sombres) accrochée à la main droite, sur le sabre du moteur
- if(typeof buildNinja3D==='function'){const BN=buildNinja3D;buildNinja3D=function(u){const rec=BN.apply(this,arguments);try{const W=u.ch&&u.ch.look.weapon;if(W&&W.hz&&rec&&rec.bones)hzCleaver3D(rec)}catch(e){}return rec}}
 });
-const HZ3={};
-function hzCleaver3D(rec){const T=THREE;if(!HZ3.g){HZ3.g=1;HZ3.blade=new T.BoxGeometry(9.5,1,30);HZ3.hole=new T.CylinderGeometry(2.4,2.4,1.25,14);HZ3.notch=new T.CylinderGeometry(2,2,1.25,12,1,false,0,Math.PI);HZ3.tip=new T.BoxGeometry(9.5,1.05,1.2);
-  HZ3.steel=new T.MeshToonMaterial({color:new T.Color(HZC.s),gradientMap:N3.gm});HZ3.edge=new T.MeshToonMaterial({color:new T.Color('#ffffff'),gradientMap:N3.gm});HZ3.dark=new T.MeshBasicMaterial({color:new T.Color('#141a22')})}
- const G=new T.Group(),add=(geo,mat,x,y,z,ry)=>{const m=new T.Mesh(geo,mat);m.position.set(x,y,z);if(ry)m.rotation.y=ry;G.add(m);return m};
- add(HZ3.blade,HZ3.steel,-3,0,0);const o=add(HZ3.blade,N3.outline,-3,0,0);o.renderOrder=-1;add(HZ3.tip,HZ3.edge,-3,0,15.2);
- add(HZ3.hole,HZ3.dark,-2.2,0,10.5);add(HZ3.notch,HZ3.dark,-7.8,0,6,Math.PI/2);
- G.position.set(0,-1,24);G.rotation.z=Math.PI/2*.8;rec.bones[BI.handR].add(G)}
 // lame du Kubikiribôchô le long de +x (L longueur, W largeur ; dos en −y, tranchant en +y)
 function hzBlade(L,W,fl){const h=W/2;g.fillStyle=fl?'#fff':HZC.s;g.strokeStyle=OUT;g.lineWidth=1.3;g.beginPath();g.moveTo(0,-h*.7);g.lineTo(L*.66,-h);g.arc(L*.76,-h,W*.18,Math.PI,0,true);g.lineTo(L,-h);g.lineTo(L,h);g.lineTo(0,h*.8);g.closePath();g.fill();g.stroke();
  g.strokeStyle='rgba(255,255,255,.9)';g.lineWidth=1;g.beginPath();g.moveTo(2,h*.55);g.lineTo(L-1,h*.7);g.stroke();g.fillStyle='#1a1e26';g.beginPath();g.arc(L*.84,h*.1,W*.2,0,7);g.fill();g.strokeStyle=OUT;g.stroke()}
@@ -302,7 +287,7 @@ JFXD.hz_wfist=(f,k,e,t,u)=>{if(!u||u.dead)return;const ex=Math.sin(Math.PI*Math.
  const fr=(f.whip?4:f.big?8:6)*q.s;g.fillStyle=rgba(HZC.w,.85);g.strokeStyle=rgba('#ffffff',.9);g.lineWidth=1.4;g.beginPath();g.arc(q.x,q.y,fr,0,7);g.fill();g.stroke();
  if(e>.3)for(let i=0;i<4;i++){const b=a+(i-1.5)*.5,d=(4+e*16)*q.s;hzDropS(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*.6,1.8*q.s,b,rgba(HZC.l,.85*k))}};
 
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // Suirendan : bras tendu, doigt pointé, l'autre main tient le poignet ; petit recul à chaque balle
  hz_point:(P,e)=>{const k=ezo(Math.min(1,e/.15)),rc=[.05,.33].reduce((s,t0)=>s+Math.max(0,1-Math.abs(e-t0)/.08),0);

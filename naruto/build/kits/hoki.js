@@ -340,7 +340,7 @@ STATD.push((u,p,S,sk)=>{const pol=u.hk_pol||0,sap=u.hk_sap>0,mg=u.hk_mg>0;if(!po
   g.strokeStyle='rgba(255,190,80,.85)';g.lineWidth=2;g.stroke();g.strokeStyle='rgba(255,250,220,.75)';g.lineWidth=2.5;g.beginPath();g.ellipse(p.x-r*.3,p.y-42*H,r*.18,r*.5,.3,3.6,5.2);g.stroke();
   for(let i=0;i<3;i++){const kk=(t*.8+i/3)%1,x=p.x+(i-1)*r*.45,y=p.y-30*H+r*1.1*(.2+.8*kk)*.9;circ(x,y,2.2*S,rgba(HKS,1-kk))}g.restore()}
  if(mg){const e=1-u.hk_mg/.5;g.save();g.fillStyle='rgba(30,20,10,.6)';g.beginPath();g.ellipse(p.x,p.y,26*S,9*S,0,0,7);g.fill();for(let i=0;i<10;i++){const a=i*.628+t*3,h=(14+i%3*8)*S*(.3+.7*e),x=p.x+Math.cos(a)*15*S*(1-e*.5),y=p.y-h+Math.sin(a)*4*S;hk_leafS(x,y,12*S,a,S,i%2?HKL:HKG)}g.restore()}});
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // pichenette : la graine part du pouce
  hk_flick:(P,e)=>{if(e<.4){const k=ezo(e/.4);pz(P,'armR',-1.2*k,0,.3*k);pz(P,'foreR',-1.8*k);pz(P,'chest',0,.3*k)}else{const k=ezo(Math.min(1,(e-.4)/.25));pz(P,'armR',-1.2-.4*k,0,.3-.4*k);pz(P,'foreR',-1.8+1.75*k);pz(P,'chest',.1*k,.3-.5*k);pz(P,'thighR',-.3*k);pz(P,'shinR',.3*k)}pz(P,'armL',.2,0,.3)},

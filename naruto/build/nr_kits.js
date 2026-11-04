@@ -57,7 +57,7 @@ const BARAUX=new Set(['sub_clay','su_jet','su_prison','uc_gk']);
 const BARCHG=[];
 // ---------- Registres partagés par les kits ----------
 // AFTER : fonctions lancées une fois tout le jeu chargé (ex. Object.assign(VP,{…}), UK.push('monChamp'))
-// ANIM : animations 3D nommées, ANIM.nom=(P,e,u,t)=>{…} modifie la pose P (e = avancement 0 → 1) ; lancer avec anim(u,'nom',durée)
+// ANIM : animations nommées, ANIM.nom=(P,e,u,t)=>{…} modifie la pose P du squelette (nr_pose.js, dessinée en 2D) (e = avancement 0 → 1) ; lancer avec anim(u,'nom',durée)
 // TRAITS[clan] : trait de clan {nom,desc,init(u),update(u,dt),deal(src,t,dmg,o)→dmg,take(t,src,dmg,o)→dmg (<0 = annule),draw(u,p,S,sk),hud(u,x,y)}
 // STATD : dessins d'états supplémentaires sur les ninjas, (u,p,S,sk)=>{…}
 // CLOOK[clan] : apparence imposée par le clan, (look, l, style)=>{…} modifie look (ex. look.head.eye='#c8e8ff', look.head.skin=…, look.scale=…)
@@ -74,7 +74,7 @@ let HUDPX=null;const hudPx=()=>HUDPX||(HUDPX=new Set([...NATURES.map(n=>n[0]),..
 function hudAbN(s,x,y,col,w){s=String(s);const i=s.indexOf(' : ');if(i>0&&hudPx().has(s.slice(0,i)))s=s.slice(i+3);g.font=FNT(8,'normal');if(g.measureText(s).width>w&&s.includes(' : '))s=s.slice(s.lastIndexOf(' : ')+3);fitT(s,x,y,10,col,w,'normal',8,'center')}
 function txtLay(){const W0=t=>String(t.s).length*4.6+6;for(let i=0;i<txt.length;i++){const t=txt[i];if(t.ly)continue;t.ly=1;
  for(let n=0;n<6;n++){let hit=false;for(let j=0;j<txt.length;j++){const o=txt[j];if(j===i||!o.ly)continue;if(Math.abs(o.y-t.y)<26&&Math.abs(o.z-t.z)<15&&Math.abs(o.x-t.x)<W0(o)+W0(t)){hit=true;break}}if(!hit)break;t.z+=16}}}
-function drawBackN(u,p,S,sk){if(u.dead)return;const T=trait(u);if(T&&T.drawB)T.drawB(u,p,S,sk)} // dessins de trait DERRIÈRE le ninja (avant drawChar3)
+function drawBackN(u,p,S,sk){if(u.dead)return;const T=trait(u);if(T&&T.drawB)T.drawB(u,p,S,sk)} // dessins de trait DERRIÈRE le ninja (avant drawChar)
 function drawPrevN(u,x,y,S,front){const T=trait(u);if(T&&T.prev)try{T.prev(u,{x,y},S,front)}catch(e){}} // signe du trait dans les aperçus (galerie, créateur) : front=0 derrière, 1 devant
 function drawExtraN(u,p,S,sk){if(u.dead)return;const T=trait(u);if(T&&T.draw)T.draw(u,p,S,sk);for(const f of STATD)f(u,p,S,sk)}
 

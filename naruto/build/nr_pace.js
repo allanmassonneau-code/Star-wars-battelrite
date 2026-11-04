@@ -104,7 +104,7 @@ JFXD.hl_heal=(f,k,e,t,u,tg)=>{const T=tg&&!tg.dead?tg:null,tx=T?T.x:f.x,ty=T?T.y
  g.fillStyle=gr;g.beginPath();g.ellipse(b.x,b.y-H/2,w,H/2,0,0,7);g.fill();
  for(let j=0;j<2;j++){const r=(16+e*46+j*14)*s;g.strokeStyle=rgba(j?'#ffffff':'#7dff9a',.85*k);g.lineWidth=(3-j)*s;g.beginPath();g.ellipse(b.x,b.y,r,r*.38,0,0,7);g.stroke()}
  for(let i=0;i<7;i++){const m=(e*1.4+i/7)%1,x=b.x+Math.sin(i*2.7)*22*s,y=b.y-(14+m*96)*s,z=(4+(i%3))*s;g.fillStyle=rgba(i%2?'#ffffff':'#9dffb4',.9*(1-m)*Math.min(1,k*3));g.fillRect(x-z/2,y-z*1.5,z,z*3);g.fillRect(x-z*1.5,y-z/2,z*3,z)}};
-// geste 3D : main tendue vers la cible, l'autre forme un signe devant la poitrine, puis les bras s'ouvrent
+// geste : main tendue vers la cible, l'autre forme un signe devant la poitrine, puis les bras s'ouvrent
 ANIM.hl_heal=(P,e)=>{const k=Math.min(1,e/.3),o=e>.65?(e-.65)/.35:0;pz(P,'armR',-1.5*k+.5*o,0,.1+.5*o);pz(P,'foreR',-.15);pz(P,'armL',-1.1*k,0,-.5*k);pz(P,'foreL',-1.7*k);pz(P,'chest',.12*k,-.25*k);pz(P,'head',.05);P.root.y=-1.5*k};
 // réseau : les amis voient la recharge du soin, l'incantation et l'épuisement
 AFTER.push(()=>UK.push('hlCd','hlC','exh'));

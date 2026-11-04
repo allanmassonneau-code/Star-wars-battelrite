@@ -289,7 +289,7 @@ STATD.push((u,p,S,sk)=>{if(!(u.uz_soul>0)||u.dead)return;sk=sk||1;const t=perfor
  circ(p.x,y1,13*S,rgba('#c8b8ff',.35*a));circ(p.x,y1-2*S,8*S,rgba('#f4f0ff',.7*a));g.fillStyle=rgba('#2a1840',.6*a);for(const sx of[-1,1]){g.beginPath();g.ellipse(p.x+sx*3*S,y1-3*S,1.4*S,2*S,0,0,7);g.fill()}
  g.globalCompositeOperation='source-over';const hy=y1-16*S;g.strokeStyle=rgba('#6a4a9a',.9*a);g.lineWidth=4*S;g.lineCap='round';g.beginPath();g.moveTo(p.x-16*S,hy-22*S);g.quadraticCurveTo(p.x-10*S,hy-6*S,p.x,hy);g.stroke();
  g.strokeStyle=rgba('#ece6ff',.95*a);g.lineWidth=2*S;g.beginPath();for(let i=-1;i<=2;i++){g.moveTo(p.x+i*3*S,hy);g.quadraticCurveTo(p.x+i*5*S,hy+7*S,p.x+i*3.5*S,hy+12*S)}g.stroke();g.restore()});
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // la main gauche tient le parchemin, la droite balaie et libère les kunai
  uz_scroll:(P,e)=>{const k=Math.min(1,e/.25),s=ezo(Math.min(1,Math.max(0,(e-.2)/.4)));pz(P,'armL',-1.4*k,0,-.25*k);pz(P,'foreL',-.4);pz(P,'armR',-1.35*k,0,(.6-1.5*s)*k);pz(P,'foreR',-.2);pz(P,'chest',.1*k,(.3-.65*s)*k)},

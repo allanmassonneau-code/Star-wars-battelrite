@@ -360,7 +360,7 @@ JFXD.su_tidal=(f,k,e,t)=>{const q=P(f.x,f.y,0),r=f.r*(.3+e*.9)*q.s,h=42*Math.sin
  for(let i=0;i<12;i++){const b=i*.524+t;circ(q.x+Math.cos(b)*r*.88,q.y-h+Math.sin(b)*r*.88*K-Math.abs(Math.sin(t*10+i))*8*q.s,3*q.s,rgba('#e8f6ff',.85*k))}};
 JFXD.su_lunge=(f,k,e,t)=>{const m=Math.min(1,e*1.5),d=90*(1-m),q=P(f.x+Math.cos(f.a)*d,f.y+Math.sin(f.a)*d,30+Math.sin(Math.PI*m)*34);
  if(e<.7){g.save();g.translate(q.x,q.y);g.scale(q.s,q.s);su_sharkD(1.5,Math.atan2(-Math.sin(f.a)*K,-Math.cos(f.a)),t*1000,0,0);g.restore()}if(e>.55)JFXD.su_bite(f,Math.min(1,(1-e)/.45),(e-.55)/.45)};
-// ---------- gestes 3D ----------
+// ---------- gestes (poses du squelette) ----------
 Object.assign(ANIM,{
  // crache : mains en coupe devant la bouche, inspire puis souffle (Teppôdama, Mizurappa)
  su_spit:(P,e,u,t)=>{const T=e*(u.anim?u.anim.m:.4),inh=T<.12,k=inh?T/.12:1;pz(P,'armL',-1.55,0,-.45);pz(P,'foreL',-2.1);pz(P,'armR',-1.55,0,.45);pz(P,'foreR',-2.1);

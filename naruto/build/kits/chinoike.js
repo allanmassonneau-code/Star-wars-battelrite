@@ -176,7 +176,7 @@ TRAITS[15]={nom:'Saignée',desc:'Tes jutsu de clan ouvrent des entailles qui sai
   tfit(`Sang bu +${Math.round(u.ci_hp||0)} PV · prix payé ${Math.round(u.ci_pd||0)} PV`,X+12,Y+18,11,'#ffc8d0',240);g.restore()}};
 AFTER.push(()=>{UK.push('ci_bl','ci_hp','ci_pd');
  VP.ci_blood=['#c0142a','#ff4a5a','#7a0612'];
- // Ketsuryûgan : œil rouge à pupille en goutte (3D et 2D), imposé par le clan (CLOOK) via le type d'œil 'ci_k'
+ // Ketsuryûgan : œil rouge à pupille en goutte imposé par le clan (CLOOK) via le type d'œil 'ci_k'
  const E0=eyeSpecial;eyeSpecial=function(x,h,cx,cy,U,lw){if(!h.eye&&h.eyeT==='ci_k')return ciEyeTex(x,cx,cy,U,lw);return E0(x,h,cx,cy,U,lw)}});
 CLOOK[15]=(look,l,S)=>{look.head.eye=null;look.head.eyeT='ci_k';if(S&&S[0]==='Lame de sang'){look.weapon.col='#d01828';look.weapon.blade='#c0142a'}};
 function ciEyeTex(x,cx,cy,U,lw){x.strokeStyle='#1a1410';x.lineWidth=1.3*lw;x.fillStyle='#fff4f4';x.beginPath();x.ellipse(cx,cy,2.5*U,3*U,0,0,7);x.fill();x.stroke();
@@ -241,7 +241,7 @@ JFXD.ci_pop=(f,k,e,t,u,tg)=>{const o=tg&&!tg.dead?tg:f,q=P(o.x,o.y,38),s=q.s,n=f
  const gr=g.createRadialGradient(q.x,q.y,0,q.x,q.y,R);gr.addColorStop(0,rgba('#ffd0c0',.6*k));gr.addColorStop(1,'rgba(200,20,30,0)');g.fillStyle=gr;g.beginPath();g.arc(q.x,q.y,R,0,7);g.fill();g.globalCompositeOperation='source-over';
  for(let i=0;i<6+n*2;i++){const b=i*2.4,d=R*(.6+.6*e),p=P(o.x+Math.cos(b)*d/s,o.y+Math.sin(b)*d/s*.6,38+20*Math.sin(Math.PI*e));ciDrop(p.x,p.y,1.8*p.s,rgba('#c0142a',k))}};
 // Mirage : double de sang à l'endroit quitté (le ninja lui-même, teinté), qui fond à la fin
-JFXD.ci_double=(f,k,e,t,u)=>{if(!u)return;const q=P(f.x,f.y,0),s=q.s,melt=k<.25?k/.25:1;g.save();g.globalAlpha=.75*melt;drawChar3(u,q.x,q.y+(1-melt)*10*s,s*1.3*(0.7+.3*melt));g.restore();
+JFXD.ci_double=(f,k,e,t,u)=>{if(!u)return;const q=P(f.x,f.y,0),s=q.s,melt=k<.25?k/.25:1;g.save();g.globalAlpha=.75*melt;drawChar(u,q.x,q.y+(1-melt)*10*s,s*1.3*(0.7+.3*melt));g.restore();
  g.save();g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(q.x,q.y-40*s,0,q.x,q.y-40*s,50*s);gr.addColorStop(0,rgba('#ff2a3a',.35*melt));gr.addColorStop(1,'rgba(160,0,20,0)');g.fillStyle=gr;g.beginPath();g.ellipse(q.x,q.y-40*s,34*s,56*s,0,0,7);g.fill();g.restore();
  for(let i=0;i<4;i++){const m=(t*1.2+i*.25)%1;ciDrop(q.x+(i-1.5)*8*s,q.y-(60-m*58)*s,1.8*s,rgba('#c0142a',.9*(1-m)))}g.fillStyle=rgba('#6a0610',.5*(1-melt*.6));g.beginPath();g.ellipse(q.x,q.y,(14+(1-melt)*16)*s,(14+(1-melt)*16)*s*K,0,0,7);g.fill()};
 // cible terrifiée : deux yeux rouges la toisent
@@ -284,7 +284,7 @@ JFXD.ci_crescent=(f,k,e,t,u)=>{const o=u&&!u.dead?u:f,R=f.R,a=f.a;g.globalCompos
  g.fillStyle=rgba('#ff3a4a',.4*k);g.beginPath();A.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));for(let i=16;i>=0;i--)g.lineTo(Bp[i].x,Bp[i].y);g.closePath();g.fill();g.globalCompositeOperation='source-over';
  for(let i=0;i<8;i++){const b=a-1.1+i*.31,d=R*(.8+.5*e),p=P(o.x+Math.cos(b)*d,o.y+Math.sin(b)*d,30*Math.sin(Math.PI*e)+6);ciDrop(p.x,p.y,1.8*p.s,rgba('#c0142a',k))}};
 
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // petit coup de poignet : les aiguilles partent des doigts
  ci_flick:(P,e)=>{const k=e<.35?ezo(e/.35):1-ezio((e-.35)/.65)*.8;pz(P,'armR',lerp(-.6,-1.5,k),0,lerp(.5,-.15,k));pz(P,'foreR',lerp(-1.8,-.1,k));pz(P,'handR',-.4*k);pz(P,'armL',-.4,0,.35);pz(P,'foreL',-1);pz(P,'chest',.1*k,-.35*k)},

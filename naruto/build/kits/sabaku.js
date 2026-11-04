@@ -121,7 +121,7 @@ TRAITS[8]={nom:'Bouclier de sable',desc:'Le sable de la gourde arrête tout seul
  hud(u,x,y){const k=1-(u.sa_shT||0)/SA_SHCD,low=u.energy<SA_SHCK,ok=k>=1&&!low;y-=20;bar(x,y,150,5,k,ok?'#f0d8a0':'#a88a50');text(ok?'Bouclier de sable : prêt':k<1?'Bouclier de sable '+Math.ceil(u.sa_shT)+' s':'Bouclier de sable : chakra !',x+158,y+6,11,ok?'#ffe0a0':'#b89a70','left','normal')}};
 AFTER.push(()=>UK.push('sa_shT','sa_arm','sa_sink','sa_sph'));
 
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // main tendue vers la cible, le poing se referme à la fin (Sabaku Kyû)
  sa_grip:(P,e)=>{const k=ezo(Math.min(1,e/.28)),c=e>.6?ezo(Math.min(1,(e-.6)/.25)):0;pz(P,'armR',-1.5*k-.3*c,0,.1);pz(P,'foreR',-.1-.8*c);pz(P,'armL',-1,0,-.55);pz(P,'foreL',-1.95);pz(P,'chest',.12*k,.25*k);pz(P,'head',.05,-.15*k);P.root.y=-1.5*k},

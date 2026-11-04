@@ -264,7 +264,7 @@ JFXD.sub_cboom=(f,k,e)=>{const q=P(f.x,f.y,0),R=f.r*q.s,cy=q.y-R*.3;g.strokeStyl
 JFXD.sub_claymouth=(f,k,e,t,u)=>{if(!u)return;const a=u.aim||0;for(const s of[-1,1]){const b=a+s*.45,q=P(u.x+Math.cos(b)*18,u.y+Math.sin(b)*18,32),sc=q.s*(.6+.6*Math.min(1,e*2)),O=SUBK[0];
  g.fillStyle='#e8b898';g.strokeStyle=O;g.lineWidth=1.2;g.beginPath();g.ellipse(q.x,q.y,6*q.s,4.5*q.s,0,0,7);g.fill();g.stroke();g.strokeStyle='#5a1a1a';g.beginPath();g.moveTo(q.x-3*q.s,q.y);g.quadraticCurveTo(q.x,q.y+(1+Math.sin(t*30))*1.5*q.s,q.x+3*q.s,q.y);g.stroke();
  if(e>.3){const w=Math.abs(Math.sin(t*20));g.fillStyle='#f4efe4';g.strokeStyle=O;g.beginPath();g.arc(q.x,q.y-8*sc,4*sc,0,7);g.fill();g.stroke();for(const z of[-1,1]){g.beginPath();g.moveTo(q.x,q.y-8*sc);g.lineTo(q.x+z*9*sc,q.y-(10+w*5)*sc);g.lineTo(q.x+z*4*sc,q.y-7*sc);g.closePath();g.fill();g.stroke()}}}};
-// ---------- animations 3D ----------
+// ---------- animations (poses du squelette, dessinées en 2D) ----------
 Object.assign(ANIM,{
  // Rashômon : morsure du pouce, puis la paume s'abat sur le sol (genou à terre)
  sub_rasho:(P,e)=>{if(e<.3){const k=Math.min(1,e/.15);pz(P,'armR',-2.3*k,0,.45*k);pz(P,'foreR',-2.2*k);pz(P,'head',.15*k);return}const k=ezo(Math.min(1,(e-.3)/.2));

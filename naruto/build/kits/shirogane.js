@@ -226,15 +226,6 @@ function sgStrings(u,q,s,al){if(u.dead)return;const h=P(u.x+Math.cos(u.aim)*12,u
  for(const [ox,oy] of[[1,-46],[-17,-14],[17,-14]]){const x1=q.x+ox*s,y1=q.y+oy*s,mx=(h.x+x1)/2,my=(h.y+y1)/2+8+Math.sin(t*3+ox)*3;
   g.strokeStyle=rgba(SG.STR,.18*al);g.lineWidth=3;g.beginPath();g.moveTo(h.x,h.y);g.quadraticCurveTo(mx,my,x1,y1);g.stroke();g.strokeStyle=rgba('#e8faff',.7*al);g.lineWidth=1;g.stroke()}
  g.fillStyle=rgba(SG.STR,.8*al);g.beginPath();g.arc(h.x,h.y,2.4,0,7);g.fill();g.restore()}
-// marionnette « ninja de bois » pour le rendu 3D : modèle chibi du jeu habillé en marionnette (lames d'os aux avant-bras)
-const SG_LK=new WeakMap();
-function sgLook(u){const L=u.ch.look;let Q=SG_LK.get(L);if(Q)return Q;const h=L.head;
- Q=Object.assign({},L,{robe:SG.CLOAK,trim:'#c8a070',rshort:1,torso:SG.WOOD,arm:SG.WOOD,legs:SG.WOOD,belt:'#7a5a3a',boot:'#8a6a48',vest:null,armor:null,tunic:null,clouds:null,back:null,gourd:null,dog:null,jet:null,scale:1,
-  head:Object.assign({},h,{skin:SG.WOOD,hair:'#3a2418',style:'gaara',eye:'#ffd060',eyeT:null,band:'#7a5a3a',bs:'',acc:'masque',face:'kankuro',kaguya:false,brows:false}),weapon:{t:'kunai',k:'bone',col:SG.STR}});
- SG_LK.set(L,Q);return Q}
-function sgFake(u){let f=u._sgf;if(!f||f.c!==u.c||f.ch.look!==sgLook(u)){f=u._sgf=mkUnit(u.c,0,0,u.team);f.ch=Object.assign({},u.ch,{look:sgLook(u)});f.anim={k:'sg_dang',t:1e9,m:1e9}}return f}
-// en bataille (40 ninjas), marionnettes en 2D : l'atlas 3D reste aux ninjas
-const sgUse3D=()=>mode!=='battle'&&OPT.p3d!==false&&typeof N3!=='undefined'&&N3.ok&&N3.on;
 // position affichée (lissée chez l'invité)
 function sgDrawPos(u){if(!isGuest()){u._sgx=u.sg_px;u._sgy=u.sg_py}else{if(u._sgx==null||Math.hypot(u._sgx-u.sg_px,u._sgy-u.sg_py)>300){u._sgx=u.sg_px;u._sgy=u.sg_py}const k=Math.min(1,(performance.now()-(u._sgT||0))/1000*16);u._sgx+=(u.sg_px-u._sgx)*k;u._sgy+=(u.sg_py-u._sgy)*k}u._sgT=performance.now();return{x:u._sgx,y:u._sgy}}
 function sgDrawPup(u){const t=performance.now()/1000,p=sgDrawPos(u),hidden=u.stealth>0&&player&&u.team!==player.team&&dist(u,player)>140;if(hidden)return;
@@ -247,9 +238,7 @@ function sgDrawPup(u){const t=performance.now()/1000,p=sgDrawPos(u),hidden=u.ste
  g.fillStyle='rgba(0,0,0,.28)';g.beginPath();g.ellipse(gq.x,gq.y,13*gq.s,4.4*gq.s,0,0,7);g.fill();
  {const al=player&&u.team===player.team;g.save();g.strokeStyle=al?'rgba(77,184,255,.6)':'rgba(255,77,77,.6)';g.lineWidth=1.5;g.setLineDash([4,4]);g.lineDashOffset=-t*12;gEll(p.x,p.y,19);g.stroke();g.restore()}
  const atk=u.swing>0||(u.anim&&u.anim.k==='sg_pull');
- if(sgUse3D()){const F=sgFake(u);F.aim=a;F.swing=u.swing;F.swingA=a;F.cmbH=u.cmbH;F.walk=t*6;F.moving=false;F.flash=fl*.12;F.spin=aux.some(x=>x.type==='sg_spin'&&x.ui===sgI(u))?1:null;
-  if(!F.anim||F.anim.k!=='sg_dang')F.anim={k:'sg_dang',t:1e9,m:1e9};drawChar3(F,q.x,q.y,q.s*1.3)}
- else{g.save();g.translate(q.x,q.y);g.scale(s*f,s);const spin=aux.some(x=>x.type==='sg_spin'&&x.ui===sgI(u));if(spin)g.scale(Math.cos(t*30),1);sgBody(0,0,atk||spin?1:0,t,f);
+ {g.save();g.translate(q.x,q.y);g.scale(s*f,s);const spin=aux.some(x=>x.type==='sg_spin'&&x.ui===sgI(u));if(spin)g.scale(Math.cos(t*30),1);sgBody(0,0,atk||spin?1:0,t,f);
   if(fl>0){g.globalCompositeOperation='lighter';g.fillStyle=rgba('#ffffff',.5*fl);g.beginPath();g.ellipse(0,-26,12,18,0,0,7);g.fill()}g.restore()}
  sgStrings(u,q,s,1);
  // petite jauge de PV au-dessus d'elle quand elle est entamée
@@ -286,7 +275,7 @@ AUXD.sg_ant=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s;g.save();g.fillStyle='rgba(0,0,
  for(const sd of[-1,1]){g.strokeStyle=OUT;g.lineWidth=3*s;for(let i=0;i<3;i++){g.beginPath();g.moveTo(q.x+sd*16*s,q.y-(18+i*8)*s);g.lineTo(q.x+sd*30*s,q.y-(12+i*7)*s);g.lineTo(q.x+sd*34*s,q.y-(i*3)*s);g.stroke()}}g.restore()};
 // carapace dessinée PAR-DESSUS la proie (elle est enfermée dedans)
 STATD.push((u,p,S)=>{const i=sgI(u);for(const x of aux){if(x.ti!==i||!(x.t>0))continue;if(x.type==='sg_ant')sgAntShell(x,{x:p.x,y:p.y,s:S/1.3});else if(x.type==='sg_str')sgStrWrap(x,p,S/1.3)}});
-// Fils de chakra : fils lumineux enroulés autour de la cible (par-dessus elle, lisibles en 2D comme en 3D)
+// Fils de chakra : fils lumineux enroulés autour de la cible (par-dessus elle, bien lisibles)
 function sgStrWrap(x,q,s){const al=Math.min(1,x.t/.3),t=performance.now()/1000,o=x.ui!=null?units[x.ui]:null;g.save();g.lineCap='round';
  for(let k=0;k<3;k++){const y=q.y-(12+k*15)*s,w=(15-k)*s,ph=t*4+k*2;g.strokeStyle=rgba(SG.STR,.35*al);g.lineWidth=4*s;g.beginPath();g.ellipse(q.x,y,w,w*.32,Math.sin(ph)*.12,0,7);g.stroke();g.strokeStyle=rgba('#e8faff',.95*al);g.lineWidth=1.3;g.beginPath();g.ellipse(q.x,y,w,w*.32,Math.sin(ph)*.12,0,7);g.stroke()}
  if(o&&!o.dead){const src=o.sg_dn>0||o.sg_px==null?P(o.x,o.y,40):P(o._sgx??o.sg_px,o._sgy??o.sg_py,40);g.strokeStyle=rgba('#e8faff',.8*al);g.lineWidth=1.2;for(let k=-1;k<=1;k++){g.beginPath();g.moveTo(q.x+k*6*s,q.y-(27+k*8)*s);g.quadraticCurveTo((q.x+src.x)/2,(q.y-27*s+src.y)/2+8+Math.sin(t*5+k)*4,src.x,src.y);g.stroke()}}
@@ -352,7 +341,7 @@ DETO.sg_pup=(x,y,r)=>jx({jfx:'sg_poof',x,y,r:Math.min(80,r*.6),t:.45,m:.45});
 // ---------- apparence : yeux clairs, parchemin d'invocation dans le dos (si rien n'est porté) ----------
 CLOOK[14]=(look,l,S)=>{look.head.eye='#bfe8ff';if(!look.back&&!look.gourd)look.back='parchemin'};
 
-// ---------- poses 3D ----------
+// ---------- poses du squelette ----------
 Object.assign(ANIM,{
  // marionnette suspendue : tête penchée, membres qui pendent et tressautent au bout des fils
  sg_dang:(P,e,u,t)=>{const j=Math.sin(t*7.3)*.12,w=Math.sin(t*2.2);P.root.y=1.5+w*1.2;pz(P,'head',.32+Math.sin(t*1.1)*.08,Math.sin(t*.8)*.25,.22);pz(P,'chest',.12,0,Math.sin(t*1.5)*.06);

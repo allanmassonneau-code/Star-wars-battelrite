@@ -238,7 +238,7 @@ JFXD.ak_bfburst=(f,k,e,t)=>{const q=P(f.x,f.y,40);g.globalCompositeOperation='li
 // Décuplement : anneaux d'expansion et flèches qui poussent vers l'extérieur
 JFXD.ak_grow=(f,k,e,t,u)=>{const q=u?P(u.x,u.y,0):P(f.x,f.y,0);for(let i=0;i<3;i++){const s=clamp(e*1.6-i*.25,0,1);if(s<=0||s>=1)continue;g.strokeStyle=rgba(i%2?'#ffb04a':'#d87a3a',.8*(1-s));g.lineWidth=6*(1-s)+1;g.beginPath();g.ellipse(q.x,q.y,(20+s*130)*q.s,(20+s*130)*q.s*K,0,0,7);g.stroke()}
  g.strokeStyle=rgba('#fff3d0',.75*k);g.lineWidth=2.5;g.beginPath();for(let i=0;i<8;i++){const b=i*.785,r0=(30+e*50)*q.s,r1=r0+18*q.s;g.moveTo(q.x+Math.cos(b)*r0,q.y-44*q.s+Math.sin(b)*r0*.8);g.lineTo(q.x+Math.cos(b)*r1,q.y-44*q.s+Math.sin(b)*r1*.8)}g.stroke()};
-// ---- animations 3D
+// ---- animations (poses du squelette, dessinées en 2D)
 Object.assign(ANIM,{
  // gifle : bras droit armé sur le côté puis balayé vers l'avant
  ak_slap:(P,e)=>{const w=e<.22?ezo(e/.22):1,s=e<.22?0:ezo(Math.min(1,(e-.22)/.2));pz(P,'armR',-1.15-.45*s,0,-1.45*w*(1-s)+.35*s);pz(P,'foreR',-.12);pz(P,'chest',.08+.28*s,.55*w*(1-s)-.6*s);pz(P,'armL',-.5,0,.5);pz(P,'foreL',-.8);
