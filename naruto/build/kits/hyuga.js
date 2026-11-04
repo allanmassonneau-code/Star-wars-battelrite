@@ -13,6 +13,11 @@ KIT('c1',[
 DASHC[1]={src:'x.hy_step',n:'Pas du Hakke',d:'2 glissades rapides ; ta frappe de Jûken suivante cogne plus fort et ferme 1 tenketsu de plus',vfx:'jyuken',cd:6};
 // ---------- aides ----------
 const hyI=u=>units.indexOf(u);
+// ---- VFX (boîte à outils nr_fx.js) : décor selon intensité / foule / camp ; champs et télégraphes nets
+const hyDim=(o,fn)=>{const m=fxA(o);return m<1?fxAlpha(m,fn):fn()};
+// impact de Jûken : onde de chakra qui traverse la cible (éclat bleu-blanc, gerbe vers l'arrière, onde au rayon du coup)
+function hyImp(u,e,a,r,big,dmg){fxFlare(e.x,e.y,'#8ab0ff',{u,z:36,r:big?30:18,t:.18,c2:'#ffffff'});fxBurst(e.x,e.y,'#dfe8ff',{u,n:big?14:8,sp:big?440:320,a,arc:1,z:36,c2:'#ffffff',w:1.5,len:.18,t:.3});
+ if(big){fxRing(e.x,e.y,{u,r0:8,r1:r,col:'#8ab0ff',c2:'#ffffff',t:.3,w:5});fxLight(e.x,e.y,r*2,'#8ab0ff',{u,t:.25,a:.4})}if(dmg)fxHitStop(u,e,dmg,big)}
 const hyS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son sans la teinte « jyuken »
 const HYV={jyuken:1,kaiten:1,byakugan:1,hakke64:1}; // éléments visuels du Jûken (ferment les tenketsu au corps à corps)
 // frappe de Jûken dans un cône devant soi ; renvoie les ennemis touchés
@@ -39,16 +44,18 @@ Object.assign(NAT,{
  // paume à bout portant : l'onde traverse le corps de la cible
  hy_palm:S_('Hakke : Paume','Paume à bout portant devant soi : étourdit 0,4 s et ferme 2 tenketsu',8,{hero:'quigon',line:{len:125,w:84},ai:RG(125,.65)},(u,a)=>{S('jyuken',u);anim(u,'hy_palm',.45);
   jx({jfx:'hy_push',ui:hyI(u),x:u.x,y:u.y,a,r:125,t:.32,m:.32});
-  for(const e of hyCone(u,a,125,1.25,8,{stun:.4,hy_tk:2}))jx({jfx:'hy_stamp',ti:hyI(e),x:e.x,y:e.y,a:ang(u,e),t:.55,m:.55})}),
+  {const m=fwd(u,a,26);fxWind(m.x+Math.cos(a)*50,m.y+Math.sin(a)*50,a,{u,len:120,w:70,n:5,t:.3,col:'#dfe8ff'})}
+  for(const e of hyCone(u,a,125,1.25,8,{stun:.4,hy_tk:2})){jx({jfx:'hy_stamp',ti:hyI(e),x:e.x,y:e.y,a:ang(u,e),t:.55,m:.55});hyImp(u,e,ang(u,e),40,1,20)}}),
  // Byakugan : vision des réseaux de chakra
  hy_byak:S_('Byakugan','8 s : chaque frappe de Jûken ferme 1 tenketsu de plus ; tu esquives la prochaine attaque et ta riposte cogne plus fort ; révèle les invisibles',9,{hero:'lando',ai:SELF(330,.6)},(u)=>{S('jyuken',u);hyS('genjutsu',u);anim(u,'hy_byak',.7);u.hy_byak=8;
   jx({jfx:'hy_vision',ui:hyI(u),x:u.x,y:u.y,r:520,t:1.1,m:1.1});jx({jfx:'hy_view',ui:hyI(u),x:u.x,y:u.y,t:.9,m:.9});
+  fxFlare(u.x+Math.cos(u.aim)*6,u.y+Math.sin(u.aim)*6,'#dfe8ff',{u,z:60,r:20,t:.3,c2:'#ffffff'});fxRing(u.x,u.y,{u,r0:20,r1:120,col:'#8ab0ff',t:.5,w:4});fxCast(u,'chakra',.5,{z:60,hd:6,n:8});
   u.dodge=Math.max(u.dodge,8);u.hy_dg=1;for(const e of enemies(u))if(dist(u,e)<520){e.stealth=0;jx({jfx:'hy_net',ti:hyI(e),x:e.x,y:e.y,t:1.6,m:1.6})}}),
  // Kaiten : dôme de chakra qui tourne
  hy_kaiten:S_('Kaiten','Tourbillon divin 1,2 s sur place : renvoie tous les tirs, repousse et blesse qui t\'approche ; agir l\'arrête',8,{hero:'obiwan',tele:{self:1,r:100},ai:DEF},(u)=>{S('jyuken',u);hyS('wind',u);anim(u,'hy_kaiten',1.2);
   u.deflect=Math.max(u.deflect,1.2);u.root=Math.max(u.root,.15);
   aux.push({type:'hy_kaiten',x:u.x,y:u.y,r:100,t:1.2,m:1.2,team:u.team,owner:u,ui:hyI(u),vfx:'jyuken',k:0,hs:new Set(),n:0});
-  jx({jfx:'hy_dome',ui:hyI(u),x:u.x,y:u.y,r:100,t:1.2,m:1.2})}),
+  jx({jfx:'hy_dome',ui:hyI(u),x:u.x,y:u.y,r:100,t:1.2,m:1.2});fxRing(u.x,u.y,{u,r0:30,r1:100,col:'#dfe8ff',c2:'#ffffff',w:7,t:.4});fxDecal(u.x,u.y,'sand',{u,r:90,t:3,al:.4});fxWind(u.x,u.y,0,{u,w:100,n:10,t:1.1,col:'#dfe8ff',spin:1})}),
  // Kûshô : bulle de vide d'air ; contre un obstacle, la cible est écrasée (étourdie)
  hy_kusho:S_('Hakke Kûshô','Paume d\'air à distance qui repousse violemment ; projeté contre un obstacle, l\'ennemi est étourdi',8,{hero:'quigon',line:{len:430,w:30},ai:RG(430,.6)},(u,a)=>{S('jyuken',u);hyS('wind',u);anim(u,'hy_kusho',.5);
   jx({jfx:'hy_muzzle',ui:hyI(u),x:u.x,y:u.y,a,t:.3,m:.3});
@@ -58,11 +65,13 @@ Object.assign(NAT,{
   const close=enemies(u).some(e=>dist(u,e)<90+e.r&&angDiff(ang(u,e),a)<.7);
   if(close){NAT.hy_palm.f(u,a,td,P);hyS('wind',u);for(const e of enemies(u))if(e.stun>0&&dist(u,e)<130+e.r&&angDiff(ang(u,e),a)<.8&&e.unstop<=0){e.kx+=Math.cos(a)*260;e.ky+=Math.sin(a)*260}return}
   S('jyuken',u);hyS('wind',u);anim(u,'hy_kusho',.5);jx({jfx:'hy_muzzle',ui:hyI(u),x:u.x,y:u.y,a,t:.3,m:.3});
-  proj(u,a,{spd:980,r:13,dmg:19,life:.44,col:'#cfe0ff',kind:'hy_kusho',big:1,o:{kb:700,wall:1,hy_tk:1},onHit:(p,t)=>jx({jfx:'hy_burst',x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.45,m:.45})})}),
+  {const m=fwd(u,a,24);fxFlare(m.x,m.y,'#cfe0ff',{u,z:32,r:20,t:.16});fxWind(m.x+Math.cos(a)*40,m.y+Math.sin(a)*40,a,{u,len:100,w:50,n:5,t:.25,col:'#dfe8ff'})}
+  proj(u,a,{spd:980,r:13,dmg:19,life:.44,col:'#cfe0ff',kind:'hy_kusho',big:1,o:{kb:700,wall:1,hy_tk:1},onHit:(p,t)=>{jx({jfx:'hy_burst',x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.45,m:.45});hyImp(p.owner,t,Math.atan2(p.vy,p.vx),44,1,p.dmg);fxImpact(t.x,t.y,'futon',1,{u:p.owner,r:40,a:Math.atan2(p.vy,p.vx),ring:0})}})}),
  // Jûho Sôshiken : deux lions de chakra sur les poings
  hy_lions:S_('Jûho Sôshiken','Bondit avec deux lions de chakra : double frappe qui ferme 4 tenketsu et vole du chakra',11,{hero:'quigon',line:{len:200,w:70},ai:{mode:'gap',min:30,max:205,p:.6}},(u,a,td)=>{S('jyuken',u);hyS('roar',u);anim(u,'hy_lion',.62);
-  jx({jfx:'hy_lions',ui:hyI(u),x:u.x,y:u.y,t:.62,m:.62});
-  const bite=i=>{if(u.dead||u.stun>0)return;for(const e of hyCone(u,u.aim,115,1.2,13,{hy_tk:2,slow:i?.6:.8,kb:i?300:0})){const s=Math.min(e.energy,5);e.energy-=s;u.energy=Math.min(100,u.energy+s);jx({jfx:'hy_bite',ti:hyI(e),x:e.x,y:e.y,a:ang(u,e),n:i,t:.42,m:.42})}if(near(u.x,u.y))S('jyuken',u)};
+  jx({jfx:'hy_lions',ui:hyI(u),x:u.x,y:u.y,t:.62,m:.62});fxCast(u,'chakra',.3,{n:10});fxSmoke(u.x,u.y,{u,col:'#d8d0c0',n:3,r:18,s:10,t:.5,al:.2});
+  const bite=i=>{if(u.dead||u.stun>0)return;for(const e of hyCone(u,u.aim,115,1.2,13,{hy_tk:2,slow:i?.6:.8,kb:i?300:0})){const s=Math.min(e.energy,5);e.energy-=s;u.energy=Math.min(100,u.energy+s);jx({jfx:'hy_bite',ti:hyI(e),x:e.x,y:e.y,a:ang(u,e),n:i,t:.42,m:.42});hyImp(u,e,ang(u,e),50,1,13);
+   fxArc(e.x,e.y,u.x,u.y,'#8ab0ff',{u,z:36,t:.3,w:1.4})}if(near(u.x,u.y))S('jyuken',u)};
   dash(u,a,clamp((td||200)-45,0,160),.16,{end:()=>{bite(0);later(u,.16,()=>bite(1))}})}),
  // Kûhekishô : un mur d'air qui avance et emporte tout
  hy_great:S_('Hakke Kûhekishô','Mur d\'air géant qui avance : emporte les ennemis, détruit leurs tirs, puis les projette et les étourdit',13,{hero:'quigon',line:{len:380,w:170},ai:RG(320,.6)},(u,a)=>{S('jyuken',u);hyS('heavy',u);hyS('wind',u);anim(u,'hy_kuheki',.65);
@@ -71,14 +80,15 @@ Object.assign(NAT,{
   if(near(u.x,u.y))shake=Math.max(shake,.15)}),
  // Pas du Hakke : glissade souple, les paumes se chargent
  hy_step:S_('Pas du Hakke','2 glissades rapides ; ta frappe de Jûken suivante cogne plus fort et ferme 1 tenketsu de plus',5,{hero:'ahsoka',charges:2,ai:GAP},(u,a,td)=>{hyS('dash',u);anim(u,'hy_glide',.24);
-  jx({jfx:'hy_steps',x:u.x,y:u.y,a,t:.5,m:.5});u.hy_stepB=2.5;
+  jx({jfx:'hy_steps',x:u.x,y:u.y,a,t:.5,m:.5});u.hy_stepB=2.5;fxSmoke(u.x,u.y,{u,col:'#d8d0c0',n:3,r:14,s:9,t:.45,al:.2,dx:-Math.cos(a)*30,dy:-Math.sin(a)*30});
   dash(u,a,clamp(td||190,70,190),.17,{jump:8,end:()=>jx({jfx:'hy_steps',x:u.x,y:u.y,a,t:.4,m:.4,b:1})})}),
  // 128 points : fond sur la cible puis l'enchaîne dans le champ des trigrammes
  hy_128:ULT('Hakke : 128 points','Fonce sur la cible ; si tu l\'atteins, 7 salves la bloquent, puis l\'étourdissent et la réduisent au silence',{line:{len:280,w:36},ai:{max:270,p:.8}},(u,a,td)=>{const e=hyPick(u,a,td||220,280),p=e||fwd(u,a,Math.min(td||250,280)),b=ang(u,p),dd=Math.max(0,dist(u,p)-36);
-  hyS('dash',u);anim(u,'hy_glide',.22);u.aim=b;jx({jfx:'hy_steps',x:u.x,y:u.y,a:b,t:.5,m:.5});
+  hyS('dash',u);anim(u,'hy_glide',.22);u.aim=b;jx({jfx:'hy_steps',x:u.x,y:u.y,a:b,t:.5,m:.5});fxSmoke(u.x,u.y,{u,col:'#d8d0c0',n:4,r:18,s:10,t:.5,al:.22});
   dash(u,b,dd,.2,{end:()=>{if(u.dead||u.stun>0)return;const t=nearE(u,u.x,u.y,96);if(!t){say(u,'MANQUÉ','#9fb3d9');return}u.aim=ang(u,t);
    // la 1re salve est le contact : esquive, intangibilité, Kaiten (renvoi) ou contre l'annulent
    aux.push({type:'hy_combo',x:(u.x+t.x)/2,y:(u.y+t.y)/2,r:115,t:1.4,m:1.4,team:u.team,owner:u,tg:t,ui:hyI(u),ti:hyI(t),vfx:'jyuken',k:0,n:0,kind:'128'});
+   fxLight((u.x+t.x)/2,(u.y+t.y)/2,200,'#8ab0ff',{u,t:1.4,a:.35});fxRing((u.x+t.x)/2,(u.y+t.y)/2,{u,r0:20,r1:150,col:'#dfe8ff',c2:'#ffffff',w:6,t:.4});
    // (v5, fusion avec 64 points) : le champ des trigrammes ralentit les autres ennemis proches
    aux.push({type:'hy_f64',x:u.x,y:u.y,r:150,t:1.45,m:1.45,team:u.team,owner:u,ui:hyI(u),vfx:'jyuken',k:.3,n:0,kind:'64',lite:1,tg:t})}})}),
  // 64 points : champ des huit trigrammes autour de soi, salves sur tous ceux qui y restent
@@ -93,9 +103,9 @@ AUXF.hy_kaiten=x=>{const o=x.owner;
  const act=o&&(o.cast||o.dash||(o.relT||0)>(x.rl??9)+.01||(o.swing||0)>(x.sw??9)+.01||(o.thrT||0)>(x.th??9)+.01);
  if(!o||o.dead||o.stun>0||act){x.t=0;if(o){o.deflect=0;hyAnimOff(o,'hy_kaiten')}return}x.rl=o.relT||0;x.sw=o.swing||0;x.th=o.thrT||0;
  o.root=Math.max(o.root,.1);if(!o.ctrl)o.aiT=Math.max(o.aiT||0,.1); // un bot tient son tourbillon jusqu'au bout
- x.x=o.x;x.y=o.y;const V=VFX;VFX='jyuken';
+ x.x=o.x;x.y=o.y;const V=VFX;VFX='jyuken';x.du=(x.du||0)-.016;if(x.du<=0&&near(x.x,x.y)){x.du=.25;fxSmoke(x.x,x.y,{u:o,col:'#d8d0c0',n:3,r:x.r*.9,s:12,t:.6,al:.2,rise:24})}
  for(const e of enemies(o)){const d=Math.hypot(e.x-x.x,e.y-x.y),m=x.r+e.r-12;if(d>=m)continue;
-  if(!x.hs.has(e)){x.hs.add(e);if(hit(e,o,x.n?11:14,{kb:460,fx:x.x,fy:x.y,hy_tk:1})&&near(e.x,e.y))sparks(e.x,e.y,'#ffffff',8,'jyuken')}
+  if(!x.hs.has(e)){x.hs.add(e);if(hit(e,o,x.n?11:14,{kb:460,fx:x.x,fy:x.y,hy_tk:1})&&near(e.x,e.y)){sparks(e.x,e.y,'#ffffff',8,'jyuken');hyImp(o,e,ang(o,e),40,1,14)}}
   if(e.unstop<=0&&d>1){e.x=x.x+(e.x-x.x)/d*m;e.y=x.y+(e.y-x.y)/d*m;collide(e)}}
  VFX=V;x.n=1;
  for(const p of projs){if(p.owner.team===x.team||p.grenade||p.dead||p.life<=0||Math.hypot(p.x-x.x,p.y-x.y)>x.r)continue;
@@ -115,7 +125,7 @@ AUXF.hy_wall=(x,dt)=>{const o=x.owner,ca=Math.cos(x.a),sa=Math.sin(x.a),V=VFX;
  for(const p of projs)if(p.owner.team!==x.team&&!p.dead&&p.life>0){const dx=p.x-x.x,dy=p.y-x.y,f=dx*ca+dy*sa,s=-dx*sa+dy*ca;if(f>-40&&f<p.r+12&&Math.abs(s)<x.w/2+p.r){p.life=0;if(near(p.x,p.y))sparks(p.x,p.y,'#cfe0ff',6,'jyuken')}}
  if(x.t<=0&&!x.done){x.done=1;for(const e of x.car){if(e.dead)continue;const dx=e.x-x.x,dy=e.y-x.y,f=dx*ca+dy*sa;
    if(f>-50&&f<e.r+70&&Math.abs(-dx*sa+dy*ca)<x.w/2+e.r+30)hit(e,o,5,{kb:560,stun:.4,wall:.6,fx:x.x-ca*80,fy:x.y-sa*80,unblockable:1})}
-  jx({jfx:'hy_wallend',x:x.x,y:x.y,a:x.a,w:x.w,t:.45,m:.45});if(near(x.x,x.y)){shake=Math.max(shake,.18);S('jyuken',o)}}
+  jx({jfx:'hy_wallend',x:x.x,y:x.y,a:x.a,w:x.w,t:.45,m:.45});if(near(x.x,x.y)){S('jyuken',o);fxImpact(x.x,x.y,'futon',1.4,{u:o,r:x.w/2,a:x.a})}}
  VFX=V};
 // 128 points : 7 salves (2, 4, 8 … 128) ; la cible reste bloquée tant que le lanceur n'est pas interrompu
 const HY128=[2,5,0,5,0,5,14]; // dégâts de chaque salve (la 1re = le contact)
@@ -127,9 +137,9 @@ AUXF.hy_combo=x=>{const o=x.owner,e=x.tg;if(x.end||x.n>=7)return;
  if(x.n===1){if(!ok){x.end=1;x.t=.3;return}hyLock(e,.15)}
  // silence finale : déjà donnée si les tenketsu viennent d'être scellés (un seul texte à l'écran)
  if(fin&&ok&&!e.dead&&e.unstop<=0&&!(e.silence>.9)){e.silence=Math.max(e.silence,1);say(e,'SILENCE','#9df')}
- anim(o,fin?'hy_finale':'hy_rapid',fin?.5:.3);jx({jfx:'hy_hits',ui:hyI(o),ti:hyI(e),x:e.x,y:e.y,n:x.n,a:ang(o,e),t:fin?.7:.2,m:fin?.7:.2});
+ anim(o,fin?'hy_finale':'hy_rapid',fin?.5:.3);jx({jfx:'hy_hits',ui:hyI(o),ti:hyI(e),x:e.x,y:e.y,n:x.n,a:ang(o,e),t:fin?.7:.2,m:fin?.7:.2});if(ok)fxBurst(e.x,e.y,'#dfe8ff',{u:o,n:4+x.n,sp:300,z:36,c2:'#ffffff',w:1.3,len:.15,t:.2});
  jx({jfx:'hy_count',x:x.x,y:x.y,r:x.r,n:2**x.n,fin:fin?1:0,t:fin?1.1:.11,m:fin?1.1:.11});
- if(fin){x.t=.55;jx({jfx:'hy_final',x:e.x,y:e.y,t:.6,m:.6});if(near(e.x,e.y)){shake=Math.max(shake,.3);hyS('heavy',o)}}else S('jyuken',o)};
+ if(fin){x.t=.55;jx({jfx:'hy_final',x:e.x,y:e.y,t:.6,m:.6});if(near(e.x,e.y)){fxShake(.3,e.x,e.y);hyS('heavy',o);hyImp(o,e,ang(o,e),90,1,30);fxPillar(e.x,e.y,'#8ab0ff',{u:o,h:240,w:30,t:.5,al:.45});fxDecal(e.x,e.y,'seal',{u:o,r:60,t:2.4,col:'#8ab0ff'})}}else S('jyuken',o)};
 // 64 points : 6 salves sur tous les ennemis du champ (2, 4 … 64), la dernière étourdit et rend vulnérable
 AUXF.hy_f64=x=>{const o=x.owner;if(x.end||x.n>=6)return;if(!o||o.dead||o.stun>0||Math.hypot(o.x-x.x,o.y-x.y)>40){x.end=1;x.t=Math.min(x.t,.25);hyAnimOff(o,'hy_rapid');return}
  o.root=Math.max(o.root,.12);if(x.k>0)return;
@@ -137,7 +147,7 @@ AUXF.hy_f64=x=>{const o=x.owner;if(x.end||x.n>=6)return;if(!o||o.dead||o.stun>0|
  for(const e of enemies(o))if(e!==x.tg&&Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r&&(x.lite?e.unstop<=0&&!(e.phase>0)&&(e.slow=Math.max(e.slow,.6))>0:hyVolley(o,e,fin?10:x.n%2?0:6,1,fin?{stun:.6,vuln:3}:{slow:.6}))){if(e.unstop<=0)e.slow=Math.max(e.slow,.6);
   jx({jfx:'hy_hits',ui:hyI(o),ti:hyI(e),x:e.x,y:e.y,n:x.n,a:ang(o,e),small:1,t:fin?.5:.2,m:fin?.5:.2})}
  VFX=V;if(x.lite){if(fin)x.t=.4;return}anim(o,'hy_rapid',.3);jx({jfx:'hy_count',x:x.x,y:x.y,r:x.r,n:2**x.n,fin:fin?1:0,t:fin?1:.17,m:fin?1:.17});
- if(fin){x.t=.4;if(near(x.x,x.y)){shake=Math.max(shake,.2);hyS('heavy',o)}}else S('jyuken',o)};
+ if(fin){x.t=.4;if(near(x.x,x.y)){fxShake(.2,x.x,x.y);hyS('heavy',o);fxRing(x.x,x.y,{u:o,r0:20,r1:x.r,col:'#dfe8ff',t:.4,w:6})}}else S('jyuken',o)};
 // ---------- dessins ----------
 // empreinte de paume (doigts vers le haut), en coordonnées écran
 function hyHand(x,y,s,col){g.fillStyle=col;g.beginPath();g.ellipse(x,y+s*.25,s*.62,s*.7,0,0,7);g.fill();
@@ -180,10 +190,10 @@ function hyField(x,k,t,lit,spin,pulse){const q=P(x.x,x.y,0),s=q.s,R=x.r*s*Math.m
   for(let l=0;l<3;l++){const yy=(l-1)*4.6*s;if((HYTRI[i]>>l)&1)g.fillRect(-9*s,yy-1.3*s,18*s,2.6*s);else{g.fillRect(-9*s,yy-1.3*s,7.5*s,2.6*s);g.fillRect(1.5*s,yy-1.3*s,7.5*s,2.6*s)}}
   if(on){g.globalCompositeOperation='lighter';g.fillStyle=rgba('#8ab0ff',.35*k);g.beginPath();g.ellipse(0,0,13*s,10*s,0,0,7);g.fill()}g.restore()}
  g.restore()}
-AUXD.hy_combo=(x,k,t)=>hyField(x,k,t,x.n===7?8:Math.min(7,x.n),.3,0);
+AUXD.hy_combo=(x,k,t)=>{hyDim(x,()=>fxGlowG(x.x,x.y,x.r*.9,'#8ab0ff',.25*k));hyField(x,k,t,x.n===7?8:Math.min(7,x.n),.3,0)};
 AUXD.hy_f64=(x,k,t)=>hyField(x,k,t,8,t*.7,x.n>0&&x.n<7?1-Math.max(0,x.k)/.17:0);
 // Kaiten : tourbillon de poussière au sol
-AUXD.hy_kaiten=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,R=x.r*s;g.globalCompositeOperation='lighter';g.fillStyle=rgba('#cfe0ff',.1*k);g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.fill();
+AUXD.hy_kaiten=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,R=x.r*s;hyDim(x,()=>fxGlowG(x.x,x.y,x.r*1.1,'#8ab0ff',.3*k));g.globalCompositeOperation='lighter';g.fillStyle=rgba('#cfe0ff',.1*k);g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.fill();
  g.strokeStyle=rgba('#ffffff',.75*k);g.lineWidth=2.5;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();
  for(let i=0;i<5;i++){const a0=t*11+i*1.26,rr=R*(.42+i*.12);g.strokeStyle=rgba(i%2?'#8ab0ff':'#dfe8ff',.65*k);g.lineWidth=(3.4-i*.4)*s;g.beginPath();g.ellipse(q.x,q.y,rr,rr*K,0,a0,a0+1.7);g.stroke()}};
 // Kûhekishô : front d'air courbe et haut qui avance, sillage au sol, ondes de pression qui montent
@@ -196,7 +206,7 @@ AUXD.hy_wall=(x,k,t)=>{const ca=Math.cos(x.a),sa=Math.sin(x.a),hw=x.w/2,N=10,tl=
  hyLine(b0,rgba('#ffffff',.95*k),4);hyLine(b1,rgba('#dfe8ff',.4*k),1.5);hyLine(b3,rgba('#cfe0ff',.3*k),1.5);
  g.strokeStyle=rgba('#ffffff',.4*k);g.lineWidth=1.4;g.beginPath();for(let i=0;i<9;i++){const s=-hw+((i*41+t*260)%x.w),b=Math.cos((s/x.w)*Math.PI)*26,q0=A(s,b,4),q1=A(s,b-8,40+(i%3)*16);g.moveTo(q0.x,q0.y);g.lineTo(q1.x,q1.y)}g.stroke()};
 // projectile de Kûshô : bulle de vide (anneaux de pression, air aspiré vers le cœur)
-PROJD.hy_kusho=(p,R,ra,t)=>{g.rotate(ra);g.globalCompositeOperation='lighter';
+PROJD.hy_kusho=(p,R,ra,t)=>{g.rotate(ra);g.globalCompositeOperation='lighter';fxGlowS(0,0,R*2.4,'#8ab0ff',.35*fxA(p));fxTailL(R*5,R*1.6,'#cfe0ff',.35*fxA(p));
  g.fillStyle=rgba('#cfe0ff',.28);g.beginPath();g.ellipse(-R*.5,0,R*1.35,R*.8,0,0,7);g.fill();
  for(let i=0;i<4;i++){const x=R*.4-i*R*.85;g.strokeStyle=rgba(i?'#8ab0ff':'#ffffff',.9-i*.18);g.lineWidth=i?2:4;g.beginPath();g.ellipse(x,0,R*(.32+i*.07),R*(1.3-i*.14),0,-1.4,1.4);g.stroke()}
  g.strokeStyle=rgba('#ffffff',.55);g.lineWidth=1.2;g.beginPath();for(let i=0;i<6;i++){const b=i*1.05+t/70,c=Math.cos(b),d=Math.sin(b);g.moveTo(c*R*2-R*.4,d*R*1.5);g.lineTo(c*R*1.15-R*.4,d*R*.85)}g.stroke()};
@@ -308,6 +318,10 @@ Object.assign(ANIM,{
  hy_finale:(P,e)=>{const k=e<.2?ezo(e/.2):1;pz(P,'armL',-1.6*k,0,-.22);pz(P,'armR',-1.6*k,0,.22);pz(P,'foreL',-.05);pz(P,'foreR',-.05);pz(P,'chest',.45*k);P.root.z=15*k;P.root.y=-8*k;pz(P,'thighR',-1.15*k);pz(P,'shinR',1*k);pz(P,'thighL',.8*k);pz(P,'shinL',.5*k)},
 });
 // ---------- trait de clan : Byakugan et tenketsu ----------
+// anticipation pendant les mudras d'un jutsu Hyûga : flammes de chakra bleues aux deux paumes, qui grandissent
+STATD.push((u,p,S)=>{if(!u.cast||u.dead)return;const ab=u.ch.abil[u.cast.i];if(!ab||!ab.key||!ab.key.startsWith('hy_'))return;const kk=Math.min(1,u.cast.t/u.cast.dur),t=performance.now()/1000,a=u.aim,px=-Math.sin(a),py=Math.cos(a);
+ hyDim(u,()=>{for(const sd of[-1,1]){const q=P(u.x+Math.cos(a)*12+px*sd*12,u.y+Math.sin(a)*12+py*sd*12,32);fxGlowS(q.x,q.y,(5+9*kk)*q.s,'#8ab0ff',.4+.35*kk);
+  g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#dfe8ff',.6*kk);g.lineWidth=1.3*q.s;for(let i=0;i<2;i++){const ph=(t*2.2+i*.5)%1;g.beginPath();g.moveTo(q.x,q.y);g.quadraticCurveTo(q.x+Math.sin(t*9+i)*4*q.s,q.y-ph*14*q.s,q.x+Math.sin(t*7+i*2)*3*q.s,q.y-(6+ph*16)*q.s);g.stroke()}g.restore()}})});
 TRAITS[1]={nom:'Byakugan : tenketsu',desc:'Chaque coup de Jûken ferme un tenketsu de la cible et lui draine 3 chakra (pas l\'attaque de base) ; à 8 tenketsu fermés, son chakra est scellé (silence 1 s). Le Byakugan révèle les ennemis invisibles proches.',
  init(u){u.hy_byak=u.hy_byak||0;u.hy_stepB=u.hy_stepB||0},
  update(u,dt){if(SIMT-(u.hy_seen??SIMT)>.5)u.hy_byak=u.hy_stepB=u.hy_dg=0;u.hy_seen=SIMT; // revenu à la vie (mode bataille) : plus d'état d'avant la mort

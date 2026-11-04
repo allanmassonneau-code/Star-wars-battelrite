@@ -20,6 +20,14 @@ DASHN[0]={src:'x.ka_dash',n:'Katon : Pas de braise',d:'Glisse en avant dans un s
 const kaS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son brut : sinon l'élément feu remplace tout par « fire »
 const kaBurning=t=>t.dotT>0&&t.dotEl===0; // la cible brûle déjà
 const kaFx=(o)=>{if(near(o.x,o.y))jx(o)};
+// ---- VFX (boîte à outils nr_fx.js) : décor selon intensité / foule / camp (fxA, fxN) ; bords de zones et télégraphes toujours nets
+const kaDim=(o,fn)=>{const m=fxA(o);return m<1?fxAlpha(m,fn):fn()};
+// impact de feu : petit = gerbe + lumière ; gros = impact complet (éclat local, onde au rayon RÉEL du coup, fumée, brûlure au sol qui s'efface)
+function kaImp(u,x,y,r,big,t,dmg){if(big)fxImpact(x,y,'katon',clamp(r/48,.7,2),{u,r});else{fxBurst(x,y,'#ff9a3a',{u,n:9,sp:200,c2:'#fff3c0',up:60,gr:60,t:.35});fxLight(x,y,r*1.8,'#ff7a2a',{u,t:.25,a:.4})}if(t&&dmg)fxHitStop(u,t,dmg)}
+// éclat à la bouche (souffle Katon) ou aux mains
+const kaMuz=(u,a,d,z,r)=>{const m=fwd(u,a,d);fxFlare(m.x,m.y,'#ffb03a',{u,z,r,t:.16,c2:'#fff3c0'});fxLight(m.x,m.y,r*3,'#ff7a2a',{u,t:.22,a:.35})};
+// lueur au sol sous un projectile (dans un PROJD, AVANT g.rotate ; repère : projectile à 28 de haut, unité ≈ px du monde)
+function kaPGlow(p,R,a){const q0=P(p.x,p.y,0),q=P(p.x,p.y,28);fxGlowS(0,(q0.y-q.y)/q.s,R,'#ff7a2a',a*fxA(p),R*K,0)}
 // le moteur ajoute un jet de feu à la bouche à tout jutsu de feu ; on le retire (dans la même image) pour les techniques lancées des mains ou du corps
 const kaNoMouth=u=>aux.push({type:'ka_nomouth',x:u.x,y:u.y,r:0,t:.1,m:.1,team:u.team,owner:u,vfx:'fire',k:0});
 // brûlure autour d'une explosion (les explosions du moteur n'en posent pas)
@@ -28,48 +36,53 @@ const kaBurnAt=(u,x,y,r,dot)=>{for(const e of enemies(u))if(Math.hypot(e.x-x,e.y
 // (durée large : un tir renvoyé vit plus longtemps que prévu ; le suivi s'arrête de lui-même quand le tir disparaît)
 function kaTrack(u,fn,end){const p=projs[projs.length-1];aux.push({type:'ka_pt',x:p.x,y:p.y,r:0,t:9,m:9,team:u.team,owner:u,vfx:'fire',k:0,p,fn,end})}
 // Flamme : embrase une cible qui brûle déjà, sinon l'allume
-function kaRavive(p,t){const o=p.owner;if(kaBurning(t)){hit(t,o,5,{dot:BURN(5,3)});say(t,'EMBRASÉ','#ffb03a');kaFx({jfx:'ka_burst',x:t.x,y:t.y,r:48,t:.42,m:.42,big:1})}
- else{hit(t,o,0,{silent:1,dot:BURN(4,3)});kaFx({jfx:'ka_burst',x:t.x,y:t.y,r:28,t:.3,m:.3})}}
+function kaRavive(p,t){const o=p.owner;if(kaBurning(t)){hit(t,o,5,{dot:BURN(5,3)});say(t,'EMBRASÉ','#ffb03a');kaFx({jfx:'ka_burst',x:t.x,y:t.y,r:48,t:.42,m:.42,big:1});kaImp(o,t.x,t.y,48,1,t,p.dmg+5)}
+ else{hit(t,o,0,{silent:1,dot:BURN(4,3)});kaFx({jfx:'ka_burst',x:t.x,y:t.y,r:28,t:.3,m:.3});kaImp(o,t.x,t.y,28,0)}}
 // Triple flamme : boule i (0, 1, 2) ; la 3e est grosse et explose (kb:0 : sans recul, sinon chaque lancer interromprait les mudras adverses)
-function kaTri(u,a,i){S('fire',u);anim(u,['ka_jabL','ka_jabR','ka_push'][i],i<2?.22:.32);
- if(i<2)proj(u,a,{spd:700,r:7+i*1.6,dmg:5+i,life:.72,col:'#ff7a2a',vfx:'fire',kind:'ka_orb',o:{dot:BURN(3,2.5)},onHit:(p,t)=>kaFx({jfx:'ka_burst',x:t.x,y:t.y,r:20+i*6,t:.25,m:.25})});
- else{proj(u,a,{spd:650,r:12,dmg:8,life:.76,col:'#ff7a2a',vfx:'fire',kind:'ka_orb',rocket:1,ar:56,kb:0});kaTrack(u,null,(x,p)=>{kaBurnAt(u,p.x,p.y,56,BURN(3,2.5));kaFx({jfx:'ka_burst',x:p.x,y:p.y,r:62,t:.4,m:.4,big:1})})}}
+function kaTri(u,a,i){S('fire',u);anim(u,['ka_jabL','ka_jabR','ka_push'][i],i<2?.22:.32);kaMuz(u,a,22,32,10+i*5);
+ if(i<2)proj(u,a,{spd:700,r:7+i*1.6,dmg:5+i,life:.72,col:'#ff7a2a',vfx:'fire',kind:'ka_orb',o:{dot:BURN(3,2.5)},onHit:(p,t)=>{kaFx({jfx:'ka_burst',x:t.x,y:t.y,r:20+i*6,t:.25,m:.25});kaImp(u,t.x,t.y,20+i*6,0)}});
+ else{proj(u,a,{spd:650,r:12,dmg:8,life:.76,col:'#ff7a2a',vfx:'fire',kind:'ka_orb',rocket:1,ar:56,kb:0});kaTrack(u,null,(x,p)=>{kaBurnAt(u,p.x,p.y,56,BURN(3,2.5));kaFx({jfx:'ka_burst',x:p.x,y:p.y,r:62,t:.4,m:.4,big:1});kaImp(u,p.x,p.y,56,1)})}}
 // Mur de feu : les tirs alliés qui le traversent s'enflamment (+20 % de dégâts, brûlent ; l'eau passe sans prendre feu)
 function kaIgnite(p){p.kaIgn=1;p.dmg*=1.2;const d=p.o&&p.o.dot,fire=ELM[p.vfx]===0;p.o=Object.assign({},p.o,{dot:d&&d.dps>=3?d:BURN(3,3)},fire?{}:{el:0});
  if(fire)p.r*=1.15;else if(!p.kind)p.kind='ka_ign';if(near(p.x,p.y)){jx({jfx:'ka_burst',x:p.x,y:p.y,r:24,t:.25,m:.25});sparks(p.x,p.y,'#ffb03a',4,'fire')}}
 // Tornade : grossit (tir de feu allié qui la traverse, ou vent)
-function kaGrow(x,dr,dm){x.r=Math.min(x.r+dr,128);x.dmg*=dm;kaFx({jfx:'ka_wave',x:x.x,y:x.y,r:x.r+20,t:.4,m:.4});if(near(x.x,x.y))sparks(x.x,x.y,'#ffb03a',10,'fire')}
+function kaGrow(x,dr,dm){x.r=Math.min(x.r+dr,128);x.dmg*=dm;kaFx({jfx:'ka_wave',x:x.x,y:x.y,r:x.r+20,t:.4,m:.4});fxPillar(x.x,x.y,'#ff7a2a',{u:x.owner,h:200,w:x.r*.45,t:.45,al:.4});if(near(x.x,x.y))sparks(x.x,x.y,'#ffb03a',10,'fire')}
 // Nuée ardente : la nuée s'abat (puissance selon la durée de canalisation, maximum à 2 s)
 function kaNueeGo(u){const c=u.chan;if(!c||c.key!=='ka_nuee')return;u.chan=null;u.cds[c.i]=c.cd;const pw=1+1.5*Math.min(1,c.t/2),V=VFX;VFX='fire';
  for(const x of aux)if(x.type==='ka_nuee'&&x.owner===u){x.t=0;if(x.fl)x.fl.t=0}
  aoe(u,c.x,c.y,c.r,28*pw,{dot:BURN(5,3),unblockable:1,quiet:1},'#ff7a2a');field(u,c.x,c.y,{r:c.r,t:2.5,dps:5*pw,col:'#ff7a2a',vfx:'fire'});
  anim(u,'ka_slam',.45);say(u,'NUÉE ARDENTE ×'+pw.toFixed(1).replace('.',','),'#ff9a3a');
- if(near(c.x,c.y)){jx({jfx:'ka_nboom',x:c.x,y:c.y,r:c.r,t:.9,m:.9,n:pw});shake=Math.max(shake,.2+.12*pw);kaS('boom',u);kaS('heavy',u)}VFX=V}
+ if(near(c.x,c.y)){jx({jfx:'ka_nboom',x:c.x,y:c.y,r:c.r,t:.9,m:.9,n:pw});fxShake(.18+.1*pw,c.x,c.y);kaS('boom',u);kaS('heavy',u);
+  fxRing(c.x,c.y,{u,r0:30,r1:c.r,col:'#ff7a2a',c2:'#fff3c0',w:10,t:.55,fill:1});fxDecal(c.x,c.y,'scorch',{u,r:c.r*.9,t:5});fxLight(c.x,c.y,c.r*1.6,'#ff7a2a',{u,t:.7,a:.5});
+  fxSmoke(c.x,c.y,{u,col:'#3a2e2c',n:10,r:c.r*.7,s:22,t:1.6,al:.28,rise:70});fxBurst(c.x,c.y,'#ff9a3a',{u,n:16+8*pw,sp:420,c2:'#fff3c0',up:140,gr:220,z:70,t:.7});
+  fxEmbers(c.x,c.y,c.r*.85,'#ffb03a',{u,n:14,h:90,t:2.4,c2:'#ff5a1a'});for(const e of enemies(u))if(Math.hypot(e.x-c.x,e.y-c.y)<c.r+e.r)fxHitStop(u,e,28*pw,pw>1.8)}VFX=V}
 // Grand souffle : le sol reste en feu le long du cône (si le souffle n'a pas été interrompu)
-function kaScorch(u){const a=u.aim;for(const [d,r] of[[105,58],[200,72],[295,86]])field(u,u.x+Math.cos(a)*d,u.y+Math.sin(a)*d,{r,t:2.5,dps:7,col:'#ff7a2a',vfx:'fire'})}
+function kaScorch(u){const a=u.aim;for(const [d,r] of[[105,58],[200,72],[295,86]]){const x=u.x+Math.cos(a)*d,y=u.y+Math.sin(a)*d;field(u,x,y,{r,t:2.5,dps:7,col:'#ff7a2a',vfx:'fire'});fxDecal(x,y,'scorch',{u,r:r*.95,t:4});fxSmoke(x,y,{u,col:'#3a2e2c',n:3,r:r*.6,s:14,t:1.3,al:.2})}}
 Object.assign(NAT,{
- ka_ball:SP('Katon : Flamme','Trait de feu rapide qui brûle ; sur une cible déjà en feu, il l\'embrase : +5 dégâts',4,{ai:RG(520,.7),line:{len:520,w:16}},(u,a)=>{S('fire',u);anim(u,'ka_spit',.36);
+ ka_ball:SP('Katon : Flamme','Trait de feu rapide qui brûle ; sur une cible déjà en feu, il l\'embrase : +5 dégâts',4,{ai:RG(520,.7),line:{len:520,w:16}},(u,a)=>{S('fire',u);anim(u,'ka_spit',.36);kaMuz(u,a,14,48,12);
   proj(u,a,{spd:720,r:8,dmg:11,life:.72,col:'#ff7a2a',kind:'ka_flame',onHit:kaRavive})}),
  ka_wall:SP('Katon : Mur de feu','Mur de feu 4 s : bloque tirs et ennemis, brûle au contact ; tes tirs le traversent et s\'enflamment',8,{ai:DEF},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_sweep',.45);kaNoMouth(u);
   wallLine(u,a,2,{});const c=fwd(u,a,95);aux.push({type:'ka_wall',x:c.x,y:c.y,a,len:62,r:70,t:4,m:4,team:u.team,owner:u,vfx:'fire',k:.3,pf:new Map()});
-  kaFx({jfx:'ka_wrise',x:c.x,y:c.y,a,len:62,ui:units.indexOf(u),t:.45,m:.45})}),
+  kaFx({jfx:'ka_wrise',x:c.x,y:c.y,a,len:62,ui:units.indexOf(u),t:.45,m:.45});fxLight(c.x,c.y,150,'#ff7a2a',{u,t:.6,a:.45});
+  for(const s of[-1,0,1]){const x=c.x-Math.sin(a)*s*48,y=c.y+Math.cos(a)*s*48;fxDecal(x,y,'scorch',{u,r:30,t:4.6});fxSmoke(x,y,{u,col:'#4a3a36',n:2,r:16,s:12,t:1.2,al:.2,rise:60})}}),
  ka_tri:SP('Katon : Triple flamme','3 boules de feu de plus en plus grosses, tirées à la suite en suivant ta visée ; la 3e explose',7,{ai:RG(500,.6),line:{len:500,w:24}},(u,a)=>{kaTri(u,a,0);kaNoMouth(u);let i=0;
   seqs.push({owner:u,n:2,t:.17,iv:.17,vfx:'fire',f:o=>kaTri(o,o.aim,++i)})}),
  // shuriken : élément visuel « tag » (pas de traînée du moteur au ras du sol, lueur orange) ; dégâts et brûlure restent du feu via el:0 ; ils tombent du ciel : pas de choc avec les tirs au sol (noClash)
  ka_air:SP('Katon : Shuriken de feu aériens','Bond en arrière : 5 shuriken de feu convergent sur le point visé, qui s\'embrase 2 s',8,{ai:RG(430,.55,110),tele:{r:58,max:450}},(u,a,td)=>{
-  let tp=atP(u,a,Math.max(90,td||300),450);S('dash',u);kaNoMouth(u);dash(u,a+Math.PI,95,.38,{jump:110});anim(u,'ka_air',.46);
+  let tp=atP(u,a,Math.max(90,td||300),450);S('dash',u);kaNoMouth(u);dash(u,a+Math.PI,95,.38,{jump:110});anim(u,'ka_air',.46);fxSmoke(u.x,u.y,{u,n:4,r:18,s:10,t:.6,al:.22,col:'#c8b8a8'});fxBurst(u.x,u.y,'#ffb03a',{u,n:6,sp:160,up:120,gr:200,t:.35});
   later(u,.12,()=>{if(u.dead||u.stun>0)return;if(!u.ctrl){const e=nearE(u,tp.x,tp.y,170);if(e)tp={x:e.x+e.vx*.3,y:e.y+e.vy*.3}}S('fire',u);let fl=.12;const px=-Math.sin(a),py=Math.cos(a);
    for(let i=0;i<5;i++){const ox=u.x+px*(i-2)*15,oy=u.y+py*(i-2)*15,b=Math.atan2(tp.y-oy,tp.x-ox),l=Math.max(.12,Math.hypot(tp.x-ox,tp.y-oy)/900);fl=Math.max(fl,l);
     projs.push({x:ox,y:oy,vx:Math.cos(b)*900,vy:Math.sin(b)*900,owner:u,src:u,rot:0,r:7,dmg:5,life:l,life0:l,col:'#ff7a2a',o:{dot:BURN(3,2),el:0},vfx:'tag',kind:'ka_shuri',noClash:1,onHit:(p,t)=>kaFx({jfx:'ka_burst',x:t.x,y:t.y,r:20,t:.25,m:.25}),jn:'Katon : Shuriken de feu aériens',ex:false,basic:false,hitSet:null})}
    later(u,fl,()=>{field(u,tp.x,tp.y,{r:58,t:2,dps:7,col:'#ff7a2a',vfx:'fire'});aux.push({type:'ka_stuck',x:tp.x,y:tp.y,a,r:58,t:2,m:2,team:u.team,owner:u,vfx:'fire',k:0});
-    kaFx({jfx:'ka_burst',x:tp.x,y:tp.y,r:54,t:.35,m:.35});if(near(tp.x,tp.y))S('flame',u)},{x:tp.x,y:tp.y,r:58})},{})}),
+    kaFx({jfx:'ka_burst',x:tp.x,y:tp.y,r:54,t:.35,m:.35});kaImp(u,tp.x,tp.y,58,1);if(near(tp.x,tp.y))S('flame',u)},{x:tp.x,y:tp.y,r:58})},{})}),
  ka_zone:SP('Katon : Fournaise','Brasier de 4 s autour de soi, qui te suit : plus un ennemi y reste, plus il brûle (jusqu\'à ×3)',10,{ai:SELF(165,.55),tele:{self:1,r:160}},(u)=>{S('fire',u);S('flame',u);anim(u,'ka_stomp',.55);kaNoMouth(u);
-  aux.push({type:'ka_four',x:u.x,y:u.y,r:160,t:4,m:4,team:u.team,owner:u,vfx:'fire',k:.05,n:0,H:new Map()});kaFx({jfx:'ka_wave',x:u.x,y:u.y,r:160,t:.5,m:.5,big:1})}),
- ka_goka:SP('Katon : Boule de feu suprême','Énorme boule de feu qui grossit en avançant : traverse et repousse les ennemis, balaie les petits tirs',8,{ai:RG(540,.55),line:{len:560,w:60}},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_goka',.6);
-  proj(u,a,{spd:430,r:16,dmg:26,life:1.3,col:'#ff7a2a',pierce:1,heavy:1,kind:'ka_goka',o:{dot:BURN(4,3),kb:110},onHit:(p,t)=>{kaFx({jfx:'ka_burst',x:t.x,y:t.y,r:p.r*2.4,t:.35,m:.35,big:1});if(near(t.x,t.y))shake=Math.max(shake,.12)}});
+  aux.push({type:'ka_four',x:u.x,y:u.y,r:160,t:4,m:4,team:u.team,owner:u,vfx:'fire',k:.05,n:0,H:new Map()});kaFx({jfx:'ka_wave',x:u.x,y:u.y,r:160,t:.5,m:.5,big:1});
+  fxRing(u.x,u.y,{u,r0:24,r1:160,col:'#ff7a2a',c2:'#fff3c0',w:8,t:.45});fxDecal(u.x,u.y,'scorch',{u,r:110,t:4.5});fxLight(u.x,u.y,230,'#ff7a2a',{u,t:.6,a:.45});fxBurst(u.x,u.y,'#ffb03a',{u,n:14,sp:300,up:90,gr:120,c2:'#fff3c0',t:.5})}),
+ ka_goka:SP('Katon : Boule de feu suprême','Énorme boule de feu qui grossit en avançant : traverse et repousse les ennemis, balaie les petits tirs',8,{ai:RG(540,.55),line:{len:560,w:60}},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_goka',.6);kaMuz(u,a,22,46,26);fxSmoke(u.x+Math.cos(a)*30,u.y+Math.sin(a)*30,{u,col:'#4a3a36',n:4,r:20,s:12,t:.9,al:.2,z:40});
+  proj(u,a,{spd:430,r:16,dmg:26,life:1.3,col:'#ff7a2a',pierce:1,heavy:1,kind:'ka_goka',o:{dot:BURN(4,3),kb:110},onHit:(p,t)=>{kaFx({jfx:'ka_burst',x:t.x,y:t.y,r:p.r*2.4,t:.35,m:.35,big:1});kaImp(u,t.x,t.y,p.r*1.6,1,t,p.dmg)}});
   // (croissance multiplicative : garde les bonus extérieurs ; un choc contre un petit tir ne lui retire que 15 % au plus, elle « balaie » vraiment)
   kaTrack(u,(p,x)=>{const e=1-p.life/p.life0;if(x.ld!=null){x.dm*=Math.max(.85,p.dmg/x.ld);x.rm*=p.r/x.lr}else{x.dm=1;x.rm=1}p.r=(16+13*e)*x.rm;p.dmg=(26+6*e)*x.dm;x.ld=p.dmg;x.lr=p.r},
-   (x,p)=>kaFx({jfx:'ka_burst',x:p.x,y:p.y,r:p.r*2.6,t:.45,m:.45,big:1}))}),
+   (x,p)=>{kaFx({jfx:'ka_burst',x:p.x,y:p.y,r:p.r*2.6,t:.45,m:.45,big:1});kaImp(u,p.x,p.y,p.r*1.8,1);fxSmoke(p.x,p.y,{u,col:'#4a3a36',n:5,r:p.r*1.4,s:16,t:1.3,al:.24,rise:60})})}),
  ka_stack:SP('Katon : Flammes chargées','5 flammes follettes à tirer une à une en relançant (5 s) ; la dernière explose',10,{ai:RG(500,.7)},(u,a)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='ka_stack');if(i<0)return;kaNoMouth(u);
   if(u.jst&&u.jst.key==='ka_stack'){const last=u.jst.n<=1;S('fire',u);anim(u,'ka_flick',.22);
    if(last){proj(u,a,{spd:820,r:9,dmg:14,life:.62,col:'#ff7a2a',kind:'ka_wisp',rocket:1,ar:62,kb:80,big:1});kaTrack(u,null,(x,p)=>{kaBurnAt(u,p.x,p.y,62,BURN(3,2));kaFx({jfx:'ka_burst',x:p.x,y:p.y,r:60,t:.4,m:.4,big:1})})}
@@ -79,24 +92,26 @@ Object.assign(NAT,{
    u.jst={key:'ka_stack',i,n:5,t:5,cd:u.ch.abil[i].cd,v:'fire'};u.cds[i]=.25;aux.push({type:'ka_jw',x:u.x,y:u.y,r:0,t:5.5,m:5.5,team:u.team,owner:u,vfx:'fire',k:0});say(u,'×5','#ffd38a');S('flame',u);anim(u,'ka_wisps',.5);kaFx({jfx:'ka_wave',x:u.x,y:u.y,r:46,t:.35,m:.35})}}),
  // ---- dash de nature (Espace) : glissade dans un sillage de braises ; 4 flaques de feu (1,5 s, 6 dégâts/s) se posent sur le passage, rien à l'arrivée
  ka_dash:SP('Katon : Pas de braise','Glisse en avant dans un sillage de braises : le sol brûle 1,5 s derrière toi (6 dégâts par seconde)',7,{ai:{mode:'gap',min:120,max:280,p:.4}},(u,a)=>{
-  kaS('dash',u);S('flame',u);anim(u,'lunge',.3);kaNoMouth(u);kaFx({jfx:'ka_burst',x:u.x,y:u.y,r:26,t:.25,m:.25});
-  dash(u,a,230,.24,{});field(u,u.x,u.y,{r:30,t:1.5,dps:6,col:'#ff7a2a',vfx:'fire'});
+  kaS('dash',u);S('flame',u);anim(u,'lunge',.3);kaNoMouth(u);kaFx({jfx:'ka_burst',x:u.x,y:u.y,r:26,t:.25,m:.25});fxBurst(u.x,u.y,'#ffb03a',{u,n:8,sp:220,a:a+Math.PI,arc:1.6,up:50,gr:60,t:.35,c2:'#fff3c0'});
+  dash(u,a,230,.24,{});field(u,u.x,u.y,{r:30,t:1.5,dps:6,col:'#ff7a2a',vfx:'fire'});fxDecal(u.x,u.y,'scorch',{u,r:24,t:1.8});aux.push({type:'ka_dtr',x:u.x,y:u.y,r:0,t:.32,m:.32,team:u.team,owner:u,vfx:'fire',k:0,ui:units.indexOf(u)});
   for(let i=1;i<4;i++)later(u,i*.075,()=>{if(u.dead)return;const x=u.x,y=u.y;
-   field(u,x,y,{r:30,t:1.5,dps:6,col:'#ff7a2a',vfx:'fire'});if(near(x,y))sparks(x,y,'#ffb03a',5,'fire')},{})}),
- ka_dragon:SP('Katon : Dragon de feu','Dragon de feu qui suit ta visée, explose en repoussant et laisse le sol en feu',12,{ai:RG(620,.5),line:{len:700,w:40}},(u,a)=>{S('fire',u);kaS('roar',u);anim(u,'ka_dragon',.75);
+   field(u,x,y,{r:30,t:1.5,dps:6,col:'#ff7a2a',vfx:'fire'});fxDecal(x,y,'scorch',{u,r:24,t:1.8});if(near(x,y))sparks(x,y,'#ffb03a',5,'fire')},{})}),
+ ka_dragon:SP('Katon : Dragon de feu','Dragon de feu qui suit ta visée, explose en repoussant et laisse le sol en feu',12,{ai:RG(620,.5),line:{len:700,w:40}},(u,a)=>{S('fire',u);kaS('roar',u);anim(u,'ka_dragon',.75);kaMuz(u,a,22,46,30);
   proj(u,a,{spd:470,r:13,dmg:28,life:1.7,col:'#ff7a2a',rocket:1,ar:90,kb:190,burn:1,steer:1,big:1,kind:'ka_dragon'});
-  kaTrack(u,null,(x,p)=>kaFx({jfx:'ka_dboom',x:p.x,y:p.y,r:90,t:.7,m:.7}));kaFx({jfx:'ka_coil',ui:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6})}),
- ka_tornado:SP('Katon : Tornade de feu','Tornade de feu guidée par ta visée : aspire et brûle sans emporter ; tes tirs de feu et le vent l\'attisent',12,{ai:RG(470,.6),line:{len:520,w:150}},(u,a)=>{S('fire',u);kaS('wind',u);anim(u,'spin',.5);kaNoMouth(u);
+  kaTrack(u,null,(x,p)=>{kaFx({jfx:'ka_dboom',x:p.x,y:p.y,r:90,t:.7,m:.7});fxImpact(p.x,p.y,'katon',1.8,{u,r:90});fxSmoke(p.x,p.y,{u,col:'#3a2e2c',n:7,r:60,s:18,t:1.5,al:.26,rise:80});
+   fxEmbers(p.x,p.y,70,'#ffb03a',{u,n:10,h:80,t:1.6,c2:'#ff5a1a'});for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<90+e.r)fxHitStop(u,e,28,1)});kaFx({jfx:'ka_coil',ui:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6})}),
+ ka_tornado:SP('Katon : Tornade de feu','Tornade de feu guidée par ta visée : aspire et brûle sans emporter ; tes tirs de feu et le vent l\'attisent',12,{ai:RG(470,.6),line:{len:520,w:150}},(u,a)=>{S('fire',u);kaS('wind',u);anim(u,'spin',.5);kaNoMouth(u);fxWind(u.x+Math.cos(a)*55,u.y+Math.sin(a)*55,a,{u,w:78,n:8,t:.5,col:'#ffb03a',spin:1});fxRing(u.x+Math.cos(a)*55,u.y+Math.sin(a)*55,{u,r0:20,r1:78,col:'#ff7a2a',t:.4});
   aux.push({type:'ka_torn',x:u.x+Math.cos(a)*55,y:u.y+Math.sin(a)*55,vx:Math.cos(a)*145,vy:Math.sin(a)*145,a,r:78,t:3.6,m:3.6,team:u.team,owner:u,vfx:'fire',k:0,dmg:7,n:0})}),
  ka_nuee:SP('Katon : Nuée ardente','Nuée de cendres brûlantes (ralentit) ; immobile, relance pour l\'abattre : jusqu\'à ×2,5 en 2 s',20,{tele:{r:165,max:480},ai:{max:460,p:.8}},(u,a,td)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='ka_nuee');if(i<0)return;
   if(u.chan&&u.chan.key==='ka_nuee'){kaNueeGo(u);aux.push({type:'ka_uncut',x:u.x,y:u.y,r:0,t:.1,m:.1,team:u.team,owner:u,vfx:'fire',k:0,nm:u.ch.abil[i].n});return}
   let p=atP(u,a,td,480);if(!u.ctrl){const e=pick(u,a,td||300,480);if(e)p={x:e.x+e.vx*.25,y:e.y+e.vy*.25}} // un bot centre la nuée sur sa cible
   u.chan={key:'ka_nuee',i,x:p.x,y:p.y,r:165,t:0,max:2.1,cd:u.ch.abil[i].cd};u.cds[i]=u.ctrl?.4:99; // un bot la laisse s'abattre au bon moment (AUXF)
   field(u,p.x,p.y,{r:165,t:2.3,slow:1,dps:6,col:'#2a2224',vfx:'ka_ash'});aux.push({type:'ka_nuee',x:p.x,y:p.y,r:165,t:2.4,m:2.4,team:u.team,owner:u,vfx:'fire',k:0,n:0,fl:fields[fields.length-1]});kaFx({jfx:'ka_ncloud',x:p.x,y:p.y,r:165,t:2.4,m:2.4});
+  fxSmoke(p.x,p.y,{u,col:'#2a2224',n:8,r:140,s:20,t:1.4,al:.22,rise:90,z:40});fxPillar(u.x,u.y,'#ff7a2a',{u,h:240,w:30,t:.7,al:.45});
   anim(u,'ka_call',2.2);kaS('roar',u)}),
  ka_breath:SP('Katon : Grand souffle de feu','Immobile 2 s : un torrent de feu balaie un très large cône (ralentit, brûle), le sol reste en feu',20,{ai:{max:300,p:.8}},(u,a)=>{S('fire',u);S('flame',u);anim(u,'ka_blast',.45);
   u.flame={t:2,k:0,R:140,arc:.88,d:4.5,burn:1,still:1,v:'fire',dot:BURN(4,3)};aux.push({type:'ka_sbr',x:u.x,y:u.y,r:0,t:2.3,m:2.3,team:u.team,owner:u,vfx:'fire',k:0,fl:u.flame,el:0});
-  kaFx({jfx:'ka_cone',ui:units.indexOf(u),x:u.x,y:u.y,t:2,m:2})}),
+  kaFx({jfx:'ka_cone',ui:units.indexOf(u),x:u.x,y:u.y,t:2,m:2});kaMuz(u,a,20,48,36);fxShake(.22,u.x,u.y)}),
 });
 Object.assign(NATHERO,{ka:'boba'});
 AFTER.push(()=>UK.push('ka_ht'));
@@ -122,7 +137,7 @@ AUXF.ka_torn=(x,dt)=>{const o=x.owner;
  const tick=x.k<=0;if(tick)x.k=.25;VFX='fire';
  for(const e of enemies(x.owner)){const dx=e.x-x.x,dy=e.y-x.y,d=Math.hypot(dx,dy);if(d>=x.r+e.r)continue;if(tick)hit(e,x.owner,x.dmg,{silent:1,dot:BURN(3,2)});
   if(d>12&&!e.dash&&!(e.unstop>0)&&!(e.phase>0)){const k=630*dt/d;e.kx-=dx*k;e.ky-=dy*k}}VFX=null};
-AUXF.ka_stuck=()=>{};
+AUXF.ka_stuck=()=>{};AUXF.ka_dtr=()=>{};
 AUXF.ka_nomouth=x=>{x.t=0;const k=units.indexOf(x.owner);for(let j=fx.length-1;j>=0;j--){const f=fx[j];if(f.jfx==='mouthfire'&&f.ui===k&&f.t===f.m){fx.splice(j,1);break}}};
 // relance de la Nuée : le moteur rejoue l'annonce d'ultime (bandeau, nom) ; on la retire dans la même image, elle a déjà été vue au lancement
 AUXF.ka_uncut=x=>{x.t=0;if(x.done)return;x.done=1;const o=x.owner,s=x.nm,k=units.indexOf(o);if(o===player&&cutin&&cutin.s===s)cutin=null;
@@ -140,20 +155,21 @@ AUXF.ka_sbr=(x,dt)=>{const o=x.owner,f=o.flame;if(!f||f!==x.fl||o.dead){if(!x.do
 function kaTongue(x,y,L,w,b,col){const c=Math.cos(b),s=Math.sin(b),px=-s*w,py=c*w;g.fillStyle=col;g.beginPath();g.moveTo(x+px,y+py);g.quadraticCurveTo(x+c*L*.5+px*.9,y+s*L*.5+py*.9,x+c*L,y+s*L);
  g.quadraticCurveTo(x+c*L*.5-px*.9,y+s*L*.5-py*.9,x-px,y-py);g.arc(x,y,w,b-Math.PI/2,b+Math.PI/2,true);g.fill()}
 // ---- projectiles
-PROJD.ka_flame=(p,R,ra,t)=>{g.rotate(ra);g.globalCompositeOperation='lighter';const f=Math.sin(t/40)*.12;
+PROJD.ka_flame=(p,R,ra,t)=>{kaPGlow(p,R*2.2,.35);g.rotate(ra);g.globalCompositeOperation='lighter';const f=Math.sin(t/40)*.12;fxGlowS(R*.2,0,R*3.4,'#ff7a2a',.4*fxA(p));
  kaTongue(0,0,R*(4.4+f*5),R*1.1,Math.PI+f*.4,rgba('#e0401a',.55));kaTongue(0,0,R*(3+f*3),R*.92,Math.PI-f*.5,rgba('#ff7a2a',.85));kaTongue(R*.25,0,R*1.9,R*.6,Math.PI,'#ffd36a');circ(R*.35,0,R*.42,'#fff3c0')};
-PROJD.ka_orb=(p,R,ra,t)=>{g.globalCompositeOperation='lighter';R*=1.2;const s=t/110;circ(0,0,R*1.8,rgba('#ff5a1a',.2));
+PROJD.ka_orb=(p,R,ra,t)=>{kaPGlow(p,R*2.4,.4);g.globalCompositeOperation='lighter';R*=1.2;const s=t/110;fxGlowS(0,0,R*2.8,'#ff7a2a',.45*fxA(p));
  g.rotate(ra);kaTongue(-R*.1,0,R*2.4,R*.95,Math.PI+Math.sin(t/45)*.18,rgba('#e0401a',.7));g.rotate(-ra);
  for(let i=0;i<3;i++){const b=s+i*2.094;kaTongue(Math.cos(b)*R*.55,Math.sin(b)*R*.55,R*1.3,R*.42,b+2.2,rgba('#ffb03a',.8))}
  g.globalCompositeOperation='source-over';circ(0,0,R,'#ff6a1a');circ(-R*.04,-R*.08,R*.72,'#ffa030');circ(R*.08,-R*.16,R*.4,'#fff3c0')};
 PROJD.ka_shuri=(p,R,ra,t)=>{const e=p.life0?Math.max(0,p.life/p.life0):0;g.translate(0,-e*e*85);g.globalCompositeOperation='lighter';circ(0,0,R*2.2,rgba('#ff7a2a',.18));g.rotate(ra-e*.9);kaTongue(-2,0,R*4.2,R*1.05,Math.PI+Math.sin(t/40)*.15,rgba('#ff5a1a',.55));kaTongue(-1,0,R*2.6,R*.75,Math.PI,rgba('#ffb03a',.75));g.rotate(-ra+e*.9+t/26);
  g.globalCompositeOperation='source-over';g.fillStyle='#2e2e36';g.beginPath();for(let i=0;i<4;i++){const b=i*Math.PI/2;g.lineTo(Math.cos(b)*R*1.6,Math.sin(b)*R*1.6);g.lineTo(Math.cos(b+.785)*R*.42,Math.sin(b+.785)*R*.42)}g.closePath();g.fill();
  g.globalCompositeOperation='lighter';g.strokeStyle='#ff9a3a';g.lineWidth=1.6;g.stroke();circ(0,0,R*.32,'#fff3c0')};
-PROJD.ka_wisp=(p,R,ra,t)=>{g.rotate(ra);g.globalCompositeOperation='lighter';const w=Math.sin(t/32+p.x*.05)*.4;
+PROJD.ka_wisp=(p,R,ra,t)=>{kaPGlow(p,R*2.4,.35);g.rotate(ra);g.globalCompositeOperation='lighter';const w=Math.sin(t/32+p.x*.05)*.4;
  kaTongue(0,0,R*5.2,R*.85,Math.PI+w*.35,rgba('#ff5a1a',.5));kaTongue(0,0,R*3.3,R*.8,Math.PI-w*.3,rgba('#ffb03a',.85));circ(0,0,R*.85,'#ffd36a');circ(R*.18,0,R*.5,'#ffffff')};
 PROJD.ka_ign=(p,R,ra,t)=>{g.rotate(ra);g.globalCompositeOperation='lighter';const f=Math.sin(t/35)*.15;R=Math.max(R,6);
  kaTongue(0,0,R*(3.6+f*4),R*.95,Math.PI+f*.4,rgba('#ff5a1a',.6));kaTongue(0,0,R*2.2,R*.7,Math.PI,'#ffb03a');circ(R*.2,0,R*.45,'#fff3c0')};
-PROJD.ka_goka=(p,R,ra,t)=>{g.globalCompositeOperation='lighter';const s=t/220;circ(0,0,R*1.6,rgba('#ff5a1a',.16));circ(0,0,R*1.25,rgba('#ff7a2a',.14));
+PROJD.ka_goka=(p,R,ra,t)=>{{const q0=P(p.x,p.y,0),q=P(p.x,p.y,28),dy=(q0.y-q.y)/q.s;fxGlowS(0,dy,R*1.9,'#ff7a2a',.5*fxA(p),R*1.9*K,0);g.strokeStyle=rgba('#ffb03a',.5);g.lineWidth=1.5;g.beginPath();g.ellipse(0,dy,R,R*K,0,0,7);g.stroke()} // tache au sol = largeur réelle
+ g.globalCompositeOperation='lighter';const s=t/220;fxGlowS(0,0,R*2.6,'#ff5a1a',.4*fxA(p));circ(0,0,R*1.25,rgba('#ff7a2a',.14));
  for(let i=0;i<10;i++){const b=(i%2?s:-s)+i*.628,L=R*(.8+.4*Math.sin(t/70+i*1.7));kaTongue(Math.cos(b)*R*.7,Math.sin(b)*R*.7,L,R*.36,b+.45,rgba(i%3?'#ff7a2a':'#ffb03a',.75))}
  g.rotate(ra);kaTongue(-R*.3,0,R*2.3,R*.9,Math.PI+Math.sin(t/60)*.12,rgba('#e0401a',.6));
  g.globalCompositeOperation='source-over';g.strokeStyle='#7a1a08';g.lineWidth=2;g.fillStyle='#e8481a';g.beginPath();g.arc(0,0,R,0,7);g.fill();g.stroke();
@@ -170,6 +186,7 @@ PROJD.ka_dragon=(p,R,ra,t)=>{const q=P(p.x,p.y,28),T=kaTrail(p),Lt=T[T.length-1]
  const n=12,pts=[[0,0]],sp=Math.hypot(p.vx,p.vy)||1,ux=p.vx/sp,uy=p.vy/sp,D=R*.62;let k=T.length-1,cx=p.x,cy=p.y,left=p.life0?Math.max(0,(p.life0-p.life)*sp-8):1e9; // le corps sort de la gueule : jamais plus long que le chemin parcouru
  for(let i=1;i<n;i++){let need=Math.min(D,left);left-=need;while(need>0){if(k<0){cx-=ux*need;cy-=uy*need;break}const a=T[k],dd=Math.hypot(a.x-cx,a.y-cy);if(dd>=need){cx+=(a.x-cx)*need/dd;cy+=(a.y-cy)*need/dd;need=0}else{cx=a.x;cy=a.y;need-=dd;k--}}
   const w=Math.sin(t/85-i*.85)*R*.38*Math.min(1,i/3),s=P(cx-uy*w,cy+ux*w,28);pts.push([(s.x-q.x)/q.s,(s.y-q.y)/q.s])}
+ {const A=fxA(p),q0=P(p.x,p.y,0);fxGlowS(0,(q0.y-q.y)/q.s,R*3,'#ff7a2a',.45*A,R*3*K,0);for(let i=1;i<n;i+=2)fxGlowS(pts[i][0],pts[i][1],R*(1.9-i/n),'#ff5a1a',.32*A)} // lueur du corps + lumière au sol
  g.lineCap='round';for(const [col,wm] of[['#8a1a08',1.35],['#e0401a',1.15],['#ff8a2a',.78],['#ffd36a',.3]]){g.strokeStyle=col;for(let i=n-1;i>=1;i--){g.lineWidth=R*wm*(.25+.75*(1-i/n));g.beginPath();g.moveTo(pts[i][0],pts[i][1]);g.lineTo(pts[i-1][0],pts[i-1][1]);g.stroke()}}
  g.globalCompositeOperation='lighter';for(let i=2;i<n;i+=2){const [x,y]=pts[i],[x2,y2]=pts[i-1],b=Math.atan2(y-y2,x-x2),s=1-i/n;kaTongue(x,y,R*(.9+.8*s),R*.3,b+(i%4?1.3:-1.3),rgba(i%4?'#ffb03a':'#ff7a2a',.75))}
  {const [x,y]=pts[n-1],[x2,y2]=pts[n-2];kaTongue(x,y,R*1.3,R*.25,Math.atan2(y-y2,x-x2)+Math.sin(t/60)*.3,rgba('#ff7a2a',.8))}
@@ -185,46 +202,55 @@ PROJD.ka_dragon=(p,R,ra,t)=>{const q=P(p.x,p.y,28),T=kaTrail(p),Lt=T[T.length-1]
 // ---- objets au sol
 // mur de feu : lit de braises sous les flammes, étincelles qui montent
 AUXD.ka_wall=(x,k,t)=>{const c=Math.cos(x.a),s=Math.sin(x.a),px=-s,py=c,A=P(x.x+px*x.len*1.15,x.y+py*x.len*1.15,0),Bq=P(x.x-px*x.len*1.15,x.y-py*x.len*1.15,0);
+ kaDim(x,()=>{for(let i=-2;i<=2;i++)fxGlowG(x.x+px*x.len*i*.45,x.y+py*x.len*i*.45,46,'#ff7a2a',.3*k*(.85+.15*Math.sin(t*7+i)))});
  g.lineCap='round';g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff5a1a',.14*k);g.lineWidth=70*A.s;g.beginPath();g.moveTo(A.x,A.y);g.lineTo(Bq.x,Bq.y);g.stroke();g.lineWidth=40*A.s;g.stroke();
  g.globalCompositeOperation='source-over';g.strokeStyle=rgba('#1a0a04',.5*k);g.lineWidth=20*A.s;g.stroke();
  g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#e0401a',.6*k);g.lineWidth=11*A.s;g.stroke();g.strokeStyle=rgba('#ffb03a',.6*k);g.lineWidth=4*A.s;g.stroke();
- for(let i=0;i<10;i++){const f=((i*.37+t*.21)%1)*2-1,h=((t*1.3+i*.29)%1),q=P(x.x+px*x.len*f+c*(i%3-1)*6,x.y+py*x.len*f+s*(i%3-1)*6,10+h*90);circ(q.x+Math.sin(t*4+i)*3,q.y,(2.4-h*1.7)*q.s,rgba(i%2?'#ffd36a':'#ff7a2a',.9*k*(1-h)))}};
+ // langues de flammes le long du mur (la hauteur = l'obstacle) puis braises : décor
+ kaDim(x,()=>{const nf=Math.max(5,fxN(9,x));for(let i=0;i<nf;i++){const f=(i+.5)/nf*2-1,w=P(x.x+px*x.len*1.05*f,x.y+py*x.len*1.05*f,0);kaTongue(w.x,w.y,(30+12*Math.sin(t*13+i*1.9))*w.s*k*(1-Math.abs(f)*.3),5.5*w.s,-Math.PI/2+Math.sin(t*5+i)*.12,rgba(i%2?'#ffb03a':'#ff5a1a',.45*k))}
+  const ne=fxN(10,x);for(let i=0;i<ne;i++){const f=((i*.37+t*.21)%1)*2-1,h=((t*1.3+i*.29)%1),q=P(x.x+px*x.len*f+c*(i%3-1)*6,x.y+py*x.len*f+s*(i%3-1)*6,10+h*90);circ(q.x+Math.sin(t*4+i)*3,q.y,(2.4-h*1.7)*q.s,rgba(i%2?'#ffd36a':'#ff7a2a',.9*k*(1-h)))}})};
+// sillage du Pas de braise : ruban de feu qui suit le ninja pendant la glissade
+AUXD.ka_dtr=(x,k)=>{const u=units[x.ui];if(!u||u.dead)return;kaDim(x,()=>{fxRibbon(x,u.x,u.y,14,'#ff5a1a',20,12,.55);const q=P(u.x,u.y,14);fxGlowS(q.x,q.y,26*q.s,'#ff7a2a',.5*k)})};
 // shuriken plantés au sol, rougeoyants
-AUXD.ka_stuck=(x,k,t)=>{for(let i=0;i<5;i++){const b=x.a+Math.PI+(i-2)*.5,d=x.r*(.2+(i%3)*.22),q=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d*.85,3),R=6*q.s;
+AUXD.ka_stuck=(x,k,t)=>kaDim(x,()=>{for(let i=0;i<5;i++){const b=x.a+Math.PI+(i-2)*.5,d=x.r*(.2+(i%3)*.22),q=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d*.85,3),R=6*q.s;
  g.save();g.translate(q.x,q.y);g.scale(1,.55);g.rotate(i*1.3);g.fillStyle='#2e2e36';g.beginPath();for(let j=0;j<4;j++){const a=j*Math.PI/2;g.lineTo(Math.cos(a)*R*1.5,Math.sin(a)*R*1.5);g.lineTo(Math.cos(a+.785)*R*.4,Math.sin(a+.785)*R*.4)}g.closePath();g.fill();
- g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff9a3a',.9*k);g.lineWidth=1.4;g.stroke();g.restore();g.save();g.globalCompositeOperation='lighter';kaTongue(q.x,q.y-2*q.s,(12+Math.sin(t*12+i*2)*4)*q.s,3*q.s,-Math.PI/2,rgba('#ffb03a',.8*k));g.restore()}};
+ g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff9a3a',.9*k);g.lineWidth=1.4;g.stroke();g.restore();g.save();g.globalCompositeOperation='lighter';kaTongue(q.x,q.y-2*q.s,(12+Math.sin(t*12+i*2)*4)*q.s,3*q.s,-Math.PI/2,rgba('#ffb03a',.8*k));g.restore();fxGlowS(q.x,q.y,10*q.s,'#ff7a2a',.5*k)}});
 // fournaise : cercle de flammes autour du lanceur, chaleur qui monte avec le temps
 AUXD.ka_four=(x,k,t)=>{const n=x.n||0,h=1+n*.9;g.fillStyle=rgba('#ff5a1a',(.08+.1*n)*k);gEll(x.x,x.y,x.r);g.fill();
  g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff5a1a',.16*k);g.lineWidth=26;gEll(x.x,x.y,x.r*.94);g.stroke();g.strokeStyle=rgba('#ff7a2a',.6*k);g.lineWidth=3;gEll(x.x,x.y,x.r);g.stroke();
+ if(fxRel(x)===2){g.strokeStyle=rgba('#ff3b3b',.7*k);g.lineWidth=1.4;g.setLineDash([10,6]);g.lineDashOffset=-t*25;gEll(x.x,x.y,x.r-3);g.stroke();g.setLineDash([])} // ennemi : liseré rouge
+ kaDim(x,()=>{fxGlowG(x.x,x.y,x.r*.9,'#ff5a1a',(.18+.2*n)*k);
  g.strokeStyle=rgba('#ffd36a',.35*k);g.lineWidth=1.5;g.setLineDash([12,10]);g.lineDashOffset=-t*40;gEll(x.x,x.y,x.r*.62);g.stroke();g.setLineDash([]);
- for(let i=0;i<22;i++){const b=i*.2856+t*.35,w=P(x.x+Math.cos(b)*x.r,x.y+Math.sin(b)*x.r,0),L=(i%2?26:17)*(1+.25*Math.sin(t*9+i*1.7))*h*w.s;kaTongue(w.x,w.y,L,(i%2?6:4.5)*w.s,-Math.PI/2+Math.sin(t*3+i)*.15,rgba(i%2?'#ff7a2a':'#ffb03a',.8*k))}
- for(let i=0;i<8;i++){const b=i*.9+t*.2,d=x.r*((i*.37)%1)*.85,e=(t*.7+i*.31)%1,w=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,e*95*h);circ(w.x,w.y,2.6*w.s*(1-e),rgba('#ffd36a',.9*k*(1-e)))}};
+ const nt=Math.max(12,fxN(22,x));for(let i=0;i<nt;i++){const b=i*.2856+t*.35,w=P(x.x+Math.cos(b)*x.r,x.y+Math.sin(b)*x.r,0),L=(i%2?26:17)*(1+.25*Math.sin(t*9+i*1.7))*h*w.s;kaTongue(w.x,w.y,L,(i%2?6:4.5)*w.s,-Math.PI/2+Math.sin(t*3+i)*.15,rgba(i%2?'#ff7a2a':'#ffb03a',.8*k))}
+ const ne=fxNB(8+6*n,x);for(let i=0;i<ne;i++){const b=i*.9+t*.2,d=x.r*((i*.37)%1)*.85,e=(t*.7+i*.31)%1,w=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,e*95*h);circ(w.x,w.y,2.6*w.s*(1-e),rgba('#ffd36a',.9*k*(1-e)))}})};
 // tornade de feu : entonnoir de rubans de flammes, braises en spirale, fumée au sommet ; le sommet penche vers où elle file (x.a, synchronisé)
 AUXD.ka_torn=(x,k,t)=>{const q=P(x.x,x.y,0),S=x.r/78,H=155*q.s*S,rb=x.r*.26*q.s,rt=x.r*1.1*q.s,lx=Math.cos(x.a||0)*16*q.s*S,ly=Math.sin(x.a||0)*6*q.s*S;g.fillStyle=rgba('#1a0a04',.32*k);gEll(x.x,x.y,x.r*.8);g.fill();
- g.globalCompositeOperation='lighter';g.fillStyle=rgba('#ff5a1a',.16*k);gEll(x.x,x.y,x.r);g.fill();g.globalCompositeOperation='source-over';
- for(const [w,col,al] of[[1,'#d8401a',.38],[.6,'#ff8a2a',.42]]){g.fillStyle=rgba(col,al*k);g.beginPath();g.moveTo(q.x-rb*w,q.y);g.quadraticCurveTo(q.x-rt*w*.45+lx*.4,q.y-H*.55+ly*.4,q.x-rt*w+lx,q.y-H+ly);g.lineTo(q.x+rt*w+lx,q.y-H+ly);g.quadraticCurveTo(q.x+rt*w*.45+lx*.4,q.y-H*.55+ly*.4,q.x+rb*w,q.y);g.closePath();g.fill()}
+ g.globalCompositeOperation='lighter';g.fillStyle=rgba('#ff5a1a',.16*k);gEll(x.x,x.y,x.r);g.fill();g.strokeStyle=rgba('#ff9a3a',.75*k);g.lineWidth=2;gEll(x.x,x.y,x.r);g.stroke();g.globalCompositeOperation='source-over'; // empreinte = zone qui brûle et aspire
+ kaDim(x,()=>{fxGlowG(x.x,x.y,x.r*1.3,'#ff7a2a',.35*k);
+ for(const [w,col,al] of[[1,'#d8401a',.28],[.6,'#ff8a2a',.3]]){g.fillStyle=rgba(col,al*k);g.beginPath();g.moveTo(q.x-rb*w,q.y);g.quadraticCurveTo(q.x-rt*w*.45+lx*.4,q.y-H*.55+ly*.4,q.x-rt*w+lx,q.y-H+ly);g.lineTo(q.x+rt*w+lx,q.y-H+ly);g.quadraticCurveTo(q.x+rt*w*.45+lx*.4,q.y-H*.55+ly*.4,q.x+rb*w,q.y);g.closePath();g.fill()}
  g.globalCompositeOperation='lighter';for(let i=0;i<11;i++){const e=i/10,y=q.y-e*H+ly*e*e,rx=(rb+(rt-rb)*e*e*.6+(rt-rb)*e*.4),a0=t*9+i*.8;g.strokeStyle=rgba(['#e0401a','#ff7a2a','#ffb03a'][i%3],(.8-e*.3)*k);g.lineWidth=(8-e*4.5)*q.s;g.beginPath();g.ellipse(q.x+Math.sin(t*3+i*.6)*5*q.s+lx*e*e,y,rx,rx*.3,0,a0,a0+3.4);g.stroke()}
  for(let i=0;i<7;i++){const b=i*.898+t*.8;kaTongue(q.x+Math.cos(b)*x.r*.5*q.s,q.y+Math.sin(b)*x.r*.5*q.s*K,(22+8*Math.sin(t*10+i))*q.s*S,5.5*q.s,-Math.PI/2+Math.cos(b)*.3,rgba(i%2?'#ffb03a':'#ff7a2a',.75*k))}
  for(let i=0;i<10;i++){const e=(t*.9+i*.1)%1,b=t*6+i*2.1,rr=(rb+(rt-rb)*e);circ(q.x+Math.cos(b)*rr+lx*e*e,q.y-e*H+Math.sin(b)*rr*.3+ly*e*e,2.4*q.s*(1-e*.5),rgba('#fff3c0',.85*k*(1-e)))}
- g.globalCompositeOperation='source-over';for(let i=0;i<4;i++){const b=t*1.5+i*1.57;g.fillStyle=rgba('#3a2a26',.3*k);g.beginPath();g.ellipse(q.x+Math.cos(b)*rt*.45+lx,q.y-H*1.03+Math.sin(b)*6*q.s+ly,rt*.42,rt*.15,0,0,7);g.fill()}};
+ g.globalCompositeOperation='source-over';for(let i=0;i<4;i++){const b=t*1.5+i*1.57;g.fillStyle=rgba('#3a2a26',.3*k);g.beginPath();g.ellipse(q.x+Math.cos(b)*rt*.45+lx,q.y-H*1.03+Math.sin(b)*6*q.s+ly,rt*.42,rt*.15,0,0,7);g.fill()}
+ fxGlowS(q.x+lx*.3,q.y-H*.35,rt*.9,'#ff7a2a',.3*k,H*.55)})};
 // nuée ardente : au sol, l'ombre du nuage et le cercle de charge ; le nuage lui-même (au-dessus des têtes) est dessiné après les ninjas (JFXD.ka_ncloud)
-AUXD.ka_nuee=(x,k,t)=>{const n=x.n||0;
+AUXD.ka_nuee=(x,k,t)=>{const n=x.n||0;kaDim(x,()=>fxGlowG(x.x,x.y,x.r*(.6+.5*n),'#ff5a1a',.15+.3*n));
  g.fillStyle=rgba('#1a0c08',.22+.25*n);gEll(x.x,x.y,x.r*(.55+.45*n));g.fill();g.globalCompositeOperation='lighter';g.fillStyle=rgba('#ff5a1a',.08+.2*n);gEll(x.x,x.y,x.r*n);g.fill();
  g.strokeStyle=rgba('#ff9a3a',.8);g.lineWidth=2+3*n;gEll(x.x,x.y,x.r*Math.max(.05,n));g.stroke();g.strokeStyle=rgba('#ff7a2a',.55);g.lineWidth=1.5;gEll(x.x,x.y,x.r);g.stroke()};
 // le nuage de cendres qui s'épaissit, ses braises qui tombent et ses éclairs de feu : suit l'objet « ka_nuee » (synchronisé, donc aussi chez les invités)
 JFXD.ka_ncloud=(f,k,e,t)=>{let x=null;for(const a of aux)if(a.type==='ka_nuee'&&Math.abs(a.x-f.x)<2&&Math.abs(a.y-f.y)<2){x=a;break}if(!x)return;
  const q=P(x.x,x.y,0),n=x.n||0,R=x.r*q.s,cy=q.y-(105+15*n)*q.s;g.globalCompositeOperation='lighter';
- for(let i=0;i<10;i++){const e=(t*(.8+n)+i*.1)%1,b=i*2.4,d=x.r*((i*.29)%1)*.9,w=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,(1-e)*(105+15*n));circ(w.x,w.y,(1.6+1.2*n)*w.s,rgba(i%2?'#ffb03a':'#ff5a1a',.8*(1-e*.6)))}
- g.globalCompositeOperation='source-over';for(let i=0;i<7;i++){const b=i*.9+t*.4,s=.55+.5*n+.12*Math.sin(t*2+i);g.fillStyle=rgba(i%2?'#2a2224':'#3a2e2c',.5+.3*n);g.beginPath();g.ellipse(q.x+Math.cos(b)*R*.48,cy+Math.sin(b)*R*.16,R*.36*s,R*.17*s,0,0,7);g.fill()}
+ const nb=fxNB(10+10*n,f);for(let i=0;i<nb;i++){const e=(t*(.8+n)+i*.1)%1,b=i*2.4,d=x.r*((i*.29)%1)*.9,w=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,(1-e)*(105+15*n));circ(w.x,w.y,(1.6+1.2*n)*w.s,rgba(i%2?'#ffb03a':'#ff5a1a',.8*(1-e*.6)))}
+ fxGlowS(q.x,cy+R*.05,R*.75,'#ff5a1a',.25+.35*n,R*.28);g.globalCompositeOperation='source-over';for(let i=0;i<7;i++){const b=i*.9+t*.4,s=.55+.5*n+.12*Math.sin(t*2+i);g.fillStyle=rgba(i%2?'#2a2224':'#3a2e2c',.5+.3*n);g.beginPath();g.ellipse(q.x+Math.cos(b)*R*.48,cy+Math.sin(b)*R*.16,R*.36*s,R*.17*s,0,0,7);g.fill()}
  g.globalCompositeOperation='lighter';for(let i=0;i<4;i++){const b=i*1.6+t*.9;g.fillStyle=rgba('#ff5a1a',(.12+.3*n)*(.6+.4*Math.sin(t*13+i*3)));g.beginPath();g.ellipse(q.x+Math.cos(b)*R*.3,cy+R*.05,R*.25,R*.09,0,0,7);g.fill()}
  if(rnd()<.25+.5*n){g.strokeStyle=rgba('#ffd36a',.8);g.lineWidth=1.6;g.beginPath();let x0=q.x+(rnd()-.5)*R,y0=cy;g.moveTo(x0,y0);for(let i=0;i<4;i++){x0+=(rnd()-.5)*22*q.s;y0+=10*q.s;g.lineTo(x0,y0)}g.stroke()}};
 AUXD.ka_pt=()=>{};AUXD.ka_sbr=()=>{};AUXD.ka_jw=()=>{};AUXD.ka_uncut=()=>{};AUXD.ka_nomouth=()=>{};
 // ---- effets (JFXD)
 // impact : langues de flammes en étoile et éclat blanc
-JFXD.ka_burst=(f,k,e)=>{const q=P(f.x,f.y,22),R=f.r*q.s*(.45+e*.75);g.globalCompositeOperation='lighter';const n=f.big?9:6;
+JFXD.ka_burst=(f,k,e)=>{const q=P(f.x,f.y,22),R=f.r*q.s*(.45+e*.75);g.globalCompositeOperation='lighter';const n=f.big?9:6;fxGlowS(q.x,q.y,R*1.4,'#ff7a2a',.45*k);
  for(let i=0;i<n;i++){const b=i*6.283/n+f.x*.013,bb=Math.atan2(Math.sin(b)*K,Math.cos(b));kaTongue(q.x+Math.cos(bb)*R*.2,q.y+Math.sin(bb)*R*.2,R*(.75+.3*Math.sin(i*2.3)),R*.2,bb,rgba(i%2?'#ffb03a':'#ff5a1a',.85*k))}
  for(let i=0;i<(f.big?3:2);i++)kaTongue(q.x+(i-1)*R*.3,q.y,R*(1+e*.5),R*.22,-Math.PI/2+(i-1)*.25,rgba('#ffd36a',.8*k));
- circ(q.x,q.y,R*.38*k,rgba('#fff3c0',.95*k));if(f.big){g.strokeStyle=rgba('#ff9a3a',.7*k);g.lineWidth=3*q.s;gEll(f.x,f.y,f.r*(.5+e*.9));g.stroke()}};
+ circ(q.x,q.y,R*.3*k,rgba('#fff3c0',.6*k));if(f.big){g.strokeStyle=rgba('#ff9a3a',.7*k);g.lineWidth=3*q.s;gEll(f.x,f.y,f.r*(.5+e*.9));g.stroke()}};
 // onde de feu au sol (Fournaise, tornade qui grossit, invocation des flammes)
 JFXD.ka_wave=(f,k,e)=>{const R=f.r*(.25+e*.8);g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff7a2a',.85*k);g.lineWidth=(f.big?7:4)*k+1;gEll(f.x,f.y,R);g.stroke();g.strokeStyle=rgba('#ffd36a',.6*k);g.lineWidth=2;gEll(f.x,f.y,R*.88);g.stroke();
  const n=f.big?14:8;for(let i=0;i<n;i++){const b=i*6.283/n,w=P(f.x+Math.cos(b)*R,f.y+Math.sin(b)*R,0);kaTongue(w.x,w.y,(f.big?26:16)*w.s*k,4*w.s,-Math.PI/2,rgba(i%2?'#ffb03a':'#ff5a1a',.8*k))}};
@@ -238,22 +264,26 @@ JFXD.ka_coil=(f,k,e,t,u)=>{if(!u)return;const q=P(u.x,u.y,0);g.globalCompositeOp
 // dragon : explosion en gerbe, anneaux et colonne de feu
 JFXD.ka_dboom=(f,k,e,t)=>{const q=P(f.x,f.y,0),R=f.r*(.35+e*1.05);g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff7a2a',.85*k);g.lineWidth=8*k+1;gEll(f.x,f.y,R);g.stroke();g.strokeStyle=rgba('#ffd36a',.7*k);g.lineWidth=3;gEll(f.x,f.y,R*.8);g.stroke();
  for(let i=0;i<10;i++){const b=i*.628+f.x*.01,w=P(f.x+Math.cos(b)*R*.85,f.y+Math.sin(b)*R*.85,0);kaTongue(w.x,w.y,(30+12*Math.sin(i*1.9))*w.s*k,6*w.s,-Math.PI/2+Math.cos(b)*.5,rgba(i%2?'#ffb03a':'#e0401a',.85*k))}
- for(let i=0;i<5;i++)circ(q.x+(i-2)*7*q.s,q.y-(20+e*110+i%2*14)*q.s,(16-e*8+(i%2)*4)*q.s*k,rgba(i%2?'#ff7a2a':'#ffb03a',.55*k));circ(q.x,q.y-10*q.s,26*q.s*k*k,rgba('#fff3c0',.8*k))};
+ for(let i=0;i<5;i++)circ(q.x+(i-2)*7*q.s,q.y-(40+e*110+i%2*14)*q.s,(14-e*7+(i%2)*4)*q.s*k,rgba(i%2?'#ff7a2a':'#ffb03a',.3*k));fxGlowG(f.x,f.y,f.r*1.1,'#ff7a2a',.5*k)}; // colonne au-dessus de la tête, jamais d'aplat clair sur le corps
 // nuée ardente : le nuage s'effondre en une vague de feu
-JFXD.ka_nboom=(f,k,e,t)=>{const q=P(f.x,f.y,0),R=f.r*(.3+e*.95),pw=f.n||1;g.globalCompositeOperation='lighter';g.fillStyle=rgba('#ff5a1a',.25*k);gEll(f.x,f.y,R);g.fill();
+JFXD.ka_nboom=(f,k,e,t)=>{const q=P(f.x,f.y,0),R=f.r*(.3+e*.95),pw=f.n||1;g.globalCompositeOperation='lighter';g.fillStyle=rgba('#ff5a1a',.2*k);gEll(f.x,f.y,R);g.fill();fxGlowG(f.x,f.y,R*1.15,'#ff7a2a',.45*k);
  g.strokeStyle=rgba('#ff9a3a',.9*k);g.lineWidth=(6+4*pw)*k+1;gEll(f.x,f.y,R);g.stroke();
  for(let i=0;i<14;i++){const b=i*.449+.2,w=P(f.x+Math.cos(b)*R*.95,f.y+Math.sin(b)*R*.95,0);kaTongue(w.x,w.y,(28+18*pw+10*Math.sin(i*2.7))*w.s*k,7*w.s,-Math.PI/2+Math.cos(b)*.35,rgba(i%2?'#ffd36a':'#ff5a1a',.85*k))}
- for(let i=0;i<6;i++){const b=i*1.05+e*2,w=P(f.x+Math.cos(b)*f.r*.35,f.y+Math.sin(b)*f.r*.3,(1-e)*110);circ(w.x,w.y,(24-e*10)*w.s,rgba('#ff7a2a',.45*k))}
+ for(let i=0;i<6;i++){const b=i*1.05+e*2,w=P(f.x+Math.cos(b)*f.r*.35,f.y+Math.sin(b)*f.r*.3,(1-e)*110);fxGlowS(w.x,w.y,(30-e*12)*w.s,'#ff7a2a',.5*k)}
  g.globalCompositeOperation='source-over';for(let i=0;i<5;i++){const b=i*1.26+e;g.fillStyle=rgba('#2a2224',.45*k*k);g.beginPath();g.ellipse(q.x+Math.cos(b)*f.r*.4*q.s,q.y-(1-e)*100*q.s,f.r*.3*q.s*(1+e),f.r*.12*q.s*(1+e),0,0,7);g.fill()}};
 // grand souffle : torrent de feu en cône qui suit la visée du lanceur (tant qu'il souffle)
 // (le torrent part de la bouche, à hauteur de tête, et retombe en nappe jusqu'au sol au bout du cône)
 JFXD.ka_cone=(f,k,e,t,u)=>{if(!u||u.dead||!u.flame)return;const el=e*f.m,R=Math.min(330,140+190*el/.35),A=.88,a=u.aim,o={x:u.x+Math.cos(a)*16,y:u.y+Math.sin(a)*16};g.globalCompositeOperation='lighter';
  const wedge=(r,w,col,zA,zE)=>{g.fillStyle=col;g.beginPath();const c=P(o.x,o.y,zA);g.moveTo(c.x,c.y);for(let i=0;i<=8;i++){const b=a-w+2*w*i/8,rr=r*(.92+.08*Math.sin(t*14+i*1.9)),p=P(o.x+Math.cos(b)*rr,o.y+Math.sin(b)*rr,zE);g.lineTo(p.x,p.y)}g.closePath();g.fill()};
- const fd=Math.min(1,k*6);wedge(R,A,rgba('#e0401a',.22*fd),42,6);wedge(R*.85,A*.75,rgba('#ff7a2a',.26*fd),46,14);wedge(R*.6,A*.5,rgba('#ffd36a',.24*fd),48,22);
- for(let i=0;i<9;i++){const f=(t*1.6+i*.37)%1,b=a+(((i*.618)%1)*2-1)*A*.8*f,rr=R*(.12+.8*f),p=P(o.x+Math.cos(b)*rr,o.y+Math.sin(b)*rr,44-32*f);kaTongue(p.x,p.y,(16+30*f)*p.s*fd,(4+5*f)*p.s,Math.atan2(Math.sin(b)*K,Math.cos(b)),rgba(f<.5?'#fff3c0':'#ffb03a',.55*fd*(1-f*.6)))}
+ const fd=Math.min(1,k*6);for(const d of[.45,.8])fxGlowG(o.x+Math.cos(a)*R*d,o.y+Math.sin(a)*R*d,R*(.22+.3*d),'#ff7a2a',.2*fd);wedge(R,A,rgba('#e0401a',.18*fd),42,6);wedge(R*.85,A*.75,rgba('#ff7a2a',.16*fd),46,14);wedge(R*.6,A*.5,rgba('#ffd36a',.1*fd),48,22);
+ const nt=fxNB(12,u);for(let i=0;i<nt;i++){const f=(t*1.6+i*.37)%1,b=a+(((i*.618)%1)*2-1)*A*.8*f,rr=R*(.12+.8*f),p=P(o.x+Math.cos(b)*rr,o.y+Math.sin(b)*rr,44-32*f);kaTongue(p.x,p.y,(16+30*f)*p.s*fd,(4+5*f)*p.s,Math.atan2(Math.sin(b)*K,Math.cos(b)),rgba(f<.5?'#fff3c0':'#ffb03a',.55*fd*(1-f*.6)))}
  for(let i=0;i<11;i++){const b=a-A+2*A*i/10,rr=R*(.82+.16*Math.sin(t*11+i*2.3)),p=P(o.x+Math.cos(b)*rr,o.y+Math.sin(b)*rr,6);kaTongue(p.x,p.y,(26+10*Math.sin(t*16+i))*p.s*fd,6*p.s,-Math.PI/2+Math.sin(b-a)*.6,rgba(i%2?'#ffb03a':'#ff5a1a',.75*fd))}};
 // ---- états visibles sur les ninjas
 STATD.push((u,p,S)=>{const t=performance.now()/1000;
+ // anticipation pendant les mudras d'un jutsu Katon : la braise grossit à la bouche, des étincelles y sont aspirées
+ if(u.cast&&!u.dead){const ab=u.ch.abil[u.cast.i];if(ab&&ab.key&&ab.key.startsWith('ka_')){const kk=Math.min(1,u.cast.t/u.cast.dur),a=u.cast.aimOv??u.aim,q=P(u.x+Math.cos(a)*10,u.y+Math.sin(a)*10,50);
+  kaDim(u,()=>{fxGlowS(q.x,q.y,(5+15*kk)*q.s,'#ff7a2a',.3+.45*kk);const n=fxN(7,u);g.save();g.globalCompositeOperation='lighter';
+   for(let i=0;i<n;i++){const ph=(t*1.8+i/n)%1,b=i*2.4+t*3,rr=36*(1-ph)*q.s;circ(q.x+Math.cos(b)*rr,q.y+Math.sin(b)*rr*.6,1.7*q.s,rgba(i%2?'#ffd36a':'#ff7a2a',.85*Math.sin(Math.PI*ph)*(.3+.7*kk)))}g.restore()})}}
  // fournaise : la chaleur monte sur la cible qui y reste
  if(u.ka_ht>0){const h=u.ka_ht;g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff7a2a',.35+.5*h);g.lineWidth=2+3*h;g.beginPath();g.ellipse(p.x,p.y,(18+10*h)*S,(7+4*h)*S,0,0,7);g.stroke();
   for(let i=0;i<3;i++){const b=i*2.1+t*2;kaTongue(p.x+Math.cos(b)*13*S,p.y-4*S+Math.sin(b)*4*S,(10+22*h+4*Math.sin(t*12+i))*S,3.5*S,-Math.PI/2,rgba(i%2?'#ffb03a':'#ff5a1a',.45+.4*h))}g.restore()}

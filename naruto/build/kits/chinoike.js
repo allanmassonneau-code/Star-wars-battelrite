@@ -37,7 +37,13 @@ const ciK={
 const ciAI={gzOn:RG(320,.75),gzOff:RG(320,.1),bOn:RG(420,.8),bOff:RG(420,.18),spOn:RG(500,.7),spOff:RG(500,.35)};
 const CIR=['#c0142a','#ff4a5a','#5a0610','#ff9aa4'];
 const ciI=u=>units.indexOf(u);
-function ciS(k,u){const V=VFX;VFX=null;S(k,u);VFX=V} // son exact, sans la teinte de l'élément
+function ciS(k,u){const V=VFX;VFX=null;S(k,u);VFX=V}
+// ---- VFX (boîte à outils nr_fx.js) : sang (gouttes non additives), lueur rouge du Ketsuryûgan, flaques sombres qui s'effacent ; zones de danger nettes
+// impact de sang : gerbe de gouttes, éclat rouge, flaque ; gel visuel sur un gros coup
+function ciImp(u,e,s,dmg,big,a){fxBurst(e.x,e.y,'#c0142a',{u,n:8*s,sp:200*s,z:34,a:a??0,arc:a==null?6.3:1.8,up:110,gr:420,w:2.2,len:.05,add:0,c2:'#ff5a6a',t:.5});
+ fxFlare(e.x,e.y,'#ff3a4a',{u,z:34,r:13*s,t:.15,star:0});fxDecal(e.x,e.y,'puddle',{u,r:18*s,t:2.5,col:'#5a0010',al:.4});if(dmg)fxHitStop(u,e,dmg,big)}
+// éclats de sang cristallisé (lignes claires)
+function ciCrys(u,e,s){fxBurst(e.x,e.y,'#ffb0b8',{u,n:7*s,sp:300*s,z:36,w:1.6,len:.16,c2:'#ffffff',t:.35});fxRing(e.x,e.y,{u,r0:8,r1:34*s,col:'#ff4a5a',c2:'#ffd0d6',w:4,t:.3})} // son exact, sans la teinte de l'élément
 function ciSay(u,s,col,dz){if(near(u.x,u.y))txt.push({x:u.x+(rnd()-.5)*12,y:u.y,z:95+(dz||0),s,col,t:1})}
 function ciSlot(u,k){const A=u.ch.abil;for(let i=0;i<A.length;i++)if(A[i]&&A[i].key===k)return i;return -1}
 function ciLine(u,a,len,w){const c=Math.cos(a),s=Math.sin(a);return enemies(u).filter(e=>{const dx=e.x-u.x,dy=e.y-u.y,f=dx*c+dy*s;return f>-e.r&&f<len+e.r&&Math.abs(-dx*s+dy*c)<w/2+e.r})}
@@ -83,30 +89,31 @@ const ciSlotP=(p,ab)=>{const i=p.ch.abil.indexOf(ab);return i<0?1:i};
 Object.assign(NAT,{
  // Aiguilles de sang : éventail de 3 aiguilles ; chacune entaille (2 entailles max par lancer et par cible)
  ci_ndl:SP('Aiguilles de sang',ciD.ndl,6,{line:{len:470,w:60},ai:RG(440,.7)},(u,a)=>{const n={};ciS('blaster',u);anim(u,'ci_flick',.3);jx({jfx:'ci_forge',ui:ciI(u),x:u.x,y:u.y,a,t:.3,m:.3});
-  for(const o of[-ciK.ndl.sp,0,ciK.ndl.sp])proj(u,a+o,{vfx:'ci_blood',spd:940,r:5,dmg:ciK.ndl.d,life:.5,col:CIR[0],kind:'ci_ndl',onHit:(p,t)=>{const k=ciI(t);if((n[k]=(n[k]||0)+1)<=ciK.ndl.n)ciBleed(p.owner,t,1)}})}),
+  for(const o of[-ciK.ndl.sp,0,ciK.ndl.sp])proj(u,a+o,{vfx:'ci_blood',spd:940,r:5,dmg:ciK.ndl.d,life:.5,col:CIR[0],kind:'ci_ndl',onHit:(p,t)=>{const k=ciI(t);if((n[k]=(n[k]||0)+1)<=ciK.ndl.n)ciBleed(p.owner,t,1);ciImp(p.owner,t,.6,0,0,Math.atan2(p.vy,p.vx))}});
+  fxFlare(u.x+Math.cos(a)*18,u.y+Math.sin(a)*18,'#ff3a4a',{u,z:40,r:10,t:.12,star:0})}),
  // Fouet de sang (prix du sang) : coup de fouet instantané sur toute la ligne, ramène vers le lanceur
  ci_whip:SP('Fouet de sang',ciD.whip,7,{hpc:.06,line:{len:ciK.whip.L,w:ciK.whip.w},ai:RG(250,.6)},(u,a)=>{const W=ciK.whip;ciS('saber',u);ciS('water',u);anim(u,'ci_lash',.45);
   jx({jfx:'ci_whip',ui:ciI(u),x:u.x,y:u.y,a,L:W.L,t:.45,m:.45});
   for(const e of ciLine(u,a,W.L,W.w)){const bl=(e.ci_bl|0)>0; // cible qui saigne déjà : le bout du fouet se cristallise
-   if(hit(e,u,W.d*(bl?1.3:1),bl?{pull:W.pull,fx:u.x,fy:u.y,el:-1,root:.4}:{pull:W.pull,fx:u.x,fy:u.y,el:-1})){ciBleed(u,e,2);jx({jfx:'ci_splash',x:e.x,y:e.y,a,t:.5,m:.5,n:8});
-    if(bl){jx({jfx:'ci_shatter',ti:ciI(e),x:e.x,y:e.y,a,t:.6,m:.6});ciSay(e,'CRISTALLISÉ !','#ff4a5a',24);ciS('rock',e)}}}}),
+   if(hit(e,u,W.d*(bl?1.3:1),bl?{pull:W.pull,fx:u.x,fy:u.y,el:-1,root:.4}:{pull:W.pull,fx:u.x,fy:u.y,el:-1})){ciBleed(u,e,2);jx({jfx:'ci_splash',x:e.x,y:e.y,a,t:.5,m:.5,n:8});ciImp(u,e,1.2,W.d,bl,a);
+    if(bl){jx({jfx:'ci_shatter',ti:ciI(e),x:e.x,y:e.y,a,t:.6,m:.6});ciSay(e,'CRISTALLISÉ !','#ff4a5a',24);ciS('rock',e);ciCrys(u,e,1.2)}}}}),
  // Lance de sang cristallisé (prix du sang) : perçante ; éclate dans une cible qui saignait déjà
  ci_spear:SP('Lance de sang cristallisé',ciD.spear,9,{hpc:.08,line:{len:540,w:24},ai:ciAI.spOff},(u,a)=>{const K=ciK.spr;ciS('bone',u);ciS('blaster',u);anim(u,'ci_throw',.45);
   jx({jfx:'ci_forge',ui:ciI(u),x:u.x,y:u.y,a,t:.35,m:.35,big:1});
   proj(u,a,{vfx:'ci_blood',spd:860,r:9,dmg:K.d,life:.63,col:CIR[0],pierce:1,kind:'ci_spear',onHit:(p,t)=>{const o=p.owner;if(t.dead)return;
-   if((t.ci_bl|0)>0){if(hit(t,o,K.d*K.bon,{unblockable:1,root:K.root,el:-1})){jx({jfx:'ci_shatter',ti:ciI(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.6,m:.6});ciSay(t,'ÉCLATE !','#ff4a5a',24);ciS('rock',t)}}
+   ciImp(o,t,1,0,0,Math.atan2(p.vy,p.vx));if((t.ci_bl|0)>0){if(hit(t,o,K.d*K.bon,{unblockable:1,root:K.root,el:-1})){jx({jfx:'ci_shatter',ti:ciI(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.6,m:.6});ciSay(t,'ÉCLATE !','#ff4a5a',24);ciS('rock',t);ciCrys(o,t,1.4);fxHitStop(o,t,K.d*K.bon,1)}}
    ciBleed(o,t,2)}})}),
  // Ketsuryûgan : Paralysie : le regard fige le sang de ceux qui saignent
  ci_gaze:SP('Ketsuryûgan : Paralysie',ciD.gaze,11,{line:{len:ciK.gaze.L,w:ciK.gaze.w},ai:ciAI.gzOff},(u,a)=>{const K=ciK.gaze;ciS('genjutsu',u);anim(u,'ci_gaze',.6);
-  jx({jfx:'ci_gaze',ui:ciI(u),x:u.x,y:u.y,a,L:K.L,w:K.w,t:.6,m:.6});
-  for(const e of ciLine(u,a,K.L,K.w)){if((e.ci_bl|0)>0){if(hit(e,u,K.d,{stun:K.st,unblockable:1,el:-1})&&e.stun>0){jx({jfx:'ci_para',ti:ciI(e),x:e.x,y:e.y,t:K.st,m:K.st});ciSay(e,'SANG FIGÉ','#ff4a5a',28)}}
+  jx({jfx:'ci_gaze',ui:ciI(u),x:u.x,y:u.y,a,L:K.L,w:K.w,t:.6,m:.6});fxFlare(u.x,u.y,'#ff2a3a',{u,z:96,r:22,t:.3,star:0});
+  for(const e of ciLine(u,a,K.L,K.w)){fxFlare(e.x,e.y,'#ff3a4a',{u,z:56,r:12,t:.2,star:0});if((e.ci_bl|0)>0){if(hit(e,u,K.d,{stun:K.st,unblockable:1,el:-1})&&e.stun>0){jx({jfx:'ci_para',ti:ciI(e),x:e.x,y:e.y,t:K.st,m:K.st});ciSay(e,'SANG FIGÉ','#ff4a5a',28);ciCrys(u,e,1);fxHitStop(u,e,K.d,1)}}
    else hit(e,u,K.d,{slow:K.sl,unblockable:1,el:-1})}}),
  // Ketsuryûgan : Sang bouillant : verrouille l'ennemi visé ; 3 brûlures (plus fortes par entaille), silence, puis les entailles sont consumées
  ci_boil:SP('Ketsuryûgan : Sang bouillant',ciD.boil,12,{tele:{r:90,max:440},ai:ciAI.bOff},(u,a,td)=>{const p=atP(u,a,td,440),e=nearE(u,p.x,p.y,120);anim(u,'ci_gaze',.7);ciS('genjutsu',u);
   jx({jfx:'ci_eye',ui:ciI(u),x:u.x,y:u.y,t:.9,m:.9});
   if(!e){say(u,'AUCUNE CIBLE','#ffb0b8');const i=ciSlot(u,'ci_boil');if(i>=0){u.cds[i]=1.5;u.energy=Math.min(100,u.energy+jcost(u.ch.abil[i]))}return}
   jx({jfx:'ci_gline',ui:ciI(u),ti:ciI(e),x:e.x,y:e.y,t:.35,m:.35});
-  aux.push({type:'ci_boil',x:e.x,y:e.y,r:0,t:1.55,m:1.55,team:u.team,owner:u,tg:e,ti:ciI(e),k:.05,n:0});ciSay(e,'LE SANG BOUT','#ff6a3a',30)}),
+  aux.push({type:'ci_boil',x:e.x,y:e.y,r:0,t:1.55,m:1.55,team:u.team,owner:u,tg:e,ti:ciI(e),k:.05,n:0});ciSay(e,'LE SANG BOUT','#ff6a3a',30);fxGlyph(e.x,e.y,'#ff3a4a',{u,ui:ciI(e),r:30,t:1.5,al:.5})}),
  // Ketsuryûgan : Mirage : invisible et rapide, un double de sang reste ; qui te regardait de près est terrifié
  ci_mir:SP('Ketsuryûgan : Mirage',ciD.mir,13,{ai:DEF},(u)=>{const K=ciK.mir;ciS('genjutsu',u);ciS('poof',u);anim(u,'ci_gaze',.35);
   jx({jfx:'ci_double',ui:ciI(u),x:u.x,y:u.y,t:K.t,m:K.t});jx({jfx:'ci_eye',ui:ciI(u),x:u.x,y:u.y,t:.6,m:.6});
@@ -118,12 +125,13 @@ Object.assign(NAT,{
   dash(u,a,D,.22,{through:1,end:()=>{x.t=Math.min(x.t,.04);jx({jfx:'ci_trail',x:x0,y:y0,x2:u.x,y2:u.y,t:.9,m:.9})}})}),
  // Marée de sang (prix du sang) : flaque intouchable qui glisse, puis jaillit
  ci_tide:SP('Marée de sang',ciD.tide,7,{tele:{r:40,max:ciK.step.D},ai:ESC},(u,a,td)=>{const d=clamp(td||ciK.step.D,90,ciK.step.D),T=.36,x0=u.x,y0=u.y;ciS('water',u);anim(u,'ci_melt',T+.1);
-  u.phase=Math.max(u.phase||0,T+.04);u.stealth=Math.max(u.stealth||0,T);jx({jfx:'ci_pool',ui:ciI(u),x:u.x,y:u.y,t:T+.1,m:T+.1});
+  u.phase=Math.max(u.phase||0,T+.04);u.stealth=Math.max(u.stealth||0,T);jx({jfx:'ci_pool',ui:ciI(u),x:u.x,y:u.y,t:T+.1,m:T+.1});fxDecal(x0,y0,'puddle',{u,r:30,t:2.5,col:'#5a0010',al:.45});
   const x={type:'ci_stp',x:u.x,y:u.y,r:0,t:T+.1,m:T+.1,team:u.team,owner:u,hs:new Set()};aux.push(x); // chaque ennemi traversé est entaillé (Pas sanglant)
-  dash(u,a,d,T,{through:1,end:()=>{x.t=Math.min(x.t,.04);ciS('water',u);anim(u,'ci_rise',.35);jx({jfx:'ci_trail',x:x0,y:y0,x2:u.x,y2:u.y,t:.9,m:.9});jx({jfx:'ci_splash',x:u.x,y:u.y,a:-1,t:.5,m:.5,n:8})}})}),
+  dash(u,a,d,T,{through:1,end:()=>{x.t=Math.min(x.t,.04);ciS('water',u);anim(u,'ci_rise',.35);jx({jfx:'ci_trail',x:x0,y:y0,x2:u.x,y2:u.y,t:.9,m:.9});jx({jfx:'ci_splash',x:u.x,y:u.y,a:-1,t:.5,m:.5,n:8});fxBurst(u.x,u.y,'#c0142a',{u,n:8,sp:160,z:10,up:200,gr:500,w:2.2,len:.05,add:0,t:.5});fxDecal(u.x,u.y,'puddle',{u,r:34,t:2.5,col:'#5a0010',al:.45})}})}),
  // Ketsuryûgan : Lune de sang : zone de genjutsu (logique : AUXF.ci_moon)
  ci_moon:ULT('Ketsuryûgan : Lune de sang',ciD.moon,{tele:{r:ciK.moon.r,max:460},ai:{max:440,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460),K=ciK.moon;ciS('genjutsu',u);ciS('roar',u);anim(u,'ci_moon',1.1);
-  jx({jfx:'ci_eye',ui:ciI(u),x:u.x,y:u.y,t:1.2,m:1.2,big:1});aux.push({type:'ci_moon',x:p.x,y:p.y,r:K.r,t:K.t,m:K.t,team:u.team,owner:u,k:.5,danger:1});if(near(p.x,p.y))shake=Math.max(shake,.25)}),
+  jx({jfx:'ci_eye',ui:ciI(u),x:u.x,y:u.y,t:1.2,m:1.2,big:1});aux.push({type:'ci_moon',x:p.x,y:p.y,r:K.r,t:K.t,m:K.t,team:u.team,owner:u,k:.5,danger:1});
+  fxRing(p.x,p.y,{u,r0:30,r1:K.r,col:'#ff3a4a',c2:'#ffd0d6',w:7,t:.5});fxPillar(p.x,p.y,'#c0142a',{u,h:230,w:30,t:.7,al:.4});fxLight(p.x,p.y,K.r*1.2,'#c0142a',{u,t:.8,a:.35});fxShake(.25,p.x,p.y)}),
  // Forêt de pieux (prix du sang) : 3 vagues de pieux en ligne, chacune touche une fois
  ci_stk:ULT('Forêt de pieux de sang',ciD.stk,{hpc:.12,line:{len:ciK.stk.L,w:150},ai:{max:420,p:.8}},(u,a)=>{const K=ciK.stk,done=new Set();ciS('bone',u);anim(u,'ci_price',1);
   for(let i=0;i<3;i++){const p=fwd(u,a,90+i*140);later(u,.28+i*.2,()=>{ciS('rock',u);if(i===2)ciS('boom',u);jx({jfx:'ci_stakes',x:p.x,y:p.y,a,t:1.1,m:1.1,s:i});
@@ -133,26 +141,28 @@ Object.assign(NAT,{
  ci_style:SP('Lame de sang','',.4,{hero:'dooku',melee:1,ai:{max:104,p:1}},(u,a)=>{const c=stC(u),T=[0,[98,1.5,10,.4],[98,1.5,10,.4],[102,2,10,.42],[124,.6,11,.44],[110,2.8,12,.62]][c];
   if(c===5)stLunge(u,a,30);
   const tr=[0,{d:-1,tl:.75,z:36,th:7,c:'#ff8a96',c2:'#a0101e',blade:1},{d:1,tl:-.75,z:36,th:7,c:'#ff8a96',c2:'#a0101e',blade:1},{d:-1,z:30,th:9,c:'#ff5a6a',c2:'#7a0612',blade:1},{jfx:'st_thrust',z:32,c:'#ff8a96'},{d:-1,z:28,th:11,c:'#ff4a5a',c2:'#5a0610',blade:1,rr:.85}][c];
-  stMelee(u,a,T[0],T[1],T[2],{},tr,e=>{if(c===5){ciBleed(u,e,2);sparks(e.x,e.y,CIR[1],5,'ci_blood')}});
+  stMelee(u,a,T[0],T[1],T[2],{},tr,e=>{if(c===5){ciBleed(u,e,2);sparks(e.x,e.y,CIR[1],3,'ci_blood');ciImp(u,e,1,0,0,a)}});
   if(c===5)jx({jfx:'ci_crescent',ui:ciI(u),x:u.x,y:u.y,a,R:T[0],t:.5,m:.5});stCd(u,T[3]);anim(u,'st_ken'+c,c===4?.3:.27)}),
 });
 Object.assign(NATHERO,{ci:'kylo'});
 
 // ---- objets à logique
 // Pas sanglant : entaille chaque ennemi frôlé pendant l'élan
-AUXF.ci_stp=x=>{const u=x.owner;if(!u||u.dead){x.t=0;return}x.x=u.x;x.y=u.y;if(!u.dash)return;for(const e of enemies(u)){if(x.hs.has(e)||dist(u,e)>u.r+e.r+18)continue;x.hs.add(e);if(hit(e,u,ciK.step.d,{el:-1})){ciBleed(u,e,1);sparks(e.x,e.y,CIR[1],6,'ci_blood')}}};
+AUXF.ci_stp=x=>{const u=x.owner;if(!u||u.dead){x.t=0;return}x.x=u.x;x.y=u.y;if(!u.dash)return;for(const e of enemies(u)){if(x.hs.has(e)||dist(u,e)>u.r+e.r+18)continue;x.hs.add(e);if(hit(e,u,ciK.step.d,{el:-1})){ciBleed(u,e,1);sparks(e.x,e.y,CIR[1],3,'ci_blood');ciImp(u,e,.8,0)}}};
 AUXD.ci_stp=()=>{};
 // Sang bouillant : suit la cible ; 3 brûlures à 0,05 s, 0,75 s et 1,45 s (silence à la 1re), entailles consumées à la 3e ; rompu si le lanceur est étourdi ou meurt
 AUXF.ci_boil=(x,dt)=>{const e=x.tg,u=x.owner;if(x.done)return;if(!e||e.dead||!u||u.dead||u.stun>0){x.done=1;x.t=Math.min(x.t,.15);if(e&&!e.dead&&u&&u.stun>0)ciSay(e,'REGARD ROMPU','#ffb0b8',30);return}
  x.x=e.x;x.y=e.y;if(x.k>0)return;x.k+=.7;x.n++;const K=ciK.boil,bl=e.ci_bl|0,last=x.n>=3;
- if(hit(e,u,K.d+K.ps*bl,{unblockable:1,el:-1,silence:x.n===1?K.sil:0,slow:.6}))jx({jfx:'ci_pop',ti:ciI(e),x:e.x,y:e.y,t:.45,m:.45,n:bl});ciS('fire',e);
+ if(hit(e,u,K.d+K.ps*bl,{unblockable:1,el:-1,silence:x.n===1?K.sil:0,slow:.6})){jx({jfx:'ci_pop',ti:ciI(e),x:e.x,y:e.y,t:.45,m:.45,n:bl});fxSmoke(e.x,e.y,{u,col:'#c84050',n:3+bl,r:14,s:10,z:30,t:.8,al:.24,rise:50});fxBurst(e.x,e.y,'#ff5a3a',{u,n:4+bl,sp:90,z:40,up:80,gr:-40,w:2,sh:'dot',c2:'#ffd0a0',t:.6});if(last)ciImp(u,e,1.3,K.d+K.ps*bl,1)}ciS('fire',e);
  if(last){x.done=1;x.t=Math.min(x.t,.3);const m=ciTake(e);if(m)ciSay(e,m+' ENTAILLE'+(m>1?'S':'')+' CONSUMÉE'+(m>1?'S':''),'#ff8a5a',44)}};
 // Lune de sang : ralentit, ajoute une entaille par seconde, double le sang bu ; à la fin, chaque entaille explose
 AUXF.ci_moon=(x,dt)=>{const u=x.owner,K=ciK.moon;if(x.done)return;const tick=x.k<=0;if(tick)x.k+=1;
  for(const e of units){if(e.dead||e.team===x.team||!ciIn(x.x,x.y,e,x.r))continue;e.ci_mnT=SIMT+.6;if(e.unstop<=0)e.slow=Math.max(e.slow||0,.25);if(tick&&!(x.t<=0))ciBleed(u,e,1)}
  if(x.t>0)return;x.done=1;let n=0;ciS('boom',u);ciS('genjutsu',u);jx({jfx:'ci_moonend',x:x.x,y:x.y,r:x.r,t:.8,m:.8});
+ // fin de la Lune : onde au rayon EXACT, mare de sang qui reste, gerbes sur chaque ensanglanté, secousse (rang S)
+ fxRing(x.x,x.y,{u,r0:30,r1:x.r,col:'#ff4a5a',c2:'#ffd0d6',w:9,t:.5});fxDecal(x.x,x.y,'puddle',{u,r:x.r*.8,t:4,col:'#4a0008',al:.4});fxLight(x.x,x.y,x.r*1.3,'#ff2a3a',{u,t:.5,a:.4});
  for(const e of units){if(e.dead||e.team===x.team||!ciIn(x.x,x.y,e,x.r))continue;const m=ciTake(e);if(hit(e,u,K.b+K.det*m,{stun:K.st,unblockable:1,el:-1,fx:x.x,fy:x.y})){n++;jx({jfx:'ci_pop',ti:ciI(e),x:e.x,y:e.y,t:.6,m:.6,n:m,big:1});if(m)ciSay(e,m+' ENTAILLE'+(m>1?'S':'')+' ÉCLATENT','#ff4a5a',30)}}
- if(near(x.x,x.y))shake=Math.max(shake,n?.4:.2)};
+ fxShake(n?.4:.2,x.x,x.y);for(const e of units)if(!e.dead&&e.team!==x.team&&ciIn(x.x,x.y,e,x.r))ciImp(u,e,1.6,K.b,1)};
 
 // ---- trait de clan : Saignée
 TRAITS[15]={nom:'Saignée',desc:'Tes jutsu de clan ouvrent des entailles qui saignent 4 s (5 max, chacune relance la durée). Le sang versé te soigne de la moitié ; à PV pleins, il te rend du chakra',
@@ -181,9 +191,9 @@ function ciEyeDraw(x,y,R,op,al){const lid=()=>{g.beginPath();g.moveTo(x-R,y);g.q
  g.fillStyle='#14000a';g.beginPath();g.moveTo(x,y-R*.3);g.quadraticCurveTo(x+R*.17,y+R*.02,x+R*.13,y+R*.12);g.arc(x,y+R*.12,R*.13,0,Math.PI);g.quadraticCurveTo(x-R*.17,y+R*.02,x,y-R*.3);g.fill();g.restore();
  g.save();g.globalAlpha*=al;lid();g.strokeStyle='#2a0006';g.lineWidth=Math.max(1.5,R*.09);g.stroke();g.restore()}
 // projectiles : aiguille et lance de sang cristallisé
-PROJD.ci_ndl=(p,R,ra,t)=>{g.rotate(ra);g.globalCompositeOperation='lighter';g.fillStyle='rgba(255,40,60,.28)';g.beginPath();g.ellipse(-8,0,14,3.4,0,0,7);g.fill();g.globalCompositeOperation='source-over';
+PROJD.ci_ndl=(p,R,ra,t)=>{g.rotate(ra);fxTailL(36,7,'#ff3a4a',.4*fxA(p));g.globalCompositeOperation='lighter';g.fillStyle='rgba(255,40,60,.28)';g.beginPath();g.ellipse(-8,0,14,3.4,0,0,7);g.fill();g.globalCompositeOperation='source-over';
  g.fillStyle='#8a0a18';g.strokeStyle='#ff8a94';g.lineWidth=.8;g.beginPath();g.moveTo(13,0);g.lineTo(-8,-1.8);g.lineTo(-13,0);g.lineTo(-8,1.8);g.closePath();g.fill();g.stroke();g.fillStyle='#ffd0d6';g.fillRect(-4,-.5,12,1)};
-PROJD.ci_spear=(p,R,ra,t)=>{g.rotate(ra);g.globalCompositeOperation='lighter';const gr=g.createLinearGradient(-50,0,10,0);gr.addColorStop(0,'rgba(200,20,40,0)');gr.addColorStop(1,'rgba(255,60,80,.45)');g.fillStyle=gr;g.fillRect(-50,-5,60,10);g.globalCompositeOperation='source-over';
+PROJD.ci_spear=(p,R,ra,t)=>{g.rotate(ra);g.save();g.translate(10,0);fxTailL(70,12,'#ff3c50',.5*fxA(p));g.restore();
  for(let i=1;i<5;i++){g.fillStyle=rgba('#c0142a',.6-i*.12);g.beginPath();g.arc(-22-i*9,Math.sin(t/45+i*2)*3,1.8,0,7);g.fill()}
  g.fillStyle='#7a0612';g.strokeStyle='#ff9aa4';g.lineWidth=1;g.beginPath();g.moveTo(26,0);g.lineTo(8,-5.5);g.lineTo(4,-2.2);g.lineTo(-26,-2.2);g.lineTo(-30,0);g.lineTo(-26,2.2);g.lineTo(4,2.2);g.lineTo(8,5.5);g.closePath();g.fill();g.stroke();
  g.fillStyle='#d8243a';g.beginPath();g.moveTo(24,0);g.lineTo(9,-3.6);g.lineTo(9,0);g.closePath();g.fill();g.strokeStyle='rgba(255,220,226,.85)';g.lineWidth=1;g.beginPath();g.moveTo(20,-.4);g.lineTo(-22,-.8);g.stroke()};
@@ -204,7 +214,7 @@ JFXD.ci_splash=(f,k,e,t)=>{const n=f.n||8,H=f.big?70:42,R=f.big?95:44;const q0=P
   ciDrop(p.x,p.y,(f.big?2.8:2)*p.s,rgba(i%3?'#c0142a':'#ff4a5a',Math.min(1,k*1.6)))}
  if(f.big&&e<.5){const q=P(f.x,f.y,0);g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff4a5a',.8*(1-e*2));g.lineWidth=3*q.s;g.beginPath();g.ellipse(q.x,q.y,R*(.4+e)*q.s,R*(.4+e)*q.s*K,0,0,7);g.stroke();g.globalCompositeOperation='source-over'}};
 // lance qui éclate dans la cible : éclats de sang cristallisé
-JFXD.ci_shatter=(f,k,e,t,u,tg)=>{const o=tg&&!tg.dead?tg:f,q=P(o.x,o.y,36),s=q.s;g.globalCompositeOperation='lighter';if(e<.3){const R=(20+60*e)*s;const gr=g.createRadialGradient(q.x,q.y,0,q.x,q.y,R);gr.addColorStop(0,'rgba(255,230,234,.9)');gr.addColorStop(.5,'rgba(255,40,60,.5)');gr.addColorStop(1,'rgba(150,0,20,0)');g.fillStyle=gr;g.beginPath();g.arc(q.x,q.y,R,0,7);g.fill()}
+JFXD.ci_shatter=(f,k,e,t,u,tg)=>{const o=tg&&!tg.dead?tg:f,q=P(o.x,o.y,36),s=q.s;g.globalCompositeOperation='lighter';if(e<.3){const R=(20+60*e)*s;fxGlowS(q.x,q.y,R,'#ff283c',.8*(1-e/.3))}
  g.globalCompositeOperation='source-over';for(let i=0;i<9;i++){const b=f.a+(i-4)*.33+Math.sin(i*3.3)*.2,d=(10+70*ezo(e))*s,x=q.x+Math.cos(b)*d,y=q.y+Math.sin(b)*d*.7-20*Math.sin(Math.PI*e)*s;g.save();g.translate(x,y);g.rotate(b+e*6);g.fillStyle=rgba(i%2?'#d01828':'#8a0a18',k);g.strokeStyle=rgba('#ffb0b8',k);g.lineWidth=.8;g.beginPath();g.moveTo(6*s,0);g.lineTo(0,-2.4*s);g.lineTo(-5*s,0);g.lineTo(0,2.4*s);g.closePath();g.fill();g.stroke();g.restore()}};
 // regard : bande rouge sang + œil au-dessus du lanceur
 JFXD.ci_gaze=(f,k,e,t,u)=>{const o=u||f,a=f.a,L=f.L*ezo(Math.min(1,e*3)),w=f.w/2,c=Math.cos(a),s=Math.sin(a),pt=(d,l,z)=>P(o.x+c*d-s*l,o.y+s*d+c*l,z||2);
@@ -212,7 +222,7 @@ JFXD.ci_gaze=(f,k,e,t,u)=>{const o=u||f,a=f.a,L=f.L*ezo(Math.min(1,e*3)),w=f.w/2
  for(let i=0;i<9;i++){const m=(e*2.2+i/9)%1,l=((i*37)%11-5)/5*w*m,p0=pt(L*m,l,4);g.fillStyle=rgba('#ff4a5a',.8*k*(1-m));g.beginPath();g.ellipse(p0.x,p0.y,6*p0.s,2.2*p0.s,0,0,7);g.fill()}g.globalCompositeOperation='source-over';
  const h=P(o.x,o.y,96);ciEyeDraw(h.x,h.y,15*h.s,Math.min(1,e*5,k*3),1)};
 // grand œil Ketsuryûgan qui s'ouvre au-dessus du lanceur
-JFXD.ci_eye=(f,k,e,t,u)=>{const o=u&&!u.dead?u:f,h=P(o.x,o.y,f.big?118:100),R=(f.big?24:16)*h.s;g.globalCompositeOperation='lighter';const gr=g.createRadialGradient(h.x,h.y,0,h.x,h.y,R*2.2);gr.addColorStop(0,rgba('#ff2a3a',.45*k));gr.addColorStop(1,'rgba(120,0,20,0)');g.fillStyle=gr;g.beginPath();g.arc(h.x,h.y,R*2.2,0,7);g.fill();g.globalCompositeOperation='source-over';
+JFXD.ci_eye=(f,k,e,t,u)=>{const o=u&&!u.dead?u:f,h=P(o.x,o.y,f.big?118:100),R=(f.big?24:16)*h.s;fxGlowS(h.x,h.y,R*2.2,'#ff2a3a',.45*k);
  ciEyeDraw(h.x,h.y,R,Math.min(1,e*4,k*3),1);for(let i=0;i<4;i++){const m=(e*1.8+i/4)%1;ciDrop(h.x+(i-1.5)*R*.4,h.y+R*.5+m*28*h.s,1.6*h.s,rgba('#c0142a',k*(1-m)))}};
 // ligne du regard vers la cible verrouillée
 JFXD.ci_gline=(f,k,e,t,u,tg)=>{if(!u||!tg)return;const a=P(u.x,u.y,96),b=P(tg.x,tg.y,50);g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ff3a4a',.8*k);g.lineWidth=3*a.s;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.strokeStyle=rgba('#ffd0d6',.9*k);g.lineWidth=1;g.stroke();g.globalCompositeOperation='source-over'};
@@ -259,11 +269,11 @@ JFXD.ci_stakes=(f,k,e,t)=>{const a=f.a+(f.s||0)*.7,c=Math.cos(a),s0=Math.sin(a),
   g.fillStyle='#7a0612';g.beginPath();g.moveTo(b.x-w,b.y);g.lineTo(tp.x,tp.y);g.lineTo(b.x+w,b.y);g.closePath();g.fill();g.fillStyle='#d01828';g.beginPath();g.moveTo(b.x-w*.2,b.y);g.lineTo(tp.x,tp.y);g.lineTo(b.x+w,b.y);g.closePath();g.fill();
   g.strokeStyle='rgba(255,200,208,.8)';g.lineWidth=1;g.beginPath();g.moveTo(b.x+w*.3,b.y-2*b.s);g.lineTo(tp.x,tp.y);g.stroke()}};
 // Lune de sang : dôme de genjutsu, lune-œil géante au-dessus, pluie de sang
-AUXD.ci_moon=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,R=x.r,fr=Math.max(0,x.t/x.m);g.fillStyle=rgba('#7a0612',.2*k);gEll(x.x,x.y,R);g.fill();g.strokeStyle=rgba('#ff3a4a',.75*k);g.lineWidth=2.5;gEll(x.x,x.y,R);g.stroke();
+AUXD.ci_moon=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,R=x.r,fr=Math.max(0,x.t/x.m);fxTele(x.x,x.y,R,0,'#ff3a4a',x,0);g.fillStyle=rgba('#7a0612',.2*k);gEll(x.x,x.y,R);g.fill();g.strokeStyle=rgba('#ff3a4a',.75*k);g.lineWidth=2.5;gEll(x.x,x.y,R);g.stroke();
  g.strokeStyle='#ff4a5a';g.lineWidth=4;g.beginPath();g.ellipse(q.x,q.y,R*s,R*s*K,0,-Math.PI/2,-Math.PI/2+fr*Math.PI*2);g.stroke();
  g.globalCompositeOperation='lighter';const gr=g.createLinearGradient(0,q.y-190*s,0,q.y);gr.addColorStop(0,'rgba(200,20,40,0)');gr.addColorStop(1,rgba('#c0142a',.22*k));g.fillStyle=gr;g.beginPath();g.ellipse(q.x,q.y-95*s,R*s,95*s+R*s*K*.5,0,Math.PI,0);g.lineTo(q.x+R*s,q.y);g.ellipse(q.x,q.y,R*s,R*s*K,0,0,Math.PI);g.fill();
  g.strokeStyle=rgba('#ff6a7a',.55*k);g.lineWidth=1.3;for(let i=0;i<18;i++){const m=(t*1.6+i*.137)%1,b=i*2.4,d=R*(.15+.8*((i*29)%17)/17),p0=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d*.9,170*(1-m));g.beginPath();g.moveTo(p0.x,p0.y);g.lineTo(p0.x-2*s,p0.y+12*s);g.stroke()}
- g.globalCompositeOperation='source-over';const h=P(x.x,x.y,215),MR=34*h.s;{const g2=g.createRadialGradient(h.x,h.y,MR*.5,h.x,h.y,MR*2);g2.addColorStop(0,rgba('#ff2a3a',.4*k));g2.addColorStop(1,'rgba(120,0,20,0)');g.fillStyle=g2;g.beginPath();g.arc(h.x,h.y,MR*2,0,7);g.fill()}
+ g.globalCompositeOperation='source-over';const h=P(x.x,x.y,215),MR=34*h.s;fxGlowS(h.x,h.y,MR*2.1,'#ff2a3a',.5*k);
  circ(h.x,h.y,MR,rgba('#a0101e',.95*k));g.fillStyle=rgba('#7a0612',.8*k);for(const [cx,cy,r] of[[-.4,-.3,.18],[.35,.25,.14],[.1,-.5,.1],[-.2,.45,.12]]){g.beginPath();g.arc(h.x+cx*MR,h.y+cy*MR,r*MR,0,7);g.fill()}
  ciEyeDraw(h.x,h.y,MR*.8,Math.min(1,(x.m-x.t)*2.5,x.t*3),k*.95)};
 // fin de la Lune : onde rouge et éclats

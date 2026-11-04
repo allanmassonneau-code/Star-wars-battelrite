@@ -37,20 +37,23 @@ function hzDrain(L,f){const H=L.map(e=>e.hp+(e.shield||0));f();let tot=0;L.forEa
 // le sang reforge la lame : soin = part des dégâts infligés (gain() applique déjà la réduction commune des soins : on la compense pour que le chiffre annoncé soit exact)
 function hzReforge(u,tot,k,e){if(tot<=0||u.dead)return;const v=tot*k;gain(u,v/HEALX,u);if(near(u.x,u.y)){say(u,'+'+Math.round(v),'#ff7a8a');if(e)jx({jfx:'hz_blood',ui:hzI(u),ti:hzI(e),x:e.x,y:e.y,t:.5,m:.5})}}
 
+// ---- VFX (boîte à outils nr_fx.js) : gerbes d'eau, flaques, éclats d'acier, sang (décor atténué selon l'intensité / le camp)
+function hzWet(u,x,y,s){fxFlare(x,y,HZC.l,{u,z:30,r:16*s,t:.16});fxBurst(x,y,'#c8f4ff',{u,n:8*s,sp:200*s,c2:'#ffffff',up:140,gr:420,w:2,len:.06,z:30})}
+function hzSteel(u,e,a,s){if(!e||!near(e.x,e.y))return;fxFlare(e.x,e.y,'#ffffff',{u,z:34,r:20*s,t:.16,rot:a+.5});fxBurst(e.x,e.y,'#dfe6ee',{u,n:7*s,sp:280*s,a,arc:1.6,c2:'#ffffff',w:1.6,len:.15,z:32,gr:60});fxBurst(e.x,e.y,HZC.b,{u,n:5*s,sp:170,a,arc:1.4,up:120,gr:420,w:2.2,len:.06,add:0,z:32})}
 // ---- mécaniques des jutsu
 Object.assign(NAT,{
  // Suirendan : deux balles d'eau sous pression tirées du doigt (pistolet à eau)
  hz_gun:SP('Suirendan',HZD.gun,5,{line:{len:550,w:14},ai:RG(540,.7)},(u,a)=>{if((u.hz_w||0)>=60){u.hz_w-=25;say(u,'GRAND JET !',HZC.l);anim(u,'hz_jet',.65);S('water',u);aux.push({type:'hz_jet',x:u.x,y:u.y,a,len:560,w:30,t:.6,m:.6,team:u.team,owner:u,ui:hzI(u),vfx:'water',k:0,n:0,d:18});return}
   anim(u,'hz_point',.5);
-  const f=o=>{const b=o.aim,h=fwd(o,b,26);hzS('blaster',o);S('water',o);proj(o,b,{spd:1150,r:6,dmg:8,life:.48,col:HZC.w,kind:'hz_drop',vfx:'water'});jx({jfx:'hz_muzzle',x:h.x,y:h.y,a:b,t:.2,m:.2})};
+  const f=o=>{const b=o.aim,h=fwd(o,b,26);hzS('blaster',o);S('water',o);proj(o,b,{spd:1150,r:6,dmg:8,life:.48,col:HZC.w,kind:'hz_drop',vfx:'water',onHit:(p,e)=>hzWet(p.owner,e.x,e.y,.7)});jx({jfx:'hz_muzzle',x:h.x,y:h.y,a:b,t:.2,m:.2});fxFlare(h.x,h.y,HZC.l,{u:o,z:34,r:12,t:.12,rot:b})};
   f(u);seqs.push({owner:u,n:1,t:.14,iv:.14,vfx:'water',f})}),
  // Contre-courant : le prochain coup traverse le corps liquide ; une balle d'eau riposte (voir le trait)
- hz_ctr:SP('Suika : Contre-courant',HZD.ctr,10,{ai:DEF},(u)=>{anim(u,'hz_ctr',.5);S('water',u);u.hz_ctr=1;jx({jfx:'hz_ctrOn',ui:hzI(u),x:u.x,y:u.y,t:.45,m:.45})}),
+ hz_ctr:SP('Suika : Contre-courant',HZD.ctr,10,{ai:DEF},(u)=>{anim(u,'hz_ctr',.5);S('water',u);u.hz_ctr=1;jx({jfx:'hz_ctrOn',ui:hzI(u),x:u.x,y:u.y,t:.45,m:.45});fxRing(u.x,u.y,{u,r0:40,r1:18,col:HZC.l,w:3,t:.3});fxDecal(u.x,u.y,'puddle',{u,r:26,t:1.5})}),
  // Gôwan : le bras gonfle d'eau (0,35 s) puis s'abat ; la réserve d'eau le rend énorme
  hz_arm:SP('Suika : Gôwan',HZD.arm,10,{tele:{r:105,max:90},ai:RG(150,.6)},(u,a,td)=>{const big=(u.hz_w||0)>=50;if(big){u.hz_w-=30;say(u,'GÔWAN !',HZC.l)}
-  const R=big?105:80,dmg=big?36:28,p=fwd(u,a,clamp(td||90,45,90));anim(u,'hz_arm',.75);S('water',u);u.hz_arm=.4;u.hz_armB=big?1:0;
-  later(u,.35,()=>{u.hz_arm=0;if(u.dead||u.stun>0)return;const V=VFX;VFX='water';for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<R+e.r)hit(e,u,dmg,{kb:big?330:260,fx:p.x-Math.cos(a)*40,fy:p.y-Math.sin(a)*40});VFX=V;
-   jx({jfx:'hz_fist',x:p.x,y:p.y,a,r:R,big:big?1:0,t:.6,m:.6});sparks(p.x,p.y,HZC.l,big?16:10,'water');if(near(p.x,p.y)){hzS('heavy',u);S('water',u);shake=Math.max(shake,big?.3:.2)}},{x:p.x,y:p.y,r:R})}),
+  const R=big?105:80,dmg=big?36:28,p=fwd(u,a,clamp(td||90,45,90));anim(u,'hz_arm',.75);S('water',u);u.hz_arm=.4;u.hz_armB=big?1:0;fxCharge(u,HZC.w,{u,t:.35,n:10,r:50,c2:'#ffffff'});
+  later(u,.35,()=>{u.hz_arm=0;if(u.dead||u.stun>0)return;const V=VFX;VFX='water';for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<R+e.r&&hit(e,u,dmg,{kb:big?330:260,fx:p.x-Math.cos(a)*40,fy:p.y-Math.sin(a)*40}))fxHitStop(u,e,dmg,big);VFX=V;
+   jx({jfx:'hz_fist',x:p.x,y:p.y,a,r:R,big:big?1:0,t:.6,m:.6});sparks(p.x,p.y,HZC.l,big?8:5,'water');fxImpact(p.x,p.y,'suiton',R/44,{u,r:R});fxBurst(p.x,p.y,'#e8f8ff',{u,n:big?18:12,sp:260,c2:'#ffffff',up:220,gr:420,w:2.4,len:.07,z:20});if(near(p.x,p.y)){hzS('heavy',u);S('water',u);shake=Math.max(shake,big?.3:.2)}},{x:p.x,y:p.y,r:R})}),
  // Grand jet (Mizudeppô) : charge au bout du doigt, puis jet perçant sur toute la ligne
  hz_jet:SP('Mizudeppô : Grand jet',HZD.jet,9,{line:{len:560,w:30},ai:RG(540,.6,110)},(u,a)=>{anim(u,'hz_jet',.65);S('water',u);
   aux.push({type:'hz_jet',x:u.x,y:u.y,a,len:560,w:30,t:.6,m:.6,team:u.team,owner:u,ui:hzI(u),vfx:'water',k:0,n:0})}),
@@ -60,30 +63,32 @@ Object.assign(NAT,{
   hzReforge(u,tot,.3,L[0]);jx({jfx:'hz_cleave',ui:hzI(u),x:u.x,y:u.y,a,R:150,w:2.7,d:1,bl:tot>0?1:0,big:1,t:.5,m:.5});if(L.length&&near(u.x,u.y))shake=Math.max(shake,.18)}),
  // Liquéfaction : fond en flaque dirigée au clavier, puis se reforme en geyser
  hz_pud:SP('Liquéfaction',HZD.pud,6,{ai:ESC},(u)=>{S('water',u);anim(u,'hz_melt',.6);u.hz_pud=1;u.phase=Math.max(u.phase||0,.6);u.haste=Math.max(u.haste||0,.6);
-  aux.push({type:'hz_pud',soft:1,x:u.x,y:u.y,r:30,t:.6,m:.6,team:u.team,owner:u,ui:hzI(u),vfx:'water',k:0});jx({jfx:'hz_geyser',x:u.x,y:u.y,r:40,s:.5,t:.45,m:.45})}),
+  aux.push({type:'hz_pud',soft:1,x:u.x,y:u.y,r:30,t:.6,m:.6,team:u.team,owner:u,ui:hzI(u),vfx:'water',k:0});jx({jfx:'hz_geyser',x:u.x,y:u.y,r:40,s:.5,t:.45,m:.45});hzWet(u,u.x,u.y,.8);fxDecal(u.x,u.y,'puddle',{u,r:34,t:2})}),
  // Bond fendant : saut, le sabre levé, abattu à l'arrivée
  hz_leap:SP('Kubikiribôchô : Bond fendant',HZD.leap,11,{tele:{r:85,max:280},ai:{mode:'gap',min:120,max:300,p:.5}},(u,a,td)=>{const d=clamp(td||250,60,280),p=fwd(u,a,d);anim(u,'hz_leap',.62);hzS('dash',u);
   later(u,.45,()=>{},{x:p.x,y:p.y,r:85});sparks(u.x,u.y,HZC.l,6,'water');dash(u,a,d,.45,{jump:95,end:()=>hzLand(u,a)})}),
  // Décapitation : ruée en ligne, coup de sabre géant (bonus selon les PV manquants), vol de vie
  hz_behead:ULT('Kubikiribôchô : Décapitation',HZD.behead,{line:{len:300,w:80},ai:{mode:'gap',min:60,max:300,p:.8}},(u,a)=>{anim(u,'hz_behead',.6);hzS('saber',u);hzS('heavy',u);
-  u.unstop=Math.max(u.unstop,.45);dash(u,a,300,.3,{});aux.push({type:'hz_behead',x:u.x,y:u.y,a,r:54,t:.55,m:.55,team:u.team,owner:u,ui:hzI(u),vfx:'steel',k:0,hs:new Set()});
+  u.unstop=Math.max(u.unstop,.45);dash(u,a,300,.3,{});fxFlare(u.x,u.y,'#ffffff',{u,z:36,r:30,t:.2,rot:a});fxWind(u.x+Math.cos(a)*150,u.y+Math.sin(a)*150,a,{u,len:300,w:80,n:9,col:'#e8f0ff',t:.4});fxSmoke(u.x,u.y,{u,col:'#9a8268',n:4,r:20,s:12,al:.24,dx:-Math.cos(a)*40,dy:-Math.sin(a)*40});aux.push({type:'hz_behead',x:u.x,y:u.y,a,r:54,t:.55,m:.55,team:u.team,owner:u,ui:hzI(u),vfx:'steel',k:0,hs:new Set()});
   jx({jfx:'hz_behead',ui:hzI(u),x:u.x,y:u.y,a,t:.6,m:.6})}),
  // Corps-déluge : géant d'eau qui inonde autour, puis s'effondre en vague
  hz_giant:ULT('Suika : Corps-déluge',HZD.giant,{tele:{self:1,r:130},ai:SELF(150,.8)},(u)=>{anim(u,'hz_giant',.8);S('water',u);hzS('roar',u);u.giant=Math.max(u.giant||0,4);u.hz_gT=4;u.hz_w=100;
-  aux.push({type:'hz_flood',x:u.x,y:u.y,r:130,t:4,m:4,team:u.team,owner:u,ui:hzI(u),vfx:'water',k:.5});jx({jfx:'hz_geyser',x:u.x,y:u.y,r:110,s:1.4,t:.7,m:.7});sparks(u.x,u.y,HZC.l,18,'water');if(near(u.x,u.y))shake=Math.max(shake,.25)}),
+  aux.push({type:'hz_flood',x:u.x,y:u.y,r:130,t:4,m:4,team:u.team,owner:u,ui:hzI(u),vfx:'water',k:.5});jx({jfx:'hz_geyser',x:u.x,y:u.y,r:110,s:1.4,t:.7,m:.7});sparks(u.x,u.y,HZC.l,8,'water');
+  fxRing(u.x,u.y,{u,r0:20,r1:130,col:HZC.l,c2:'#ffffff',w:7,t:.45});fxBurst(u.x,u.y,'#e8f8ff',{u,n:22,sp:240,c2:'#ffffff',up:320,gr:420,w:2.6,len:.07,z:20});fxDecal(u.x,u.y,'puddle',{u,r:125,t:5});fxLight(u.x,u.y,170,HZC.w,{u,t:.6,a:.4});if(near(u.x,u.y))shake=Math.max(shake,.25)}),
  // ---- styles
  // Kubikiribôchô : sabre géant, coups lents et très larges ; [portée, arc, dégâts, recharge] par coup ; chaque coup qui touche rend 10 % de ses dégâts
  hz_st_kubi:SP('Kubikiribôchô','',.5,{hero:'dooku',melee:1,ai:{max:112,p:1}},(u,a)=>{const c=stC(u),T=[0,[112,2.2,13,.5],[112,2.2,13,.52],[118,3,14,.58],[126,.7,14,.52],[122,2.4,17,.78]][c];
   if(c===4)stLunge(u,a,34);if(c===5){stLunge(u,a,40);hzS('dash',u)}
   const L=stIn(u,a,T[0],T[1]),tot=hzDrain(L,()=>stMelee(u,a,T[0],T[1],T[2],c===5?{kb:150}:c===3?{slow:.5}:{},null));hzReforge(u,tot,.1,tot>0?L.find(e=>!e.dead)||L[0]:null);
   jx({jfx:'hz_cleave',ui:hzI(u),x:u.x,y:u.y,a,R:T[0],w:T[1],d:[0,-1,1,-1,0,1][c],thr:c===4?1:0,ov:c===5?1:0,bl:tot>0?1:0,t:.3,m:.3});
-  if(c===5){const p=fwd(u,a,T[0]*.7);jx({jfx:'shock',x:p.x,y:p.y,r:70,t:.35,m:.35,col:HZC.s});if(near(p.x,p.y))shake=Math.max(shake,.14)}
+  if(c>=4)for(const e of L)if(!e.dead)hzSteel(u,e,a,c===5?1.1:.7);
+  if(c===5){const p=fwd(u,a,T[0]*.7);jx({jfx:'shock',x:p.x,y:p.y,r:70,t:.35,m:.35,col:HZC.s});fxDebris(p.x,p.y,{u,n:6,sp:150,col:'#8a6a48',c2:'#5a4028',s:3});fxDecal(p.x,p.y,'crack',{u,r:46,t:3.5});if(near(p.x,p.y))shake=Math.max(shake,.14)}
   stCd(u,T[3]);anim(u,'hz_k'+c,c===5?.42:.32)}),
  // Taijutsu liquide : poings qui s'allongent en eau ; 3e : coup d'eau (trempe) ; 5e : fouet d'eau qui ramène la cible
  hz_st_liq:SP('Taijutsu liquide','',.42,{hero:'rey',melee:1,ai:{max:104,p:1}},(u,a)=>{const c=stC(u),T=[0,[102,1.4,10,.42],[102,1.4,10,.42],[106,1.6,11,.46],[104,1.5,11,.44],[126,.6,12,.62]][c];
   const o=c===3?{el:1}:c===5?{el:1,pull:380,fx:u.x,fy:u.y,slow:.5}:{};stMelee(u,a,T[0],T[1],T[2],o,null);
   jx({jfx:'hz_wfist',ui:hzI(u),x:u.x,y:u.y,a,R:T[0]*(c===5?1:.92),s:c%2?1:-1,whip:c===5?1:0,big:c===3?1:0,t:c===5?.4:.28,m:c===5?.4:.28});
-  if(c>=3){S('water',u);const p=fwd(u,a,T[0]*.8);sparks(p.x,p.y,HZC.l,c===5?8:5,'water')}
+  if(c>=3){S('water',u);const p=fwd(u,a,T[0]*.8);sparks(p.x,p.y,HZC.l,c===5?4:3,'water');hzWet(u,p.x,p.y,c===5?1:.6)}
   stCd(u,T[3]);anim(u,c===5?'hz_whip':'st_tai'+c,c===5?.4:.28)}),
 });
 Object.assign(NATHERO,{hz:'kylo'});
@@ -93,29 +98,31 @@ function hzLand(u,a){if(u.dead)return;const x=u.x,y=u.y,V=VFX;VFX='steel';for(co
  jx({jfx:'hz_slam',x:x+Math.cos(a)*30,y:y+Math.sin(a)*30,a,r:85,t:.8,m:.8});jx({jfx:'shock',x,y,r:100,t:.4,m:.4,col:HZC.l});sparks(x,y,HZC.l,12,'water');if(near(x,y)){hzS('heavy',u);hzS('rock',u);shake=Math.max(shake,.22)}}
 // Liquéfaction : le corps se reforme en jaillissant
 function hzReform(o,soft){const V=VFX;VFX='water';for(const e of enemies(o))if(Math.hypot(e.x-o.x,e.y-o.y)<80+e.r)hit(e,o,soft?0:14,soft?{slow:.8,silent:1,fx:o.x,fy:o.y}:{slow:1,fx:o.x,fy:o.y});VFX=V;
- jx({jfx:'hz_geyser',x:o.x,y:o.y,r:80,s:1,t:.6,m:.6});jx({jfx:'shock',x:o.x,y:o.y,r:90,t:.35,m:.35,col:HZC.l});sparks(o.x,o.y,HZC.l,12,'water');if(near(o.x,o.y))S('water',o)}
+ jx({jfx:'hz_geyser',x:o.x,y:o.y,r:80,s:1,t:.6,m:.6});jx({jfx:'shock',x:o.x,y:o.y,r:80,t:.35,m:.35,col:HZC.l});sparks(o.x,o.y,HZC.l,6,'water');fxRing(o.x,o.y,{u:o,r0:12,r1:80,col:HZC.l,c2:'#ffffff',w:5,t:.35});hzWet(o,o.x,o.y,1.2);fxDecal(o.x,o.y,'puddle',{u:o,r:50,t:2.5});if(near(o.x,o.y))S('water',o)}
 
 // moulinet de fin de Décapitation (ancienne Fauche, réduite) : 16 dégâts autour, ralentit, la lame boit 30 %
 function hzSpin(u,a){anim(u,'hz_cleave',.5);hzS('saber',u);const L=enemies(u).filter(e=>dist(u,e)<150+e.r),V=VFX;VFX='steel';const tot=hzDrain(L,()=>{for(const e of L)hit(e,u,16,{slow:1,fx:u.x,fy:u.y})});VFX=V;
- hzReforge(u,tot,.3,L[0]);jx({jfx:'hz_cleave',ui:hzI(u),x:u.x,y:u.y,a:a+Math.PI,R:150,w:6.2,d:1,bl:tot>0?1:0,big:1,t:.5,m:.5});if(L.length&&near(u.x,u.y))shake=Math.max(shake,.18)}
+ hzReforge(u,tot,.3,L[0]);jx({jfx:'hz_cleave',ui:hzI(u),x:u.x,y:u.y,a:a+Math.PI,R:150,w:6.2,d:1,bl:tot>0?1:0,big:1,t:.5,m:.5});if(L.length&&near(u.x,u.y))shake=Math.max(shake,.18);
+ fxRing(u.x,u.y,{u,r0:30,r1:150,col:'#dfe6ee',c2:'#ffffff',w:7,t:.35});fxWind(u.x,u.y,0,{u,spin:1,w:140,n:8,col:'#ffffff',t:.4});for(const e of L)hzSteel(u,e,ang(u,e),1);fxDebris(u.x,u.y,{u,n:8,sp:200,col:'#8a6a48',c2:'#5a4028',s:3});fxDecal(u.x,u.y,'crack',{u,r:90,t:4})}
 // ---- objets (logique hôte)
 // Grand jet : 0,3 s de charge (le lanceur étourdi l'annule), puis le jet frappe toute la ligne une fois
 AUXF.hz_jet=x=>{const o=x.owner;if(!o||o.dead){x.t=0;return}if(x.n)return;x.x=o.x;x.y=o.y;if(o.stun>0){x.t=0;x.n=2;return}
  if(x.m-x.t<.3)return;x.n=1;const ca=Math.cos(x.a),sa=Math.sin(x.a),V=VFX;VFX='water';
- for(const e of enemies(o)){const dx=e.x-x.x,dy=e.y-x.y,f=dx*ca+dy*sa,s=Math.abs(-dx*sa+dy*ca);if(f>0&&f<x.len+e.r&&s<x.w/2+e.r)hit(e,o,x.d||26,{kb:150,fx:x.x,fy:x.y})}VFX=V;
- o.kx-=ca*120;o.ky-=sa*120;if(near(x.x,x.y)){hzS('boom',o);S('water',o);shake=Math.max(shake,.16)}sparks(x.x+ca*x.len,x.y+sa*x.len,HZC.l,10,'water')};
+ for(const e of enemies(o)){const dx=e.x-x.x,dy=e.y-x.y,f=dx*ca+dy*sa,s=Math.abs(-dx*sa+dy*ca);if(f>0&&f<x.len+e.r&&s<x.w/2+e.r&&hit(e,o,x.d||26,{kb:150,fx:x.x,fy:x.y}))hzWet(o,e.x,e.y,1)}VFX=V;
+ o.kx-=ca*120;o.ky-=sa*120;if(near(x.x,x.y)){hzS('boom',o);S('water',o);shake=Math.max(shake,.16)}sparks(x.x+ca*x.len,x.y+sa*x.len,HZC.l,6,'water');
+ {const ex=x.x+ca*x.len,ey=x.y+sa*x.len;fxFlare(x.x+ca*24,x.y+sa*24,'#ffffff',{u:o,z:30,r:26,t:.2});fxRing(x.x+ca*24,x.y+sa*24,{u:o,r0:6,r1:40,col:HZC.l,w:4,t:.3});hzWet(o,ex,ey,1.4);fxDecal(ex,ey,'puddle',{u:o,r:40,t:3});for(let i=1;i<=3;i++)fxLight(x.x+ca*x.len*i/3.4,x.y+sa*x.len*i/3.4,60,HZC.w,{u:o,t:.35,a:.3})}};
 // Liquéfaction : la flaque suit le ninja ; à la fin (ou s'il attaque), le corps se reforme
 AUXF.hz_pud=x=>{const o=x.owner;if(!o||o.dead){x.t=0;x.done=1;if(o)o.hz_pud=0;return}x.x=o.x;x.y=o.y;if(x.done)return;
  if(x.t<=0||o.swing>0||(o.relT>0&&x.m-x.t>.32)){const r=Math.max(0,x.t)+.05;x.done=1;x.t=0;o.hz_pud=0;if(o.phase<=r)o.phase=0;if(o.haste<=r)o.haste=0;hzReform(o,x.soft)}};
 // Décapitation : la lame frappe une fois chaque ennemi sur la ligne de la ruée
 AUXF.hz_behead=x=>{const o=x.owner;if(!o||o.dead||!o.dash){if(!x.done){x.done=1;x.t=0;if(o&&!o.dead&&state==='fight')hzSpin(o,x.a)}return}x.x=o.x;x.y=o.y;const ca=Math.cos(x.a),sa=Math.sin(x.a),tx=o.x+ca*28,ty=o.y+sa*28;
  for(const e of enemies(o))if(!x.hs.has(e)&&Math.hypot(e.x-tx,e.y-ty)<x.r+e.r){x.hs.add(e);const V=VFX;VFX='steel';const tot=hzDrain([e],()=>hit(e,o,38,{exec:.1,kb:140,melee:1,fx:o.x-ca*40,fy:o.y-sa*40}));VFX=V;
-  hzReforge(o,tot,.3,e);jx({jfx:'hz_spray',x:e.x,y:e.y,a:x.a,t:.6,m:.6});if(near(e.x,e.y)){hzS('boom',o);shake=Math.max(shake,.3)}}};
+  hzReforge(o,tot,.3,e);jx({jfx:'hz_spray',x:e.x,y:e.y,a:x.a,t:.6,m:.6});if(near(e.x,e.y)){hzS('boom',o);shake=Math.max(shake,.3)}hzSteel(o,e,x.a,1.6);fxDecal(e.x,e.y,'puddle',{u:o,r:30,t:3,col:'#5a0010'});fxLight(e.x,e.y,90,'#ff5a6a',{u:o,t:.3,a:.3});fxHitStop(o,e,38,1);fxShake(.3,e.x,e.y)}};
 AUXD.hz_behead=()=>{};
 // Corps-déluge : inonde autour du géant toutes les 0,5 s ; à la fin, il s'effondre en vague
 AUXF.hz_flood=x=>{const o=x.owner;if(!o||o.dead){x.t=0;x.done=1;if(o)o.hz_gT=0;return}x.x=o.x;x.y=o.y;
  if(x.t<=0){if(!x.done){x.done=1;o.hz_gT=0;const V=VFX;VFX='water';for(const e of enemies(o))if(Math.hypot(e.x-o.x,e.y-o.y)<160+e.r)hit(e,o,24,{kb:260,fx:o.x,fy:o.y});VFX=V;
-  jx({jfx:'hz_wave',x:o.x,y:o.y,r:170,t:.8,m:.8});sparks(o.x,o.y,HZC.l,20,'water');if(near(o.x,o.y)){S('water',o);hzS('boom',o);shake=Math.max(shake,.3)}}return}
+  jx({jfx:'hz_wave',x:o.x,y:o.y,r:160,t:.8,m:.8});sparks(o.x,o.y,HZC.l,10,'water');fxImpact(o.x,o.y,'suiton',3,{u:o,r:160});fxBurst(o.x,o.y,'#e8f8ff',{u:o,n:24,sp:340,c2:'#ffffff',up:220,gr:420,w:2.6,len:.07,z:20});if(near(o.x,o.y)){S('water',o);hzS('boom',o);shake=Math.max(shake,.3)}}return}
  if(x.k>0)return;x.k=.5;x.c=(x.c||0)+1;const V=VFX;VFX='water';for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)hit(e,o,5,x.c%2?{slow:.35,fx:x.x,fy:x.y}:{fx:x.x,fy:x.y});VFX=V};
 
 // ---- trait de clan : Hydrification (réserve d'eau)
@@ -225,11 +232,11 @@ JFXD.hz_fist=(f,k,e)=>{const q=P(f.x,f.y,0),s=q.s,R=f.r*s,dz=(1-ezo(Math.min(1,e
  if(e>.15)for(let i=0;i<12;i++){const b=i*.5236+.2,d=R*(.3+(e-.15)*1.3),hh=Math.sin(Math.min(1,(e-.15)/.7)*Math.PI)*(30+(i%3)*12)*s;hzDropS(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*K-hh,2.6*s,b-.9,rgba(i%2?HZC.w:HZC.l,.9*a))}};
 // Grand jet : charge (fine ligne, eau qui s'amasse au doigt), puis jet épais qui s'efface
 AUXD.hz_jet=(x,k,t)=>{const ca=Math.cos(x.a),sa=Math.sin(x.a),el=x.m-x.t,o=units[x.ui],z=30,h=P(x.x+ca*24,x.y+sa*24,z),E=P(x.x+ca*x.len,x.y+sa*x.len,z),hw=x.w/2;
- if(!x.n){const c=Math.min(1,el/.3);g.strokeStyle=rgba(HZC.l,.5);g.lineWidth=1.5;g.setLineDash([8,8]);g.lineDashOffset=-t*80;g.beginPath();g.moveTo(h.x,h.y);g.lineTo(E.x,E.y);g.stroke();g.setLineDash([]);
+ if(!x.n){const c=Math.min(1,el/.3);fxGlowS(h.x,h.y,(8+18*c)*h.s,HZC.w,.5);g.strokeStyle=rgba(HZC.l,.5);g.lineWidth=1.5;g.setLineDash([8,8]);g.lineDashOffset=-t*80;g.beginPath();g.moveTo(h.x,h.y);g.lineTo(E.x,E.y);g.stroke();g.setLineDash([]);
   g.fillStyle=rgba(HZC.w,.25*c);const A=P(x.x-sa*hw,x.y+ca*hw,0),Bq=P(x.x+sa*hw,x.y-ca*hw,0),Cq=P(x.x+ca*x.len+sa*hw,x.y+sa*x.len-ca*hw,0),D=P(x.x+ca*x.len-sa*hw,x.y+sa*x.len+ca*hw,0);poly([A,Bq,Cq,D],rgba(HZC.w,.12*c));
   g.fillStyle=rgba(HZC.w,.8);g.strokeStyle=rgba('#ffffff',.9);g.lineWidth=1.5;g.beginPath();g.arc(h.x,h.y,(3+9*c)*h.s,0,7);g.fill();g.stroke();
   for(let i=0;i<6;i++){const b=i*1.05+t*6,d=(1-((t*3+i/6)%1))*26*h.s;circ(h.x+Math.cos(b)*d,h.y+Math.sin(b)*d*.7,1.8*h.s,rgba(HZC.l,.9))}return}
- if(x.n!==1)return;const f=Math.max(0,Math.min(1,x.t/(x.m-.3))),W=hw*1.25*h.s*(.45+.55*f),ra=Math.atan2(E.y-h.y,E.x-h.x),L=Math.hypot(E.x-h.x,E.y-h.y);g.save();g.translate(h.x,h.y);g.rotate(ra);
+ if(x.n!==1)return;const f=Math.max(0,Math.min(1,x.t/(x.m-.3))),W=hw*h.s*(.45+.55*f),ra=Math.atan2(E.y-h.y,E.x-h.x),L=Math.hypot(E.x-h.x,E.y-h.y);g.save();g.translate(h.x,h.y);g.rotate(ra);
  g.fillStyle=rgba(HZC.w,.55*f);g.beginPath();g.moveTo(0,-W*.5);g.lineTo(L,-W);g.quadraticCurveTo(L+W*1.2,0,L,W);g.lineTo(0,W*.5);g.closePath();g.fill();
  g.fillStyle=rgba('#ffffff',.85*f);g.beginPath();g.moveTo(0,-W*.18);g.lineTo(L,-W*.35);g.lineTo(L,W*.35);g.lineTo(0,W*.18);g.closePath();g.fill();
  g.strokeStyle=rgba(HZC.l,.8*f);g.lineWidth=1.5;for(let i=0;i<8;i++){const p0=((t*900+i*137)%L),w0=((i*53)%10-5)/5*W*.8;g.beginPath();g.moveTo(p0,w0);g.lineTo(p0+30,w0*.9);g.stroke()}
@@ -270,9 +277,10 @@ AUXD.hz_pud=(x,k,t)=>{if(x.done)return;const q=P(x.x,x.y,0),s=q.s,r=x.r*s,o=unit
  g.strokeStyle=rgba('#ffffff',.75*k);g.lineWidth=1.4;for(let i=0;i<2;i++){const ph=(t*1.8+i*.5)%1;g.beginPath();g.ellipse(q.x,q.y,r*(.4+ph*1.2),r*(.4+ph*1.2)*.4,0,0,7);g.globalAlpha=1-ph;g.stroke()}g.globalAlpha=1;
  if(o&&o.moving){const a=o.aim,b=Math.atan2(o.vy||Math.sin(a),o.vx||Math.cos(a));for(let i=1;i<4;i++){const p=P(x.x-Math.cos(b)*i*16,x.y-Math.sin(b)*i*16,0);g.fillStyle=rgba(HZC.w,(.4-i*.1)*k);g.beginPath();g.ellipse(p.x,p.y,(r*1.1-i*3*s),(r*.42-i*s),0,0,7);g.fill()}}};
 // Corps-déluge : sol inondé autour du géant
-AUXD.hz_flood=(x,k,t)=>{const q=P(x.x,x.y,0),R=x.r*q.s;g.fillStyle=rgba(HZC.w,.16*k);g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.fill();g.strokeStyle=rgba(HZC.l,.6*k);g.lineWidth=2;g.setLineDash([12,8]);g.lineDashOffset=-t*40;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();g.setLineDash([]);
+AUXD.hz_flood=(x,k,t)=>{const q=P(x.x,x.y,0),R=x.r*q.s;g.strokeStyle=rgba(HZC.l,.75*k);g.lineWidth=2;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();fxAlpha(fxA(x),()=>hzFloodD(x,k,t))}; // bord net, eau atténuée (ennemi)
+function hzFloodD(x,k,t){const q=P(x.x,x.y,0),R=x.r*q.s;g.fillStyle=rgba(HZC.w,.16*k);g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.fill();g.strokeStyle=rgba(HZC.l,.6*k);g.lineWidth=2;g.setLineDash([12,8]);g.lineDashOffset=-t*40;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();g.setLineDash([]);
  for(let i=0;i<3;i++){const ph=(t*.8+i/3)%1;g.strokeStyle=rgba('#ffffff',.5*(1-ph)*k);g.lineWidth=1.5;g.beginPath();g.ellipse(q.x,q.y,R*ph,R*ph*K,0,0,7);g.stroke()}
- for(let i=0;i<8;i++){const b=i*.785+t*.6,d=R*.85,y0=q.y+Math.sin(b)*d*K,x0=q.x+Math.cos(b)*d,h=(6+Math.sin(t*5+i)*4)*q.s;g.fillStyle=rgba(HZC.l,.6*k);g.beginPath();g.moveTo(x0-6*q.s,y0);g.quadraticCurveTo(x0,y0-h*2,x0+6*q.s,y0);g.fill()}};
+ for(let i=0;i<8;i++){const b=i*.785+t*.6,d=R*.85,y0=q.y+Math.sin(b)*d*K,x0=q.x+Math.cos(b)*d,h=(6+Math.sin(t*5+i)*4)*q.s;g.fillStyle=rgba(HZC.l,.6*k);g.beginPath();g.moveTo(x0-6*q.s,y0);g.quadraticCurveTo(x0,y0-h*2,x0+6*q.s,y0);g.fill()}}
 // Corps-déluge : la vague finale
 JFXD.hz_wave=(f,k,e)=>{const q=P(f.x,f.y,0),R=f.r*q.s*(.25+ezo(e)*.85),H=Math.sin(Math.PI*Math.min(1,e*1.2))*34*q.s;g.globalAlpha=Math.min(1,k*2);
  g.fillStyle=rgba(HZC.w,.35);g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.fill();g.strokeStyle=rgba(HZC.w,.8);g.lineWidth=H*.5+2;g.beginPath();g.ellipse(q.x,q.y-H*.5,R,R*K,0,Math.PI,0);g.stroke();

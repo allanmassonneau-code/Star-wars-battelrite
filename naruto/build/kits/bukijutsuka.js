@@ -17,6 +17,9 @@ KIT('c22',[
 Object.assign(NATHERO,{bk:'rey'});
 // ---------- trait Arsenal : armes au sol ----------
 const BK_W=['kunai','tonfa','staff','kama','mace'],BK_TREES=new Set(['c22','t2']);
+// ---- VFX (boîte à outils nr_fx.js) : étincelles d'acier, éclats dorés, poussière (décor atténué selon l'intensité / le camp)
+function bkHitFx(u,e,a,s){if(!e||!near(e.x,e.y))return;fxFlare(e.x,e.y,'#fff4d8',{u,z:32,r:16*s,t:.15,rot:a});fxBurst(e.x,e.y,'#ffd36a',{u,n:6*s,sp:260*s,c2:'#ffffff',a,arc:1.6,w:1.5,len:.14,z:30,gr:80})}
+function bkPuff(u,x,y,s){fxSmoke(x,y,{u,col:'#e8e0d0',n:5*s,r:18*s,s:12*s,al:.28,rise:30,z:30,t:.7});fxFlare(x,y,'#fff4d8',{u,z:40,r:18*s,t:.18,star:0})} // invocation d'un rouleau : « pouf »
 // pose une arme au sol (Bukijutsuka seulement), 4 au plus par ninja : la plus ancienne disparaît
 function bkDrop(u,x,y,k){if(!u||u.dead||u.ch.clan!==BUKI)return;x=clamp(x,B.x+16,B.x+B.w-16);y=clamp(y,B.y+16,B.y+B.h-16);const L=aux.filter(o=>o.type==='bk_wpn'&&o.owner===u&&o.t>0);if(L.length>=4)L[0].t=0;
  aux.push({type:'bk_wpn',x,y,r:14,t:6,m:6,team:u.team,owner:u,ui:stI(u),k:(k==null?Math.floor(rnd()*5):k)%5,a:rnd()*6.28})}
@@ -34,7 +37,7 @@ TRAITS[BUKI]={nom:'Arsenal',desc:'Tes jutsu d\'armes laissent des armes plantée
  init(u){u.bk_w=1;u.bk_axe=0;u.bk_ton=0},
  update(u,dt){if(u.bk_cds!==u.cds){if(u.bk_cds){u.bk_axe=0;u.bk_ton=0}u.bk_cds=u.cds}if(u.bk_axe>0)u.bk_axe=Math.max(0,u.bk_axe-dt);if(u.bk_ton>0)u.bk_ton=Math.max(0,u.bk_ton-dt)},
  take(t,src,dmg,o){if(!src||src===t||src.team===t.team||!o.melee||o.silent)return dmg;
-  if(t.bk_ton>0){t.bk_ton=0;src.disarm=Math.max(src.disarm||0,.8);say(t,'CONTRE','#ffd36a');say(src,'DÉSARMÉ','#ffb03a');S('deflect',t);sparks(t.x,t.y,'#e8d0a8',12);
+  if(t.bk_ton>0){t.bk_ton=0;src.disarm=Math.max(src.disarm||0,.8);say(t,'CONTRE','#ffd36a');say(src,'DÉSARMÉ','#ffb03a');S('deflect',t);sparks(t.x,t.y,'#e8d0a8',6);fxFlare(t.x,t.y,'#ffffff',{u:t,z:34,r:26,t:.18});fxBurst(t.x,t.y,'#ffd36a',{u:t,n:10,sp:280,c2:'#ffffff',z:34,w:1.5});
    later(t,.05,()=>{if(!src.dead&&!t.dead&&dist(t,src)<160){hit(src,t,10,{melee:1,unblockable:1});jx({jfx:'buk_wsw',ui:stI(t),x:t.x,y:t.y,a:ang(t,src),w:'tonfa',d:1,t:.22,m:.22})}});return -1}return dmg},
  draw(u,p,S,sk){if(u.bk_axe>0){g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ffd36a',.35+.2*Math.sin(performance.now()/90));g.lineWidth=2;g.beginPath();g.ellipse(p.x,p.y,24*S,8*S,0,0,7);g.stroke();g.restore()}
   if(u.bk_ton>0){g.save();g.globalCompositeOperation='lighter';g.strokeStyle='rgba(232,208,168,.8)';g.lineWidth=3*S;g.beginPath();g.ellipse(p.x+Math.cos(u.aim)*14*S,p.y-34*S*sk,10*S,26*S*sk,0,0,7);g.stroke();g.restore()}},
@@ -47,40 +50,42 @@ CLOOK[BUKI]=(look)=>{if(!look.back&&!look.gourd)look.back='rouleaux';look.head.e
 // ---------- mécaniques ----------
 Object.assign(NAT,{
  bk_volley:S_('Kunai Rendan : Volée de kunai','',4,{line:{len:450,w:60},ai:RG(430,.7)},(u,a)=>{anim(u,'throw2',.3);S('blaster',u);u.thrT=.2;
-  for(const d of[-.2,0,.2]){proj(u,a+d,{spd:950,r:7,dmg:8,life:.48,col:'#d8dde6',kind:'bk_kunai'});bkTrack(u,0)}}),
- bk_tonfa:S_('Tonfa : Contre','',6,{ai:DEF},(u)=>{u.bk_ton=.7;anim(u,'kj_guard',.6);S('deflect',u);say(u,'GARDE','#e8d0a8')}),
+  for(const d of[-.2,0,.2]){proj(u,a+d,{spd:950,r:7,dmg:8,life:.48,col:'#d8dde6',kind:'bk_kunai',onHit:(p,e)=>bkHitFx(p.owner,e,Math.atan2(p.vy,p.vx),.7)});bkTrack(u,0)}fxFlare(u.x+Math.cos(a)*24,u.y+Math.sin(a)*24,'#ffffff',{u,z:36,r:14,t:.12,rot:a})}),
+ bk_tonfa:S_('Tonfa : Contre','',6,{ai:DEF},(u)=>{u.bk_ton=.7;anim(u,'kj_guard',.6);S('deflect',u);say(u,'GARDE','#e8d0a8');fxFlare(u.x+Math.cos(u.aim)*16,u.y+Math.sin(u.aim)*16,'#e8d0a8',{u,z:34,r:20,t:.2,star:0});fxRing(u.x,u.y,{u,r0:34,r1:16,col:'#e8d0a8',w:3,t:.25})}),
  bk_fundo:S_('Fundo : Masse à chaîne','',8,{line:{len:280,w:30},ai:RG(270,.6)},(u,a)=>{anim(u,'throw2',.35);S('heavy',u);u.thrT=.2;
-  proj(u,a,{spd:700,r:13,dmg:14,life:2,col:'#9aa4b4',ret:280,pierce:1,kind:'bk_mace',o:{slow:.8}});aux.push({type:'buk_chain',x:u.x,y:u.y,r:0,t:2.2,m:2.2,team:u.team,owner:u,ui:stI(u),p:projs[projs.length-1]})}),
- bk_heavy:S_('Makimono : Arme lourde','',10,{ai:SELF(150,.6)},(u)=>{u.bk_axe=4;anim(u,'summon',.4);S('poof',u);say(u,'ARME LOURDE','#ffd36a');jx({jfx:'bk_scroll',ui:stI(u),x:u.x,y:u.y,t:.6,m:.6})}),
+  proj(u,a,{spd:700,r:13,dmg:14,life:2,col:'#9aa4b4',ret:280,pierce:1,kind:'bk_mace',o:{slow:.8},onHit:(p,e)=>{bkHitFx(p.owner,e,Math.atan2(p.vy,p.vx),1);fxDebris(e.x,e.y,{u:p.owner,n:3,sp:100,col:'#9aa4b4',c2:'#5a6070',s:2.5})}});aux.push({type:'buk_chain',x:u.x,y:u.y,r:0,t:2.2,m:2.2,team:u.team,owner:u,ui:stI(u),p:projs[projs.length-1]})}),
+ bk_heavy:S_('Makimono : Arme lourde','',10,{ai:SELF(150,.6)},(u)=>{u.bk_axe=4;anim(u,'summon',.4);S('poof',u);say(u,'ARME LOURDE','#ffd36a');jx({jfx:'bk_scroll',ui:stI(u),x:u.x,y:u.y,t:.6,m:.6});bkPuff(u,u.x,u.y,1);fxRing(u.x,u.y,{u,r0:10,r1:50,col:'#ffd36a',w:4,t:.3})}),
  bk_cage:S_('Kunai Ori : Cage de kunai','',11,{tele:{r:110,max:380},ai:RG(380,.6)},(u,a,td)=>{const p=atP(u,a,td,380);anim(u,'throw2',.4);S('blaster',u);u.thrT=.2;
-  const ins=new Set(enemies(u).filter(e=>Math.hypot(e.x-p.x,e.y-p.y)<110));aux.push({type:'bk_cage',x:p.x,y:p.y,r:110,t:4,m:4,team:u.team,owner:u,ins,done:new Set(),k:0});jx({jfx:'bk_fly8',x:u.x,y:u.y,x2:p.x,y2:p.y,t:.25,m:.25})}),
+  const ins=new Set(enemies(u).filter(e=>Math.hypot(e.x-p.x,e.y-p.y)<110));aux.push({type:'bk_cage',x:p.x,y:p.y,r:110,t:4,m:4,team:u.team,owner:u,ins,done:new Set(),k:0});jx({jfx:'bk_fly8',x:u.x,y:u.y,x2:p.x,y2:p.y,t:.25,m:.25});
+  later(u,.25,()=>{fxRing(p.x,p.y,{u,r0:20,r1:110,col:'#e8eef6',c2:'#ffffff',w:4,t:.35});for(let i=0;i<8;i++){const b=i*.785+.2;fxFlare(p.x+Math.cos(b)*110,p.y+Math.sin(b)*110,'#e8eef6',{u,z:8,r:10,t:.16,star:0})}})}),
  bk_hammer:S_('Ôtsuchi : Marteau écraseur','',11,{line:{len:150,w:170},ai:RG(130,.65)},(u,a)=>{const p=fwd(u,a,85);anim(u,'kj_hammer',.6);S('poof',u);S('heavy',u);const D=tjLock(u,.5);
-  jx({jfx:'bk_hammer',x:p.x,y:p.y,a,t:.62,m:.62});later(u,.4,()=>{if(u.dead)return;for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<85+e.r)hit(e,u,30,{melee:1,stun:.7,unblockable:1,fx:p.x,fy:p.y});
-   jx({jfx:'tj_crater',x:p.x,y:p.y,r:85,t:.9,m:.9});jx({jfx:'shock',x:p.x,y:p.y,r:95,t:.4,m:.4,col:'#e8d0a8'});bkDrop(u,p.x,p.y,4);if(near(p.x,p.y)){S('boom',u);S('rock',u);shake=Math.max(shake,.35)}},{x:p.x,y:p.y,r:85})}),
+  jx({jfx:'bk_hammer',x:p.x,y:p.y,a,t:.62,m:.62});bkPuff(u,u.x,u.y,.8);later(u,.4,()=>{if(u.dead)return;for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<85+e.r&&hit(e,u,30,{melee:1,stun:.7,unblockable:1,fx:p.x,fy:p.y}))fxHitStop(u,e,30,1);
+   jx({jfx:'tj_crater',x:p.x,y:p.y,r:85,t:.9,m:.9});jx({jfx:'shock',x:p.x,y:p.y,r:85,t:.4,m:.4,col:'#e8d0a8'});fxRing(p.x,p.y,{u,r0:14,r1:85,col:'#e8d0a8',c2:'#ffffff',w:8,t:.35});fxDebris(p.x,p.y,{u,n:12,sp:220,col:'#a07850',c2:'#5a4028',s:4.5});fxSmoke(p.x,p.y,{u,col:'#a08a70',n:7,r:60,s:15,al:.24,rise:26,t:1.1});fxDecal(p.x,p.y,'crack',{u,r:80,t:4.5});fxFlare(p.x,p.y,'#fff4d8',{u,z:20,r:34,t:.22});bkDrop(u,p.x,p.y,4);if(near(p.x,p.y)){S('boom',u);S('rock',u);shake=Math.max(shake,.35)}},{x:p.x,y:p.y,r:85})}),
  bk_barrage:S_('Buki Shôkan : Arsenal volant','',13,{line:{len:420,w:90},ai:RG(400,.7)},(u)=>{const D=tjLock(u,1.25);anim(u,'bk_barrage',1.2);let n=0;jx({jfx:'bk_scroll',ui:stI(u),x:u.x,y:u.y,t:1.2,m:1.2,big:1});
+  bkPuff(u,u.x,u.y,1.2);fxGlyph(u.x,u.y,'#ffd36a',{ui:stI(u),u,r:46,t:1.25,al:.5});
   seqs.push({owner:u,n:12,t:.02,iv:.1,vfx:'kunai',f:o=>{if(o.dash!==D||o.stun>0)return;const p=tjCur(o,420),b=ang(o,p)+(rnd()-.5)*.18,k=n++%5;o.aim=ang(o,p);S('blaster',o);
-   proj(o,b,{spd:980,r:8,dmg:4,life:.48,col:'#d8dde6',kind:'bk_wpnp',bk:k});if(n>8)bkTrack(o,k)}})}),
- bk_spin:S_('Kusarigama : Tourbillon','',14,{ai:SELF(170,.65)},(u,a)=>{anim(u,'buk_twirl',2);S('wind',u);aux.push({type:'bk_spin',x:u.x,y:u.y,a,r:150,t:2,m:2,team:u.team,owner:u,ui:stI(u),hs:new Map()})}),
+   proj(o,b,{spd:980,r:8,dmg:4,life:.48,col:'#d8dde6',kind:'bk_wpnp',bk:k,onHit:(p,e)=>bkHitFx(p.owner,e,Math.atan2(p.vy,p.vx),.7)});if(n%3===1)fxFlare(o.x+Math.cos(b)*22,o.y+Math.sin(b)*22,'#fff4d8',{u:o,z:40,r:14,t:.12,star:0});if(n>8)bkTrack(o,k)}})}),
+ bk_spin:S_('Kusarigama : Tourbillon','',14,{ai:SELF(170,.65)},(u,a)=>{anim(u,'buk_twirl',2);S('wind',u);aux.push({type:'bk_spin',x:u.x,y:u.y,a,r:150,t:2,m:2,team:u.team,owner:u,ui:stI(u),hs:new Map()});fxWind(u.x,u.y,0,{u,spin:1,w:150,n:8,col:'#e8eef6',t:.6});fxSmoke(u.x,u.y,{u,col:'#c8b8a0',n:5,r:130,s:12,al:.2,rise:8,t:.8})}),
  bk_soryu:S_('Sôshôryû','',21,{tele:{r:140,max:420},ai:RG(420,.7)},(u,a,td)=>{const p=atP(u,a,td,420);anim(u,'bk_soryu',1.1);S('wind',u);S('poof',u);u.root=Math.max(u.root,.45);
-  jx({jfx:'bk_twin',ui:stI(u),x:u.x,y:u.y,x2:p.x,y2:p.y,t:1.95,m:1.95});aux.push({type:'bk_soryu',x:p.x,y:p.y,r:140,t:1.95,m:1.95,team:u.team,owner:u,k:.45,n:0,danger:1})}),
+  jx({jfx:'bk_twin',ui:stI(u),x:u.x,y:u.y,x2:p.x,y2:p.y,t:1.95,m:1.95});bkPuff(u,u.x-30,u.y,1);bkPuff(u,u.x+30,u.y,1);fxPillar(u.x,u.y,'#ffd36a',{u,h:220,w:24,t:.6,al:.35});aux.push({type:'bk_soryu',x:p.x,y:p.y,r:140,t:1.95,m:1.95,team:u.team,owner:u,k:.45,n:0,danger:1})}),
  bk_rope:S_('Kôkinjô : Corde d\'or','',22,{line:{len:420,w:24},ai:RG(410,.65)},(u,a)=>{anim(u,'throw2',.4);S('blaster',u);u.thrT=.2;
-  proj(u,a,{spd:900,r:11,dmg:30,life:.47,col:'#ffd36a',kind:'bk_rope',o:{root:1.4,silence:1.4,unblockable:1},onHit:(p,t)=>{if(t.dead)return;t.energy=Math.max(0,(t.energy||0)-15);say(t,'LIGOTÉ','#ffd36a');jx({jfx:'bk_bind',ti:stI(t),x:t.x,y:t.y,t:1.4,m:1.4})}});
+  proj(u,a,{spd:900,r:11,dmg:30,life:.47,col:'#ffd36a',kind:'bk_rope',o:{root:1.4,silence:1.4,unblockable:1},onHit:(p,t)=>{if(t.dead)return;t.energy=Math.max(0,(t.energy||0)-15);say(t,'LIGOTÉ','#ffd36a');bkHitFx(p.owner,t,Math.atan2(p.vy,p.vx),1.3);fxRing(t.x,t.y,{u:p.owner,r0:50,r1:14,col:'#ffd36a',c2:'#fff4d8',w:4,t:.4});fxLight(t.x,t.y,80,'#ffd36a',{u:p.owner,t:.4,a:.35});fxHitStop(p.owner,t,30,1);jx({jfx:'bk_bind',ti:stI(t),x:t.x,y:t.y,t:1.4,m:1.4})}});
   aux.push({type:'bk_gchain',x:u.x,y:u.y,r:0,t:.55,m:.55,team:u.team,owner:u,ui:stI(u),p:projs[projs.length-1]})}),
  // dash du clan (Espace) : Kunai-grappin — on se tire au point d'impact (devant l'ennemi touché) ; le kunai reste planté
  bk_grap:S_('Kunai-grappin','',6,{ai:{mode:'gap',min:150,max:300,p:.45}},(u,a)=>{u.thrT=.2;S('blaster',u);anim(u,'throw2',.25);
   proj(u,a,{spd:1000,r:8,dmg:4,life:.3,col:'#d8dde6',hook:3,kind:'bk_kunai',onHit:(p,t)=>{const o=p.owner;if(o.dead||t.dead||o.stun>0||o.root>0)return;const b=Math.atan2(o.y-t.y,o.x-t.x),q={x:t.x+Math.cos(b)*(o.r+t.r+6),y:t.y+Math.sin(b)*(o.r+t.r+6)};
    o.dash={sx:o.x,sy:o.y,tx:clamp(q.x,B.x+o.r,B.x+B.w-o.r),ty:clamp(q.y,B.y+o.r,B.y+B.h-o.r),t:0,dur:.2,jump:22,hitDone:false};o.cast=null;bkDrop(o,t.x+Math.cos(b+1.6)*30,t.y+Math.sin(b+1.6)*30,0)}});
-  const pr=projs[projs.length-1];aux.push({type:'bk_grapk',x:u.x,y:u.y,r:0,t:.6,m:.6,team:u.team,owner:u,ui:stI(u),p:pr})}),
+  const pr=projs[projs.length-1];aux.push({type:'bk_grapk',x:u.x,y:u.y,r:0,t:.6,m:.6,team:u.team,owner:u,ui:stI(u),p:pr});fxFlare(u.x+Math.cos(a)*22,u.y+Math.sin(a)*22,'#ffffff',{u,z:36,r:12,t:.12,rot:a})}),
 });
 DASHC[BUKI]={src:'x.bk_grap',n:'Kunai-grappin',d:'Kunai à fil (300) : tu te tires jusqu\'au point d\'impact, ou devant l\'ennemi touché ; le kunai reste planté (arme à ramasser)',vfx:'kunai',cd:6};
 // ---------- logique des objets ----------
 // grappin : sans cible touchée, on se tire au point d'arrivée du kunai
 AUXF.bk_grapk=x=>{const p=x.p,o=x.owner;if(!p){x.t=0;return}if(!p.dead&&p.life>0){x.x=p.x;x.y=p.y;return}if(x.done)return;x.done=1;x.t=.18;if(p.hitAny||!o||o.dead||o.stun>0||o.root>0||o.dash)return;
- const q={x:clamp(p.x,B.x+o.r,B.x+B.w-o.r),y:clamp(p.y,B.y+o.r,B.y+B.h-o.r)};o.dash={sx:o.x,sy:o.y,tx:q.x,ty:q.y,t:0,dur:.22,jump:20,hitDone:false};o.cast=null;bkDrop(o,q.x,q.y,0)};
+ const q={x:clamp(p.x,B.x+o.r,B.x+B.w-o.r),y:clamp(p.y,B.y+o.r,B.y+B.h-o.r)};o.dash={sx:o.x,sy:o.y,tx:q.x,ty:q.y,t:0,dur:.22,jump:20,hitDone:false};o.cast=null;bkDrop(o,q.x,q.y,0);fxBurst(q.x,q.y,'#e8eef6',{u:o,n:5,sp:120,z:10,c2:'#ffffff'});fxSmoke(o.x,o.y,{u:o,col:'#c8b8a0',n:3,r:12,s:10,al:.22})};
 AUXD.bk_grapk=(x,k)=>{const u=units[x.ui];if(!u||u.dead)return;const a=P(u.x,u.y,30),b=P(x.x,x.y,24);g.strokeStyle=rgba('#e8eef6',.8*Math.min(1,k*3));g.lineWidth=1.2;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()};
 // Cage de kunai : l'ennemi qui sort du cercle est entravé
 AUXF.bk_cage=(x,dt)=>{const u=x.owner;for(const e of enemies(u)){if(x.done.has(e))continue;const d=Math.hypot(e.x-x.x,e.y-x.y);if(d<x.r)x.ins.add(e);else if(x.ins.has(e)&&d>x.r+e.r*.4){x.done.add(e);x.ins.delete(e);
-  if(hit(e,u,16,{root:.8,unblockable:1})){say(e,'PRIS AU FIL','#e8eef6');jx({jfx:'bk_snap',x:e.x,y:e.y,a:Math.atan2(e.y-x.y,e.x-x.x),t:.5,m:.5})}}}
+  if(hit(e,u,16,{root:.8,unblockable:1})){say(e,'PRIS AU FIL','#e8eef6');bkHitFx(u,e,Math.atan2(e.y-x.y,e.x-x.x),1);jx({jfx:'bk_snap',x:e.x,y:e.y,a:Math.atan2(e.y-x.y,e.x-x.x),t:.5,m:.5})}}}
  if(x.t<=dt*1.01&&!x.fin){x.fin=1;for(let i=0;i<4;i++){const b=i*1.57+.4;bkDrop(u,x.x+Math.cos(b)*x.r,x.y+Math.sin(b)*x.r,0)}}};
 AUXD.bk_cage=(x,k,t)=>{const al=Math.min(1,x.t/.4,(x.m-x.t)/.15),pts=[];for(let i=0;i<8;i++){const b=i*.785+.2;pts.push(P(x.x+Math.cos(b)*x.r,x.y+Math.sin(b)*x.r,0))}g.save();g.globalAlpha=al;
  g.strokeStyle=rgba('#e8eef6',.75);g.lineWidth=1.4;g.beginPath();for(let i=0;i<=8;i++){const p=pts[i%8];i?g.lineTo(p.x,p.y-10*p.s):g.moveTo(p.x,p.y-10*p.s)}g.stroke();
@@ -95,12 +100,15 @@ AUXD.bk_spin=(x,k,t)=>{const u=units[x.ui];if(!u||u.dead)return;const b=t*9+x.m,
  g.strokeStyle=rgba('#e8eef6',.18);g.lineWidth=12*s;g.beginPath();g.ellipse(c.x,c.y+4*s,x.r*s,x.r*s*K,0,b-1.2,b);g.stroke();g.restore();
  g.strokeStyle='#9aa4b4';g.lineWidth=1.8*s;g.setLineDash([3*s,2*s]);g.beginPath();g.moveTo(c.x,c.y);g.lineTo(q.x,q.y);g.stroke();g.setLineDash([]);g.save();g.translate(q.x,q.y);g.rotate(b+1.57);bukWeapon('kama',s);g.restore()};
 // Sôshôryû : pluie d'armes (après 0,45 s d'alerte) : 10 vagues de 5,5 dégâts ; à la fin, 4 armes au sol
-AUXF.bk_soryu=(x,dt)=>{const u=x.owner;x.k-=dt;if(x.k>0||x.n>=10)return;x.k=.15;x.n++;const V=VFX;VFX='kunai';for(const e of enemies(u))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)hit(e,u,5.5,{slow:.5,unblockable:1,silent:x.n%2?0:1});VFX=V;
+AUXF.bk_soryu=(x,dt)=>{const u=x.owner;x.k-=dt;if(x.k>0||x.n>=10)return;x.k=.15;x.n++;const V=VFX;VFX='kunai';for(const e of enemies(u))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r&&hit(e,u,5.5,{slow:.5,unblockable:1,silent:x.n%2?0:1})&&x.n%3===0)bkHitFx(u,e,1.57,.6);VFX=V;
+ if(x.n%2){const b=rnd()*6.28,d=Math.sqrt(rnd())*x.r;fxBurst(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,'#ffd36a',{u,n:5,sp:140,c2:'#ffffff',z:4,up:60,gr:200,w:1.4})}
+ if(x.n===10){fxRing(x.x,x.y,{u,r0:20,r1:x.r,col:'#ffd36a',c2:'#ffffff',w:7,t:.4});fxDebris(x.x,x.y,{u,n:10,sp:180,col:'#a07850',c2:'#5a4028',s:3.5});fxDecal(x.x,x.y,'crack',{u,r:x.r*.8,t:4});fxLight(x.x,x.y,x.r*1.1,'#ffd36a',{u,t:.4,a:.35});fxShake(.25,x.x,x.y)}
  if(near(x.x,x.y)&&x.n%2)S('saber',x);if(x.n===10){for(let i=0;i<4;i++){const b=i*1.57+rnd(),d=30+rnd()*90;bkDrop(u,x.x+Math.cos(b)*d,x.y+Math.sin(b)*d)}if(near(x.x,x.y))shake=Math.max(shake,.2)}};
-AUXD.bk_soryu=(x,k,t)=>{const el=x.m-x.t,q=P(x.x,x.y,0),R=x.r*q.s;g.save();g.strokeStyle=rgba('#ffd36a',.6);g.lineWidth=2;g.setLineDash([10,7]);g.lineDashOffset=-t*30;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();g.setLineDash([]);
- g.fillStyle=rgba('#ffd36a',el<.45?.08+.12*el/.45:.12);g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.fill();g.restore();if(el<.3)return;
- for(let i=0;i<16;i++){const ph=((t*2.2+i*.137)%1),b=i*2.4,d=x.r*((i*53)%17)/17,wx=x.x+Math.cos(b)*d,wy=x.y+Math.sin(b)*d,p=P(wx,wy,(1-ph)*240);g.save();g.globalAlpha=Math.min(1,k*3);g.translate(p.x,p.y);g.rotate(1.57);bukWeapon(BK_W[i%5],p.s*.8);g.restore();
-  if(ph>.9){const gq=P(wx,wy,0);g.fillStyle=rgba('#d8c8a8',.5);g.beginPath();g.ellipse(gq.x,gq.y,7*gq.s,3*gq.s,0,0,7);g.fill()}}};
+AUXD.bk_soryu=(x,k,t)=>{const el=x.m-x.t;fxTele(x.x,x.y,x.r,Math.min(1,el/.45),'#ffd36a',x,el<.45?.08+.12*el/.45:.12);if(el<.3)return;fxAlpha(fxA(x),()=>bkSoryuD(x,k,t))};
+function bkSoryuD(x,k,t){const el=x.m-x.t,q=P(x.x,x.y,0),R=x.r*q.s;if(el>=.3){bkRain(x,k,t,el);return}g.save();g.strokeStyle=rgba('#ffd36a',.6);g.lineWidth=2;g.setLineDash([10,7]);g.lineDashOffset=-t*30;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();g.setLineDash([]);
+ g.fillStyle=rgba('#ffd36a',el<.45?.08+.12*el/.45:.12);g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.fill();g.restore()}
+function bkRain(x,k,t,el){const n=fxN(16,x);for(let i=0;i<n;i++){const ph=((t*2.2+i*.137)%1),b=i*2.4,d=x.r*((i*53)%17)/17,wx=x.x+Math.cos(b)*d,wy=x.y+Math.sin(b)*d,p=P(wx,wy,(1-ph)*240);g.save();g.globalAlpha=Math.min(1,k*3);g.translate(p.x,p.y);g.rotate(1.57);bukWeapon(BK_W[i%5],p.s*.8);g.restore();
+  if(ph>.9){const gq=P(wx,wy,0);g.fillStyle=rgba('#d8c8a8',.5);g.beginPath();g.ellipse(gq.x,gq.y,7*gq.s,3*gq.s,0,0,7);g.fill();fxGlowS(gq.x,gq.y,8*gq.s,'#ffd36a',.5)}}}
 // chaîne dorée de la corde
 AUXF.bk_gchain=AUXF.buk_chain;AUXD.bk_gchain=(x,k)=>{const u=units[x.ui];if(!u||u.dead)return;const a=P(u.x,u.y,30),b=P(x.x,x.y,26);g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ffd36a',.85*Math.min(1,x.t/.12));g.lineWidth=2.6*a.s;
  g.beginPath();g.moveTo(a.x,a.y);g.quadraticCurveTo((a.x+b.x)/2,(a.y+b.y)/2-10*a.s,b.x,b.y);g.stroke();g.restore()};

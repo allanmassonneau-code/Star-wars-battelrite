@@ -16,6 +16,11 @@ DASHC[6]={src:'x.uz_leap',n:'Bond des chaînes',d:'Des chaînes te catapultent a
 // ---- sceaux marqueurs (cœur du clan) : jusqu'à 3 sur un ennemi, 8 s après le dernier posé ; le 3e scelle son chakra (une fois toutes les 8 s)
 const UZ_MKT=8,UZ_KAIR=480,UZ_BL=170,UZ_WL=230,UZ_KAI_AI={max:UZ_KAIR-20,p:.75},UZ_ST_AI={max:520,p:.9},UZ_ST_DEF={mode:'def',p:.6};
 const uzMk=t=>t&&!t.dead&&SIMT<t.uz_mkE?t.uz_mk|0:0;
+// ---- VFX (boîte à outils nr_fx.js) : or des chaînes adamantines, encre et papier des sceaux, feu des étiquettes ; les zones de danger restent nettes
+const UZ_G='#e8c860',UZ_GL='#ffe9a0';
+// impact doré (chaîne, kunai) : étincelles métalliques, éclat, petit sceau au sol qui s'efface
+function uzImp(u,e,s,dmg,big){fxBurst(e.x,e.y,UZ_GL,{u,n:8*s,sp:280*s,z:30,c2:'#ffffff',w:1.8,len:.14,t:.35});fxFlare(e.x,e.y,UZ_G,{u,z:32,r:14*s,t:.16,c2:'#ffffff'});
+ fxDecal(e.x,e.y,'seal',{u,r:22*s,t:1.2,col:UZ_G});if(dmg)fxHitStop(u,e,dmg,big)}
 function uzMark(o,t,n=1){if(!o||!t||t.dead||t.team===o.team)return;const m0=uzMk(t);t.uz_mk=Math.min(3,m0+n);t.uz_mkE=SIMT+UZ_MKT;
  if(!aux.some(x=>x.type==='uz_mkt'&&x.tg===t&&x.t>0))aux.push({type:'uz_mkt',x:t.x,y:t.y,r:0,t:UZ_MKT,m:UZ_MKT,team:o.team,owner:o,tg:t,k:0})
  if(t.uz_mk>m0)jx({jfx:'uz_mkon',ti:units.indexOf(t),x:t.x,y:t.y,t:.45,m:.45});
@@ -34,16 +39,20 @@ function uzSoul(o,t){if(!o||!t||t.dead)return;const n=uzMk(t);t.uz_mk=0;t.uz_mkE
  say(t,n?'ÂME SCELLÉE ×'+n:'ÂME SCELLÉE','#d8c8ff');if(near(t.x,t.y)){S('shadow',o);shake=Math.max(shake,.3)}}
 Object.assign(NAT,{
  uz_tagk:SP('Kunai à sceau','Kunai rapide : 14 dégâts et colle un sceau sur l\'ennemi touché',4,{line:{len:470,w:16},ai:RG(460,.7)},(u,a)=>{S('blaster',u);anim(u,'throw2',.3);
-  proj(u,a,{spd:980,r:7,dmg:14,life:.48,col:'#d8dde6',kind:'uz_kunai',onHit:(p,t)=>uzMark(p.owner,t,1)})}),
+  fxFlare(u.x+Math.cos(a)*18,u.y+Math.sin(a)*18,'#e8eef6',{u,z:34,r:10,t:.12,star:0});
+  proj(u,a,{spd:980,r:7,dmg:14,life:.48,col:'#d8dde6',kind:'uz_kunai',onHit:(p,t)=>{uzMark(p.owner,t,1);uzImp(p.owner,t,1,0)}})}),
  uz_harpoon:SP('Chaîne-harpon','Une chaîne adamantine harponne le 1er ennemi : ramené à toi (16 dégâts), étourdi 0,4 s et marqué d\'un sceau',8,{hero:'cadbane',line:{len:450,w:20},ai:RG(440,.55,110)},(u,a)=>{S('dash',u);S('deflect',u);anim(u,'uz_chain',.55);
-  proj(u,a,{spd:1000,r:10,dmg:16,life:.45,col:'#e8c860',hook:1,stun:.4,kind:'uz_chainp',onHit:(p,t)=>{const o=p.owner;uzMark(o,t,1);if(near(t.x,t.y))S('heavy',o);
+  fxGlyph(u.x,u.y,UZ_G,{u,ui:units.indexOf(u),r:30,t:.45,al:.5});fxFlare(u.x+Math.cos(a)*20,u.y+Math.sin(a)*20,UZ_G,{u,z:32,r:12,t:.14});
+  proj(u,a,{spd:1000,r:10,dmg:16,life:.45,col:'#e8c860',hook:1,stun:.4,kind:'uz_chainp',onHit:(p,t)=>{const o=p.owner;uzMark(o,t,1);if(near(t.x,t.y))S('heavy',o);uzImp(o,t,1.3,16,1);fxRing(t.x,t.y,{u:o,r0:6,r1:34,col:UZ_G,w:4,t:.3});
    jx({jfx:'uz_wrap',ti:units.indexOf(t),ui:units.indexOf(o),x:t.x,y:t.y,t:.8,m:.8})}})}),
  uz_kai:SP('Sceaux : Détonation','Fait exploser les sceaux des ennemis à moins de 480 : 12 + 12 par sceau ; à 3 sceaux, étourdi 0,7 s',9,{tele:{self:1,r:UZ_KAIR},ai:null},(u)=>{const L=[];for(const e of enemies(u))if(uzMk(e)&&dist(u,e)<UZ_KAIR+e.r)L.push(e);
   if(!L.length){const i=u.ch.abil.findIndex(x=>x&&x.key==='uz_kai');if(i>=0){u.cds[i]=.6;u.energy=Math.min(100,u.energy+jcost(u.ch.abil[i]))}say(u,'AUCUN SCEAU','#e8c860');return}
-  S('genjutsu',u);anim(u,'uz_kai',.55);jx({jfx:'uz_kaic',ui:units.indexOf(u),x:u.x,y:u.y,t:.55,m:.55});
+  S('genjutsu',u);anim(u,'uz_kai',.55);jx({jfx:'uz_kaic',ui:units.indexOf(u),x:u.x,y:u.y,t:.55,m:.55});fxGlyph(u.x,u.y,UZ_G,{u,ui:units.indexOf(u),r:40,t:.7});fxCharge(u,'#ffb03a',{t:.3,n:8,z:54,hd:12});
   for(const e of L){const n=uzMk(e);e.uz_mk=0;e.uz_mkE=0;jx({jfx:'uz_kaib',ti:units.indexOf(e),x:e.x,y:e.y,n,t:.3,m:.3});
    later(u,.28,()=>{if(e.dead)return;VFX='tag';hit(e,u,12+12*n,{unblockable:1,stun:n>=3?.7:0,kb:n>=3?0:110,fx:u.x,fy:u.y});VFX=null;jx({jfx:'uz_kaiboom',x:e.x,y:e.y,n,t:.6,m:.6});
-    if(near(e.x,e.y)){S('boom',u);shake=Math.max(shake,.1+.06*n);sparks(e.x,e.y,'#ff9a3a',6+4*n,'tag')}})}}),
+    if(near(e.x,e.y)){S('boom',u);sparks(e.x,e.y,'#ff9a3a',3+2*n,'tag')}
+    // explosion des étiquettes : plus grosse par sceau, trace brûlée + sceau qui s'éteint au sol, gel visuel à 2 sceaux et plus
+    fxImpact(e.x,e.y,'tag',.8+.35*n,{u,r:40+16*n});fxDecal(e.x,e.y,'seal',{u,r:30+8*n,t:1.4,col:'#ffb03a'});if(n>=3)fxRing(e.x,e.y,{u,r0:10,r1:70,col:UZ_GL,w:6,t:.4});fxHitStop(u,e,12+12*n,n>=2)})}}),
  uz_cage:SP('Cage adamantine','Des chaînes jaillissent sous la zone : 20 dégâts, entrave 0,7 s et un sceau, puis enferment 2,5 s (ni ennemi ni tir ne passe)',13,{tele:{r:130,max:420},ai:RG(420,.55)},(u,a,td)=>{const p=atP(u,a,td,420);S('deflect',u);anim(u,'uz_slam',.45);u.root=Math.max(u.root,.3);
   aux.push({type:'uz_cage',x:p.x,y:p.y,r:130,t:2.95,m:2.95,team:u.team,owner:u,vfx:'chain',k:0,sd:{}})}),
  // Cage adamantine (v5, fusion avec le Rempart) : visée tout près de soi (< 150), elle se dresse en rempart
@@ -59,32 +68,37 @@ Object.assign(NAT,{
  uz_wall:SP('Rempart de chaînes','Un rempart de chaînes jaillit devant toi 3 s : il arrête les tirs et le passage des ennemis ; en surgissant, 14 dégâts et repousse',12,{line:{len:90,w:UZ_WL},ai:{mode:'def',p:.5}},(u,a)=>{S('heavy',u);S('deflect',u);anim(u,'uz_slam',.45);
   const c=fwd(u,a,70),ca=Math.cos(a),sa=Math.sin(a);aux.push({type:'uz_wall',x:c.x,y:c.y,a,len:UZ_WL,w:0,r:0,t:3,m:3,team:u.team,owner:u,vfx:'chain',k:0,sd:{}});
   VFX='chain';for(const e of enemies(u)){const dx=e.x-c.x,dy=e.y-c.y,f=dx*ca+dy*sa,s=-dx*sa+dy*ca;if(Math.abs(s)<UZ_WL/2+e.r&&Math.abs(f)<28+e.r)hit(e,u,14,{kb:240,fx:c.x-ca*60,fy:c.y-sa*60,unblockable:1})}VFX=null;
-  if(near(c.x,c.y)){shake=Math.max(shake,.15);sparks(c.x,c.y,'#e8c860',14,'chain')}}),
+  if(near(c.x,c.y))sparks(c.x,c.y,'#e8c860',6,'chain');
+  for(let i=-1;i<=1;i++){const px=c.x-sa*i*UZ_WL*.38,py=c.y+ca*i*UZ_WL*.38;fxBurst(px,py,UZ_GL,{u,n:5,sp:150,z:8,up:220,gr:320,w:1.6,len:.12,t:.45});fxDebris(px,py,{u,n:3,sp:110,col:'#8a6a48',c2:'#5a4028',s:3})}fxLight(c.x,c.y,140,UZ_G,{u,t:.4,a:.35})}),
  uz_swap:SP('Sceau d\'échange','Kunai-sceau : échange ta place avec l\'ennemi touché (ralenti), sinon te téléporte là où il se plante',10,{hero:'dooku',ai:ESC},(u,a,td)=>{S('dash',u);anim(u,'point',.3);const L=clamp(td||300,120,380);
   proj(u,a,{spd:1150,r:9,dmg:4,life:L/1150,col:'#e8c860',kind:'uz_kunai',swap:1,onHit:(p,t)=>{const o=p.owner;if(t.unstop>0||t.dead)return;p.uzSw=1;t.slow=Math.max(t.slow,1);
    jx({jfx:'uz_swapfx',x:o.x,y:o.y,x2:t.x,y2:t.y,t:.5,m:.5});if(near(o.x,o.y)){sparks(o.x,o.y,'#ececf2',8,'smoke');sparks(t.x,t.y,'#ececf2',8,'smoke');S('poof',o)}}});
   aux.push({type:'uz_swapk',x:u.x,y:u.y,r:0,t:1,m:1,team:u.team,owner:u,p:projs[projs.length-1]})}),
  uz_leap:SP('Bond des chaînes','Des chaînes te catapultent au curseur ; à l\'atterrissage, elles fouettent autour de toi : 12 dégâts, entrave 0,5 s et un sceau',8,{ai:{mode:'gap',min:150,max:300,p:.45}},(u,a,td)=>{S('dash',u);S('deflect',u);anim(u,'leap',.42);const L=clamp(td||260,90,290);
-  jx({jfx:'uz_leapc',x:u.x,y:u.y,a,t:.5,m:.5});
+  jx({jfx:'uz_leapc',x:u.x,y:u.y,a,t:.5,m:.5});fxSmoke(u.x,u.y,{u,col:'#c8b898',n:3,r:20,s:10,t:.6,al:.22});
   dash(u,a,L,.38,{jump:46,end:()=>{if(u.dead)return;VFX='chain';for(const e of enemies(u))if(dist(u,e)<92+e.r){const sd=uzMk(e)>0;if(hit(e,u,8,{root:.3,unblockable:1})&&sd)uzMark(u,e,1)}VFX=null;
-   jx({jfx:'uz_lash',x:u.x,y:u.y,t:.5,m:.5});if(near(u.x,u.y)){S('heavy',u);shake=Math.max(shake,.12)}}})}),
+   jx({jfx:'uz_lash',x:u.x,y:u.y,t:.5,m:.5});if(near(u.x,u.y))S('heavy',u);fxRing(u.x,u.y,{u,r0:16,r1:92,col:UZ_G,w:5,t:.35});fxDecal(u.x,u.y,'seal',{u,r:44,t:1.4,col:UZ_G});fxSmoke(u.x,u.y,{u,col:'#c8b898',n:4,r:40,s:12,t:.7,al:.22,rise:14})}})}),
  uz_shiki:ULT('Shiki Fûjin','En plus du chakra, coûte 12 % de tes PV. Le Shinigami se dresse 0,7 s, puis sa main saisit le 1er ennemi de la ligne : 34 dégâts, puis âme scellée 3 s (12 dégâts/s, ralenti, ni jutsu ni recharge) ; +8 dégâts par sceau',{hero:'thrawn',line:{len:520,w:36},ai:{max:480,p:.8}},(u,a)=>{S('genjutsu',u);S('roar',u);anim(u,'uz_shiki',1.1);u.root=Math.max(u.root,.75);u.uz_rtE=SIMT+.7;u.uz_rtB=0;
-  jx({jfx:'uz_shini',ui:units.indexOf(u),x:u.x,y:u.y,a,t:1.35,m:1.35});
+  jx({jfx:'uz_shini',ui:units.indexOf(u),x:u.x,y:u.y,a,t:1.35,m:1.35});fxSmoke(u.x-Math.cos(a)*30,u.y-Math.sin(a)*30,{u,col:'#4a2a6a',n:6,r:40,s:18,t:1.2,al:.28,rise:50});fxLight(u.x,u.y,160,'#a080ff',{u,t:1.1,a:.35});fxGlyph(u.x,u.y,'#c8b8ff',{u,ui:units.indexOf(u),r:50,t:1});
   later(u,.7,()=>{if(u.dead||u.uz_rtB||u.stun>0||u.sleepT<0){say(u,'RITUEL BRISÉ','#c8a8ff');return}const h0=u.hp;u.hp=Math.max(1,u.hp-Math.round(u.max*.12));say(u,'-'+Math.round(h0-u.hp)+' PV : LE PRIX DU SCEAU','#c8a8ff');S('shadow',u);
-   proj(u,u.aim,{spd:950,r:16,dmg:34,life:.55,col:'#d8c8ff',kind:'uz_shand',vfx:'chakra',noClash:1,o:{unblockable:1},onHit:(p,t)=>uzSoul(p.owner,t)});if(near(u.x,u.y))shake=Math.max(shake,.25)})}),
+   proj(u,u.aim,{spd:950,r:16,dmg:34,life:.55,col:'#d8c8ff',kind:'uz_shand',vfx:'chakra',noClash:1,o:{unblockable:1},onHit:(p,t)=>{uzSoul(p.owner,t);const o=p.owner;fxPillar(t.x,t.y,'#b8a0ff',{u:o,h:200,w:24,t:.7,al:.45});fxBurst(t.x,t.y,'#c8b8ff',{u:o,n:14,sp:120,z:50,up:60,gr:-80,w:3,sh:'petal',c2:'#f4f0ff',t:.9});fxFlare(t.x,t.y,'#c8b8ff',{u:o,z:50,r:26,t:.25});fxRing(t.x,t.y,{u:o,r0:8,r1:50,col:'#a080ff',w:5,t:.4});fxHitStop(o,t,34,1);fxShake(.25,t.x,t.y)}});fxFlare(u.x+Math.cos(u.aim)*24,u.y+Math.sin(u.aim)*24,'#c8b8ff',{u,z:60,r:22,t:.2})})}),
  uz_bind:ULT('Entrave du démon','Après 0,4 s, des chaînes saisissent 3 ennemis à moins de 380 : entravés 0,6 s puis enchaînés à toi 3 s (170 au plus, ralentis), 8 dégâts par 0,5 s et un sceau par seconde ; tu restes immobile, un étourdissement les brise',{tele:{self:1,r:380},ai:SELF(330,.8)},(u)=>{S('heavy',u);S('deflect',u);anim(u,'uz_bind',4);u.root=Math.max(u.root,.45);u.uz_rtE=SIMT+.4;u.uz_rtB=0;
-  const ui=units.indexOf(u);jx({jfx:'uz_bindw',ui,x:u.x,y:u.y,t:.45,m:.45});
+  const ui=units.indexOf(u);jx({jfx:'uz_bindw',ui,x:u.x,y:u.y,t:.45,m:.45});fxCharge(u,UZ_G,{t:.4,n:12,z:44,hd:0,r:60});fxLight(u.x,u.y,180,UZ_G,{u,t:.5,a:.35});
   later(u,.4,()=>{if(u.dead||u.uz_rtB||u.stun>0||u.sleepT<0){say(u,'CHAÎNES BRISÉES','#e8c860');if(u.anim&&u.anim.k==='uz_bind')u.anim=null;return}
    const L=enemies(u).filter(e=>dist(u,e)<380+e.r&&!(e.stealth>0)).sort((p,q)=>dist(u,p)-dist(u,q)).slice(0,3);if(!L.length){say(u,'PERSONNE À ENCHAÎNER','#e8c860');if(u.anim&&u.anim.k==='uz_bind')u.anim=null;return}
-   if(near(u.x,u.y)){S('heavy',u);shake=Math.max(shake,.3)}
-   for(const e of L){aux.push({type:'uz_bind',x:e.x,y:e.y,r:0,t:3.5,m:3.5,team:u.team,owner:u,tg:e,ui,ti:units.indexOf(e),k:.5,n:0});VFX='chain';hit(e,u,8,{root:.6,unblockable:1});VFX=null;uzMark(u,e,1);if(near(e.x,e.y))sparks(e.x,e.y,'#e8c860',10,'chain')}})}),
+   if(near(u.x,u.y))S('heavy',u);fxShake(.28,u.x,u.y);fxRing(u.x,u.y,{u,r0:20,r1:120,col:UZ_G,c2:'#ffffff',w:7,t:.4});fxDecal(u.x,u.y,'seal',{u,r:60,t:3.6,col:UZ_G,al:.45});fxBurst(u.x,u.y,UZ_GL,{u,n:14,sp:240,z:44,up:80,gr:200,w:1.8,len:.14,t:.5});
+   for(const e of L){aux.push({type:'uz_bind',x:e.x,y:e.y,r:0,t:3.5,m:3.5,team:u.team,owner:u,tg:e,ui,ti:units.indexOf(e),k:.5,n:0});VFX='chain';hit(e,u,8,{root:.6,unblockable:1});VFX=null;uzMark(u,e,1);uzImp(u,e,1.3,8,1);fxArc(u.x,u.y,e.x,e.y,UZ_GL,{u,z:44,z2:30,w:1.6,t:.25,j:.08})}})}),
 });
 Object.assign(NATHERO,{uz:'savage'});
 // ---- mécaniques (hôte)
 // Cage adamantine : 0,45 s d'alerte, jaillissement (entrave + sceau), puis barrière : les ennemis ne la franchissent pas, ni leurs tirs
 AUXF.uz_cage=(x,dt)=>{const o=x.owner,el=(x.m-.45)-x.t;if(el<0)return;
  if(!x.on){x.on=1;VFX='chain';for(const e of enemies(o)){const d=Math.hypot(e.x-x.x,e.y-x.y);x.sd[units.indexOf(e)]=d<x.r?1:0;if(d<x.r+e.r){hit(e,o,20,{root:.7,unblockable:1});uzMark(o,e,1)}}VFX=null;
-  jx({jfx:'uz_cagef',x:x.x,y:x.y,r:x.r,t:x.t,m:x.t});ring(x.x,x.y,x.r,'#e8c860');if(near(x.x,x.y)){S('heavy',o);S('deflect',o);shake=Math.max(shake,.25);sparks(x.x,x.y,'#e8c860',16,'chain')}}
+  jx({jfx:'uz_cagef',x:x.x,y:x.y,r:x.r,t:x.t,m:x.t});if(near(x.x,x.y)){S('heavy',o);S('deflect',o);sparks(x.x,x.y,'#e8c860',8,'chain')}
+  // onde dorée au rayon EXACT de la cage, formule au sol qui reste le temps de l'enfermement, gerbes le long du bord
+  fxRing(x.x,x.y,{u:o,r0:x.r*.4,r1:x.r,col:UZ_G,c2:'#ffffff',w:7,t:.4});fxDecal(x.x,x.y,'seal',{u:o,r:x.r*.92,t:2.9,col:UZ_G,al:.4});fxLight(x.x,x.y,x.r*1.3,UZ_G,{u:o,t:.5,a:.4});
+  for(let i=0;i<6;i++){const b=i*1.047+.39;fxBurst(x.x+Math.cos(b)*x.r,x.y+Math.sin(b)*x.r,UZ_GL,{u:o,n:4,sp:160,z:10,up:200,gr:300,w:1.6,len:.12,t:.4})}
+  for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)uzImp(o,e,1,20)}
  x.lp=x.lp||{};for(const e of units){if(e.dead||e.team===x.team)continue;const i=units.indexOf(e),dx=e.x-x.x,dy=e.y-x.y,d=Math.hypot(dx,dy)||1,l=x.lp[i];let s=x.sd[i];if(s==null||(l&&!l.d&&!e.dash&&Math.hypot(e.x-l.x,e.y-l.y)>60))s=x.sd[i]=d<x.r?1:0;
   const m=s?x.r-e.r-3:x.r+e.r+3;if(s?d>m:d<m){e.x=x.x+dx/d*m;e.y=x.y+dy/d*m;e.kx*=.2;e.ky*=.2}if(!l)x.lp[i]={x:e.x,y:e.y,d:!!e.dash};else{l.x=e.x;l.y=e.y;l.d=!!e.dash}}
  for(const p of projs){if(p.dead||p.grenade||p.ret||!p.owner||p.owner.team===x.team)continue;const d=Math.hypot(p.x-x.x,p.y-x.y)-x.r,d0=Math.hypot(p.x-p.vx*dt-x.x,p.y-p.vy*dt-x.y)-x.r,d1=Math.hypot(p.x+p.vx*dt-x.x,p.y+p.vy*dt-x.y)-x.r;
@@ -140,18 +154,18 @@ function uzFence(x,y,R,side,h,al=1){if(h<=0||al<=0)return;const N=8,Q=[];for(let
  g.restore()}
 // ---- objets au sol
 AUXD.uz_cage=(x,k,t)=>{const el=(x.m-.45)-x.t,w=el<0?Math.max(0,1+el/.45):1,a=el<0?.9:.55*k;
- if(el<0){g.fillStyle=rgba('#e8c860',.08+.14*w);gEll(x.x,x.y,x.r*w);g.fill()}
+ if(el<0){fxTele(x.x,x.y,x.r,w,UZ_G,x,.06);fxGlowG(x.x,x.y,x.r*.6,UZ_G,.25*w*fxA(x))} // alerte : forme exacte de la cage, jamais atténuée
  uzSealG(x.x,x.y,x.r*(el<0?.35+.65*ezo(w):1),t*(el<0?2.4:.5),rgba('#e8c860',a),rgba('#2a2a33',a*.85));
  if(el<0)uzFence(x.x,x.y,x.r,-1,12*w);else uzFence(x.x,x.y,x.r,0,64*Math.min(1,el/.18),k)};
 // ---- projectiles
 // kunai à étiquette de sceau (doré : kunai d'échange)
-PROJD.uz_kunai=(p,R,ra,t)=>{g.rotate(ra);if(p.col==='#e8c860'){g.globalCompositeOperation='lighter';circ(-21,0,9,'rgba(232,200,96,.35)');circ(2,0,7,'rgba(232,200,96,.25)');g.globalCompositeOperation='source-over'}
+PROJD.uz_kunai=(p,R,ra,t)=>{g.rotate(ra);fxTailL(44,9,p.col==='#e8c860'?UZ_G:'#e8eef6',.4*fxA(p));if(p.col==='#e8c860'){g.globalCompositeOperation='lighter';circ(-21,0,9,'rgba(232,200,96,.35)');circ(2,0,7,'rgba(232,200,96,.25)');g.globalCompositeOperation='source-over'}
  const w=Math.sin(t/40+p.x*.03)*2.4;g.fillStyle='#f0e0b0';g.beginPath();g.moveTo(-17,-1.6);g.lineTo(-28,-3.5+w);g.lineTo(-28,3.5+w);g.lineTo(-17,1.6);g.closePath();g.fill();g.strokeStyle='#c0302a';g.lineWidth=1.2;g.beginPath();g.moveTo(-21,w*.4-1.5);g.lineTo(-25,w*.8+1.5);g.stroke();
  g.strokeStyle='#3a3a44';g.lineWidth=1.3;g.beginPath();g.arc(-15.5,0,2.6,0,7);g.stroke();g.fillStyle='#3a3a44';g.fillRect(-13,-1.6,8,3.2);
  g.fillStyle='#e8eef6';g.beginPath();g.moveTo(-5,-4.2);g.lineTo(11,0);g.lineTo(-5,4.2);g.closePath();g.fill();g.fillStyle='#9aa2ae';g.beginPath();g.moveTo(-5,0);g.lineTo(11,0);g.lineTo(-5,4.2);g.closePath();g.fill()};
 // tête de chaîne : pointe dorée, la chaîne part de la main du lanceur
 PROJD.uz_chainp=(p,R,ra,t)=>{if(p.ox!=null){const q=P(p.x,p.y,28),a=P(p.ox,p.oy,30);uzChain((a.x-q.x)/q.s,(a.y-q.y)/q.s,0,0,1,5,'#e8c860')}
- g.rotate(ra);g.fillStyle='#f4dc8a';g.beginPath();g.moveTo(16,0);g.lineTo(-3,-6.5);g.lineTo(1,0);g.lineTo(-3,6.5);g.closePath();g.fill();g.strokeStyle='#8a6a2a';g.lineWidth=1.2;g.stroke();g.fillStyle='#2a2a33';g.fillRect(-9,-1.8,7,3.6)};
+ g.rotate(ra);fxGlowS(4,0,22,UZ_G,.5*fxA(p),14);g.fillStyle='#f4dc8a';g.beginPath();g.moveTo(16,0);g.lineTo(-3,-6.5);g.lineTo(1,0);g.lineTo(-3,6.5);g.closePath();g.fill();g.strokeStyle='#8a6a2a';g.lineWidth=1.2;g.stroke();g.fillStyle='#2a2a33';g.fillRect(-9,-1.8,7,3.6)};
 // cinq flammes de chakra qui tournent en pentagone
 PROJD.uz_gogyo=(p,R,ra,t)=>{g.globalCompositeOperation='lighter';circ(0,0,R*.95,'rgba(160,112,255,.25)');for(let i=0;i<5;i++){const b=t/80+i*1.2566,x=Math.cos(b)*R*1.15,y=Math.sin(b)*R*.85;g.fillStyle=i%2?'rgba(190,150,255,.9)':'rgba(140,90,255,.9)';
  g.beginPath();g.moveTo(x-3.6,y+1);g.quadraticCurveTo(x-1,y-12,x+.5,y-15);g.quadraticCurveTo(x+1.5,y-8,x+3.6,y+1);g.closePath();g.fill();circ(x,y-1,1.8,'#f4ecff')}circ(0,0,R*.35,'#f4ecff')};
@@ -203,13 +217,14 @@ AUXD.uz_wall=(x,k,t)=>{const el=x.m-x.t,h=60*ezo(Math.min(1,el/.16))*Math.min(1,
 // chaînes de l'Entrave du démon : elles sortent du dos du lanceur et s'enroulent autour de chaque ennemi
 AUXD.uz_bind=(x,k,t)=>{const o=units[x.ui],e=units[x.ti];if(!o||!e||o.dead||e.dead)return;const j=(x.ti*1.7)%3,a=P(o.x-Math.cos(o.aim||0)*8,o.y-Math.sin(o.aim||0)*8,40+j*6),b=P(e.x,e.y,30),s=b.s;g.globalAlpha*=Math.min(1,x.t*4);
  uzChain(a.x,a.y,b.x,b.y,s,(12+Math.sin(t*7+x.ti)*5)*s,'#e8c860');const q=P(e.x,e.y,0);g.lineCap='round';g.strokeStyle='rgba(40,28,8,.6)';g.lineWidth=4*s;g.beginPath();for(const hh of[16,30,44]){g.moveTo(q.x+16*s,q.y-hh*s);g.ellipse(q.x,q.y-hh*s,16*s,6*s,(hh-30)*.015,0,7)}g.stroke();
- g.strokeStyle='#e8c860';g.lineWidth=2.2*s;g.setLineDash([3.5*s,2.2*s]);g.lineDashOffset=-t*20;g.stroke();g.setLineDash([]);g.globalCompositeOperation='lighter';circ(a.x,a.y,5*a.s,rgba('#ffe9a0',.6))};
+ g.strokeStyle='#e8c860';g.lineWidth=2.2*s;g.setLineDash([3.5*s,2.2*s]);g.lineDashOffset=-t*20;g.stroke();g.setLineDash([]);g.globalCompositeOperation='lighter';circ(a.x,a.y,5*a.s,rgba('#ffe9a0',.6));
+ {const am=fxA(x);for(let i=0;i<2;i++){const m=(t*1.4+i*.5+x.ti*.13)%1;fxGlowS(lerp(a.x,b.x,m),lerp(a.y,b.y,m)+Math.sin(m*Math.PI)*10*s,7*s,UZ_GL,.7*am*Math.sin(m*Math.PI))}fxGlowS(b.x,b.y-4*s,22*s,UZ_G,.18*am,12*s)}};
 AUXD.uz_scrl=()=>{};
 // ---- projectiles
 // shuriken stocké
 PROJD.uz_shur=(p,R,ra,t)=>{g.rotate(t/28+p.x*.01);g.fillStyle='#c8ccd4';g.strokeStyle='#5a606a';g.lineWidth=1;g.beginPath();for(let i=0;i<8;i++){const b=i*Math.PI/4,r=i%2?3:10;i?g.lineTo(Math.cos(b)*r,Math.sin(b)*r):g.moveTo(r,0)}g.closePath();g.fill();g.stroke();circ(0,0,1.8,'#2a2a33')};
 // main du Shinigami : bras spectral, paume et doigts griffus
-PROJD.uz_shand=(p,R,ra,t)=>{g.rotate(ra);g.globalCompositeOperation='lighter';const gr=g.createLinearGradient(-80,0,0,0);gr.addColorStop(0,'rgba(170,140,255,0)');gr.addColorStop(1,'rgba(200,180,255,.55)');g.fillStyle=gr;g.beginPath();g.moveTo(-80,-5);g.quadraticCurveTo(-30,-11,0,-9);g.lineTo(0,9);g.quadraticCurveTo(-30,11,-80,5);g.closePath();g.fill();
+PROJD.uz_shand=(p,R,ra,t)=>{g.rotate(ra);fxTailL(130,40,'#a080ff',.45*fxA(p));fxGlowS(6,0,R*2.4,'#c8b8ff',.4*fxA(p));g.globalCompositeOperation='lighter';const gr=g.createLinearGradient(-80,0,0,0);gr.addColorStop(0,'rgba(170,140,255,0)');gr.addColorStop(1,'rgba(200,180,255,.55)');g.fillStyle=gr;g.beginPath();g.moveTo(-80,-5);g.quadraticCurveTo(-30,-11,0,-9);g.lineTo(0,9);g.quadraticCurveTo(-30,11,-80,5);g.closePath();g.fill();
  circ(4,0,R*1.15,'rgba(160,120,255,.22)');g.globalCompositeOperation='source-over';g.fillStyle='#ece6ff';g.strokeStyle='#6a4a9a';g.lineWidth=1.4;g.beginPath();g.ellipse(2,0,9,8,0,0,7);g.fill();g.stroke();
  const w=Math.sin(t/60)*1.5;g.lineCap='round';for(let i=0;i<4;i++){const y=-6+i*4;g.strokeStyle='#6a4a9a';g.lineWidth=4.2;g.beginPath();g.moveTo(8,y*.8);g.quadraticCurveTo(16,y,20+(i===1||i===2?3:0),y*1.1+w);g.stroke();g.strokeStyle='#ece6ff';g.lineWidth=2.6;g.stroke();circ(21+(i===1||i===2?3:0),y*1.1+w,1.1,'#2a1840')}
  g.strokeStyle='#6a4a9a';g.lineWidth=4;g.beginPath();g.moveTo(0,7);g.quadraticCurveTo(6,12,12,11);g.stroke();g.strokeStyle='#ece6ff';g.lineWidth=2.4;g.stroke()};
@@ -231,7 +246,7 @@ JFXD.uz_kaib=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;const n=f.n||1,q=P(tg.x,tg.
  g.globalCompositeOperation='lighter';circ(q.x,q.y,(10+e*20)*s,rgba('#ff7a2a',.35*e))};
 // Détonation : explosion de papier et de flammes, plus grosse par sceau
 JFXD.uz_kaiboom=(f,k,e)=>{const n=f.n||1,q=P(f.x,f.y,30),g0=P(f.x,f.y,0),s=q.s,R=(18+e*(40+16*n))*s;g.fillStyle=rgba('#2a1a10',.3*k);g.beginPath();g.ellipse(g0.x,g0.y,R*.8,R*.8*K,0,0,7);g.fill();
- g.globalCompositeOperation='lighter';if(e<.45){const w=1-e/.45;circ(q.x,q.y,R,rgba('#ff7a2a',.45*w));circ(q.x,q.y,R*.55,rgba('#ffd36a',.7*w));circ(q.x,q.y,R*.22,rgba('#ffffff',.9*w))}
+ g.globalCompositeOperation='lighter';if(e<.45){const w=1-e/.45;fxGlowS(q.x,q.y,R*1.2,'#ff7a2a',.55*w);fxGlowS(q.x,q.y,R*.5,'#ffd36a',.45*w)}
  g.strokeStyle=rgba('#ffb03a',.7*k);g.lineWidth=4*k+1;g.beginPath();g.ellipse(g0.x,g0.y,R*1.2,R*1.2*K,0,0,7);g.stroke();g.globalCompositeOperation='source-over';
  for(let i=0,N=6+4*n;i<N;i++){const b=i*2.399+f.x,d=R*(.6+((i*37)%50)/60),x=q.x+Math.cos(b)*d,y=q.y+Math.sin(b)*d*.6-30*s*e+60*s*e*e;g.save();g.translate(x,y);g.rotate(b+e*9);g.globalAlpha=k;g.fillStyle=i%3?'#f2e4b8':'#c0302a';g.fillRect(-2.5*s,-4*s,5*s,8*s);g.restore()}};
 // Parchemin de stockage : grand parchemin déroulé devant le lanceur, formule de sceau qui tourne

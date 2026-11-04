@@ -242,13 +242,17 @@ function headAcc2D(h,hx,hy,R,ex,back,fl){const a=h.acc,c=v=>fl?'#fff':v;
  if(a==='kabuto'){outlined(()=>{g.arc(hx,hy-1.5,R+1.6,Math.PI,2*Math.PI)},c('#3a3a48'));g.fillStyle=c('#2a2a34');g.fillRect(hx-R-3,hy-2.5,2*R+6,3);if(!back){g.strokeStyle=c('#e8c040');g.lineWidth=1.8;g.beginPath();g.moveTo(ex,hy-10);g.lineTo(ex-6,hy-22);g.moveTo(ex,hy-10);g.lineTo(ex+6,hy-22);g.stroke()}}
  if(a==='paille'){outlined(()=>{g.moveTo(hx-21,hy-5);g.lineTo(hx,hy-27);g.lineTo(hx+21,hy-5);g.quadraticCurveTo(hx,hy-1,hx-21,hy-5)},c('#c8a860'));g.strokeStyle=c('#8a6a3a');g.lineWidth=.7;for(let i=-2;i<=2;i++){g.beginPath();g.moveTo(hx,hy-26);g.lineTo(hx+i*8,hy-4.6);g.stroke()}
   g.fillStyle=c('#f0ece0');for(const x of back?[-14,-7,0,7,14]:[-17,-12,12,17])g.fillRect(hx+x-1,hy-4,2,9);if(!back)for(const s of[-1,1]){g.fillStyle=c('#c02a2a');g.fillRect(hx+s*15-.5,hy-3,1,5);blob(hx+s*15,hy+3,1.8,c('#f0c840'))}}}
+// éclair blanc du coup reçu : court (130 ms au plus par rafale), pour que les coups répétés (broyage, dôme) ne blanchissent pas la cible en continu
+function hitFl(u){if(!(u.flash>0)||u.dead){u._fl0=0;return 0}const n=performance.now();if(!u._fl0||n-(u._flL||0)>90)u._fl0=n;u._flL=n;return n-u._fl0<130?Math.min(1,u.flash/.12):0}
 function drawNinja(u,bx,by,s,ghost){
  const L=u.ch.look,h=L.head,W=L.weapon,k=W.k||'fist',t=performance.now()/1000;
- const fx=Math.cos(u.aim),fy=Math.sin(u.aim),back=fy<-.3,fl=u.flash>0,sk=L.scale||1;
+ const fx=Math.cos(u.aim),fy=Math.sin(u.aim),back=fy<-.3,fl=hitFl(u)>0,sk=L.scale||1;
  const run=u.dash?2:(u.haste>0||u.sprint)&&u.moving?2:u.moving?1:0;
  g.save();g.translate(bx,by);g.scale(s*sk,s*sk);if(u.phase>0)g.globalAlpha*=.35+Math.sin(t*30)*.1;
  if(u.dead){g.globalAlpha=Math.max(0,1-u.deadT*.6);g.rotate(Math.min(1.4,u.deadT*6)*(fx<0?-1:1))}
  if(u.stun>0)g.rotate(Math.sin(t*12)*.06);
+ // projeté (airT) : renversé en l'air, puis couché tant qu'il est étourdi (2D sans WebGL)
+ if(u.airT>0&&!u.dead){u._kd2=1;g.translate(0,-6);g.rotate(-(fx>=0?1:-1)*.85)}else if(u._kd2&&u.stun>0&&!u.dead){g.translate(0,-2);g.rotate(-(fx>=0?1:-1)*1.35)}else u._kd2=0;
  const sw=u.swing>0?u.swing/.18:0,cs=cmbStep(u),cph=sw>0?punchK(sw):0,fs=Math.cos(u.aim)>=0?1:-1;if(sw>0)g.translate(Math.cos(u.aim)*[4,6,10,5,7,12][cs]*cph,Math.sin(u.aim)*3*cph);
  if(cs===5){g.translate(0,-16*cph);g.rotate(fs*.38*cph)}else if(cs===3){g.translate(0,-6*cph);g.rotate(-fs*.12*cph)}else if(cs===4)g.rotate(-fs*.26*cph);else if(cs===2)g.rotate(fs*.14*cph);else if(cs===1)g.rotate(fs*.07*cph);
  // image rémanente du coup final

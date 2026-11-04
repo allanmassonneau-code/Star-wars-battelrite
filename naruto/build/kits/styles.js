@@ -30,9 +30,12 @@ const stCd=(u,cd)=>{u.cds[0]=cd*(u.rapid>0?.45:1)}; // rythme propre à chaque c
 const stCad=ab=>{const m=/T=\[0,((?:\[[^\[\]]*\],?){5})\]/.exec(String(ab&&ab.f)),L=m&&m[1].match(/\[[^\[\]]*\]/g);if(!L||L.length!==5)return null;const v=L.map(x=>+x.slice(1,-1).split(',')[3]);return v.every(x=>x>0)?v:null};
 // coup au corps à corps : melee() du moteur (combo, endurance, 5e coup, renvoi des tirs) ; l'arc générique au sol est remplacé par la traînée du style (tr),
 // cb(e) est appelé pour chaque ennemi vraiment touché (ni esquivé, ni paré)
-function stMelee(u,a,R,arc,dmg,o,tr,cb){const L=cb?stIn(u,a,R,arc):[],H=L.map(e=>e.hp+(e.shield||0)),i=fx.length,n=melee(u,a,R,arc,dmg,o||{});
+function stMelee(u,a,R,arc,dmg,o,tr,cb){const c5=stC(u)===5,L=cb||c5?stIn(u,a,R,arc):[],H=L.map(e=>e.hp+(e.shield||0)),i=fx.length,n=melee(u,a,R,arc,dmg,o||{});
  if(fx[i]&&fx[i].swing)fx.splice(i,1);if(tr)jx(Object.assign({jfx:'st_arc',ui:stI(u),x:u.x,y:u.y,a,R,w:arc,t:.26,m:.26},tr));
- L.forEach((e,k)=>{if(e.hp+(e.shield||0)<H[k]-.01)cb(e)});return n}
+ let f5=null;L.forEach((e,k)=>{if(e.hp+(e.shield||0)<H[k]-.01){if(cb)cb(e);if(c5&&!f5)f5=e}});if(f5)stFx5(u,f5,a,dmg);return n}
+// 5e coup qui touche : impact aux couleurs du style (palette de son vfx) et gel bref des deux ninjas
+function stFx5(u,e,a,dmg){const ab=u.ch.abil[0],v=ab&&ab.vfx||'tai',C=fxPal(v),x=e.x-Math.cos(a)*e.r*.5,y=e.y-Math.sin(a)*e.r*.5;
+ fxFlare(x,y,C.a,{u,z:34,r:24,t:.18,c2:C.h});fxBurst(x,y,C.b,{u,z:34,n:9,sp:300,gr:60,up:30,w:1.8,c2:C.h,a,arc:1.8,add:C.e==='blood'?0:1});fxRing(e.x,e.y,{u,r0:8,r1:42,col:C.a,w:4,t:.28});fxHitStop(u,e,dmg,1)}
 // ennemis dans l'arc d'un coup
 const stIn=(u,a,R,arc)=>enemies(u).filter(e=>dist(u,e)<R+e.r&&angDiff(ang(u,e),a)<arc/2);
 // poing qui s'abat sur un disque devant soi (Poing décuplé) : mêmes règles qu'un coup au corps à corps (combo, parade, contre, 5e coup)
@@ -56,7 +59,7 @@ Object.assign(NAT,{
  // ---------- corps à corps : [portée, arc, dégâts, recharge] par coup ----------
  // Taijutsu : direct gauche, direct droit, uppercut, circulaire large, coup de pied sauté qui fond sur la cible
  st_tai:SP('Taijutsu','',.45,{hero:'rey',melee:1,ai:{max:90,p:1}},(u,a)=>{const c=stC(u),T=[0,[78,1.7,11,.36],[80,1.7,11,.38],[76,1.6,12,.44],[90,2.6,13,.46],[118,2,14,.62]][c];
-  if(c===5){stLunge(u,a,58);S('dash',u);sparks(u.x,u.y,'#d8d8dc',6,'smoke')}
+  if(c===5){stLunge(u,a,58);S('dash',u);fxSmoke(u.x,u.y,{u,col:'#d8d0c0',n:3,r:20,s:10,t:.55,al:.22,rise:10,dx:-Math.cos(a)*30,dy:-Math.sin(a)*30})}
   stMelee(u,a,T[0],T[1],T[2],{},[0,{jfx:'st_line',off:-6,z:36},{jfx:'st_line',off:6,z:36},{d:1,tl:1.45,z:30,th:12,rr:.6},{d:-1,z:14,th:13},{jfx:'st_line',z:24,n:3,burst:1}][c]);
   stCd(u,T[3]);anim(u,'st_tai'+c,c===5?.36:.28)}),
  // Taijutsu Uchiha : coups de pied vifs ; le Sharingan lit la cible qui attaque ou fait ses mudras (+20 %) et coupe ses mudras (au plus une fois toutes les 4 s par cible)
@@ -80,14 +83,15 @@ Object.assign(NAT,{
  // Poing décuplé : crochets géants ; 3e et 5e coups : le poing s'écrase sur un disque devant soi ([distance, rayon, dégâts, recharge]) ; 4e : charge du ventre
  st_aki:SP('Poing décuplé','',.6,{hero:'savage',melee:1,ai:{max:104,p:1}},(u,a)=>{const c=stC(u),T=[0,[94,2.2,13,.58],[94,2.2,13,.58],[62,58,15,.72],[96,2.2,12,.6],[68,66,17,.86]][c],slam=c===3||c===5;
   if(c===4){stLunge(u,a,44);S('dash',u)}
-  if(slam){const p=fwd(u,a,T[0]);stSlam(u,a,p.x,p.y,T[1],T[2],c===3?{kb:120}:{});jx({jfx:'st_slam',x:p.x,y:p.y,a,r:T[1],t:.75,m:.75});S('heavy',u);if(near(p.x,p.y))shake=Math.max(shake,c===5?.3:.16)}
+  if(slam){const p=fwd(u,a,T[0]);stSlam(u,a,p.x,p.y,T[1],T[2],c===3?{kb:120}:{});jx({jfx:'st_slam',x:p.x,y:p.y,a,r:T[1],t:.75,m:.75});S('heavy',u);
+   later(u,.07,()=>{fxRing(p.x,p.y,{u,r0:T[1]*.2,r1:T[1],col:'#ead8b8',c2:'#ffffff',w:c===5?7:5,t:.34});fxDebris(p.x,p.y,{u,n:c===5?8:5,sp:160,col:'#a07850',c2:'#5a4028',s:4});fxSmoke(p.x,p.y,{u,col:'#c8b090',n:c===5?5:3,r:T[1]*.8,s:14,t:.8,al:.24,rise:16});if(c===5)fxDecal(p.x,p.y,'crack',{u,r:T[1]*.85,t:3})})}
   else stMelee(u,a,T[0],T[1],T[2],c===4?{kb:170}:{},{d:c===2?1:-1,z:c===4?22:34,th:c===4?16:24,c:'#ffd8b0',c2:'#ffffff',rr:.7});
   stCd(u,T[3]);anim(u,'st_aki'+c,slam?.42:.34)}),
  // Danse des os : balayages très larges ; 3e : tourbillon tout autour ; 4e : croix ; 5e : estoc d'os (danse du camélia) qui transperce en ligne
  st_bone:SP('Danse des os','',.45,{hero:'grievous',melee:1,ai:{max:96,p:1}},(u,a)=>{const c=stC(u),T=[0,[92,2.8,14,.42],[92,2.8,13,.42],[90,6.3,14,.5],[94,2.4,14,.44],[128,.55,17,.62]][c];
   if(c===5)stLunge(u,a,24);
   stMelee(u,a,T[0],T[1],T[2],{},[0,{d:-1,z:34,th:13,bone:1},{d:1,z:34,th:13,bone:1},{d:-1,z:26,th:11,bone:1,rr:.8},{d:-1,tl:.8,z:36,th:11,bone:1,x2:1},{jfx:'st_thrust',z:30,bone:1,w2:7}][c]);
-  if(c===3||c===5)S('bone',u);stCd(u,T[3]);anim(u,'st_bone'+c,c===3?.36:.28)}),
+  if(c===3){S('bone',u);fxRing(u.x,u.y,{u,r0:30,r1:T[0],col:'#f2efe6',c2:'#ffffff',w:4,t:.3})}if(c===5)S('bone',u);stCd(u,T[3]);anim(u,'st_bone'+c,c===3?.36:.28)}),
  // Crocs et griffes : griffures très rapides ; le chien mord aux 2e, 4e et 5e coups (ralentit) ; 5e : bond
  st_inu:SP('Crocs et griffes','',.3,{hero:'ventress',melee:1,ai:{max:86,p:1}},(u,a)=>{const c=stC(u),T=[0,[80,1.9,6,.28],[80,1.9,6,.28],[84,2.1,7,.3],[88,1.9,7,.32],[98,2.2,9,.5]][c];
   if(c===4)stLunge(u,a,32);if(c===5){stLunge(u,a,52);S('dash',u)}
@@ -98,7 +102,7 @@ Object.assign(NAT,{
  // Taijutsu du fauve : le combo s'accélère ; 2e : Konoha Reppû (fauchage) ; 4e : Konoha Shôfû (projette en l'air) ; 5e : Konoha Senpû tout autour
  st_lee:SP('Taijutsu du fauve','',.5,{hero:'kylo',melee:1,ai:{max:92,p:1}},(u,a)=>{const c=stC(u),T=[0,[84,1.8,13,.52],[90,2.4,13,.46],[86,2.1,14,.4],[86,1.8,14,.36],[96,6.3,16,.66]][c];
   stMelee(u,a,T[0],T[1],T[2],c===4?{air:.3}:{},[0,{jfx:'st_line',off:6,z:36},{d:1,z:6,th:14,c:'#eaffea',c2:'#8aff9a'},{d:-1,z:36,th:12,c:'#eaffea',c2:'#8aff9a'},{d:1,tl:1.5,z:30,th:14,c:'#d8ffdc',c2:'#4aff6a',rr:.65},{d:1,z:22,th:15,c:'#c8ffd0',c2:'#2aff5a',rr:.8}][c]);
-  if(c===5){sparks(u.x,u.y,'#5aa83a',14,'leaf');jx({jfx:'st_whirl',ui:stI(u),x:u.x,y:u.y,t:.55,m:.55});S('wind',u)}
+  if(c===5){jx({jfx:'st_whirl',ui:stI(u),x:u.x,y:u.y,t:.55,m:.55});fxWind(u.x,u.y,0,{u,spin:1,w:T[0],n:9,t:.45,col:'#c8ffd0'});fxBurst(u.x,u.y,'#5aa83a',{u,z:20,n:10,sp:260,gr:40,up:60,w:2.4,sh:'petal',c2:'#8ad05a'});S('wind',u)}
   stCd(u,T[3]);anim(u,'st_lee'+c,c===5?.38:c===2?.3:.26)}),
  // Poings d'insectes : chaque coup pose un insecte (4 max, 4 s) qui ronge la cible ; le 5e coup les fait dévorer (5 dégâts et 3,5 soins par insecte)
  st_abu:SP('Poings d\'insectes','',.45,{hero:'quigon',melee:1,ai:{max:86,p:1}},(u,a)=>{const c=stC(u),T=[0,[80,1.8,11,.42],[80,1.8,11,.42],[82,2,12,.45],[82,2,12,.45],[86,2,13,.6]][c];
@@ -110,18 +114,18 @@ Object.assign(NAT,{
   if(c===5){stLunge(u,a,46);S('dash',u)}
   stMelee(u,a,T[0],T[1],T[2],{},[0,{jfx:'st_thrust',z:34,c:K0,w2:3.5},{d:1,tl:-.5,z:34,th:5,c:K0,blade:1},{d:-1,tl:.9,z:30,th:5,c:K0,blade:1},{d:-1,z:26,th:6,c:'#ffffff',blade:1,rr:.8},{jfx:'st_thrust',z:30,c:'#ffffff',w2:4.5}][c],e=>{
    jx({jfx:'st_glint',ti:stI(e),x:e.x,y:e.y,a,t:.3,m:.3});if(c===5&&!(e.dotT>0)){e.dot=2.5;e.dotT=2;e.dotSrc=u;e.dotEl=-1;jx({jfx:'st_bleed',ti:stI(e),x:e.x,y:e.y,t:2,m:2})}});
-  if(c===4)S('saber',u);stCd(u,T[3]);anim(u,'st_kun'+c,c===4?.36:.26)}),
+  if(c===4){S('saber',u);fxRing(u.x,u.y,{u,r0:30,r1:T[0],col:'#e4eaf2',c2:'#ffffff',w:3,t:.26})}stCd(u,T[3]);anim(u,'st_kun'+c,c===4?.36:.26)}),
  // Frappes d'ombre (Nara) : chaque coup ralentit 0,4 s ; 3e : pique d'ombre qui jaillit du sol en ligne (touche toute la ligne) ; 5e : mains d'ombre qui agrippent (ralenti 1 s)
  st_nara:SP('Frappes d\'ombre','',.38,{hero:'rey',melee:1,ai:{max:104,p:1}},(u,a)=>{const c=stC(u),T=[0,[80,1.7,10,.38],[80,1.7,10,.38],[118,.5,11,.46],[88,2.4,11,.44],[96,2,13,.62]][c],D='#141418';
   stMelee(u,a,T[0],T[1],T[2],{slow:c===5?1:.4},[0,{jfx:'st_line',off:-6,z:36,c:D},{jfx:'st_line',off:6,z:36,c:D},null,{d:-1,z:20,th:13,fl:'shadow',rr:.75},{d:1,tl:1.3,z:30,th:14,fl:'shadow',rr:.65}][c],e=>{
    if(c===5)jx({jfx:'st_grab',ti:stI(e),x:e.x,y:e.y,t:1,m:1})});
-  if(c===3)jx({jfx:'st_sspike',ui:stI(u),x:u.x,y:u.y,a,R:T[0],t:.5,m:.5});if(c>=3)S('shadow',u);
+  if(c===3){jx({jfx:'st_sspike',ui:stI(u),x:u.x,y:u.y,a,R:T[0],t:.5,m:.5});const p=fwd(u,a,T[0]);later(u,.1,()=>fxSmoke(p.x,p.y,{u,col:'#101018',n:3,r:20,s:12,t:.6,al:.3,rise:20}))}if(c>=3)S('shadow',u);
   stCd(u,T[3]);anim(u,'st_nar'+c,c===3?.36:.28)}),
  // Paumes de l'essaim (Aburame) : 3e coup : l'essaim jaillit en gerbe (+1 insecte de la colonie) ; 5e : il engloutit la cible (+2 insectes, la révèle)
  st_bug:SP('Paumes de l\'essaim','',.4,{hero:'rey',melee:1,ai:{max:98,p:1}},(u,a)=>{const c=stC(u),T=[0,[80,1.8,10,.4],[80,1.8,10,.4],[98,1.4,10,.46],[84,2,11,.44],[100,1.6,13,.6]][c],G='#3a4a30';
   stMelee(u,a,T[0],T[1],T[2],c===5?{reveal:1}:{},[0,{jfx:'st_line',off:6,z:36,c:G},{jfx:'st_line',off:-6,z:36,c:G},null,{d:1,tl:1.3,z:28,th:11,fl:'bugs',c:G,c2:'#c8d8a8',rr:.65},null][c],e=>{
    if(c!==3&&c!==5)return;if(typeof ab_add==='function')ab_add(e,u,c===5?2:1);jx({jfx:'st_crawl',ti:stI(e),x:e.x,y:e.y,t:.9,m:.9})});
-  if(c===3||c===5){jx({jfx:'st_gush',ui:stI(u),x:u.x,y:u.y,a,R:T[0],w:T[1],big:c===5?1:0,t:.55,m:.55});S('bugs',u)}
+  if(c===3||c===5){jx({jfx:'st_gush',ui:stI(u),x:u.x,y:u.y,a,R:T[0],w:T[1],big:c===5?1:0,t:.55,m:.55});if(c===5){const p=fwd(u,a,T[0]*.8);fxSmoke(p.x,p.y,{u,col:'#1a2018',n:4,r:30,s:14,t:.7,al:.3,rise:14})}S('bugs',u)}
   {const p=fwd(u,a,T[0]*.6);sparks(p.x,p.y,'#26302a',c>=3?8:4,'bugs')}stCd(u,T[3]);anim(u,'st_swm'+c,c===5?.34:.28)}),
  // Chaînes au poing (Uzumaki) : 3e coup : la chaîne fouette droit devant (120) ; 4e : elle balaie large ; 5e : elle harponne, ramène la cible contre toi et pose 1 sceau (trait Fûinjutsu)
  st_chain:SP('Chaînes au poing','',.38,{hero:'rey',melee:1,ai:{max:116,p:1}},(u,a)=>{const c=stC(u),T=[0,[84,1.7,10,.38],[84,1.7,10,.38],[120,.8,11,.46],[110,2.4,11,.46],[122,.7,12,.62]][c],G='#e8c860',p0=fwd(u,a,u.r+30);
@@ -133,12 +137,12 @@ Object.assign(NAT,{
  // Frappes fleuries (Yamanaka) : senbon tenus en main et paumes, très vifs ; 3 coups de suite sur une cible = point vital (5 dégâts, ralentit)
  st_sen:SP('Frappes fleuries','',.3,{hero:'rey',melee:1,ai:{max:88,p:1}},(u,a)=>{const c=stC(u),T=[0,[80,1.6,8,.3],[80,1.6,8,.3],[84,2,9,.34],[90,2.4,9,.38],[96,2,11,.54]][c],PK='#ff9ac8',PL='#ffe0ec';
   stMelee(u,a,T[0],T[1],T[2],{},[0,{jfx:'st_thrust',z:36,c:PL,w2:2.5},{jfx:'st_line',off:-6,z:36,c:PK},{d:-1,z:14,th:11,fl:'petal',c:PL,c2:PK},{d:1,tl:1.3,z:34,th:11,fl:'petal',c:PL,c2:PK,rr:.65},{d:-1,z:30,th:13,fl:'petal',c:PL,c2:'#ff6aa8',rr:.7}][c],e=>stVital(u,e));
-  if(c===5){const p=fwd(u,a,52);jx({jfx:'st_bloom',x:p.x,y:p.y,a,t:.55,m:.55})}stCd(u,T[3]);anim(u,'st_flo'+c,c===3?.32:.26)}),
+  if(c===5){const p=fwd(u,a,52);jx({jfx:'st_bloom',x:p.x,y:p.y,a,t:.55,m:.55});fxBurst(p.x,p.y,'#ff9ac8',{u,z:32,n:8,sp:140,gr:20,up:40,w:3,sh:'petal',c2:'#ffe0ec'})}stCd(u,T[3]);anim(u,'st_flo'+c,c===3?.32:.26)}),
  // Poings de sable (Sabaku) : gantelets lourds ; chaque coup qui touche ajoute 2 à l'armure de sable (bouclier, 6 max, 2,5 s) ; 5e : un poing de sable s'abat sur un disque devant soi
  st_sand:SP('Poings de sable','',.5,{hero:'rey',melee:1,ai:{max:94,p:1}},(u,a)=>{const c=stC(u),T=[0,[86,2,13,.5],[86,2,13,.5],[92,2.6,14,.56],[84,1.6,14,.52],[62,56,17,.78]][c],SD='#d8b878';
   const arm=e=>{jx({jfx:'st_sandback',ui:stI(u),x:e.x,y:e.y,t:.45,m:.45});if(u.dead||(u.shield||0)>=6)return;shieldU(u,Math.min(6,(u.shield||0)+2),2.5)};
   if(c===5){const p=fwd(u,a,T[0]),L=enemies(u).filter(e=>Math.hypot(e.x-p.x,e.y-p.y)<T[1]+e.r),H=L.map(e=>e.hp+(e.shield||0));stSlam(u,a,p.x,p.y,T[1],T[2],{});L.forEach((e,k)=>{if(e.hp+(e.shield||0)<H[k]-.01)arm(e)});
-   jx({jfx:'st_sfist',x:p.x,y:p.y,a,r:T[1],t:.8,m:.8});S('heavy',u);if(near(p.x,p.y))shake=Math.max(shake,.22)}
+   jx({jfx:'st_sfist',x:p.x,y:p.y,a,r:T[1],t:.8,m:.8});S('heavy',u);later(u,.08,()=>{fxRing(p.x,p.y,{u,r0:10,r1:T[1],col:'#e8d0a0',w:6,t:.34});fxDecal(p.x,p.y,'sand',{u,r:T[1]*.85,t:3});fxSmoke(p.x,p.y,{u,col:'#d8b878',n:4,r:T[1]*.7,s:14,t:.8,al:.24,rise:14})})}
   else stMelee(u,a,T[0],T[1],T[2],{},[0,{jfx:'st_line',off:-6,z:36,c:SD,burst:1},{jfx:'st_line',off:6,z:36,c:SD,burst:1},{d:1,z:26,th:16,fl:'sand',c:SD,c2:'#8a6a38'},{d:1,tl:1.45,z:30,th:14,fl:'sand',c:SD,c2:'#8a6a38',rr:.6}][c],arm);
   S('sand',u);stCd(u,T[3]);anim(u,'st_snd'+c,c===5?.42:.3)}),
  // Marionnette (Kankurô, clan Sabaku) : Karasu, à ton côté, fond au contact (allonge 125) ; 3e et 5e coups : poison (2,5/s pendant 2 s, si la cible n'a pas déjà un effet sur la durée) ; 5e : ralentit
@@ -471,30 +475,35 @@ Object.assign(NAT,{
  // ---------- Taijutsu ----------
  // Ôkashô : le poing s'abat devant soi ; disque d'impact puis fissure en ligne qui ralentit
  tai_oka:S_('Ôkashô','',10,{line:{len:220,w:150},ai:RG(170,.6)},(u,a)=>{anim(u,'tai_oka',.5);S('heavy',u);const D=tjLock(u,.32);
-  jx({jfx:'tai_charge',ui:stI(u),x:u.x,y:u.y,a,t:.2,m:.2});
+  jx({jfx:'tai_charge',ui:stI(u),x:u.x,y:u.y,a,t:.2,m:.2});fxCharge(u,'#ff9ac8',{t:.2,n:10,r:50,z:50,hd:14,c2:'#ffffff'});
   later(u,.18,()=>{if(u.dead||u.stun>0)return;const c=fwd(u,a,46);S('rock',u);S('boom',u);
    for(const e of enemies(u)){const d=Math.hypot(e.x-c.x,e.y-c.y);if(d<72+e.r)hit(e,u,28,{melee:1,air:.45,kb:240,fx:c.x,fy:c.y,unblockable:1});
     else{const dx=e.x-u.x,dy=e.y-u.y,f=dx*Math.cos(a)+dy*Math.sin(a),s=Math.abs(-dx*Math.sin(a)+dy*Math.cos(a));if(f>0&&f<220+e.r&&s<34+e.r)hit(e,u,14,{air:.3,slow:1,unblockable:1})}}
-   jx({jfx:'tai_crack',x:c.x,y:c.y,a,len:180,t:1.4,m:1.4});jx({jfx:'tj_crater',x:c.x,y:c.y,r:80,t:.9,m:.9});jx({jfx:'shock',x:c.x,y:c.y,r:90,t:.4,m:.4,col:'#ffd0e0'});
-   if(near(c.x,c.y))shake=Math.max(shake,.32)})}),
+   jx({jfx:'tai_crack',x:c.x,y:c.y,a,len:180,t:1.4,m:1.4});jx({jfx:'tj_crater',x:c.x,y:c.y,r:72,t:.9,m:.9});jx({jfx:'shock',x:c.x,y:c.y,r:72,t:.4,m:.4,col:'#ffd0e0'});
+   fxImpact(c.x,c.y,'doton',1.5,{u,r:72});fxFlare(c.x,c.y,'#ff9ac8',{u,z:20,r:30,t:.2});for(const d of[90,160])fxDebris(u.x+Math.cos(a)*d,u.y+Math.sin(a)*d,{u,n:4,sp:120,col:'#a07850',c2:'#5a4028',s:4});
+   for(const e of enemies(u))if(Math.hypot(e.x-c.x,e.y-c.y)<72+e.r){fxHitStop(u,e,28,1);break}})}),
  // Tsûtenkyaku : bond et talon qui fend le sol (cercle d'alerte contrable)
  tai_heel:S_('Tsûtenkyaku : Talon céleste','',20,{tele:{r:130,max:320},ai:{mode:'gap',min:90,max:320,p:.6}},(u,a,td)=>{const d=clamp(td||250,40,320),p=fwd(u,a,d);S('dash',u);anim(u,'tj_heel',.6);
-  later(u,.55,()=>{},{x:p.x,y:p.y,r:130});jx({jfx:'tai_rise',ui:stI(u),x:u.x,y:u.y,t:.55,m:.55});
+  later(u,.55,()=>{},{x:p.x,y:p.y,r:130});jx({jfx:'tai_rise',ui:stI(u),x:u.x,y:u.y,t:.55,m:.55});fxSmoke(u.x,u.y,{u,col:'#d8c8b0',n:5,r:30,s:16,t:.8,al:.26,rise:10});fxRing(u.x,u.y,{u,r0:10,r1:50,col:'#ffd0e0',w:4,t:.3});
   dash(u,a,d,.55,{jump:150,end:()=>{if(u.dead)return;const x=u.x,y=u.y;for(const e of enemies(u)){const dd=Math.hypot(e.x-x,e.y-y);if(dd<78+e.r)hit(e,u,55,{melee:1,stun:1,unblockable:1,fx:x,fy:y});else if(dd<130+e.r)hit(e,u,30,{kb:320,fx:x,fy:y,unblockable:1})}
-   field(u,x,y,{r:130,t:2,slow:.45,col:'#c8a070',vfx:'tai'});jx({jfx:'tj_heel',x,y,r:150,t:.7,m:.7});jx({jfx:'tj_crater',x,y,r:130,t:2,m:2});jx({jfx:'tai_shards',x,y,t:.9,m:.9});
-   if(near(x,y)){S('boom',u);S('rock',u);shake=Math.max(shake,.5)}}})}),
+   field(u,x,y,{r:130,t:2,slow:.45,col:'#c8a070',vfx:'tai'});jx({jfx:'tj_heel',x,y,r:130,t:.7,m:.7});jx({jfx:'tj_crater',x,y,r:130,t:2,m:2});jx({jfx:'tai_shards',x,y,t:.9,m:.9});
+   fxImpact(x,y,'doton',2.6,{u,r:130,dec:0});fxRing(x,y,{u,r0:20,r1:78,col:'#ffd0e0',c2:'#ffffff',w:7,t:.3});fxDecal(x,y,'crack',{u,r:120,t:5});fxPillar(x,y,'#ffd0e0',{u,h:160,w:26,t:.35,al:.45});fxSmoke(x,y,{u,col:'#c8b090',n:8,r:120,s:26,t:1.2,al:.26,rise:24});fxShake(.4,x,y);
+   for(const e of enemies(u))if(Math.hypot(e.x-x,e.y-y)<78+e.r){fxHitStop(u,e,55,1);break}
+   if(near(x,y)){S('boom',u);S('rock',u)}}})}),
  // ---------- Kenjutsu ----------
  // Iai : Dégainé éclair : coupe en ligne instantanée, la pointe (au-delà de 105) inflige +50 %
  ken_iai:S_('Iai : Dégainé éclair','',5,{line:{len:150,w:34},ai:RG(150,.7)},(u,a)=>{const m=kenIai(u)?1.3:1;anim(u,'ken_draw',.32);S('saber',u);
   for(const e of enemies(u)){const dx=e.x-u.x,dy=e.y-u.y,f=dx*Math.cos(a)+dy*Math.sin(a),s=Math.abs(-dx*Math.sin(a)+dy*Math.cos(a));if(f<0||f>150+e.r||s>17+e.r)continue;
-   const tip=f>105;if(hit(e,u,14*m*(tip?1.5:1),{melee:1,unblockable:m>1?1:0}))jx({jfx:'st_glint',ti:stI(e),x:e.x,y:e.y,a,t:.34,m:.34});if(tip)say(e,'POINTE','#e4eeff')}
+   const tip=f>105;if(hit(e,u,14*m*(tip?1.5:1),{melee:1,unblockable:m>1?1:0})){jx({jfx:'st_glint',ti:stI(e),x:e.x,y:e.y,a,t:.34,m:.34});fxBurst(e.x,e.y,'#e4eeff',{u,z:36,n:tip?9:5,sp:300,gr:0,up:10,w:1.3,a,arc:1.2,c2:'#ffffff'});if(tip)fxHitStop(u,e,21,1)}if(tip)say(e,'POINTE','#e4eeff')}
+  fxFlare(u.x+Math.cos(a)*150,u.y+Math.sin(a)*150,'#cfe8ff',{u,z:32,r:16,t:.16});
   jx({jfx:'ken_line',ui:stI(u),x:u.x,y:u.y,a,len:150,t:.35,m:.35});jx({jfx:'st_iai',ui:stI(u),x:u.x,y:u.y,a,R:150,t:.5,m:.5})}),
  // Ashigiri : entaille basse, ralentit et empêche le dash 1,5 s (la recharge du dash de la cible est repoussée)
  ken_ashi:S_('Ashigiri : Coupe aux jarrets','',8,{line:{len:115,w:180},ai:RG(115,.65)},(u,a)=>{const m=kenIai(u)?1.3:1;anim(u,'ken_low',.34);S('saber',u);
-  for(const e of stIn(u,a,115,1.9)){if(!hit(e,u,18*m,{melee:1,slow:1.2,unblockable:m>1?1:0}))continue;e.cds[DASHI]=Math.max(e.cds[DASHI]||0,1.5);aux.push({type:'ken_legs',x:e.x,y:e.y,r:0,t:1.5,m:1.5,team:u.team,owner:u,ti:stI(e)});say(e,'JAMBES TRANCHÉES','#ff8a8a');jx({jfx:'st_bleed',ti:stI(e),x:e.x,y:e.y,t:1.5,m:1.5})}
+  for(const e of stIn(u,a,115,1.9)){if(!hit(e,u,18*m,{melee:1,slow:1.2,unblockable:m>1?1:0}))continue;e.cds[DASHI]=Math.max(e.cds[DASHI]||0,1.5);aux.push({type:'ken_legs',x:e.x,y:e.y,r:0,t:1.5,m:1.5,team:u.team,owner:u,ti:stI(e)});say(e,'JAMBES TRANCHÉES','#ff8a8a');jx({jfx:'st_bleed',ti:stI(e),x:e.x,y:e.y,t:1.5,m:1.5});fxBurst(e.x,e.y,'#c0142a',{u,z:12,n:7,sp:150,up:60,gr:400,w:2,len:.05,add:0})}
+  fxSmoke(u.x+Math.cos(a)*70,u.y+Math.sin(a)*70,{u,col:'#c8b8a0',n:3,r:50,s:12,t:.6,al:.22,rise:6});
   kenArc(u,a,115,1.9,{z:8,th:8,d:1,c:'#ffe0e0',c2:'#ff6a6a',tl:-.2})}),
  // Tourbillon d'acier : toupie lame tendue (u.spin du moteur : coupes toutes les 0,25 s) et renvoi des tirs
- ken_kaiten:S_('Kaiten-giri : Tourbillon d\'acier','',10,{ai:SELF(110,.6)},(u,a)=>{const m=kenIai(u)?1.3:1;S('saber',u);u.spin={t:1,k:0,r:105,dmg:4*m,ex:EX};
+ ken_kaiten:S_('Kaiten-giri : Tourbillon d\'acier','',10,{ai:SELF(110,.6)},(u,a)=>{const m=kenIai(u)?1.3:1;S('saber',u);u.spin={t:1,k:0,r:105,dmg:4*m,ex:EX};fxRing(u.x,u.y,{u,r0:30,r1:105,col:'#cfe0ff',c2:'#ffffff',w:4,t:.3});
   aux.push({type:'ken_spin',x:u.x,y:u.y,r:105,t:1,m:1,team:u.team,owner:u,ui:stI(u)})}),
  // Mikazuki no Mai : marque en croissant sur la cible (0,25 s), puis 3 lames de 3 côtés
  ken_mika:S_('Mikazuki no Mai : Danse du croissant','',13,{line:{len:260,w:40},ai:RG(240,.65)},(u,a,td)=>{const e=pick(u,a,td||200,260),m=kenIai(u)?1.3:1;anim(u,'ken_draw',.3);S('saber',u);
@@ -503,20 +512,21 @@ Object.assign(NAT,{
   later(u,.25,()=>{if(u.dead||e.dead||u.stun>0||dist(u,e)>330)return;const b0=ang(e,u);
    for(let i=0;i<3;i++)later(u,i*.09,()=>{if(e.dead||u.dead)return;const b=b0+(i-1)*2.09,ox=e.x+Math.cos(b)*44,oy=e.y+Math.sin(b)*44;
     jx({jfx:'ken_shade',ui:stI(u),x:ox,y:oy,x2:e.x,y2:e.y,me:i===1?1:0,t:.4,m:.4});S('saber',u);
-    if(hit(e,u,13*m,i===2?{melee:1,unblockable:1,stun:.6}:{melee:1,unblockable:1}))jx({jfx:'st_glint',ti:stI(e),x:e.x,y:e.y,a:b+3.14,t:.3,m:.3})})})}),
+    if(hit(e,u,13*m,i===2?{melee:1,unblockable:1,stun:.6}:{melee:1,unblockable:1})){jx({jfx:'st_glint',ti:stI(e),x:e.x,y:e.y,a:b+3.14,t:.3,m:.3});fxBurst(e.x,e.y,'#e8f0ff',{u,z:36,n:6,sp:260,gr:0,up:10,w:1.3,a:b+3.14,arc:1.4});if(i===2){fxFlare(e.x,e.y,'#9ab8ff',{u,z:40,r:28,t:.22});fxRing(e.x,e.y,{u,r0:10,r1:50,col:'#9ab8ff',w:4,t:.3});fxHitStop(u,e,13,1)}}})})}),
  // Ranbu : 1,3 s canalisé (avance lentement), coupes en cône toutes les 0,13 s, renvoie les tirs de face ; coupe finale qui repousse
  ken_ranbu:S_('Ranbu : Tempête de lames','',21,{line:{len:170,w:200},ai:RG(150,.7)},(u,a)=>{const m=kenIai(u)?1.3:1;const D=tjLock(u,1.38);D.tx=clamp(u.x+Math.cos(a)*90,B.x+30,B.x+B.w-30);D.ty=clamp(u.y+Math.sin(a)*90,B.y+30,B.y+B.h-30);anim(u,'ken_flurry',1.3);let n=0; // avance lente : 90 en 1,38 s
   seqs.push({owner:u,n:10,t:.05,iv:.13,vfx:'steel',f:o=>{if(o.dash!==D||o.stun>0)return;n++;const b=o.aim;kenReflect(o,o.x,o.y,150,b,1.6);
    for(const e of stIn(o,b,170,1.5))hit(e,o,n<10?5*m:7*m,n<10?{melee:1,silent:n%2?1:0}:{melee:1,kb:340});
-   kenArc(o,b+(rnd()-.5)*.6,150+rnd()*20,1.3,{d:n%2?1:-1,tl:(rnd()-.5)*1.4,th:5,t:.22,m:.22});if(n%2)S('saber',o);if(n===10){jx({jfx:'st_iai',ui:stI(o),x:o.x,y:o.y,a:b,R:170,t:.5,m:.5});if(near(o.x,o.y))shake=Math.max(shake,.2)}}})}),
+   kenArc(o,b+(rnd()-.5)*.6,150+rnd()*20,1.3,{d:n%2?1:-1,tl:(rnd()-.5)*1.4,th:5,t:.22,m:.22});if(n%2){S('saber',o);fxBurst(o.x+Math.cos(b)*100,o.y+Math.sin(b)*100,'#e4eeff',{u:o,z:30,n:5,sp:280,gr:0,up:10,w:1.2,a:b,arc:1.5,c2:'#ffffff'})}
+   if(n===10){jx({jfx:'st_iai',ui:stI(o),x:o.x,y:o.y,a:b,R:170,t:.5,m:.5});fxWind(o.x+Math.cos(b)*85,o.y+Math.sin(b)*85,b,{u:o,len:170,w:150,n:9,t:.45,col:'#e4eeff'});fxFlare(o.x+Math.cos(b)*110,o.y+Math.sin(b)*110,'#cfe0ff',{u:o,z:32,r:34,t:.22});fxShake(.25,o.x,o.y)}}})}),
  // ---------- Bukijutsu ----------
  // Ashibarai : balayage bas, fait trébucher
  buk_sweep:S_('Ashibarai : Balayage','',5,{line:{len:115,w:200},ai:SELF(115,.6)},(u,a)=>{anim(u,'buk_sweep',.36);S('saber',u);
   for(const e of stIn(u,a,115,3.5))if(hit(e,u,12,{melee:1,slow:.8})&&e.unstop<=0){if(e.dash&&!e.dash.lock){e.dash=null;e.z=0}e.run=Math.min(e.run??100,10);say(e,'TRÉBUCHE','#e8c8a0')}
-  kenArc(u,a,115,3.5,{z:6,th:9,d:1,c:'#e8d0a8',c2:'#8a5a2a',blade:0,rr:.95});jx({jfx:'buk_dust',x:u.x,y:u.y,a,t:.5,m:.5})}),
+  kenArc(u,a,115,3.5,{z:6,th:9,d:1,c:'#e8d0a8',c2:'#8a5a2a',blade:0,rr:.95});jx({jfx:'buk_dust',x:u.x,y:u.y,a,t:.5,m:.5});for(const d of[-1.2,0,1.2])fxSmoke(u.x+Math.cos(a+d)*90,u.y+Math.sin(a+d)*90,{u,col:'#d8c8a8',n:2,r:20,s:12,t:.6,al:.22,rise:8})}),
  // Kusarigama : Harpon : la faucille au bout de sa chaîne ramène l'ennemi touché
  buk_hook:S_('Kusarigama : Harpon','',8,{line:{len:300,w:20},ai:RG(300,.6,90)},(u,a)=>{anim(u,'throw2',.3);S('blaster',u);u.thrT=.2;
-  proj(u,a,{spd:950,r:9,dmg:18,life:.31,col:'#d8dde6',hook:1,kind:'buk_kama',o:{root:.4}});aux.push({type:'buk_chain',x:u.x,y:u.y,r:0,t:.7,m:.7,team:u.team,owner:u,ui:stI(u),p:projs[projs.length-1]})}),
+  proj(u,a,{spd:950,r:9,dmg:18,life:.31,col:'#d8dde6',hook:1,kind:'buk_kama',o:{root:.4},onHit:(p,t)=>{fxBurst(t.x,t.y,'#eef2f8',{u:p.owner,z:32,n:7,sp:240,gr:0,up:20,w:1.4,c2:'#ffffff'});fxFlare(t.x,t.y,'#ffffff',{u:p.owner,z:32,r:16,t:.15})}});aux.push({type:'buk_chain',x:u.x,y:u.y,r:0,t:.7,m:.7,team:u.team,owner:u,ui:stI(u),p:projs[projs.length-1]})}),
  // Moulinet du bâton : arme qui tournoie devant soi 1,4 s (bloque les tirs de face, frappe toutes les 0,3 s), coup final qui repousse
  buk_mouli:S_('Bôjutsu : Moulinet du bâton','',11,{ai:DEF},(u,a)=>{anim(u,'buk_twirl',1.4);S('wind',u);aux.push({type:'buk_mouli',x:u.x,y:u.y,a,r:95,t:1.4,m:1.4,team:u.team,owner:u,ui:stI(u),k:.15,n:0})}),
  // Ruée des cent armes : ruée ; au 1er ennemi touché, 5 armes à la suite (la masse étourdit)
@@ -524,12 +534,15 @@ Object.assign(NAT,{
   jx({jfx:'tj_dash',ui:stI(u),x:u.x,y:u.y,a,t:.32,m:.32});aux.push({type:'buk_rush',x:u.x,y:u.y,r:0,t:.4,m:.4,team:u.team,owner:u,d:u.dash,a})}),
  // Kongô Nyoi : le bâton pousse (0,35 s, ligne d'alerte) puis balaie 120° à 380
  buk_nyoi:S_('Kongô Nyoi : Bâton infini','',22,{line:{len:380,w:30},ai:RG(370,.7,120)},(u,a)=>{const D=tjLock(u,.75);anim(u,'buk_nyoi',.75);S('heavy',u);
-  jx({jfx:'buk_staff',ui:stI(u),x:u.x,y:u.y,a,t:.75,m:.75});
+  jx({jfx:'buk_staff',ui:stI(u),x:u.x,y:u.y,a,t:.75,m:.75});aux.push({type:'buk_nyoiw',x:u.x,y:u.y,a,r:380,t:.35,m:.35,team:u.team,owner:u,ui:stI(u)}); // alerte : l'arc réel du balayage (120°, 380)
   later(u,.35,()=>{if(u.dead||u.dash!==D||u.stun>0)return;S('wind',u);S('boom',u);const b=u.aim;
    for(const e of enemies(u)){const d=dist(u,e);if(d>380+e.r||angDiff(ang(u,e),b)>1.05)continue;const tip=d>300;
-    if(hit(e,u,50,tip?{melee:1,kb:260,stun:1,unblockable:1,fx:u.x,fy:u.y}:{melee:1,kb:260,unblockable:1,fx:u.x,fy:u.y})){jx({jfx:'tj_impact',x:e.x,y:e.y,a:ang(u,e),t:.4,m:.4,big:tip?1:0});if(tip)say(e,'POINTE','#ffd36a')}}
-   if(near(u.x,u.y))shake=Math.max(shake,.3)})}),
+    if(hit(e,u,50,tip?{melee:1,kb:260,stun:1,unblockable:1,fx:u.x,fy:u.y}:{melee:1,kb:260,unblockable:1,fx:u.x,fy:u.y})){jx({jfx:'tj_impact',x:e.x,y:e.y,a:ang(u,e),t:.4,m:.4,big:tip?1:0});fxImpact(e.x,e.y,'doton',tip?1.4:1,{u,r:tip?54:40,dec:0});fxHitStop(u,e,50,1);if(tip)say(e,'POINTE','#ffd36a')}}
+   for(const d of[-.7,0,.7])fxWind(u.x+Math.cos(b+d)*220,u.y+Math.sin(b+d)*220,b+d+Math.PI/2,{u,len:200,w:80,n:4,t:.4,col:'#ffe08a'});fxShake(.3,u.x,u.y)})}),
 });
+// Kongô Nyoi : alerte du balayage (secteur exact de 120° sur 380 autour de la visée), jamais atténuée
+AUXF.buk_nyoiw=x=>{const u=x.owner;if(!u||u.dead||u.stun>0){x.t=0;return}x.x=u.x;x.y=u.y;x.a=u.aim};
+AUXD.buk_nyoiw=x=>{const u=units[x.ui],o=u&&!u.dead?u:x;fxTeleCone(o.x,o.y,u?u.aim:x.a,x.r,2.1,1-x.t/x.m,'#ffd36a',x,.08)};
 // Ruée des cent armes : 1er contact pendant la ruée
 AUXF.buk_rush=x=>{const u=x.owner;if(u.dead||u.dash!==x.d){x.t=0;return}for(const e of enemies(u))if(dist(u,e)<u.r+e.r+18){u.dash=null;u.z=0;x.t=0;bukCombo(u,e,x.a);return}};
 // les 5 armes à la suite sur la cible (ou le 1er ennemi devant soi en fin de ruée)
@@ -538,7 +551,7 @@ function bukCombo(u,e,a){if(u.dead)return;if(!e){e=stIn(u,a,70,1.6)[0];if(!e){sp
  const D=tjLock(u,.6);aux.push({type:'buk_rushk',x:e.x,y:e.y,r:0,t:.62,m:.62,team:u.team,owner:u,tg:e,ti:stI(e),ui:stI(u),d:D,k:0,n:0});say(u,'CENT ARMES !','#ffd36a')}
 AUXF.buk_rushk=(x,dt)=>{const u=x.owner,e=x.tg;if(u.dead||!e||e.dead||u.dash!==x.d||u.stun>0){x.t=0;return}x.x=e.x;x.y=e.y;u.aim=ang(u,e);x.k-=dt;if(x.k>0||x.n>=5)return;x.k=.11;
  const n=x.n++,w=BUKW[n];S(n===4?'heavy':'saber',u);anim(u,n%2?'stab':'lunge',.12);jx({jfx:'buk_wsw',ui:stI(u),x:u.x,y:u.y,a:u.aim,w,d:n%2?1:-1,t:.22,m:.22});
- if(hit(e,u,7,n===4?{melee:1,stun:.8,kb:200,fx:u.x,fy:u.y}:{melee:1}))jx({jfx:'tj_impact',x:e.x,y:e.y,a:u.aim,t:.3,m:.3,big:n===4?1:0});if(n===4){bukDrop(u,e.x,e.y,4);if(near(e.x,e.y))shake=Math.max(shake,.2)}};
+ if(hit(e,u,7,n===4?{melee:1,stun:.8,kb:200,fx:u.x,fy:u.y}:{melee:1}))jx({jfx:'tj_impact',x:e.x,y:e.y,a:u.aim,t:.3,m:.3,big:n===4?1:0});if(n===4){bukDrop(u,e.x,e.y,4);fxImpact(e.x,e.y,'doton',1,{u,r:44,dec:0});fxHitStop(u,e,20,1)}};
 // Kusarigama : la chaîne relie le lanceur à la faucille
 AUXF.buk_chain=x=>{const p=x.p;if(!p||p.dead||p.life<=0||x.owner.dead){x.t=Math.min(x.t,.12);x.p=null;return}x.x=p.x;x.y=p.y};
 AUXD.buk_chain=(x,k)=>{const u=units[x.ui];if(!u||u.dead)return;const a=P(u.x,u.y,30),b=P(x.x,x.y,26),al=Math.min(1,x.t/.12);g.strokeStyle=rgba('#9aa4b4',.9*al);g.lineWidth=2.2*a.s;g.setLineDash([3*a.s,2*a.s]);g.beginPath();g.moveTo(a.x,a.y);
@@ -549,14 +562,14 @@ PROJD.buk_kama=(p,R,ra,t)=>{g.rotate(ra);g.fillStyle='#5a3a22';g.fillRect(-R*1.6
 AUXF.buk_mouli=(x,dt)=>{const u=x.owner;if(u.dead||u.stun>0){x.t=0;return}x.x=u.x;x.y=u.y;x.a=u.aim;
  for(const p of projs){if(p.dead||p.life<=0||p.owner.team===u.team||p.rocket)continue;const d=Math.hypot(p.x-u.x,p.y-u.y);if(d<x.r+p.r&&angDiff(Math.atan2(p.y-u.y,p.x-u.x),x.a)<1.2){p.life=0;p.dead=1;if(near(p.x,p.y)){sparks(p.x,p.y,'#e8d0a8',6);S('deflect',u)}}}
  x.k-=dt;if(x.k<=0&&x.t>.15){x.k=.3;x.n++;for(const e of stIn(u,x.a,x.r,2.4))hit(e,u,4,{melee:1,silent:x.n%2?1:0})}
- if(x.t<=dt*1.01&&!x.fin){x.fin=1;S('heavy',u);for(const e of stIn(u,x.a,x.r+15,2.4))hit(e,u,12,{melee:1,kb:300,fx:u.x,fy:u.y});kenArc(u,x.a,x.r+20,2.4,{c:'#f0dcb8',c2:'#8a5a2a',blade:0,th:10,z:30})}};
-AUXD.buk_mouli=(x,k,t)=>{const u=units[x.ui];if(!u||u.dead)return;const c=fwd(u,x.a,34),q=P(c.x,c.y,32),s=q.s,R=42*s,sp=t*26;g.save();g.globalCompositeOperation='lighter';
+ if(x.t<=dt*1.01&&!x.fin){x.fin=1;S('heavy',u);for(const e of stIn(u,x.a,x.r+15,2.4))hit(e,u,12,{melee:1,kb:300,fx:u.x,fy:u.y});kenArc(u,x.a,x.r+20,2.4,{c:'#f0dcb8',c2:'#8a5a2a',blade:0,th:10,z:30});fxWind(u.x+Math.cos(x.a)*60,u.y+Math.sin(x.a)*60,x.a,{u,len:110,w:150,n:6,t:.35,col:'#f0dcb8'})}};
+AUXD.buk_mouli=(x,k,t)=>fxAlpha(fxA(x),()=>stMouliD(x,k,t));function stMouliD(x,k,t){const u=units[x.ui];if(!u||u.dead)return;const c=fwd(u,x.a,34),q=P(c.x,c.y,32),s=q.s,R=42*s,sp=t*26;g.save();g.globalCompositeOperation='lighter';
  g.fillStyle=rgba('#f0dcb8',.16);g.beginPath();g.ellipse(q.x,q.y,R*.55,R,0,0,7);g.fill();g.strokeStyle=rgba('#ffffff',.35);g.lineWidth=2;g.beginPath();g.ellipse(q.x,q.y,R*.55,R,0,sp,sp+2.4);g.stroke();g.restore();
  for(let i=0;i<2;i++){const b=sp+i*Math.PI;g.strokeStyle='#6a4a2a';g.lineWidth=3.2*s;g.lineCap='round';g.beginPath();g.moveTo(q.x-Math.cos(b)*R*.5,q.y-Math.sin(b)*R);g.lineTo(q.x+Math.cos(b)*R*.5,q.y+Math.sin(b)*R);g.stroke();
   g.fillStyle='#e8c040';circ(q.x+Math.cos(b)*R*.5,q.y+Math.sin(b)*R,2.4*s,'#e8c040')}};
 // Tourbillon d'acier : renvoie les tirs autour du lanceur tant qu'il tournoie
 AUXF.ken_spin=x=>{const u=x.owner;if(u.dead||!u.spin){x.t=0;return}x.x=u.x;x.y=u.y;kenReflect(u,u.x,u.y,x.r+10,0,null)};
-AUXD.ken_spin=(x,k,t)=>{const u=units[x.ui];if(!u||u.dead)return;const q=P(u.x,u.y,26),R=x.r*q.s;g.save();g.globalCompositeOperation='lighter';for(let i=0;i<3;i++){const b=t*22+i*2.09;
+AUXD.ken_spin=(x,k,t)=>fxAlpha(fxA(x),()=>stKenSpinD(x,k,t));function stKenSpinD(x,k,t){const u=units[x.ui];if(!u||u.dead)return;const q=P(u.x,u.y,26),R=x.r*q.s;g.save();g.globalCompositeOperation='lighter';for(let i=0;i<3;i++){const b=t*22+i*2.09;
  g.strokeStyle=rgba(i?'#9ab8ff':'#ffffff',.7);g.lineWidth=(4-i)*q.s;g.beginPath();g.ellipse(q.x,q.y,R*(.92-i*.08),R*(.92-i*.08)*K,0,b,b+1.4);g.stroke()}
  g.fillStyle=rgba('#c8d8ff',.08);g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.fill();g.restore()};
 // ---- visuels des arbres de style

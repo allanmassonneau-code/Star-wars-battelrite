@@ -37,10 +37,11 @@ Object.assign(NAT,{
  sub_jashu:S_('Serpents de l\'ombre','Serpents qui mordent et ramènent la cible',9,{ai:RG(430,.6,60)},(u,a)=>{anim(u,'sub_jashu',.55);S('shadow',u);S('dash',u);
   proj(u,a,{spd:900,r:13,dmg:14,life:.5,col:'#6f8f3c',vfx:'kunai',kind:'sub_snkh',noClash:1,o:{root:.7,dot:{dps:4,dur:3}},onHit:(p,t)=>{const o=p.owner,x=aux.find(q=>q.type==='sub_snk'&&q.p===p);
    if(x){x.n=1;x.tg=t;x.ti=subBI(t);x.t=x.m=1.05;x.x=t.x;x.y=t.y}jx({jfx:'sub_coil',ti:subBI(t),x:t.x,y:t.y,t:1.1,m:1.1});
+   fxBurst(t.x,t.y,'#9ad05a',{u:o,z:40,n:8,sp:160,up:60,gr:260,w:2.2,sh:'dot',c2:'#d0f0a0',add:0});fxFlare(t.x,t.y,'#b8f07a',{u:o,z:40,r:16,t:.16});fxHitStop(o,t,14,1);
    if(t.unstop<=0&&!o.dead&&!t.dead){const b=ang(o,t),q=subFree({x:o.x+Math.cos(b)*(o.r+t.r+8),y:o.y+Math.sin(b)*(o.r+t.r+8)},t.r);t.dash={sx:t.x,sy:t.y,tx:q.x,ty:q.y,t:0,dur:.3,jump:10};t.cast=null;t.kx=t.ky=0}}});
   const p=projs[projs.length-1];aux.push({type:'sub_snk',x:p.x,y:p.y,r:0,t:.8,m:.8,team:u.team,owner:u,ui:subBI(u),p,n:0,a})}),
  // --- Kage Bunshin : leurre — invisible, le clone continue la course ; les bots le visent (voir pickTarget plus bas)
- sub_leurre:S_('Kage Bunshin : leurre','Invisible, un clone court à ta place',7,{ai:{mode:'esc',max:230,p:.55}},(u,a)=>{anim(u,'sub_seal',.3);S('poof',u);subPoof(u.x,u.y,40,u);
+ sub_leurre:S_('Kage Bunshin : leurre','Invisible, un clone court à ta place',7,{ai:{mode:'esc',max:230,p:.55}},(u,a)=>{anim(u,'sub_seal',.3);S('poof',u);subPoof(u.x,u.y,40,u);fxSmoke(u.x,u.y,{u,col:'#dcdce4',n:5,r:34,s:20,t:.9,al:.3,rise:30,dx:-Math.cos(a)*30,dy:-Math.sin(a)*30});
   const q=subFree({x:u.x,y:u.y},16),p=subCarrier(u,q.x,q.y,'sub_decoy',{life:1.3,r:1,ox:a,zapP:1});
   const D=Object.create(u);Object.assign(D,{x:q.x,y:q.y,vx:0,vy:0,dead:false,stealth:0,swing:0,cast:null,spin:null,flame:null,dash:null,z:0,phase:0,sub_eat:0,sub_dk:1});
   aux.push({type:'sub_leurre',x:q.x,y:q.y,r:0,t:1.3,m:1.3,team:u.team,owner:u,p,D,a,a0:a,ck:0});
@@ -48,18 +49,20 @@ Object.assign(NAT,{
   for(const e of units)if(e.team!==u.team&&e.tgt===u)e.tgt=D}),
  // --- Barrière Shishienjin : quatre flammes violettes puis le dôme ; enfermés dedans, ou tenus dehors
  sub_shishi:S_('Barrière Shishienjin','Dôme violet : les ennemis enfermés ne sortent plus',14,{cast:.25,tele:{r:150,max:420},ai:RG(400,.55)},(u,a,td)=>{const p=subFree(atP(u,a,td,420),60);anim(u,'sub_shishi',.75);S('genjutsu',u);
-  aux.push({type:'sub_shishi',x:p.x,y:p.y,r:150,t:3.45,m:3.45,team:u.team,owner:u,n:0,side:new Map(),bt:new Map()});jx({jfx:'sub_shishiup',x:p.x,y:p.y,r:150,t:.45,m:.45})}),
+  aux.push({type:'sub_shishi',x:p.x,y:p.y,r:150,t:3.45,m:3.45,team:u.team,owner:u,n:0,side:new Map(),bt:new Map()});jx({jfx:'sub_shishiup',x:p.x,y:p.y,r:150,t:.45,m:.45});
+  fxCast(u,'genjutsu',.35,{col:'#c080ff'});for(const c of subBCorners(p.x,p.y,150))fxPillar(c.x,c.y,'#a050f0',{u,h:120,w:14,t:.55,al:.45})}),
  // --- Byakugô (Tsunade) : le sceau libère le chakra stocké ; chaque blessure se referme 1 s plus tard, tant qu'il reste du chakra
  sub_byakugo:S_('Byakugô','4 s : régénère les dégâts subis 1 s plus tard',18,{ai:{mode:'self',max:280,p:.45}},(u)=>{anim(u,'sub_byk',.75);S('ignite',u);S('orb',u);u.sub_byk=4;
   for(const x of aux)if(x.type==='sub_byk'&&x.owner===u)x.act=0;
-  aux.push({type:'sub_byk',x:u.x,y:u.y,r:0,t:5.3,m:5.3,team:u.team,owner:u,ui:subBI(u),hp0:u.hp,q:[],act:4,clk:0,n:0});say(u,'BYAKUGÔ !','#d08aff');jx({jfx:'sub_bykon',ui:subBI(u),x:u.x,y:u.y,t:1,m:1})}),
+  aux.push({type:'sub_byk',x:u.x,y:u.y,r:0,t:5.3,m:5.3,team:u.team,owner:u,ui:subBI(u),hp0:u.hp,q:[],act:4,clk:0,n:0});say(u,'BYAKUGÔ !','#d08aff');jx({jfx:'sub_bykon',ui:subBI(u),x:u.x,y:u.y,t:1,m:1});
+  fxRing(u.x,u.y,{u,r0:16,r1:120,col:'#d8a8ff',c2:'#b8ffb0',w:7,t:.55});fxGlyph(u.x,u.y,'#c080ff',{u,r:52,t:1.2,ui:subBI(u)});fxEmbers(u.x,u.y,30,'#b8ffb0',{u,n:10,t:1.6,h:110,c2:'#d8a8ff'});fxLight(u.x,u.y,170,'#c080ff',{u,t:.8,a:.45})}),
  // --- Invocation : Manda : sort d'un nuage derrière le lanceur et charge en ligne droite
  sub_manda:ULT('Invocation : Manda','Serpent géant qui avale le 1er ennemi',{cast:.45,line:{len:1000,w:100},ai:{max:700,p:.8}},(u,a)=>{anim(u,'sub_manda',.8);S('poof',u);S('roar',u);
-  const s=subFree({x:u.x-Math.cos(a)*60,y:u.y-Math.sin(a)*60},40);subPoof(s.x,s.y,110,u);sparks(s.x,s.y,'#eceff4',16,'smoke');if(near(s.x,s.y))shake=Math.max(shake,.3);
+  const s=subFree({x:u.x-Math.cos(a)*60,y:u.y-Math.sin(a)*60},40);subPoof(s.x,s.y,110,u);fxSmoke(s.x,s.y,{u,col:'#e8e4f0',n:10,r:100,s:34,t:1.2,al:.3,rise:50});fxGlyph(s.x,s.y,'#a878d0',{u,r:80,t:.8});fxShake(.3,s.x,s.y);
   const c=subCarrier(u,s.x,s.y,'sub_mandah',{life:4.3,r:1,ox:a,ar:0,zapP:0});aux.push({type:'sub_manda',x:s.x,y:s.y,a,len:0,r:46,t:4.2,m:4.2,team:u.team,owner:u,p:c,n:0,w:0,sw:0})}),
  // --- Fûton : Rasenshuriken : formé au-dessus de la main (incantation), lancé loin ; la sphère de lames tranche le chakra
  sub_rsk:ULT('Fûton : Rasenshuriken','Sphère de lames de vent qui tranche le chakra',{cast:.5,line:{len:640,w:70},ai:{max:600,p:.8}},(u,a,td)=>{anim(u,'sub_rsk',.45);S('wind',u);S('rasengan',u);
-  const L=clamp(td||600,140,640),sg=u.sub_sage>0?1:0;u.sub_rskW=4;if(sg)say(u,'SENPÔ : RASENSHURIKEN !','#9ad05a');proj(u,a,{spd:640,r:20+sg*5,dmg:8,life:L/640,col:'#c8fff0',vfx:'rasenshuriken',kind:'sub_rskp',big:1,noClash:1,sg,onHit:(p,t)=>{p.bx=t.x;p.by=t.y}});
+  const L=clamp(td||600,140,640),sg=u.sub_sage>0?1:0;u.sub_rskW=4;fxWind(u.x,u.y,a,{u,len:160,w:60,n:8,t:.4,col:'#e8fffa'});if(sg)say(u,'SENPÔ : RASENSHURIKEN !','#9ad05a');proj(u,a,{spd:640,r:20+sg*5,dmg:8,life:L/640,col:'#c8fff0',vfx:'rasenshuriken',kind:'sub_rskp',big:1,noClash:1,sg,onHit:(p,t)=>{p.bx=t.x;p.by=t.y}});
   aux.push({type:'sub_rskt',x:u.x,y:u.y,r:0,t:2,m:2,team:u.team,owner:u,p:projs[projs.length-1]})}),
 });
 AFTER.push(()=>UK.push('sub_byk','sub_eat','sub_ckc'));
@@ -85,7 +88,7 @@ AUXF.sub_leurre=(x,dt)=>{const u=x.owner,p=x.p,D=x.D;if(!p||p.life<=0||D.dead){D
 // Shishienjin : 0 = les quatre flammes s'allument (0,45 s) ; 1 = dôme, les ennemis gardent leur côté (dedans / dehors) ; toucher le mur brûle
 AUXF.sub_shishi=(x,dt)=>{const u=x.owner;
  if(x.n===0){if(x.m-x.t<.45)return;x.n=1;let c=0;VFX='genjutsu';for(const e of enemies(u)){const d=Math.hypot(e.x-x.x,e.y-x.y),i=d<x.r;x.side.set(e,i);if(i&&!(e.phase>0)&&!(e.sub_eat>0)){c++;hit(e,u,8,{unblockable:1});say(e,'PIÉGÉ','#d8a8ff')}}VFX=null;
-  jx({jfx:'sub_shishif',x:x.x,y:x.y,r:x.r,t:3,m:3});if(near(x.x,x.y)){S('flame',u);S('fire',u);shake=Math.max(shake,c?.25:.12)}return}
+  jx({jfx:'sub_shishif',x:x.x,y:x.y,r:x.r,t:3,m:3});fxRing(x.x,x.y,{u,r0:x.r*.3,r1:x.r,col:'#c080ff',c2:'#ffffff',w:7,t:.45});fxLight(x.x,x.y,x.r,'#a050f0',{u,t:.6,a:.35});fxDecal(x.x,x.y,'seal',{u,r:x.r*.85,t:3,col:'#a060e0'});if(near(x.x,x.y)){S('flame',u);S('fire',u)}return}
  if(x.t<=0)return;
  for(const e of enemies(u)){if(e.sub_eat>0)continue;let i=x.side.get(e);const d=Math.hypot(e.x-x.x,e.y-x.y);if(i===undefined){i=d<x.r;x.side.set(e,i)}
   const lim=i?x.r-e.r-2:x.r+e.r+2;if(i?d<=lim:d>=lim)continue;
@@ -97,21 +100,22 @@ AUXF.sub_shishi=(x,dt)=>{const u=x.owner;
 AUXF.sub_byk=(x,dt)=>{const u=x.owner;if(!u||u.dead){if(u)u.sub_byk=0;x.t=0;return}x.x=u.x;x.y=u.y;x.clk+=dt;x.act-=dt;u.sub_byk=Math.max(0,x.act);
  const loss=x.hp0-u.hp;if(loss>.05&&x.act>0){x.q.push([x.clk+1,loss]);jx({jfx:'sub_bykq',ui:x.ui,x:u.x,y:u.y,t:1.12,m:1.12,n:(x.n++)%3})}
  let due=0;while(x.q.length&&x.q[0][0]<=x.clk)due+=x.q.shift()[1];
- if(due>0){const can=Math.min(due,u.energy*4,u.max-u.hp);if(can>0){u.hp+=can;u.energy=Math.max(0,u.energy-can/4);stOf(u).heal+=can;if(near(u.x,u.y)&&can>=1)say(u,'◆ +'+Math.round(can),'#b8ffb0')}
+ if(due>0){const can=Math.min(due,u.energy*4,u.max-u.hp);if(can>0){u.hp+=can;u.energy=Math.max(0,u.energy-can/4);stOf(u).heal+=can;if(near(u.x,u.y)&&can>=1){say(u,'◆ +'+Math.round(can),'#b8ffb0');fxBurst(u.x,u.y,'#b8ffb0',{u,z:40,n:6,sp:70,gr:-90,up:40,w:2,sh:'dot',c2:'#ffffff'})}}
   if(can<due-.5&&u.energy<1&&near(u.x,u.y))say(u,'PLUS DE CHAKRA','#4ab0ff')}
  x.hp0=u.hp;if(x.act<=0&&!x.q.length){x.t=0;u.sub_byk=0}if(x.t<=0)u.sub_byk=0};
 // Manda : 0 = sort du nuage ; 1 = charge ; 2 = la proie est avalée (cachée, intangible, étourdie) ; 3 = disparaît en fumée
 function subBMandaBite(x,u,e){VFX='smoke';const ok=hit(e,u,12,{unblockable:1});VFX=null;if(near(e.x,e.y)){S('roar',u);S('heavy',u);shake=Math.max(shake,.3)}
  if(!ok||e.unstop>0||e.dead){x.n=3;x.t=Math.min(x.t,.55);if(ok&&!e.dead)say(e,'RÉSISTE','#fc6');return}
  x.n=2;x.tg=e;x.ti=subBI(e);x.sw=1.2;e.sub_eat=1.2;e.phase=Math.max(e.phase||0,.2);e.stun=Math.max(e.stun,1.2);e.cast=null;e.dash=null;e.spin=null;e.flame=null;e.block=false;e.kx=e.ky=0;
- say(e,'AVALÉ !','#d8a8ff');jx({jfx:'sub_mgulp',x:e.x,y:e.y,t:.45,m:.45})}
+ say(e,'AVALÉ !','#d8a8ff');jx({jfx:'sub_mgulp',x:e.x,y:e.y,t:.45,m:.45});fxFlare(e.x,e.y,'#d8a8ff',{u,z:40,r:30,t:.2});fxHitStop(u,e,30,1)}
 function subBMandaSpit(x,u,e){x.n=3;x.t=Math.min(x.t,.7);if(!e)return;e.sub_eat=0;if(e.dead)return;e.phase=0;const ca=Math.cos(x.a),sa=Math.sin(x.a),q=subFree({x:x.x+ca*(x.r+e.r+16),y:x.y+sa*(x.r+e.r+16)},e.r);e.x=q.x;e.y=q.y;collide(e);
- VFX='smoke';hit(e,u,30,{kb:520,stun:.45,unblockable:1,fx:x.x,fy:x.y});VFX=null;say(e,'RECRACHÉ !','#d8a8ff');jx({jfx:'sub_mspit',x:e.x,y:e.y,a:x.a,t:.6,m:.6});if(near(e.x,e.y)){S('water',e);S('heavy',e);shake=Math.max(shake,.3)}}
+ VFX='smoke';hit(e,u,30,{kb:520,stun:.45,unblockable:1,fx:x.x,fy:x.y});VFX=null;say(e,'RECRACHÉ !','#d8a8ff');jx({jfx:'sub_mspit',x:e.x,y:e.y,a:x.a,t:.6,m:.6});
+ fxBurst(e.x,e.y,'#c8e8a0',{u,z:30,n:12,sp:260,up:110,gr:420,w:2.6,len:.05,a:x.a,arc:1.6,add:0});fxDecal(e.x,e.y,'puddle',{u,r:40,t:3,col:'#8ab070'});fxRing(e.x,e.y,{u,r0:10,r1:60,col:'#d8a8ff',w:5,t:.35});fxShake(.3,e.x,e.y);fxHitStop(u,e,30,1);if(near(e.x,e.y)){S('water',e);S('heavy',e)}}
 AUXF.sub_manda=(x,dt)=>{const u=x.owner,ca=Math.cos(x.a),sa=Math.sin(x.a);
  // porteur de la tête détruit (dôme qui dévore les projectiles…) : recréé
  if((!x.p||x.p.dead||x.p.life<=0)&&x.t>.1&&u)x.p=subCarrier(u,x.x,x.y,'sub_mandah',{life:x.t+.05,r:1,ox:x.a,ar:x.w,zapP:x.n});const c=x.p;
  if(x.n===0){x.w=Math.min(1,x.w+dt/.3);if(x.w>=1)x.n=1}
- else if(x.n===1){const st=1000*dt;x.x+=ca*st;x.y+=sa*st;x.len+=st;const hx=x.x+ca*22,hy=x.y+sa*22;
+ else if(x.n===1){const st=1000*dt;x.x+=ca*st;x.y+=sa*st;x.len+=st;const hx=x.x+ca*22,hy=x.y+sa*22;x.sw-=dt;if(x.sw<=0){x.sw=.09;fxSmoke(x.x,x.y,{u,col:'#b8a890',n:2,r:40,s:18,t:.7,al:.24,rise:12})}
   for(const e of enemies(u)){if(e.phase>0||e.sub_eat>0)continue;if(Math.hypot(e.x-hx,e.y-hy)<x.r+e.r){subBMandaBite(x,u,e);break}}
   if(x.n===1&&(x.len>=1150||x.x<B.x+40||x.x>B.x+B.w-40||x.y<B.y+40||x.y>B.y+B.h-40)){x.n=3;x.t=Math.min(x.t,.55);subPoof(x.x,x.y,100,u)}}
  else if(x.n===2){const e=x.tg;x.sw-=dt;
@@ -122,12 +126,12 @@ AUXF.sub_manda=(x,dt)=>{const u=x.owner,ca=Math.cos(x.a),sa=Math.sin(x.a);
 // Rasenshuriken : suit le projectile ; à l'impact (ou au bout de sa course, ou contre un pilier) la sphère de lames éclate
 AUXF.sub_rskt=x=>{const p=x.p;if(!p){x.t=0;return}if(!p.dead&&p.life>0){x.x=p.x;x.y=p.y;return}x.t=0;const u=p.owner||x.owner;if(!u)return;const q=subFree({x:p.bx??p.x,y:p.by??p.y},20);subBRskBoom(u,q.x,q.y,p.sg)}; // renvoyé (parade, renvoi) : il explose pour celui qui l'a renvoyé
 function subBRskBoom(u,x,y,sg){const R=sg?165:135;aux.push({type:'sub_rskd',x,y,r:R,t:1.05,m:1.05,k:0,team:u.team,owner:u,hs:new Set(),sgm:sg?1.3:1});jx({jfx:'sub_rskboom',x,y,r:R,t:.5,m:.5});jx({jfx:'sub_rskdome',x,y,r:R,t:1.05,m:1.05});
- if(near(x,y)){S('boom',u);S('wind',u);shake=Math.max(shake,.4)}}
+ if(near(x,y)){fxFlare(x,y,'#c8fff0',{u,z:R*.45,r:46,t:.25});fxRing(x,y,{u,r0:R*.2,r1:R,col:'#c8fff0',c2:'#ffffff',w:8,t:.4});fxWind(x,y,0,{u,spin:1,w:R,n:12,t:1,col:'#e8fffa'});fxDecal(x,y,'crack',{u,r:R*.75,t:4.5});fxLight(x,y,R*1.2,'#9fd8ff',{u,t:1,a:.4});fxShake(.35,x,y);S('boom',u);S('wind',u)}}
 function subBCut(u,e){const lost=Math.min(e.energy,30);e.energy-=lost;if(near(e.x,e.y))say(e,'-'+Math.round(lost)+' CHAKRA','#4ab0ff');jx({jfx:'sub_ckdrain',ti:subBI(e),x:e.x,y:e.y,t:.9,m:.9});
  const o=aux.find(a=>a.type==='sub_ckc'&&a.tg===e);if(o){o.t=o.m=3;o.cap=e.energy}else aux.push({type:'sub_ckc',x:e.x,y:e.y,r:0,t:3,m:3,team:u.team,owner:u,tg:e,ti:subBI(e),cap:e.energy,sh:0});e.sub_ckc=3}
 AUXF.sub_rskd=x=>{const u=x.owner;if(!u)return;
  if(x.k<=0&&x.t>.05){x.k=.15;VFX='rasenshuriken';for(const e of enemies(u)){if(Math.hypot(e.x-x.x,e.y-x.y)>=x.r+e.r)continue;if(hit(e,u,3*(x.sgm||1),{unblockable:1,slow:.5,pull:150,fx:x.x,fy:x.y})&&!x.hs.has(e)){x.hs.add(e);subBCut(u,e)}}VFX=null}
- if(x.t<=0&&!x.done){x.done=1;VFX='rasenshuriken';for(const e of enemies(u))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)hit(e,u,10*(x.sgm||1),{kb:380,unblockable:1,fx:x.x,fy:x.y});VFX=null;detoFx(x.x,x.y,x.r,'rasenshuriken');if(near(x.x,x.y)){S('boom',u);shake=Math.max(shake,.3)}}};
+ if(x.t<=0&&!x.done){x.done=1;VFX='rasenshuriken';for(const e of enemies(u))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)hit(e,u,10*(x.sgm||1),{kb:380,unblockable:1,fx:x.x,fy:x.y});VFX=null;detoFx(x.x,x.y,x.r,'rasenshuriken');if(near(x.x,x.y)){fxImpact(x.x,x.y,'futon',2.4,{u,r:x.r,z:40});fxShake(.3,x.x,x.y);S('boom',u)}}};
 // chakra tranché : le chakra de la cible ne peut plus remonter (charge, coups, pilules…)
 AUXF.sub_ckc=(x,dt)=>{const e=x.tg;if(!e||e.dead){if(e)e.sub_ckc=0;x.t=0;return}x.x=e.x;x.y=e.y;e.sub_ckc=Math.max(0,x.t);x.sh-=dt;
  if(e.energy>x.cap+.01){e.energy=x.cap;if(x.sh<=0&&e.chk){x.sh=1.2;if(near(e.x,e.y))say(e,'CHAKRA COUPÉ','#4ab0ff')}}else x.cap=e.energy;if(x.t<=0)e.sub_ckc=0};
@@ -255,12 +259,12 @@ STATD.push((u,p,S,sk)=>{if(!u.cast||u.dead)return;const ab=castAb(u,u.cast);if(!
  const gr=g.createRadialGradient(0,0,0,0,0,R*.7);gr.addColorStop(0,'#fff');gr.addColorStop(.5,'#9fd8ff');gr.addColorStop(1,'rgba(58,138,255,0)');g.fillStyle=gr;g.beginPath();g.arc(0,0,R*.7,0,7);g.fill();
  g.scale(1,.82);g.rotate(t*24);for(let i=0;i<4;i++){g.rotate(Math.PI/2);g.fillStyle=rgba('#d7fff5',.55*k);g.beginPath();g.moveTo(R*.15,-R*.12);g.quadraticCurveTo(R*.7,-R*.4,R*1.4*k,-R*.08);g.quadraticCurveTo(R*.8,0,R*.2,R*.12);g.closePath();g.fill()}g.restore()});
 JFXD.sub_rskboom=(f,k,e)=>{const q=P(f.x,f.y,f.r*.45),R=f.r*q.s*(.3+.75*ezo(Math.min(1,e*2.2)));g.save();g.globalCompositeOperation='lighter';
- const gr=g.createRadialGradient(q.x,q.y,0,q.x,q.y,R);gr.addColorStop(0,rgba('#ffffff',.95*k));gr.addColorStop(.6,rgba('#c8fff0',.5*k));gr.addColorStop(1,rgba('#9fd8ff',0));g.fillStyle=gr;g.beginPath();g.arc(q.x,q.y,R,0,7);g.fill();
+ fxGlowS(q.x,q.y,R,'#9fe8ff',.5*k);
  g.strokeStyle=rgba('#ffffff',.9*k);g.lineWidth=2;g.beginPath();g.arc(q.x,q.y,R*1.05,0,7);g.stroke();g.restore()};
 // sphère de lames : des milliers d'aiguilles de vent (par-dessus les ninjas, transparente)
 JFXD.sub_rskdome=(f,k,e,t)=>{const c=P(f.x,f.y,f.r*.45),R=f.r*c.s*Math.min(1,.3+e*6),a=Math.min(1,k*4);g.save();g.globalCompositeOperation='lighter';
  g.fillStyle=rgba('#c8fff0',.12*a);g.beginPath();g.ellipse(c.x,c.y,R,R*.92,0,0,7);g.fill();g.strokeStyle=rgba('#e8fffa',.6*a);g.lineWidth=2;g.stroke();
- g.lineWidth=1.2;for(let i=0;i<46;i++){const b=i*2.399+t*(i%2?7:-5),d=R*(.15+((i*53)%80)/100),L=R*.26,x=c.x+Math.cos(b)*d,y=c.y+Math.sin(b)*d*.92;g.strokeStyle=rgba(i%3?'#ffffff':'#9fd8ff',.65*a);g.beginPath();g.moveTo(x,y);g.lineTo(x+Math.cos(b+1.57)*L,y+Math.sin(b+1.57)*L*.92);g.stroke()}
+ g.lineWidth=1.2;const NN=Math.max(12,fxNB(46,f));for(let i=0;i<NN;i++){const b=i*2.399+t*(i%2?7:-5),d=R*(.15+((i*53)%80)/100),L=R*.26,x=c.x+Math.cos(b)*d,y=c.y+Math.sin(b)*d*.92;g.strokeStyle=rgba(i%3?'#ffffff':'#9fd8ff',.65*a);g.beginPath();g.moveTo(x,y);g.lineTo(x+Math.cos(b+1.57)*L,y+Math.sin(b+1.57)*L*.92);g.stroke()}
  g.translate(c.x,c.y);g.scale(1,.35);g.rotate(t*18);g.fillStyle=rgba('#d7fff5',.3*a);for(let i=0;i<4;i++){g.rotate(Math.PI/2);g.beginPath();g.moveTo(R*.1,-R*.08);g.quadraticCurveTo(R*.6,-R*.3,R*1.25,-R*.04);g.quadraticCurveTo(R*.7,0,R*.12,R*.08);g.closePath();g.fill()}g.restore()};
 AUXD.sub_rskd=(x,k,t)=>{g.fillStyle=rgba('#0a2030',.22*k);gEll(x.x,x.y,x.r);g.fill();g.strokeStyle=rgba('#c8fff0',.7*k);g.lineWidth=2;g.setLineDash([14,8]);g.lineDashOffset=-t*160;gEll(x.x,x.y,x.r);g.stroke();g.setLineDash([])};
 // chakra arraché : des volutes bleues quittent la cible ; puis, tant qu'il est coupé, un anneau de chakra brisé tourne autour d'elle

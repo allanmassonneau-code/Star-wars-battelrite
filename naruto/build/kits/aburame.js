@@ -20,6 +20,11 @@ const AB_MAX=5,AB_DR=.12; // insectes max par cible ; chakra rongé par insecte 
 function ab_add(e,u,n=1){if(!e||e.dead||!u||e.team===u.team)return;const c=e.ab_col||0;e.ab_col=Math.min(AB_MAX,c+n);e.ab_colT=6;e.ab_src=u;
  if(e.ab_col>c&&near(e.x,e.y))jx({jfx:'ab_infest',ti:units.indexOf(e),x:e.x,y:e.y,n:e.ab_col-c,t:.45,m:.45})}
 const ab_n=e=>e&&!e.dead?e.ab_col||0:0;
+// ---- VFX (boîte à outils nr_fx.js) : insectes = nuées sombres non additives + reflets verts ; décor selon intensité / foule / camp ; zones nettes
+const ab_dim=(o,fn)=>{const m=fxA(o);return m<1?fxAlpha(m,fn):fn()};
+// nuée qui s'abat sur une cible : grouillement sombre, reflets verts, ombre au sol
+function ab_imp(u,x,y,r,big,t,dmg){fxBurst(x,y,'#161b17',{u,n:big?18:10,sp:big?260:180,z:30,up:60,gr:-20,w:2.4,len:.08,add:0,c2:'#3a4a30',t:.55});fxBurst(x,y,'#c8e07a',{u,n:big?6:3,sp:160,z:34,w:1.4,sh:'dot',gr:0,t:.4});
+ fxSmoke(x,y,{u,col:'#161b17',n:big?5:3,r:r*.6,s:12,t:.8,al:.28,rise:24});if(big)fxDecal(x,y,'default',{u,r:r*.8,t:2.6,col:'#0c0f0d',al:.4});if(t&&dmg)fxHitStop(u,t,dmg,big)}
 // point visé par le lanceur (souris, entrée réseau, sinon sa cible), à moins de R du lanceur
 function ab_want(u,R){let x=null,y=null;if(u.ctrl==='local'){const m=unP(mouse.x,mouse.y);x=m.x;y=m.y}else if(u.ctrl==='remote'){const Q=peerOf(u.rid);if(Q&&Q.in){x=+Q.in.ax;y=+Q.in.ay}}
  if(x==null||isNaN(x)){const e=u.tgt&&!u.tgt.dead?u.tgt:nearE(u,u.x,u.y,900);if(e){x=e.x;y=e.y}else{x=u.x+Math.cos(u.aim)*200;y=u.y+Math.sin(u.aim)*200}}
@@ -59,7 +64,7 @@ Object.assign(NAT,{
  // Insectes espions (Rinkaichû) : un insecte femelle, rapide et précis ; il infeste la cible et la piste (les mâles la retrouvent partout)
  ab_spy:S_('Insectes espions','Insecte femelle rapide : infeste la cible (+2 insectes) et la piste 5 s (révélée, traquée)',7,{ai:RG(470,.6),line:{len:490,w:16}},(u,a)=>{S('bugs',u);anim(u,'ab_flick',.5);
   jx({jfx:'ab_glint',ui:units.indexOf(u),x:u.x,y:u.y,t:.4,m:.4});
-  proj(u,a,{spd:900,r:7,dmg:4,life:.54,col:'#b8d870',kind:'ab_spy',o:{reveal:1},onHit:(p,t)=>{ab_add(t,p.owner,1);t.ab_spyT=5;t.ab_spyS=p.owner;t.stealth=0;say(t,'PISTÉ','#c8e07a');jx({jfx:'ab_mark',ti:units.indexOf(t),x:t.x,y:t.y,t:.7,m:.7})}})}),
+  proj(u,a,{spd:900,r:7,dmg:4,life:.54,col:'#b8d870',kind:'ab_spy',o:{reveal:1},onHit:(p,t)=>{ab_add(t,p.owner,1);t.ab_spyT=5;t.ab_spyS=p.owner;t.stealth=0;say(t,'PISTÉ','#c8e07a');jx({jfx:'ab_mark',ti:units.indexOf(t),x:t.x,y:t.y,t:.7,m:.7});fxFlare(t.x,t.y,'#c8e07a',{u:p.owner,z:40,r:16,t:.2});fxRing(t.x,t.y,{u:p.owner,r0:8,r1:40,col:'#c8e07a',t:.35,w:3})}})}),
  // Insectes chercheurs : la nuée file droit, puis flaire les colonies et traque l'infesté le plus proche (de plus loin s'il est pisté)
  ab_seek:S_('Insectes chercheurs','Nuée qui file droit, puis traque l\'ennemi infesté le plus proche : dégâts et +2 insectes',8,{hero:'lando',ai:RG(560,.65),line:{len:600,w:28}},(u,a)=>{S('bugs',u);anim(u,'ab_sleeve',.55);
   jx({jfx:'ab_pour',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.45,m:.45});
@@ -74,13 +79,14 @@ Object.assign(NAT,{
    const ox=u.x,oy=u.y;jx({jfx:'ab_stream',x:ox,y:oy,x2:cl.x,y2:cl.y,t:.35,m:.35});u.x=cl.x;u.y=cl.y;u.kx=u.ky=0;u.dash=null;collide(u);cl.x=ox;cl.y=oy;
    u.phase=Math.max(u.phase||0,.15);anim(u,'ab_dissolve',.35);S('poof',u);u.jst=null;u.cds[i]=Math.max(.5,ab.cd-(cl.m-cl.t));ab_cloneBurst(cl);return}
   if(u.jst&&u.jst.key!=='ab_clone'){u.cds[u.jst.i]=u.jst.cd;u.jst=null}
-  S('bugs',u);S('dash',u);anim(u,'ab_dissolve',.4);
+  S('bugs',u);S('dash',u);anim(u,'ab_dissolve',.4);fxSmoke(u.x,u.y,{u,col:'#161b17',n:4,r:20,s:12,t:.6,al:.3,rise:30});
   aux.push({type:'ab_clone',x:u.x,y:u.y,r:24,t:2.5,m:2.5,team:u.team,owner:u,ui:units.indexOf(u),a:u.aim,k:0,vfx:'bugs',n:0});
   const d=clamp(td||230,140,240),e=fwd(u,a,d);jx({jfx:'ab_stream',x:u.x,y:u.y,x2:e.x,y2:e.y,t:.35,m:.35});dash(u,a,d,.2,{});u.phase=Math.max(u.phase||0,.22);
   if(u.jst&&u.jst.key!=='ab_clone')u.cds[u.jst.i]=u.jst.cd;u.jst={key:'ab_clone',i,n:0,t:2.5,cd:Math.max(.5,ab.cd-2.5),v:'bugs'};u.cds[i]=.35}),
  // Mur d'insectes (Kikai Heki) : rideau d'insectes devant soi ; il dévore les projectiles ennemis et infeste ceux qui le traversent
  ab_wall:S_('Mur d\'insectes','Rideau d\'insectes 3,5 s : dévore les projectiles (+chakra), ralentit et infeste qui le traverse',10,{ai:DEF},(u,a)=>{S('bugs',u);anim(u,'ab_wall',.6);const c=fwd(u,a,80);
-  aux.push({type:'ab_wall',x:c.x,y:c.y,a,len:210,w:30,r:110,t:3.5,m:3.5,team:u.team,owner:u,k:0,vfx:'bugs',n:0,hs:{}});sparks(c.x,c.y,'#26302a',14,'bugs')}),
+  aux.push({type:'ab_wall',x:c.x,y:c.y,a,len:210,w:30,r:110,t:3.5,m:3.5,team:u.team,owner:u,k:0,vfx:'bugs',n:0,hs:{}});sparks(c.x,c.y,'#26302a',14,'bugs');
+  for(const s of[-1,0,1])fxSmoke(c.x-Math.sin(a)*s*80,c.y+Math.cos(a)*s*80,{u,col:'#161b17',n:3,r:24,s:12,t:.8,al:.24,rise:50})}),
  // Insectes dévoreurs : la nuée s'accroche à l'ennemi touché et pompe son chakra et sa vie, d'autant plus vite qu'il est infesté
  ab_drain:S_('Insectes dévoreurs','Nuée accrochée à l\'ennemi touché 3 s : vole chakra et PV (plus s\'il est infesté), à portée',13,{ai:RG(380,.6),line:{len:400,w:20}},(u,a)=>{S('bugs',u);anim(u,'ab_drain',1);
   jx({jfx:'ab_pour',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.35,m:.35});
@@ -88,11 +94,12 @@ Object.assign(NAT,{
    aux.push({type:'ab_drain',x:t.x,y:t.y,r:0,t:3,m:3,team:o.team,owner:o,tg:t,ui:units.indexOf(o),ti:units.indexOf(t),k:.5,vfx:'bugs',n:0});say(t,'DÉVORÉ','#c8e07a')}})}),
  // Essaim d'insectes : grande nuée qui suit le curseur ; elle ronge, ralentit et infeste ; le feu la brûle
  ab_swarm:S_('Essaim d\'insectes','Grande nuée qui suit ton curseur 3,5 s : ronge, ralentit et infeste. Le feu la brûle',12,{hero:'boba',ai:RG(480,.6),tele:{r:80,max:500}},(u,a,td)=>{S('bugs',u);S('wind',u);anim(u,'ab_swarm',.7);const p=fwd(u,a,55);
-  aux.push({type:'ab_swarm',x:p.x,y:p.y,a,r:88,t:3.5,m:3.5,team:u.team,owner:u,ui:units.indexOf(u),k:.15,vfx:'bugs',n:0,acc:0,hs:{}});jx({jfx:'ab_pour',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.5,m:.5,big:1})}),
+  aux.push({type:'ab_swarm',x:p.x,y:p.y,a,r:88,t:3.5,m:3.5,team:u.team,owner:u,ui:units.indexOf(u),k:.15,vfx:'bugs',n:0,acc:0,hs:{}});jx({jfx:'ab_pour',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.5,m:.5,big:1});
+  fxSmoke(p.x,p.y,{u,col:'#161b17',n:6,r:60,s:16,t:1,al:.24,rise:40});fxRing(p.x,p.y,{u,r0:20,r1:88,col:'#56683f',t:.4,w:4})}),
  // Insectes chercheurs (v5, fusion avec les Dévoreurs) : la nuée traque, puis s'accroche 2 s à l'ennemi touché
  ab_seekB:S_('Insectes chercheurs','',10,{hero:'lando',ai:RG(560,.65),line:{len:600,w:28}},(u,a)=>{S('bugs',u);anim(u,'ab_sleeve',.55);
   jx({jfx:'ab_pour',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.45,m:.45});
-  proj(u,a,{spd:470,r:12,dmg:16,life:1.6,col:'#4a5a3a',kind:'ab_seek',onHit:(p,t)=>{ab_add(t,p.owner,1);ab_burst(t.x,t.y,50);if(t.dead)return;const o=p.owner;for(const x of aux)if(x.type==='ab_drain'&&x.owner===o)x.t=0;
+  proj(u,a,{spd:470,r:12,dmg:16,life:1.6,col:'#4a5a3a',kind:'ab_seek',onHit:(p,t)=>{ab_add(t,p.owner,1);ab_burst(t.x,t.y,50);ab_imp(p.owner,t.x,t.y,50,1,t,p.dmg);if(t.dead)return;const o=p.owner;for(const x of aux)if(x.type==='ab_drain'&&x.owner===o)x.t=0;
    aux.push({type:'ab_drain',x:t.x,y:t.y,r:0,t:2,m:2,team:o.team,owner:o,tg:t,ui:units.indexOf(o),ti:units.indexOf(t),k:.5,vfx:'bugs',n:0});say(t,'DÉVORÉ','#c8e07a')}});
   aux.push({type:'ab_seek',x:u.x,y:u.y,r:0,t:1.7,m:1.7,team:u.team,owner:u,p:projs[projs.length-1],k:0})}),
  // Nano-insectes de Torune : venin cumulable sur les attaques de base
@@ -104,10 +111,10 @@ Object.assign(NAT,{
   later(u,.76,()=>{for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<150+e.r){ab_add(e,u,1);jx({jfx:'ab_engulf',ti:units.indexOf(e),x:e.x,y:e.y,t:1,m:1})}
    aux.push({type:'ab_nuee',x:p.x,y:p.y,r:125,t:3,m:3,team:u.team,owner:u,ui:units.indexOf(u),k:.2,vfx:'bugs',n:0})},{x:p.x,y:p.y})}),
  // Nuée destructrice (v5, fusion avec la Sphère) : à l'impact, l'ennemi qui porte 5 insectes est enfermé dans une sphère
- ab_nueeS:ULT('Nuée destructrice','',{hero:'deathtrooper',tele:{r:150,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480);S('bugs',u);S('heavy',u);anim(u,'ab_nuee',.9);
+ ab_nueeS:ULT('Nuée destructrice','',{hero:'deathtrooper',tele:{r:150,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480);S('bugs',u);S('heavy',u);anim(u,'ab_nuee',.9);fxPillar(u.x,u.y,'#56683f',{u,h:240,w:30,t:.6,al:.4});fxSmoke(u.x,u.y,{u,col:'#161b17',n:6,r:30,s:14,t:.9,al:.28,rise:120});
   zone(u,p.x,p.y,150,20,.75,{root:.8,silence:.8},'#26302a');lastZ().deto='ab_fall';jx({jfx:'ab_fall',x:p.x,y:p.y,r:150,t:.75,m:.75});
   later(u,.76,()=>{for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<150+e.r){ab_add(e,u,1);jx({jfx:'ab_engulf',ti:units.indexOf(e),x:e.x,y:e.y,t:1,m:1});
-    const c=ab_n(e);if(c>=AB_MAX&&!e.dead&&e.unstop<=0&&!(e.ab_sph>0)){const D=1+.16*c;say(e,'SPHÈRE D\'INSECTES','#c8e07a');aux.push({type:'ab_sphere',x:e.x,y:e.y,r:36,t:D,m:D,team:u.team,owner:u,tg:e,ui:units.indexOf(u),ti:units.indexOf(e),k:.25,vfx:'bugs',n:c})}}
+    fxHitStop(u,e,20,1);const c=ab_n(e);if(c>=AB_MAX&&!e.dead&&e.unstop<=0&&!(e.ab_sph>0)){const D=1+.16*c;say(e,'SPHÈRE D\'INSECTES','#c8e07a');fxRing(e.x,e.y,{u,r0:60,r1:20,col:'#c8e07a',t:.4,w:4});aux.push({type:'ab_sphere',x:e.x,y:e.y,r:36,t:D,m:D,team:u.team,owner:u,tg:e,ui:units.indexOf(u),ti:units.indexOf(e),k:.25,vfx:'bugs',n:c})}}
    aux.push({type:'ab_nuee',x:p.x,y:p.y,r:125,t:3,m:3,team:u.team,owner:u,ui:units.indexOf(u),k:.2,vfx:'bugs',n:0})},{x:p.x,y:p.y})}),
  // Sphère d'insectes (Mushi Dama) : le premier ennemi touché est enfermé dans une sphère qui le dévore ; elle tient plus longtemps sur une cible infestée
  ab_sphere:ULT('Sphère d\'insectes','Enferme le 1er ennemi touché dans une sphère d\'insectes : dévore PV et chakra, dure plus s\'il est infesté',{line:{len:560,w:30},ai:{max:520,p:.8}},(u,a)=>{S('bugs',u);S('wind',u);anim(u,'ab_sphere',.7);
@@ -127,7 +134,7 @@ AUXF.ab_seek=(x,dt)=>{const p=x.p;if(!p||p.dead||p.life<=0){x.t=0;return}x.x=p.x
  const tr=(2.2+age*2.2)*dt,na=cur+clamp(df,-tr,tr),sp=Math.min(620,Math.hypot(p.vx,p.vy)+110*dt);p.vx=Math.cos(na)*sp;p.vy=Math.sin(na)*sp};
 // clone : éclate quand un ennemi le touche ou qu'un projectile ennemi le frappe ; sinon se disperse sans dégâts
 function ab_cloneBurst(x){if(x.gone)return;x.gone=1;x.t=Math.min(x.t,.01);if(x.dp)x.dp.life=0;const o=x.owner;VFX='bugs';for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<80+e.r&&hit(e,o,8,{slow:.7,unblockable:1}))ab_add(e,o,1);VFX=null;
- ab_burst(x.x,x.y,85,1);if(near(x.x,x.y)){S('bugs',o);shake=Math.max(shake,.1)}
+ ab_burst(x.x,x.y,85,1);if(near(x.x,x.y)){S('bugs',o);ab_imp(o,x.x,x.y,85,1)}
  if(o.jst&&o.jst.key==='ab_clone'){const i=o.jst.i,ab=o.ch.abil[i];o.cds[i]=Math.max(.5,ab.cd-(x.m-x.t));o.jst=null}}
 // la traînée de bond du moteur (perles de chakra) devient une traînée d'insectes
 function ab_dashfx(u){for(let i=Math.max(0,fx.length-14);i<fx.length;i++){const f=fx[i];if(f.r===6&&f.m===.25&&f.vx===0&&!f.vfx&&Math.abs(f.x-u.x)<40&&Math.abs(f.y-u.y)<40){f.vfx='bugs';f.col=ABK;f.r=3;f.t=f.m=.5;f.z=8+rnd()*30;f.vx=(rnd()-.5)*60;f.vy=(rnd()-.5)*40}}}
@@ -142,7 +149,7 @@ AUXF.ab_wall=(x,dt)=>{const o=x.owner;x.pts=x.pts||ab_wpts(x);x.dcs=x.dcs||[];
  x.pts.forEach((q,i)=>{let p=x.dcs[i];if(!p||p.dead||p.life<=0&&x.t>.05||projs.indexOf(p)<0)p=x.dcs[i]=ab_decor(o,'ab_wallc',q.x,q.y,x.t,{life0:x.m,ar:i+1});p.life=Math.max(.02,x.t)});
  for(const p of projs){if(p.owner.team===x.team||p.grenade||p.dead||p.life<=0||Math.abs(p.x-x.x)>x.len*.6+30||Math.abs(p.y-x.y)>x.len*.6+30)continue;if(ab_wd(x,p.x,p.y)>x.w*.5+p.r+6)continue;
   if(ELM[p.vfx]===0){if(!p.abB){p.abB=1;x.t-=1.2;sparks(p.x,p.y,'#ff9a3a',12,'fire');if(near(x.x,x.y))say(o,'MUR BRÛLÉ','#ff9a3a')}continue} // le feu traverse et brûle le mur
-  p.life=0;p.boom=1;o.energy=Math.min(100,o.energy+2);x.n++;if(near(p.x,p.y))jx({jfx:'ab_chomp',x:p.x,y:p.y,t:.35,m:.35})}
+  p.life=0;p.boom=1;o.energy=Math.min(100,o.energy+2);x.n++;if(near(p.x,p.y)){jx({jfx:'ab_chomp',x:p.x,y:p.y,t:.35,m:.35});fxBurst(p.x,p.y,'#c8e07a',{u:o,n:4,sp:120,z:28,sh:'dot',w:1.4,gr:0,t:.3})}}
  for(const e of enemies(o)){if(ab_wd(x,e.x,e.y)>x.w*.5+e.r)continue;if(e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.3);const kk=e.c+'|'+e.team;
   if(SIMT-(x.hs[kk]||-9)>=.5){x.hs[kk]=SIMT;VFX='bugs';hit(e,o,3,{silent:1});VFX=null;ab_add(e,o,1)}}};
 // dévoreurs : lien vivant ; toutes les 0,5 s, vole chakra et PV (plus sur une cible infestée) ; se rompt au-delà de 400
@@ -172,8 +179,9 @@ AUXF.ab_sphere=(x,dt)=>{const o=x.owner,e=x.tg;if(!e||e.dead){if(e)e.ab_sph=0;x.
 // palette des kikaichû : corps, contour, liseré (lumière venue d'en haut), reflets
 const ABK='#161b17',ABO='#070807',ABR='#56683f',ABM='#3a4a30';
 // masse d'insectes façon « toon » : disques [x,y,r] (repère écran) avec contour sombre, liseré clair en haut à gauche, corps sombre
-function ab_blob(C,s){g.fillStyle=ABO;g.beginPath();for(const [x,y,r] of C){g.moveTo(x+r+1.5*s,y);g.arc(x,y,r+1.5*s,0,7)}g.fill();
- g.fillStyle=ABR;g.beginPath();for(const [x,y,r] of C){g.moveTo(x-.5*s+r,y-1.3*s);g.arc(x-.5*s,y-1.3*s,r,0,7)}g.fill();
+function ab_blob(C,s){const lite=g.globalAlpha<.95; // translucide (nuée au-dessus d'un ninja) : une seule couche, sinon les couches empilées redeviennent opaques
+ if(!lite){g.fillStyle=ABO;g.beginPath();for(const [x,y,r] of C){g.moveTo(x+r+1.5*s,y);g.arc(x,y,r+1.5*s,0,7)}g.fill();
+ g.fillStyle=ABR;g.beginPath();for(const [x,y,r] of C){g.moveTo(x-.5*s+r,y-1.3*s);g.arc(x-.5*s,y-1.3*s,r,0,7)}g.fill()}
  g.fillStyle=ABK;g.beginPath();for(const [x,y,r] of C){const q=Math.max(.6,r-1.2*s);g.moveTo(x+.5*s+q,y+.7*s);g.arc(x+.5*s,y+.7*s,q,0,7)}g.fill();
  // grain : des insectes qui grouillent dans la masse
  const T=performance.now()/1000;g.fillStyle=ABM;g.beginPath();for(let j=0;j<C.length;j++){const [x,y,r]=C[j],n=Math.min(9,r/(2.8*s)|0);for(let i=0;i<n;i++){const a=i*2.399+j*1.37+T*(1+(i%3)*.6)*(j%2?1:-1),d=r*.78*Math.sqrt((i*.618+j*.29)%1);g.rect(x+Math.cos(a)*d-1.2*s,y+Math.sin(a)*d-1*s,2.4*s,2*s)}}g.fill()}
@@ -190,7 +198,7 @@ function ab_keep(x,kind,ex){let p=x.dp;if(!p||p.dead||p.life<=0||projs.indexOf(p
 // dans un dessin de décor : revenir au repère de l'écran
 const ab_scr=()=>{g.restore();g.save()};
 // projectile espion : un insecte femelle lumineux, ailes battantes, traînée d'odeur
-PROJD.ab_spy=(p,R,ra,t)=>{const T=t/1000;g.rotate(ra);g.globalCompositeOperation='lighter';g.fillStyle='rgba(200,240,120,.45)';for(let i=1;i<7;i++)g.fillRect(-i*6-1,Math.sin(T*30+i)*1.6-1,2.2,2.2);circ(-1,0,9,'rgba(170,230,90,.22)');g.globalCompositeOperation='source-over';
+PROJD.ab_spy=(p,R,ra,t)=>{const T=t/1000;g.rotate(ra);g.globalCompositeOperation='lighter';fxGlowS(0,0,R*3,'#c8e07a',.3*fxA(p));g.fillStyle='rgba(200,240,120,.45)';for(let i=1;i<7;i++)g.fillRect(-i*6-1,Math.sin(T*30+i)*1.6-1,2.2,2.2);circ(-1,0,9,'rgba(170,230,90,.22)');g.globalCompositeOperation='source-over';
  const w=Math.abs(Math.sin(T*55));g.fillStyle='rgba(225,245,210,.6)';g.beginPath();g.ellipse(-1,-3-w*2.4,5.5,2+w*2.2,-.4,0,7);g.ellipse(-1,3+w*2.4,5.5,2+w*2.2,.4,0,7);g.fill();
  g.fillStyle=ABO;g.beginPath();g.ellipse(0,0,7,4.2,0,0,7);g.fill();g.fillStyle=ABK;g.beginPath();g.ellipse(.4,.4,6,3.4,0,0,7);g.fill();circ(6,0,2.4,ABO);
  g.globalCompositeOperation='lighter';circ(-2.2,0,2.6,'rgba(210,250,130,.95)');circ(-2.2,0,5,'rgba(180,230,100,.3)')};
@@ -208,14 +216,14 @@ PROJD.ab_latch=(p,R,ra,t)=>{const T=t/1000;g.save();g.rotate(ra);g.strokeStyle=A
 // projectile sphère : boule d'insectes qui roule, ceinturée de deux orbites
 PROJD.ab_ball=(p,R,ra,t)=>{const T=t/1000,r=R*1.35;ab_sphere(0,0,r,T,1,1)};
 // sphère d'insectes (projectile et prison) : contour, corps sombre, liseré, insectes en surface, anneaux qui tournent
-function ab_sphere(x,y,r,T,s,al){g.save();g.globalAlpha*=al;g.fillStyle=ABO;g.beginPath();g.arc(x,y,r+1.8*s,0,7);g.fill();g.fillStyle=ABR;g.beginPath();g.arc(x-r*.06,y-r*.08,r,0,7);g.fill();g.fillStyle=ABK;g.beginPath();g.arc(x+r*.05,y+r*.06,r*.94,0,7);g.fill();
+function ab_sphere(x,y,r,T,s,al){g.save();g.globalAlpha*=al;if(al>=.95){g.fillStyle=ABO;g.beginPath();g.arc(x,y,r+1.8*s,0,7);g.fill();g.fillStyle=ABR;g.beginPath();g.arc(x-r*.06,y-r*.08,r,0,7);g.fill()}else{g.strokeStyle=ABR;g.lineWidth=2*s;g.beginPath();g.arc(x,y,r,0,7);g.stroke()}g.fillStyle=ABK;g.beginPath();g.arc(x+r*.05,y+r*.06,r*.94,0,7);g.fill();
  g.fillStyle=ABM;g.beginPath();for(let i=0;i<22;i++){const la=(i%5)/5*2-.8,ph=T*(1.2+(i%3)*.3)+i*1.7,cx=Math.cos(ph)*Math.sqrt(1-la*la)*r*.9;if(Math.sin(ph)<0)continue;g.rect(x+cx-1.4*s,y+la*r*.9-1.1*s,2.8*s,2.2*s)}g.fill();
  g.strokeStyle='rgba(210,236,140,.55)';g.lineWidth=1.2*s;for(let i=0;i<2;i++){g.beginPath();g.ellipse(x,y,r*1.32,r*.36,T*1.6+i*1.8,0,7);g.stroke()}ab_dots(x,y,r*1.45,r*.5,12,T*3.2,7,s,ABK);ab_glints(x-r*.35,y-r*.4,r*.18,r*.12,2,T,s);g.restore()}
 // essaim (décor) : grosse masse tourbillonnante au-dessus de la zone
-PROJD.ab_swarmd=(p,R,ra,t)=>{ab_scr();const T=t/1000,q=P(p.x,p.y,0),Rr=(p.ar||80)*q.s,k=Math.min(1,p.life/.45,(p.life0-p.life)/.3+.25),cy=q.y-40*q.s;g.globalAlpha=Math.min(1,p.life/.45);
- ab_blob(ab_mass(q.x,cy,Rr*.78*k,Rr*.4*k,12,T*1.3,1),q.s);ab_dots(q.x,cy,Rr*1.05*k,Rr*.62*k,46,T*1.5,2,q.s,ABK);ab_dots(q.x,cy-4*q.s,Rr*.9*k,Rr*.5*k,14,T*1.9,5,q.s,ABM);ab_glints(q.x,cy,Rr*.55*k,Rr*.25*k,5,T,q.s)};
+PROJD.ab_swarmd=(p,R,ra,t)=>{ab_scr();const T=t/1000,q=P(p.x,p.y,0),Rr=(p.ar||80)*q.s,k=Math.min(1,p.life/.45,(p.life0-p.life)/.3+.25),cy=q.y-40*q.s,A=fxA(p);g.globalAlpha=Math.min(1,p.life/.45)*.62*A; // masse translucide : on voit qui est dedans
+ ab_blob(ab_mass(q.x,cy,Rr*.78*k,Rr*.4*k,12,T*1.3,1),q.s);g.globalAlpha=Math.min(1,p.life/.45)*A;ab_dots(q.x,cy,Rr*1.05*k,Rr*.62*k,Math.max(16,fxNB(46,p)),T*1.5,2,q.s,ABK);ab_dots(q.x,cy-4*q.s,Rr*.9*k,Rr*.5*k,14,T*1.9,5,q.s,ABM);ab_glints(q.x,cy,Rr*.55*k,Rr*.25*k,5,T,q.s)};
 // nuée destructrice (décor) : grand tourbillon en colonne
-PROJD.ab_nueed=(p,R,ra,t)=>{ab_scr();const T=t/1000,q=P(p.x,p.y,0),Rr=(p.ar||125)*q.s;g.globalAlpha=.8*Math.min(1,p.life/.5);
+PROJD.ab_nueed=(p,R,ra,t)=>{ab_scr();const T=t/1000,q=P(p.x,p.y,0),Rr=(p.ar||125)*q.s;g.globalAlpha=.6*Math.min(1,p.life/.5)*fxA(p);fxGlowG(p.x,p.y,(p.ar||125)*.8,'#56683f',.25);
  for(let j=0;j<5;j++){const h=(6+j*16)*q.s,rx=Rr*(.2+j*.17),ry=rx*.32,n=6+j*2,C=[];for(let i=0;i<n;i++){const a=T*(2.6-j*.3)+i*6.283/n+j*.7;C.push([q.x+Math.cos(a)*rx,q.y-h+Math.sin(a)*ry,Rr*(.075+j*.014)*(.8+.2*Math.sin(T*4+i))])}ab_blob(C,q.s)}
  g.fillStyle=ABK;g.beginPath();for(let i=0;i<70;i++){const k=i/70,a=T*3.2+k*15,h=k*88*q.s,rx=Rr*(.18+k*.8);g.rect(q.x+Math.cos(a)*rx-1.5*q.s,q.y-h+Math.sin(a)*rx*.32-1.2*q.s,3*q.s,2.4*q.s)}g.fill();
  ab_dots(q.x,q.y-50*q.s,Rr*1.1,Rr*.5,30,T*2.2,4,q.s,ABK);ab_glints(q.x,q.y-50*q.s,Rr*.6,Rr*.3,6,T,q.s)};
@@ -254,7 +262,7 @@ JFXD.ab_fall=(f,k,e,t)=>{const q=P(f.x,f.y,0),fall=ezo(Math.min(1,e*1.12)),R=f.r
  if(fall<.97){const cy=q.y-H-R*.3;g.strokeStyle='rgba(22,27,23,.5)';g.lineWidth=2;g.beginPath();for(let i=0;i<9;i++){const xx=q.x+(i-4)*R*.2;g.moveTo(xx,cy-R*.2);g.lineTo(xx+Math.sin(i)*4,cy-R*.2-30*q.s-(i%3)*12*q.s)}g.stroke();
   ab_blob(ab_mass(q.x,cy,R*.95,R*.45,14,t*1.2,2),q.s);ab_dots(q.x,cy,R*1.15,R*.65,60,t*2,3,q.s,ABK);ab_glints(q.x,cy,R*.6,R*.25,5,t,q.s)}};
 // la cible est engloutie : boules d'insectes et nuée qui grouillent sur tout le corps
-JFXD.ab_engulf=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;const q=P(tg.x,tg.y,0),s=q.s*1.3*(tg.ch.look.scale||1);g.globalAlpha=Math.min(1,k*3);const C=[];
+JFXD.ab_engulf=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;const q=P(tg.x,tg.y,0),s=q.s*1.3*(tg.ch.look.scale||1);g.globalAlpha=Math.min(1,k*3)*.6;const C=[];
  for(let i=0;i<6;i++){const a=t*2.5+i*1.05,h=(14+i*9)*s;C.push([q.x+Math.cos(a)*11*s,q.y-h+Math.sin(a)*3*s,(5.5-i*.3)*s])}ab_blob(C,q.s);ab_dots(q.x,q.y-34*s,16*s,36*s,40,t*3,5,q.s,ABK)};
 // impact du venin de Torune : éclaboussure violette (taille selon la dose)
 JFXD.ab_vhit=(f,k,e,t)=>{const q=P(f.x,f.y,34);const n=5+(f.n||1)*4;g.fillStyle=rgba('#6a2a9a',.85*k);g.beginPath();for(let i=0;i<n;i++){const a=i*2.4+f.x,r=(5+26*e)*q.s;g.moveTo(q.x+Math.cos(a)*r+2.6*q.s,q.y+Math.sin(a)*r*.8-10*e*q.s);g.arc(q.x+Math.cos(a)*r,q.y+Math.sin(a)*r*.8-10*e*q.s,(2.6-1.6*e)*q.s,0,7)}g.fill();g.globalCompositeOperation='lighter';for(let i=0;i<n;i++){const a=i*2.4+f.x+.5,r=(4+20*e)*q.s;g.fillStyle=i%2?rgba('#e0c0ff',.8*k):rgba('#a060e0',.8*k);g.fillRect(q.x+Math.cos(a)*r-1.5,q.y+Math.sin(a)*r*.8-1.5-8*e*q.s,3,3)}
@@ -262,7 +270,8 @@ JFXD.ab_vhit=(f,k,e,t)=>{const q=P(f.x,f.y,34);const n=5+(f.n||1)*4;g.fillStyle=
 // activation des nano-insectes : anneau violet et nuée fine qui monte
 JFXD.ab_venup=(f,k,e,t,u)=>{if(!u)return;const q=P(u.x,u.y,0);g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#b47ae0',.8*k);g.lineWidth=2.5;g.beginPath();g.ellipse(q.x,q.y,(18+40*e)*q.s,(18+40*e)*q.s*K,0,0,7);g.stroke();
  for(let i=0;i<16;i++){const a=i*.39+t*3,r=(12+8*Math.sin(i))*q.s,y=q.y-(10+e*70+((i*13)%20))*q.s;g.fillStyle=i%2?rgba('#d8b0ff',.8*k):rgba('#8a4ad0',.8*k);g.fillRect(q.x+Math.cos(a)*r-1.2,y-1.2,2.4,2.4)}};
-DETO.ab_fall=(x,y,r)=>{jx({jfx:'ab_burst',x,y,r:r*1.1,t:.8,m:.8});jx({jfx:'shock',x,y,r:r*1.2,t:.5,m:.5,col:'#4a5a3a'})};
+DETO.ab_fall=(x,y,r)=>{jx({jfx:'ab_burst',x,y,r:r*1.1,t:.8,m:.8});jx({jfx:'shock',x,y,r:r*1.2,t:.5,m:.5,col:'#4a5a3a'});
+ fxShake(.3,x,y);ab_imp(undefined,x,y,r,1);fxRing(x,y,{r0:30,r1:r,col:'#56683f',c2:'#c8e07a',w:8,t:.45});fxSmoke(x,y,{col:'#161b17',n:10,r:r*.85,s:20,t:1.4,al:.24,rise:60});fxLight(x,y,r*1.3,'#56683f',{t:.5,a:.3})};
 // au sol : flaque du clone, bande du mur, ombre de l'essaim, disque de la nuée
 AUXD.ab_clone=(x,k,t)=>{const q=P(x.x,x.y,0);g.fillStyle=rgba('#0c0f0d',.4*k);g.beginPath();g.ellipse(q.x,q.y,22*q.s,22*q.s*K,0,0,7);g.fill();ab_dots(q.x,q.y,26*q.s,10*q.s,16,t*1.5,2,q.s,ABK)};
 AUXD.ab_wall=(x,k,t)=>{const Q=ab_wpts(x).map(p=>P(p.x,p.y,0));g.strokeStyle=rgba('#0c0f0d',.38*k);g.lineCap='round';g.lineJoin='round';g.lineWidth=x.w*Q[4].s;g.beginPath();Q.forEach((q,i)=>i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y));g.stroke();
@@ -279,8 +288,11 @@ AUXD.ab_drain=(x,k,t)=>{const o=x.ui!=null?units[x.ui]:null,e=x.ti!=null?units[x
  g.save();g.globalCompositeOperation='lighter';g.fillStyle='rgba(127,208,255,.95)';for(let i=0;i<4+(x.n||0);i++){const kk=1-((i/(4+(x.n||0))+t*1.3)%1),[px,py]=pt(kk,1,9);g.fillRect(px-1.8,py-1.8,3.6,3.6)}g.restore();
  const C2=[];for(let i=0;i<5;i++){const an=t*3+i*1.26;C2.push([b.x+Math.cos(an)*13*b.s,b.y-6*b.s+Math.sin(an)*20*b.s,4*b.s])}ab_blob(C2,b.s);ab_dots(b.x,b.y-4*b.s,18*b.s,26*b.s,14+2*(x.n||0),t*2.6,4,b.s,ABK)};
 // colonies sur les ninjas : insectes qui grouillent sur le corps et compteur à côté de la barre de vie ; insecte espion ; doses de venin ; sphère d'insectes
+// anticipation pendant les mudras d'un jutsu Aburame : les kikaichû sortent des manches et tournent en anneau qui se resserre, reflets verts
+STATD.push((u,p,S)=>{if(!u.cast||u.dead)return;const ab=u.ch.abil[u.cast.i];if(!ab||!ab.key||!ab.key.startsWith('ab_'))return;const kk=Math.min(1,u.cast.t/u.cast.dur),t=performance.now()/1000,q=P(u.x+Math.cos(u.aim)*10,u.y+Math.sin(u.aim)*10,34);
+ ab_dim(u,()=>{const n=Math.max(8,fxN(22,u));ab_dots(q.x,q.y,(40-18*kk)*q.s,(16-6*kk)*q.s,n,t*2.4,3,q.s,ABK);ab_glints(q.x,q.y,(30-12*kk)*q.s,(12-4*kk)*q.s,2,t,q.s);fxGlowS(q.x,q.y,(8+10*kk)*q.s,'#c8e07a',.15+.2*kk)})});
 STATD.push((u,p,S,sk)=>{const c=u.ab_col||0,sp=u.ab_spyT>0,vd=u.ab_vd||0,sph=u.ab_sph>0;if(!c&&!sp&&!vd&&!sph)return;const t=performance.now()/1000,H=S*sk,ps=S/1.3/(u.giant>0?1.35:1),top=p.y-100*sk*ps;
- if(sph){const r=40*S*.82*sk*(1+.05*Math.sin(t*9)),gr=Math.min(1,(u.ab_sphM-u.ab_sph)/.2+.3);ab_sphere(p.x,p.y-38*H,r*gr,t,ps,.86);g.fillStyle='rgba(127,208,255,.85)';for(let i=0;i<3;i++){const kk=(t*1.2+i/3)%1;g.fillRect(p.x+Math.sin(i*2+t*4)*r*.4-1.5,p.y-38*H-r*(.2+kk)-1.5,3,3)}}
+ if(sph){const r=40*S*.82*sk*(1+.05*Math.sin(t*9)),gr=Math.min(1,(u.ab_sphM-u.ab_sph)/.2+.3);ab_sphere(p.x,p.y-38*H,r*gr,t,ps,.7);g.fillStyle='rgba(127,208,255,.85)';for(let i=0;i<3;i++){const kk=(t*1.2+i/3)%1;g.fillRect(p.x+Math.sin(i*2+t*4)*r*.4-1.5,p.y-38*H-r*(.2+kk)-1.5,3,3)}}
  if(c){const B=[];for(let i=0;i<c*3;i++){const ph=t*(1.1+(i%4)*.3)+i*2.1;B.push([p.x+Math.sin(ph)*(7+(i%3)*2)*S,p.y-(8+((i*17+t*14*(i%2?1:-1))%60+60)%60)*H*.95])}
   // insectes qui grouillent sur le corps : liseré clair (visible sur les tenues sombres) puis corps sombre
   g.fillStyle='#9ab35a';g.beginPath();for(const [xx,yy] of B)g.rect(xx-1.6*S,yy-1.6*S,3.2*S,1.4*S);g.fill();g.fillStyle=ABK;g.beginPath();for(const [xx,yy] of B)g.rect(xx-1.4*S,yy-.9*S,2.8*S,2*S);g.fill();

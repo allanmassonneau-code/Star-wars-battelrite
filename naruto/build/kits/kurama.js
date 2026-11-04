@@ -22,24 +22,34 @@ DASHC[25]={src:'x.kr_dash',n:'Mirage',d:KR_D.dash,vfx:'kr_gen',cd:7};
 Object.assign(NAT,{
  // ---------- Lame illusoire (D) ----------
  kr_blade:SP('Genjutsu : Lame illusoire',KR_D.blade,4.5,{ai:RG(470,.8),line:{len:480,w:22}},(u,a)=>{gkS('genjutsu',u);gkS('saber',u);anim(u,'throw2',.35);
-  proj(u,a,{spd:800,r:9,dmg:13,life:.6,col:KRC.b,kind:'kr_blade',vfx:'kr_gen',pierce:1,o:{slow:.6}})}),
+  krMuzzle(u,a,.8);proj(u,a,{spd:800,r:9,dmg:13,life:.6,col:KRC.b,kind:'kr_blade',vfx:'kr_gen',pierce:1,o:{slow:.6},onHit:(p,t)=>krHitFx(p.owner,t,.7,Math.atan2(p.vy,p.vx))})}),
  // ---------- Hallucination (C) ----------
- kr_fear:SP('Genjutsu : Hallucination',KR_D.fear,8,{ai:RG(420,.65),tele:{r:85,max:420}},(u,a,td)=>{const c=atP(u,a,td,420),D=.5;gkS('genjutsu',u);anim(u,'eye',.5);jx({jfx:'kr_eyes',x:c.x,y:c.y,r:85,t:D+.4,m:D+.4});
-  later(u,D,()=>{gkAoe(u,c.x,c.y,85,12,{fear:.9,fx:c.x,fy:c.y},'kr_gen',e=>jx({jfx:'kr_haunt',ti:gkI(e),x:e.x,y:e.y,t:.9,m:.9}));if(near(c.x,c.y))gkS('roar',u)},{x:c.x,y:c.y,r:85})}),
+ kr_fear:SP('Genjutsu : Hallucination',KR_D.fear,8,{ai:RG(420,.65),tele:{r:85,max:420}},(u,a,td)=>{const c=atP(u,a,td,420),D=.5;gkS('genjutsu',u);anim(u,'eye',.5);jx({jfx:'kr_eyes',x:c.x,y:c.y,r:85,t:D+.4,m:D+.4});fxCast(u,'kr_gen',D,{n:8,z:58,hd:4});
+  later(u,D,()=>{gkAoe(u,c.x,c.y,85,12,{fear:.9,fx:c.x,fy:c.y},'kr_gen',e=>{jx({jfx:'kr_haunt',ti:gkI(e),x:e.x,y:e.y,t:.9,m:.9});krHitFx(u,e,.6)});krBloom(u,c.x,c.y,85,0);if(near(c.x,c.y))gkS('roar',u)},{x:c.x,y:c.y,r:85})}),
  // ---------- Tableau vivant (B) : zone peinte (gkPool) ----------
  kr_paint:SP('Genjutsu : Tableau vivant',KR_D.paint,10,{ai:RG(400,.6),tele:{r:120,max:400}},(u,a,td)=>{const c=atP(u,a,td,400);gkS('genjutsu',u);gkS('flame',u);anim(u,'kr_brush',.6);
-  gkPool(u,c.x,c.y,{r:120,t:3.5,kind:'kr',vfx:'kr_gen',d:5,iv:.5,sl:1});jx({jfx:'kr_stroke',ui:gkI(u),x:c.x,y:c.y,r:120,t:.5,m:.5})}),
+  gkPool(u,c.x,c.y,{r:120,t:3.5,kind:'kr',vfx:'kr_gen',d:5,iv:.5,sl:1});jx({jfx:'kr_stroke',ui:gkI(u),x:c.x,y:c.y,r:120,t:.5,m:.5});
+  later(u,.25,()=>{krInk(u,c.x,c.y,120);fxRing(c.x,c.y,{u,r0:20,r1:120,col:'#e8c060',c2:KRC.b,w:4,t:.35})})}),
  // ---------- Ronces de cauchemar (A) ----------
  kr_thorn:SP('Genjutsu : Ronces de cauchemar',KR_D.thorn,12,{ai:RG(510,.65),line:{len:520,w:30}},(u,a)=>{gkS('genjutsu',u);gkS('shadow',u);anim(u,'palm',.45);
-  proj(u,a,{spd:700,r:13,dmg:26,life:.74,col:KRC.c,kind:'kr_thorn',vfx:'kr_gen',o:{root:1,dot:{dps:4,dur:2}},onHit:(p,t)=>jx({jfx:'kr_vines',ti:gkI(t),x:t.x,y:t.y,t:1,m:1})})}),
+  krMuzzle(u,a,1);proj(u,a,{spd:700,r:13,dmg:26,life:.74,col:KRC.c,kind:'kr_thorn',vfx:'kr_gen',tail:1,o:{root:1,dot:{dps:4,dur:2}},onHit:(p,t)=>{jx({jfx:'kr_vines',ti:gkI(t),x:t.x,y:t.y,t:1,m:1});krHitFx(p.owner,t,1,Math.atan2(p.vy,p.vx));
+   fxBurst(t.x,t.y,KRC.c,{u:p.owner,n:10,sp:160,sh:'dot',w:2,up:90,gr:200,add:0,c2:'#200818'});fxDecal(t.x,t.y,'',{u:p.owner,r:36,t:3,col:'#3a0a2a',al:.4});fxHitStop(p.owner,t,26)}})}),
  // ---------- Royaume peint (S) ----------
- kr_world:ULT('Genjutsu : Royaume peint',KR_D.world,{ai:SELF(210,.85),tele:{self:1,r:220}},(u)=>{const D=.6,x0=u.x,y0=u.y;gkS('genjutsu',u);gkS('roar',u);anim(u,'kr_brush',.9);jx({jfx:'kr_canvas',ui:gkI(u),x:x0,y:y0,r:220,d:D,t:D+1.6,m:D+1.6});
-  later(u,D,()=>{const o=u.dead?null:u;if(!o)return;gkAoe(o,o.x,o.y,220,30,{stun:.8,dot:{dps:6,dur:3}},'kr_gen',e=>jx({jfx:'kr_haunt',ti:gkI(e),x:e.x,y:e.y,t:1.2,m:1.2}));if(near(o.x,o.y)){gkS('boom',o);shake=Math.max(shake,.35)}},{x:x0,y:y0,r:220})}),
+ kr_world:ULT('Genjutsu : Royaume peint',KR_D.world,{ai:SELF(210,.85),tele:{self:1,r:220}},(u)=>{const D=.6,x0=u.x,y0=u.y;gkS('genjutsu',u);gkS('roar',u);anim(u,'kr_brush',.9);jx({jfx:'kr_canvas',ui:gkI(u),x:x0,y:y0,r:220,d:D,t:D+1.6,m:D+1.6});fxCast(u,'kr_gen',D,{n:14,c2:'#ffffff'});fxPillar(u.x,u.y,KRC.b,{u,h:200,w:26,t:D+.2,al:.35});
+  later(u,D,()=>{const o=u.dead?null:u;if(!o)return;gkAoe(o,o.x,o.y,220,30,{stun:.8,dot:{dps:6,dur:3}},'kr_gen',e=>{jx({jfx:'kr_haunt',ti:gkI(e),x:e.x,y:e.y,t:1.2,m:1.2});krHitFx(o,e,1);fxHitStop(o,e,30,1)});krBloom(o,o.x,o.y,220,1);if(near(o.x,o.y)){gkS('boom',o);shake=Math.max(shake,.35)}},{x:x0,y:y0,r:220})}),
  // ---------- dash : Mirage ----------
  kr_dash:SP('Mirage',KR_D.dash,7,{ai:ESC},(u,a,td)=>{const x0=u.x,y0=u.y,d=clamp(td||210,110,210);gkS('poof',u);gkS('genjutsu',u);u.dash=null;u.kx=u.ky=0;
-  jx({jfx:'kr_ghost',x:x0,y:y0,a:u.aim||a,t:1,m:1});u.x=clamp(u.x+Math.cos(a)*d,B.x+u.r,B.x+B.w-u.r);u.y=clamp(u.y+Math.sin(a)*d,B.y+u.r,B.y+B.h-u.r);collide(u);u.stealth=Math.max(u.stealth||0,.6);if(near(u.x,u.y))sparks(u.x,u.y,KRC.a,10,'kr_gen')}),
+  jx({jfx:'kr_ghost',x:x0,y:y0,a:u.aim||a,t:1,m:1});fxBurst(x0,y0,KRC.b,{u,n:10,sp:120,sh:'petal',w:2.6,gr:-30,up:30,c2:KRC.a,z:34});fxSmoke(x0,y0,{u,col:'#c080b0',n:4,r:18,s:12,al:.22,rise:30});u.x=clamp(u.x+Math.cos(a)*d,B.x+u.r,B.x+B.w-u.r);u.y=clamp(u.y+Math.sin(a)*d,B.y+u.r,B.y+B.h-u.r);collide(u);u.stealth=Math.max(u.stealth||0,.6);if(near(u.x,u.y))sparks(u.x,u.y,KRC.a,6,'kr_gen');fxBurst(u.x,u.y,KRC.a,{u,n:8,sp:100,sh:'petal',w:2.4,gr:-30,up:20,c2:KRC.b,z:30})}),
 });
 Object.assign(NATHERO,{kr:'kylo'});
+// ---- VFX (boîte à outils nr_fx.js) : pétales, encre, lumière rose (décor atténué selon l'intensité / le camp)
+function krMuzzle(u,a,s){const x=u.x+Math.cos(a)*24,y=u.y+Math.sin(a)*24;fxFlare(x,y,KRC.b,{u,z:36,r:16*s,t:.16,c2:KRC.a});fxBurst(x,y,KRC.b,{u,n:6*s,sp:140,sh:'petal',w:2.2,gr:-20,up:20,a,arc:1.2,c2:KRC.a,z:36})}
+function krHitFx(o,t,s,a){if(!t||!near(t.x,t.y))return;fxFlare(t.x,t.y,KRC.b,{u:o,z:34,r:20*s,t:.2,c2:'#ffffff'});fxBurst(t.x,t.y,KRC.b,{u:o,n:8*s,sp:150,sh:'petal',w:2.4,gr:-30,up:40,c2:KRC.a,z:34,a:a??0,arc:a==null?6.3:2.2});fxLight(t.x,t.y,60*s,KRC.b,{u:o,t:.3,a:.3})}
+// éclaboussure d'encre (non additive) : peinture qui gicle sur la toile
+function krInk(u,x,y,r){fxBurst(x,y,KRC.c,{u,n:14,sp:r*2,sh:'dot',w:2.6,up:70,gr:300,add:0,c2:'#200818'});fxBurst(x,y,KRC.b,{u,n:10,sp:r*1.6,sh:'petal',w:2.6,up:60,gr:60,c2:'#e8c060',z:20})}
+// éclosion d'un genjutsu : onde = rayon exact, pétales, lumière rose (big : ultime)
+function krBloom(u,x,y,r,big){fxRing(x,y,{u,r0:r*.15,r1:r,col:big?'#e8c060':KRC.b,c2:'#ffffff',w:big?9:5,t:.45});fxBurst(x,y,KRC.b,{u,n:big?30:12,sp:r*2.2,sh:'petal',w:2.8,gr:-30,up:60,c2:KRC.a,z:30});
+ fxLight(x,y,r*1.1,KRC.b,{u,t:big?.6:.35,a:big?.42:.32});fxSmoke(x,y,{u,col:'#a05090',n:big?8:4,r:r*.7,s:16,al:.2,rise:30});if(big){fxFlare(x,y,'#ffd8f2',{u,z:44,r:56,t:.32});fxRing(x,y,{u,r0:r*.6,r1:r*1.12,col:KRC.b,w:3,t:.7,al:.5});fxShake(.3,x,y);krInk(u,x,y,r*.6)}}
 // ---- trait : Écho de l'illusion (un écho ne relance pas d'écho : VFX 'kr_echo')
 TRAITS[25]={nom:'Écho de l\'illusion',desc:'Tes genjutsu font mal deux fois : 1,2 s après chaque touche, la cible ressent à nouveau 30 % des dégâts (un Kawarimi ou une esquive l\'évite)',
  landed(src,t,dmg,o){if(VFX!=='kr_gen'||!(dmg>=3)||!t||t===src||t.dead)return;const v=dmg*KR_EC;
@@ -77,10 +87,11 @@ JFXD.kr_vines=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;const q=P(tg.x,tg.y,0),s=q
 // coup de pinceau du Tableau vivant (du lanceur vers la toile)
 JFXD.kr_stroke=(f,k,e,t,u)=>{const A=P(u&&!u.dead?u.x:f.x,u&&!u.dead?u.y:f.y,40),Bq=P(f.x,f.y,10);g.save();g.strokeStyle=rgba(KRC.b,.8*k);g.lineWidth=8*A.s*k;g.lineCap='round';g.beginPath();g.moveTo(A.x,A.y);g.quadraticCurveTo((A.x+Bq.x)/2,Math.min(A.y,Bq.y)-60*A.s,lerp(A.x,Bq.x,Math.min(1,e*2)),lerp(A.y,Bq.y,Math.min(1,e*2)));g.stroke();g.restore()};
 // toile peinte au sol : cadre, aplats d'encre, flammes illusoires
-GKPOOL.kr=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,R=x.r;g.save();g.fillStyle=rgba('#2a0a24',.35*k);g.beginPath();g.ellipse(q.x,q.y,R*s,R*s*K,0,0,7);g.fill();
+GKPOOL.kr=(x,k,t)=>{fxAlpha(fxA(x),()=>krPoolD(x,k,t));if(x.strip)return;const q=P(x.x,x.y,0);g.save();g.strokeStyle=rgba('#e8c060',.8*k);g.lineWidth=2*q.s;g.beginPath();g.ellipse(q.x,q.y,x.r*q.s,x.r*q.s*K,0,0,7);g.stroke();g.restore()}; // bord de la zone : net, décor : atténué (ennemi)
+function krPoolD(x,k,t){const q=P(x.x,x.y,0),s=q.s,R=x.r;g.save();g.fillStyle=rgba('#2a0a24',.35*k);g.beginPath();g.ellipse(q.x,q.y,R*s,R*s*K,0,0,7);g.fill();
  g.strokeStyle=rgba('#e8c060',.7*k);g.lineWidth=3*s;g.beginPath();g.ellipse(q.x,q.y,R*s,R*s*K,0,0,7);g.stroke();g.strokeStyle=rgba(KRC.b,.5*k);g.lineWidth=1.5*s;g.beginPath();g.ellipse(q.x,q.y,R*.92*s,R*.92*s*K,0,0,7);g.stroke();
  for(let i=0;i<5;i++){const b=i*1.26+.4,d=R*.45,c=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,0);g.fillStyle=rgba(i%2?KRC.c:KRC.b,.35*k);g.beginPath();g.ellipse(c.x,c.y,26*s,9*s,b,0,7);g.fill()}
- g.globalCompositeOperation='lighter';for(let i=0;i<12;i++){const b=i*.52+t*.4,d=R*(.2+((i*37)%60)/100),c=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d*.85,2),h=(12+Math.sin(t*8+i)*5)*c.s;g.fillStyle=rgba(i%3?KRC.b:'#ffb0e0',.65*k);g.beginPath();g.moveTo(c.x-4*c.s,c.y);g.quadraticCurveTo(c.x+Math.sin(t*6+i)*3*c.s,c.y-h*2,c.x+4*c.s,c.y);g.fill()}g.restore()};
+ g.globalCompositeOperation='lighter';for(let i=0;i<12;i++){const b=i*.52+t*.4,d=R*(.2+((i*37)%60)/100),c=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d*.85,2),h=(12+Math.sin(t*8+i)*5)*c.s;g.fillStyle=rgba(i%3?KRC.b:'#ffb0e0',.65*k);g.beginPath();g.moveTo(c.x-4*c.s,c.y);g.quadraticCurveTo(c.x+Math.sin(t*6+i)*3*c.s,c.y-h*2,c.x+4*c.s,c.y);g.fill()}g.restore()}
 // royaume peint : la toile se déroule autour du lanceur, puis le monde se teinte
 JFXD.kr_canvas=(f,k,e,t,u)=>{const el=e*f.m,m=Math.min(1,el/f.d),R=f.r*m,cx=u&&!u.dead?u.x:f.x,cy=u&&!u.dead?u.y:f.y,q=P(cx,cy,0),s=q.s,fade=Math.min(1,k*3);g.save();
  g.fillStyle=rgba('#2a0a24',.3*fade);g.beginPath();g.ellipse(q.x,q.y,R*s,R*s*K,0,0,7);g.fill();g.strokeStyle=rgba('#e8c060',.85*fade);g.lineWidth=4*s;g.beginPath();g.ellipse(q.x,q.y,R*s,R*s*K,0,-Math.PI/2,-Math.PI/2+Math.PI*2*m);g.stroke();

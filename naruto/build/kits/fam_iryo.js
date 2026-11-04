@@ -11,15 +11,15 @@ DASHF[0]={src:'x.sub_d_iry',n:'Iryô : Pas médical',d:'Glisse de 190 : se libè
 const SUB_IRC='#7fe8ff'; // chakra médical (paume, nerfs)
 Object.assign(NAT,{
  // --- Ranshinshô : courte avancée, paume au contact ; la cible touchée titube (confusion de yamanaka.js) et sa garde est bloquée (blockLock : ni parade ni garde)
- sub_iry_ran:S_('Ranshinshô : Chaos nerveux','Paume qui brouille les nerfs : confusion et plus de parade',13,{hero:'yoda',ai:RG(115,.65)},(u,a)=>{anim(u,'palm',.42);S('jyuken',u);
+ sub_iry_ran:S_('Ranshinshô : Chaos nerveux','Paume qui brouille les nerfs : confusion et plus de parade',13,{hero:'yoda',ai:RG(115,.65)},(u,a)=>{anim(u,'palm',.42);S('jyuken',u);fxCast(u,'chakra',.2,{col:SUB_IRC});
   dash(u,a,55,.08,{end:()=>{const ui=units.indexOf(u),L=enemies(u).filter(e=>dist(u,e)<96+e.r&&angDiff(ang(u,e),u.aim)<.8).sort((p,q)=>dist(u,p)-dist(u,q)),e=L[0];
-   jx({jfx:'sub_ranpalm',ui,x:u.x,y:u.y,a:u.aim,col:SUB_IRC,t:.42,m:.42});if(!e)return;
+   jx({jfx:'sub_ranpalm',ui,x:u.x,y:u.y,a:u.aim,col:SUB_IRC,t:.42,m:.42});fxWind(u.x+Math.cos(u.aim)*50,u.y+Math.sin(u.aim)*50,u.aim,{u,len:110,w:50,n:5,t:.3,col:SUB_IRC});if(!e)return;
    VFX='chakra';const ok=hit(e,u,24,{unblockable:1,fx:u.x,fy:u.y,kb:90});VFX=null;if(!ok||e.dead)return;
    if(e.unstop<=0){if(typeof yaConfuse==='function')yaConfuse(u,e,1.2);else e.slow=Math.max(e.slow,1.2);e.blockLock=Math.max(e.blockLock||0,2);e.block=false;e.parry=0}
-   say(e,'NERFS BROUILLÉS','#7fe8ff');jx({jfx:'sub_nerves',ti:units.indexOf(e),x:e.x,y:e.y,t:2,m:2});if(near(e.x,e.y)){S('zap',u);shake=Math.max(shake,.12)}}})}),
+   say(e,'NERFS BROUILLÉS','#7fe8ff');jx({jfx:'sub_nerves',ti:units.indexOf(e),x:e.x,y:e.y,t:2,m:2});fxFlare(e.x,e.y,SUB_IRC,{u,z:40,r:26,t:.2});fxArcs(e.x,e.y,40,SUB_IRC,{u,z:44,n:4,t:.3});fxRing(e.x,e.y,{u,r0:8,r1:44,col:SUB_IRC,w:4,t:.3});fxHitStop(u,e,24,1);if(near(e.x,e.y))S('zap',u)}})}),
  // --- Pas médical (dash) : la glissade purge entraves et ralentissements, petit soin à l'arrivée
  sub_d_iry:S_('Iryô : Pas médical','Glissade qui libère et soigne un peu',7,{hero:'rey',ai:ESC},(u,a)=>{u.root=0;u.slow=0;S('dash',u);anim(u,'lunge',.3);const x0=u.x,y0=u.y;
-  dash(u,a,190,.2,{end:()=>{const r=gain(u,9.2,u);if(r>=1&&near(u.x,u.y))say(u,'+'+Math.round(r),'#6f9');jx({jfx:'sub_medstep',x:x0,y:y0,x2:u.x,y2:u.y,t:.55,m:.55})}});
+  dash(u,a,190,.2,{end:()=>{const r=gain(u,9.2,u);if(r>=1&&near(u.x,u.y))say(u,'+'+Math.round(r),'#6f9');jx({jfx:'sub_medstep',x:x0,y:y0,x2:u.x,y2:u.y,t:.55,m:.55});fxBurst(u.x,u.y,'#9ff09f',{u,z:30,n:7,sp:80,gr:-90,up:50,w:2,sh:'dot',c2:'#ffffff'});fxLight(u.x,u.y,60,'#7fe07f',{u,t:.35,a:.35})}});
   jx({jfx:'sub_medcross',ui:units.indexOf(u),x:u.x,y:u.y,t:.45,m:.45})}),
 });
 // ---------- visuels ----------

@@ -20,15 +20,18 @@ function subHmAdd(u,x,y,tg){const L=subHM(u);
  else{const G=L.filter(m=>!m.tg);if(G.length>=SUB_HM.gN)subHmDel(u,G[0])}
  const q=tg?{x:tg.x,y:tg.y}:subFree({x,y},10),T=tg?SUB_HM.eT:SUB_HM.gT,m={x:q.x,y:q.y,t:T,tg:tg||null};L.push(m);
  m.ax={type:'sub_hmk',x:m.x,y:m.y,r:0,t:T,m:T,team:u.team,owner:u,n:tg?2:1,ti:tg?units.indexOf(tg):undefined,mk:m};aux.push(m.ax);
- if(near(m.x,m.y)){if(tg)say(tg,'MARQUÉ','#ffe14a');jx({jfx:'sub_hmpop',x:m.x,y:m.y,ti:tg?units.indexOf(tg):undefined,t:.45,m:.45})}return m}
+ if(near(m.x,m.y)){if(tg)say(tg,'MARQUÉ','#ffe14a');jx({jfx:'sub_hmpop',x:m.x,y:m.y,ti:tg?units.indexOf(tg):undefined,t:.45,m:.45});fxBurst(m.x,m.y,'#fff3a0',{u,z:tg?40:10,n:6,sp:150,gr:0,up:40,w:1.4})}return m}
 // marques encore valables (une cible morte efface sa marque)
 function subHmLive(u){const L=subHM(u);for(let i=L.length-1;i>=0;i--){const m=L[i];if(m.tg&&m.tg.dead)subHmDel(u,m)}return L}
 // téléportation sur une marque : derrière l'ennemi marqué (o.dmg, o.h = options de hit) ou sur la marque au sol ; renvoie l'ennemi visé
 function subHrTp(u,m,o){o=o||{};const ox=u.x,oy=u.y,ui=units.indexOf(u);S('zap',u);let e=null;
  if(m.tg&&!m.tg.dead){e=m.tg;const b=ang(u,e),q=subFree({x:e.x+Math.cos(b)*(u.r+e.r+8),y:e.y+Math.sin(b)*(u.r+e.r+8)},u.r);u.x=q.x;u.y=q.y;collide(u);u.aim=ang(u,e);u.swing=.18;u.swingA=u.aim;
-  if(o.dmg){const V=VFX;VFX='hiraishin';hit(e,u,o.dmg,Object.assign({unblockable:1,fx:u.x,fy:u.y},o.h));VFX=V}S('saber',u);jx({jfx:'sub_slash',ui,x:u.x,y:u.y,a:u.aim,col:SUB_HY,t:.3,m:.3})}
+  if(o.dmg){const V=VFX;VFX='hiraishin';hit(e,u,o.dmg,Object.assign({unblockable:1,fx:u.x,fy:u.y},o.h));VFX=V;fxImpact(e.x,e.y,'raiton',o.dmg>=20?1.3:.9,{u,r:44,dec:0,z:34});fxHitStop(u,e,o.dmg,o.dmg>=20)}S('saber',u);jx({jfx:'sub_slash',ui,x:u.x,y:u.y,a:u.aim,col:SUB_HY,t:.3,m:.3})}
  else{const q=subFree({x:m.x,y:m.y},u.r);u.x=q.x;u.y=q.y;collide(u)}
- u.dash=null;u.kx=u.ky=0;u.z=0;jx({jfx:'sub_hira',x:ox,y:oy,x2:u.x,y2:u.y,t:.5,m:.5});if(near(u.x,u.y))flashS=Math.max(flashS||0,u===player?.12:0);return e}
+ u.dash=null;u.kx=u.ky=0;u.z=0;jx({jfx:'sub_hira',x:ox,y:oy,x2:u.x,y2:u.y,t:.5,m:.5});subHrFx(u,ox,oy);return e}
+// décor d'une téléportation : éclats jaunes LOCAUX (aucun flash d'écran), sceau qui s'efface au départ, onde et étincelles à l'arrivée
+function subHrFx(u,ox,oy){fxFlare(ox,oy,SUB_HY,{u,z:34,r:22,t:.18});fxDecal(ox,oy,'seal',{u,r:24,t:1.4,col:SUB_HY});fxFlare(u.x,u.y,SUB_HY,{u,z:34,r:30,t:.22,c2:'#ffffff'});
+ fxRing(u.x,u.y,{u,r0:8,r1:46,col:SUB_HY,c2:'#ffffff',w:4,t:.3});fxBurst(u.x,u.y,'#fff3a0',{u,z:30,n:8,sp:260,gr:0,up:10,w:1.4,c2:'#ffffff'});fxLight(u.x,u.y,80,SUB_HY,{u,t:.3,a:.4})}
 // marque visée : celle de l'ennemi visé par un bot (ou la plus proche de lui), sinon la plus proche du curseur
 function subHmPick(u,L,p){if(!u.ctrl&&u.tgt&&!u.tgt.dead){const e=u.tgt,m=L.find(q=>q.tg===e);if(m)return m;return L.slice().sort((a,b)=>Math.hypot(a.x-e.x,a.y-e.y)-Math.hypot(b.x-e.x,b.y-e.y))[0]}
  return L.slice().sort((a,b)=>Math.hypot(a.x-p.x,a.y-p.y)-Math.hypot(b.x-p.x,b.y-p.y))[0]}
@@ -54,22 +57,21 @@ Object.assign(NAT,{
  sub_hrb:S_('Hiraishin : Éclair jaune','Téléportation sur une marque : frappe dans le dos',10,{hero:'ventress',ai:{mode:'gap',min:150,max:650,p:.6}},(u,a,td)=>{const L=subHmLive(u).filter(m=>dist(u,m)<650);
   if(!L.length){subRefund(u,'sub_hrb',u.ctrl?.4:1.5,'AUCUNE MARQUE',SUB_HY);return}
   const m=subHmPick(u,L,fwd(u,a,Math.min(td||300,650)));anim(u,'lunge',.3);const e=subHrTp(u,m,{dmg:m.tg?26:0,h:{stun:.5}});subHmDel(u,m);
-  if(!e){const V=VFX;VFX='hiraishin';aoe(u,u.x,u.y,90,16,{unblockable:1,kb:200,fx:u.x,fy:u.y},SUB_HY);VFX=V;jx({jfx:'shock',x:u.x,y:u.y,r:95,t:.4,m:.4,col:SUB_HY})}
-  if(near(u.x,u.y))shake=Math.max(shake,.18)}),
+  if(!e){const V=VFX;VFX='hiraishin';aoe(u,u.x,u.y,90,16,{unblockable:1,kb:200,fx:u.x,fy:u.y},SUB_HY);VFX=V;jx({jfx:'shock',x:u.x,y:u.y,r:90,t:.4,m:.4,col:SUB_HY});fxRing(u.x,u.y,{u,r0:20,r1:90,col:SUB_HY,c2:'#ffffff',w:6,t:.35});fxArcs(u.x,u.y,80,SUB_HY,{u,z:20,n:4,t:.3});fxDecal(u.x,u.y,'seal',{u,r:70,t:2,col:SUB_HY})}}),
  // --- Danse de l'éclair jaune : file de sauts (seqs) entre marques et ennemis marqués ; intangible pendant la danse
  sub_hrs:S_('Hiraishin : Danse de l\'éclair jaune','Cinq sauts tranchants entre tes marques',22,{hero:'ventress',ai:{mode:'gap',min:60,max:600,p:.75}},(u,a,td)=>{const L=subHmLive(u).filter(m=>dist(u,m)<700);
   if(L.length<2&&!L.some(m=>m.tg)){const e=pick(u,a,td||300,300);if(!e){subRefund(u,'sub_hrs',1,'AUCUNE CIBLE',SUB_HY);return}anim(u,'lunge',.3);subHrTp(u,{tg:e},{dmg:30,h:{stun:.4}});say(u,'ÉCLAIR JAUNE !',SUB_HY);return}
   const c=fwd(u,a,Math.min(td||300,700)),O=L.slice().sort((p,q)=>Math.hypot(p.x-c.x,p.y-c.y)-Math.hypot(q.x-c.x,q.y-c.y)),H=new Map();let k=0,last=null;
-  u.phase=Math.max(u.phase||0,1.05);u.root=Math.max(u.root,.95);say(u,'DANSE DE L\'ÉCLAIR JAUNE !',SUB_HY);anim(u,'sub_seal',.3);jx({jfx:'sub_hrdance',ui:units.indexOf(u),x:u.x,y:u.y,t:1.1,m:1.1});
+  u.phase=Math.max(u.phase||0,1.05);u.root=Math.max(u.root,.95);say(u,'DANSE DE L\'ÉCLAIR JAUNE !',SUB_HY);anim(u,'sub_seal',.3);jx({jfx:'sub_hrdance',ui:units.indexOf(u),x:u.x,y:u.y,t:1.1,m:1.1});fxGlyph(u.x,u.y,SUB_HY,{u,r:56,t:.6});for(const m of L)fxDecal(m.tg?m.tg.x:m.x,m.tg?m.tg.y:m.y,'seal',{u,r:30,t:1.2,col:SUB_HY});
   seqs.push({owner:u,n:5,t:.02,iv:.18,vfx:'hiraishin',f:o=>{const m=O[k%O.length];k++;if(!m||(m.tg&&m.tg.dead))return;const x0=o.x,y0=o.y;o.phase=Math.max(o.phase||0,.3);
-   const e=subHrTp(o,m,{});const dx=o.x-x0,dy=o.y-y0,D=Math.hypot(dx,dy)||1;
+   const e=subHrTp(o,m,{});const dx=o.x-x0,dy=o.y-y0,D=Math.hypot(dx,dy)||1;fxArc(x0,y0,o.x,o.y,SUB_HY,{u:o,z:30,w:3,t:.35,j:.08});
    for(const v of enemies(o)){const f=clamp(((v.x-x0)*dx+(v.y-y0)*dy)/(D*D),0,1),px=x0+dx*f,py=y0+dy*f;if(Math.hypot(v.x-px,v.y-py)>20+v.r&&v!==e)continue;const n=H.get(v)||0;if(n>=2)continue;
-    H.set(v,n+1);if(hit(v,o,14,{unblockable:1,fx:x0,fy:y0}))last=v;sparks(v.x,v.y,SUB_HY,8)}
-   if(k>=5&&last&&!last.dead){hit(last,o,0,{stun:.6,silent:1,unblockable:1});say(last,'ÉTOURDI','#b8f');jx({jfx:'shock',x:last.x,y:last.y,r:70,t:.4,m:.4,col:SUB_HY});if(near(o.x,o.y))shake=Math.max(shake,.3)}}})}),
+    H.set(v,n+1);if(hit(v,o,14,{unblockable:1,fx:x0,fy:y0}))last=v;fxBurst(v.x,v.y,SUB_HY,{u:o,z:34,n:8,sp:280,gr:0,up:20,w:1.6,c2:'#ffffff'})}
+   if(k>=5&&last&&!last.dead){hit(last,o,0,{stun:.6,silent:1,unblockable:1});say(last,'ÉTOURDI','#b8f');jx({jfx:'shock',x:last.x,y:last.y,r:70,t:.4,m:.4,col:SUB_HY});fxImpact(last.x,last.y,'raiton',1.8,{u:o,r:70,z:34});fxPillar(last.x,last.y,SUB_HY,{u:o,h:180,w:20,t:.45,al:.5});fxShake(.3,last.x,last.y);fxHitStop(o,last,30,1)}}})}),
  // --- Hiraishin : Saut (dash) : sur une marque proche du curseur, sinon clignement ; marque le point de départ
  sub_hiraD:S_('Hiraishin : Saut','Téléportation sur une marque, sinon clignement',8,{hero:'ventress',ai:{mode:'gap',min:160,max:520,p:.45}},(u,a,td)=>{const ox=u.x,oy=u.y,c=fwd(u,a,Math.min(td||200,600));
   const L=subHmLive(u).filter(m=>dist(u,m)<600&&Math.hypot(m.x-c.x,m.y-c.y)<140).sort((p,q)=>Math.hypot(p.x-c.x,p.y-c.y)-Math.hypot(q.x-c.x,q.y-c.y));anim(u,'crouch',.25);
-  if(L.length){const m=L[0];subHrTp(u,m,{});if(m.tg)subHmDel(u,m)}else{const q=subFree(fwd(u,a,200),u.r);S('zap',u);u.x=q.x;u.y=q.y;collide(u);u.dash=null;jx({jfx:'sub_hira',x:ox,y:oy,x2:u.x,y2:u.y,t:.45,m:.45})}
+  if(L.length){const m=L[0];subHrTp(u,m,{});if(m.tg)subHmDel(u,m)}else{const q=subFree(fwd(u,a,200),u.r);S('zap',u);u.x=q.x;u.y=q.y;collide(u);u.dash=null;jx({jfx:'sub_hira',x:ox,y:oy,x2:u.x,y2:u.y,t:.45,m:.45});subHrFx(u,ox,oy)}
   subHmAdd(u,ox,oy,null)}),
 });
 // Barrière Shishienjin : recharge 14 s (sub_nrp2.js), effet visuel du sceau

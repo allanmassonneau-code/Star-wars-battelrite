@@ -14,8 +14,13 @@ KIT('c3',[
 DASHC[3]={src:'x.ak_rollD',n:'Boulet humain',d:'Roule en boulet 0,6 s en suivant la visée : percute, écarte et ralentit ; à 50 calories ou plus, le boulet se hérisse de pointes (saignement) et brûle 50 calories',vfx:'tai',cd:7};
 // ---- calories : jauge 0-100 (2 portions de 50)
 // décuplement : brûle 50 calories si possible → 1 (suralimenté : +20 % de dégâts, +15 % de taille), sinon 0
-function ak_burn(u){if((u.ak_cal||0)<50)return 0;u.ak_cal-=50;say(u,'SURALIMENTÉ','#ffb04a');jx({jfx:'ak_fed',ui:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6});return 1}
+function ak_burn(u){if((u.ak_cal||0)<50)return 0;u.ak_cal-=50;say(u,'SURALIMENTÉ','#ffb04a');jx({jfx:'ak_fed',ui:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6});fxEmbers(u.x,u.y,22,'#ff9a3a',{u,n:8,h:80,t:.8,c2:'#ffd36a'});return 1}
 const ak_add=(u,v)=>{u.ak_cal=Math.min(100,(u.ak_cal||0)+v)};
+// ---- VFX (boîte à outils nr_fx.js) : décor selon intensité / foule / camp ; zones d'alerte nettes
+const ak_dim=(o,fn)=>{const m=fxA(o);return m<1?fxAlpha(m,fn):fn()};
+// choc de chair (coup géant) : éclat chaud local, onde de poussière, éclats de sol ; big : impact de terre complet au rayon réel
+function ak_imp(u,x,y,r,big,t,dmg){fxFlare(x,y,'#ffd8a0',{u,z:30,r:big?30:20,t:.18});fxSmoke(x,y,{u,col:'#d8c8b0',n:big?6:3,r:r*.6,s:big?16:11,t:.8,al:.24,rise:24});
+ if(big){fxRing(x,y,{u,r0:r*.2,r1:r,col:'#ffe0b0',c2:'#ffffff',t:.35,w:6});fxDebris(x,y,{u,n:7,sp:170,col:'#8a6a48',c2:'#5a4028',s:4});fxDecal(x,y,'crack',{u,r:r*.8,t:4})}else fxBurst(x,y,'#fff3d0',{u,n:7,sp:260,z:30,w:1.6,len:.15,t:.25});if(t&&dmg)fxHitStop(u,t,dmg,big)}
 // tenue sombre ? (boulet et ventre prennent la couleur de la tenue : motifs clairs sur une tenue sombre)
 const ak_dark=c=>{if(typeof c!=='string'||c[0]!=='#')return false;const h=c.length===4?c.slice(1).split('').map(x=>x+x).join(''):c.slice(1,7),n=parseInt(h,16);return .299*(n>>16)+.587*(n>>8&255)+.114*(n&255)<85};
 TRAITS[3]={nom:'Calories',desc:'Encaisser des coups, frapper au corps à corps et manger (pilules, ou chips en rechargeant le chakra) remplit la jauge. Paume, bras, ventre et Boulet humain brûlent 50 calories : +20 % de dégâts et plus grands. Le Mode Papillon brûle tout.',
@@ -42,8 +47,8 @@ const AK_SLAM=.4,AK_ARM_ST=.3; // AK_SLAM : délai entre la fin des mudras du Ch
 Object.assign(NAT,{
  // Paume géante : la main grandit et balaie l'avant ; repousse (écrase contre un obstacle) et renvoie les projectiles
  ak_palm:S_('Paume géante','Gifle géante devant soi : repousse fort, renvoie les projectiles, étourdit si la cible heurte un obstacle',9,{hero:'sister',line:{len:190,w:190},ai:RG(185,.6)},(u,a)=>{const F=ak_burn(u),R=185*(1+.15*F),M=1+.2*F;
-  S('heavy',u);anim(u,'ak_slap',.45);jx({jfx:'ak_palm',ui:units.indexOf(u),x:u.x,y:u.y,a,r:R,t:.5,m:.5});
-  later(u,.1,()=>{if(u.dead)return;let n=0;for(const e of enemies(u))if(dist(u,e)<R+e.r&&angDiff(ang(u,e),a)<.85&&hit(e,u,11*M,{melee:1,unblockable:1,kb:760,wall:.8,fx:u.x,fy:u.y})){n++;jx({jfx:'shock',x:e.x,y:e.y,r:46,t:.3,m:.3,col:'#ffe0b0'})}
+  S('heavy',u);anim(u,'ak_slap',.45);jx({jfx:'ak_palm',ui:units.indexOf(u),x:u.x,y:u.y,a,r:R,t:.5,m:.5});fxWind(u.x+Math.cos(a)*R*.55,u.y+Math.sin(a)*R*.55,a,{u,len:R,w:R*.9,n:8,t:.4,col:'#fff3d0'});
+  later(u,.1,()=>{if(u.dead)return;let n=0;for(const e of enemies(u))if(dist(u,e)<R+e.r&&angDiff(ang(u,e),a)<.85&&hit(e,u,11*M,{melee:1,unblockable:1,kb:760,wall:.8,fx:u.x,fy:u.y})){n++;jx({jfx:'shock',x:e.x,y:e.y,r:46,t:.3,m:.3,col:'#ffe0b0'});ak_imp(u,e.x,e.y,46,1,e,22)}
    for(const p of projs)if(p.owner.team!==u.team&&clashOk(p)&&Math.hypot(p.x-u.x,p.y-u.y)<R+30&&angDiff(Math.atan2(p.y-u.y,p.x-u.x),a)<1)reflect(p,u);
    if(n){S('hit',u);if(nearMe(u.x,u.y))shake=Math.max(shake,.16)}})}),
  // Boulet humain (Nikudan Sensha) : roule en suivant la visée, percute et écarte les ennemis
@@ -63,27 +68,30 @@ Object.assign(NAT,{
  // (le ventre qui s'abat, commun au Chôdan Bakugeki v5)
  ak_slam0:S_('',0,0,{},(u,a,td,F)=>{const R=135*(1+.15*F),M=1+.2*F,D=AK_SLAM,p=fwd(u,a,clamp(td||120,40,120));
   S('heavy',u);anim(u,'ak_belly',D*1.5);u.unstop=Math.max(u.unstop,D+.05);u.giant=Math.max(u.giant,D+.4);jx({jfx:'ak_belly',ui:units.indexOf(u),x:p.x,y:p.y,a,r:R,t:D/.66,m:D/.66});
-  zone(u,p.x,p.y,R,0,D,{silent:1,quiet:1},'#e8dcc8');lastZ().deto='ak_none';
+  zone(u,p.x,p.y,R,0,D,{silent:1,quiet:1},'#e8dcc8');lastZ().deto='ak_none';if(!lastZ().vfx)lastZ().vfx='tai'; // zone d'alerte sans dégâts : sans élément, le décor d'explosion serait celui de la foudre
   later(u,D,()=>{if(u.dead)return;for(const e of enemies(u)){const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<R+e.r){const c=d<R*.5+e.r;hit(e,u,(c?29:20)*M,{stun:c?.9:.4,kb:c?120:280,fx:p.x,fy:p.y,unblockable:1})}}
-   jx({jfx:'ak_crack',x:p.x,y:p.y,r:R,t:.9,m:.9});jx({jfx:'shock',x:p.x,y:p.y,r:R*1.2,t:.5,m:.5,col:'#e8c8a0'});sparks(p.x,p.y,'#a07850',16,'earth');sparks(p.x,p.y,'#e8dcc8',10,'smoke');if(near(p.x,p.y)){S('rock',u);if(nearMe(p.x,p.y))shake=Math.max(shake,.35)}})}),
+   jx({jfx:'ak_crack',x:p.x,y:p.y,r:R,t:.9,m:.9});jx({jfx:'shock',x:p.x,y:p.y,r:R*1.2,t:.5,m:.5,col:'#e8c8a0'});sparks(p.x,p.y,'#a07850',16,'earth');sparks(p.x,p.y,'#e8dcc8',10,'smoke');
+   fxImpact(p.x,p.y,'doton',clamp(R/48,1.5,2.6),{u,r:R});fxSmoke(p.x,p.y,{u,col:'#d8c8b0',n:8,r:R*.9,s:18,t:1.2,al:.22,rise:30});fxShake(.28,p.x,p.y);for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<R+e.r)fxHitStop(u,e,29*M,1);if(near(p.x,p.y)){S('rock',u);if(nearMe(p.x,p.y))shake=Math.max(shake,.35)}})}),
  // Chôdan Bakugeki (v5, fusion avec le Décuplement) : grandit, inarrêtable 1,2 s, le sol tremble ; le ventre s'abat à 0,8 s
  ak_chodan:S_('Chôdan Bakugeki','',13,{hero:'savage',tele:{r:140,max:120},ai:RG(220,.6)},(u,a,td)=>{const F=ak_burn(u),T=1.2;S('roar',u);anim(u,'ak_grow',.8);
   u.giant=Math.max(u.giant,T+.4);u.unstop=Math.max(u.unstop,T);aux.push({type:'ak_quake',x:u.x,y:u.y,r:95*(1+.15*F),t:T,m:T,team:u.team,owner:u,ui:units.indexOf(u),k:.25,M:1+.2*F,vfx:'tai'});
-  jx({jfx:'ak_grow',ui:units.indexOf(u),x:u.x,y:u.y,t:.8,m:.8});const d0=td;later(u,.4,()=>{if(u.dead||u.stun>0&&!(u.unstop>0))return;ak_slamDo(u,u.aim,d0,F)})}),
+  jx({jfx:'ak_grow',ui:units.indexOf(u),x:u.x,y:u.y,t:.8,m:.8});fxRing(u.x,u.y,{u,r0:20,r1:130,col:'#ffb04a',t:.5,w:6});fxSmoke(u.x,u.y,{u,col:'#d8c8b0',n:6,r:50,s:16,t:1,al:.24,rise:20});fxDecal(u.x,u.y,'crack',{u,r:60,t:3});const d0=td;later(u,.4,()=>{if(u.dead||u.stun>0&&!(u.unstop>0))return;ak_slamDo(u,u.aim,d0,F)})}),
  // Pilule rouge : Mode Papillon (v5, fusion) : soin + libération, puis le Papillon (les calories gardées allongent les ailes)
- ak_redbf:ULT('Pilule rouge : Mode Papillon','',{ai:SELF(320,.8)},(u,a,td,P)=>{heal(u,30);cleanse(u);anim(u,'ak_pill',.4);S('fire',u);jx({jfx:'ak_pill',ui:units.indexOf(u),x:u.x,y:u.y,col:'#ff3a2a',red:1,t:.9,m:.9});
+ ak_redbf:ULT('Pilule rouge : Mode Papillon','',{ai:SELF(320,.8)},(u,a,td,P)=>{heal(u,30);cleanse(u);anim(u,'ak_pill',.4);S('fire',u);jx({jfx:'ak_pill',ui:units.indexOf(u),x:u.x,y:u.y,col:'#ff3a2a',red:1,t:.9,m:.9});fxFlare(u.x,u.y,'#ff3a1a',{u,z:44,r:34,t:.3});
   NAT.ak_butterfly.f(u,a,td,P)}),
  // dash : Boulet humain (pointes à 50 calories)
  ak_rollD:S_('Boulet humain','',7,{hero:'chewie',ai:{mode:'gap',min:130,max:360,p:.5}},(u,a)=>{const bl=(u.ak_cal||0)>=50;if(bl){u.ak_cal-=50;say(u,'BOULET À POINTES','#ffb04a')}S('dash',u);S(bl?'saber':'heavy',u);anim(u,'ak_ball',.7);
-  aux.push({type:'ak_roll',x:u.x,y:u.y,a,r:0,t:.6,m:.6,team:u.team,owner:u,ui:units.indexOf(u),vfx:'tai',k:0,hs:[],bl:bl?1:0,dm:8});u.ak_roll=.6;u.ak_spk=bl?1:0;sparks(u.x,u.y,bl?'#d8dde6':'#e8dcc8',10,'smoke')}),
+  aux.push({type:'ak_roll',x:u.x,y:u.y,a,r:0,t:.6,m:.6,team:u.team,owner:u,ui:units.indexOf(u),vfx:'tai',k:0,hs:[],bl:bl?1:0,dm:8});fxSmoke(u.x,u.y,{u,col:'#d8c8b0',n:5,r:24,s:14,t:.8,al:.26});fxRing(u.x,u.y,{u,r0:10,r1:50,col:'#e8dcc8',t:.3});u.ak_roll=.6;u.ak_spk=bl?1:0;sparks(u.x,u.y,bl?'#d8dde6':'#e8dcc8',10,'smoke')}),
  // Pilule verte (épinards) : bouclier, vitesse, endurance, et c'est de la nourriture : +25 calories
  ak_pill:S_('Pilule verte','Pilule d\'épinards : bouclier, vitesse 3 s, endurance et +25 calories',8,{ai:DEF},(u)=>{shieldU(u,20,3);u.haste=Math.max(u.haste,3);u.stam=Math.min(100,u.stam+40);u.blockLock=0;ak_add(u,25);anim(u,'ak_pill',.45);S('poof',u);
-  jx({jfx:'ak_pill',ui:units.indexOf(u),x:u.x,y:u.y,col:'#4ad04a',t:.8,m:.8})}),
+  jx({jfx:'ak_pill',ui:units.indexOf(u),x:u.x,y:u.y,col:'#4ad04a',t:.8,m:.8});fxBurst(u.x,u.y,'#7fe07f',{u,n:10,sp:90,z:20,gr:-90,up:60,w:2,sh:'dot',t:.9,c2:'#cfffcf'});fxRing(u.x,u.y,{u,r0:10,r1:46,col:'#7fe07f',t:.4})}),
  // Mode Papillon : brûle toutes les calories (+1 s par 34), ailes de chakra, puissance maximale ; épuisé à la fin
  ak_butterfly:ULT('Mode Papillon','Ailes de chakra 4,5 s (+1 s / 34 calories) : géant, rapide, +35 % de dégâts, bouclier, ignore les ralentissements ; épuisé après',{ai:SELF(320,.8)},(u)=>{const c=u.ak_cal||0,D=4.5+Math.floor(c/34);u.ak_cal=0;
   S('roar',u);anim(u,'ak_bfly',.9);for(const k of['giant','haste','rage','slowImm'])u[k]=Math.max(u[k]||0,D);shieldU(u,20,D);u.ak_bf=D;
   aux.push({type:'ak_wings',x:u.x,y:u.y,r:0,t:D,m:D,team:u.team,owner:u,ui:units.indexOf(u),k:0,vfx:'ak_bf'});
-  aoe(u,u.x,u.y,150,8,{kb:280,quiet:1},'#ff7ad8');jx({jfx:'ak_bfburst',ui:units.indexOf(u),x:u.x,y:u.y,t:.9,m:.9});if(D>5)say(u,'+'+Math.round(D-4.5)+' s','#ffb04a')}),
+  aoe(u,u.x,u.y,150,8,{kb:280,quiet:1},'#ff7ad8');jx({jfx:'ak_bfburst',ui:units.indexOf(u),x:u.x,y:u.y,t:.9,m:.9});
+  fxShake(.3,u.x,u.y);fxPillar(u.x,u.y,'#ff7ad8',{u,h:320,w:44,t:.8,al:.5});fxRing(u.x,u.y,{u,r0:30,r1:150,col:'#ff7ad8',c2:'#a8f0ff',w:9,t:.5,fill:1});fxLight(u.x,u.y,260,'#ff7ad8',{u,t:.8,a:.5});
+  fxBurst(u.x,u.y,'#ff9ae8',{u,n:24,sp:260,z:50,gr:-60,up:80,w:3.2,sh:'petal',c2:'#a8f0ff',t:1.4});fxEmbers(u.x,u.y,70,'#ffb8ec',{u,n:14,h:160,t:D,c2:'#c8f6ff'});if(D>5)say(u,'+'+Math.round(D-4.5)+' s','#ffb04a')}),
  // Décuplement (Baika) : géant inarrêtable, le sol tremble autour de lui
  ak_baika:ULT('Décuplement','Devient géant 3 s : inarrêtable, et le sol tremble sans cesse autour de lui (dégâts, ralentit)',{hero:'savage',ai:SELF(220,.8)},(u)=>{const F=ak_burn(u);S('roar',u);S('heavy',u);anim(u,'ak_grow',.8);
   u.giant=Math.max(u.giant,3);u.unstop=Math.max(u.unstop,3);aux.push({type:'ak_quake',x:u.x,y:u.y,r:95*(1+.15*F),t:3,m:3,team:u.team,owner:u,ui:units.indexOf(u),k:.35,M:1+.2*F,vfx:'tai'});
@@ -103,7 +111,7 @@ AUXF.ak_roll=(x,dt)=>{const u=x.owner;if(u.dead||(!x.spk&&u.stun>0)){x.t=0;u.ak_
  if(x.lx!=null&&x.ex>2&&Math.hypot(u.x-x.lx,u.y-x.ly)<x.ex*.45){x.t=0;u.ak_roll=0;u.ak_spk=0;u.kx=-Math.cos(x.a)*160;u.ky=-Math.sin(x.a)*160;jx({jfx:'shock',x:u.x,y:u.y,r:40,t:.3,m:.3,col:'#e8dcc8'});sparks(u.x,u.y,'#e8dcc8',10,'smoke');if(near(u.x,u.y))S('rock',u);return}
  let d=ak_want(u)-x.a;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;x.a+=clamp(d,-4.2*dt,4.2*dt);u.aim=x.a;
  for(const e of enemies(u))if(!x.hs.includes(e)&&Math.hypot(e.x-u.x,e.y-u.y)<u.r+e.r+16){x.hs.push(e);const s=(-(e.x-u.x)*Math.sin(x.a)+(e.y-u.y)*Math.cos(x.a))<0?-1:1,b=x.a+s*1.1;
-  VFX='tai';hit(e,u,x.dm||10,Object.assign({unblockable:1,slow:.6,kb:430,fx:e.x-Math.cos(b)*20,fy:e.y-Math.sin(b)*20},x.bl?{dot:{dps:3,dur:3},el:-2}:{}));VFX=null;if(x.bl)sparks(e.x,e.y,'#c03030',6);jx({jfx:'shock',x:e.x,y:e.y,r:44,t:.3,m:.3,col:'#ffe0b0'});if(near(e.x,e.y)){S('heavy',u);if(nearMe(e.x,e.y))shake=Math.max(shake,.12)}}
+  VFX='tai';hit(e,u,x.dm||10,Object.assign({unblockable:1,slow:.6,kb:430,fx:e.x-Math.cos(b)*20,fy:e.y-Math.sin(b)*20},x.bl?{dot:{dps:3,dur:3},el:-2}:{}));VFX=null;ak_imp(u,e.x,e.y,44,0,e,18);if(x.bl)fxBurst(e.x,e.y,'#c01a2a',{u,n:8,sp:180,z:30,up:100,gr:420,w:2,len:.06,add:0,t:.5});if(x.bl)sparks(e.x,e.y,'#c03030',6);jx({jfx:'shock',x:e.x,y:e.y,r:44,t:.3,m:.3,col:'#ffe0b0'});if(near(e.x,e.y)){S('heavy',u);if(nearMe(e.x,e.y))shake=Math.max(shake,.12)}}
  if(x.t<=0){u.ak_roll=0;u.ak_spk=0;sparks(u.x,u.y,'#e8dcc8',8,'smoke');return}
  ak_trail(u,0);
  const sp=560;x.lx=u.x;x.ly=u.y;x.ex=sp*dt;u.dash={sx:u.x,sy:u.y,tx:u.x+Math.cos(x.a)*sp*dt,ty:u.y+Math.sin(x.a)*sp*dt,t:0,dur:dt,jump:0};x.x=u.x;x.y=u.y;u.ak_roll=x.t};
@@ -130,9 +138,9 @@ AUXF.ak_arm=(x,dt)=>{const u=x.owner;if(u.dead){x.t=0;u.ak_arm=null;return}x.x=u
 AUXD.ak_arm=()=>{};
 function ak_grab(x,u,e){const M=x.M;if(!hit(e,u,5*M,{unblockable:1})){x.st=2;return}
  if(e.dead||e.unstop>0){if(!e.dead)hit(e,u,10*M,{unblockable:1,kb:220});x.st=2;return}
- x.st=1;x.tg=e;x.ti=units.indexOf(e);x.hx=u.x;x.hy=u.y;anim(u,'ak_heave',.55);S('heavy',u);say(e,'SAISI','#ffb04a');const b=fwd(u,x.a+Math.PI,125);e.stun=Math.max(e.stun,.5);e.cast=null;e.spin=null;e.flame=null;e.block=false;
+ x.st=1;x.tg=e;x.ti=units.indexOf(e);x.hx=u.x;x.hy=u.y;anim(u,'ak_heave',.55);S('heavy',u);say(e,'SAISI','#ffb04a');ak_imp(u,e.x,e.y,30,0);const b=fwd(u,x.a+Math.PI,125);e.stun=Math.max(e.stun,.5);e.cast=null;e.spin=null;e.flame=null;e.block=false;
  e.dash={sx:e.x,sy:e.y,tx:b.x,ty:b.y,t:0,dur:.5,jump:115,end:()=>ak_land(u,e,M)}}
-function ak_land(u,e,M){const V=VFX;VFX='tai';if(!u.dead&&!e.dead){hit(e,u,14*M,{stun:AK_ARM_ST,unblockable:1});for(const o of enemies(u))if(o!==e&&Math.hypot(o.x-e.x,o.y-e.y)<75+o.r)hit(o,u,8*M,{kb:240,fx:e.x,fy:e.y,unblockable:1})}
+function ak_land(u,e,M){const V=VFX;VFX='tai';if(!e.dead){ak_imp(u,e.x,e.y,75,1,e,14*M+10);fxShake(.2,e.x,e.y)}if(!u.dead&&!e.dead){hit(e,u,14*M,{stun:AK_ARM_ST,unblockable:1});for(const o of enemies(u))if(o!==e&&Math.hypot(o.x-e.x,o.y-e.y)<75+o.r)hit(o,u,8*M,{kb:240,fx:e.x,fy:e.y,unblockable:1})}
  jx({jfx:'ak_crack',x:e.x,y:e.y,r:70,t:.7,m:.7});sparks(e.x,e.y,'#a07850',10,'earth');sparks(e.x,e.y,'#e8dcc8',8,'smoke');if(near(e.x,e.y)){S('boom',e);if(nearMe(e.x,e.y))shake=Math.max(shake,.25)}VFX=V}
 // ailes du Mode Papillon : planent au-dessus du sol ; à la fin, épuisement
 AUXF.ak_wings=(x,dt)=>{const u=x.owner;if(u.dead){x.t=0;u.ak_bf=0;return}x.x=u.x;x.y=u.y;u.ak_bf=Math.max(0,x.t);u.z=Math.max(u.z||0,7+Math.sin(SIMT*5)*2.5);
@@ -140,19 +148,23 @@ AUXF.ak_wings=(x,dt)=>{const u=x.owner;if(u.dead){x.t=0;u.ak_bf=0;return}x.x=u.x
 // Décuplement : onde toutes les 0,6 s autour du géant
 AUXF.ak_quake=(x,dt)=>{const u=x.owner;if(u.dead){x.t=0;return}x.x=u.x;x.y=u.y;if(x.k>0)return;x.k=.6;VFX='tai';
  for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<x.r+e.r)hit(e,u,4*x.M,{slow:.4,unblockable:1,fx:u.x,fy:u.y});VFX=null;
- jx({jfx:'ak_crack',x:u.x,y:u.y,r:x.r*.8,t:.55,m:.55});jx({jfx:'shock',x:u.x,y:u.y,r:x.r,t:.35,m:.35,col:'#d8a070'});sparks(u.x,u.y,'#e8dcc8',5,'smoke');if(near(u.x,u.y)){S('rock',u);if(nearMe(u.x,u.y))shake=Math.max(shake,.06)}};
+ jx({jfx:'ak_crack',x:u.x,y:u.y,r:x.r*.8,t:.55,m:.55});jx({jfx:'shock',x:u.x,y:u.y,r:x.r,t:.35,m:.35,col:'#d8a070'});sparks(u.x,u.y,'#e8dcc8',5,'smoke');fxDebris(u.x,u.y,{u,n:4,sp:120,s:3});if(near(u.x,u.y)){S('rock',u);if(nearMe(u.x,u.y))shake=Math.max(shake,.06)}};
 // ---- dessins
 // cercle du séisme autour du géant
 AUXD.ak_quake=(x,k,t)=>{const u=x.ui!=null?units[x.ui]:null;if(!u||u.dead)return;const pl=.5+.5*Math.sin(t*10.5);g.fillStyle=rgba('#000000',.2*k);gEll(u.x,u.y,36);g.fill();
  g.strokeStyle=rgba('#d8a070',(.25+.25*pl)*k);g.lineWidth=2;g.setLineDash([10,7]);g.lineDashOffset=-t*40;gEll(u.x,u.y,x.r);g.stroke();g.setLineDash([]);g.fillStyle=rgba('#a07850',.08*k);gEll(u.x,u.y,x.r);g.fill();
- for(let i=0;i<7;i++){const b=i*.9+(i%2?t*.6:-t*.5),r=x.r*(.55+.4*((i*37)%10)/10),q=P(u.x+Math.cos(b)*r,u.y+Math.sin(b)*r,Math.abs(Math.sin(t*9+i*1.7))*14);g.fillStyle=i%2?'#8a6a48':'#a07850';g.fillRect(q.x-2.5*q.s,q.y-2.5*q.s,5*q.s,5*q.s)}};
+ const nq=fxN(7,x);for(let i=0;i<nq;i++){const b=i*.9+(i%2?t*.6:-t*.5),r=x.r*(.55+.4*((i*37)%10)/10),q=P(u.x+Math.cos(b)*r,u.y+Math.sin(b)*r,Math.abs(Math.sin(t*9+i*1.7))*14);g.fillStyle=i%2?'#8a6a48':'#a07850';g.fillRect(q.x-2.5*q.s,q.y-2.5*q.s,5*q.s,5*q.s)}};
 // ailes de chakra (dessinées derrière les ninjas)
-AUXD.ak_wings=(x,k,t)=>{const u=x.ui!=null?units[x.ui]:null;if(!u||u.dead)return;const q=P(u.x,u.y,u.z||0),s=q.s*1.3*(u.giant>0?1.35:1)*(u.ch.look.scale||1)*.62,cx=q.x,cy=q.y-58*s,fl=.7+.3*Math.sin(t*8);
+AUXD.ak_wings=(x,k,t)=>{const u=x.ui!=null?units[x.ui]:null;if(!u||u.dead)return;k*=.6+.4*fxA(x);{const q0=P(u.x,u.y,30);fxGlowS(q0.x,q0.y-30*q0.s,70*q0.s,'#ff7ad8',.22*k,50*q0.s);fxRibbon(x,u.x,u.y,40+(u.z||0),'#ff9ae8',14,12,.4*k)}const q=P(u.x,u.y,u.z||0),s=q.s*1.3*(u.giant>0?1.35:1)*(u.ch.look.scale||1)*.62,cx=q.x,cy=q.y-58*s,fl=.7+.3*Math.sin(t*8);
  const W=(sd)=>{g.beginPath();g.moveTo(6*s,0);g.bezierCurveTo(28*s,-62*s,80*s,-74*s,90*s,-40*s);g.bezierCurveTo(94*s,-14*s,52*s,-2*s,6*s,5*s);g.moveTo(6*s,8*s);g.bezierCurveTo(48*s,8*s,68*s,32*s,52*s,52*s);g.bezierCurveTo(38*s,62*s,16*s,38*s,6*s,12*s)};
  for(const sd of[-1,1]){g.save();g.translate(cx,cy);g.scale(sd*fl,1);W();g.fillStyle=rgba('#ff5ac8',.38*k);g.fill();g.strokeStyle=rgba('#ffffff',.85*k);g.lineWidth=1.5;g.stroke();
   g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#7fe8ff',.45*k);g.lineWidth=5;g.stroke();g.strokeStyle=rgba('#ffd0f0',.5*k);g.lineWidth=1.2;g.beginPath();g.moveTo(8*s,0);g.quadraticCurveTo(40*s,-30*s,84*s,-44*s);g.moveTo(8*s,0);g.quadraticCurveTo(46*s,-12*s,80*s,-20*s);g.moveTo(8*s,10*s);g.quadraticCurveTo(38*s,22*s,50*s,46*s);g.stroke();
   circ(62*s,-44*s,9*s,rgba('#ffffff',.35*k));circ(42*s,-28*s,5*s,rgba('#ffe0f6',.45*k));circ(36*s,32*s,6*s,rgba('#ffffff',.3*k));g.restore()}
  g.globalCompositeOperation='lighter';for(let i=0;i<6;i++){const a=t*1.7+i*1.05,r=(50+(i%3)*18)*s;circ(cx+Math.cos(a)*r,cy+Math.sin(a*1.3)*r*.4-((t*30+i*20)%40)*s,2*s+1,rgba(i%2?'#ffb8ec':'#c8f6ff',.75*k))}};
+// anticipation pendant les mudras d'un jutsu Akimichi : chaleur des calories qui monte (vagues orange), poussière aux pieds
+STATD.push((u,p,S,sk)=>{if(!u.cast||u.dead)return;const ab=u.ch.abil[u.cast.i];if(!ab||!ab.key||!ab.key.startsWith('ak_'))return;const kk=Math.min(1,u.cast.t/u.cast.dur),t=performance.now()/1000;
+ ak_dim(u,()=>{fxGlowS(p.x,p.y-34*S*(sk||1),(18+16*kk)*S,'#ff9a3a',.18+.22*kk,(28+20*kk)*S);g.save();g.globalCompositeOperation='lighter';g.lineWidth=2*S;const n=fxN(4,u);
+  for(let i=0;i<n;i++){const ph=(t*1.4+i/n)%1,x=p.x+Math.sin(i*2.4+t*2)*14*S,y=p.y-(10+ph*60)*S;g.strokeStyle=rgba(i%2?'#ffb04a':'#ff7a2a',.6*(1-ph)*kk);g.beginPath();g.moveTo(x,y+6*S);g.quadraticCurveTo(x+5*S*Math.sin(t*6+i),y,x,y-6*S);g.stroke()}g.restore()})});
 // boulet (par-dessus le ninja) et bras géant (à la profondeur du lanceur)
 STATD.push((u,p,S,sk)=>{const t=performance.now()/1000,L=u.ch.look;
  // saignement (boulet à pointes) : gouttes de sang qui perlent

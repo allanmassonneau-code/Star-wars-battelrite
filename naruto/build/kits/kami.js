@@ -34,6 +34,11 @@ const KMC={w:'#f6f3ea',s:'#d6d0c0',b:'#7a9ae0',l:'#c8d6f4',o:'#2a3050',r:'#c8302
 const KM_MAX=6,KM_REG=3,KM_TEAR=12,KM_ABS=3; // feuilles max, une toutes les 3 s, un coup ≥ 12 en déchire une qui en absorbe 3
 const km_I=u=>units.indexOf(u);
 const km_S=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son brut
+// ---- VFX (boîte à outils nr_fx.js) : papier blanc et bleu (feuilles non additives), lueur bleue du chakra, feu doré des papiers explosifs ; zones de danger nettes
+// feuilles de papier qui volent (impact, envol)
+function kmPapers(u,x,y,n,sp,o){fxBurst(x,y,KMC.w,Object.assign({u,n,sp,z:30,up:90,gr:-20,w:2.6,sh:'petal',c2:KMC.l,add:0,t:.8},o||{}))}
+// impact de papier tranchant : feuilles, éclat bleu ; gel visuel sur un gros coup
+function kmImp(u,e,s,dmg,big,a){kmPapers(u,e.x,e.y,5*s,200*s,{a:a??0,arc:a==null?6.3:1.8});fxBurst(e.x,e.y,'#ffffff',{u,n:4*s,sp:280*s,z:32,a:a??0,arc:a==null?6.3:1.4,w:1.4,len:.14,t:.25});fxFlare(e.x,e.y,KMC.l,{u,z:32,r:12*s,t:.14});if(dmg)fxHitStop(u,e,dmg,big)}
 // dépense jusqu'à n feuilles de la réserve, renvoie le nombre dépensé
 function km_spend(u,n){const k=Math.max(0,Math.min(n,u.km_pp|0));if(k){u.km_pp-=k;jx({jfx:'km_puff',ui:km_I(u),x:u.x,y:u.y,n:k,t:.45,m:.45})}return k}
 function km_gain(u,n){const k=Math.min(n,KM_MAX-(u.km_pp|0));if(k>0)u.km_pp=(u.km_pp|0)+k;return k}
@@ -48,19 +53,22 @@ Object.assign(NAT,{
  // Shuriken de papier : éventail, +1 shuriken par feuille dépensée (2 max)
  km_shuri:SP('Shuriken de papier',KMD.shuri,5,{line:{len:520,w:60},ai:RG(480,.7)},(u,a)=>{const n=3+km_spend(u,2);S('wind',u);km_S('saber',u);anim(u,'km_flick',.42);
   jx({jfx:'km_fold',ui:km_I(u),x:u.x,y:u.y,a,t:.35,m:.35});
-  for(let i=0;i<n;i++)proj(u,a+(i-(n-1)/2)*.06,{vfx:'km_paper',spd:860,r:7,dmg:6,life:.62,col:KMC.w,kind:'km_shuri'})}),
+  for(let i=0;i<n;i++)proj(u,a+(i-(n-1)/2)*.06,{vfx:'km_paper',spd:860,r:7,dmg:6,life:.62,col:KMC.w,kind:'km_shuri',onHit:(p,t)=>kmImp(p.owner,t,.6,0,0,Math.atan2(p.vy,p.vx))});
+  kmPapers(u,u.x+Math.cos(a)*20,u.y+Math.sin(a)*20,4,140,{a,arc:1.4})}),
  // Lance de papier : perce, le premier ennemi touché est cloué
  km_lance:SP('Lance de papier',KMD.lance,8,{line:{len:560,w:22},ai:RG(540,.6)},(u,a)=>{S('wind',u);km_S('saber',u);anim(u,'km_spear',.5);let pin=0;
   jx({jfx:'km_fold',ui:km_I(u),x:u.x,y:u.y,a,t:.35,m:.35,big:1});
-  proj(u,a,{vfx:'km_paper',spd:1050,r:9,dmg:17,life:.55,col:KMC.w,pierce:1,kind:'km_spear',onHit:(p,t)=>{if(pin||t.dead)return;pin=1;hit(t,p.owner,0,{root:.6,silent:1});
+  fxFlare(u.x+Math.cos(a)*24,u.y+Math.sin(a)*24,KMC.l,{u,z:36,r:14,t:.16});
+  proj(u,a,{vfx:'km_paper',spd:1050,r:9,dmg:17,life:.55,col:KMC.w,pierce:1,kind:'km_spear',onHit:(p,t)=>{kmImp(p.owner,t,pin?.8:1.4,pin?0:17,!pin,Math.atan2(p.vy,p.vx));if(pin||t.dead)return;pin=1;hit(t,p.owner,0,{root:.6,silent:1});fxRing(t.x,t.y,{u:p.owner,r0:30,r1:10,col:KMC.l,w:4,t:.3});
    if(t.root>0){jx({jfx:'km_pin',ti:km_I(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.7,m:.7});km_S('rock',t)}}})}),
  // Corps de papier : intangible 1 s, plus rapide, ne peut ni frapper ni lancer de jutsu ; se reforme en tranchant autour de soi
  km_corps:SP('Corps de papier',KMD.corps,13,{hero:'ahsoka',ai:DEF},(u)=>{const D=.8;u.phase=Math.max(u.phase||0,D);u.haste=Math.max(u.haste,D);u.disarm=Math.max(u.disarm,D);u.silence=Math.max(u.silence,D);u.km_sc=D;
   S('wind',u);km_S('poof',u);anim(u,'km_scatter',D);jx({jfx:'km_swirl',ui:km_I(u),x:u.x,y:u.y,t:D,m:D});
-  later(u,D,()=>{if(u.dead)return;u.km_sc=0;VFX='km_paper';aoe(u,u.x,u.y,90,12,{slow:.8,unblockable:1,quiet:1},KMC.l);VFX=null;jx({jfx:'km_reform',x:u.x,y:u.y,r:90,t:.45,m:.45});km_S('saber',u);anim(u,'km_open',.35)})}),
+  later(u,D,()=>{if(u.dead)return;u.km_sc=0;VFX='km_paper';aoe(u,u.x,u.y,90,12,{slow:.8,unblockable:1,quiet:1},KMC.l);VFX=null;jx({jfx:'km_reform',x:u.x,y:u.y,r:90,t:.45,m:.45});fxRing(u.x,u.y,{u,r0:16,r1:90,col:KMC.l,w:4,t:.3});kmPapers(u,u.x,u.y,8,220);km_S('saber',u);anim(u,'km_open',.35)})}),
  // Papillons shikigami : nuée qui traque, +1 papillon par feuille (3 max)
  km_bfly:SP('Papillons shikigami',KMD.bfly,10,{ai:RG(460,.6)},(u,a)=>{const n=4+km_spend(u,3);let i=0;S('wind',u);anim(u,'km_point',.55);jx({jfx:'km_fold',ui:km_I(u),x:u.x,y:u.y,a,t:.4,m:.4,big:1});
-  const f=o=>{const b=a+(i-(n-1)/2)*.32;i++;proj(o,b,{vfx:'km_paper',spd:420,r:7,dmg:5,life:1.5,col:KMC.w,home:1,slow:.5,noClash:1,o:{reveal:1},kind:'km_bfly'})};
+  fxGlyph(u.x,u.y,KMC.b,{u,ui:km_I(u),r:36,t:.5,al:.5});
+  const f=o=>{const b=a+(i-(n-1)/2)*.32;i++;proj(o,b,{vfx:'km_paper',spd:420,r:7,dmg:5,life:1.5,col:KMC.w,home:1,slow:.5,noClash:1,o:{reveal:1},kind:'km_bfly',onHit:(p,t)=>{kmPapers(p.owner,t.x,t.y,4,120,{c2:KMC.b});fxFlare(t.x,t.y,KMC.b,{u:p.owner,z:34,r:10,t:.14,star:0})}})};
   f(u);seqs.push({owner:u,n:n-1,t:.06,iv:.06,vfx:'km_paper',f})}),
  // Chakram de papier : aller-retour, le retour ralentit
  km_chakram:SP('Chakram de papier',KMD.chakram,9,{line:{len:400,w:40},ai:RG(380,.6)},(u,a)=>{S('wind',u);km_S('saber',u);anim(u,'km_spear',.45);
@@ -72,15 +80,17 @@ Object.assign(NAT,{
  // Cocon de papier : zone retardée qui entrave, puis le cocon explose
  km_cocoon:SP('Cocon de papier',KMD.cocoon,13,{tele:{r:85,max:440},ai:RG(430,.6)},(u,a,td)=>{const p=atP(u,a,td,440),R=85,vic=[];S('wind',u);anim(u,'km_point',.6);
   jx({jfx:'km_gather',x:p.x,y:p.y,r:R,t:.5,m:.5});zone(u,p.x,p.y,R,10,.5,{root:1.1},KMC.b);lastZ().deto='km_wrap';
-  later(u,.52,()=>{for(const e of enemies(u))if(e.root>0&&Math.hypot(e.x-p.x,e.y-p.y)<R+e.r+4){vic.push({x:e.x,y:e.y});jx({jfx:'km_cocoon',ti:km_I(e),x:e.x,y:e.y,t:1.1,m:1.1})}});
+  fxCharge(u,KMC.b,{t:.45,n:8});
+  later(u,.52,()=>{fxRing(p.x,p.y,{u,r0:R,r1:R*.3,col:KMC.l,w:5,t:.35});kmPapers(u,p.x,p.y,8,160,{gr:200});for(const e of enemies(u))if(e.root>0&&Math.hypot(e.x-p.x,e.y-p.y)<R+e.r+4){vic.push({x:e.x,y:e.y});jx({jfx:'km_cocoon',ti:km_I(e),x:e.x,y:e.y,t:1.1,m:1.1});fxHitStop(u,e,10,1)}});
   later(u,1.6,()=>{for(const v of vic){VFX='km_paper';for(const e of enemies(u))if(Math.hypot(e.x-v.x,e.y-v.y)<50+e.r)hit(e,u,20,{kb:120,fx:v.x,fy:v.y,unblockable:1});VFX=null;
-   jx({jfx:'km_boom',x:v.x,y:v.y,r:50,t:.6,m:.6});km_S('boom',u)}if(vic.length&&near(p.x,p.y))shake=Math.max(shake,.2)})}),
+   jx({jfx:'km_boom',x:v.x,y:v.y,r:50,t:.6,m:.6});km_S('boom',u);fxImpact(v.x,v.y,'bakuton',1.1,{u,r:50});kmPapers(u,v.x,v.y,6,220,{c2:KMC.y});
+   for(const e of enemies(u))if(Math.hypot(e.x-v.x,e.y-v.y)<50+e.r)fxHitStop(u,e,20,1)}})}),
  // Ailes de papier : vol jusqu'au point visé, coup d'ailes à l'atterrissage
  km_wings:SP('Ailes de papier',KMD.wings,7,{hero:'cadbane',ai:{mode:'gap',min:130,max:260,p:.5}},(u,a,td)=>{const d=clamp(td||260,100,260),D=.44;S('wind',u);km_S('dash',u);anim(u,'km_open',D+.1);
   u.phase=Math.max(u.phase||0,D);u.km_sc=Math.max(u.km_sc||0,D);jx({jfx:'km_swirl',ui:km_I(u),x:u.x,y:u.y,t:D,m:D});
-  aux.push({type:'km_wings',x:u.x,y:u.y,r:1.2,t:D+.15,m:D+.15,team:u.team,owner:u,ui:km_I(u),k:0});
+  aux.push({type:'km_wings',x:u.x,y:u.y,r:1.2,t:D+.15,m:D+.15,team:u.team,owner:u,ui:km_I(u),k:0});kmPapers(u,u.x,u.y,6,150,{up:160});
   dash(u,a,d,D,{jump:70,end:()=>{if(u.dead)return;VFX='km_paper';for(const e of enemies(u))if(dist(u,e)<105+e.r)hit(e,u,0,{kb:150,fx:u.x,fy:u.y,silent:1});VFX=null;u.km_sc=0;
-   jx({jfx:'km_gust',x:u.x,y:u.y,r:105,t:.45,m:.45});km_S('wind',u)}})}),
+   jx({jfx:'km_gust',x:u.x,y:u.y,r:105,t:.45,m:.45});km_S('wind',u);fxRing(u.x,u.y,{u,r0:20,r1:105,col:KMC.l,w:4,t:.3});fxWind(u.x,u.y,0,{u,spin:1,w:90,n:5,t:.4,col:KMC.l})}})}),
  // Clone de papier : double qui arrête un tir puis explose (logique : AUXF.km_clone)
  km_clone:SP('Clone de papier',KMD.clone,9,{hero:'cadbane',ai:ESC},(u,a,td)=>{const d=clamp(td||200,110,200);km_S('poof',u);S('dash',u);
   aux.push({type:'km_clone',x:u.x,y:u.y,a:u.aim,r:18,t:1.5,m:1.5,team:u.team,owner:u,ui:km_I(u),k:0});jx({jfx:'km_puff',ui:km_I(u),x:u.x,y:u.y,n:5,t:.45,m:.45});
@@ -90,8 +100,11 @@ Object.assign(NAT,{
   S('wind',u);km_S('heavy',u);anim(u,'km_pray',.9);jx({jfx:'km_puff',ui:km_I(u),x:u.x,y:u.y,n:Math.max(4,n),t:.5,m:.5});
   aux.push({type:'km_sea',x:p.x,y:p.y,r:R,t:D,m:D,team:u.team,owner:u,danger:1,n,k:0});
   u.km_sw=D;u.slowImm=Math.max(u.slowImm||0,D);u.slow=0;u.root=0;u.rootV=null;aux.push({type:'km_wings',x:u.x,y:u.y,r:1.6,t:D,m:D,team:u.team,owner:u,ui:km_I(u),k:0,big:1});jx({jfx:'km_gust',x:u.x,y:u.y,r:120,t:.5,m:.5});
-  zone(u,p.x,p.y,R,40+2*n,D,{kb:220,stun:.4},KMC.b);lastZ().deto='km_sea';
-  later(u,D,()=>{VFX='km_paper';for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<70+e.r)hit(e,u,12,{unblockable:1});VFX=null;km_S('boom',u);if(near(p.x,p.y))shake=Math.max(shake,.5)})}),
+  zone(u,p.x,p.y,R,40+2*n,D,{kb:220,stun:.4},KMC.b);lastZ().deto='km_sea';fxCharge(u,KMC.y,{t:.8,n:12,r:60});fxGlyph(p.x,p.y,KMC.b,{u,r:R*.6,t:D,al:.45});
+  later(u,D,()=>{VFX='km_paper';for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<70+e.r){hit(e,u,12,{unblockable:1});fxHitStop(u,e,40,1)}VFX=null;km_S('boom',u);
+   // embrasement : ondes aux rayons EXACTS (170 la mer, 70 le cœur), sol brûlé, colonne de feu au centre, nuée de feuilles enflammées, secousse (rang S)
+   fxRing(p.x,p.y,{u,r0:40,r1:R,col:KMC.y,c2:'#fff6d8',w:9,t:.55});fxRing(p.x,p.y,{u,r0:10,r1:70,col:'#ffffff',w:6,t:.35});fxDecal(p.x,p.y,'scorch',{u,r:R*.9,t:4.5});fxPillar(p.x,p.y,KMC.y,{u,h:220,w:30,t:.55,al:.35});
+   fxSmoke(p.x,p.y,{u,col:'#4a3a36',n:9,r:R*.8,s:20,t:1.4,al:.24,rise:50});kmPapers(u,p.x,p.y,14,320,{c2:KMC.y,up:200});fxShake(.45,p.x,p.y)})}),
  // Ange de papier : ailes 6 s (voir le trait : vol, lames de papier)
  km_angel:ULT('Ange de papier',KMD.angel,{ai:SELF(450,.8)},(u)=>{const D=6;u.km_ang=D;u.km_angK=.5;u.haste=Math.max(u.haste,D);u.slowImm=Math.max(u.slowImm,D);u.slow=0;u.root=0;
   S('wind',u);km_S('roar',u);anim(u,'km_pray',.8);aux.push({type:'km_wings',x:u.x,y:u.y,r:1.6,t:D,m:D,team:u.team,owner:u,ui:km_I(u),k:0,big:1});
@@ -111,7 +124,7 @@ AUXF.km_clone=x=>{if(x.done)return;const o=x.owner;let go=x.t<=0;
  if(!go)for(const p of projs){if(p.dead||p.grenade||!p.owner||p.owner.team===x.team)continue;if(Math.hypot(p.x-x.x,p.y-x.y)<x.r+p.r+6){p.life=0;if(p.rocket)p.boom=1;go=true;break}}
  if(!go)for(const e of units)if(!e.dead&&e.team!==x.team&&Math.hypot(e.x-x.x,e.y-x.y)<60+e.r){go=true;break}
  if(!go)return;x.done=1;x.t=Math.min(x.t,.02);if(!o)return;VFX='km_paper';aoe(o,x.x,x.y,80,12,{slow:1,unblockable:1,quiet:1},KMC.y);VFX=null;
- jx({jfx:'km_boom',x:x.x,y:x.y,r:80,t:.6,m:.6});km_S('boom',o)};
+ jx({jfx:'km_boom',x:x.x,y:x.y,r:80,t:.6,m:.6});km_S('boom',o);fxImpact(x.x,x.y,'bakuton',1.3,{u:o,r:80});kmPapers(o,x.x,x.y,8,240,{c2:KMC.y})};
 // mer de papiers : ralentit les ennemis dedans (l'explosion est une zone)
 AUXF.km_sea=x=>{for(const e of units){if(e.dead||e.team===x.team||e.unstop>0||e.slowImm>0)continue;if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)e.slow=Math.max(e.slow,.3)}};
 // ailes : suivent le ninja (dessin derrière lui) ; celles de l'ange tombent quand l'ange prend fin
@@ -128,7 +141,7 @@ TRAITS[16]={nom:'Danse du shikigami',desc:'Jusqu\'à 6 feuilles de papier tourne
     if(tg){const a=ang(u,tg);VFX='km_paper';for(const o of[-.22,.22])proj(u,a+o,{vfx:'km_paper',spd:720,r:6,dmg:4,life:.8,col:KMC.w,home:1,noClash:1,kind:'km_blade'});VFX=null;if(near(u.x,u.y))km_S('saber',u)}}}
   if((u.km_pp|0)<KM_MAX){u.km_ppT=(u.km_ppT||0)+dt*(u.km_ang>0||u.km_sw>0?2:1);if(u.km_ppT>=KM_REG){u.km_ppT=0;u.km_pp=(u.km_pp|0)+1}}else u.km_ppT=0},
  // un gros coup déchire une feuille, qui en absorbe une partie
- take(t,src,dmg,o){if(dmg>=KM_TEAR&&src&&src!==t&&src.team!==t.team&&(t.km_pp|0)>0&&!o.silent){t.km_pp--;dmg=Math.max(0,dmg-KM_ABS);jx({jfx:'km_tear',ui:km_I(t),x:t.x,y:t.y,a:Math.atan2(t.y-src.y,t.x-src.x),t:.5,m:.5})}return dmg},
+ take(t,src,dmg,o){if(dmg>=KM_TEAR&&src&&src!==t&&src.team!==t.team&&(t.km_pp|0)>0&&!o.silent){t.km_pp--;dmg=Math.max(0,dmg-KM_ABS);jx({jfx:'km_tear',ui:km_I(t),x:t.x,y:t.y,a:Math.atan2(t.y-src.y,t.x-src.x),t:.5,m:.5});kmPapers(t,t.x,t.y,3,140,{a:Math.atan2(t.y-src.y,t.x-src.x),arc:1.6,z:46})}return dmg},
  // feuilles qui tournent autour du ninja (en arrière : plus petites et pâles)
  draw(u,p,S,sk){const n=u.km_pp|0;if(!n||u.km_sc>0)return;const t=performance.now()/1000,cy=p.y-36*S*(sk||1);
   for(let i=0;i<n;i++){const b=t*1.5+i*Math.PI*2/n,c=Math.cos(b),s=Math.sin(b),y=cy+s*9*S+Math.sin(t*2.4+i*1.7)*4*S,fr=s<0?.75:1;
@@ -155,7 +168,7 @@ function km_star(R,rot){g.save();g.rotate(rot);g.strokeStyle=KMC.o;g.lineWidth=1
  for(let i=0;i<4;i++){const b=i*Math.PI/2;g.fillStyle=i%2?KMC.b:KMC.w;g.beginPath();g.moveTo(0,0);g.lineTo(Math.cos(b)*R*.35-Math.sin(b)*R*.35,Math.sin(b)*R*.35+Math.cos(b)*R*.35);g.lineTo(Math.cos(b)*R,Math.sin(b)*R);g.closePath();g.fill();g.stroke();
   g.fillStyle=i%2?KMC.l:KMC.s;g.beginPath();g.moveTo(0,0);g.lineTo(Math.cos(b)*R,Math.sin(b)*R);g.lineTo(Math.cos(b)*R*.35+Math.sin(b)*R*.35,Math.sin(b)*R*.35-Math.cos(b)*R*.35);g.closePath();g.fill();g.stroke()}
  g.fillStyle=KMC.o;g.beginPath();g.arc(0,0,R*.12,0,7);g.fill();g.restore()}
-PROJD.km_shuri=(p,R,ra,t)=>{g.save();g.rotate(ra);g.strokeStyle='rgba(200,214,244,.45)';g.lineWidth=3;g.beginPath();g.moveTo(-28,0);g.lineTo(-8,0);g.stroke();g.restore();g.scale(1,.8);km_star(R*1.5,t/28)};
+PROJD.km_shuri=(p,R,ra,t)=>{g.save();g.rotate(ra);fxTailL(36,14,KMC.l,.3*fxA(p));g.strokeStyle='rgba(200,214,244,.45)';g.lineWidth=3;g.beginPath();g.moveTo(-28,0);g.lineTo(-8,0);g.stroke();g.restore();g.scale(1,.8);km_star(R*1.5,t/28)};
 // lance de papier : losange long et plié, pointe bleue
 PROJD.km_spear=(p,R,ra,t)=>{g.rotate(ra);g.strokeStyle='rgba(255,255,255,.45)';g.lineWidth=1.5;g.beginPath();for(const y of[-4,0,4]){g.moveTo(-60,y);g.lineTo(-36-Math.abs(y)*2,y)}g.stroke();
  g.strokeStyle=KMC.o;g.lineWidth=1.3;g.lineJoin='round';g.fillStyle=KMC.w;g.beginPath();g.moveTo(26,0);g.lineTo(4,-5.5);g.lineTo(-34,-3);g.lineTo(-38,0);g.lineTo(-34,3);g.lineTo(4,5.5);g.closePath();g.fill();g.stroke();
@@ -208,7 +221,7 @@ JFXD.km_cocoon=(f,k,e,t,u,tg)=>{const c=tg&&!tg.dead?tg:f,q=P(c.x,c.y,0),s=q.s*(
  g.restore()};
 // explosion de papiers piégés : éclair, feuilles qui brûlent et s'envolent, fumée
 JFXD.km_boom=(f,k,e)=>{const q=P(f.x,f.y,10),R=f.r*q.s;g.save();g.globalCompositeOperation='lighter';
- const gr=g.createRadialGradient(q.x,q.y-R*.2,0,q.x,q.y-R*.2,R*(.5+e*.7));gr.addColorStop(0,rgba('#fff6d8',.95*k));gr.addColorStop(.45,rgba(KMC.y,.7*k));gr.addColorStop(1,'rgba(255,90,40,0)');g.fillStyle=gr;g.beginPath();g.ellipse(q.x,q.y-R*.2,R*(.5+e*.7),R*(.5+e*.7)*.8,0,0,7);g.fill();g.restore();
+ g.restore();fxGlowS(q.x,q.y-R*.2,R*(.6+e*.7),KMC.y,.8*k,R*(.6+e*.7)*.8);
  g.save();g.fillStyle=rgba('#c8c4c0',.4*k);for(let i=0;i<5;i++){const b=i*1.26,d=R*(.3+e*.6);g.beginPath();g.arc(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*.5-e*R*.6,R*(.18+e*.22),0,7);g.fill()}g.restore();
  for(let i=0;i<9;i++){const b=i*.698+f.x*.03,d=R*(.2+e*1.1),h=Math.sin(Math.min(1,e*1.4)*Math.PI)*R*(.6+(i%3)*.3);km_leaf(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*.6-h,q.s*.8,b+e*8,Math.cos(e*15+i),Math.min(1,k*1.6));
   if(k>.4){g.fillStyle=rgba(KMC.y,.8*k);g.beginPath();g.arc(q.x+Math.cos(b)*d+3*q.s,q.y+Math.sin(b)*d*.6-h-5*q.s,1.8*q.s,0,7);g.fill()}}};
@@ -218,7 +231,7 @@ JFXD.km_gust=(f,k,e)=>{g.save();g.lineCap='round';for(let j=0;j<2;j++){const r=f
 // mer : explosions en cascade du centre vers le bord
 JFXD.km_cascade=(f,k,e,t)=>{const N=16;g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#fff2d0',.7*k);g.lineWidth=6*k+1;gEll(f.x,f.y,f.r*(.2+e*1));g.stroke();
  for(let i=0;i<N;i++){const b=i*2.39996,dd=f.r*.95*Math.sqrt((i+.5)/N),l=(e-dd/f.r*.45)/.45;if(l<=0||l>=1)continue;const q=P(f.x+Math.cos(b)*dd,f.y+Math.sin(b)*dd,10),R=(14+l*30)*q.s,a=1-l;
-  const gr=g.createRadialGradient(q.x,q.y-R*.3,0,q.x,q.y-R*.3,R);gr.addColorStop(0,rgba('#ffffff',.95*a));gr.addColorStop(.4,rgba(KMC.y,.75*a));gr.addColorStop(1,'rgba(255,80,30,0)');g.fillStyle=gr;g.beginPath();g.arc(q.x,q.y-R*.3,R,0,7);g.fill()}g.restore();
+  fxGlowS(q.x,q.y-R*.3,R*1.1,KMC.y,.8*a)}g.restore();
  for(let i=0;i<N;i++){const b=i*2.39996,dd=f.r*.95*Math.sqrt((i+.5)/N),l=(e-dd/f.r*.45)/.55;if(l<=0||l>=1)continue;for(let j=0;j<2;j++){const c=b+j*2.6,d=dd+l*30,q=P(f.x+Math.cos(c)*d,f.y+Math.sin(c)*d,10+Math.sin(l*Math.PI)*(50+j*20));km_leaf(q.x,q.y,q.s*.75,c+l*7,Math.cos(l*14+i),1-l)}}};
 DETO.km_wrap=(x,y,r)=>{jx({jfx:'shock',x,y,r,t:.4,m:.4,col:KMC.l});sparks(x,y,KMC.w,10,'bone')};
 DETO.km_sea=(x,y,r)=>{jx({jfx:'km_cascade',x,y,r,t:1,m:1});sparks(x,y,KMC.y,16,'tag')};
@@ -240,7 +253,7 @@ AUXD.km_clone=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,f=Math.cos(x.a||0)>=0?1:-1,ho
  g.fillStyle=hot?KMC.y:'#f2ead2';g.fillRect(-3+w,-26,6,11);g.fillStyle=KMC.r;g.fillRect(-.8+w,-24,1.6,7);
  g.fillStyle=KMC.w;for(let i=0;i<4;i++){const b=t*4+i*1.57;g.save();g.translate(Math.cos(b)*18,-20+Math.sin(b*1.3)*14);g.rotate(b);g.fillRect(-2.5,-3.5,5,7);g.restore()}g.restore()};
 // mer de papiers : les papiers tombent puis couvrent le sol ; ils rougeoient juste avant l'explosion
-AUXD.km_sea=(x,k,t)=>{const N=64,e=1-x.t/x.m,hot=x.t<.45;g.save();g.fillStyle=rgba('#f2ead2',.14+.12*e);gEll(x.x,x.y,x.r);g.fill();g.strokeStyle=rgba(hot?KMC.y:KMC.b,.8);g.lineWidth=2.5;g.setLineDash([10,7]);g.lineDashOffset=-t*30;gEll(x.x,x.y,x.r);g.stroke();g.setLineDash([]);
+AUXD.km_sea=(x,k,t)=>{const N=Math.max(24,fxN(64,x)),e=1-x.t/x.m,hot=x.t<.45;fxTele(x.x,x.y,x.r,0,hot?KMC.y:KMC.b,x,0);g.save();g.fillStyle=rgba('#f2ead2',.14+.12*e);gEll(x.x,x.y,x.r);g.fill();g.strokeStyle=rgba(hot?KMC.y:KMC.b,.8);g.lineWidth=2.5;g.setLineDash([10,7]);g.lineDashOffset=-t*30;gEll(x.x,x.y,x.r);g.stroke();g.setLineDash([]);
  for(let i=0;i<N;i++){const s0=i/N*.75,l=(e-s0)/.25;if(l<=0)continue;const b=i*2.39996,d=x.r*.94*Math.sqrt((i+.5)/N),z=l<1?(1-l)*90:0,q=P(x.x+Math.cos(b)*d+(l<1?Math.sin(l*9+i)*10*(1-l):0),x.y+Math.sin(b)*d,z),s=q.s;
   if(l<1){km_leaf(q.x,q.y,s*.8,i+l*6,Math.cos(l*12+i),1);continue}
   g.save();g.translate(q.x,q.y);g.rotate(i*1.7);g.scale(1,K);g.fillStyle=hot&&Math.sin(t*36+i*1.3)>-.2?KMC.y:'#f2ead2';g.strokeStyle=KMC.o;g.lineWidth=.8;g.fillRect(-6*s,-3.5*s,12*s,7*s);g.strokeRect(-6*s,-3.5*s,12*s,7*s);g.fillStyle=KMC.r;g.fillRect(-4*s,-.8*s,8*s,1.6*s);g.restore()}

@@ -179,3 +179,82 @@ Tout contrôle doit être **lisible** (télégraphe, projectile visible, délai)
 - En ligne : l'hôte envoie `{t:'bal',p,n}` (avec le salon et au lancement) ; l'invité l'applique (`blRecv`) et retrouve son propre profil en quittant.
 - Simulateur : iframe `index.html?sim=1` en bac à sable (`sandbox`, autre processus chez Chrome : l'interface reste fluide ; iframe ordinaire en `file://`), ni rendu ni boucle de jeu, même tirage de kits et même duel que `bal21/sim.mjs` (`player.ctrl=null`, 1v1, 150 s au plus).
 - `BLPART` (nr_bal.js) : jutsu dont une partie des dégâts échappe au multiplicateur (signalés ⚠ dans l'onglet Jutsu). Un kit qui corrige ça (dégâts recalculés à partir de `p.dmg` d'origine) peut en être retiré.
+
+## VFX
+Boîte à outils commune (`nr_fx.js`, chargée avant les kits ; utilisable dans toute fonction, et au chargement pour les palettes `FXP` / `fxPal`). **Tout est visuel** : rien ne change le jeu.
+
+### Règles (demande du joueur)
+- **Ça doit claquer sans gêner** : chaque jutsu a son identité (anticipation, silhouette forte, traînée, impact, trace au sol qui s'efface, particules secondaires, lumière additive) et **se lit** : la forme dessinée = la hitbox (même rayon, même largeur), les télégraphes restent nets.
+- **Ne jamais cacher un ninja** : rien d'opaque sur un corps, grosses formes semi-transparentes (≤ 0,35 au-dessus des unités), lueurs blanches petites et brèves, durées courtes pour le fouillis.
+- **Aucun flash plein écran** (`fillRect(0,0,W,H)`, voile coloré, vignette qui clignote) : utiliser `fxFlare` / `fxLight` (lumière locale). Un `JFXD`/`AUXD` qui remplit encore tout l'écran d'une couleur unie est redessiné automatiquement en éclat local (garde-fou `fxNoFull`) : à corriger quand même dans le kit. `flashS` n'est plus dessiné.
+- **Secousse** : seulement les jutsu S (une fenêtre de 3 s s'ouvre au lancement d'un S près de la caméra, `fxSCast`) et les gros coups reçus par le joueur (≥ 9 % de ses PV, automatique). Ailleurs, `shake=` n'a plus d'effet. Pour une secousse voulue (impact d'un S) : `fxShake(.3,x,y)`. Aucune en « Faible ».
+- **Intensité** (`OPT.fxi`, option « Intensité des effets » : 0 Faible, 1 Normal, 2 Fort), **foule** (au-delà de 8 ninjas vivants, le décor baisse : 20c20 ≈ 0,56 → Normal ≈ Faible) et **camp** (effets ENNEMIS atténués en nombre et en opacité, alliés un peu) sont appliqués **au dessin, chez chaque joueur**. Les effets du joueur restent pleins.
+- **Télégraphes / zones de danger : jamais atténués** (utiliser `fxTele*`, ou `tele:1` sur un `jx`).
+- Budget : particules dessinées par image plafonnées (`fxNB`), anciennes particules du moteur coupées au-delà du plafond (`fxCull`), ≤ 36 traces au sol.
+
+### Échelles (à appeler AU DESSIN, dans `JFXD` / `AUXD` / `PROJD` / `STATD`)
+- `fxK(o)` : échelle du décor 0..1 (0,8 = Normal, 1c1, ton jutsu). `o` = le lanceur (unité), un indice d'unité, ou l'objet dessiné (`f` d'un jx, `x` d'un aux, projectile : il lit `oi`, `owner`, `ui`, `team`).
+- `fxA(o)` : opacité selon le camp (1 pour toi, ≈ 0,68 ennemi en Normal, ≈ 0,55 en Faible).
+- `fxN(n,o)` : nombre de particules (n = ce que tu veux en Normal pour TON jutsu ; au moins 1). `fxNB(n,o)` : idem + budget global de l'image (pour une boucle de particules dessinées).
+- `fxRel(o)` : 0 le mien, 1 allié, 2 ennemi, 3 inconnu. `fxAlpha(m,()=>{…})` : dessine un bloc avec une opacité imposée (tout `globalAlpha` du bloc est multiplié).
+- Les `jx(...)` reçoivent `oi` (lanceur) automatiquement pendant un jutsu, un objet `aux`, une zone, un projectile, une rafale `seqs`, un `later` ; un jfx d'ennemi est déjà dessiné à `fxA` (sauf `f.tele`, `f.danger`, nom contenant `warn|tele|alert|danger`, ou `FXTELE.add('xx_nom')`).
+```js
+JFXD.ka_cone=(f,k,e,t,u)=>{const n=fxNB(14,f);for(let i=0;i<n;i++){…}};      // nombre de flammes selon intensité/camp
+AUXD.do_rubble=(x,k)=>{fxTele(x.x,x.y,x.r,1-x.t/x.m,'#a07850',x);              // le danger : net
+ fxAlpha(fxA(x),()=>{/* décor (cailloux, poussière) */})};
+```
+
+### Effets analytiques (côté hôte, dans la mécanique : `f(u,a,td)`, `AUXF`, `later`, `onHit`…)
+Un seul objet `fx` par effet, synchronisé avec les invités, recalculé au dessin depuis une graine : coût réseau minime, chacun le voit à SA intensité. Tous prennent `o.u` (lanceur ; par défaut le lanceur courant), `o.t` (durée, s), `o.z` (hauteur).
+| appel | effet | options utiles |
+|---|---|---|
+| `fxBurst(x,y,col,o)` | étincelles / gouttes / pétales qui jaillissent | `n` (12), `sp` vitesse (260), `a`+`arc` (cône), `up`, `gr` gravité (110 ; négatif = monte), `w`, `len` traînée, `sh:'line'|'dot'|'petal'`, `c2` couleur chaude, `add:0` (pas additif : sang, encre) |
+| `fxSmoke(x,y,o)` | bouffées de fumée / poussière / vapeur | `col`, `n` (6), `r` étalement, `s` taille, `rise`, `al` (≤ 0,35), `dx`,`dy` dérive |
+| `fxDebris(x,y,o)` | éclats qui retombent et rebondissent | `col`, `c2`, `n`, `sp`, `s` taille |
+| `fxRing(x,y,o)` | onde de choc au sol (sous les ninjas) | `r0`, **`r1` = rayon réel du coup**, `col`, `c2`, `w`, `fill:1` |
+| `fxDecal(x,y,kind,o)` | trace au sol qui s'efface (sous les ninjas) | `kind` : `scorch crack puddle ice burn seal sand leaf` ; `r`, `t` (3-5 s), `col` (puddle, seal), `al` |
+| `fxArc(x,y,x2,y2,col,o)` / `fxArcs(x,y,r,col,o)` | arc électrique entre deux points / autour d'un point | `z`, `z2`, `w`, `n`, `j` (zigzag) |
+| `fxWind(x,y,a,o)` | filets de vent dans la direction `a` | `len`, `w` largeur, `n`, `spin:1` (tourbillon) |
+| `fxFlare(x,y,col,o)` | éclat de lumière LOCAL (impact) | `r` (28), `t` (0,2), `c2`, `star:0`, `al` |
+| `fxLight(x,y,r,col,o)` | lumière additive au sol | `t`, `a` (0,45) |
+| `fxPillar(x,y,col,o)` | colonne de lumière | `h`, `w`, `al` |
+| `fxEmbers(x,y,r,col,o)` | braises / bulles / spores qui montent d'une zone (en boucle pendant `t`) | `n`, `h`, `w`, `c2` |
+| `fxCharge(u,col,o)` | anticipation : particules aspirées vers les mains de `u` (le suit) | `t`, `n`, `r`, `hd` (distance de la main), `z` (34 mains, 52 bouche) |
+| `fxGlyph(x,y,col,o)` | cercle de sceau au sol | `r`, `ui` (suit l'unité d'indice ui) |
+Combinés :
+- `fxImpact(x,y,vfx,s,o)` : impact complet selon la famille de l'élément (éclat + lumière + onde + particules + trace au sol) ; `s` taille (1 ≈ 44 px), `o.r` rayon de l'onde (mets le rayon réel), `o.dec:0` sans trace, `o.ring:0` sans onde, `o.a` direction (vent).
+- `fxCast(u,vfx,durée,o)` : préparation (charge aux mains ; `o.mouth:1` pour un souffle Katon, `o.glyph:1` cercle au sol).
+- `fxDeto(x,y,r,vfx,u)` : décor d'explosion (déjà appelé par le moteur pour les zones et projectiles qui explosent).
+- `fxHitStop(src,cible,dégâts,gros)` : gros coup (≥ 16 ou 7 % des PV, ou `gros`) → gel visuel des deux ninjas (`u.fxHS`, secondes, lu par l'animation) ; une vraie pause de 35-75 ms seulement hors ligne et si le joueur local donne/reçoit le coup (jamais en ligne : la simulation de l'hôte n'est jamais arrêtée).
+- `fxShake(a,x,y)` : secousse (voir règles).
+```js
+// Katon : Grande boule de feu — préparation, tir, impact
+ka_ball:SP('Katon : …','…',6,{ai:RG(520,.7)},(u,a,td)=>{fxCast(u,'katon',.35,{mouth:1});
+  fireP(u,a,{r:14,onHit:(p,e)=>{fxImpact(p.x,p.y,'katon',1.3,{u,r:60});fxHitStop(u,e,p.dmg)}})}),
+// Doton : pics — l'onde = le rayon exact du coup
+later(u,.5,()=>{aoe(u,x,y,110,26,{});fxRing(x,y,{u,r0:20,r1:110,col:'#a07850',w:7});fxDebris(x,y,{u,n:10});fxDecal(x,y,'crack',{u,r:100,t:4})},{x,y,r:110}),
+// Raiton : arc vers chaque cible touchée
+for(const e of hit)fxArc(u.x,u.y,e.x,e.y,'#bfe6ff',{u,z:34,t:.2});
+```
+
+### Dessin (dans `PROJD`, `JFXD`, `AUXD`, `STATD` : contexte `g`)
+- `fxGlow(x,y,z,r,col,a)` (monde), `fxGlowS(sx,sy,rx,col,a,ry)` (écran) : lueur additive à cœur blanc, **sprite pré-rendu** (bien moins cher qu'un `createRadialGradient` par image). `fxGlowG(x,y,r,col,a)` : tache de lumière au sol. `fxSoftS(sx,sy,rx,col,a,ry)` : tache douce non additive (fumée, ombre, brûlure). `fxSpr(col,kind)` : le sprite 64 px (0 linéaire, 1 lueur, 2 doux).
+- `fxTailL(len,w,col,a)` : traînée effilée dans le repère courant (après `g.rotate(ra)` dans un `PROJD` : de 0 vers −len). `fxTrailW(x,y,z,vx,vy,len,w,col,a)` : traînée d'un objet du monde d'après sa vitesse. `fxRibbon(obj,x,y,z,col,w,n,a)` : ruban d'historique (dash, arme), garde ses points sur `obj`.
+- Projectiles : traînée lumineuse automatique pour les éléments lumineux (`fire wind water lightning chidori rasengan jyuken heal chakra genjutsu…`) ; `p.tail=1` / `p.tail=0` pour forcer, `FXNOTAIL.ka_dragon=1` pour un `PROJD` qui a la sienne.
+- `fxBoltS(x0,y0,x1,y1,col,w,graine,zigzag,segments)` : éclair à l'écran (lueur + cœur blanc). Graine `f.sd+Math.floor(performance.now()/55)` = crépite sans clignoter.
+- **Télégraphes** (jamais atténués, forme = hitbox, `k` progression 0→1, `o` lanceur : un ennemi ajoute un liseré rouge pointillé, le dernier quart pulse) : `fxTele(x,y,r,k,col,o)` (cercle), `fxTeleLine(x,y,a,len,w,k,col,o)` (rectangle depuis x,y), `fxTeleCone(x,y,a,R,arc,k,col,o)` (secteur, arc = ouverture totale).
+- Ondes et traces au sol passent **sous** les ninjas et sous les télégraphes ; les autres effets FXK passent avec les particules (au-dessus) : garder leur opacité modérée.
+
+### Palettes par nature (`fxPal(vfx)` → `{a principale, b claire, c sombre, h cœur chaud, sm fumée, e famille d'impact}`)
+`FXP` : `katon suiton futon raiton doton genjutsu iryo fuin chakra rasengan kage mushi hone suna mokuton hyoton yoton futton jiton bakuton shakuton ranton shoton jinton kiminari sakin kurama sennin metal taijutsu chi`. Les clés `vfx` du catalogue y renvoient (`fire`→katon, `yo_lava`→yoton, `sj_wood`→mokuton, `ci_blood`→chi…) ; une clé de kit inconnue prend les couleurs de `VP[vfx]`. Une nouvelle palette : `FXP.xx_moi={a:'#…',b:'#…',c:'#…',h:'#fff',sm:'#…',e:'fire'}` (familles `e` : `fire water wind lightning earth sand ice steam genjutsu heal seal dark blood chakra metal`).
+
+### Outils VFX des kekkei genkai et des clans c23-c27 (`kits/kg_common.js`)
+`gkDim(o,fn)` décor atténué si `o` est ennemi · `gkImp(u,x,y,v,r,o)` impact complet à éclat plafonné (ne délave pas la cible) · `gkEdge(x,y,r,col,a,o)` / `gkEdgeL` bord net d'une zone durable (liseré rouge si ennemie, jamais atténué) · `gkTrail` sillage de dash · `gkN(n,o)` nombre de particules selon le budget · `GKPOOLC[kind]` couleur de bord d'une nappe. Poses : `gk_lob` (lancer par-dessus l'épaule), `gk_slam` (deux poings au sol), `gk_sweep` (balayage du bras).
+
+### Éclair du coup reçu (moteur, `hitFl(u)` dans `nr_char.js`)
+Le blanc d'un ninja touché (`u.flash`) dure au plus 130 ms par rafale de coups, et en 3D il reste modéré (émissif 0,55) : un broyage ou un dôme qui frappe à chaque image ne blanchit plus la cible en continu. Ne pas remettre `flash` à la main pour « faire briller » une cible : utiliser `fxFlare` / `fxLight`.
+
+### Restes (passe de fondations, mis à jour à l'intégration)
+- Faits : `bt_flash` (Bakuton) est une lueur au sol locale ; le `flashS` de `fam_fuin.js` est retiré ; l'éclair lointain de la carte d'orage (`nr_maps.js`) n'éclaire plus que le haut du ciel et disparaît en Faible.
+- Gardés (gameplay) : `hyuga.js` `JFXD.hy_view` (vignette du Byakugan) ; `suiton.js` brume du Kirigakure autour du joueur.
+- Beaucoup de kits mettent `shake=…` sur des jutsu non S : sans effet maintenant (normal), ne pas compenser.

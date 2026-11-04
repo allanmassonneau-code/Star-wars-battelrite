@@ -44,6 +44,9 @@ function hs_hit(e,u,d,o,v){const V=VFX;VFX=v||'water';const r=hit(e,u,d,o||{});V
 function hs_pilot(u,f){const p=projs[projs.length-1];aux.push({type:'hs_pc',x:p.x,y:p.y,r:0,t:p.life+1,m:p.life+1,team:u.team,owner:u,p,f});return p}
 AUXF.hs_pc=(x,dt)=>{const p=x.p;if(!p||x.done){x.t=0;return}x.x=p.x;x.y=p.y;if(p.dead||!projs.includes(p)){x.done=1;x.t=0;x.f(x,p,dt,1)}else{x.t=Math.max(x.t,.5);x.f(x,p,dt,0)}};
 AUXD.hs_pc=()=>{};
+// ---- VFX (boîte à outils nr_fx.js) : gerbes d'eau, écume, flaques, éclats bleus (décor atténué selon l'intensité / le camp)
+function hsSplash(u,x,y,r,s){fxBurst(x,y,'#bfe8ff',{u,n:10*s,sp:200*s,c2:'#ffffff',up:160,gr:420,w:2.2,len:.06,z:10});fxRing(x,y,{u,r0:r*.2,r1:r,col:'#9fe0ff',c2:'#ffffff',w:4*s,t:.35});fxDecal(x,y,'puddle',{u,r:r*.8,t:3})}
+function hsBite(u,e,s){if(!e||!near(e.x,e.y))return;fxFlare(e.x,e.y,HSC.ck,{u,z:34,r:20*s,t:.18,c2:'#ffffff'});fxBurst(e.x,e.y,'#bfe8ff',{u,n:7*s,sp:200,c2:'#ffffff',up:120,gr:380,w:2,len:.06,z:30});fxBurst(e.x,e.y,'#a8304a',{u,n:4*s,sp:140,up:100,gr:420,w:2,len:.05,add:0,z:30})}
 const hs_wrap=a=>{while(a>Math.PI)a-=2*Math.PI;while(a<-Math.PI)a+=2*Math.PI;return a};
 // requin chercheur : vire (3 rad/s) vers un ennemi devant lui ; une proie (chakra < 25) est traquée partout (4,5 rad/s), l'œil rougit
 function hs_hunt(o,p,dt){const h=Math.atan2(p.vy,p.vx);let tg=null,bd=1e9,pr=0;
@@ -56,48 +59,50 @@ Object.assign(NAT,{
  hs_style:SP('Samehada','',.5,{hero:'dooku',melee:1,ai:{max:108,p:1}},(u,a)=>{const c=stC(u),T=[0,[104,1.7,12,.5],[104,1.7,12,.5],[110,2.6,12,.56],[100,1.1,13,.52],[114,2.1,15,.72]][c];
   if(c===5)stLunge(u,a,40);
   stMelee(u,a,T[0],T[1],T[2],c===4?{kb:110}:{},[0,{d:-1,tl:.8,z:40,th:17,c:HSC.lt,c2:HSC.dk,blade:1},{d:1,tl:-.8,z:36,th:17,c:HSC.lt,c2:HSC.dk,blade:1},{d:-1,z:24,th:19,c:HSC.lt,c2:HSC.dk,blade:1,rr:.8},{jfx:'st_thrust',z:30,c:HSC.lt},{d:-1,tl:1.3,z:34,th:21,c:'#ffffff',c2:HSC.md,blade:1,rr:.75}][c],e=>{
-   const n=hs_drain(u,e,c===5?4:1);if(c===5){jx({jfx:'hs_chomp',ti:hs_i(e),x:e.x,y:e.y,a,t:.42,m:.42});hs_S('bone',e)}else if(n&&near(e.x,e.y))sparks(e.x,e.y,HSC.ck,4)});
+   const n=hs_drain(u,e,c===5?4:1);if(c===5){jx({jfx:'hs_chomp',ti:hs_i(e),x:e.x,y:e.y,a,t:.42,m:.42});hs_S('bone',e);hsBite(u,e,1)}else if(n&&near(e.x,e.y))sparks(e.x,e.y,HSC.ck,4)});
   stCd(u,T[3]);anim(u,'hs_sw'+c,c===5?.4:.32)}),
  // ---------- Samehada : Morsure (D) : élan court, le sabre s'abat et arrache le chakra ----------
  hs_bite:SP('Samehada : Morsure',HS_D.bite,6,{hero:'dooku',ai:RG(125,.75),line:{len:130,w:80}},(u,a)=>{hs_S('saber',u);hs_S('bone',u);anim(u,'hs_chop',.42);stLunge(u,a,46);
   jx({jfx:'st_arc',ui:hs_i(u),x:u.x,y:u.y,a,R:128,w:1.8,t:.3,m:.3,d:-1,tl:1.2,z:40,th:22,c:HSC.lt,c2:HSC.dk,blade:1});
-  for(const e of stIn(u,a,128,1.8))if(hs_hit(e,u,12,{melee:1},'steel')){hs_drain(u,e,3);jx({jfx:'hs_chomp',ti:hs_i(e),x:e.x,y:e.y,a,t:.42,m:.42})}}),
+  for(const e of stIn(u,a,128,1.8))if(hs_hit(e,u,12,{melee:1},'steel')){hs_drain(u,e,3);jx({jfx:'hs_chomp',ti:hs_i(e),x:e.x,y:e.y,a,t:.42,m:.42});hsBite(u,e,1)}
+  later(u,.12,()=>{const c=fwd(u,a,70);fxDebris(c.x,c.y,{u,n:5,sp:120,col:'#8a6a48',c2:'#5a4028',s:3});fxDecal(c.x,c.y,'crack',{u,r:40,t:3});fxSmoke(c.x,c.y,{u,col:'#9a8268',n:3,r:24,s:11,al:.2})})}),
  // ---------- Requins voraces (C) : 3 requins chercheurs en éventail ----------
- hs_sharks:SP('Suiton : Requins voraces',HS_D.sharks,8,{ai:RG(470,.65)},(u,a)=>{S('water',u);anim(u,'hs_summon',.45);jx({jfx:'hs_pool',x:u.x+Math.cos(a)*34,y:u.y+Math.sin(a)*34,r:40,t:.5,m:.5});
-  for(const k of[-1,0,1]){proj(u,a+k*.34,{spd:560,r:9,dmg:7,life:.95,col:HSC.md,kind:'hs_shark',onHit:(p,t)=>{hs_drain(p.owner,t,2);jx({jfx:'hs_chomp',ti:hs_i(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),s:.6,t:.32,m:.32})}});
+ hs_sharks:SP('Suiton : Requins voraces',HS_D.sharks,8,{ai:RG(470,.65)},(u,a)=>{S('water',u);anim(u,'hs_summon',.45);jx({jfx:'hs_pool',x:u.x+Math.cos(a)*34,y:u.y+Math.sin(a)*34,r:40,t:.5,m:.5});hsSplash(u,u.x+Math.cos(a)*34,u.y+Math.sin(a)*34,40,.8);
+  for(const k of[-1,0,1]){proj(u,a+k*.34,{spd:560,r:9,dmg:7,life:.95,col:HSC.md,kind:'hs_shark',onHit:(p,t)=>{hs_drain(p.owner,t,2);jx({jfx:'hs_chomp',ti:hs_i(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),s:.6,t:.32,m:.32});hsBite(p.owner,t,.7)}});
    hs_pilot(u,(x,p,dt,end)=>{if(!end)hs_hunt(p.owner,p,dt);else if(near(p.x,p.y)&&p.life<=0)jx({jfx:'hs_splash',x:p.x,y:p.y,r:26,t:.4,m:.4})})}}),
  // ---------- Prison aqueuse (B) : bulle lente ; la cible est noyée 0,9 s pendant que Samehada boit son chakra ----------
  hs_prison:SP('Suiton : Prison aqueuse',HS_D.prison,12,{ai:RG(380,.6),line:{len:400,w:28}},(u,a)=>{S('water',u);anim(u,'hs_grasp',.5);
   proj(u,a,{spd:620,r:13,dmg:8,life:.62,col:'#5ac8e8',kind:'hs_bubble',stun:.9,onHit:(p,t)=>{if(t.dead)return;const o=p.owner,D=t.stun>0?Math.min(.9,t.stun):0;
-   if(!D){jx({jfx:'hs_splash',x:t.x,y:t.y,r:40,t:.45,m:.45});return} // insensible au contrôle : la bulle éclate tout de suite
+   fxImpact(t.x,t.y,'suiton',.9,{u:o,r:40});if(!D){jx({jfx:'hs_splash',x:t.x,y:t.y,r:40,t:.45,m:.45});return} // insensible au contrôle : la bulle éclate tout de suite
    say(t,'PRISON AQUEUSE','#9fe0ff');aux.push({type:'hs_prison',x:t.x,y:t.y,r:34,t:D,m:D,team:o.team,owner:o,vfx:'water',k:.2,ti:hs_i(t),tg:t,n:0});jx({jfx:'hs_bubbleT',ti:hs_i(t),x:t.x,y:t.y,t:D,m:D})}})}),
  // ---------- Écailles de Samehada (C) : armure d'écailles (gérée par le trait) ----------
  hs_scales:SP('Écailles de Samehada',HS_D.scales,12,{ai:DEF},(u)=>{hs_S('saber',u);hs_S('deflect',u);u.hs_scl=3;anim(u,'hs_guard',.55);jx({jfx:'hs_scaleUp',ui:hs_i(u),x:u.x,y:u.y,t:.5,m:.5});sparks(u.x,u.y,HSC.lt,10)}),
  // ---------- Fusion avec Samehada (A) : forme d'homme-requin (gérée par le trait) ----------
  hs_fuse:SP('Fusion avec Samehada',HS_D.fuse,20,{ai:SELF(200,.75)},(u)=>{S('water',u);hs_S('roar',u);hs_S('heavy',u);u.hs_fus=6;u.slowImm=Math.max(u.slowImm||0,6);u.slow=0;anim(u,'hs_fuse',.8);
   for(const x of aux)if(x.type==='hs_sea'&&x.owner===u)x.t=Math.min(x.t,.25);aux.push({type:'hs_sea',x:u.x,y:u.y,r:150,t:6,m:6,team:u.team,owner:u,ui:hs_i(u),vfx:'water',k:.6,n:0,iv:.75,fu:1});jx({jfx:'hs_rise',x:u.x,y:u.y,r:150,t:.9,m:.9});jx({jfx:'hs_scaleUp',ui:hs_i(u),x:u.x,y:u.y,t:.5,m:.5});
-  jx({jfx:'hs_fuseFx',ui:hs_i(u),x:u.x,y:u.y,t:.8,m:.8});if(near(u.x,u.y))shake=Math.max(shake,.15);say(u,'FUSION !','#9fe0ff')}),
+  jx({jfx:'hs_fuseFx',ui:hs_i(u),x:u.x,y:u.y,t:.8,m:.8});if(near(u.x,u.y))shake=Math.max(shake,.15);say(u,'FUSION !','#9fe0ff');
+  hsSplash(u,u.x,u.y,150,2);fxBurst(u.x,u.y,'#e8f6ff',{u,n:26,sp:300,c2:'#ffffff',up:260,gr:420,w:2.6,len:.07,z:20});fxDecal(u.x,u.y,'puddle',{u,r:140,t:6,col:'#1e4a6e'});fxRing(u.x,u.y,{u,r0:150,r1:30,col:HSC.ck,w:5,t:.5,al:.6});fxShake(.3,u.x,u.y)}),
  // ---------- Samehada déchaînée (A) : le sabre tournoie, traverse et revient ----------
  hs_throw:SP('Samehada déchaînée',HS_D.throw,12,{hero:'dooku',ai:RG(400,.6),line:{len:400,w:40}},(u,a)=>{hs_S('saber',u);hs_S('roar',u);anim(u,'hs_fling',.45);
   proj(u,a,{spd:640,r:18,dmg:16,life:1.7,ret:380,pierce:1,col:HSC.same,kind:'hs_same',onHit:(p,t)=>{hs_drain(p.owner,t,5);if(near(t.x,t.y)){sparks(t.x,t.y,HSC.lt,6);hs_S('bone',t)}}})}),
  // ---------- Nage du requin (C, déplacement) : plongée, aileron qui file, puis on jaillit en mordant ----------
  hs_swim:SP('Nage du requin',HS_D.swim,7,{ai:{mode:'gap',min:150,max:260,p:.55}},(u,a,td)=>{const d=clamp(td||260,110,260),D=.42;S('water',u);u.phase=Math.max(u.phase||0,.3);u.root=0;u.rootV=null;
-  anim(u,'hs_dive',D+.12);jx({jfx:'hs_splash',x:u.x,y:u.y,r:34,t:.4,m:.4});jx({jfx:'hs_fin',ui:hs_i(u),x:u.x,y:u.y,a,t:D+.05,m:D+.05});
-  dash(u,a,d,D,{end:()=>{if(u.dead)return;jx({jfx:'hs_burst',x:u.x,y:u.y,r:80,a,t:.6,m:.6});S('water',u);
+  anim(u,'hs_dive',D+.12);jx({jfx:'hs_splash',x:u.x,y:u.y,r:34,t:.4,m:.4});hsSplash(u,u.x,u.y,34,.8);jx({jfx:'hs_fin',ui:hs_i(u),x:u.x,y:u.y,a,t:D+.05,m:D+.05});
+  dash(u,a,d,D,{end:()=>{if(u.dead)return;jx({jfx:'hs_burst',x:u.x,y:u.y,r:80,a,t:.6,m:.6});S('water',u);hsSplash(u,u.x,u.y,80,1.2);
    for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<80+e.r&&hs_hit(e,u,0,{slow:.8,fx:u.x,fy:u.y,silent:1}))hs_drain(u,e,2)}})}),
  // ---------- Bakusui (B, déplacement) : on file sur une vague, le reflux repousse derrière soi ----------
  hs_wave:SP('Suiton : Bakusui',HS_D.wave,13,{ai:ESC},(u,a,td)=>{const d=clamp(td||230,120,240),b=a+Math.PI;S('water',u);hs_S('wind',u);anim(u,'hs_surf',.48);
   proj(u,b,{spd:640,r:36,dmg:8,life:.42,col:'#5ac8e8',kind:'hs_wave',pierce:1,noClash:1,o:{kb:240}});
   jx({jfx:'hs_ride',ui:hs_i(u),x:u.x,y:u.y,a,t:.46,m:.46});dash(u,a,d,.4,{jump:16,end:()=>{if(!u.dead)jx({jfx:'hs_splash',x:u.x,y:u.y,r:46,t:.45,m:.45})}})}),
  // ---------- Daikôdan (A, ultime) : le requin géant avale la cible, puis la recrache ----------
- hs_dai:ULT('Suiton : Daikôdan',HS_D.dai,{line:{len:520,w:56},ai:{max:470,p:.8}},(u,a)=>{S('water',u);hs_S('roar',u);anim(u,'hs_summon',.6);jx({jfx:'hs_pool',x:u.x+Math.cos(a)*40,y:u.y+Math.sin(a)*40,r:62,t:.6,m:.6});
+ hs_dai:ULT('Suiton : Daikôdan',HS_D.dai,{line:{len:520,w:56},ai:{max:470,p:.8}},(u,a)=>{S('water',u);hs_S('roar',u);anim(u,'hs_summon',.6);jx({jfx:'hs_pool',x:u.x+Math.cos(a)*40,y:u.y+Math.sin(a)*40,r:62,t:.6,m:.6});hsSplash(u,u.x+Math.cos(a)*40,u.y+Math.sin(a)*40,62,1.4);fxCast(u,'suiton',.3,{n:10});
   proj(u,a,{spd:500,r:26,dmg:10,life:1.05,col:HSC.md,kind:'hs_big',noClash:1,stun:.8,onHit:(p,t)=>{if(t.dead)return;const o=p.owner;
    aux.push({type:'hs_maw',x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),r:40,t:.8,m:.8,team:o.team,owner:o,vfx:'water',k:.2,ti:hs_i(t),tg:t,n:0});
-   jx({jfx:'hs_jaws',ti:hs_i(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.8,m:.8});if(near(t.x,t.y)){hs_S('bone',t);shake=Math.max(shake,.2)}}});
+   jx({jfx:'hs_jaws',ti:hs_i(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.8,m:.8});if(near(t.x,t.y)){hs_S('bone',t);shake=Math.max(shake,.2)}hsBite(o,t,1.4);hsSplash(o,t.x,t.y,60,1.3);fxHitStop(o,t,30,1)}});
   hs_pilot(u,(x,p,dt,end)=>{if(end&&p.life<=0&&near(p.x,p.y))jx({jfx:'hs_splash',x:p.x,y:p.y,r:70,t:.6,m:.6})})}),
  // ---------- Mer des requins (S, ultime) : la mer suit le lanceur, les requins mordent les ennemis dedans ----------
  hs_sea:ULT('Suiton : Mer des requins',HS_D.sea,{tele:{self:1,r:210},ai:SELF(180,.8)},(u)=>{S('water',u);hs_S('heavy',u);hs_S('roar',u);anim(u,'hs_sea',.9);
-  aux.push({type:'hs_sea',x:u.x,y:u.y,r:210,t:5,m:5,team:u.team,owner:u,ui:hs_i(u),vfx:'water',k:.45,n:0});jx({jfx:'hs_rise',x:u.x,y:u.y,r:210,t:.9,m:.9});if(near(u.x,u.y))shake=Math.max(shake,.3)}),
+  aux.push({type:'hs_sea',x:u.x,y:u.y,r:210,t:5,m:5,team:u.team,owner:u,ui:hs_i(u),vfx:'water',k:.45,n:0});jx({jfx:'hs_rise',x:u.x,y:u.y,r:210,t:.9,m:.9});if(near(u.x,u.y))shake=Math.max(shake,.3);hsSplash(u,u.x,u.y,210,2)}),
 });
 Object.assign(NATHERO,{hs:'kylo'});
 
@@ -106,14 +111,14 @@ Object.assign(NATHERO,{hs:'kylo'});
 // prison : la bulle suit la cible ; toutes les 0,3 s Samehada boit 3 de chakra ; à la fin la bulle éclate
 AUXF.hs_prison=(x,dt)=>{const e=x.tg,o=x.owner;if(x.done)return;if(!e||e.dead){x.t=0;x.done=1;return}x.x=e.x;x.y=e.y;
  if(x.k<=0&&x.n<3){x.k+=.3;x.n++;x.dr=(x.dr||0)+hs_drain(o,e,3,1)}
- if(x.t<=0){x.done=1;if(o)hs_hit(e,o,6,{});if(x.dr>=1)say(e,'-'+Math.round(x.dr)+' CHAKRA','#7fd8ff');jx({jfx:'hs_splash',x:e.x,y:e.y,r:48,t:.5,m:.5});if(near(e.x,e.y))S('water',e)}};
+ if(x.t<=0){x.done=1;if(o)hs_hit(e,o,6,{});if(x.dr>=1)say(e,'-'+Math.round(x.dr)+' CHAKRA','#7fd8ff');jx({jfx:'hs_splash',x:e.x,y:e.y,r:48,t:.5,m:.5});hsSplash(o,e.x,e.y,48,1);if(near(e.x,e.y))S('water',e)}};
 AUXD.hs_prison=()=>{};
 // Daikôdan : la cible est dans la gueule (étourdie) ; Samehada boit 4 de chakra 3 fois ; puis le requin la recrache
 AUXF.hs_maw=(x,dt)=>{const e=x.tg,o=x.owner;if(x.done)return;if(!e||e.dead){x.t=0;x.done=1;return}x.x=e.x;x.y=e.y;e.kx=e.ky=0;
  if(x.k<=0&&x.n<3){x.k+=.22;x.n++;x.dr=(x.dr||0)+hs_drain(o,e,4,1)}
  if(x.t<=0){x.done=1;if(x.dr>=1)say(e,'-'+Math.round(x.dr)+' CHAKRA','#7fd8ff');const V=VFX;VFX='water';hit(e,o,34,{kb:260,fx:e.x-Math.cos(x.a)*30,fy:e.y-Math.sin(x.a)*30,unblockable:1});
   for(const f of enemies(o))if(f!==e&&Math.hypot(f.x-e.x,f.y-e.y)<90+f.r)hit(f,o,12,{fx:e.x,fy:e.y,kb:120});VFX=V;
-  jx({jfx:'hs_spit',x:e.x,y:e.y,a:x.a,r:90,t:.7,m:.7});if(near(e.x,e.y)){S('water',e);hs_S('boom',e);shake=Math.max(shake,.3)}}};
+  jx({jfx:'hs_spit',x:e.x,y:e.y,a:x.a,r:90,t:.7,m:.7});fxImpact(e.x,e.y,'suiton',2,{u:o,r:90});fxBurst(e.x,e.y,'#e8f6ff',{u:o,n:16,sp:300,a:x.a,arc:1.8,c2:'#ffffff',up:200,gr:420,w:2.4,len:.07,z:30});fxHitStop(o,e,34,1);if(near(e.x,e.y)){S('water',e);hs_S('boom',e);shake=Math.max(shake,.3)}}};
 AUXD.hs_maw=()=>{};
 // mer des requins : suit le lanceur ; trempe et attire les ennemis ; un requin mord toutes les 0,5 s (proie d'abord, sinon le plus proche du centre)
 AUXF.hs_sea=(x,dt)=>{const o=x.owner;if(!o||o.dead||(x.fu&&!(o.hs_fus>0)&&x.t>.25)){x.t=Math.min(x.t,.25);return}x.x=o.x;x.y=o.y;if(x.t<=0)return;o.slowImm=Math.max(o.slowImm||0,.2);
@@ -121,7 +126,7 @@ AUXF.hs_sea=(x,dt)=>{const o=x.owner;if(!o||o.dead||(x.fu&&!(o.hs_fus>0)&&x.t>.2
   if(d>12&&e.unstop<=0&&!e.dash){const v=Math.min(d-12,40*dt);e.x+=dx/d*v;e.y+=dy/d*v}
   const sc=d-((e.energy||0)<HS_PREY?1000:0);if(sc<bs&&!(e.stealth>0&&d>120)){bs=sc;tg=e}}
  if(x.k<=0){x.k+=x.iv||.5;if(tg){const a=Math.atan2(tg.y-x.y,tg.x-x.x);jx({jfx:'hs_leap',ti:hs_i(tg),x:tg.x,y:tg.y,a,t:.42,m:.42});
-  later(o,.18,()=>{if(tg.dead||o.dead||Math.hypot(tg.x-x.x,tg.y-x.y)>x.r+tg.r+30)return;if(hs_hit(tg,o,7,{}))hs_drain(o,tg,3)})}}};
+  later(o,.18,()=>{if(tg.dead||o.dead||Math.hypot(tg.x-x.x,tg.y-x.y)>x.r+tg.r+30)return;if(hs_hit(tg,o,7,{})){hs_drain(o,tg,3);hsBite(o,tg,.8)}})}}};
 
 // ---- trait de clan : Samehada (le chakra volé soigne ; un ennemi à sec est une proie)
 // écailles et fusion : réduction de dégâts ; écailles : un coup au corps à corps blesse l'attaquant et lui arrache du chakra (une fois par 0,5 s et par attaquant)
@@ -254,7 +259,7 @@ JFXD.hs_scaleUp=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x,u.y,0),s=q.s;fo
 function hs_scale(x,y,z,a,al){g.save();g.translate(x,y);g.rotate(a);g.globalAlpha=al;g.fillStyle=HSC.lt;g.strokeStyle=HSC.ol;g.lineWidth=1;g.beginPath();g.moveTo(-z,z*.4);g.quadraticCurveTo(0,-z*1.4,z,z*.4);g.quadraticCurveTo(0,z*.1,-z,z*.4);g.fill();g.stroke();g.restore()}
 // fusion : colonne d'eau qui enveloppe le corps et retombe
 JFXD.hs_fuseFx=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x,u.y,0),s=q.s,H=(e<.4?e/.4:1)*110*s,w=(30-e*8)*s;g.globalAlpha=Math.min(1,k*2.5);
- const gr=g.createLinearGradient(0,q.y-H,0,q.y);gr.addColorStop(0,'rgba(90,200,232,0)');gr.addColorStop(.5,'rgba(90,200,232,.45)');gr.addColorStop(1,'rgba(232,246,255,.7)');g.fillStyle=gr;g.beginPath();g.ellipse(q.x,q.y-H/2,w,H/2,0,0,7);g.fill();
+ const gr=g.createLinearGradient(0,q.y-H,0,q.y);gr.addColorStop(0,'rgba(90,200,232,0)');gr.addColorStop(.5,'rgba(90,200,232,.28)');gr.addColorStop(1,'rgba(232,246,255,.38)');g.fillStyle=gr;g.beginPath();g.ellipse(q.x,q.y-H/2,w,H/2,0,0,7);g.fill();
  g.strokeStyle=rgba(HSC.foam,.85);g.lineWidth=2.5*s;for(let i=0;i<3;i++){const y=q.y-((t*120+i*36)%110)*s;g.beginPath();g.ellipse(q.x,y,w*.9,w*.3,0,0,7);g.stroke()}g.globalAlpha=1;
  if(e>.5)JFXD.hs_splash({x:f.x,y:f.y,r:70},Math.min(1,(1-e)*2.5),(e-.5)*2,t)};
 // nage : aileron qui fend l'eau (suit le ninja), sillage d'écume
@@ -271,7 +276,7 @@ JFXD.hs_ride=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x,u.y,0),s=q.s,ra=Ma
 // Daikôdan : le requin géant tient la cible dans sa gueule
 JFXD.hs_jaws=(f,k,e,t,u,tg)=>{const o=tg&&!tg.dead?tg:f,q=P(o.x,o.y,0),s=q.s,rise=Math.min(1,e*f.m/.15);
  g.fillStyle=rgba('#2a6a9a',.5);g.beginPath();g.ellipse(q.x,q.y,58*s,20*s,0,0,7);g.fill();g.strokeStyle=rgba(HSC.foam,.85);g.lineWidth=3;g.beginPath();g.ellipse(q.x,q.y,(50+Math.sin(t*8)*4)*s,(17+Math.sin(t*8)*2)*s,0,0,7);g.stroke();
- g.save();g.translate(q.x,q.y-30*s*rise);g.scale(s*2.6,s*2.6);g.globalAlpha=.92;hs_sharkD(1,-Math.PI/2+(Math.cos(f.a)<0?-.35:.35),t*1000,.15,0,1);g.restore();g.globalAlpha=1;
+ g.save();g.translate(q.x,q.y-30*s*rise);g.scale(s*2.6,s*2.6);g.globalAlpha*=.68;hs_sharkD(1,-Math.PI/2+(Math.cos(f.a)<0?-.35:.35),t*1000,.15,0,1);g.restore();g.globalAlpha=1;
  g.fillStyle=rgba(HSC.ck,.8);for(let i=0;i<5;i++){const m=(t*1.6+i/5)%1;g.beginPath();g.arc(q.x+Math.sin(i*2.1)*20*s,q.y-(20+m*60)*s,2.2*s,0,7);g.fill()}};
 // recraché : la gueule s'ouvre, gerbe et onde
 JFXD.hs_spit=(f,k,e,t)=>{const q=P(f.x,f.y,0),s=q.s;JFXD.hs_splash(f,k,e,t);g.strokeStyle=rgba('#ffffff',.7*k);g.lineWidth=5*k;gEll(f.x,f.y,f.r*(.2+e));g.stroke();
@@ -286,12 +291,13 @@ JFXD.hs_leap=(f,k,e,t,u,tg)=>{const o=tg&&!tg.dead?tg:f,b=f.a+Math.PI,sx=o.x+Mat
  const p0=P(sx,sy,0);g.strokeStyle=rgba(HSC.foam,.8*k);g.lineWidth=2;g.beginPath();g.ellipse(p0.x,p0.y,(10+e*18)*p0.s,(4+e*6)*p0.s,0,0,7);g.stroke();
  if(e>.65)JFXD.hs_chomp({x:o.x,y:o.y,a:f.a,s:.8},Math.min(1,k*3),(e-.65)/.35,t,null,tg)};
 // mer des requins (au sol) : eau sombre, vagues, ailerons qui tournent
-AUXD.hs_sea=(x,k,t)=>{const q=P(x.x,x.y,0),R=x.r*q.s;g.fillStyle=rgba('#1e4a6e',.38*k);gEll(x.x,x.y,x.r);g.fill();g.fillStyle=rgba('#2a6a9a',.3*k);gEll(x.x,x.y,x.r*.7);g.fill();
+AUXD.hs_sea=(x,k,t)=>{fxAlpha(fxA(x),()=>hsSeaD(x,k,t));const q=P(x.x,x.y,0);g.save();g.strokeStyle=rgba(HSC.foam,.8*k);g.lineWidth=2.2*q.s;g.beginPath();g.ellipse(q.x,q.y,x.r*q.s,x.r*q.s*K,0,0,7);g.stroke();g.restore()};
+function hsSeaD(x,k,t){const q=P(x.x,x.y,0),R=x.r*q.s;g.fillStyle=rgba('#1e4a6e',.38*k);gEll(x.x,x.y,x.r);g.fill();g.fillStyle=rgba('#2a6a9a',.3*k);gEll(x.x,x.y,x.r*.7);g.fill();
  g.strokeStyle=rgba(HSC.foam,.75*k);g.lineWidth=3;gEll(x.x,x.y,x.r);g.stroke();g.strokeStyle=rgba('#9fe0ff',.45*k);g.lineWidth=1.6;for(let j=0;j<3;j++){const r=x.r*(.3+((t*.25+j/3)%1)*.65);gEll(x.x,x.y,r);g.stroke()}
  g.fillStyle=rgba(HSC.foam,.8*k);for(let i=0;i<14;i++){const a=i*.449+t*.6,p=P(x.x+Math.cos(a)*x.r,x.y+Math.sin(a)*x.r,2+Math.sin(t*4+i)*3);g.beginPath();g.ellipse(p.x,p.y,4*p.s,2*p.s,0,0,7);g.fill()}
  for(let i=0;i<3;i++){const a=t*(1.1+i*.15)*(i%2?-1:1)+i*2.1,r=x.r*(.45+i*.16),p=P(x.x+Math.cos(a)*r,x.y+Math.sin(a)*r,0),s=p.s,sd=(i%2?-1:1)*(Math.sin(a)>0?-1:1);
   g.fillStyle=rgba(HSC.foam,.6*k);g.beginPath();g.ellipse(p.x,p.y,16*s,5*s,0,0,7);g.fill();g.save();g.translate(p.x,p.y);g.scale(sd,1);g.globalAlpha=k;g.fillStyle=HSC.dk;g.strokeStyle=HSC.ol;g.lineWidth=1.2;
-  g.beginPath();g.moveTo(-9*s,0);g.quadraticCurveTo(-3*s,-8*s,5*s,-19*s);g.quadraticCurveTo(3*s,-9*s,9*s,0);g.closePath();g.fill();g.stroke();g.restore();g.globalAlpha=1}};
+  g.beginPath();g.moveTo(-9*s,0);g.quadraticCurveTo(-3*s,-8*s,5*s,-19*s);g.quadraticCurveTo(3*s,-9*s,9*s,0);g.closePath();g.fill();g.stroke();g.restore()}}
 // états visibles : écailles, fusion (aileron dorsal, branchies lumineuses, aura d'eau), proie (aileron rouge au-dessus de la tête)
 let HS_HUNT={t:-1,m:[0,0]}; // équipes qui ont un Hoshigaki vivant en face (recalculé 4 fois par seconde)
 STATD.push((u,p,S,sk)=>{const t=performance.now()/1000;sk=sk||1;

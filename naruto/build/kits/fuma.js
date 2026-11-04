@@ -37,20 +37,23 @@ const fmS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son « brut »
 // texte au-dessus des dégâts et des états du moteur (ne se mêle pas à « -12 » ni à « ENTRAVÉ »)
 const fmSay=(u,s,col,z)=>{if(near(u.x,u.y))txt.push({x:u.x,y:u.y,z:z||122,s,col,t:1})};
 const fm_h=i=>{const v=Math.sin(i*127.1+311.7)*43758.5453;return v-Math.floor(v)}; // hasard figé (dessins)
+// ---- VFX (boîte à outils nr_fx.js) : étincelles d'acier, fumée d'ombre, éclats rouges (décor atténué selon l'intensité / le camp)
+function fmSpark(u,e,a,s){if(!e||!near(e.x,e.y))return;fxFlare(e.x,e.y,'#ffffff',{u,z:32,r:14*s,t:.14,rot:a});fxBurst(e.x,e.y,'#e8ecf4',{u,n:6*s,sp:260*s,a,arc:1.5,c2:'#ffffff',w:1.4,len:.15,z:30,gr:80})}
+function fmShadow(u,x,y,s){fxSmoke(x,y,{u,col:'#1c1822',n:5*s,r:18*s,s:12*s,al:.3,rise:34,z:16,t:.7});fxBurst(x,y,'#8a5ac8',{u,n:6*s,sp:90*s,sh:'petal',w:2,gr:-60,up:40,z:30,add:0,c2:'#3a2a4a'})}
 // marque de l'assassin (objet aux qui suit la cible : synchronisé chez les invités)
 function fmMarkOf(e,u){for(const x of aux)if(x.type==='fm_mark'&&x.t>0&&x.tg===e&&x.owner===u)return x;return null}
 function fmMark(u,e,d){if(!e||e.dead||e===u||e.team===u.team)return;const x=fmMarkOf(e,u);if(x){x.t=x.m=Math.max(x.t,d);return}
- aux.push({type:'fm_mark',x:e.x,y:e.y,r:24,t:d,m:d,team:u.team,owner:u,tg:e,ti:fmI(e),ui:fmI(u),k:0});fmSay(e,'MARQUÉ','#ff6a7a',112);jx({jfx:'fm_mkfx',x:e.x,y:e.y,ti:fmI(e),t:.45,m:.45})}
+ aux.push({type:'fm_mark',x:e.x,y:e.y,r:24,t:d,m:d,team:u.team,owner:u,tg:e,ti:fmI(e),ui:fmI(u),k:0});fmSay(e,'MARQUÉ','#ff6a7a',112);jx({jfx:'fm_mkfx',x:e.x,y:e.y,ti:fmI(e),t:.45,m:.45});fxRing(e.x,e.y,{u,r0:50,r1:26,col:FM_RED,w:3,t:.3})}
 // l'attaquant est-il dans le dos de la cible (arc de 130° derrière elle, à moins de 340) ?
 const fmBehind=(t,src)=>dist(t,src)<340&&angDiff(t.aim||0,ang(t,src))>FM_BACK;
 function fmCrit(src,t,big){fmSay(t,big?'CRITIQUE MORTEL !':'CRITIQUE !',big?'#ffd040':FM_RED,128);jx({jfx:'fm_crit',x:t.x,y:t.y,a:ang(src,t),big:big?1:0,t:.6,m:.6});
- if(near(t.x,t.y)){fmS('saber',src);if(src===player||t===player)shake=Math.max(shake,big?.22:.14)}}
+ if(near(t.x,t.y)){fmS('saber',src);if(src===player||t===player)shake=Math.max(shake,big?.22:.14);const c=big?'#ffd040':FM_RED;fxFlare(t.x,t.y,c,{u:src,z:40,r:big?34:24,t:.22,c2:'#ffffff',rot:ang(src,t)});fxBurst(t.x,t.y,c,{u:src,n:big?14:8,sp:240,a:ang(src,t),arc:2,c2:'#ffffff',w:1.6,len:.14,z:36});fxBurst(t.x,t.y,'#8a0a1a',{u:src,n:big?8:4,sp:150,up:120,gr:420,w:2,len:.06,add:0,a:ang(src,t),arc:1.6});fxHitStop(src,t,20,big)}}
 // point juste dans le dos d'une cible (là où elle ne regarde pas), dans l'arène
 function fmBackPos(e,u){const b=(e.aim||0)+Math.PI,d=e.r+u.r+4;return{x:clamp(e.x+Math.cos(b)*d,B.x+u.r,B.x+B.w-u.r),y:clamp(e.y+Math.sin(b)*d,B.y+u.r,B.y+B.h-u.r)}}
 // surgit dans le dos de e et frappe (Assassinat, Danse)
 function fmStrike(u,e,dmg,o){const p0={x:u.x,y:u.y},p=fmBackPos(e,u);jx({jfx:'fm_vanish',x:p0.x,y:p0.y,r:30,t:.45,m:.45});u.dash=null;u.kx=u.ky=0;u.x=p.x;u.y=p.y;collide(u);u.aim=ang(u,e);
- jx({jfx:'fm_streak',x:p0.x,y:p0.y,x2:u.x,y2:u.y,t:.3,m:.3});jx({jfx:'fm_vanish',x:u.x,y:u.y,r:26,t:.4,m:.4,inv:1});anim(u,'fm_stab',.34);u.swing=.16;u.swingA=u.aim;
- const V=VFX;VFX='steel';const ok=hit(e,u,dmg,Object.assign({melee:1,fm_back:1,unblockable:1},o));VFX=V;jx({jfx:'fm_slash',x:e.x,y:e.y,a:u.aim,t:.35,m:.35});if(near(u.x,u.y))fmS('saber',u);return ok}
+ jx({jfx:'fm_streak',x:p0.x,y:p0.y,x2:u.x,y2:u.y,t:.3,m:.3});jx({jfx:'fm_vanish',x:u.x,y:u.y,r:26,t:.4,m:.4,inv:1});anim(u,'fm_stab',.34);fmShadow(u,p0.x,p0.y,.7);u.swing=.16;u.swingA=u.aim;
+ const V=VFX;VFX='steel';const ok=hit(e,u,dmg,Object.assign({melee:1,fm_back:1,unblockable:1},o));VFX=V;jx({jfx:'fm_slash',x:e.x,y:e.y,a:u.aim,t:.35,m:.35});if(ok)fmSpark(u,e,u.aim,1.1);if(near(u.x,u.y))fmS('saber',u);return ok}
 // petit shuriken (style, Traceur, Repli, fin des Tournoyants)
 const fmShu=(u,a,o)=>proj(u,a,Object.assign({spd:900,r:6,dmg:7,life:.66,col:FM_STEEL,kind:'fm_shu'},o));
 // ---------- mécaniques ----------
@@ -58,13 +61,13 @@ Object.assign(NAT,{
  // style (corps à corps) : shuriken tenu en main ; 4e coup : tour tranchant qui marque la cible ; 5e : bond qui plonge
  fm_style:SP('Shuriken en main','',.36,{hero:'rey',melee:1,ai:{max:100,p:1}},(u,a)=>{const c=stC(u),T=[0,[86,1.7,10,.36],[86,1.7,10,.36],[88,2.4,10,.4],[92,6.3,10,.46],[110,1,13,.6]][c],W='#e8ecf2';
   if(c===5){stLunge(u,a,48);S('dash',u)}
-  stMelee(u,a,T[0],T[1],T[2],c===4?{fm_sh:1}:{},[0,{d:-1,tl:.6,z:36,th:6,c:W,c2:FM_RED,blade:1},{d:1,tl:-.6,z:34,th:6,c:W,c2:FM_RED,blade:1},{d:-1,z:12,th:7,c:W,c2:FM_RED,blade:1,rr:.8},{d:-1,z:24,th:8,c:W,c2:FM_SHD,blade:1,rr:.85},{jfx:'st_thrust',z:30,c:W,w2:5}][c],e=>jx({jfx:'fm_slash',x:e.x,y:e.y,a,t:.35,m:.35}));
+  stMelee(u,a,T[0],T[1],T[2],c===4?{fm_sh:1}:{},[0,{d:-1,tl:.6,z:36,th:6,c:W,c2:FM_RED,blade:1},{d:1,tl:-.6,z:34,th:6,c:W,c2:FM_RED,blade:1},{d:-1,z:12,th:7,c:W,c2:FM_RED,blade:1,rr:.8},{d:-1,z:24,th:8,c:W,c2:FM_SHD,blade:1,rr:.85},{jfx:'st_thrust',z:30,c:W,w2:5}][c],e=>{jx({jfx:'fm_slash',x:e.x,y:e.y,a,t:.35,m:.35});if(c>=4)fmSpark(u,e,a,c===5?1:.7)});
   if(c===4)fmS('saber',u);stCd(u,T[3]);anim(u,'st_fum'+c,c>=4?.36:.26)}),
  fm_trace:SP('Shuriken traceur',FM_D.trace,5,{line:{len:600,w:14},ai:RG(560,.7)},(u,a)=>{S('blaster',u);anim(u,'fm_flickr',.26);
-  fmShu(u,a,{spd:1150,r:6,dmg:10,life:.54,kind:'fm_trace',noClash:1,o:{fm_sh:1,fm_md:6,reveal:1}});jx({jfx:'fm_glint',x:u.x,y:u.y,a,t:.25,m:.25})}),
+  fmShu(u,a,{spd:1150,r:6,dmg:10,life:.54,kind:'fm_trace',noClash:1,o:{fm_sh:1,fm_md:6,reveal:1},onHit:(p,e)=>fmSpark(p.owner,e,Math.atan2(p.vy,p.vx),.8)});jx({jfx:'fm_glint',x:u.x,y:u.y,a,t:.25,m:.25})}),
  // Fûma : arc de cercle (le côté alterne) dont la corde tombe sur la visée, puis retour droit vers le lanceur (moteur : ret)
  fm_fuma:SP('Shuriken du croissant',FM_D.fuma,8,{line:{len:380,w:30},ai:RG(400,.6,60)},(u,a)=>{u.fm_side=u.fm_side>0?-1:1;const cv=1.0*u.fm_side,T=380/640;anim(u,'fm_heave',.45);fmS('saber',u);S('dash',u);
-  proj(u,a-cv*T/2,{spd:640,r:15,dmg:12,life:2.6,col:FM_STEEL,ret:380,pierce:1,slow:.6,kind:'fm_big',o:{fm_sh:1}});
+  proj(u,a-cv*T/2,{spd:640,r:15,dmg:12,life:2.6,col:FM_STEEL,ret:380,pierce:1,slow:.6,kind:'fm_big',o:{fm_sh:1},onHit:(p,e)=>{fmSpark(p.owner,e,Math.atan2(p.vy,p.vx),1.2);fxDebris(e.x,e.y,{u:p.owner,n:3,sp:90,col:'#cfd3dd',c2:'#5a5e6a',s:2.2})}});fxWind(u.x+Math.cos(a)*50,u.y+Math.sin(a)*50,a,{u,len:110,w:50,n:5,col:'#e8ecf4',t:.3});
   aux.push({type:'fm_boom',p:projs[projs.length-1],x:u.x,y:u.y,t:1,m:1,team:u.team,owner:u,cv,k:0})}),
  fm_wire:SP('Shuriken à fil',FM_D.wire,10,{line:{len:450,w:16},ai:RG(430,.55)},(u,a)=>{S('blaster',u);anim(u,'fm_flickl',.3);
   proj(u,a,{spd:940,r:7,dmg:8,life:.48,col:FM_STEEL,kind:'fm_wire',noClash:1,root:1,o:{fm_sh:1},onHit:(p,t)=>{const o=p.owner;if(t.dead)return;
@@ -89,16 +92,16 @@ Object.assign(NAT,{
   if(!tg&&!u.ctrl&&u.hp>u.max*.5){const e=u.tgt&&!u.tgt.dead?u.tgt:null;if(e&&fmMarkOf(e,u)&&dist(u,e)<300+e.r)tg=e}
   if(tg){const b=(tg.aim??ang(u,tg))+Math.PI,R0=tg.r+u.r+8;p={x:clamp(tg.x+Math.cos(b)*R0,B.x+u.r,B.x+B.w-u.r),y:clamp(tg.y+Math.sin(b)*R0,B.y+u.r,B.y+B.h-u.r)};jx({jfx:'fm_shade',x:tg.x,y:tg.y,ti:fmI(tg),t:.4,m:.4});say(tg,'!','#ff6a7a')}
   fmS('poof',u);anim(u,'fm_seal',.3);
-  jx({jfx:'fm_vanish',x:u.x,y:u.y,r:40,t:.55,m:.55});u.dash=null;u.kx=u.ky=0;u.x=p.x;u.y=p.y;collide(u);if(tg)u.aim=ang(u,tg);u.stealth=Math.max(u.stealth,.6);u.haste=Math.max(u.haste,.5);
+  jx({jfx:'fm_vanish',x:u.x,y:u.y,r:40,t:.55,m:.55});fmShadow(u,u.x,u.y,1);u.dash=null;u.kx=u.ky=0;u.x=p.x;u.y=p.y;collide(u);if(tg)u.aim=ang(u,tg);fxBurst(u.x,u.y,'#8a5ac8',{u,n:5,sp:80,sh:'petal',w:2,gr:-50,up:30,z:30,add:0,c2:'#3a2a4a'});u.stealth=Math.max(u.stealth,.6);u.haste=Math.max(u.haste,.5);
   jx({jfx:'fm_streak',x:p0.x,y:p0.y,x2:u.x,y2:u.y,t:.3,m:.3});jx({jfx:'fm_vanish',x:u.x,y:u.y,r:30,t:.45,m:.45,inv:1})}),
  fm_repli:SP('Repli du Fûma',FM_D.repli,7,{ai:{max:170,p:.55}},(u,a)=>{S('dash',u);S('blaster',u);anim(u,'backflip',.36);dash(u,a+Math.PI,190,.32,{jump:46});
   for(const o of[-.22,0,.22])fmShu(u,a+o,{spd:880,r:5,dmg:5,life:.5,o:{fm_sh:1,fm_nc:1}});jx({jfx:'fm_glint',x:u.x,y:u.y,a,t:.25,m:.25,fan:1})}),
  // Pluie : 5 vagues (objet aux) puis la dernière = explosion de la zone (le cercle d'alerte montre quand elle tombe ; les bots la fuient)
  fm_rain:ULT('Pluie de shuriken',FM_D.rain,{tele:{r:140,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);anim(u,'fm_rainup',.6);fmS('saber',u);S('dash',u);
-  aux.push({type:'fm_rain',x:p.x,y:p.y,r:140,t:2,m:2,team:u.team,owner:u,n:0,k:.6});zone(u,p.x,p.y,140,10,1.6,{stun:.5},'#c8ccd8');lastZ().deto='fm_rainz';
+  aux.push({type:'fm_rain',x:p.x,y:p.y,r:140,t:2,m:2,team:u.team,owner:u,n:0,k:.6});fxBurst(u.x,u.y,'#e8ecf4',{u,n:10,sp:80,up:420,gr:-200,w:1.4,len:.2,c2:'#ffffff',z:40});zone(u,p.x,p.y,140,10,1.6,{stun:.5},'#c8ccd8');lastZ().deto='fm_rainz';
   jx({jfx:'fm_up',x:u.x,y:u.y,t:.7,m:.7})}),
  fm_dance:ULT('Danse des mille ombres',FM_D.dance,{hero:'ventress',tele:{self:1,r:400},ai:SELF(330,.8)},(u)=>{anim(u,'fm_seal',.35);fmS('poof',u);S('dash',u);
-  jx({jfx:'fm_vanish',x:u.x,y:u.y,r:50,t:.6,m:.6});u.phase=Math.max(u.phase||0,.5);u.stealth=Math.max(u.stealth,.5);
+  jx({jfx:'fm_vanish',x:u.x,y:u.y,r:50,t:.6,m:.6});u.phase=Math.max(u.phase||0,.5);u.stealth=Math.max(u.stealth,.5);fmShadow(u,u.x,u.y,1.4);fxRing(u.x,u.y,{u,r0:30,r1:400,col:FM_RED,w:3,t:.55,al:.55});fxLight(u.x,u.y,120,'#8a5ac8',{u,t:.5,a:.35});
   aux.push({type:'fm_dance',x:u.x,y:u.y,r:400,t:2,m:2,team:u.team,owner:u,ui:fmI(u),n:0,k:.22,tg:null,hs:[]});fmDancePick(aux[aux.length-1])}),
 });
 Object.assign(NATHERO,{fm:'kylo'});
@@ -113,7 +116,7 @@ AUXF.fm_wl=x=>{const p=x.p;if(!p||p.dead||p.life<=0||(x.owner&&x.owner.dead)){x.
 AUXF.fm_bind=x=>{const e=x.tg;if(!e||e.dead){x.t=0;return}x.x=e.x;x.y=e.y};
 AUXF.fm_kg=(x,dt)=>{const o=x.owner,p2=x.p2;if(!p2||p2.dead||p2.life<=0){x.t=0;x.p1=x.p2=null;return}x.x=p2.x;x.y=p2.y;x.t=1;const p1=x.p1;
  // le 1er a touché : l'ombre reste cachée (x.n=2) ; il a été esquivé, détruit ou est arrivé au bout : elle surgit (x.n=1) et cherche l'ennemi proche
- if(!x.n&&(!p1||p1.dead||p1.life<=0)){x.n=p1&&p1.fm_hit?2:1;if(x.n===1){p2.kind='fm_kage2';p2.life=Math.max(p2.life,.35);jx({jfx:'fm_emerge',x:p2.x,y:p2.y,t:.35,m:.35});if(near(p2.x,p2.y))fmS('saber',o)}}
+ if(!x.n&&(!p1||p1.dead||p1.life<=0)){x.n=p1&&p1.fm_hit?2:1;if(x.n===1){p2.kind='fm_kage2';p2.life=Math.max(p2.life,.35);jx({jfx:'fm_emerge',x:p2.x,y:p2.y,t:.35,m:.35});fxFlare(p2.x,p2.y,'#b070ff',{u:o,z:28,r:22,t:.2});fmShadow(o,p2.x,p2.y,.6);if(near(p2.x,p2.y))fmS('saber',o)}}
  if(x.n===1&&o){let tg=null,bd=300;for(const e of enemies(o)){const d=Math.hypot(e.x-p2.x,e.y-p2.y);if(d<bd){bd=d;tg=e}}
   if(tg){const cur=Math.atan2(p2.vy,p2.vx);let df=Math.atan2(tg.y-p2.y,tg.x-p2.x)-cur;while(df>Math.PI)df-=2*Math.PI;while(df<-Math.PI)df+=2*Math.PI;const na=cur+clamp(df,-3.2*dt,3.2*dt),sp=Math.hypot(p2.vx,p2.vy);p2.vx=Math.cos(na)*sp;p2.vy=Math.sin(na)*sp}}};
 AUXF.fm_orb=x=>{const o=x.owner;if(!o||o.dead){x.t=0;return}x.x=o.x;x.y=o.y;
@@ -126,12 +129,12 @@ AUXF.fm_orb=x=>{const o=x.owner;if(!o||o.dead){x.t=0;return}x.x=o.x;x.y=o.y;
 AUXF.fm_maki=()=>{};
 AUXF.fm_rain=x=>{const o=x.owner;if(!o||o.dead){x.t=Math.min(x.t,.3);return}if(x.n>=5||x.k>0)return;x.n++;x.k=.2;
  const V=VFX;VFX='shuriken';for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)hit(e,o,7,{slow:.5,fm_sh:1,fm_nc:1,unblockable:1,fx:x.x,fy:x.y});VFX=V;
- if(near(x.x,x.y)){fmS(x.n%2?'saber':'hit',o);sparks(x.x+(rnd()-.5)*x.r,x.y+(rnd()-.5)*x.r*.8,FM_STEEL,6,'kunai')}};
+ if(near(x.x,x.y)){fmS(x.n%2?'saber':'hit',o);const b=rnd()*6.28,d=Math.sqrt(rnd())*x.r*.85,sx=x.x+Math.cos(b)*d,sy=x.y+Math.sin(b)*d;fxBurst(sx,sy,'#e8ecf4',{u:o,n:6,sp:160,c2:'#ffffff',z:4,up:80,gr:300,w:1.4});fxDebris(sx,sy,{u:o,n:3,sp:80,col:'#9a8268',c2:'#5a4028',s:2.2})}};
 // Danse : une frappe toutes les 0,28 s, la cible suivante est montrée par une ombre juste avant
 AUXF.fm_dance=x=>{const o=x.owner;if(!o||o.dead){x.t=0;return}if(x.n>=3){x.t=0;return}o.phase=Math.max(o.phase||0,.12);o.stealth=Math.max(o.stealth,.12);
  if(x.k>0)return;const e=x.tg;if(e&&!e.dead&&Math.hypot(e.x-x.x,e.y-x.y)<x.r+120){fmStrike(o,e,9,{slow:.4});x.hs.push(e)}x.n++;x.k=.28;
  if(x.n>=3||!fmDancePick(x)){x.n=3;x.t=0;o.phase=0;o.stealth=0;jx({jfx:'fm_vanish',x:o.x,y:o.y,r:40,t:.5,m:.5,inv:1})}};
-DETO.fm_rainz=(x,y,r)=>{jx({jfx:'fm_impact',x,y,r,t:.7,m:.7})};
+DETO.fm_rainz=(x,y,r)=>{jx({jfx:'fm_impact',x,y,r,t:.7,m:.7});fxRing(x,y,{r0:20,r1:r,col:'#e8ecf4',c2:FM_RED,w:7,t:.4});fxDebris(x,y,{n:10,sp:200,col:'#cfd3dd',c2:'#5a5e6a',s:3});fxSmoke(x,y,{col:'#9a8268',n:6,r:r*.7,s:14,al:.22,rise:20});fxDecal(x,y,'crack',{r:r*.8,t:4});fxLight(x,y,r*1.1,'#ffd8d8',{t:.35,a:.3})};
 // ---------- dessins ----------
 // shuriken à 4 branches (repère local, déjà tourné), L = rayon
 function fmStar(L,fill,edge,hole){g.beginPath();for(let i=0;i<4;i++){const a=i*Math.PI/2;g.lineTo(Math.cos(a)*L,Math.sin(a)*L);g.lineTo(Math.cos(a+.785)*L*.3,Math.sin(a+.785)*L*.3)}g.closePath();
@@ -145,7 +148,7 @@ PROJD.fm_shu=(p,R,ra,t)=>{g.save();g.rotate(ra);g.strokeStyle=rgba(FM_RED,.55);g
  g.scale(1,.62);g.rotate(t/34);fmStar(R*1.6,FM_STEEL,'#23232c',FM_RED)};
 PROJD.fm_trace=(p,R,ra,t)=>{g.save();g.rotate(ra);g.globalCompositeOperation='lighter';g.strokeStyle=rgba(FM_RED,.7);g.lineWidth=2.4;g.lineCap='round';g.beginPath();g.moveTo(-R,0);g.lineTo(-R*7,0);g.stroke();g.strokeStyle='rgba(255,255,255,.6)';g.lineWidth=1;g.stroke();g.restore();
  g.scale(1,.62);g.rotate(t/26);fmStar(R*1.5,'#f2f4f8',FM_RED,FM_RED)};
-PROJD.fm_big=(p,R,ra,t)=>{g.scale(1,.6);fmFuma(R*1.9,t/40)};
+PROJD.fm_big=(p,R,ra,t)=>{fxGlowS(0,0,R*2.4,'#cfd3dd',.25,R*1.5);g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#e8ecf4',.35);g.lineWidth=R*.5;g.lineCap='round';g.scale(1,.6);for(let i=0;i<2;i++){const b=t/40+i*Math.PI;g.beginPath();g.arc(0,0,R*1.7,b,b+1.1);g.stroke()}g.restore();g.scale(1,.6);fmFuma(R*1.9,t/40)};
 // Kage shuriken caché : à peine une ombre (il voyage juste derrière le 1er)
 PROJD.fm_kage=(p,R,ra,t)=>{g.save();g.globalAlpha=.22;g.scale(1,.62);g.rotate(t/34);fmStar(R*1.5,'#14121a','#14121a','#14121a');g.restore()};
 // l'ombre surgit : shuriken noir et violet, volutes d'ombre
@@ -177,10 +180,10 @@ AUXD.fm_rain=(x,k,t)=>{const el=x.m-x.t,on=el>.55,al=Math.min(1,x.t/.35);g.save(
  g.strokeStyle=rgba(FM_RED,.6*al);g.lineWidth=2;g.setLineDash([10,7]);g.lineDashOffset=t*30;gEll(x.x,x.y,x.r);g.stroke();g.setLineDash([]);
  const nPl=on?Math.min(22,Math.floor((el-.55)*18)):0;for(let i=0;i<nPl;i++){const b=fm_h(i*5+1)*6.283,d=x.r*Math.sqrt(fm_h(i*5+2)),q=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d*.92,1);
   g.save();g.globalAlpha=al;g.translate(q.x,q.y);g.scale(q.s,q.s);g.rotate(fm_h(i)*3);g.fillStyle='#9aa0ac';g.strokeStyle='#18181e';g.lineWidth=1;g.beginPath();g.moveTo(0,-7);g.lineTo(2,-1);g.lineTo(7,0);g.lineTo(2,1);g.lineTo(0,3);g.lineTo(-2,1);g.lineTo(-7,0);g.lineTo(-2,-1);g.closePath();g.fill();g.stroke();g.restore()}
- if(el>.25&&el<1.7)for(let i=0;i<26;i++){const ph=(t*2.6+fm_h(i*11))%1,b=fm_h(i*11+3)*6.283,d=x.r*Math.sqrt(fm_h(i*11+4)),wx=x.x+Math.cos(b)*d,wy=x.y+Math.sin(b)*d*.92,z=(1-ph)*300,q=P(wx,wy,z),qt=P(wx,wy,z+46);
-  if(!on&&z<160)continue;g.strokeStyle=rgba('#ffffff',.35*al);g.lineWidth=1.5;g.beginPath();g.moveTo(qt.x,qt.y);g.lineTo(q.x,q.y);g.stroke();
-  g.save();g.translate(q.x,q.y);g.scale(q.s,q.s*.62);g.rotate(t*24+i);g.globalAlpha=al;fmStar(7,FM_STEEL,'#23232c');g.restore();
-  if(on&&ph>.9){const qg=P(wx,wy,0);g.strokeStyle=rgba('#ffffff',.7*al);g.lineWidth=1.2;g.beginPath();g.ellipse(qg.x,qg.y,7*qg.s,3*qg.s,0,0,7);g.stroke()}}
+ const nR=fxN(26,x),aR=fxA(x);if(el>.25&&el<1.7)for(let i=0;i<nR;i++){const ph=(t*2.6+fm_h(i*11))%1,b=fm_h(i*11+3)*6.283,d=x.r*Math.sqrt(fm_h(i*11+4)),wx=x.x+Math.cos(b)*d,wy=x.y+Math.sin(b)*d*.92,z=(1-ph)*300,q=P(wx,wy,z),qt=P(wx,wy,z+46);
+  if(!on&&z<160)continue;g.strokeStyle=rgba('#ffffff',.35*al*aR);g.lineWidth=1.5;g.beginPath();g.moveTo(qt.x,qt.y);g.lineTo(q.x,q.y);g.stroke();
+  g.save();g.translate(q.x,q.y);g.scale(q.s,q.s*.62);g.rotate(t*24+i);g.globalAlpha=al*aR;fmStar(7,FM_STEEL,'#23232c');g.restore();
+  if(on&&ph>.9){fxGlowS(q.x,q.y,10*q.s,'#ffffff',.5*aR);const qg=P(wx,wy,0);g.strokeStyle=rgba('#ffffff',.7*al);g.lineWidth=1.2;g.beginPath();g.ellipse(qg.x,qg.y,7*qg.s,3*qg.s,0,0,7);g.stroke()}}
  g.restore()};
 // marque au sol : réticule rouge qui tourne autour de la cible (clignote en fin de marque)
 AUXD.fm_mark=(x,k,t)=>{const e=units[x.ti];if(!e||e.dead||x.t<=0)return;const al=Math.min(1,x.t/.4)*(x.t<1?.55+.45*Math.sin(t*22):1);g.save();
@@ -198,7 +201,7 @@ JFXD.fm_mkfx=(f,k,e,t,u,tg)=>{const c=tg&&!tg.dead?tg:f,q=P(c.x,c.y,60),s=q.s;g.
  g.translate(q.x,q.y);g.rotate(e*4);g.scale(s,s*.8);g.globalAlpha=k;fmStar(9*(1-e*.3),FM_RED,'#ffffff','#ffffff');g.restore()};
 // fumée noire et violette (disparition / apparition), plumes d'ombre qui montent
 JFXD.fm_vanish=(f,k,e)=>{const q=P(f.x,f.y,20),R=(f.r||34)*q.s;g.save();
- for(let i=0;i<9;i++){const b=i*.698+f.x*.01,d=R*(.2+e*.8)*(f.inv?1-e*.5:1),r=R*(.35+e*.3)*(i%2?.8:1);g.fillStyle=rgba(i%3?'#1c1822':'#3a2a4a',.7*k);g.beginPath();g.arc(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*.55-e*18*q.s,r,0,7);g.fill()}
+ for(let i=0;i<9;i++){const b=i*.698+f.x*.01,d=R*(.2+e*.8)*(f.inv?1-e*.5:1),r=R*(.35+e*.3)*(i%2?.8:1);g.fillStyle=rgba(i%3?'#1c1822':'#3a2a4a',(f.inv?.36:.5)*k);g.beginPath();g.arc(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*.55-e*18*q.s,r,0,7);g.fill()}
  g.strokeStyle=rgba('#8a5ac8',.6*k);g.lineWidth=1.6;g.lineCap='round';g.beginPath();for(let i=0;i<6;i++){const x0=q.x+(fm_h(i+f.y)-.5)*R*1.6,y0=q.y-e*40*q.s-fm_h(i)*20*q.s;g.moveTo(x0,y0);g.quadraticCurveTo(x0+6*q.s,y0-8*q.s,x0+1*q.s,y0-16*q.s)}g.stroke();g.restore()};
 // traînée d'ombre entre deux points (Shunshin, frappes dans le dos)
 JFXD.fm_streak=(f,k,e)=>{const a=P(f.x,f.y,28),b=P(f.x2,f.y2,28);g.save();g.lineCap='round';g.strokeStyle=rgba('#1c1822',.55*k);g.lineWidth=16*a.s*k;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();

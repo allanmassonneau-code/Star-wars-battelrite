@@ -33,6 +33,12 @@ const ucTR={rng:560,rec:40,part:.65}; // trait : portée de lecture des mudras, 
 const ucK={kusa:9,kusaP:14,kusaS:.3,gkD:5,gkA:4,gkR:40,cpM:.9,ryuS:4,ryuR:.65,ryuF:12,genD:12,genS:.9,genL:345,genW:120,shB:1.15,shT:.22,amD:13,amP:6.5,amT:5,tsuD:8,tsuS:.9,tsuT:6,tsuC:15,tsuV:1.5,susD:6,susL:12,susR:.2,susT:3.5,susU:.8,susS:.6};
 const ucAI={cp:{max:420,p:.75},wake:{mode:'def',p:.45},izF:{mode:'self',max:260,p:.6},izN:{mode:'heal',p:0}}; // conduite des bots : Sharingan (copie prête ou non), Izanagi (blessé et au contact), Kamui (esquive, fuite si presque mort)
 const ucI=u=>units.indexOf(u),ucCol=u=>u.ch.look.weapon.col||'#a5f';
+// ---- VFX (boîte à outils nr_fx.js) : décor selon intensité / foule / camp ; télégraphes nets
+const ucDim=(o,fn)=>{const m=fxA(o);return m<1?fxAlpha(m,fn):fn()};
+// éclat rouge au niveau des yeux (Sharingan, Mangekyô)
+const ucEyeFl=(u,col,r)=>fxFlare(u.x+Math.cos(u.aim)*6,u.y+Math.sin(u.aim)*6,col||'#ff2a3a',{u,z:60,r:r||14,t:.22,c2:'#ffd0d8'});
+// prise de genjutsu sur une cible : pétales rouges, sceau au sol, éclat
+function ucGenFx(u,e,big){fxImpact(e.x,e.y,'genjutsu',big?1.2:.8,{u,r:big?46:32,dec:0});fxGlyph(e.x,e.y,'#e0304a',{u,ui:ucI(e),r:big?40:30,t:big?1.4:.9})}
 function ucS(k,u){const V=VFX;VFX=null;S(k,u);VFX=V} // son exact (sans la teinte sonore de l'élément)
 function ucSay(u,s,col,dz,dx){if(near(u.x,u.y))txt.push({x:u.x+(dx||0)+(rnd()-.5)*12,y:u.y,z:95+(dz||0),s,col,t:1})} // texte plus haut : ne se mêle pas à « ÉTOURDI » et aux dégâts
 function ucSlot(u,k){const A=u.ch.abil;for(let i=0;i<A.length;i++)if(A[i]&&A[i].key===k)return i;return -1}
@@ -45,15 +51,15 @@ Object.assign(NAT,{
  // Lame de Kusanagi : estoc instantané en ligne (la lame s'allonge), ignore les parades ; le bout de la lame frappe plus fort
  uc_kusa:S_('Lame de Kusanagi',ucD.kusa,8,{hero:'anakin',line:{len:235,w:34},ai:RG(225,.65)},(u,a)=>{const L=235;ucS('saber',u);anim(u,'uc_thrust',.45);
   jx({jfx:'uc_blade',ui:ucI(u),x:u.x,y:u.y,a,L,t:.62,m:.62,col:ucCol(u)});
-  for(const e of ucLine(u,a,L,34)){const tip=dist(u,e)>L-70;if(hit(e,u,tip?ucK.kusaP:ucK.kusa,{melee:1,unblockable:1,slow:ucK.kusaS})){sparks(e.x,e.y,'#ffffff',tip?10:5,'steel');jx({jfx:'uc_cut',ti:ucI(e),x:e.x,y:e.y,a,tip:tip?1:0,t:.45,m:.45});if(tip)ucSay(e,'POINTE !','#e8ecf2',26)}}}),
+  for(const e of ucLine(u,a,L,34)){const tip=dist(u,e)>L-70;if(hit(e,u,tip?ucK.kusaP:ucK.kusa,{melee:1,unblockable:1,slow:ucK.kusaS})){sparks(e.x,e.y,'#ffffff',tip?10:5,'steel');fxBurst(e.x,e.y,'#ffffff',{u,n:tip?10:6,sp:380,a,arc:1,z:34,w:1.4,len:.2,t:.25});if(tip)fxHitStop(u,e,ucK.kusaP,1);jx({jfx:'uc_cut',ti:ucI(e),x:e.x,y:e.y,a,tip:tip?1:0,t:.45,m:.45});if(tip)ucSay(e,'POINTE !','#e8ecf2',26)}}}),
  // Katon : Gôkakyû : grosse boule de feu lente qui grossit ; explose au contact ou en fin de course ; relance = explosion immédiate
  uc_goka:S_('Katon : Gôkakyû',ucD.goka,10,{line:{len:520,w:56},ai:RG(470,.6)},(u,a)=>{const i=ucCopy===u?-1:ucSlot(u,'uc_goka'),p0=u.uc_gk; // copiée par le Sharingan : simple boule, sans relance
   if(i>=0&&u.jst&&u.jst.key==='uc_goka'&&p0&&!p0.dead&&p0.life>0){if(p0.life0-p0.life<.3){u.cds[i]=.05;return}ucGokaBoom(p0);p0.life=0;u.cds[i]=u.jst.cd;u.jst=null;return}
-  ucS('fire',u);anim(u,'breath',.6);proj(u,a,{spd:350,r:14,dmg:ucK.gkD,life:1.5,col:'#ff7a2a',big:1,kind:'uc_goka',onHit:p=>ucGokaBoom(p)});const p=projs[projs.length-1];if(i>=0)u.uc_gk=p;
+  ucS('fire',u);anim(u,'breath',.6);fxCast(u,'katon',.25,{mouth:1,n:8});{const m=fwd(u,a,20);fxFlare(m.x,m.y,'#ffb03a',{u,z:48,r:26,t:.2,c2:'#fff3c0'})}proj(u,a,{spd:350,r:14,dmg:ucK.gkD,life:1.5,col:'#ff7a2a',big:1,kind:'uc_goka',onHit:p=>ucGokaBoom(p)});const p=projs[projs.length-1];if(i>=0)u.uc_gk=p;
   aux.push({type:'uc_gk',x:p.x,y:p.y,r:0,t:4,m:4,team:u.team,owner:u,p,i,cd:i>=0?u.ch.abil[i].cd:0});
   if(i>=0&&!u.jst){u.jst={key:'uc_goka',i,n:1,t:1.5,cd:u.ch.abil[i].cd,v:'fire'};u.cds[i]=.3}}), // relance seulement si aucune autre charge n'est en cours
  // Sharingan : copie le dernier jutsu ennemi vu (10 s) et le relance à 90 % ; sinon lit le prochain coup (esquive 2,5 s, comme l'ancien Sharingan)
- uc_shar:S_('Sharingan',ucD.shar,10,{ai:SELF(380,.4)},(u,a,td)=>{const c=u.uc_cp,ok=!!(c&&c.ab&&SIMT-c.t<10);anim(u,'eye',.5);ucS('genjutsu',u);jx({jfx:'uc_copy',ui:ucI(u),x:u.x,y:u.y,t:.7,m:.7,cp:ok?1:0});
+ uc_shar:S_('Sharingan',ucD.shar,10,{ai:SELF(380,.4)},(u,a,td)=>{const c=u.uc_cp,ok=!!(c&&c.ab&&SIMT-c.t<10);anim(u,'eye',.5);ucS('genjutsu',u);jx({jfx:'uc_copy',ui:ucI(u),x:u.x,y:u.y,t:.7,m:.7,cp:ok?1:0});ucEyeFl(u,'#ff2a3a',ok?20:14);fxRing(u.x,u.y,{u,r0:14,r1:ok?70:48,col:'#e0304a',t:.4,w:4});
   if(!ok){u.dodge=Math.max(u.dodge,2.5);ring(u.x,u.y,48,'#e0304a');say(u,'SHARINGAN','#ff5a6a');return}
   u.uc_cp=null;say(u,'COPIE : '+c.ab.n,'#ff5a6a');const n0=projs.length,z0=zones.length,f0=fields.length,a0=aux.length,ab=Object.assign({},c.ab);
   ucCopy=u;try{fire(u,ab,a,td,false)}catch(err){}ucCopy=null;
@@ -64,9 +70,9 @@ Object.assign(NAT,{
   for(const k of[-.1,0,.1]){proj(u,a+k,{spd:820,r:7,dmg:ucK.ryuS,life:.55,col:'#d8dde6',vfx:'shuriken',kind:'uc_shuri',ox:u.x,oy:u.y,onHit:(p,t)=>{if(c.done||t.dead||p.owner!==u)return;c.done=1;ucWire(u,t)}});ps.push(projs[projs.length-1])}
   aux.push({type:'uc_wthrow',x:u.x,y:u.y,r:0,t:.6,m:.6,team:u.team,owner:u,ps})}),
  // Sharingan : Genjutsu : regard droit devant ; paralyse ceux qui regardent le lanceur, ralentit les autres (la zone touchée est exactement la bande du télégraphe)
- uc_genj:S_('Sharingan : Genjutsu',ucD.genj,10,{hero:'inquisitor',line:{len:ucK.genL,w:ucK.genW},ai:RG(320,.6)},(u,a)=>{ucS('genjutsu',u);anim(u,'uc_stare',.6);jx({jfx:'uc_gaze',ui:ucI(u),x:u.x,y:u.y,a,L:ucK.genL,w:ucK.genW,t:.6,m:.6});
+ uc_genj:S_('Sharingan : Genjutsu',ucD.genj,10,{hero:'inquisitor',line:{len:ucK.genL,w:ucK.genW},ai:RG(320,.6)},(u,a)=>{ucS('genjutsu',u);anim(u,'uc_stare',.6);ucEyeFl(u);jx({jfx:'uc_gaze',ui:ucI(u),x:u.x,y:u.y,a,L:ucK.genL,w:ucK.genW,t:.6,m:.6});
   for(const e of ucLine(u,a,ucK.genL,ucK.genW)){
-   if(ucEye(e,u)){if(hit(e,u,ucK.genD,{stun:ucK.genS,unblockable:1,reveal:1})){jx({jfx:'uc_bind',ti:ucI(e),x:e.x,y:e.y,t:ucK.genS,m:ucK.genS});jx({jfx:'uc_gazeline',ui:ucI(u),ti:ucI(e),x:e.x,y:e.y,t:.4,m:.4});ucSay(e,'GENJUTSU','#ff5a6a',28)}}
+   if(ucEye(e,u)){if(hit(e,u,ucK.genD,{stun:ucK.genS,unblockable:1,reveal:1})){jx({jfx:'uc_bind',ti:ucI(e),x:e.x,y:e.y,t:ucK.genS,m:ucK.genS});ucGenFx(u,e,0);fxHitStop(u,e,ucK.genD,1);jx({jfx:'uc_gazeline',ui:ucI(u),ti:ucI(e),x:e.x,y:e.y,t:.4,m:.4});ucSay(e,'GENJUTSU','#ff5a6a',28)}}
    else if(hit(e,u,ucK.genD*.5,{slow:1.6,unblockable:1}))ucSay(e,'REGARD ÉVITÉ','#ffb0c0',28)}}),
  // Genjutsu : Tsukuyomi (v5, fusion) : regard du Genjutsu ; à 3 tomoe éveillés (trait), le regard devient Tsukuyomi et consomme les tomoe
  uc_gtsu:S_('Genjutsu : Tsukuyomi',ucD.gtsu,10,{hero:'inquisitor',line:{len:ucK.genL,w:ucK.genW},ai:RG(320,.6)},(u,a,td,P)=>{
@@ -74,32 +80,33 @@ Object.assign(NAT,{
   NAT.uc_genj.f(u,a,td,P)}),
  // Izanagi : ancre (position + PV) ; au bout de 4 s, ou à la mort (moteur : izRevive), retour à l'ancre
  uc_iza:S_('Izanagi',ucD.iza,14,{ai:HEALM},(u)=>{ucS('genjutsu',u);anim(u,'pray',.5);const T=4;u.izT=T+.3;u.izS={x:u.x,y:u.y,hp:u.hp};
-  aux.push({type:'uc_iza',x:u.x,y:u.y,r:0,t:T,m:T,team:u.team,owner:u,ui:ucI(u),hp:u.hp,lx:u.x,ly:u.y});jx({jfx:'uc_izaon',ui:ucI(u),x:u.x,y:u.y,t:T,m:T});ring(u.x,u.y,46,'#e0304a');say(u,'IZANAGI','#ff5a6a')}),
+  aux.push({type:'uc_iza',x:u.x,y:u.y,r:0,t:T,m:T,team:u.team,owner:u,ui:ucI(u),hp:u.hp,lx:u.x,ly:u.y});jx({jfx:'uc_izaon',ui:ucI(u),x:u.x,y:u.y,t:T,m:T});ring(u.x,u.y,46,'#e0304a');say(u,'IZANAGI','#ff5a6a');fxGlyph(u.x,u.y,'#e0304a',{u,r:40,t:1});ucEyeFl(u)}),
  // Shunshin Uchiha : éclair dans une nuée de corbeaux, réapparaît dans le dos de l'ennemi visé (sinon au curseur)
  uc_shun:S_('Shunshin des corbeaux',ucD.shun,7,{hero:'maul',ai:GAP},(u,a,td)=>{const p=fwd(u,a,Math.min(td||220,250)),e0=nearE(u,p.x,p.y,120),e=e0&&dist(u,e0)<270?e0:null;let tx,ty;
   if(e){const b=ang(u,e);tx=e.x+Math.cos(b)*48;ty=e.y+Math.sin(b)*48}else{const q=fwd(u,a,Math.min(td||220,220));tx=q.x;ty=q.y}
   tx=clamp(tx,B.x+u.r,B.x+B.w-u.r);ty=clamp(ty,B.y+u.r,B.y+B.h-u.r);const b=Math.atan2(ty-u.y,tx-u.x),d=Math.hypot(tx-u.x,ty-u.y);
-  ucS('dash',u);ucS('poof',u);jx({jfx:'uc_crows',x:u.x,y:u.y,a:b,t:.8,m:.8,out:1});u.phase=Math.max(u.phase||0,ucK.shT+.08); // intangible pendant le trajet (souvenir de Kamui)
-  dash(u,b,d,ucK.shT,{end:()=>{if(e&&!e.dead)u.aim=ang(u,e);u.uc_shB=SIMT+1.6;anim(u,'uc_land',.4);jx({jfx:'uc_crows',x:u.x,y:u.y,a:b+Math.PI,t:.55,m:.55,out:0})}})}),
+  ucS('dash',u);ucS('poof',u);jx({jfx:'uc_crows',x:u.x,y:u.y,a:b,t:.8,m:.8,out:1});fxSmoke(u.x,u.y,{u,col:'#1a1020',n:5,r:22,s:14,t:.7,al:.3,rise:30});fxBurst(u.x,u.y,'#0c0a10',{u,n:10,sp:180,z:40,sh:'petal',w:2.6,gr:60,add:0,c2:'#2a2030',t:.8});u.phase=Math.max(u.phase||0,ucK.shT+.08); // intangible pendant le trajet (souvenir de Kamui)
+  dash(u,b,d,ucK.shT,{end:()=>{if(e&&!e.dead)u.aim=ang(u,e);u.uc_shB=SIMT+1.6;anim(u,'uc_land',.4);jx({jfx:'uc_crows',x:u.x,y:u.y,a:b+Math.PI,t:.55,m:.55,out:0});fxSmoke(u.x,u.y,{u,col:'#1a1020',n:4,r:18,s:12,t:.6,al:.26});fxBurst(u.x,u.y,'#0c0a10',{u,n:8,sp:120,z:40,sh:'petal',w:2.4,gr:80,add:0,t:.7})}})}),
  // Kamui : aspiré dans l'autre dimension (intangible, invisible) puis recraché au point visé, sans traverser la carte ; le point d'arrivée tourbillonne d'avance
  // (deux « dash » immobiles : ni déplacement visible ni jutsu pendant le passage)
  uc_kamui:S_('Kamui',ucD.kamui,12,{ai:ESC},(u,a,td)=>{const p=fwd(u,a,clamp(td||260,90,300)),dur=.5,h=dur/2;ucS('wind',u);ucS('genjutsu',u);anim(u,'eye',.65);
-  jx({jfx:'uc_kamui',x:u.x,y:u.y,t:.55,m:.55,in:1});jx({jfx:'uc_kamui',x:p.x,y:p.y,t:dur+.4,m:dur+.4,dl:dur});
+  jx({jfx:'uc_kamui',x:u.x,y:u.y,t:.55,m:.55,in:1});jx({jfx:'uc_kamui',x:p.x,y:p.y,t:dur+.4,m:dur+.4,dl:dur});fxWind(u.x,u.y,0,{u,w:50,n:7,t:.5,col:'#c8a0e0',spin:1,z:30});
   u.phase=Math.max(u.phase||0,dur+.05);u.stealth=Math.max(u.stealth,dur-.08);
   dash(u,a,0,h,{end:()=>{u.x=p.x;u.y=p.y;u.kx=u.ky=0;collide(u);dash(u,a,0,h,{end:()=>{ring(u.x,u.y,46,'#8a3ab0');ucS('wind',u)}})}})}),
  // Amaterasu : le regard verrouille l'ennemi le plus proche du point visé (dans le cercle annoncé) ; 0,28 s plus tard, flammes noires (brûlure inextinguible qui se propage)
  uc_amat:ULT('Amaterasu',ucD.amat,{tele:{r:110,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480),tg=nearE(u,p.x,p.y,130); // verrouille un ennemi qui touche le cercle annoncé
   ucS('genjutsu',u);anim(u,'uc_amat',1);
   jx({jfx:'uc_mgk',ui:ucI(u),x:u.x,y:u.y,t:1.4,m:1.4,blood:1});if(tg)jx({jfx:'uc_gazeline',ui:ucI(u),ti:ucI(tg),x:tg.x,y:tg.y,t:.3,m:.3,dark:1});
-  later(u,.28,()=>{const live=tg&&!tg.dead,x=live?tg.x:p.x,y=live?tg.y:p.y;ucS('fire',u);jx({jfx:'uc_amatb',x,y,r:72,t:1.1,m:1.1});field(u,x,y,{r:62,t:3.5,dps:6,col:'#120a16',vfx:'black'});
+  ucEyeFl(u,'#b0101e',18);later(u,.28,()=>{const live=tg&&!tg.dead,x=live?tg.x:p.x,y=live?tg.y:p.y;ucS('fire',u);jx({jfx:'uc_amatb',x,y,r:72,t:1.1,m:1.1});field(u,x,y,{r:62,t:3.5,dps:6,col:'#120a16',vfx:'black'});
+   fxFlare(x,y,'#9a4ad0',{u,z:30,r:30,t:.25,c2:'#e0c0ff'});fxRing(x,y,{u,r0:10,r1:72,col:'#9a4ad0',t:.4,w:5});fxDecal(x,y,'scorch',{u,r:60,t:4.5});fxSmoke(x,y,{u,col:'#120a16',n:7,r:40,s:16,t:1.4,al:.32,rise:90});fxEmbers(x,y,55,'#9a4ad0',{u,n:10,h:90,t:2.4,c2:'#2a1238'});if(live)fxHitStop(u,tg,ucK.amD,1);
    if(live){ucIgnite(u,tg,ucK.amD,ucK.amP,ucK.amT);for(const o of enemies(u))if(o!==tg&&dist(o,tg)<110)ucIgnite(u,o,10,5,4)}else for(const o of enemies(u))if(Math.hypot(o.x-x,o.y-y)<72+o.r)ucIgnite(u,o,12,6,5);
-   if(near(x,y))shake=Math.max(shake,.3)})}),
+   })}),
  // Tsukuyomi : contact visuel obligatoire ; crucifiée 0,9 s, 3 « jours » de tourments, chakra perdu, puis esprit brisé (vulnérable) ; sinon simple ralentissement
  // cible : l'ennemi de la ligne de regard (télégraphe) le plus proche du point visé, sinon celui tout près du point visé
  uc_tsuku:ULT('Tsukuyomi',ucD.tsuku,{line:{len:420,w:70},ai:{max:400,p:.8}},(u,a,td)=>{const e=ucGazeT(u,a,td,420,70);anim(u,'uc_stare',.9);ucS('genjutsu',u);jx({jfx:'uc_mgk',ui:ucI(u),x:u.x,y:u.y,t:1.1,m:1.1});
   if(!e){say(u,'AUCUN REGARD','#ffb0c0');return}jx({jfx:'uc_gazeline',ui:ucI(u),ti:ucI(e),x:e.x,y:e.y,t:.45,m:.45});
   if(!ucEye(e,u)){if(hit(e,u,10,{slow:1.6,unblockable:1}))ucSay(e,'REGARD ÉVITÉ','#ffb0c0',28);return}
-  const T=ucK.tsuS;if(!hit(e,u,ucK.tsuD,{stun:T,unblockable:1}))return;e.energy=Math.max(0,e.energy-ucK.tsuC);jx({jfx:'redmoon',x:e.x,y:e.y,t:1.5,m:1.5});ucS('heavy',u);
+  const T=ucK.tsuS;if(!hit(e,u,ucK.tsuD,{stun:T,unblockable:1}))return;e.energy=Math.max(0,e.energy-ucK.tsuC);jx({jfx:'redmoon',x:e.x,y:e.y,t:1.5,m:1.5});ucS('heavy',u);ucGenFx(u,e,1);ucEyeFl(u,'#ff2a3a',22);fxHitStop(u,e,ucK.tsuD,1);
   if(!(e.stun>0)){ucSay(e,'RÉSISTE','#ffb0c0',28);return} // inarrêtable, ou lu par un Sharingan : le monde de Tsukuyomi ne le retient pas
   anim(e,'uc_cross',T);e.aim=Math.PI/2;ucSay(e,'TSUKUYOMI','#ff3a4a',36); // crucifiée face à nous
   jx({jfx:'uc_tsuku',ti:ucI(e),x:e.x,y:e.y,t:T,m:T});aux.push({type:'uc_tsk',x:e.x,y:e.y,r:0,t:T,m:T,team:u.team,owner:u,tg:e,ti:ucI(e)});
@@ -110,10 +117,12 @@ Object.assign(NAT,{
  uc_susa:ULT('Susanô : Totsuka',ucD.susa,{hero:'kylo',line:{len:185,w:220},ai:{max:160,p:.8}},(u,a)=>{ucS('roar',u);ucS('heavy',u);anim(u,'uc_susa',1.6);const col=ucCol(u);
   const T=ucK.susT;u.uc_suT=SIMT+T;u.unstop=Math.max(u.unstop,ucK.susU);aux.push({type:'uc_susa',x:u.x,y:u.y,r:0,t:T,m:T,team:u.team,owner:u,ui:ucI(u),col});
   jx({jfx:'uc_susf',ui:ucI(u),x:u.x,y:u.y,t:T,m:T,col});later(u,0,()=>{u.auraV=null});
+  fxShake(.28,u.x,u.y);fxPillar(u.x,u.y,col,{u,h:300,w:46,t:.7,al:.5});fxRing(u.x,u.y,{u,r0:20,r1:150,col,c2:'#ffffff',w:8,t:.5});fxLight(u.x,u.y,240,col,{u,t:.8,a:.45});fxEmbers(u.x,u.y,60,col,{u,n:12,h:150,t:T,c2:'#ffffff'});
   for(let i=0;i<3;i++)later(u,.3+i*.42,()=>{if(u.dead)return;const b=u.aim,last=i===2;ucS('saber',u);ucS(last?'boom':'heavy',u);
    jx({jfx:'uc_totsuka',ui:ucI(u),x:u.x,y:u.y,a:b,dir:i%2?-1:1,last:last?1:0,t:.42,m:.42,col});
-   for(const e of enemies(u))if(dist(u,e)<180+e.r&&angDiff(ang(u,e),b)<1.05&&hit(e,u,last?ucK.susL:ucK.susD,last?{stun:ucK.susS,unblockable:1}:{kb:150,unblockable:1,fx:u.x,fy:u.y})&&last){jx({jfx:'seal',ti:ucI(e),x:e.x,y:e.y,t:1,m:1});say(e,'SCELLÉ','#ffe8a0')}
-   if(near(u.x,u.y))shake=Math.max(shake,last?.35:.18)})}),
+   for(const e of enemies(u))if(dist(u,e)<180+e.r&&angDiff(ang(u,e),b)<1.05&&hit(e,u,last?ucK.susL:ucK.susD,last?{stun:ucK.susS,unblockable:1}:{kb:150,unblockable:1,fx:u.x,fy:u.y})){fxBurst(e.x,e.y,col,{u,n:10,sp:380,a:b,arc:1.2,z:40,c2:'#ffffff',w:1.8,len:.18,t:.3});fxHitStop(u,e,last?ucK.susL:ucK.susD,last);
+    if(last){jx({jfx:'seal',ti:ucI(e),x:e.x,y:e.y,t:1,m:1});say(e,'SCELLÉ','#ffe8a0');fxImpact(e.x,e.y,'fuin',1.3,{u,r:50})}}
+   {const m=fwd(u,b,120);fxWind(m.x,m.y,b+(i%2?-1:1)*1.4,{u,len:200,w:120,n:6,t:.35,col});if(last){fxShake(.32,u.x,u.y);fxRing(m.x,m.y,{u,r0:20,r1:110,col:'#ffe8a0',t:.45,w:6});fxDecal(m.x,m.y,'seal',{u,r:70,t:2.5,col:'#ffe8a0'})}}})}),
 });
 Object.assign(NATHERO,{uc:'ahsoka'});
 // ---- mécaniques annexes
@@ -122,13 +131,13 @@ function ucWire(u,t){if(t.unstop<=0&&!(t.slowImm>0)){t.root=Math.max(t.root,ucK.
  const f=jx({jfx:'uc_ryuka',ui:ucI(u),ti:ucI(t),x:t.x,y:t.y,t:tr+.45,m:tr+.45,tr});aux.push({type:'uc_wire',x:t.x,y:t.y,r:0,t:tr,m:tr,team:u.team,owner:u,tg:t,f,ui:ucI(u),ti:ucI(t)})}
 AUXF.uc_wire=x=>{const u=x.owner,e=x.tg;if(x.done)return;
  if(u.dead||e.dead||u.stun>0||dist(u,e)>560){x.done=1;x.t=0;if(x.f)x.f.t=Math.min(x.f.t,.1);if(!e.dead)say(e,'FIL ROMPU','#cccccc');return}
- x.x=e.x;x.y=e.y;if(x.t<=0){x.done=1;VFX='fire';hit(e,u,ucK.ryuF,{dot:BURN(3,2)});VFX=null;detoFx(e.x,e.y,46,'fire');ucS('fire',u);sparks(e.x,e.y,'#ffb03a',12,'fire')}};
+ x.x=e.x;x.y=e.y;if(x.t<=0){x.done=1;VFX='fire';hit(e,u,ucK.ryuF,{dot:BURN(3,2)});VFX=null;detoFx(e.x,e.y,46,'fire');ucS('fire',u);sparks(e.x,e.y,'#ffb03a',12,'fire');fxImpact(e.x,e.y,'katon',1,{u,r:46});fxHitStop(u,e,ucK.ryuF)}};
 // fils des shuriken en vol : on tient à jour le point d'attache (lanceur) pour le dessin
 AUXF.uc_wthrow=x=>{for(const p of x.ps){p.ox=x.owner.x;p.oy=x.owner.y}};
 // Gôkakyû : la boule grossit en vol ; explosion (feu, brûlure, sol embrasé) au contact, en fin de course ou à la relance
 function ucGokaBoom(p){if(p.uc_b)return;p.uc_b=1;const u=p.owner,R=ucK.gkR+p.r*2.2,d=ucK.gkA+(p.r-14)*.5,V=VFX;VFX='fire';
  aoe(u,p.x,p.y,R,d,{dot:BURN(3,1.5),kb:110,quiet:1},'#ff7a2a');field(u,p.x,p.y,{r:R*.7,t:1.6,dps:3,col:'#ff7a2a',vfx:'fire'});VFX=V;
- jx({jfx:'uc_gkboom',x:p.x,y:p.y,r:R,t:.75,m:.75});if(near(p.x,p.y)){shake=Math.max(shake,.28);ucS('boom',u)}}
+ jx({jfx:'uc_gkboom',x:p.x,y:p.y,r:R,t:.75,m:.75});if(near(p.x,p.y)){ucS('boom',u);fxImpact(p.x,p.y,'katon',clamp(R/48,1,2),{u,r:R});fxSmoke(p.x,p.y,{u,col:'#3a3030',n:5,r:R*.6,s:16,t:1.3,al:.24,rise:70});for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<R+e.r)fxHitStop(u,e,d+8)}}
 AUXF.uc_gk=(x,dt)=>{const p=x.p,u=x.owner;if(x.done)return;
  // tant que la boule vole : pas de nouvelle boule (si une autre charge a pris la relance) ; les bots ne relancent pas
  if(!p.dead&&p.life>0&&projs.indexOf(p)>=0){p.r=Math.min(p.windB?34:26,p.r+dt*9);x.x=p.x;x.y=p.y;if(x.i>=0&&(!u.ctrl||!(u.jst&&u.jst.key==='uc_goka')))u.cds[x.i]=Math.max(u.cds[x.i],.3);return}
@@ -138,7 +147,7 @@ const ucIzaClean=u=>{cleanse(u);for(const o of aux)if(o.type==='uc_amat'&&o.tg==
 AUXF.uc_iza=x=>{const u=x.owner;if(x.done)return;if(u.dead){x.done=1;x.t=0;return}
  if(!(u.izT>0)){x.done=1;x.t=0;ucIzaClean(u);jx({jfx:'uc_izend',x:x.lx,y:x.ly,x2:u.x,y2:u.y,t:.7,m:.7});return}x.lx=u.x;x.ly=u.y;
  if(x.t<=0){x.done=1;const ox=u.x,oy=u.y;u.izT=0;u.hp=Math.max(u.hp,x.hp);u.x=x.x;u.y=x.y;u.kx=u.ky=0;u.dash=null;ucIzaClean(u);collide(u);
-  jx({jfx:'uc_izend',x:ox,y:oy,x2:u.x,y2:u.y,t:.7,m:.7});ring(u.x,u.y,60,'#e0304a');say(u,'IZANAGI !','#ff5a6a');ucS('genjutsu',u)}};
+  jx({jfx:'uc_izend',x:ox,y:oy,x2:u.x,y2:u.y,t:.7,m:.7});ring(u.x,u.y,60,'#e0304a');say(u,'IZANAGI !','#ff5a6a');ucS('genjutsu',u);fxFlare(u.x,u.y,'#ff3a4a',{u,z:36,r:34,t:.3});fxBurst(ox,oy,'#ff5a6a',{u,n:12,sp:200,z:36,sh:'petal',w:2.4,gr:-20,t:.7,c2:'#ffd0d8'})}};
 // Amaterasu : flammes noires à part (élément neutre, indépendantes des brûlures du moteur : ni l'eau ni une autre brûlure ne les éteignent ;
 // seuls l'intangibilité et Izanagi y échappent) ; chaque seconde, elles sautent sur les ennemis proches qui ne brûlent pas encore
 function ucIgnite(u,e,dmg,dps,dur){if(!hit(e,u,dmg,{el:-1,unblockable:1}))return false;const x=aux.find(o=>o.type==='uc_amat'&&o.tg===e&&!o.end);
@@ -245,13 +254,13 @@ JFXD.uc_ryuka=(f,k,e,t,u,tg)=>{if(!u||!tg||u.dead||tg.dead||f.cut)return;const e
    circ(h.x,h.y,R*1.6,'rgba(255,90,26,.5)');circ(h.x,h.y,R,'#ffb03a');circ(h.x,h.y,R*.5,'#fff3c0');g.globalCompositeOperation='source-over'}}
  else{const e2=(el-f.tr)/(f.m-f.tr);g.globalCompositeOperation='lighter';for(let i=0;i<8;i++){const c=i*.785+t*2,r=(12+e2*30)*b.s;circ(b.x+Math.cos(c)*r,b.y+Math.sin(c)*r*.6-e2*20*b.s,(9-e2*6)*b.s,rgba(i%2?'#ff7a2a':'#ffd36a',.7*(1-e2)))}}};
 // Gôkakyû : boule de feu en couches, langues de flamme qui tournent autour
-PROJD.uc_goka=(p,R,ra,t)=>{const T=t/1000;g.globalCompositeOperation='lighter';g.rotate(ra);for(let i=5;i>=1;i--)circ(-i*R*.42,Math.sin(T*16+i)*R*.12,R*(1-i*.13),rgba(i%2?'#ff5a1a':'#ffb03a',.4));
+PROJD.uc_goka=(p,R,ra,t)=>{const T=t/1000;{const q0=P(p.x,p.y,0),q=P(p.x,p.y,28);fxGlowS(0,(q0.y-q.y)/q.s,R*2.2,'#ff7a2a',.45*fxA(p),R*2.2*K,0)}g.globalCompositeOperation='lighter';fxGlowS(0,0,R*2.4,'#ff5a1a',.4*fxA(p));g.rotate(ra);for(let i=5;i>=1;i--)circ(-i*R*.42,Math.sin(T*16+i)*R*.12,R*(1-i*.13),rgba(i%2?'#ff5a1a':'#ffb03a',.4));
  circ(0,0,R*1.12,'rgba(224,64,26,.55)');circ(0,0,R*.9,'rgba(255,122,42,.85)');circ(R*.1,0,R*.66,'#ffb03a');circ(R*.18,0,R*.4,'#ffe9a0');circ(R*.22,0,R*.18,'#ffffff');
  g.fillStyle='rgba(255,170,60,.5)';for(let i=0;i<6;i++){const b=T*5+i*1.047,c=Math.cos(b),s=Math.sin(b);g.beginPath();g.moveTo(c*R*.8,s*R*.8);g.quadraticCurveTo(c*R*1.25-s*R*.3,s*R*1.25+c*R*.3,c*R*1.5,s*R*1.5);g.quadraticCurveTo(c*R*1.1+s*R*.2,s*R*1.1-c*R*.2,c*R*.8,s*R*.8);g.fill()}};
 // explosion du Gôkakyû : sol roussi, anneau de feu, boule qui monte, flammes et fumée
 JFXD.uc_gkboom=(f,k,e,t)=>{const q=P(f.x,f.y,0),s=q.s,R=f.r*s,ee=ezo(e);g.fillStyle=rgba('#2a1408',.35*k);g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.fill();g.globalCompositeOperation='lighter';
  g.strokeStyle=rgba('#ff7a2a',.85*k);g.lineWidth=10*k*s+1;g.beginPath();g.ellipse(q.x,q.y,R*(.35+.75*ee),R*(.35+.75*ee)*K,0,0,7);g.stroke();
- const H=R*.75*(1-e*.4),cy=q.y-H*.6-e*30*s;circ(q.x,cy,H*.8*k,'rgba(255,90,26,.55)');circ(q.x,cy,H*.55*k,'rgba(255,176,58,.7)');circ(q.x,cy,H*.3*k,'rgba(255,240,190,.8)');
+ const H=R*.75*(1-e*.4),cy=q.y-H*.6-e*30*s-20*s;fxGlowS(q.x,cy,H*1.1*k,'#ff7a2a',.6);circ(q.x,cy,H*.42*k,'rgba(255,176,58,.4)'); // boule qui monte : lueur, plus d'aplat clair opaque sur la cible
  for(let i=0;i<10;i++){const b=i*.628,x=q.x+Math.cos(b)*R*.8*ee,y=q.y+Math.sin(b)*R*.8*ee*K,h=(26+((i*29)%20))*s*k;g.fillStyle=rgba(i%2?'#ff5a1a':'#ffb03a',.75*k);g.beginPath();g.moveTo(x-5*s,y);g.quadraticCurveTo(x,y-h*1.6,x+5*s,y);g.fill()}
  g.globalCompositeOperation='source-over';for(let i=0;i<5;i++){const b=i*1.26+.4;circ(q.x+Math.cos(b)*R*.4,cy-e*40*s-i*6*s,(12+e*14)*s,rgba('#3a3030',.3*k*e))}};
 // Izanagi : reflet du ninja au point d'ancrage, horloge au sol, fil rouge jusqu'au ninja
@@ -298,9 +307,12 @@ function ucBlackFlames(qx,qy,s,t){g.lineWidth=1;g.strokeStyle='#8a3ab0';g.fillSt
  for(let i=0;i<3;i++){const ph=(t*.9+i*.33)%1;circ(qx+Math.sin(t*3+i*2)*10*s,qy-(60+ph*30)*s,(2.2-ph*1.5)*s,'#2a1238')}}
 // la brûlure d'Amaterasu se lit sur le ninja (champ uc_am synchronisé : visible aussi chez les invités)
 STATD.push((u,p,S)=>{if(u.uc_am>0)ucBlackFlames(p.x,p.y,S*.96,performance.now()/1000)});
+// anticipation pendant les mudras d'un jutsu Uchiha : l'œil rougeoie (deux points rouges qui s'allument), tomoe qui tournent aux pieds
+STATD.push((u,p,S,sk)=>{if(!u.cast||u.dead)return;const ab=u.ch.abil[u.cast.i];if(!ab||!ab.key||!ab.key.startsWith('uc_'))return;const kk=Math.min(1,u.cast.t/u.cast.dur),t=performance.now()/1000,q=P(u.x+Math.cos(u.aim)*6,u.y+Math.sin(u.aim)*6,60*(sk||1));
+ ucDim(u,()=>{fxGlowS(q.x,q.y,(6+12*kk)*q.s,'#ff2a3a',.35+.4*kk,(4+6*kk)*q.s);g.save();g.globalAlpha*=.5+.5*kk;for(let i=0;i<3;i++){const b=t*3+i*2.094;ucTomoe(p.x+Math.cos(b)*30*S,p.y+Math.sin(b)*30*S*K,2.4*S,b+1.57,'#c0202a')}g.restore()})});
 JFXD.blackfire=(f,k,e,t,u,tg)=>{if(tg&&!tg.dead){const q=P(tg.x,tg.y,0);ucBlackFlames(q.x,q.y,q.s*1.25,t)}}; // nom historique (autres kits)
 // Tsukuyomi : monde rouge sous la cible, croix noire plantée derrière elle (bras de la croix à hauteur d'épaules : ils dépassent de part et d'autre), lune rouge
-AUXD.uc_tsk=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,c=q.s*1.3;g.fillStyle=rgba('#a00a18',.35*k);g.beginPath();g.ellipse(q.x,q.y,80*s,80*s*K,0,0,7);g.fill();g.strokeStyle=rgba('#120408',.6*k);g.lineWidth=1.5;
+AUXD.uc_tsk=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s,c=q.s*1.3;fxGlowG(x.x,x.y,90,'#d01a2a',.3*k);g.fillStyle=rgba('#a00a18',.35*k);g.beginPath();g.ellipse(q.x,q.y,80*s,80*s*K,0,0,7);g.fill();g.strokeStyle=rgba('#120408',.6*k);g.lineWidth=1.5;
  for(let i=0;i<8;i++){const b=i*.785+.2;g.beginPath();g.moveTo(q.x+Math.cos(b)*20*s,q.y+Math.sin(b)*20*s*K);g.lineTo(q.x+Math.cos(b)*76*s,q.y+Math.sin(b)*76*s*K);g.stroke()}
  const X=q.x,Y=q.y-3*c,up=Math.min(1,(x.m-x.t)/.15); // la croix surgit du sol
  g.fillStyle=rgba('#140408',.95*k);g.strokeStyle=rgba('#ff3a4a',.75*k);g.lineWidth=1.5;g.beginPath();g.rect(X-5*c,Y-76*c*up,10*c,76*c*up);g.rect(X-46*c,Y-38*c*up,92*c,8*c);g.fill();g.stroke();
@@ -310,7 +322,7 @@ JFXD.uc_tsuku=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;const q=P(tg.x,tg.y,0),s=q
  g.strokeStyle='rgba(220,30,50,.85)';g.lineWidth=2*s;for(const [y0,w] of[[14,12],[22,13]]){g.beginPath();g.ellipse(q.x,q.y-y0*c,w*c,4*c,0,0,7);g.stroke()}
  for(const d of[-1,1]){g.beginPath();g.ellipse(q.x+d*36*c,q.y-37*c,3.5*c,6*c,0,0,7);g.stroke()}g.globalAlpha=1};
 // Susanô (derrière le ninja) : cage thoracique, épaules et crâne de chakra
-AUXD.uc_susa=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s*1.3,c=x.col||'#a5f',al=k*(.85+.15*Math.sin(t*7)),cx=q.x,Y=v=>q.y-v*s;g.globalCompositeOperation='lighter';
+AUXD.uc_susa=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s*1.3,c=x.col||'#a5f',al=k*(.85+.15*Math.sin(t*7))*fxA(x),cx=q.x,Y=v=>q.y-v*s;fxGlowG(x.x,x.y,90,c,.35*al);fxGlowS(cx,Y(70),60*s,c,.13*al,80*s);g.globalCompositeOperation='lighter';
  g.fillStyle=rgba(c,.13*al);g.beginPath();g.ellipse(cx,q.y,58*s,58*s*K,0,0,7);g.fill();g.fillStyle=rgba(c,.08*al);g.beginPath();g.ellipse(cx,Y(62),48*s,44*s,0,0,7);g.fill();
  g.strokeStyle=rgba(c,.75*al);g.lineCap='round';g.lineWidth=3.2*s;g.beginPath();g.moveTo(cx,Y(20));g.lineTo(cx,Y(92));g.stroke();g.lineWidth=2.6*s;
  for(let i=0;i<4;i++){const y=Y(84-i*13),w=(44-i*4)*s;g.beginPath();g.moveTo(cx,y);g.quadraticCurveTo(cx-w,y-5*s,cx-w*.86,y+15*s);g.moveTo(cx,y);g.quadraticCurveTo(cx+w,y-5*s,cx+w*.86,y+15*s);g.stroke()}
@@ -321,7 +333,7 @@ AUXD.uc_susa=(x,k,t)=>{const q=P(x.x,x.y,0),s=q.s*1.3,c=x.col||'#a5f',al=k*(.85+
 JFXD.uc_susf=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x,u.y,0),s=q.s*1.3,c=f.col||'#a5f',al=Math.min(1,k*4,e*8)*.55,cx=q.x;g.globalCompositeOperation='lighter';g.strokeStyle=rgba(c,al);g.lineWidth=2.4*s;g.lineCap='round';
  for(let i=0;i<2;i++){const y=q.y-(70-i*16)*s,w=(40-i*5)*s;g.beginPath();g.moveTo(cx-w*.9,y-8*s);g.quadraticCurveTo(cx-w*.4,y+12*s,cx-4*s,y+14*s);g.moveTo(cx+w*.9,y-8*s);g.quadraticCurveTo(cx+w*.4,y+12*s,cx+4*s,y+14*s);g.stroke()}};
 // coup de Totsuka : bras de chakra, longue lame liquide et traînée en arc ; le dernier coup laisse un sceau
-JFXD.uc_totsuka=(f,k,e,t,u)=>{const o=u&&!u.dead?u:f,c=f.col||'#a5f',sw=ezo(Math.min(1,e/.45)),A=1.15,a0=f.a-A*f.dir,a1=f.a+A*f.dir,b=lerp(a0,a1,sw),L=f.last?215:190,q=P(o.x,o.y,0),s=q.s*1.3;
+JFXD.uc_totsuka=(f,k,e,t,u)=>{const o=u&&!u.dead?u:f,c=f.col||'#a5f',sw=ezo(Math.min(1,e/.45)),A=1.15,a0=f.a-A*f.dir,a1=f.a+A*f.dir,b=lerp(a0,a1,sw),L=f.last?215:190,q=P(o.x,o.y,0),s=q.s*1.3;{const tp=P(o.x+Math.cos(b)*L*.8,o.y+Math.sin(b)*L*.8,40);fxGlowS(tp.x,tp.y,40*s,c,.5*k)}
  g.globalCompositeOperation='lighter';g.fillStyle=rgba(c,.26*k);g.beginPath();for(let i=0;i<=10;i++){const cc=lerp(a0,b,i/10),p=P(o.x+Math.cos(cc)*L,o.y+Math.sin(cc)*L,40);i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)}
  for(let i=10;i>=0;i--){const cc=lerp(a0,b,i/10),p=P(o.x+Math.cos(cc)*L*.35,o.y+Math.sin(cc)*L*.35,58);g.lineTo(p.x,p.y)}g.closePath();g.fill();
  const h=P(o.x+Math.cos(b)*34,o.y+Math.sin(b)*34,84),tp=P(o.x+Math.cos(b)*L,o.y+Math.sin(b)*L,40),sh={x:q.x+(Math.cos(b)>0?1:-1)*54*s,y:q.y-84*s};g.lineCap='round';

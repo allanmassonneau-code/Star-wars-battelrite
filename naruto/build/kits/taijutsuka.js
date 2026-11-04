@@ -22,6 +22,15 @@ const GATEN=['Kaimon · Ouverture','Kyûmon · Repos','Seimon · Vie','Shômon �
 // ouvre les portes jusqu'à n (au-delà de 5 seulement par un jutsu)
 function tjGate(u,n){if((u.tj_g||0)<n){u.tj_g=n;u.tj_cT=3}u.tj_n=Math.max(u.tj_n||0,tjG(u))}
 // annonce au-dessus des nombres de dégâts
+// ---- VFX (boîte à outils nr_fx.js) : air comprimé blanc, feuilles vertes, chakra des portes (vert → rouge), poussière ; les hitbox restent nettes
+const TJ_LF='#5aa83a';
+// impact de taijutsu : éclat blanc, onde, poussière, gel visuel (gros = hit-stop + traînée d'air dans la direction a)
+function tjImp(u,e,s,dmg,big,a,col){const c=col||'#ffffff';fxFlare(e.x,e.y,c,{u,z:32,r:16*s,t:.16,c2:'#ffffff'});fxBurst(e.x,e.y,c,{u,n:7*s,sp:300*s,z:30,a:a??0,arc:a==null?6.3:1.8,w:1.8,len:.16,t:.3});
+ fxRing(e.x,e.y,{u,r0:6,r1:30*s,col:c,w:4,t:.25});fxSmoke(e.x,e.y,{u,col:'#d8d0c0',n:2+s,r:14*s,s:9*s,t:.55,al:.2,rise:10});if(a!=null&&big)fxWind(e.x,e.y,a,{u,len:110*s,w:40*s,n:4,t:.3,col:'#ffffff'});if(dmg)fxHitStop(u,e,dmg,big)}
+// feuilles soulevées (Konoha) : pétales verts non additifs
+function tjLeaves(u,x,y,n,sp,o){fxBurst(x,y,TJ_LF,Object.assign({u,n,sp,z:20,up:90,gr:-20,w:2.4,sh:'petal',c2:'#8ad05a',add:0,t:.8},o||{}))}
+// choc au sol (talon, poing d'air, lotus) : onde au rayon exact, fissures, éclats, poussière
+function tjGround(u,x,y,r,s){fxRing(x,y,{u,r0:r*.2,r1:r,col:'#f0e8d8',c2:'#ffffff',w:6*s,t:.4});fxDecal(x,y,'crack',{u,r:r*.85,t:3.5});fxDebris(x,y,{u,n:6*s,sp:150*s,col:'#8a6a48',c2:'#5a4028',s:3.5*s});fxSmoke(x,y,{u,col:'#c8b898',n:3+2*s,r:r*.6,s:12*s,t:.8,al:.24,rise:14})}
 const tjSay=(u,s,col)=>{if(near(u.x,u.y))txt.push({x:u.x,y:u.y,z:122,s,col,t:1.1})};
 // rotation sur soi ramenée dans [-π, π] (pas de tour à l'envers quand l'animation finit)
 const tjSp=r=>{r%=6.2832;return r>3.1416?r-6.2832:r<-3.1416?r+6.2832:r};
@@ -49,21 +58,22 @@ Object.assign(NAT,{
  // Konoha Senpû : coup de pied circulaire à 360°
  tj_senpu:S_('Konoha Senpû','',5,{hero:'maul',tele:{self:1,r:100},ai:SELF(105,.6)},(u,a)=>{S('wind',u);anim(u,'tj_senpu',.36);
   for(const e of enemies(u))if(dist(u,e)<100+e.r)hit(e,u,12,{melee:1,kb:280,slow:.7,fx:u.x,fy:u.y});
-  jx({jfx:'tj_whirl',ui:units.indexOf(u),x:u.x,y:u.y,r:100,t:.4,m:.4});sparks(u.x,u.y,'#5aa83a',8,'leaf')}),
+  jx({jfx:'tj_whirl',ui:units.indexOf(u),x:u.x,y:u.y,r:100,t:.4,m:.4});sparks(u.x,u.y,'#5aa83a',4,'leaf');fxRing(u.x,u.y,{u,r0:30,r1:100,col:'#e8fff0',w:4,t:.3});tjLeaves(u,u.x,u.y,8,220)}),
  // Konoha Daisenpû : trois tours en avançant (on peut viser entre deux tours), le dernier projette en l'air
  tj_daisen:S_('Konoha Daisenpû','',10,{hero:'savage',line:{len:190,w:210},ai:RG(150,.6)},(u,a)=>{let i=0;
   const spin=(o,n)=>{S('wind',o);dash(o,o.aim,40,.17,{});jx({jfx:'tj_whirl',ui:units.indexOf(o),x:o.x,y:o.y,r:108,t:.3,m:.3,big:1});
    // le 3e tour projette en l'air (Kage Buyô peut suivre)
-   for(const e of enemies(o))if(dist(o,e)<105+e.r&&hit(e,o,n<2?6:10,n<2?{melee:1}:{melee:1,air:.3})&&n===2)tjCut(e);
-   if(n===2){ring(o.x,o.y,105,'#cfe8c0');sparks(o.x,o.y,'#5aa83a',12,'leaf')}};
+   for(const e of enemies(o))if(dist(o,e)<105+e.r&&hit(e,o,n<2?6:10,n<2?{melee:1}:{melee:1,air:.3})){tjImp(o,e,n<2?.8:1.3,n<2?0:10,n===2,ang(o,e));if(n===2)tjCut(e)}
+   fxWind(o.x,o.y,0,{u:o,spin:1,w:100,n:5,t:.3,col:'#e8fff0'});tjLeaves(o,o.x,o.y,4,180);
+   if(n===2){sparks(o.x,o.y,'#5aa83a',6,'leaf');fxRing(o.x,o.y,{u:o,r0:30,r1:105,col:'#cfe8c0',c2:'#ffffff',w:6,t:.35});tjLeaves(o,o.x,o.y,10,260)}};
   anim(u,'tj_daisen',.64);spin(u,0);seqs.push({owner:u,n:2,t:.21,iv:.21,vfx:'leaf',f:o=>spin(o,++i)})}),
  // Konoha Gôriki Senpû : le coup de pied qui brise tout
  tj_goriki:S_('Konoha Gôriki Senpû','',11,{hero:'anakin',line:{len:130,w:150},ai:RG(120,.6)},(u,a)=>{S('heavy',u);S('wind',u);anim(u,'tj_goriki',.42);u.kx+=Math.cos(a)*240;u.ky+=Math.sin(a)*240;
   let n=0;for(const e of enemies(u))if(dist(u,e)<128+e.r&&angDiff(ang(u,e),a)<.8){const sh=e.shield,shT=e.shieldT;e.shield=0;
-   if(hit(e,u,26,{melee:1,unblockable:1,kb:500,wall:.8})){n++;jx({jfx:'tj_impact',x:e.x,y:e.y,a,t:.4,m:.4,big:1});
+   if(hit(e,u,26,{melee:1,unblockable:1,kb:500,wall:.8})){n++;jx({jfx:'tj_impact',x:e.x,y:e.y,a,t:.4,m:.4,big:1});tjImp(u,e,1.6,26,1,a);fxDecal(e.x,e.y,'crack',{u,r:36,t:3});
     if(sh>0){e.shieldT=0;tjSay(e,'BOUCLIER BRISÉ','#bfe6ff');jx({jfx:'tj_shards',x:e.x,y:e.y,t:.6,m:.6})}}
    else if(e.shield<=0){e.shield=sh;e.shieldT=shT}} // esquivé : le bouclier reste
-  jx({jfx:'tj_crescent',ui:units.indexOf(u),x:u.x,y:u.y,a,r:130,t:.35,m:.35});if(n&&near(u.x,u.y))shake=Math.max(shake,.25)}),
+  jx({jfx:'tj_crescent',ui:units.indexOf(u),x:u.x,y:u.y,a,r:130,t:.35,m:.35});fxWind(u.x+Math.cos(a)*60,u.y+Math.sin(a)*60,a,{u,len:200,w:130,n:7,t:.4,col:'#ffffff'});fxSmoke(u.x,u.y,{u,col:'#c8b898',n:3,r:20,s:10,t:.6,al:.22})}),
  // Lotus primaire (Omote Renge) : course, saisie, envol, piqué
  tj_lotus1:S_('Lotus primaire','',13,{hero:'savage',line:{len:300,w:40},ai:{mode:'gap',min:60,max:300,p:.6}},(u,a)=>{S('dash',u);anim(u,'lunge',.3);dash(u,a,300,.27,{});jx({jfx:'tj_dash',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.3,m:.3});
   aux.push({type:'tj_lotus',x:u.x,y:u.y,r:0,t:1.5,m:1.5,team:u.team,owner:u,ui:units.indexOf(u),ph:0,d:u.dash,k:0});tjSay(u,'LOTUS !','#6aff7a');sparks(u.x,u.y,'#6aff7a',8,'gate')}),
@@ -72,12 +82,12 @@ Object.assign(NAT,{
  // Poids retirés : les poids tombent, la vitesse explose (IA : sans chakra, ne le lance plus à chaque ouverture : 220-450 de distance, p 0,25)
  tj_weights:S_('Poids retirés','',6,{hero:'quigon',ai:{mode:'gap',min:220,max:450,p:.25}},(u)=>{u.root=0;u.slow=0;u.haste=Math.max(u.haste,2.2);anim(u,'tj_weights',.32);if(u.ch.clan===TAIJ){tjGate(u,Math.min(5,tjG(u)+1));u.tj_cT=3}S('dash',u);
   const x=u.x,y=u.y;jx({jfx:'tj_weights',x,y,t:.9,m:.9});later(u,.22,()=>{for(const e of enemies(u))if(Math.hypot(e.x-x,e.y-y)<85+e.r)hit(e,u,8,{slow:.8,fx:x,fy:y});
-   if(near(x,y)){S('rock',u);shake=Math.max(shake,.15)}aux.push({type:'tj_crater',x,y,r:30,t:5,m:5,team:u.team,owner:u})})}),
+   if(near(x,y))S('rock',u);aux.push({type:'tj_crater',x,y,r:30,t:5,m:5,team:u.team,owner:u});tjGround(u,x,y,85,1)})}),
  // Bond du fauve : saut et coup de talon (Konoha Daisenkô)
  tj_leap:S_('Bond du fauve','',9,{hero:'savage',ai:{mode:'gap',min:110,max:300,p:.5}},(u,a,td)=>{const d=clamp(td||250,60,300),p=fwd(u,a,d);S('dash',u);anim(u,'tj_heel',.42);
   later(u,.4,()=>{},{x:p.x,y:p.y,r:60});
   dash(u,a,d,.4,{jump:105,end:()=>{const x=u.x,y=u.y;for(const e of enemies(u)){const dd=Math.hypot(e.x-x,e.y-y);if(dd<60+e.r)hit(e,u,7,{melee:1,stun:.4});else if(dd<150+e.r)hit(e,u,4,{kb:300,fx:x,fy:y})}
-   jx({jfx:'tj_heel',x,y,r:150,t:.6,m:.6});if(near(x,y)){S('boom',u);S('rock',u);shake=Math.max(shake,.25)}}})}),
+   jx({jfx:'tj_heel',x,y,r:150,t:.6,m:.6});if(near(x,y)){S('boom',u);S('rock',u)}tjGround(u,x,y,60,1.2);fxRing(x,y,{u,r0:60,r1:150,col:'#ffe08a',w:3,t:.4})}})}),
  // Vitesse du fauve (Kage Buyô) : dans le dos de la cible, et la relance si elle est en l'air
  tj_shadow:S_('Vitesse du fauve','',7,{hero:'ventress',ai:GAP},(u,a,td)=>{const e=pick(u,a,td||300,350),ox=u.x,oy=u.y;S('dash',u);
   if(!e){const p=fwd(u,a,200);u.x=p.x;u.y=p.y;collide(u)}
@@ -86,7 +96,7 @@ Object.assign(NAT,{
   jx({jfx:'tj_blink',x:ox,y:oy,x2:u.x,y2:u.y,ui:units.indexOf(u),t:.45,m:.45});anim(u,'tj_stance',.35)}),
  // Défi éternel : la flamme de la jeunesse désigne un rival
  tj_defi:S_('Défi éternel','',6,{hero:'mace',line:{len:480,w:18},ai:RG(450,.55)},(u,a)=>{S('wind',u);anim(u,'point',.45);jx({jfx:'tj_ting',ui:units.indexOf(u),x:u.x,y:u.y,t:.5,m:.5});
-  proj(u,a,{spd:950,r:10,dmg:3,life:.52,col:'#7dff8a',kind:'tj_defi',o:{taunt:.4},onHit:(p,t)=>tjRival(p.owner,t)})}),
+  proj(u,a,{spd:950,r:10,dmg:3,life:.52,col:'#7dff8a',kind:'tj_defi',o:{taunt:.4},onHit:(p,t)=>{tjRival(p.owner,t);fxFlare(t.x,t.y,'#7dff8a',{u:p.owner,z:40,r:16,t:.2});fxBurst(t.x,t.y,'#ff7a3a',{u:p.owner,n:8,sp:90,z:50,up:60,gr:-80,w:2,c2:'#ffd36a',t:.6})}})}),
  // Dynamic Entry : saut de pied volant vers le curseur, le premier ennemi rencontré est éjecté
  tj_dynamic:S_('Dynamic Entry','',8,{hero:'bossk',line:{len:400,w:44},ai:{mode:'gap',min:130,max:400,p:.55}},(u,a,td)=>{S('dash',u);anim(u,'tj_flykick',.36);
   dash(u,a,clamp((td||300)+20,90,400),.26,{jump:48,end:()=>tjEntry(u,null,a)});jx({jfx:'tj_dash',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.3,m:.3});aux.push({type:'tj_entry',owner:u,d:u.dash,a,x:u.x,y:u.y,r:0,t:.45,m:.45,team:u.team})}),
@@ -105,37 +115,41 @@ Object.assign(NAT,{
  tj_elephant:S_('Éléphant du soir','',13,{hero:'gideon',tele:{r:80,max:380},ai:{max:380,p:.8}},(u)=>{const D=tjLock(u,1.35);anim(u,'tj_punches',1.35);let i=0;
   const punch=o=>{if(o.dash!==D||o.dead)return;const p=tjCur(o,380),n=i;o.aim=ang(o,p);S('heavy',o);jx({jfx:'tj_foot',x:p.x,y:p.y,r:78,a:o.aim,t:.16,m:.16});
    later(o,.15,()=>{for(const e of enemies(o))if(Math.hypot(e.x-p.x,e.y-p.y)<68+e.r)hit(e,o,8,n<4?{kb:50,slow:.4,fx:p.x,fy:p.y}:{stun:.8});
-    jx({jfx:'tj_stomp',x:p.x,y:p.y,r:78,last:n===4,t:.55,m:.55});if(near(p.x,p.y)){S('boom',o);shake=Math.max(shake,n<4?.12:.3)}})};
+    jx({jfx:'tj_stomp',x:p.x,y:p.y,r:78,last:n===4,t:.55,m:.55});if(near(p.x,p.y))S('boom',o);tjGround(o,p.x,p.y,68,n<4?.8:1.4);
+    if(n===4){fxFlare(p.x,p.y,'#ffe08a',{u:o,z:20,r:30,t:.22});for(const e of enemies(o))if(Math.hypot(e.x-p.x,e.y-p.y)<68+e.r)fxHitStop(o,e,16,1)}})};
   punch(u);seqs.push({owner:u,n:4,t:.28,iv:.28,vfx:'tai',f:o=>{i++;punch(o)}})}),
  // Huit Portes : toutes les portes s'ouvrent, puis l'épuisement
  tj_8gates:S_('Huit Portes','',24,{hero:'bossk',ai:SELF(170,.8)},(u,a)=>{const i=u.ch.abil.findIndex(x=>x&&x.key==='tj_8gates');
   if(u.jst&&u.jst.key==='tj_8gates'){u.cds[u.jst.i]=u.jst.cd;u.jst=null;if(u.tj_8>0){NAT.tj_night.f(u,a);u.tj_8=Math.min(u.tj_8,.01)}return} // relance : Nuit de la mort, fin des portes
   if(i>=0){if(u.jst)u.cds[u.jst.i]=u.jst.cd;u.jst={key:'tj_8gates',i,n:1,t:6,cd:u.ch.abil[i].cd,v:'gate'};u.cds[i]=.5}
   u.tj_8=6;u.tj_g=8;u.lsB=Math.max(u.lsB,6);u.haste=Math.max(u.haste,6);u.rage=Math.max(u.rage,6);u.unstop=Math.max(u.unstop,3);gain(u,40,u);u.tj_red=6;
-  anim(u,'tj_gate',.8);S('heavy',u);jx({jfx:'tj_8gates',ui:units.indexOf(u),x:u.x,y:u.y,t:1.1,m:1.1});if(near(u.x,u.y))shake=Math.max(shake,.35)}),
+  anim(u,'tj_gate',.8);S('heavy',u);jx({jfx:'tj_8gates',ui:units.indexOf(u),x:u.x,y:u.y,t:1.1,m:1.1});
+  // 8e porte : colonne de chakra rouge, onde, le sol se fend, vapeur de sang qui monte 6 s
+  fxPillar(u.x,u.y,'#ff4a3a',{u,h:260,w:36,t:.8,al:.5});fxRing(u.x,u.y,{u,r0:20,r1:150,col:'#ff4a3a',c2:'#8affd8',w:8,t:.55});fxDecal(u.x,u.y,'crack',{u,r:90,t:5});fxDebris(u.x,u.y,{u,n:10,sp:200,col:'#8a6a48',c2:'#5a4028',s:4});
+  fxEmbers(u.x,u.y,24,'#ff5a3a',{u,n:9,t:6,h:90,c2:'#8affd8'});fxLight(u.x,u.y,200,'#ff4a3a',{u,t:.8,a:.45});fxShake(.35,u.x,u.y)}),
  // Paon du matin (Asa Kujaku) : éventail de plumes de feu, on peut balayer avec la souris
  tj_peacock:S_('Paon du matin','',15,{hero:'anakin',line:{len:330,w:160},ai:{max:210,p:.8}},(u)=>{const D=tjLock(u,.9);anim(u,'tj_flurry',.9);tjGate(u,6);
-  jx({jfx:'tj_tail',ui:units.indexOf(u),x:u.x,y:u.y,t:.9,m:.9});
+  jx({jfx:'tj_tail',ui:units.indexOf(u),x:u.x,y:u.y,t:.9,m:.9});fxCharge(u,'#ff8a2a',{t:.4,n:10,r:50});fxLight(u.x,u.y,140,'#ff7a2a',{u,t:.9,a:.35});
   seqs.push({owner:u,n:13,t:.02,iv:.055,vfx:'peacock',f:o=>{if(o.dash!==D)return;const p=tjCur(o,330);o.aim=ang(o,p);const b=o.aim+(rnd()-.5)*.5;S('fire',o);
-   proj(o,b,{spd:900,r:9,dmg:2.4,life:.38,col:'#ff8a2a',kind:'tj_feather',vfx:'peacock',o:{dot:BURN(2,2)}})}});
+   proj(o,b,{spd:900,r:9,dmg:2.4,life:.38,col:'#ff8a2a',kind:'tj_feather',vfx:'peacock',o:{dot:BURN(2,2)},onHit:(p,t)=>fxBurst(t.x,t.y,'#ffb03a',{u:p.owner,n:4,sp:180,z:32,up:60,gr:-40,w:1.6,c2:'#fff0c0',t:.35})})}});
   later(u,.8,()=>{if(u.dash!==D||u.dead||u.stun>0)return;const p=tjCur(u,330);u.aim=ang(u,p);S('fire',u);S('boom',u);
-   proj(u,u.aim,{spd:950,r:18,dmg:9,life:.36,col:'#ffb03a',kind:'tj_fist',vfx:'peacock',big:1,o:{air:.5},onHit:(p,t)=>tjCut(t)})})}),
+   proj(u,u.aim,{spd:950,r:18,dmg:9,life:.36,col:'#ffb03a',kind:'tj_fist',vfx:'peacock',big:1,o:{air:.5},onHit:(p,t)=>{tjCut(t);fxImpact(t.x,t.y,'katon',1.3,{u:p.owner,r:50});fxHitStop(p.owner,t,9,1)}})})}),
  // Tigre de midi (Hirudora) : le poing comprime l'air en un tigre
  tj_tiger:ULT('Tigre de midi','',{hero:'luke',line:{len:620,w:70},ai:{max:560,p:.8}},(u)=>{const D=tjLock(u,.45);anim(u,'tj_tiger',.62);tjGate(u,7);S('wind',u);
   jx({jfx:'tj_suck',ui:units.indexOf(u),x:u.x,y:u.y,t:.3,m:.3});
   later(u,.3,()=>{if(u.dead||u.dash!==D||u.stun>0)return;const p=tjCur(u,620),a=ang(u,p);u.aim=a;S('heavy',u);S('boom',u);S('roar',u);
    const sx=u.x+Math.cos(a)*30,sy=u.y+Math.sin(a)*30;aux.push({type:'tj_tiger',x:sx,y:sy,vx:Math.cos(a)*820,vy:Math.sin(a)*820,a,r:34,t:.78,m:.78,team:u.team,owner:u,hs:new Set()});
-   jx({jfx:'tj_tigerfx',x:sx,y:sy,a,spd:820,t:.78,m:.78});jx({jfx:'shock',x:u.x,y:u.y,r:90,t:.4,m:.4,col:'#e8fff4'});if(near(u.x,u.y))shake=Math.max(shake,.3)})}),
+   jx({jfx:'tj_tigerfx',x:sx,y:sy,a,spd:820,t:.78,m:.78});jx({jfx:'shock',x:u.x,y:u.y,r:90,t:.4,m:.4,col:'#e8fff4'});fxWind(sx,sy,a,{u,len:240,w:80,n:8,t:.5,col:'#e8fff4'});fxFlare(sx,sy,'#e8fff4',{u,z:34,r:30,t:.22});fxShake(.3,u.x,u.y)})}),
  // Nuit de la mort (Yagai) : le coup de pied de la 8e porte
  tj_night:ULT('Nuit de la mort','',{hero:'sister',line:{len:440,w:64},ai:{mode:'exec',max:420,p:.9}},(u,a)=>{u.hp=Math.max(1,u.hp-u.hp*.25);u.tj_red=Math.max(u.tj_red||0,2.5);tjGate(u,8);u.unstop=Math.max(u.unstop,.7);
-  S('roar',u);S('dash',u);anim(u,'tj_flykick',.5);const sx=u.x,sy=u.y;dash(u,a,440,.34,{});u.dash.nt=1;
+  S('roar',u);S('dash',u);anim(u,'tj_flykick',.5);const sx=u.x,sy=u.y;dash(u,a,440,.34,{});u.dash.nt=1;fxWind(sx,sy,a+Math.PI,{u,len:160,w:80,n:7,t:.45,col:'#ff8a7a'});fxDecal(sx,sy,'crack',{u,r:40,t:3});
   aux.push({type:'tj_night',x:u.x,y:u.y,r:0,t:.5,m:.5,team:u.team,owner:u,d:u.dash,hs:new Set()});jx({jfx:'tj_dragon',x:sx,y:sy,a,len:440,dur:.34,t:.95,m:.95});
   later(u,.36,()=>{if(u.dead)return;u.slow=Math.max(u.slow,2);tjSay(u,'ÉPUISÉ','#ff9a7a')})}),
 });
 // descriptions affichées = celles du catalogue
 for(const r of KITROWS)if(r[0]==='c10'&&r[3].startsWith('x.')){const N=NAT[r[3].slice(2)];if(N&&!N.d)N.d=r[5]}
 // Lotus caché (Ura Renge) : 1er assaut au curseur ; s'il touche, la cible est projetée et deux assauts éclair la traversent de part et d'autre
-NAT.tj_lotus2.f=(u,a)=>{u.hp=Math.max(1,u.hp-u.hp*.1);tjGate(u,3);jx({jfx:'tj_gate',ui:units.indexOf(u),x:u.x,y:u.y,n:3,t:.7,m:.7});tjSay(u,'LOTUS CACHÉ !','#6aff7a');
+NAT.tj_lotus2.f=(u,a)=>{u.hp=Math.max(1,u.hp-u.hp*.1);tjGate(u,3);jx({jfx:'tj_gate',ui:units.indexOf(u),x:u.x,y:u.y,n:3,t:.7,m:.7});tjSay(u,'LOTUS CACHÉ !','#6aff7a');fxRing(u.x,u.y,{u,r0:10,r1:60,col:'#6aff7a',w:5,t:.35});tjLeaves(u,u.x,u.y,8,200);
  tjUra(u,a,230,0,null)};
 function tjUra(u,a,L,n,tg){S('dash',u);anim(u,n===2?'tj_flykick':n?'lunge':'kickup',.22);dash(u,a,L,.13,{});aux.push({type:'tj_ura',owner:u,d:u.dash,n,tg,sx:u.x,sy:u.y,x:u.x,y:u.y,r:0,t:.6,m:.6,team:u.team,hs:new Set()})}
 Object.assign(NATHERO,{tj:'kylo'});
@@ -143,9 +157,10 @@ Object.assign(NATHERO,{tj:'kylo'});
 // (sans chakra depuis que les arbres martiaux sont gratuits : élan de la 3e porte ramené de 4,5 à 3 s au total, −25 → −20 % de dégâts subis, endurance remontée à 60 au lieu de 100)
 NAT.tj_gates=S_('Portes célestes','',10,{hero:'savage',ai:SELF(180,.6)},(u)=>{u.root=0;u.slow=0;u.unstop=Math.max(u.unstop,1.5);u.drT=Math.max(u.drT,1.5);u.dr=Math.max(u.dr||0,.2);u.critBuf=Math.max(u.critBuf||0,1);
  tjGate(u,Math.max(3,tjG(u)));u.tj_cT=3;u.tj_life=Math.max(u.tj_life||0,3);u.regenB=Math.max(u.regenB,3);u.haste=Math.max(u.haste,3);u.stam=Math.max(u.stam,60);u.tj_red=Math.max(u.tj_red||0,3);anim(u,'tj_gate',.5);S('heavy',u);
- jx({jfx:'tj_gate',ui:units.indexOf(u),x:u.x,y:u.y,n:3,t:.8,m:.8});jx({jfx:'tj_jade',ui:units.indexOf(u),x:u.x,y:u.y,t:1.5,m:1.5});tjSay(u,'PORTES CÉLESTES !','#6aff7a');if(near(u.x,u.y))shake=Math.max(shake,.15)});
+ jx({jfx:'tj_gate',ui:units.indexOf(u),x:u.x,y:u.y,n:3,t:.8,m:.8});jx({jfx:'tj_jade',ui:units.indexOf(u),x:u.x,y:u.y,t:1.5,m:1.5});tjSay(u,'PORTES CÉLESTES !','#6aff7a');
+ fxPillar(u.x,u.y,'#6aff7a',{u,h:170,w:26,t:.55,al:.4});fxRing(u.x,u.y,{u,r0:10,r1:70,col:'#6aff7a',c2:'#ffffff',w:6,t:.4});fxEmbers(u.x,u.y,26,'#8affa8',{u,n:8,t:1.5,h:80,c2:'#ffffff'});fxDecal(u.x,u.y,'crack',{u,r:40,t:3});fxSmoke(u.x,u.y,{u,col:'#c8b898',n:4,r:30,s:12,t:.7,al:.22})});
 // dash du clan (Espace) : Pas du fauve — ruée de 190 ; fini près d'un ennemi (90), on réapparaît dans son dos ; le coup de base suivant (1,2 s) frappe +30 % ; ouvre une demi-porte
-NAT.tj_pas=S_('Pas du fauve','',5,{hero:'ventress',ai:{mode:'gap',min:120,max:330,p:.45}},(u,a,td)=>{const d=clamp(td||190,60,190),ox=u.x,oy=u.y;S('dash',u);anim(u,'lunge',.2);
+NAT.tj_pas=S_('Pas du fauve','',5,{hero:'ventress',ai:{mode:'gap',min:120,max:330,p:.45}},(u,a,td)=>{const d=clamp(td||190,60,190),ox=u.x,oy=u.y;S('dash',u);anim(u,'lunge',.2);tjLeaves(u,ox,oy,6,140);fxSmoke(ox,oy,{u,col:'#c8b898',n:3,r:16,s:9,t:.5,al:.22});
  dash(u,a,d,.16,{end:()=>{if(u.dead)return;const e=nearE(u,u.x,u.y,90);if(e&&e.phase<=0){const b=ang(u,e);u.x=e.x+Math.cos(b)*(e.r+u.r+6);u.y=e.y+Math.sin(b)*(e.r+u.r+6);collide(u);u.aim=ang(u,e);tjSay(u,'DANS LE DOS','#9f6')}
   u.tj_pb=1.2;if(u.ch.clan===TAIJ){u.tj_g=Math.min(5,(u.tj_g||0)+.5);u.tj_cT=3}jx({jfx:'tj_blink',x:ox,y:oy,x2:u.x,y2:u.y,ui:units.indexOf(u),t:.45,m:.45});sparks(u.x,u.y,'#5aa83a',8,'leaf')}});
  jx({jfx:'tj_dash',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.2,m:.2})});
@@ -167,11 +182,11 @@ AUXF.tj_lotus=x=>{const u=x.owner;if(u.dead){x.t=0;return}
  if(x.k<=0){x.t=0;u.dash=null;u.z=0;e.airT=0;e.z=0;
   hit(e,u,26,{melee:1,unblockable:1,stun:.9});for(const o of enemies(u))if(o!==e&&dist(o,e)<95+o.r)hit(o,u,10,{kb:220,fx:e.x,fy:e.y});
   const b=ang(e,u);u.x=e.x+Math.cos(b)*36;u.y=e.y+Math.sin(b)*36;collide(u);anim(u,'crouch',.3);
-  jx({jfx:'tj_crater',x:e.x,y:e.y,r:95,t:.9,m:.9});if(near(e.x,e.y)){shake=Math.max(shake,.4);S('boom',u);S('rock',u)}}};
+  jx({jfx:'tj_crater',x:e.x,y:e.y,r:95,t:.9,m:.9});if(near(e.x,e.y)){S('boom',u);S('rock',u)}tjGround(u,e.x,e.y,95,1.5);fxHitStop(u,e,26,1)}};
 // Dynamic Entry : le premier ennemi rencontré pendant le saut prend le coup de pied
 AUXF.tj_entry=x=>{const u=x.owner;if(u.dead||u.dash!==x.d){x.t=0;return}for(const e of enemies(u))if(dist(u,e)<u.r+e.r+26){u.dash=null;u.z=0;x.t=0;tjEntry(u,e,x.a);return}};
 function tjEntry(u,e,a){let hitAny=0;for(const o of enemies(u))if(o===e||(!e&&dist(u,o)<u.r+o.r+30&&angDiff(ang(u,o),a)<1.3)){if(hit(o,u,20,{melee:1,kb:260,slow:.6}))hitAny=1}
- const p=fwd(u,a,22);jx({jfx:'tj_impact',x:p.x,y:p.y,a,t:.45,m:.45,big:1});if(hitAny){tjSay(u,'DYNAMIC ENTRY !','#ffe14a');if(near(u.x,u.y)){S('heavy',u);shake=Math.max(shake,.2)}}else sparks(u.x,u.y,'#d8c8a8',8,'smoke')}
+ const p=fwd(u,a,22);jx({jfx:'tj_impact',x:p.x,y:p.y,a,t:.45,m:.45,big:1});if(hitAny){tjSay(u,'DYNAMIC ENTRY !','#ffe14a');if(near(u.x,u.y))S('heavy',u);tjImp(u,p,1.5,20,1,a)}else sparks(u.x,u.y,'#d8c8a8',8,'smoke')}
 // Défi éternel : marque de rival (+10 % de dégâts du lanceur contre elle)
 function tjRival(u,t){if(!u||u.dead||!t||t.dead)return;for(const x of aux)if(x.type==='tj_riv'&&x.owner===u)x.t=0;
  aux.push({type:'tj_riv',x:t.x,y:t.y,r:0,t:5,m:5,team:u.team,owner:u,tg:t,ti:units.indexOf(t),ui:units.indexOf(u)});later(u,.35,()=>{if(!t.dead)tjSay(t,'RIVAL !','#ff7a3a')})}
@@ -180,29 +195,29 @@ AUXF.tj_riv=x=>{const e=x.tg;if(!e||e.dead||x.owner.dead){x.t=0;if(e)e.tj_rvT=0;
 AUXF.tj_crater=()=>{};
 // Tigre de midi : traverse tout, avale les tirs ennemis, frappe chaque ennemi une fois
 AUXF.tj_tiger=(x,dt)=>{x.x+=x.vx*dt;x.y+=x.vy*dt;if(x.x<B.x||x.x>B.x+B.w||x.y<B.y||x.y>B.y+B.h){x.t=0;return}const o=x.owner;
- for(const e of enemies(o))if(!x.hs.has(e)&&Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r){x.hs.add(e);VFX='tai';hit(e,o,30,{kb:700,stun:.6,fx:e.x-Math.cos(x.a)*60,fy:e.y-Math.sin(x.a)*60});VFX=null;jx({jfx:'tj_impact',x:e.x,y:e.y,a:x.a,t:.45,m:.45,big:1})}
+ for(const e of enemies(o))if(!x.hs.has(e)&&Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r){x.hs.add(e);VFX='tai';hit(e,o,30,{kb:700,stun:.6,fx:e.x-Math.cos(x.a)*60,fy:e.y-Math.sin(x.a)*60});VFX=null;jx({jfx:'tj_impact',x:e.x,y:e.y,a:x.a,t:.45,m:.45,big:1});tjImp(o,e,1.8,30,1,x.a,'#e8fff4')}
  for(const q of projs)if(q.owner.team!==x.team&&!q.dead&&Math.hypot(q.x-x.x,q.y-x.y)<x.r+q.r+10){q.life=0;q.dead=1;if(near(q.x,q.y))sparks(q.x,q.y,'#e8fff4',6)}};
 AUXF.tj_ura=x=>{const u=x.owner;if(u.dead){x.t=0;return}
  if(u.dash===x.d){if(u.stun>0){u.dash=null;x.t=0;return}
   for(const e of enemies(u))if(!x.hs.has(e)&&dist(u,e)<u.r+e.r+12){x.hs.add(e);
    // l'enchaînement ne part que si le 1er assaut touche vraiment (esquive, contre, intangible : raté)
-   if(hit(e,u,10,{melee:1,unblockable:1,air:x.n<2?.2:0})){if(!x.tg)x.tg=e;if(x.n<2)tjCut(e);jx({jfx:'tj_impact',x:e.x,y:e.y,a:ang(u,e),t:.3,m:.3})}}return}
+   if(hit(e,u,10,{melee:1,unblockable:1,air:x.n<2?.2:0})){if(!x.tg)x.tg=e;if(x.n<2)tjCut(e);jx({jfx:'tj_impact',x:e.x,y:e.y,a:ang(u,e),t:.3,m:.3});tjImp(u,e,1.2,10,1,ang(u,e),'#bfffc8')}}return}
  if(x.done)return;x.done=1;x.t=0;jx({jfx:'tj_streak',x:x.sx,y:x.sy,x2:u.x,y2:u.y,ui:units.indexOf(u),t:.45,m:.45});if(Math.hypot(u.x-x.d.tx,u.y-x.d.ty)>30)return; // assaut interrompu
- if(x.n===2){const p={x:u.x,y:u.y};for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<85+e.r)hit(e,u,25,{unblockable:1,stun:1,fx:p.x,fy:p.y});jx({jfx:'tj_crater',x:p.x,y:p.y,r:85,t:.8,m:.8});jx({jfx:'tj_impact',x:p.x,y:p.y,a:0,t:.4,m:.4,big:1});
-  if(near(p.x,p.y)){S('boom',u);shake=Math.max(shake,.3)}return}
+ if(x.n===2){const p={x:u.x,y:u.y};for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<85+e.r){hit(e,u,25,{unblockable:1,stun:1,fx:p.x,fy:p.y});fxHitStop(u,e,25,1)}jx({jfx:'tj_crater',x:p.x,y:p.y,r:85,t:.8,m:.8});jx({jfx:'tj_impact',x:p.x,y:p.y,a:0,t:.4,m:.4,big:1});
+  if(near(p.x,p.y))S('boom',u);tjGround(u,p.x,p.y,85,1.6);fxPillar(p.x,p.y,'#6aff7a',{u,h:180,w:26,t:.45,al:.4});fxLight(p.x,p.y,140,'#6aff7a',{u,t:.45,a:.4});fxShake(.32,p.x,p.y);return}
  const e=x.tg;if(!e||e.dead||u.stun>0)return;
  // assaut suivant : repart à travers la cible, de l'autre côté
  later(u,.06,()=>{if(u.dead||e.dead||u.stun>0||u.dash)return;const n=x.n+1,b=ang(u,e)+(n===1?.22:0),L=n===2?Math.max(40,dist(u,e)):clamp(dist(u,e)+120,150,300);tjUra(u,b,L,n,e)})};
 // Nuit de la mort : chaque ennemi traversé prend le coup (exécution)
 AUXF.tj_night=x=>{const u=x.owner;if(u.dead||u.dash!==x.d){x.t=0;return}
  for(const e of enemies(u))if(!x.hs.has(e)&&dist(u,e)<u.r+e.r+22){x.hs.add(e);hit(e,u,60,{melee:1,unblockable:1,exec:.1,kb:300});jx({jfx:'tj_impact',x:e.x,y:e.y,a:ang(u,e),t:.5,m:.5,big:1,col:'#ff6a4a'});
-  tjSay(e,'NUIT DE LA MORT','#ff4a3a');if(near(e.x,e.y)){S('boom',u);shake=Math.max(shake,.45)}}
+  tjSay(e,'NUIT DE LA MORT','#ff4a3a');if(near(e.x,e.y))S('boom',u);tjImp(u,e,2.2,60,1,ang(u,e),'#ff6a4a');fxPillar(e.x,e.y,'#ff4a3a',{u,h:200,w:24,t:.5,al:.45});fxDecal(e.x,e.y,'crack',{u,r:60,t:4});fxShake(.45,e.x,e.y)}
  if(near(u.x,u.y))fx.push({x:u.x+(rnd()-.5)*20,y:u.y+(rnd()-.5)*20,z:20+rnd()*30,vx:(rnd()-.5)*60,vy:(rnd()-.5)*60,t:.6,m:.6,col:rnd()<.5?'#ff4a3a':'#ffb0a0',r:3+rnd()*3,vfx:'chakra'})};
 // Esquive du fauve : pas de côté, image rémanente, puis riposte si l'attaquant est proche
 function tjDodge(u,src){const ox=u.x,oy=u.y,a=ang(src,u),s=rnd()<.5?1:-1;u.kx=u.ky=0;u.x+=Math.cos(a+s*1.57)*42;u.y+=Math.sin(a+s*1.57)*42;collide(u);u.haste=Math.max(u.haste,1.5);
- jx({jfx:'tj_ghost',ui:units.indexOf(u),x:ox,y:oy,t:.5,m:.5});sparks(ox,oy,'#5aa83a',10,'leaf');tjSay(u,'ESQUIVE','#9f6');S('dash',u);
+ jx({jfx:'tj_ghost',ui:units.indexOf(u),x:ox,y:oy,t:.5,m:.5});sparks(ox,oy,'#5aa83a',4,'leaf');tjLeaves(u,ox,oy,8,160);tjSay(u,'ESQUIVE','#9f6');S('dash',u);
  if(dist(u,src)<170&&!src.dead)later(u,.08,()=>{if(u.dead||u.stun>0||src.dead||dist(u,src)>190)return;u.aim=ang(u,src);anim(u,'tj_senpu',.3);VFX='leaf';
-  hit(src,u,14,{melee:1,unblockable:1,kb:240});VFX=null;jx({jfx:'tj_crescent',ui:units.indexOf(u),x:u.x,y:u.y,a:u.aim,r:90,t:.3,m:.3});tjSay(u,'RIPOSTE','#9f6')})}
+  hit(src,u,14,{melee:1,unblockable:1,kb:240});VFX=null;tjImp(u,src,1.2,14,1,u.aim);jx({jfx:'tj_crescent',ui:units.indexOf(u),x:u.x,y:u.y,a:u.aim,r:90,t:.3,m:.3});tjSay(u,'RIPOSTE','#9f6')})}
 
 // ---------- trait de clan : les Huit Portes ----------
 TRAITS[10]={nom:'Huit Portes',desc:'Frapper et encaisser ouvre peu à peu les portes (jusqu\'à la 5e) : +1,5 % de dégâts et de vitesse par porte ; dès la 3e, le corps se consume. Hors combat, elles se referment.',
@@ -228,17 +243,17 @@ TRAITS[10]={nom:'Huit Portes',desc:'Frapper et encaisser ouvre peu à peu les po
   t.tj_g=Math.min(Math.max(5,t.tj_g||0),(t.tj_g||0)+.12);t.tj_cT=3;return dmg},
  draw(u,p,S,sk){const n=tjG(u),t=performance.now()/1000;
   if(u.tj_red>0||u.tj_8>0)tjTint(u,p,S,'#ff2a1a',(.3+.08*Math.sin(t*9))*Math.min(1,Math.max(u.tj_red||0,u.tj_8||0)*2));
-  if(!n)return;g.save();g.globalCompositeOperation='lighter';
+  if(!n)return;g.save();g.globalCompositeOperation='lighter';g.globalAlpha*=fxA(u);if(n>=3)fxGlowS(p.x,p.y,26*S*sk,GATEC(n),.12+.03*n,26*S*sk*K,0);
   // anneau des huit portes au sol
   for(let i=0;i<8;i++){const on=i<n,a=i*.785+t*.6;g.strokeStyle=rgba(GATEC(i+1),on?.8:.12);g.lineWidth=on?2.5:1.5;g.beginPath();g.ellipse(p.x,p.y,21*S*sk,21*S*sk*K,0,a+.1,a+.62);g.stroke()}
   // vapeur de chakra (rouge dès la 6e porte)
-  const red=n>=6;for(let i=0;i<n+(red?3:0);i++){const k=(t*1.1+i*.37)%1,a=i*2.4+t*.8,x=p.x+Math.cos(a)*11*S,y=p.y-(8+k*58)*S*sk;
+  const red=n>=6,nv=Math.max(2,fxN(n+(red?3:0),u));for(let i=0;i<nv;i++){const k=(t*1.1+i*.37)%1,a=i*2.4+t*.8,x=p.x+Math.cos(a)*11*S,y=p.y-(8+k*58)*S*sk;
    g.fillStyle=rgba(red&&i%2?'#ff5a3a':GATEC(Math.min(n,i+1)),.26*(1-k));g.beginPath();g.ellipse(x,y,(3+k*5)*S,(5+k*7)*S,0,0,7);g.fill()}
   g.restore()},
  hud(u,x,y){const n=tjG(u),X=x+368,Y=y-56;text('PORTES '+n+'/8'+(n?' · '+GATEN[n-1]:''),X,Y-4,10,n>=8?'#ff8a7a':'#9fe8a8','left');
   for(let i=0;i<8;i++){const on=i<n;g.fillStyle=on?GATEC(i+1):'rgba(0,0,0,.55)';g.fillRect(X+i*13,Y,11,15);g.strokeStyle=on?'#ffffff':'rgba(255,255,255,.25)';g.lineWidth=1;g.strokeRect(X+i*13,Y,11,15)}
   const f=(u.tj_g||0)-n;if(n<8&&f>0){g.fillStyle='rgba(255,255,255,.45)';g.fillRect(X+n*13,Y+15-15*f,11,15*f)}}};
-AFTER.push(()=>UK.push('tj_g','tj_esq','tj_red','tj_8'));
+AFTER.push(()=>{UK.push('tj_g','tj_esq','tj_red','tj_8');FXTELE.add('tj_foot')});
 
 // ---------- animations 3D ----------
 Object.assign(ANIM,{
@@ -403,7 +418,7 @@ JFXD.tj_tigerfx=(f,k,e,t)=>{const d=f.spd*(f.m-f.t),x=f.x+Math.cos(f.a)*d,y=f.y+
  g.strokeStyle='rgba(40,110,80,.8)';g.lineWidth=3;g.lineCap='round';g.beginPath();g.moveTo(-22,-6);g.lineTo(-8,-2);g.moveTo(-24,4);g.lineTo(-10,6);g.moveTo(-20,13);g.lineTo(-8,12);g.moveTo(-4,-18);g.lineTo(0,-8);g.stroke();
  g.fillStyle='#ffe14a';g.beginPath();g.ellipse(8,-6,6,3.2,-.2,0,7);g.fill();g.fillStyle='#1a2a20';g.fillRect(7.5,-8.5,2.5,5);g.restore()};
 // Éléphant du soir : la patte d'air descend, puis l'impact
-JFXD.tj_foot=(f,k,e)=>{const h=(1-ezo(e))*190,q=P(f.x,f.y,h),g0=P(f.x,f.y,0),R=f.r*q.s;g.fillStyle=rgba('#000000',.22*e);g.beginPath();g.ellipse(g0.x,g0.y,R*e,R*e*K,0,0,7);g.fill();
+JFXD.tj_foot=(f,k,e)=>{fxTele(f.x,f.y,68,e,'#e8fff0',f,.05);const h=(1-ezo(e))*190,q=P(f.x,f.y,h),g0=P(f.x,f.y,0),R=f.r*q.s;g.fillStyle=rgba('#000000',.22*e);g.beginPath();g.ellipse(g0.x,g0.y,R*e,R*e*K,0,0,7);g.fill();
  g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#e8fff0',.45);g.lineWidth=2;g.beginPath();for(let i=0;i<7;i++){const x=q.x+(i-3)*R*.28;g.moveTo(x,q.y-R*.2-(30+(i%3)*18)*q.s);g.lineTo(x,q.y-R*.2-(80+(i%2)*30)*q.s)}g.stroke();
  // la patte d'air : colonne évasée (plus large au pied), un reflet et des plis d'air comprimé
  const top=q.y-170*q.s;g.fillStyle=rgba('#dff8ea',.08);g.beginPath();g.moveTo(q.x-R*.95,q.y);g.lineTo(q.x-R*.6,top);g.lineTo(q.x+R*.6,top);g.lineTo(q.x+R*.95,q.y);g.closePath();g.fill();

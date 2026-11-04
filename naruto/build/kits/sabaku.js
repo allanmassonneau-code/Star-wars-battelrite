@@ -22,40 +22,50 @@ KIT('c8',[
 DASHC[8]={src:'x.sa_fly',n:'Sable volant',d:SAD.fly,vfx:'sand',cd:7};
 // son « brut » (sans la teinte sable que l'élément impose à tous les sons du jutsu)
 const sa_S=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V};
+// ---- VFX (boîte à outils nr_fx.js) : sable mat (non additif), poussière dorée, lueur chaude discrète ; les zones de danger restent nettes
+const SA_A='#d8b878',SA_B='#f0d8a0',SA_C='#a88a50';
+// gerbe de sable (grains + nuage) ; s = taille
+function sa_puff(u,x,y,s,o){fxBurst(x,y,SA_A,Object.assign({u,n:10*s,sp:180*s,z:20,sh:'dot',w:2,gr:240,up:90,add:0,c2:SA_B,t:.6},o||{}));fxSmoke(x,y,{u,col:SA_B,n:3+2*s,r:26*s,s:12*s,t:.9,al:.22,rise:18})}
 // le Sable mouvant du lanceur sous ce ninja ?
 const sa_inQS=(o,t)=>aux.some(x=>x.type==='sa_qs'&&x.team===o.team&&Math.hypot(t.x-x.x,t.y-x.y)<x.r+t.r);
 Object.assign(NAT,{
  // Sabaku Kyû : un filet de sable rampe au sol (ne se choque pas aux tirs) puis enveloppe la cible
  sa_coffin:S_('Cercueil de sable',SAD.coffin,9,{hero:'kylo',line:{len:470,w:24},ai:RG(450,.6)},(u,a)=>{S('sand',u);anim(u,'sa_grip',.6);jx({jfx:'sa_pour',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.4,m:.4});
-  proj(u,a,{vfx:'sand',spd:520,r:12,dmg:4,life:.86,col:'#d8b878',noClash:1,root:.5,kind:'sa_creep',onHit:(p,t)=>{if(t.dead||!(t.root>0))return;if(sa_inQS(p.owner,t))t.root=Math.max(t.root,1);
+  fxSmoke(u.x,u.y,{u,col:SA_B,n:3,r:16,s:9,z:40,t:.6,al:.2,rise:-10});
+  proj(u,a,{vfx:'sand',spd:520,r:12,dmg:4,life:.86,col:'#d8b878',noClash:1,root:.5,kind:'sa_creep',onHit:(p,t)=>{if(t.dead||!(t.root>0))return;if(sa_inQS(p.owner,t))t.root=Math.max(t.root,1);sa_puff(p.owner,t.x,t.y,1);fxRing(t.x,t.y,{u:p.owner,r0:30,r1:10,col:SA_A,w:5,t:.35});fxDecal(t.x,t.y,'sand',{u:p.owner,r:30,t:2});
    jx({jfx:'sa_coffin',ti:units.indexOf(t),x:t.x,y:t.y,t:t.root,m:t.root});sa_S('rock',t)}})}),
  // nuage de sable : vole jusqu'au point visé ; à l'envol (0,25 s) les tirs s'écrasent dans le nuage
  sa_fly:S_('Sable volant',SAD.fly,15,{hero:'cadbane',ai:ESC},(u,a,td)=>{const d=clamp(td||260,90,260),D=.45;S('sand',u);sa_S('wind',u);u.sa_fly=.25;anim(u,'sa_cross',D+.12);
-  jx({jfx:'sa_cloud',ui:units.indexOf(u),x:u.x,y:u.y,t:D+.12,m:D+.12});sparks(u.x,u.y,'#d8b878',10,'sand');
-  dash(u,a,d,D,{jump:62,end:()=>{jx({jfx:'sa_dust',x:u.x,y:u.y,r:95,t:.5,m:.5});S('sand',u)}})}),
+  jx({jfx:'sa_cloud',ui:units.indexOf(u),x:u.x,y:u.y,t:D+.12,m:D+.12});sparks(u.x,u.y,'#d8b878',5,'sand');sa_puff(u,u.x,u.y,1,{up:140});
+  dash(u,a,d,D,{jump:62,end:()=>{jx({jfx:'sa_dust',x:u.x,y:u.y,r:95,t:.5,m:.5});S('sand',u);fxSmoke(u.x,u.y,{u,col:SA_B,n:5,r:60,s:14,t:.8,al:.22,rise:12});fxDecal(u.x,u.y,'sand',{u,r:50,t:2.5})}})}),
  // sable mouvant : aspire vers le centre, ralentit, freine les tirs ; 1,5 s dedans = enlisé
  sa_quick:S_('Sable mouvant',SAD.quick,10,{hero:'cal',tele:{r:128,max:420},ai:RG(420,.5)},(u,a,td)=>{const p=atP(u,a,td,420);S('sand',u);anim(u,'sa_sink',.55);
-  field(u,p.x,p.y,{r:128,t:3.5,slow:1,timeSlow:1,col:'#d8b878',vfx:'sand'});aux.push({type:'sa_qs',x:p.x,y:p.y,r:128,t:3.5,m:3.5,team:u.team,owner:u,vfx:'sand',k:0,in:{}});jx({jfx:'shock',x:p.x,y:p.y,r:120,t:.45,m:.45,col:'#d8b878'});sparks(p.x,p.y,'#d8b878',14,'sand')}),
+  field(u,p.x,p.y,{r:128,t:3.5,slow:1,timeSlow:1,col:'#d8b878',vfx:'sand'});aux.push({type:'sa_qs',x:p.x,y:p.y,r:128,t:3.5,m:3.5,team:u.team,owner:u,vfx:'sand',k:0,in:{}});jx({jfx:'shock',x:p.x,y:p.y,r:120,t:.45,m:.45,col:'#d8b878'});sparks(p.x,p.y,'#d8b878',6,'sand');
+  fxRing(p.x,p.y,{u,r0:30,r1:128,col:SA_A,c2:SA_B,w:6,t:.45});sa_puff(u,p.x,p.y,1.3,{up:160});fxDebris(p.x,p.y,{u,n:5,sp:120,col:SA_A,c2:SA_C,s:3})}),
  // armure de sable (absorbe, gérée par le trait) ; alliés proches : bouclier ; brisée, elle éclate
  sa_armor:S_('Armure de sable',SAD.armor,13,{hero:'thrawn',ai:DEF},(u)=>{S('sand',u);anim(u,'sa_crust',.6);u.sa_arm=28;u.sa_armT=4;u.sa_brk=0;
-  for(const x of allies(u,320)){if(x!==u)shieldU(x,16,4);jx({jfx:'sa_crust',ti:units.indexOf(x),x:x.x,y:x.y,t:.6,m:.6})}}),
+  for(const x of allies(u,320)){if(x!==u)shieldU(x,16,4);jx({jfx:'sa_crust',ti:units.indexOf(x),x:x.x,y:x.y,t:.6,m:.6});fxSmoke(x.x,x.y,{u,col:SA_B,n:3,r:18,s:10,t:.7,al:.2,rise:40})}}),
  // Ryûsa Bakuryû : la vague emporte, avale les tirs, puis s'écrase (logique : AUXF.sa_wavec)
- sa_tsunami:ULT('Tsunami de sable',SAD.tsunami,{line:{len:470,w:100},ai:{max:440,p:.8}},(u,a)=>{S('sand',u);sa_S('heavy',u);anim(u,'throw2',.7);jx({jfx:'sa_rise',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.55,m:.55});
+ sa_tsunami:ULT('Tsunami de sable',SAD.tsunami,{line:{len:470,w:100},ai:{max:440,p:.8}},(u,a)=>{S('sand',u);sa_S('heavy',u);anim(u,'throw2',.7);jx({jfx:'sa_rise',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.55,m:.55});sa_puff(u,u.x-Math.cos(a)*30,u.y-Math.sin(a)*30,1.2,{up:200});
   const L=1.05,sp=440;
   proj(u,a,{vfx:'sand',spd:sp,r:12,dmg:0,life:L,col:'#d8b878',grenade:1,boom:1,noClash:1,kind:'sa_wave'});const pw=projs[projs.length-1];
   zone(u,u.x+Math.cos(a)*24,u.y+Math.sin(a)*24,90,8,L,{slow:1,kb:90},'#d8b878');Object.assign(lastZ(),{follow:pw,deto:'sa_crash'});
   aux.push({type:'sa_wavec',x:u.x,y:u.y,r:0,t:L+1,m:L+1,team:u.team,owner:u,p:pw,hs:new Set(),a})}),
  // Sabaku Sôsô : le sable engloutit la zone (immobilise), puis écrase les ensevelis
  sa_funeral:ULT('Funérailles du désert',SAD.funeral,{tele:{r:110,max:450},ai:{max:450,p:.8}},(u,a,td)=>{const p=atP(u,a,td,450),R=110,pre=new Set(),inZ=e=>Math.hypot(e.x-p.x,e.y-p.y)<R+e.r;S('sand',u);anim(u,'sa_funeral',1.45);
-  jx({jfx:'sa_dune',x:p.x,y:p.y,r:R,t:1.3,m:1.3});zone(u,p.x,p.y,R,10,.6,{root:.9},'#d8b878');lastZ().deto='sa_wrap';
+  jx({jfx:'sa_dune',x:p.x,y:p.y,r:R,t:1.3,m:1.3});zone(u,p.x,p.y,R,10,.6,{root:.9},'#d8b878');lastZ().deto='sa_wrap';fxCharge(u,SA_A,{t:.6,n:12,r:60});fxSmoke(p.x,p.y,{u,col:SA_B,n:6,r:R*.8,s:16,t:1.3,al:.2,rise:10});
   later(u,.58,()=>{for(const e of enemies(u))if(inZ(e)&&(e.root>0||e.stun>0))pre.add(e)}); // déjà immobilisés avant l'ensevelissement
   later(u,.6,()=>{for(const e of enemies(u))if(inZ(e)&&e.root>0)jx({jfx:'sa_coffin',ti:units.indexOf(e),x:e.x,y:e.y,t:.72,m:.72,big:1})});
   later(u,1.2,()=>{let n=0;VFX='sand';for(const e of enemies(u)){if(Math.hypot(e.x-p.x,e.y-p.y)>R+e.r+30||!(e.root>0||e.stun>0))continue;n++;const b=pre.has(e);hit(e,u,b?48:36,{stun:.45,unblockable:1});if(b)say(e,'ÉCRASÉ ×1,3','#ffd38a');detoFx(e.x,e.y,70,'sa_crush')}VFX=null;
-   jx({jfx:'shock',x:p.x,y:p.y,r:R,t:.5,m:.5,col:'#c8a060'});sa_S('boom',u);if(near(p.x,p.y))shake=Math.max(shake,n?.45:.2)},{x:p.x,y:p.y})}),
+   jx({jfx:'shock',x:p.x,y:p.y,r:R,t:.5,m:.5,col:'#c8a060'});sa_S('boom',u);
+   // écrasement : onde au rayon EXACT (110), désert qui reste au sol, geysers de sable, gel visuel des ensevelis, secousse (rang S)
+   fxRing(p.x,p.y,{u,r0:30,r1:R,col:SA_A,c2:'#fff4d8',w:9,t:.5});fxDecal(p.x,p.y,'sand',{u,r:R,t:4.5});fxDecal(p.x,p.y,'crack',{u,r:R*.7,t:4});fxLight(p.x,p.y,R*1.4,'#ffd38a',{u,t:.5,a:.35});
+   sa_puff(u,p.x,p.y,2.4,{up:300,sp:260});fxDebris(p.x,p.y,{u,n:10,sp:200,col:SA_A,c2:SA_C,s:5});fxShake(n?.4:.2,p.x,p.y);
+   for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<=R+e.r+30&&!e.dead){fxBurst(e.x,e.y,SA_B,{u,n:8,sp:80,z:10,up:360,gr:500,sh:'dot',w:2.4,add:0,c2:SA_A,t:.7});fxHitStop(u,e,40,1)}},{x:p.x,y:p.y})}),
  // Bouclier absolu : sphère intouchable (gérée par le trait), puis pics de sable à l'ouverture
  sa_shield:S_('Bouclier absolu',SAD.shield,17,{tele:{self:1,r:125},ai:DEF},(u)=>{const D=1.5;S('sand',u);sa_S('heavy',u);u.sa_sph=D;u.root=Math.max(u.root,D);u.silence=Math.max(u.silence,D);u.disarm=Math.max(u.disarm,D);
-  anim(u,'sa_cross',D);jx({jfx:'sa_sphere',ui:units.indexOf(u),x:u.x,y:u.y,t:D,m:D});zone(u,u.x,u.y,125,26,D,{kb:320},'#d8b878');lastZ().deto='sa_spk';
-  later(u,D,()=>{u.sa_sph=0;if(u.dead)return;u.sa_shT=0;anim(u,'roar',.45);sa_S('rock',u);u.sa_arm=Math.max(u.sa_arm||0,15);u.sa_armT=Math.max(u.sa_armT||0,3);u.sa_brk=0;jx({jfx:'sa_crust',ti:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6})})}),
+  anim(u,'sa_cross',D);jx({jfx:'sa_sphere',ui:units.indexOf(u),x:u.x,y:u.y,t:D,m:D});sa_puff(u,u.x,u.y,1.2,{up:200});fxWind(u.x,u.y,0,{u,spin:1,w:60,n:6,t:.6,col:SA_B});zone(u,u.x,u.y,125,26,D,{kb:320},'#d8b878');lastZ().deto='sa_spk';
+  later(u,D,()=>{u.sa_sph=0;if(u.dead)return;u.sa_shT=0;anim(u,'roar',.45);sa_S('rock',u);fxRing(u.x,u.y,{u,r0:30,r1:125,col:SA_A,c2:SA_B,w:7,t:.4});fxDebris(u.x,u.y,{u,n:8,sp:220,col:SA_A,c2:SA_C,s:4});sa_puff(u,u.x,u.y,1.4);fxDecal(u.x,u.y,'crack',{u,r:80,t:3});u.sa_arm=Math.max(u.sa_arm||0,15);u.sa_armT=Math.max(u.sa_armT||0,3);u.sa_brk=0;jx({jfx:'sa_crust',ti:units.indexOf(u),x:u.x,y:u.y,t:.6,m:.6})})}),
  // lances de sable : 3 lances perçantes qui suivent la visée ; 2 touches sur la même cible = clouée
  sa_spears:S_('Lances de sable',SAD.spears,8,{line:{len:520,w:20},ai:RG(500,.6)},(u)=>{const V={};jx({jfx:'sa_forge',ui:units.indexOf(u),x:u.x,y:u.y,t:.5,m:.5});
   const f=o=>{S('sand',o);anim(o,'sa_flick',.3);proj(o,o.aim,{vfx:'sand',spd:980,r:8,dmg:8,life:.54,col:'#d8b878',pierce:1,kind:'sa_spear',onHit:(p,t)=>{const k=t.c+'|'+t.team;V[k]=(V[k]||0)+1;if(near(t.x,t.y))sparks(t.x,t.y,'#d8b878',5,'sand');
@@ -75,11 +85,13 @@ AUXF.sa_qs=(x,dt)=>{const o=x.owner,end=x.t<=0;
   if(v>=1.5&&v0<1.5){VFX='sand';hit(e,o,6,{root:.6});VFX=null;say(e,'ENLISÉ','#e8c890');if(near(e.x,e.y))sparks(e.x,e.y,'#c8a060',10,'sand')}}};
 // tsunami : la vague (projectile sans collision) est suivie ici : elle emporte les ennemis et avale leurs tirs ; l'écrasement est une zone qui la suit
 AUXF.sa_wavec=x=>{const p=x.p,o=x.owner;if(x.done)return;
- if(!p||p.dead||p.life<=0||projs.indexOf(p)<0){x.done=1;x.t=Math.min(x.t,.05);const cx=p?p.x:x.x,cy=p?p.y:x.y;S('sand',o);if(near(cx,cy))shake=Math.max(shake,.35);return} // l'écrasement lui-même : zone qui suivait la vague
+ if(!p||p.dead||p.life<=0||projs.indexOf(p)<0){x.done=1;x.t=Math.min(x.t,.05);const cx=p?p.x:x.x,cy=p?p.y:x.y;S('sand',o);
+  // écrasement : onde au rayon EXACT de la zone (90), nappe de sable qui reste, gerbe, poussière
+  fxRing(cx,cy,{u:o,r0:20,r1:90,col:SA_A,c2:SA_B,w:7,t:.45});fxDecal(cx,cy,'sand',{u:o,r:88,t:3.5});sa_puff(o,cx,cy,1.8,{up:220});fxDebris(cx,cy,{u:o,n:6,sp:150,col:SA_A,c2:SA_C,s:4});return} // l'écrasement lui-même : zone qui suivait la vague
  x.x=p.x;x.y=p.y;const sp=Math.hypot(p.vx,p.vy)||1,cx=p.vx/sp,cy=p.vy/sp,W=46;
  for(const q of projs)if(q.owner.team!==x.team&&!q.grenade&&!q.dead){const dx=q.x-p.x,dy=q.y-p.y;if(Math.abs(dx*cx+dy*cy)<34+q.r&&Math.abs(-dx*cy+dy*cx)<W+q.r){q.life=0;if(q.rocket)q.boom=1;if(near(q.x,q.y))sparks(q.x,q.y,'#d8b878',6,'sand')}}
  for(const e of enemies(o)){if(x.hs.has(e))continue;const dx=e.x-p.x,dy=e.y-p.y;if(Math.abs(dx*cx+dy*cy)>30+e.r||Math.abs(-dx*cy+dy*cx)>W+e.r)continue;x.hs.add(e);
-  VFX='sand';const ok=hit(e,o,5,{slow:1,unblockable:1});VFX=null;if(!ok||e.dead||e.unstop>0)continue;
+  VFX='sand';const ok=hit(e,o,5,{slow:1,unblockable:1});VFX=null;if(!ok||e.dead||e.unstop>0)continue;sa_puff(o,e.x,e.y,.8,{a:Math.atan2(cy,cx),arc:1.6});
   const L=Math.min(.25,Math.max(.12,p.life));e.dash={sx:e.x,sy:e.y,tx:clamp(e.x+p.vx*L,B.x+e.r,B.x+B.w-e.r),ty:clamp(e.y+p.vy*L,B.y+e.r,B.y+B.h-e.r),t:0,dur:L,jump:10};
   if(e.flame||e.spin)say(e,'INTERROMPU','#fc6');e.flame=null;e.spin=null;say(e,'EMPORTÉ','#e8c890')}}; // une incantation en cours est seulement suspendue
 AUXD.sa_wavec=()=>{};
@@ -89,13 +101,13 @@ const SA_SHCD=22,SA_SHCK=20,SA_SHFAR=260; // recharge, chakra par blocage, dista
 // projectile ennemi qui va toucher u à cette image (m = marge : nuage, sphère)
 const sa_inc=(u,p,dt,m)=>p.owner&&p.owner.team!==u.team&&!p.grenade&&!p.dead&&p.life>0&&(Math.hypot(p.x+p.vx*dt-u.x,p.y+p.vy*dt-u.y)<u.r+p.r+m||Math.hypot(p.x-u.x,p.y-u.y)<u.r+p.r+m);
 // le sable se dresse entre le ninja et le tir, qui s'y écrase
-function sa_stop(u,p,big){p.life=0;if(p.rocket)p.boom=1;if(near(u.x,u.y)){jx({jfx:'sa_block',ui:units.indexOf(u),x:u.x,y:u.y,a:Math.atan2(p.y-u.y,p.x-u.x),t:.55,m:.55,big:big?1:0});sparks(p.x,p.y,'#d8b878',big?10:5,'sand');S('sand',u)}}
+function sa_stop(u,p,big){p.life=0;if(p.rocket)p.boom=1;if(near(u.x,u.y)){sa_puff(u,p.x,p.y,big?1:.6,{a:Math.atan2(p.y-u.y,p.x-u.x),arc:1.8,t:.45});jx({jfx:'sa_block',ui:units.indexOf(u),x:u.x,y:u.y,a:Math.atan2(p.y-u.y,p.x-u.x),t:.55,m:.55,big:big?1:0});sparks(p.x,p.y,'#d8b878',big?10:5,'sand');S('sand',u)}}
 TRAITS[8]={nom:'Bouclier de sable',desc:'Le sable de la gourde arrête tout seul un projectile tiré de loin (20 chakra, recharge '+String(rtOut(SA_SHCD)).replace('.',',')+' s) ; de près, il n\'a pas le temps de réagir. Un croissant de sable flotte devant toi quand il est prêt',
  init(u){u.sa_shT=SA_SHCD},
  update(u,dt){if(u.sa_cds!==u.cds){u.sa_cds=u.cds;u.sa_shT=SA_SHCD;u.sa_arm=0;u.sa_armT=0;u.sa_sph=0;u.sa_fly=0;u.sa_brk=0} // nouveau ninja ou réapparition
   if(u.sa_shT>0)u.sa_shT=Math.max(0,u.sa_shT-dt);if(u.sa_fly>0)u.sa_fly-=dt;if(u.sa_sph>0)u.sa_sph=Math.max(0,u.sa_sph-dt);
   if(u.sa_armT>0){u.sa_armT-=dt;if(u.sa_armT<=0&&u.sa_arm>0){u.sa_arm=0;if(near(u.x,u.y))sparks(u.x,u.y,'#d8b878',10,'sand')}}
-  if(u.sa_brk){u.sa_brk=0;VFX='sand';aoe(u,u.x,u.y,110,8,{slow:1.4,quiet:1},'#d8b878');VFX=null;jx({jfx:'sa_shards',x:u.x,y:u.y,t:.55,m:.55});say(u,'ARMURE BRISÉE','#e8c890');sa_S('rock',u)}
+  if(u.sa_brk){u.sa_brk=0;VFX='sand';aoe(u,u.x,u.y,110,8,{slow:1.4,quiet:1},'#d8b878');VFX=null;jx({jfx:'sa_shards',x:u.x,y:u.y,t:.55,m:.55});fxRing(u.x,u.y,{u,r0:20,r1:110,col:SA_A,w:5,t:.4});fxDebris(u.x,u.y,{u,n:6,sp:180,col:SA_A,c2:SA_C,s:3});say(u,'ARMURE BRISÉE','#e8c890');sa_S('rock',u)}
   for(const p of projs){if(u.sa_sph>0){if(sa_inc(u,p,dt,26))sa_stop(u,p,0);continue}if(!sa_inc(u,p,dt,8))continue;
    if(u.sa_fly>0){sa_stop(u,p,0);continue}if(u.sa_shT<=0&&u.energy>=SA_SHCK&&((p.life0||0)-p.life)*Math.hypot(p.vx,p.vy)>=SA_SHFAR){sa_stop(u,p,1);u.sa_shT=SA_SHCD;u.energy-=SA_SHCK;say(u,'BOUCLIER DE SABLE','#e8c890')}}},
  // sphère : intouchable ; armure : absorbe les dégâts (puis éclate à l'image suivante)
@@ -157,10 +169,10 @@ JFXD.sa_cloud=(f,k,e,t,u)=>{if(!u||u.dead)return;const z=u.z||0,q=P(u.x,u.y,Math
 JFXD.sa_dust=(f,k,e)=>{const q=P(f.x,f.y,0),s=q.s,R=f.r*(.35+e*.75);g.strokeStyle=rgba(SAC[0],.7*k);g.lineWidth=5*k+1;gEll(f.x,f.y,R);g.stroke();
  for(let i=0;i<8;i++){const a=i*.785+.3,p=P(f.x+Math.cos(a)*R*.9,f.y+Math.sin(a)*R*.9,6+e*14);g.fillStyle=rgba(i%2?SAC[1]:SAC[0],.55*k);g.beginPath();g.ellipse(p.x,p.y,(7+e*8)*s,(4+e*5)*s,0,0,7);g.fill()}};
 // sable mouvant : disque qui tourbillonne vers un centre sombre
-AUXD.sa_qs=(x,k,t)=>{const q=P(x.x,x.y,0),R=x.r*q.s;g.fillStyle=rgba(SAC[0],.32*k);gEll(x.x,x.y,x.r);g.fill();g.fillStyle=rgba(SAC[1],.4*k);gEll(x.x,x.y,x.r*.62);g.fill();g.fillStyle=rgba(SAC[4],.5*k);gEll(x.x,x.y,x.r*.22);g.fill();
+AUXD.sa_qs=(x,k,t)=>{fxTele(x.x,x.y,x.r,0,SA_A,x,0);const q=P(x.x,x.y,0),R=x.r*q.s;g.globalAlpha*=Math.max(.75,fxA(x));g.fillStyle=rgba(SAC[0],.32*k);gEll(x.x,x.y,x.r);g.fill();g.fillStyle=rgba(SAC[1],.4*k);gEll(x.x,x.y,x.r*.62);g.fill();g.fillStyle=rgba(SAC[4],.5*k);gEll(x.x,x.y,x.r*.22);g.fill();
  g.strokeStyle=rgba(SAC[3],.85*k);g.lineWidth=3;gEll(x.x,x.y,x.r);g.stroke();g.strokeStyle=rgba(SAC[4],.35*k);g.lineWidth=1.5;gEll(x.x,x.y,x.r*.9);g.stroke();
  for(let j=0;j<4;j++){g.strokeStyle=rgba(j%2?SAC[2]:SAC[4],(j%2?.6:.45)*k);g.lineWidth=j%2?2:3;g.beginPath();for(let i=0;i<=10;i++){const d=1-i/11,b=t*1.4+j*1.571+i*.45;const xx=q.x+Math.cos(b)*R*d,yy=q.y+Math.sin(b)*R*d*K;i?g.lineTo(xx,yy):g.moveTo(xx,yy)}g.stroke()}
- g.fillStyle=rgba('#e8cc90',.85*k);for(let i=0;i<10;i++){const d=(t*.35+i*.1)%1,b=i*2.4+t*1.4+d*4.5;g.fillRect(q.x+Math.cos(b)*R*(1-d),q.y+Math.sin(b)*R*(1-d)*K,2*q.s,2*q.s)}};
+ g.fillStyle=rgba('#e8cc90',.85*k);for(let i=0,nG=fxNB(10,x);i<nG;i++){const d=(t*.35+i*.1)%1,b=i*2.4+t*1.4+d*4.5;g.fillRect(q.x+Math.cos(b)*R*(1-d),q.y+Math.sin(b)*R*(1-d)*K,2*q.s,2*q.s)}};
 // armure de sable : le sable remonte le long du corps
 JFXD.sa_crust=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;const q=P(tg.x,tg.y,0),s=q.s,h=e*66*s;g.fillStyle=rgba(SAC[0],.35*k);g.beginPath();g.ellipse(q.x,q.y-h*.5,20*s,h*.55+4,0,0,7);g.fill();
  g.fillStyle=SAC[2];for(let i=0;i<10;i++){const a=t*7+i*.63;g.fillRect(q.x+Math.cos(a)*18*s,q.y-h*(i/10)+Math.sin(a)*4*s,2*s,2*s)}g.strokeStyle=rgba(SAC[0],.8*k);g.lineWidth=2;g.beginPath();g.ellipse(q.x,q.y-h,17*s,5*s,0,0,7);g.stroke()};
@@ -212,7 +224,7 @@ JFXD.sa_rise=(f,k,e,t,u)=>{if(!u)return;const b0=P(u.x-Math.cos(f.a)*30,u.y-Math
  g.fillStyle=SAC[0];for(let i=0;i<8;i++){const a=i*.8+t*4;g.fillRect(top.x+Math.cos(a)*16*s,top.y+Math.sin(a)*8*s,2.4*s,2.4*s)}};
 // vague qui s'écrase : gerbe de sable, anneau et retombées
 JFXD.sa_crash=(f,k,e,t)=>{const q=P(f.x,f.y,0),s=q.s;g.fillStyle=rgba(SAC[1],.35*k);gEll(f.x,f.y,f.r*(.5+e*.6));g.fill();g.strokeStyle=rgba(SAC[0],.8*k);g.lineWidth=6*k+1;gEll(f.x,f.y,f.r*(.4+e*.75));g.stroke();
- const up=Math.sin(Math.PI*Math.min(1,e*1.2));if(e<.5){g.fillStyle=rgba(SAC[3],.9*(1-e*2));g.beginPath();g.ellipse(q.x,q.y-up*50*s,f.r*.55*s*(1-e),up*60*s,0,0,7);g.fill()} // la masse retombe
+ const up=Math.sin(Math.PI*Math.min(1,e*1.2));if(e<.5){g.fillStyle=rgba(SAC[3],.55*(1-e*2));g.beginPath();g.ellipse(q.x,q.y-up*50*s,f.r*.55*s*(1-e),up*60*s,0,0,7);g.fill()} // la masse retombe
  for(let i=0;i<14;i++){const a=i*.449+.2,d=f.r*(.15+e*.8)*(i%2?.65:1),h=up*(70+(i%4)*28)*s,p=P(f.x+Math.cos(a)*d,f.y+Math.sin(a)*d,0);g.fillStyle=i%3?SAC[3]:SAC[1];g.beginPath();g.ellipse(p.x,p.y-h,(8-e*4)*s,(6-e*3)*s,0,0,7);g.fill()}
  g.fillStyle=SAC[2];for(let i=0;i<10;i++){const a=i*.63,p=P(f.x+Math.cos(a)*f.r*e,f.y+Math.sin(a)*f.r*e,0);g.fillRect(p.x,p.y-up*30*s,2.4*s,2.4*s)}};
 // Funérailles : le sol de la zone se met à tourbillonner, des colonnes de sable montent au bord

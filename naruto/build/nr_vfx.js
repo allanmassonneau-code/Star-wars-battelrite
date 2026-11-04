@@ -9,7 +9,9 @@ const VP={kunai:['#d8dde6','#8a929e'],shuriken:['#c8ccd4','#6a707a'],senbon:['#e
 const DARKV={shadow:1,bugs:1,black:1};
 const vcol=(v,col,i=0)=>v&&VP[v]?VP[v][i%VP[v].length]:col;
 // particules
-function drawPart(f,p){const v=f.vfx,k=f.t/f.m,s=p.s;
+function drawPart(f,p){if(f.fk){if(!f.gd&&FXK[f.fk])FXK[f.fk](f,f.t/f.m,1-f.t/f.m);return} // effets analytiques (nr_fx.js)
+ {const kk=fxK(f);if(kk<.8&&(f.sd??(f.sd=Math.random()))>kk/.8)return;const am=fxA(f);if(am<1)g.globalAlpha*=am} // intensité, foule, camp
+ const v=f.vfx,k=f.t/f.m,s=p.s;
  if(f.imp){const e=1-k,R=(10+18*e)*s*(f.r||1);g.save();g.globalCompositeOperation='lighter';g.translate(p.x,p.y);g.rotate(f.a||0);g.fillStyle=rgba(f.col,.9*k);g.beginPath();for(let i=0;i<8;i++){const b=i*Math.PI/4,L=i%2?R*.45:R*(i%4?1:1.5);g.lineTo(Math.cos(b)*L,Math.sin(b)*L*.75)}g.closePath();g.fill();circ(0,0,R*.35*k,'#fff');g.restore();return}
  if(!v||!VP[v]&&v!=='chakra'){g.fillStyle=f.col;g.beginPath();g.arc(p.x,p.y,f.r*s,0,7);g.fill();return}
  const c=v==='chakra'?f.col:vcol(v,f.col,(f.r*7|0));
@@ -29,7 +31,7 @@ function drawPart(f,p){const v=f.vfx,k=f.t/f.m,s=p.s;
   case'genjutsu':{g.save();g.translate(p.x,p.y+(1-k)*10*s);g.rotate(f.r*4+(1-k)*3);g.fillStyle=c;g.beginPath();g.ellipse(0,0,f.r*s*2,f.r*s*.6,0,0,7);g.fill();g.restore();break}
   default:{g.save();g.globalCompositeOperation='lighter';g.fillStyle=c;g.beginPath();g.arc(p.x,p.y,f.r*s,0,7);g.fill();g.restore()}}}
 // ondes (ring) et coups au corps à corps (swing)
-function drawRingSwing(f){const v=f.vfx,c=v==='chakra'||!v?f.col:vcol(v,f.col),k=f.t/f.m;
+function drawRingSwing(f){{const am=fxA(f);if(am<1)g.globalAlpha*=am}const v=f.vfx,c=v==='chakra'||!v?f.col:vcol(v,f.col),k=f.t/f.m;
  if(f.ring){const r=f.ring*(1.1-k*.6);
   if(v==='smoke'||v==='tag'||v==='sand'){g.fillStyle=rgba(vcol(v,f.col,v==='tag'?1:0),.35*k);gEll(f.x,f.y,r);g.fill();g.strokeStyle=rgba(vcol(v,f.col,1),.6*k);g.lineWidth=3;gEll(f.x,f.y,r);g.stroke();return}
   if(v==='water'){g.strokeStyle=c;g.lineWidth=3;gEll(f.x,f.y,r);g.stroke();g.lineWidth=1.5;gEll(f.x,f.y,r*.7);g.stroke();return}
@@ -45,7 +47,7 @@ function drawRingSwing(f){const v=f.vfx,c=v==='chakra'||!v?f.col:vcol(v,f.col),k
  if(v==='lightning'){g.strokeStyle=c;g.lineWidth=3;gEll(f.x,f.y,f.range,a0,a1);g.stroke();g.strokeStyle='#fff';g.lineWidth=1;gEll(f.x,f.y,f.range*(.9+rnd()*.15),a0,a1);g.stroke();return}
  g.strokeStyle=c;g.lineWidth=6;gEll(f.x,f.y,f.range,a0,a1);g.stroke();g.strokeStyle='rgba(255,255,255,.7)';g.lineWidth=1.5;gEll(f.x,f.y,f.range*.96,a0,a1);g.stroke()}
 // rayons (beamFx) et éclairs
-function drawBeamN(f){const a=P(f.x,f.y,30),b=P(f.x2,f.y2,30),v=f.vfx,c=v==='chakra'||!v?f.col:vcol(v,f.col),dark=DARKV[v];g.save();if(dark)g.globalCompositeOperation='source-over';g.globalAlpha=f.t/f.m;g.lineCap='round';
+function drawBeamN(f){const a=P(f.x,f.y,30),b=P(f.x2,f.y2,30),v=f.vfx,c=v==='chakra'||!v?f.col:vcol(v,f.col),dark=DARKV[v];g.save();if(dark)g.globalCompositeOperation='source-over';g.globalAlpha=f.t/f.m*fxA(f);g.lineCap='round';
  if(v==='lightning'){drawBolt(a.x,a.y,b.x,b.y,c);drawBolt(a.x,a.y,b.x,b.y,'#fff');g.restore();return}
  if(v==='kirin'){for(let i=0;i<4;i++)drawBolt(a.x,a.y,b.x,b.y,i%2?'#fff':'#9fd8ff');g.lineWidth=f.w*a.s*1.4;g.strokeStyle=rgba('#bfe6ff',.5);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();const ang=Math.atan2(b.y-a.y,b.x-a.x);g.translate(b.x,b.y);g.rotate(ang);g.fillStyle='#e8f6ff';g.beginPath();g.moveTo(26,0);g.lineTo(-10,-16);g.lineTo(-4,0);g.lineTo(-10,16);g.closePath();g.fill();g.fillStyle='#ffe14a';g.fillRect(4,-6,4,3);g.strokeStyle='#fff';g.lineWidth=2;g.beginPath();g.moveTo(-8,-14);g.lineTo(-22,-30);g.moveTo(-8,14);g.lineTo(-22,30);g.stroke();g.restore();return}
  if(v==='wind'){g.strokeStyle=rgba(c,.6);g.lineWidth=f.w*a.s;g.setLineDash([24,12]);g.lineDashOffset=-performance.now()/8;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.setLineDash([]);g.restore();return}
@@ -53,12 +55,15 @@ function drawBeamN(f){const a=P(f.x,f.y,30),b=P(f.x2,f.y2,30),v=f.vfx,c=v==='cha
  g.strokeStyle=c;g.lineWidth=f.w*a.s;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();if(!dark){g.strokeStyle='#fff';g.lineWidth=Math.max(1,f.w*a.s*.3);g.stroke()}g.restore()}
 // projectiles
 const NOTRAIL={kunai:1,senbon:1,shuriken:1,tag:1,shadow:1};
+// traînée lumineuse automatique (éléments lumineux) ; un kit peut forcer p.tail=1 / 0, ou exclure un dessin PROJD : FXNOTAIL.ka_xxx=1
+const FXTAIL={fire:1,fox:1,peacock:1,lightning:1,chidori:1,kirin:1,rasengan:1,rasenshuriken:1,wind:1,water:1,jyuken:1,heal:1,chakra:1,genjutsu:1,mind:1,hiraishin:1,sage:1,gate:1},FXNOTAIL={};
 function drawProj(p){const v=p.vfx;if(!v)return drawProjOld(p);
- if(!p.grenade&&!NOTRAIL[v]&&rnd()<(p.big||p.r>10?.9:.45))fx.push({x:p.x-p.vx*.015,y:p.y-p.vy*.015,z:28+(rnd()-.5)*6,vx:-p.vx*.1+(rnd()-.5)*40,vy:-p.vy*.1+(rnd()-.5)*40,t:.3,m:.3,col:p.col,r:(p.big||p.r>10?3.6:2.2)*(.7+rnd()*.6),vfx:v});
+ if(!p.grenade&&!NOTRAIL[v]&&rnd()<(p.big||p.r>10?.9:.45)*fxK(p)/.8)fx.push({oi:fxOI(p.owner),x:p.x-p.vx*.015,y:p.y-p.vy*.015,z:28+(rnd()-.5)*6,vx:-p.vx*.1+(rnd()-.5)*40,vy:-p.vy*.1+(rnd()-.5)*40,t:.3,m:.3,col:p.col,r:(p.big||p.r>10?3.6:2.2)*(.7+rnd()*.6),vfx:v});
  if(v==='shadow'&&p.owner&&!p.owner.dead){const a=P(p.owner.x,p.owner.y,0),b=P(p.x,p.y,0);g.strokeStyle='rgba(8,8,12,.75)';g.lineWidth=7*b.s;g.lineCap='round';g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()}
  if(p.hook&&p.ox!=null){const a=P(p.ox,p.oy,30),b=P(p.x,p.y,28);g.strokeStyle=v==='shadow'?'#141418':v==='chain'?'#e8c860':'#888';g.lineWidth=v==='shadow'?5:2.5;if(v==='chain')g.setLineDash([6,3]);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.setLineDash([])}
  const z=p.grenade?Math.sin(Math.PI*(1-p.life/p.life0))*70+15:28,q=P(p.x,p.y,z),t=performance.now();
  g.fillStyle='rgba(0,0,0,.35)';gEll(p.x,p.y,p.r*.9);g.fill();
+ if(p.tail!==0&&!p.grenade&&(p.tail||FXTAIL[v])&&!(p.kind&&FXNOTAIL[p.kind])){const sp=Math.hypot(p.vx,p.vy);if(sp>60){const L=Math.min(110,sp*.075)*(p.big?1.5:1),R0=p.r*(p.big?1.6:1);fxTrailW(p.x,p.y,z,p.vx,p.vy,L,R0*2.4,vcol(v==='chakra'?null:v,p.col),.5*fxA(p))}}
  g.save();g.translate(q.x,q.y);g.scale(q.s,q.s);const ra=Math.atan2(p.vy*K,p.vx),R=p.r*(p.big?1.6:1),c=vcol(v,p.col),ex=p.ex;if(p.kind&&PROJD[p.kind]){PROJD[p.kind](p,R,ra,t);g.restore();return}
  switch(v){
   case'kunai':g.rotate(ra);g.fillStyle='#3a3a44';g.fillRect(-14,-1.5,8,3);g.strokeStyle='#3a3a44';g.lineWidth=1.2;g.beginPath();g.arc(-16,0,2.4,0,7);g.stroke();g.fillStyle=ex?'#ffe81f':'#d8dde6';g.beginPath();g.moveTo(-6,-4);g.lineTo(10,0);g.lineTo(-6,4);g.fill();break;
@@ -89,7 +94,7 @@ function drawProj(p){const v=p.vfx;if(!v)return drawProjOld(p);
 // zones au sol laissées par les jutsu
 function drawFieldN(f,t){const v=f.vfx;if(!v||f.pet||f.spinner||f.dome)return false;const c=vcol(v,f.col),k=Math.min(1,f.t/.5);
  const dark=DARKV[v];g.fillStyle=rgba(dark?'#101014':c,(dark?.45:.16)*k);gEll(f.x,f.y,f.r);g.fill();g.strokeStyle=rgba(c,.5*k);g.lineWidth=2;gEll(f.x,f.y,f.r);g.stroke();
- const seed=(f.x*7+f.y*13)|0,n=Math.min(14,4+f.r/14|0);
+ const seed=(f.x*7+f.y*13)|0,n=Math.max(2,Math.round(Math.min(14,4+f.r/14|0)*Math.min(1,fxK(f)/.8)));
  for(let i=0;i<n;i++){const a=i*2.4+seed,d=f.r*(.2+((i*37+seed)%70)/100),x=f.x+Math.cos(a+t*(v==='sand'||v==='wind'||v==='bugs'?1.2:.1))*d,y=f.y+Math.sin(a+t*(v==='sand'||v==='wind'||v==='bugs'?1.2:.1))*d*.8,q=P(x,y,4);
   switch(v){case'fire':case'black':case'fox':{const h=(8+Math.sin(t*9+i)*4)*q.s;g.fillStyle=v==='black'?'#120a16':i%2?'#ffb03a':'#ff5a1a';g.beginPath();g.moveTo(q.x-4*q.s,q.y);g.quadraticCurveTo(q.x,q.y-h*2,q.x+4*q.s,q.y);g.fill();break}
    case'smoke':case'genjutsu':circ(q.x,q.y-8*q.s,(10+Math.sin(t*2+i)*3)*q.s,v==='genjutsu'?rgba('#8a3ab0',.25):'rgba(210,210,215,.35)');break;

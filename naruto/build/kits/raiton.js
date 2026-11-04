@@ -26,6 +26,12 @@ const raHit=(e,o,dmg,op,v)=>{const V=VFX;VFX=v||'lightning';const r=hit(e,o,dmg,
 const raAoe=(o,x,y,r,dmg,op,col,v)=>{const V=VFX;VFX=v||'lightning';aoe(o,x,y,r,dmg,op,col);VFX=V};
 const raPop=(x,y,r,c)=>jx({jfx:'ra_pop',x,y,r,c,t:.24,m:.24});
 const raUi=u=>units.indexOf(u);
+// ---- VFX (boîte à outils nr_fx.js) : décor selon intensité / foule / camp ; zones d'alerte (cibles d'éclair, Kirin) toujours nettes
+const raDim=(o,fn)=>{const m=fxA(o);return m<1?fxAlpha(m,fn):fn()};
+// impact de foudre : petit = arcs + étincelles ; gros = impact complet (éclat local, onde au rayon réel, brûlure électrique au sol)
+function raImp(u,x,y,r,big,t,dmg,c){if(big)fxImpact(x,y,'raiton',clamp(r/48,.6,2.4),{u,r});else{fxArcs(x,y,r*1.2,c||'#ffe14a',{u,n:3,t:.2,z:32});fxBurst(x,y,'#fff6c0',{u,n:7,sp:360,c2:'#ffffff',w:1.4,len:.14,t:.25,z:32});fxLight(x,y,r*2.4,c||'#ffe14a',{u,t:.18,a:.35})}if(t&&dmg)fxHitStop(u,t,dmg)}
+// brûlures électriques le long d'une ligne (Eisô, Chidori, Pas de l'éclair)
+function raLine(u,x0,y0,x1,y1,n,r,t){for(let i=1;i<=n;i++){const k=i/(n+1);fxDecal(x0+(x1-x0)*k,y0+(y1-y0)*k,'burn',{u,r,t:t||2.2})}}
 // tracé d'un éclair : zigzag perpendiculaire à sa direction ; les mêmes points servent au halo et au cœur blanc
 const RAP=[];
 function raPath(x0,y0,x1,y1,j,n){RAP.length=0;RAP.push(x0,y0);const dx=x1-x0,dy=y1-y0,L=Math.hypot(dx,dy)||1,nx=-dy/L,ny=dx/L;for(let i=1;i<n;i++){const k=i/n,o=(rnd()-.5)*j;RAP.push(x0+dx*k+nx*o,y0+dy*k+ny*o)}RAP.push(x1,y1)}
@@ -37,11 +43,11 @@ function raRay(u,a,len){const c=Math.cos(a),s=Math.sin(a);for(let d=24;d<len;d+=
  for(const o of OBST)if(Math.abs(o.x-x)<o.r&&Math.hypot(o.x-x,o.y-y)<o.r)return d;for(const w of walls)if(w.team!==u.team&&Math.abs(w.x-x)<w.r&&Math.hypot(w.x-x,w.y-y)<w.r)return d}return len}
 // paralysie (Chidori Senbon) : mudras coupés et plus de jutsu
 function raParalyze(o,t,d){if(t.dead||t.unstop>0)return;t.silence=Math.max(t.silence,d);if(t.cast||t.flame||t.spin){t.cast=null;t.flame=null;t.spin=null;say(t,'INTERROMPU','#fc6')}
- say(t,'PARALYSÉ','#bfe6ff');jx({jfx:'ra_para',ti:raUi(t),x:t.x,y:t.y,t:d,m:d});raPop(t.x,t.y,26,'#bfe6ff');raS('deflect',t)}
+ say(t,'PARALYSÉ','#bfe6ff');jx({jfx:'ra_para',ti:raUi(t),x:t.x,y:t.y,t:d,m:d});raPop(t.x,t.y,26,'#bfe6ff');raImp(o,t.x,t.y,26,0,t,18,'#bfe6ff');raS('deflect',t)}
 // chaîne d'éclairs : saute vers l'ennemi le plus proche pas encore touché ; cible seule → la foudre s'y accumule
 function raChain(o,from,n,dmg,hs,j){let nb=null,bd=290;for(const e of enemies(o))if(!hs.includes(e)){const d=Math.hypot(e.x-from.x,e.y-from.y);if(d<bd){bd=d;nb=e}}
  if(!nb){if(!j)raStack(o,from);return}hs.push(nb);const x0=from.x,y0=from.y;
- later(o,.09,()=>{if(nb.dead)return;jx({jfx:'ra_arc',x:x0,y:y0,x2:nb.x,y2:nb.y,t:.3,m:.3});raHit(nb,o,dmg,{slow:.5});raPop(nb.x,nb.y,18);raS('zap',nb);if(n>1)raChain(o,nb,n-1,dmg*.85,hs,j+1)})}
+ later(o,.09,()=>{if(nb.dead)return;jx({jfx:'ra_arc',x:x0,y:y0,x2:nb.x,y2:nb.y,t:.3,m:.3});raHit(nb,o,dmg,{slow:.5});raPop(nb.x,nb.y,18);raImp(o,nb.x,nb.y,18,0);raS('zap',nb);if(n>1)raChain(o,nb,n-1,dmg*.85,hs,j+1)})}
 function raStack(o,t){jx({jfx:'ra_charge',ti:raUi(t),x:t.x,y:t.y,t:.95,m:.95});for(let i=1;i<=3;i++)later(o,i*.3,()=>{if(t.dead)return;raHit(t,o,3,{slow:.35});jx({jfx:'ra_zap',ti:raUi(t),x:t.x,y:t.y,t:.22,m:.22});raS('zap',t)})}
 // IA : les bots fuient aussi les objets « aux » marqués danger (nuage de Kirin, éclairs de l'Orage)
 AFTER.push(()=>{if(typeof dangers!=='function'||dangers.raW)return;const D0=dangers,sel=auxSel(x=>x.danger);dangers=function(u){const L=D0(u);for(const x of sel())if(x.team!==u.team)L.push({x:x.x,y:x.y,r:x.r});return L};dangers.raW=1});
@@ -50,10 +56,10 @@ Object.assign(NAT,{
  // ---- éclair : le tir le plus rapide du jeu, perce la ligne
  ra_bolt:SP('Raiton : Éclair','Trait de foudre fulgurant : transperce et ralentit ; la foudre saute du premier touché vers un ennemi proche',5,{line:{len:560,w:14},ai:RG(540,.7)},(u,a)=>{let n=0;
   raS('zap',u);anim(u,'ra_flick',.32);jx({jfx:'ra_muzzle',x:u.x+Math.cos(a)*24,y:u.y+Math.sin(a)*24,a,r:14,t:.2,m:.2});
-  proj(u,a,{spd:1500,r:6,dmg:10,life:.38,col:'#ffe14a',slow:.5,pierce:1,kind:'ra_bolt',onHit:(p,t)=>{raPop(t.x,t.y,16);if(n++)return;raChain(p.owner,t,t.wet>0?2:1,6,[t],1)}})}),
+  proj(u,a,{spd:1500,r:6,dmg:10,life:.38,col:'#ffe14a',slow:.5,pierce:1,kind:'ra_bolt',onHit:(p,t)=>{raPop(t.x,t.y,16);raImp(p.owner,t.x,t.y,16,0);if(n++)return;raChain(p.owner,t,t.wet>0?2:1,6,[t],1)}})}),
  // ---- chidori senbon : éventail serré ; à bout portant, 3 aiguilles paralysent les mains
  ra_senbon:SP('Raiton : Chidori Senbon','Éventail de 5 aiguilles qui ralentissent ; touché par 3, l\'ennemi est paralysé : ni mudras ni jutsu 1 s',6,{line:{len:330,w:90},ai:RG(210,.75)},(u,a)=>{
-  raS('chidori',u);raS('zap',u);anim(u,'ra_fan',.38);jx({jfx:'ra_fan',ui:raUi(u),x:u.x,y:u.y,a,t:.22,m:.22});const vol={};
+  raS('chidori',u);raS('zap',u);anim(u,'ra_fan',.38);jx({jfx:'ra_fan',ui:raUi(u),x:u.x,y:u.y,a,t:.22,m:.22});const vol={};{const m=fwd(u,a,22);fxFlare(m.x,m.y,'#bfe6ff',{u,z:30,r:16,t:.14})}
   for(let i=0;i<5;i++)proj(u,a+(i-2)*.11,{spd:1150,r:4,dmg:3.5,life:.3,col:'#bfe6ff',slow:.6,noClash:1,kind:'ra_needle',onHit:(p,t)=>{const k=raUi(t);vol[k]=(vol[k]||0)+1;if(vol[k]===3)raParalyze(p.owner,t,1)}})}),
  // ---- chaîne : rebondit entre les ennemis, ou s'accumule dans une cible isolée
  ra_chain:SP('Raiton : Chaîne d\'éclairs','Rebondit sur 3 ennemis proches ; sur une cible seule, la foudre s\'accumule et la frappe 3 fois de plus',7,{line:{len:480,w:18},ai:RG(480,.6)},(u,a)=>{
@@ -64,42 +70,48 @@ Object.assign(NAT,{
   const fr=u.root>0||u.slow>0;u.root=0;u.rootV=null;u.slow=0;if(fr)say(u,'LIBÉRÉ','#bfe6ff');
   aoe(u,u.x,u.y,115,12,{stun:.45},'#bfe6ff');u.riposte=Math.max(u.riposte,2);u.riposteS=1;
   jx({jfx:'ra_burst',ui:raUi(u),x:u.x,y:u.y,r:115,c:'#bfe6ff',t:.45,m:.45});jx({jfx:'ra_current',ui:raUi(u),x:u.x,y:u.y,t:2,m:2});
+  fxRing(u.x,u.y,{u,r0:20,r1:115,col:'#bfe6ff',c2:'#ffffff',w:6,t:.35});fxDecal(u.x,u.y,'burn',{u,r:80,t:2.6});fxArcs(u.x,u.y,115,'#bfe6ff',{u,n:5,t:.3,z:20});fxLight(u.x,u.y,200,'#9fd8ff',{u,t:.35,a:.45});
+  for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<115+e.r)fxArc(u.x,u.y,e.x,e.y,'#bfe6ff',{u,z:30,t:.25});
   anim(u,'ra_nagashi',.5);raS('chidori',u);raS('zap',u)}),
  // ---- clone de foudre : leurre piégé, tu bondis en arrière
  ra_clone:SP('Raiton : Kage Bunshin','Bondis en arrière en laissant un clone de foudre : il explose au contact d\'un ennemi ou d\'un tir et étourdit',10,{ai:DEF},(u,a)=>{
   aux.push({type:'ra_clone',x:u.x,y:u.y,r:26,t:2.5,m:2.5,team:u.team,owner:u,ui:raUi(u),vfx:'lightning',k:0});
-  jx({jfx:'ra_burst',x:u.x,y:u.y,r:44,c:'#bfe6ff',t:.28,m:.28});dash(u,a+Math.PI,170,.24,{jump:24});anim(u,'ra_hop',.36);raS('poof',u);raS('zap',u)}),
+  jx({jfx:'ra_burst',x:u.x,y:u.y,r:44,c:'#bfe6ff',t:.28,m:.28});fxSmoke(u.x,u.y,{u,col:'#e8eef6',n:5,r:22,s:14,t:.6,al:.3});dash(u,a+Math.PI,170,.24,{jump:24});anim(u,'ra_hop',.36);raS('poof',u);raS('zap',u)}),
  // ---- chidori eisô : lance instantanée, s'arrête au premier obstacle, fourche au bout
  ra_spear:SP('Raiton : Chidori Eisô','Lance de foudre instantanée qui transperce la ligne, se ramifie au bout et étourdit brièvement',9,{line:{len:540,w:30},ai:RG(520,.55)},(u,a)=>{
   const L=raRay(u,a,540),c=Math.cos(a),s=Math.sin(a),tx=u.x+c*L,ty=u.y+s*L;let n=0;
-  for(const e of enemies(u)){const dx=e.x-u.x,dy=e.y-u.y,f=dx*c+dy*s,sd=Math.abs(-dx*s+dy*c);if((f>0&&f<L&&sd<15+e.r)||Math.hypot(e.x-tx,e.y-ty)<62+e.r){if(hit(e,u,19,{stun:.3,unblockable:1}))n++;raPop(e.x,e.y,24,'#bfe6ff')}}
-  jx({jfx:'ra_spear',ui:raUi(u),x:u.x,y:u.y,a,len:L,t:.34,m:.34});anim(u,'ra_thrust',.45);raS('chidori',u);raS('zap',u);if(near(u.x,u.y))shake=Math.max(shake,n?.2:.08)}),
+  for(const e of enemies(u)){const dx=e.x-u.x,dy=e.y-u.y,f=dx*c+dy*s,sd=Math.abs(-dx*s+dy*c);if((f>0&&f<L&&sd<15+e.r)||Math.hypot(e.x-tx,e.y-ty)<62+e.r){if(hit(e,u,19,{stun:.3,unblockable:1})){n++;fxHitStop(u,e,19)}raPop(e.x,e.y,24,'#bfe6ff')}}
+  jx({jfx:'ra_spear',ui:raUi(u),x:u.x,y:u.y,a,len:L,t:.34,m:.34});anim(u,'ra_thrust',.45);raS('chidori',u);raS('zap',u);
+  raLine(u,u.x+c*20,u.y+s*20,tx,ty,Math.max(2,L/110|0),14,1.8);raImp(u,tx,ty,62,1);fxFlare(u.x+c*24,u.y+s*24,'#bfe6ff',{u,z:32,r:24,t:.18})}),
  // ---- panthère noire (Darui) : bête de foudre qui traque et plaque au sol
  ra_panther:SP('Raiton : Panthère noire','Panthère de foudre qui traque l\'ennemi le plus proche et le cloue au sol 1,2 s',11,{line:{len:560,w:30},ai:RG(560,.6)},(u,a)=>{
   raS('roar',u);raS('zap',u);anim(u,'ra_beast',.5);jx({jfx:'ra_burst',x:u.x+Math.cos(a)*30,y:u.y+Math.sin(a)*30,r:38,c:'#ffe14a',t:.3,m:.3});
-  proj(u,a,{spd:520,r:13,dmg:20,life:1.4,col:'#ffe14a',home:1,root:1.2,kind:'ra_panther',onHit:(p,t)=>{jx({jfx:'ra_pounce',ti:raUi(t),x:t.x,y:t.y,t:1.2,m:1.2});raS('roar',t)}})}),
+  proj(u,a,{spd:520,r:13,dmg:20,life:1.4,col:'#ffe14a',home:1,root:1.2,kind:'ra_panther',onHit:(p,t)=>{jx({jfx:'ra_pounce',ti:raUi(t),x:t.x,y:t.y,t:1.2,m:1.2});raS('roar',t);raImp(p.owner,t.x,t.y,40,1,t,p.dmg)}})}),
  // ---- chidori : course éclair, coup imparable au premier ennemi touché
  ra_chidori:SP('Chidori','Fonce, la foudre au poing : le premier ennemi touché subit un coup imparable, est projeté et étourdi',12,{line:{len:340,w:44},ai:{mode:'gap',min:90,max:330,p:.6}},(u,a,td)=>{
   const d=clamp((td||300)+20,120,340),e=fwd(u,a,d);dash(u,a,d,.22,{});aux.push({type:'ra_chid',x:u.x,y:u.y,r:0,t:.6,m:.6,team:u.team,owner:u,a,k:0});
-  jx({jfx:'ra_trail',x:u.x,y:u.y,x2:e.x,y2:e.y,c:'#7fd0ff',t:.45,m:.45});anim(u,'ra_chidori',.42);raS('chidori',u);raS('dash',u)}),
+  jx({jfx:'ra_trail',x:u.x,y:u.y,x2:e.x,y2:e.y,c:'#7fd0ff',t:.45,m:.45});anim(u,'ra_chidori',.42);raS('chidori',u);raS('dash',u);raLine(u,u.x,u.y,e.x,e.y,2,16,1.6);fxFlare(u.x,u.y,'#9fd8ff',{u,z:30,r:22,t:.18})}),
  // ---- orage : nuage qui trempe, puis 3 éclairs ciblés (chacun annoncé au sol)
  ra_storm:SP('Raiton : Orage','Nuage d\'orage : sa pluie trempe les ennemis (foudre +35 %) et 3 éclairs frappent ceux restés dessous',13,{tele:{r:150,max:450},ai:RG(450,.6)},(u,a,td)=>{const p=atP(u,a,td,450);
   aux.push({type:'ra_storm',x:p.x,y:p.y,r:150,t:2.6,m:2.6,team:u.team,owner:u,vfx:'lightning',k:.4,n:3,danger:1});jx({jfx:'ra_cloud',x:p.x,y:p.y,r:150,rain:1,t:2.6,m:2.6});
-  anim(u,'ra_call',.7);raS('water',u);raS('zap',u)}),
+  anim(u,'ra_call',.7);raS('water',u);raS('zap',u);fxPillar(u.x,u.y,'#ffe14a',{u,h:200,w:18,t:.4,al:.45})}),
  // ---- pas de l'éclair : traversée foudroyante + sol électrisé
  ra_step:SP('Raiton : Pas de l\'éclair','Fonce en éclair à travers les ennemis (7 dégâts, ralentit) en laissant une courte traînée électrique qui ralentit',7,{ai:{mode:'gap',min:120,max:280,p:.4}},(u,a)=>{
   const s={x:u.x,y:u.y},e=fwd(u,a,260),L=Math.hypot(e.x-s.x,e.y-s.y);dash(u,a,260,.14,{});aux.push({type:'ra_run',x:u.x,y:u.y,r:0,t:.5,m:.5,team:u.team,owner:u,k:0,hs:[]});
   aux.push({type:'ra_trail',x:s.x,y:s.y,a,len:L,w:30,r:0,t:1,m:1,team:u.team,owner:u,k:0});jx({jfx:'ra_flash',x:s.x,y:s.y,x2:e.x,y2:e.y,t:.32,m:.32});
+  fxFlare(s.x,s.y,'#ffe14a',{u,z:30,r:20,t:.16});fxFlare(e.x,e.y,'#ffe14a',{u,z:30,r:20,t:.2});raLine(u,s.x,s.y,e.x,e.y,2,14,1.1);
   anim(u,'ra_dashp',.22);raS('zap',u);raS('dash',u)}),
  // ---- kirin : l'orage s'amasse, puis la foudre-dragon frappe l'ennemi le plus proche du centre
  ra_kirin:SP('Raiton : Kirin','Un orage couvre la zone ; peu après, Kirin foudroie l\'ennemi le plus au centre : énormes dégâts, étourdit',20,{tele:{r:200,max:480},ai:{max:480,p:.8}},(u,a,td)=>{const p=atP(u,a,td,480);
   aux.push({type:'ra_kirin',x:p.x,y:p.y,r:200,t:.8,m:.8,team:u.team,owner:u,vfx:'kirin',k:0,danger:1});jx({jfx:'ra_cloud',x:p.x,y:p.y,r:200,kir:1,c:'#bfe6ff',t:.85,m:.85});
-  anim(u,'ra_kirin',.8);raS('zap',u);raS('wind',u)}),
+  anim(u,'ra_kirin',.8);raS('zap',u);raS('wind',u);fxPillar(u.x,u.y,'#bfe6ff',{u,h:300,w:22,t:.6,al:.5});fxArcs(u.x,u.y,60,'#bfe6ff',{u,n:4,t:.4,z:60})}),
  // ---- armure de foudre (Raikage) : l'armure jaillit (étourdit autour), puis vitesse, force, réflexes, rien ne la retient
  ra_armor:SP('Raiton : Armure de foudre','Étourdit autour de toi, puis 5,5 s : très rapide, +35 % de dégâts, ni ralenti ni entravé, esquive un coup toutes les 2 s',20,{ai:SELF(320,.8)},(u)=>{const D=5.5;
   u.haste=Math.max(u.haste,D);u.rage=Math.max(u.rage,D);u.slowImm=Math.max(u.slowImm,D);u.slow=0;u.root=0;u.dodge=Math.max(u.dodge,D);aoe(u,u.x,u.y,110,12,{stun:.5},'#bfe6ff');
   for(const x of aux)if(x.type==='ra_armor'&&x.owner===u)x.t=0;aux.push({type:'ra_armor',x:u.x,y:u.y,r:0,t:D,m:D,team:u.team,owner:u,k:2});
-  jx({jfx:'ra_armor',ui:raUi(u),x:u.x,y:u.y,t:D,m:D});jx({jfx:'ra_armorburst',ui:raUi(u),x:u.x,y:u.y,t:.6,m:.6});anim(u,'ra_flex',.6);raS('chidori',u);raS('heavy',u)}),
+  jx({jfx:'ra_armor',ui:raUi(u),x:u.x,y:u.y,t:D,m:D});jx({jfx:'ra_armorburst',ui:raUi(u),x:u.x,y:u.y,t:.6,m:.6});anim(u,'ra_flex',.6);raS('chidori',u);raS('heavy',u);
+  fxShake(.3,u.x,u.y);fxRing(u.x,u.y,{u,r0:24,r1:110,col:'#bfe6ff',c2:'#ffffff',w:9,t:.45,fill:1});fxPillar(u.x,u.y,'#bfe6ff',{u,h:260,w:34,t:.6,al:.5});fxDecal(u.x,u.y,'burn',{u,r:90,t:3.5});fxArcs(u.x,u.y,130,'#bfe6ff',{u,n:6,t:.4,z:20});
+  fxDebris(u.x,u.y,{u,n:8,sp:180,col:'#8a7a60',c2:'#5a4a38'});for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<110+e.r){fxArc(u.x,u.y,e.x,e.y,'#bfe6ff',{u,z:34,t:.3});fxHitStop(u,e,12,1)}}),
 });
 Object.assign(NATHERO,{ra:'ig88'});
 
@@ -109,11 +121,11 @@ AUXF.ra_clone=x=>{if(x.done)return;const o=x.owner;let go=x.t<=0;
  if(!go)for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r+12){go=true;break}
  if(!go)for(const p of projs)if(p.owner.team!==x.team&&!p.grenade&&!p.dead&&p.life>0&&Math.hypot(p.x-x.x,p.y-x.y)<x.r+p.r+4){p.life=0;go=true;break}
  if(!go)return;x.done=1;x.t=0;raAoe(o,x.x,x.y,95,16,{stun:.6,unblockable:1},'#bfe6ff');jx({jfx:'ra_burst',x:x.x,y:x.y,r:95,c:'#bfe6ff',t:.5,m:.5});
- if(near(x.x,x.y)){raS('boom',o);raS('zap',o);shake=Math.max(shake,.18)}};
+ if(near(x.x,x.y)){raS('boom',o);raS('zap',o);raImp(o,x.x,x.y,95,1);for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<95+e.r){fxArc(x.x,x.y,e.x,e.y,'#bfe6ff',{u:o,z:30,t:.3});fxHitStop(o,e,16,1)}}};
 // chidori : la course s'arrête sur le premier ennemi touché
 AUXF.ra_chid=x=>{const u=x.owner;if(x.done||u.dead){x.t=0;return}
  for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<u.r+e.r+14){x.done=1;x.t=0;u.dash=null;u.z=0;const a=x.a;u.x=e.x-Math.cos(a)*(u.r+e.r+2);u.y=e.y-Math.sin(a)*(u.r+e.r+2);collide(u);
-  raHit(e,u,30,{melee:1,unblockable:1,air:.5,kb:160},'chidori');jx({jfx:'ra_impact',x:e.x,y:e.y,a,t:.5,m:.5});
+  raHit(e,u,30,{melee:1,unblockable:1,air:.5,kb:160},'chidori');jx({jfx:'ra_impact',x:e.x,y:e.y,a,t:.5,m:.5});raImp(u,e.x,e.y,60,1,e,30);fxBurst(e.x,e.y,'#bfe6ff',{u,n:16,sp:520,a,arc:1.2,z:34,c2:'#ffffff',w:1.6,len:.18,t:.35});
   if(near(e.x,e.y)){raS('boom',u);raS('chidori',u);shake=Math.max(shake,.3)}if(u===player||e===player)hs=Math.max(hs,.09);return}
  if(!u.dash)x.t=0};
 // orage : la pluie trempe ; toutes les 0,7 s un éclair vise l'ennemi le plus proche du centre (annoncé au sol 0,45 s)
@@ -121,16 +133,19 @@ AUXF.ra_storm=x=>{const o=x.owner;for(const e of enemies(o))if(Math.hypot(e.x-x.
  if(x.k>0||x.n<=0)return;x.n--;x.k=.7;let tg=null,bd=1e9;for(const e of enemies(o)){const d=Math.hypot(e.x-x.x,e.y-x.y);if(d<x.r+e.r&&d<bd){bd=d;tg=e}}
  const b=rnd()*7,rr=x.r*(.2+rnd()*.5);aux.push({type:'ra_mark',x:tg?tg.x:x.x+Math.cos(b)*rr,y:tg?tg.y:x.y+Math.sin(b)*rr*.85,r:58,t:.45,m:.45,team:x.team,owner:o,vfx:'lightning',k:0,danger:1})};
 AUXF.ra_mark=x=>{if(x.t>0||x.done)return;x.done=1;const o=x.owner;for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)raHit(e,o,11,{stun:.3,unblockable:1,fx:x.x,fy:x.y});
- jx({jfx:'ra_strike',x:x.x,y:x.y,r:x.r,t:.4,m:.4});if(near(x.x,x.y)){raS('zap',o);raS('boom',o);shake=Math.max(shake,.14)}};
+ jx({jfx:'ra_strike',x:x.x,y:x.y,r:x.r,t:.4,m:.4});if(near(x.x,x.y)){raS('zap',o);raS('boom',o);raImp(o,x.x,x.y,x.r,1);for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)fxHitStop(o,e,11)}};
 // kirin : la cible est choisie au dernier moment (0,12 s avant l'impact, le temps que le dragon descende)
 AUXF.ra_kirin=x=>{const o=x.owner;
  if(!x.lk&&x.t<=.12){x.lk=1;let tg=null,bd=1e9;for(const e of enemies(o)){const d=Math.hypot(e.x-x.x,e.y-x.y);if(d<x.r+e.r&&d<bd){bd=d;tg=e}}x.tx=tg?tg.x:x.x;x.ty=tg?tg.y:x.y;
   jx({jfx:'ra_kirinfx',x:x.tx,y:x.ty,r:110,t:1.1,m:1.1});raS('roar',o)}
  if(x.t>0||x.done)return;x.done=1;raAoe(o,x.tx,x.ty,110,62,{stun:1.1,unblockable:1},'#bfe6ff','kirin');
  jx({jfx:'flashsky',x:x.tx,y:x.ty,t:.4,m:.4});aux.push({type:'ra_scorch',x:x.tx,y:x.ty,r:95,t:1.8,m:1.8,team:x.team,owner:o,k:0});
- if(near(x.tx,x.ty)){raS('boom',o);raS('chidori',o);shake=Math.max(shake,.45)}if(o===player||(player&&Math.hypot(player.x-x.tx,player.y-x.ty)<130))hs=Math.max(hs,.08)};
+ if(near(x.tx,x.ty)){raS('boom',o);raS('chidori',o);fxShake(.4,x.tx,x.ty);fxImpact(x.tx,x.ty,'raiton',1.5,{u:o,r:110});fxDecal(x.tx,x.ty,'burn',{u:o,r:105,t:5}); // colonne : celle de flashsky suffit (empiler des lumières blanches masquait la cible)
+  
+  fxArcs(x.tx,x.ty,170,'#bfe6ff',{u:o,n:7,t:.45,z:10});fxSmoke(x.tx,x.ty,{u:o,col:'#c8d8ff',n:7,r:80,s:18,t:1.2,al:.22,rise:60});fxDebris(x.tx,x.ty,{u:o,n:8,sp:200,col:'#5a5a6a',c2:'#2a2a33'});
+  for(const e of enemies(o))if(Math.hypot(e.x-x.tx,e.y-x.ty)<110+e.r)fxHitStop(o,e,62,1)}if(o===player||(player&&Math.hypot(player.x-x.tx,player.y-x.ty)<130))hs=Math.max(hs,.08)};
 // pas de l'éclair : la course foudroie chaque ennemi traversé (une fois)
-AUXF.ra_run=x=>{const u=x.owner;if(u.dead){x.t=0;return}for(const e of enemies(u))if(!x.hs.includes(e)&&Math.hypot(e.x-u.x,e.y-u.y)<u.r+e.r+14){x.hs.push(e);raHit(e,u,7,{melee:1,slow:.6});raPop(e.x,e.y,22)}if(!u.dash)x.t=0};
+AUXF.ra_run=x=>{const u=x.owner;if(u.dead){x.t=0;return}for(const e of enemies(u))if(!x.hs.includes(e)&&Math.hypot(e.x-u.x,e.y-u.y)<u.r+e.r+14){x.hs.push(e);raHit(e,u,7,{melee:1,slow:.6});raPop(e.x,e.y,22);raImp(u,e.x,e.y,22,0)}if(!u.dash)x.t=0};
 // pas de l'éclair : la traînée ralentit les ennemis qui la touchent
 AUXF.ra_trail=x=>{if(x.k>0)return;x.k=.2;const c=Math.cos(x.a),s=Math.sin(x.a);for(const e of enemies(x.owner)){const dx=e.x-x.x,dy=e.y-x.y,f=dx*c+dy*s,sd=Math.abs(-dx*s+dy*c);
  if(f>-e.r&&f<x.len+e.r&&sd<x.w/2+e.r&&e.unstop<=0&&!(e.slowImm>0))e.slow=Math.max(e.slow,.45)}};
@@ -172,7 +187,7 @@ Object.assign(ANIM,{
 
 // ---- dessins : projectiles
 // éclair : long trait dentelé, tête blanche
-PROJD.ra_bolt=(p,R,ra)=>{g.rotate(ra);g.globalCompositeOperation='lighter';raBolt(-72,0,2,0,11,8,'#ffe14a',2.8);circ(2,0,R*1.7,rgba('#ffe14a',.35));circ(2,0,R*.75,'#ffffff')};
+PROJD.ra_bolt=(p,R,ra)=>{g.rotate(ra);g.globalCompositeOperation='lighter';fxGlowS(0,0,R*4,'#ffe14a',.35*fxA(p));raBolt(-72,0,2,0,11,8,'#ffe14a',2.8);circ(2,0,R*1.7,rgba('#ffe14a',.35));circ(2,0,R*.75,'#ffffff')};
 // aiguille de chidori : fine, bleu-blanc
 PROJD.ra_needle=(p,R,ra)=>{g.rotate(ra);g.globalCompositeOperation='lighter';g.lineCap='round';g.strokeStyle=rgba('#7fd0ff',.45);g.lineWidth=4.5;g.beginPath();g.moveTo(-20,0);g.lineTo(6,0);g.stroke();
  g.strokeStyle='#ffffff';g.lineWidth=1.5;g.beginPath();g.moveTo(-15,0);g.lineTo(9,0);g.stroke();raPath(-24,0,4,0,5,4);raStroke(rgba('#bfe6ff',.8),1)};
@@ -181,7 +196,7 @@ PROJD.ra_chain=(p,R,ra,t)=>{g.globalCompositeOperation='lighter';g.lineCap='roun
  g.strokeStyle=rgba('#fff6a0',.85);g.lineWidth=1.3;for(let i=0;i<3;i++){const a0=t/90+i*2.1;g.beginPath();g.ellipse(0,0,R*2,R*.8,i*1.05+t/400,a0,a0+2.2);g.stroke()}
  for(let i=0;i<4;i++){const b=rnd()*7,L=R*(1.9+rnd()*1.4);raPath(Math.cos(b)*R*.7,Math.sin(b)*R*.7,Math.cos(b+.3)*L,Math.sin(b+.3)*L,R*.8,3);raStroke(i%2?'#fff6a0':'#ffffff',1.3)}};
 // panthère noire : corps d'encre bordé de foudre, galop
-PROJD.ra_panther=(p,R,ra,t)=>{g.rotate(ra);const S=R/11;g.scale(S,S);const run=t/55,sw=Math.sin(run);
+PROJD.ra_panther=(p,R,ra,t)=>{{const q0=P(p.x,p.y,0),q=P(p.x,p.y,28);fxGlowS(0,(q0.y-q.y)/q.s,R*2.2,'#ffe14a',.35*fxA(p),R*2.2*K,0)}g.rotate(ra);const S=R/11;g.scale(S,S);const run=t/55,sw=Math.sin(run);
  g.globalCompositeOperation='lighter';circ(0,0,25,rgba('#ffe14a',.12));for(let i=0;i<3;i++){raPath(-24,(rnd()-.5)*12,-48,(rnd()-.5)*18,10,4);raStroke(i?rgba('#ffe14a',.75):'#ffffff',1.2)}
  g.globalCompositeOperation='source-over';g.fillStyle='#111118';g.strokeStyle='#111118';g.lineCap='round';g.lineWidth=3.4;
  for(const [x,ph] of[[-11,0],[-7,2.2],[8,1],[12,3.3]]){const s=Math.sin(run+ph);g.beginPath();g.moveTo(x,2);g.lineTo(x+s*6,8);g.lineTo(x+s*8.5,11);g.stroke()}
@@ -232,7 +247,7 @@ JFXD.ra_pounce=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;const q=P(tg.x,tg.y,0),s=
  for(let i=0;i<2;i++){const b=rnd()*7,o=P(tg.x+Math.cos(b)*24,tg.y+Math.sin(b)*18,0);raPath(o.x,o.y,q.x+(rnd()-.5)*12*s,q.y-(18+rnd()*34)*s,9*s,4);raStroke(rgba('#ffe14a',.85*a),1.3*s)}};
 // chidori : la foudre traverse la cible
 JFXD.ra_impact=(f,k,e)=>{const q=P(f.x,f.y,34),s=q.s,c=Math.cos(f.a),sn=Math.sin(f.a);g.globalCompositeOperation='lighter';g.lineCap='round';
- circ(q.x,q.y,(18+44*e)*s*k,rgba('#bfe6ff',.32));circ(q.x,q.y,13*s*k,'#ffffff');if(e<.25){g.fillStyle=rgba('#ffffff',.55*(1-e*4));g.beginPath();g.ellipse(q.x,q.y,70*s,40*s,0,0,7);g.fill()}
+ fxGlowS(q.x,q.y,(24+50*e)*s*k,'#9fd8ff',.5);circ(q.x,q.y,8*s*k,rgba('#ffffff',.7));if(e<.25)fxGlowS(q.x,q.y,70*s,'#bfe6ff',.35*(1-e*4),40*s); // éclat local, jamais d'aplat blanc opaque sur le corps
  const b=P(f.x+c*130*(.35+e),f.y+sn*130*(.35+e),34);raBolt(q.x,q.y,b.x,b.y,12*s,6,'#7fd0ff',3.4*s,k);
  for(let i=0;i<6;i++){const a=f.a+Math.PI+(i-2.5)*.5+(rnd()-.5)*.3,L=(30+55*e)*s;raPath(q.x,q.y,q.x+Math.cos(a)*L,q.y+Math.sin(a)*L*.8,10*s,4);raStroke(rgba(i%2?'#ffffff':'#bfe6ff',.9*k),1.6*s)}
  g.strokeStyle=rgba('#ffffff',.8*k);g.lineWidth=3*s;gEll(f.x,f.y,30+75*e);g.stroke()};
@@ -258,14 +273,14 @@ JFXD.ra_kirinfx=(f,k,e,t)=>{const g0=P(f.x,f.y,0),s=g0.s,H=600,dsc=Math.min(1,e/
   for(let i=0;i<=18;i++){const v=i/18,x=top.x+(hd.x-top.x)*v+Math.sin(v*10+t*14)*44*s*(1-v*.75)+(j?(rnd()-.5)*6*s:0),y=top.y+(hd.y-top.y)*v;i?g.lineTo(x,y):g.moveTo(x,y)}g.stroke()}
  if(e<.34){const ha=e<.11?1:Math.max(0,1-(e-.11)/.23);g.save();g.translate(hd.x,hd.y-(e<.11?0:(e-.11)*120*s));g.scale(s*(1+(e<.11?0:(e-.11)*1.5)),s*(1+(e<.11?0:(e-.11)*1.5)));g.fillStyle=rgba('#e8f6ff',.95*ha);g.beginPath();g.moveTo(0,42);for(const [x,y] of[[-8,22],[-14,12],[-30,8],[-18,0],[-14,-12],[-32,-40],[-8,-20],[0,-28]])g.lineTo(x,y);for(const [x,y] of[[8,-20],[32,-40],[14,-12],[18,0],[30,8],[14,12],[8,22]])g.lineTo(x,y);g.closePath();g.fill();g.strokeStyle=rgba('#7fd0ff',.9*ha);g.lineWidth=1.5;g.beginPath();g.moveTo(-6,26);g.lineTo(0,20);g.lineTo(6,26);g.stroke();
   circ(-8,2,3.4,rgba('#ffe14a',ha));circ(8,2,3.4,rgba('#ffe14a',ha));g.strokeStyle=rgba('#bfe6ff',.8*ha);g.lineWidth=2;g.beginPath();g.moveTo(-14,10);g.quadraticCurveTo(-34,14,-44,30);g.moveTo(14,10);g.quadraticCurveTo(34,14,44,30);g.stroke();g.restore()}
- if(e>.09){const ee=Math.min(1,(e-.09)/.9),R=f.r;g.fillStyle=rgba('#ffffff',.55*(1-ee));g.beginPath();g.ellipse(g0.x,g0.y,R*s*(.6+ee*.8),R*s*K*(.6+ee*.8),0,0,7);g.fill();
+ if(e>.09){const ee=Math.min(1,(e-.09)/.9),R=f.r;g.fillStyle=rgba('#bfe6ff',.12*(1-ee));g.beginPath();g.ellipse(g0.x,g0.y,R*s*(.6+ee*.8),R*s*K*(.6+ee*.8),0,0,7);g.fill();
   g.strokeStyle=rgba('#bfe6ff',.9*(1-ee));g.lineWidth=7*s*(1-ee)+1;gEll(f.x,f.y,R*(.5+ee*1.6));g.stroke();g.strokeStyle=rgba('#ffe14a',.7*(1-ee));g.lineWidth=2;gEll(f.x,f.y,R*(.3+ee*1.2));g.stroke();
   for(let i=0;i<7;i++){const b=i*.9+f.x,L=R*(.5+ee*1.1),o=P(f.x+Math.cos(b)*L,f.y+Math.sin(b)*L,0);raPath(g0.x,g0.y,o.x,o.y,18*s,5);raStroke(rgba(i%2?'#ffffff':'#ffe14a',.85*(1-ee)),2*s)}}};
 // mains paralysées (Senbon) : crépitements aux poignets tant que dure la paralysie
 JFXD.ra_para=(f,k,e,t,u,tg)=>{if(!tg||tg.dead||!(tg.silence>0))return;const q=P(tg.x,tg.y,tg.z||0),s=q.s*1.3,y=q.y-28*s;g.globalCompositeOperation='lighter';g.lineCap='round';
  for(const sx of[-1,1]){const hx=q.x+sx*12*s;circ(hx,y,4.5*s,rgba('#bfe6ff',.45));raPath(hx,y,hx+(rnd()-.5)*16*s,y+(rnd()-.5)*16*s,5*s,3);raStroke('#ffffff',1.1)}raPath(q.x-12*s,y,q.x+12*s,y,9*s,5);raStroke(rgba('#bfe6ff',.85),1.3)};
 // armure de foudre : contour électrique et cheveux dressés (devant le ninja)
-JFXD.ra_armor=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x,u.y,u.z||0),s=q.s*1.3*(u.ch.look.scale||1),cx=q.x,cy=q.y-38*s,a=Math.min(1,f.t*3,(f.m-f.t)*4+.3);g.globalCompositeOperation='lighter';g.lineCap='round';
+JFXD.ra_armor=(f,k,e,t,u)=>{if(!u||u.dead)return;fxRibbon(f,u.x,u.y,30+(u.z||0),'#9fd8ff',12,10,.45);const q=P(u.x,u.y,u.z||0),s=q.s*1.3*(u.ch.look.scale||1),cx=q.x,cy=q.y-38*s,a=Math.min(1,f.t*3,(f.m-f.t)*4+.3);g.globalCompositeOperation='lighter';g.lineCap='round';
  g.strokeStyle=rgba('#bfe6ff',.5*a);g.lineWidth=2.2*s;g.beginPath();g.ellipse(cx,cy,23*s,44*s,0,0,7);g.stroke();
  for(let i=0;i<4;i++){const b=rnd()*7,b2=b+.6+rnd()*.8;raPath(cx+Math.cos(b)*20*s,cy+Math.sin(b)*40*s,cx+Math.cos(b2)*23*s,cy+Math.sin(b2)*43*s,9*s,4);raStroke(rgba(i%2?'#ffffff':'#bfe6ff',.9*a),1.4*s)}
  for(let i=0;i<2;i++){const hx=cx+(rnd()-.5)*16*s;raPath(hx,cy-36*s,hx+(rnd()-.5)*8*s,cy-(52+rnd()*10)*s,4*s,3);raStroke(rgba('#ffffff',.8*a),1.1*s)}
@@ -287,7 +302,7 @@ AUXD.ra_clone=(x,k,t)=>{const u=x.ui!=null?units[x.ui]:null,q=P(x.x,x.y,0),s=q.s
  for(let i=0;i<5;i++){const b=rnd()*7,c=P(x.x,x.y,10+rnd()*70);raPath(c.x+Math.cos(b)*16*s,c.y+Math.sin(b)*10*s,c.x+Math.cos(b+2.4)*18*s,c.y+(rnd()-.5)*34*s,10*s,4);raStroke(rgba(i%2?'#bfe6ff':'#ffffff',.9*k*fl),1.5*s)}};
 // sol détrempé sous le nuage d'orage : ronds de pluie
 AUXD.ra_storm=(x,k,t)=>{g.fillStyle=rgba('#1a3a6a',.2*k);gEll(x.x,x.y,x.r);g.fill();g.strokeStyle=rgba('#9fdcff',.55*k);g.lineWidth=2;g.setLineDash([10,7]);g.lineDashOffset=t*25;gEll(x.x,x.y,x.r);g.stroke();g.setLineDash([]);
- g.strokeStyle=rgba('#bfe6ff',.6*k);g.lineWidth=1;for(let i=0;i<10;i++){const ph=(t*1.7+i*.37)%1,b=i*2.4,d=x.r*(.15+((i*37)%80)/100),c=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d*.85,0);g.globalAlpha=1-ph;g.beginPath();g.ellipse(c.x,c.y,(3+ph*10)*c.s,(1.5+ph*5)*c.s,0,0,7);g.stroke()}g.globalAlpha=1};
+ g.strokeStyle=rgba('#bfe6ff',.6*k*fxA(x));g.lineWidth=1;const nr=fxN(10,x);for(let i=0;i<nr;i++){const ph=(t*1.7+i*.37)%1,b=i*2.4,d=x.r*(.15+((i*37)%80)/100),c=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d*.85,0);g.globalAlpha=1-ph;g.beginPath();g.ellipse(c.x,c.y,(3+ph*10)*c.s,(1.5+ph*5)*c.s,0,0,7);g.stroke()}g.globalAlpha=1};
 // cible d'un éclair d'orage
 AUXD.ra_mark=(x,k)=>{const e=1-x.t/x.m,q=P(x.x,x.y,0),R=x.r*.55*q.s;g.fillStyle=rgba('#ffe14a',.12);gEll(x.x,x.y,x.r);g.fill();g.fillStyle=rgba('#ffe14a',.32);gEll(x.x,x.y,x.r*e);g.fill();g.strokeStyle='#ffe14a';g.lineWidth=2;gEll(x.x,x.y,x.r);g.stroke();
  g.strokeStyle=rgba('#fff6c0',.85);g.lineWidth=1.5;g.beginPath();g.moveTo(q.x-R,q.y);g.lineTo(q.x+R,q.y);g.moveTo(q.x,q.y-R*K);g.lineTo(q.x,q.y+R*K);g.stroke()};
@@ -295,10 +310,10 @@ AUXD.ra_mark=(x,k)=>{const e=1-x.t/x.m,q=P(x.x,x.y,0),R=x.r*.55*q.s;g.fillStyle=
 AUXD.ra_kirin=(x,k,t)=>{const e=1-x.t/x.m;g.fillStyle=rgba('#0a0e1c',.16+.24*e);gEll(x.x,x.y,x.r);g.fill();g.strokeStyle=rgba('#bfe6ff',.55+.45*e);g.lineWidth=2.5;g.setLineDash([12,8]);g.lineDashOffset=-t*40;gEll(x.x,x.y,x.r);g.stroke();g.setLineDash([]);
  g.strokeStyle=rgba('#ffffff',.6);g.lineWidth=1.5;gEll(x.x,x.y,x.r*(1-e*.85));g.stroke();if(rnd()<.2+.5*e){g.globalCompositeOperation='lighter';const b=rnd()*7,d=x.r*rnd(),o=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,0);raPath(o.x,o.y,o.x+(rnd()-.5)*30*o.s,o.y+(rnd()-.5)*14*o.s,8*o.s,3);raStroke(rgba('#bfe6ff',.8),1.2)}};
 // sol brûlé par Kirin : fissures lumineuses qui s'éteignent
-AUXD.ra_scorch=(x,k,t)=>{const a=Math.min(1,x.t/x.m*1.4),q=P(x.x,x.y,0);g.fillStyle=rgba('#14141c',.45*a);gEll(x.x,x.y,x.r*.8);g.fill();g.globalCompositeOperation='lighter';g.lineCap='round';
+AUXD.ra_scorch=(x,k,t)=>{const a=Math.min(1,x.t/x.m*1.4)*fxA(x),q=P(x.x,x.y,0);fxGlowG(x.x,x.y,x.r,'#9fd8ff',.3*a);g.fillStyle=rgba('#14141c',.45*a);gEll(x.x,x.y,x.r*.8);g.fill();g.globalCompositeOperation='lighter';g.lineCap='round';
  for(let i=0;i<7;i++){const b=i*.9+x.x,o=P(x.x+Math.cos(b)*x.r*.85,x.y+Math.sin(b)*x.r*.85*.9,0),m=P(x.x+Math.cos(b+.25)*x.r*.45,x.y+Math.sin(b+.25)*x.r*.4,0);g.strokeStyle=rgba(i%2?'#bfe6ff':'#ffe14a',.7*a);g.lineWidth=1.6*q.s;g.beginPath();g.moveTo(q.x,q.y);g.lineTo(m.x,m.y);g.lineTo(o.x,o.y);g.stroke()}};
 // traînée électrique (Pas de l'éclair)
-AUXD.ra_trail=(x,k,t)=>{const a=P(x.x,x.y,3),b=P(x.x+Math.cos(x.a)*x.len,x.y+Math.sin(x.a)*x.len,3),al=Math.min(1,x.t/x.m*1.6);g.globalCompositeOperation='lighter';g.lineCap='round';
+AUXD.ra_trail=(x,k,t)=>{const a=P(x.x,x.y,3),b=P(x.x+Math.cos(x.a)*x.len,x.y+Math.sin(x.a)*x.len,3),al=Math.min(1,x.t/x.m*1.6)*(.5+.5*fxA(x));g.globalCompositeOperation='lighter';g.lineCap='round';
  g.strokeStyle=rgba('#ffe14a',.14*al);g.lineWidth=x.w*a.s*.8;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();raBolt(a.x,a.y,b.x,b.y,14*a.s,Math.max(4,x.len/26|0),'#ffe14a',1.5*a.s,al*.9)};
 AUXD.ra_chid=AUXD.ra_armor=AUXD.ra_run=()=>{};
 // la foudre crépite entre les mains pendant les mudras (signal lisible : un jutsu Raiton arrive) ; le Chidori y forme sa boule

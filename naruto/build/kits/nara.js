@@ -13,6 +13,11 @@ KIT('c2',[
 DASHC[2]={src:'x.na_run',n:'Course de l\'ombre',d:'Glissade de l\'ombre, insensible aux ralentissements et entraves ; ta traînée ralentit les ennemis. En reculant : petit bouclier',vfx:'shadow',cd:6};
 // ---- outils communs
 const naI=u=>units.indexOf(u);
+// ---- VFX (boîte à outils nr_fx.js) : l'ombre n'éclaire pas : volutes sombres (non additives), éclats violets discrets ; danger net
+const naDim=(o,fn)=>{const m=fxA(o);return m<1?fxAlpha(m,fn):fn()};
+// prise d'ombre sur une cible : volutes noires qui jaillissent, voile violet, trace sombre au sol
+function naImp(u,e,big,dmg){fxBurst(e.x,e.y,'#0b0b10',{u,n:big?14:8,sp:big?240:170,z:20,up:90,gr:-40,w:2.6,len:.12,add:0,c2:'#2a2a3a',t:.5});fxSmoke(e.x,e.y,{u,col:'#101018',n:big?5:3,r:22,s:12,t:.7,al:.3,rise:30});
+ fxFlare(e.x,e.y,'#8a8ad0',{u,z:36,r:big?24:16,t:.2,star:0});fxDecal(e.x,e.y,'default',{u,r:big?38:28,t:2.2,col:'#0b0b10',al:.45});if(dmg)fxHitStop(u,e,dmg,big)}
 const naS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son joué tel quel (sans le mappage de l'élément)
 const naSay=(u,s,col)=>{if(near(u.x,u.y))txt.push({x:u.x,y:u.y,z:122,s,col,t:1})}; // au-dessus des textes d'état du moteur
 // trait « Ombre tenace » : une cible déjà ralentie ou contrôlée (entrave, étourdissement, silence, peur, possession) subit des contrôles plus longs
@@ -64,31 +69,31 @@ AUXF.na_ten=(x,dt)=>{const o=x.owner;if(!o||o.dead){if(x.n===1)naFree(x);x.t=0;r
 // Kage Mane : la tête de l'ombre touche → possession
 function naManeHit(x,e){const o=x.owner,D=NA_MANE.hold*naLong(e);if(!hit(e,o,NA_MANE.dmg,{})||e.dead||e.unstop>0)return false;if(D>1)naTenace(e);
  x.hold=x.h0=D;x.px=o.x;x.py=o.y;e.na_posT=SIMT+D;naHold(e,o,D);for(const k of NA_LOCK)e[k]=Math.max(e[k],D);naStop(e);e.slowImm=0;e.dash=null;e.block=false;e.anim={k:'na_ne',t:D,m:D};
- say(e,'POSSÉDÉ','#d8d8f0');naS('genjutsu',o);naG({kind:'snap',x:e.x,y:e.y,t:.45});jx({jfx:'na_pos',ti:naI(e),ui:naI(o),x:e.x,y:e.y,t:D+.1,m:D+.1});return true}
+ say(e,'POSSÉDÉ','#d8d8f0');naS('genjutsu',o);naG({kind:'snap',x:e.x,y:e.y,t:.45});naImp(o,e,1,16);jx({jfx:'na_pos',ti:naI(e),ui:naI(o),x:e.x,y:e.y,t:D+.1,m:D+.1});return true}
 // Kage Kubi Shibari : entrave + silence (allongés par le trait), interrompt les mudras, puis l'ombre serre
 function naKubi(u,e,inst,x){const O={root:1};if(!hit(e,u,6,O)||e.dead)return false;const H=clamp(O.root||1,.5,1.6); // durée de CE coup (allongée par le trait), pas une entrave déjà présente
  if(e.unstop<=0){e.silence=Math.max(e.silence,H);e.dash=null;if(naStop(e))say(e,'INTERROMPU','#fc6');naSay(e,'ÉTRANGLÉ','#d8d8f0')} // silence posé ici : un seul texte au lieu de deux superposés
- if(!x){x=naTen(u,ang(u,e),{kind:'kubi',w:7,n:1,x:e.x,y:e.y});naG({kind:'snap',x:e.x,y:e.y,t:.4});naS('genjutsu',u)}
+ if(!x){x=naTen(u,ang(u,e),{kind:'kubi',w:7,n:1,x:e.x,y:e.y});naG({kind:'snap',x:e.x,y:e.y,t:.4});naS('genjutsu',u)}naImp(u,e,1,16);
  // N tics réguliers, le dernier juste avant la fin de la prise (sinon il tombe après et se perd)
  const N=Math.max(1,Math.round(H/.25)),iv=H/N;Object.assign(x,{kind:'kubi',n:1,tg:e,ti:naI(e),hold:H,iv,k:iv-.07,ticks:N,tick:5});naHold(e,u,H);
  jx({jfx:'na_hands',ti:naI(e),ui:naI(u),x:e.x,y:e.y,t:H,m:H});return true}
 Object.assign(NAT,{
- na_mane:S_('Kage Mane','Ombre au sol : possédée 1 s puis ralentie, la cible imite tes pas en miroir et ne peut plus agir ; toi, jutsu seulement',10,{hero:'padme',line:{len:460,w:22},ai:RG(430,.55)},(u,a)=>{S('shadow',u);anim(u,'na_ne',.6);naG({kind:'burst',x:u.x,y:u.y,a,t:.35,n:3});naTen(u,a,{kind:'mane',spd:NA_MANE.spd,max:460,r:11,w:9,hit:naManeHit})}),
+ na_mane:S_('Kage Mane','Ombre au sol : possédée 1 s puis ralentie, la cible imite tes pas en miroir et ne peut plus agir ; toi, jutsu seulement',10,{hero:'padme',line:{len:460,w:22},ai:RG(430,.55)},(u,a)=>{S('shadow',u);anim(u,'na_ne',.6);naG({kind:'burst',x:u.x,y:u.y,a,t:.35,n:3});fxSmoke(u.x,u.y,{u,col:'#101018',n:3,r:20,s:10,t:.5,al:.25});naTen(u,a,{kind:'mane',spd:NA_MANE.spd,max:460,r:11,w:9,hit:naManeHit})}),
  na_kubi:S_('Kage Kubi Shibari','Étrangle la cible : entravée, réduite au silence et blessée 1 s ; instantané si ton ombre la tient déjà',12,{line:{len:420,w:20},ai:RG(410,.6)},(u,a,td)=>{S('shadow',u);anim(u,'na_grip',.75);const h=naHeld(u,a,td);if(h){naKubi(u,h,1);return}naTen(u,a,{kind:'kubi',spd:720,max:420,r:10,w:7,hit:(x,e)=>naKubi(x.owner,e,0,x)})}),
  na_trap:S_('Ombre explosive','Piège : parchemin caché dans une flaque d\'ombre (2 max) ; l\'ennemi est entravé, puis tout explose',9,{tele:{r:58,max:380},ai:RG(370,.45)},(u,a,td)=>{const p=atP(u,a,td,380);S('shadow',u);anim(u,'summon',.45);
   const mine=aux.filter(x=>x.type==='na_trap'&&x.owner===u&&x.n<2);if(mine.length>=2)mine[0].t=0;
   aux.push({type:'na_trap',x:p.x,y:p.y,r:58,t:16,m:16,team:u.team,owner:u,ui:naI(u),ti:-1,vfx:'shadow',k:0,n:0,arm:.5});jx({jfx:'na_toss',ui:naI(u),x:u.x,y:u.y,x2:p.x,y2:p.y,t:.3,m:.3})}),
- na_nui:ULT('Kage Nui','5 aiguilles d\'ombre en éventail transpercent tout : dégâts et entrave ; de près, plusieurs touchent',{line:{len:470,w:120},ai:{max:390,p:.8}},(u,a)=>{S('shadow',u);naS('heavy',u);anim(u,'na_nui',.65);naG({kind:'burst',x:u.x,y:u.y,a,t:.5,n:9});const grp=new Map();
-  for(let i=-2;i<=2;i++)naTen(u,a+i*.17,{kind:'nui',spd:980,max:470,r:9,w:4,hit:(x,e)=>{const c=grp.get(e)||0,T=NA_NUI;if(c<T.max){grp.set(e,c+1);if(hit(e,x.owner,c?T.more:T.first,{root:T.root})){naHold(e,x.owner,e.root);jx({jfx:'na_spike',ti:naI(e),ui:naI(x.owner),x:e.x,y:e.y,a:x.a,c,t:1.2,m:1.2})}}return 'p'}})}),
+ na_nui:ULT('Kage Nui','5 aiguilles d\'ombre en éventail transpercent tout : dégâts et entrave ; de près, plusieurs touchent',{line:{len:470,w:120},ai:{max:390,p:.8}},(u,a)=>{S('shadow',u);naS('heavy',u);anim(u,'na_nui',.65);naG({kind:'burst',x:u.x,y:u.y,a,t:.5,n:9});const grp=new Map();fxSmoke(u.x,u.y,{u,col:'#101018',n:4,r:30,s:12,t:.6,al:.28});fxFlare(u.x+Math.cos(a)*20,u.y+Math.sin(a)*20,'#8a8ad0',{u,z:20,r:20,t:.2,star:0});
+  for(let i=-2;i<=2;i++)naTen(u,a+i*.17,{kind:'nui',spd:980,max:470,r:9,w:4,hit:(x,e)=>{const c=grp.get(e)||0,T=NA_NUI;if(c<T.max){grp.set(e,c+1);if(hit(e,x.owner,c?T.more:T.first,{root:T.root})){naHold(e,x.owner,e.root);jx({jfx:'na_spike',ti:naI(e),ui:naI(x.owner),x:e.x,y:e.y,a:x.a,c,t:1.2,m:1.2});naImp(x.owner,e,!c,c?T.more:T.first)}}return 'p'}})}),
  na_prot:S_('Ombre protectrice','Recule d\'un bond (à l\'opposé de la visée) avec un bouclier ; ton ombre fouette et ralentit les proches',8,{hero:'gideon',tele:{self:1,r:135},ai:SELF(170,.55)},(u,a)=>{const ox=u.x,oy=u.y;S('shadow',u);naS('dash',u);anim(u,'backflip',.42);dash(u,a+Math.PI,210,.32,{jump:38});shieldU(u,22,2.5);u.na_sh=2.5;
   naG({kind:'lash',x:ox,y:oy,a,t:.42});for(const e of enemies(u))if(Math.hypot(e.x-ox,e.y-oy)<135+e.r&&hit(e,u,6,{slow:1.5}))naG({kind:'lash',x:ox,y:oy,a,t:.42,ti:naI(e)})}),
  na_run:S_('Course de l\'ombre','Glissade de l\'ombre',6,{hero:'grievous',ai:{mode:'esc',max:220,p:.45}},(u,a)=>{const v=Math.hypot(u.vx||0,u.vy||0),mv=v>40?Math.atan2(u.vy,u.vx):a,back=v>40&&angDiff(mv,a)>2.1;
   S('shadow',u);anim(u,'na_melt',.32);u.slowImm=Math.max(u.slowImm,.7);u.slow=0;u.root=0;
   aux.push({type:'na_run',x:u.x,y:u.y,a:mv,r:0,t:.7,m:.7,team:u.team,owner:u,ui:naI(u),vfx:'shadow',k:0,lx:u.x,ly:u.y});aux.push({type:'na_pud',x:u.x,y:u.y,a:mv,r:30,t:1.6,m:1.6,team:u.team,owner:u,vfx:'shadow',k:0});naG({kind:'snap',x:u.x,y:u.y,t:.35});
-  dash(u,mv,220,.3,{});if(back){shieldU(u,14,1.5);naSay(u,'OMBRE PROTECTRICE','#c8c8e0');naG({kind:'lash',x:u.x,y:u.y,a,t:.42})}}),
+  dash(u,mv,220,.3,{});fxSmoke(u.x,u.y,{u,col:'#101018',n:4,r:18,s:12,t:.6,al:.3});if(back){shieldU(u,14,1.5);naSay(u,'OMBRE PROTECTRICE','#c8c8e0');naG({kind:'lash',x:u.x,y:u.y,a,t:.42})}}),
  // réflexion : un vrai temps mort (ni pas, ni jutsu, ni attaque, ni parade) ; la Course ne la contourne pas
  na_plan:S_('Plan du stratège','Réfléchis 0,4 s sans bouger ni agir : ton prochain jutsu à mudras (dans les 8 s) part aussitôt et sans chakra',10,{ai:RG(900,.35,260)},(u)=>{const R=NA_PLAN.think;S('shadow',u);anim(u,'na_think',R+.05);u.slowImm=0;for(const k of NA_SELF)u[k]=Math.max(u[k],R);
-  aux.push({type:'na_plan',x:u.x,y:u.y,r:0,t:R,m:R,team:u.team,owner:u,ui:naI(u),vfx:'shadow',k:0});jx({jfx:'na_shogi',ui:naI(u),x:u.x,y:u.y,t:R+.05,m:R+.05})}),
+  aux.push({type:'na_plan',x:u.x,y:u.y,r:0,t:R,m:R,team:u.team,owner:u,ui:naI(u),vfx:'shadow',k:0});jx({jfx:'na_shogi',ui:naI(u),x:u.x,y:u.y,t:R+.05,m:R+.05});fxGlyph(u.x,u.y,'#ffd38a',{u,ui:naI(u),r:36,t:R+.2,al:.5})}),
  na_planD:S_('Plan du stratège','',8,{ai:RG(900,.35,260)},(u,a,td,P)=>{for(const x of aux)if(x.type==='na_trap'&&x.owner===u&&x.n<2)x.t=0;
   aux.push({type:'na_trap',x:u.x,y:u.y,r:58,t:16,m:16,team:u.team,owner:u,ui:naI(u),ti:-1,vfx:'shadow',k:0,n:0,arm:.5,dmg:11});NAT.na_plan.f(u,a,td,P)}),
  na_lie:ULT('Ombres liées','Ton ombre s\'étend autour de toi puis saisit les ennemis dedans : ramenés vers toi et entravés 1 s',{hero:'rey',tele:{self:1,r:225},ai:SELF(190,.8)},(u)=>{S('shadow',u);anim(u,'na_ne',.5);u.slowImm=0;u.root=Math.max(u.root,.5);
@@ -108,21 +113,21 @@ AUXF.na_trap=(x,dt)=>{const o=x.owner;if(!o||o.dead){x.t=0;return}
   for(const e of enemies(o))if(!(e.phase>0)&&Math.hypot(e.x-x.x,e.y-x.y)<x.r*.62+e.r){x.n=2;x.tg=e;x.ti=naI(e);x.fuse=.55;x.t=1;const V=VFX;VFX='shadow';hit(e,o,4,{root:.55});VFX=V;naHold(e,o,.55);naSay(e,'PIÈGE !','#ffb04a');naS('deflect',o);
    jx({jfx:'na_wrap',ti:naI(e),x:e.x,y:e.y,t:.55,m:.55,legs:1});jx({jfx:'na_fuse',x:x.x,y:x.y,t:.55,m:.55});break}return}
  if((x.fuse-=dt)>0||x.done)return;x.done=1;x.t=0;const V=VFX;VFX='tag';for(const e of enemies(o))if(Math.hypot(e.x-x.x,e.y-x.y)<85+e.r)hit(e,o,x.dmg||16,{fx:x.x,fy:x.y,kb:70});
- sparks(x.x,x.y,'#ff9a3a',16,'tag');VFX=V;naS('boom',o);jx({jfx:'na_boom',x:x.x,y:x.y,r:85,t:.55,m:.55});if(near(x.x,x.y))shake=Math.max(shake,.22)};
+ sparks(x.x,x.y,'#ff9a3a',16,'tag');VFX=V;naS('boom',o);jx({jfx:'na_boom',x:x.x,y:x.y,r:85,t:.55,m:.55});fxImpact(x.x,x.y,'bakuton',1.6,{u:o,r:85});fxSmoke(x.x,x.y,{u:o,col:'#3a3434',n:5,r:50,s:16,t:1.2,al:.26,rise:60});if(x.tg)fxHitStop(o,x.tg,x.dmg||16)};
 // Course de l'ombre : une flaque tous les ~30 px ; chaque flaque ralentit les ennemis qui la traversent
 AUXF.na_run=(x)=>{const o=x.owner;if(!o||o.dead){x.t=0;return}x.x=o.x;x.y=o.y;if(Math.hypot(o.vx||0,o.vy||0)>40)x.a=Math.atan2(o.vy,o.vx);
  const L=Math.hypot(o.x-x.lx,o.y-x.ly);if(L>30){aux.push({type:'na_pud',x:o.x,y:o.y,a:Math.atan2(o.y-x.ly,o.x-x.lx),len:Math.min(L,60),r:26,t:2.2,m:2.2,team:x.team,owner:o,vfx:'shadow',k:0});x.lx=o.x;x.ly=o.y}};
 AUXF.na_pud=x=>{if(x.k>0)return;x.k=.2;for(const e of enemies(x.owner))if(e.unstop<=0&&!(e.slowImm>0)&&Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r){if(!(e.slow>0))say(e,'RALENTI','#b8b8d0');e.slow=Math.max(e.slow,.45)}};
 // Ombres liées : la nappe s'étend 0,5 s (centrée sur le Nara, même repoussé), puis saisit tout ce qui est dedans
 AUXF.na_lie=(x)=>{const o=x.owner;if(!o||o.dead){x.t=0;return}const el=x.m-x.t;if(x.n){x.r=x.w*Math.max(0,x.t/.55);return}
- x.x=o.x;x.y=o.y;x.r=30+(x.w-30)*Math.min(1,el/.5);if(el<.5)return;x.n=1;x.r=x.w;anim(o,'na_pull',.55);naS('heavy',o);if(near(x.x,x.y))shake=Math.max(shake,.25);
+ x.x=o.x;x.y=o.y;x.r=30+(x.w-30)*Math.min(1,el/.5);if(el<.5)return;x.n=1;x.r=x.w;anim(o,'na_pull',.55);naS('heavy',o);if(near(x.x,x.y)){fxShake(.26,x.x,x.y);fxRing(x.x,x.y,{u:o,r0:x.w,r1:40,col:'#8a8ad0',c2:'#d8d8f0',w:6,t:.5});fxSmoke(x.x,x.y,{u:o,col:'#101018',n:10,r:x.w*.8,s:18,t:1,al:.26,rise:20});fxLight(x.x,x.y,x.w,'#5a5a9a',{u:o,t:.5,a:.3})}
  for(const e of enemies(o)){const d=Math.hypot(e.x-x.x,e.y-x.y);if(d>x.w+e.r)continue;const b=Math.atan2(e.y-x.y,e.x-x.x),V=VFX;VFX='shadow';const T=NA_LIE,ok=hit(e,o,T.dmg,{stun:T.stun,root:T.root,unblockable:1});VFX=V;if(!ok)continue;
   if(e.unstop<=0&&T.pull<d){const L=Math.min(d,T.pull);e.dash={sx:e.x,sy:e.y,tx:x.x+Math.cos(b)*L,ty:x.y+Math.sin(b)*L,t:0,dur:.26,jump:0}}
-  const H=Math.max(.3,e.stun,e.root);naHold(e,o,H);const l=naTen(o,b,{kind:'lie',n:1,x:e.x,y:e.y,w:6});Object.assign(l,{tg:e,ti:naI(e),hold:H});jx({jfx:'na_wrap',ti:naI(e),x:e.x,y:e.y,t:H,m:H})}};
+  const H=Math.max(.3,e.stun,e.root);naHold(e,o,H);naImp(o,e,1,T.dmg+10);const l=naTen(o,b,{kind:'lie',n:1,x:e.x,y:e.y,w:6});Object.assign(l,{tg:e,ti:naI(e),hold:H});jx({jfx:'na_wrap',ti:naI(e),x:e.x,y:e.y,t:H,m:H})}};
 // Plan du stratège : la réflexion est rompue si l'on est étourdi ; ensuite le plan reste prêt 8 s
 AUXF.na_plan=x=>{const o=x.owner;if(!o||o.dead){x.t=0;return}x.x=o.x;x.y=o.y;
  if(o.stun>0){for(const k of NA_SELF)if(Math.abs(o[k]-x.t)<.06)o[k]=0;x.t=0;naSay(o,'PLAN ROMPU','#c8c8e0');return} // rompue : le Nara retrouve ses moyens dès la fin de l'étourdissement
- if(x.t<=0){o.na_pl=NA_PLAN.ready;naSay(o,'PLAN PRÊT','#ffd38a');naS('genjutsu',o)}};
+ if(x.t<=0){o.na_pl=NA_PLAN.ready;naSay(o,'PLAN PRÊT','#ffd38a');naS('genjutsu',o);fxFlare(o.x,o.y,'#ffd38a',{u:o,z:90,r:18,t:.25})}};
 AUXF.na_gfx=()=>{};
 AUXF.na_dusk=x=>{const o=x.owner;if(!o||o.dead){x.t=0;return}x.x=o.x;x.y=o.y};
 // ---- trait de clan
@@ -172,7 +177,7 @@ function naHead(kd,x,y,a,t,al){const c=Math.cos(a),s=Math.sin(a),W=(f,l)=>P(x+c*
  for(let i=0;i<n;i++){const l=(i-(n-1)/2)*(ku?5:7),w=Math.sin(t*14+i*1.7)*3,b=W(6,l),m=W(14,l*1.3+w),e=W(ku?23:20,ku?l*.5:l*1.1+w*1.5);g.moveTo(b.x,b.y);g.quadraticCurveTo(m.x,m.y,e.x,e.y)}g.stroke()}
 AUXD.na_ten=(x,k,t)=>{const o=units[x.ui];if(!o||o.dead)return;const tg=x.n===1&&x.ti>=0?units[x.ti]:null,hx=tg?tg.x:x.x,hy=tg?tg.y:x.y,kd=x.kind;
  if(tg&&kd!=='nui'){const R=kd==='mane'?30:kd==='kubi'?25:20;g.fillStyle=`rgba(9,9,13,${.5*k})`;gEll(hx,hy,R);g.fill();g.strokeStyle=`rgba(90,90,130,${.55*k})`;g.lineWidth=1.5;gEll(hx,hy,R+Math.sin(t*9)*2.5);g.stroke()}
- naRib(o.x,o.y,hx,hy,x.n===2?(x.w||8)*.6:x.w||8,t,x.n===2?1.5:tg?3:kd==='nui'?2:5,k*(x.n===2?.75:1),tg?.15:.6);
+ naRib(o.x,o.y,hx,hy,x.n===2?(x.w||8)*.6:x.w||8,t,x.n===2?1.5:tg?3:kd==='nui'?2:5,k*(x.n===2?.75:1),tg?.15:.6);if(x.n===0)fxGlowG(hx,hy,26,'#6a6ab0',.35*k);
  if(x.n===0)naHead(kd,hx,hy,x.a,t,k);else if(x.n===2){g.fillStyle=`rgba(9,9,13,${.8*k})`;gEll(hx,hy,5);g.fill()}};
 // parchemin explosif dans sa flaque (à peine visible pour l'adversaire)
 AUXD.na_trap=(x,k,t)=>{const el=x.m-x.t;if(x.n===0&&el<.3)return; // le parchemin est encore en l'air : la flaque naît quand il touche le sol
@@ -183,14 +188,14 @@ AUXD.na_trap=(x,k,t)=>{const el=x.m-x.t;if(x.n===0&&el<.3)return; // le parchemi
  const tg=x.ti>=0?units[x.ti]:null,f=clamp((1-x.t)/.55,0,1);if(tg&&!tg.dead)naRib(x.x,x.y,tg.x,tg.y,7,t,2,1);
  g.fillStyle=`rgba(255,154,58,${.12+.18*f})`;gEll(x.x,x.y,85*f);g.fill();g.strokeStyle='#ff9a3a';g.lineWidth=2;gEll(x.x,x.y,85);g.stroke();
  g.globalAlpha=1};
-AUXD.na_pud=(x,k)=>{const w=x.r*(.55+.45*k);g.fillStyle=`rgba(9,9,13,${.4*k})`;gEll(x.x,x.y,w);g.fill();if(x.len){const a=P(x.x,x.y,0),b=P(x.x-Math.cos(x.a)*x.len,x.y-Math.sin(x.a)*x.len,0);g.strokeStyle=`rgba(9,9,13,${.4*k})`;g.lineCap='round';g.lineWidth=w*1.5*a.s;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()}};
-AUXD.na_run=(x,k,t)=>{const o=units[x.ui];if(!o||o.dead)return;const a=x.a||0;naRib(o.x,o.y,o.x-Math.cos(a)*78,o.y-Math.sin(a)*78,13,t,4,.8*k)};
+AUXD.na_pud=(x,k)=>{const w=x.r*(.55+.45*k);k*=.55+.45*fxA(x);g.fillStyle=`rgba(9,9,13,${.4*k})`;gEll(x.x,x.y,w);g.fill();if(x.len){const a=P(x.x,x.y,0),b=P(x.x-Math.cos(x.a)*x.len,x.y-Math.sin(x.a)*x.len,0);g.strokeStyle=`rgba(9,9,13,${.4*k})`;g.lineCap='round';g.lineWidth=w*1.5*a.s;g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke()}};
+AUXD.na_run=(x,k,t)=>{const o=units[x.ui];if(!o||o.dead)return;const a=x.a||0;k*=fxA(x);naRib(o.x,o.y,o.x-Math.cos(a)*78,o.y-Math.sin(a)*78,13,t,4,.8*k)};
 // nappe d'Ombres liées : elle s'étend (contour d'alerte), saisit, puis se retire
 AUXD.na_lie=(x,k,t)=>{if(!x.n){g.strokeStyle='rgba(16,16,24,.75)';g.lineWidth=2.5;g.setLineDash([10,7]);g.lineDashOffset=-t*40;gEll(x.x,x.y,x.w);g.stroke();g.setLineDash([])}
  const R=x.r;if(R<4)return;g.fillStyle=`rgba(9,9,13,${x.n?.45:.6})`;naBlob(x.x,x.y,R,18,t*2,.05,0);g.fill();
  g.strokeStyle='rgba(90,90,128,.5)';g.lineWidth=1.5;g.stroke();g.strokeStyle='rgba(70,70,105,.45)';g.lineWidth=2;for(let i=0;i<3;i++){gEll(x.x,x.y,R*(.3+i*.22),t*2+i*2.1,t*2+i*2.1+2.2);g.stroke()}};
 // effets au sol : burst (lancer), snap (l'ombre se referme), ten (Ombre tenace), lash (fouet d'Ombre protectrice)
-AUXD.na_gfx=(x,k,t)=>{const e=1-x.t/x.m,f=Math.max(0,x.t/x.m);
+AUXD.na_gfx=(x,k,t)=>{const e=1-x.t/x.m,f=Math.max(0,x.t/x.m)*(x.ti>=0&&x.kind==='lash'?1:fxA(x));
  if(x.kind==='burst'){const n=x.n||5;g.fillStyle=`rgba(9,9,13,${.65*f})`;gEll(x.x,x.y,22+26*e);g.fill();for(let i=0;i<n;i++){const b=x.a+(i-(n-1)/2)*(n>5?.32:.5),L=26+(n>5?70:44)*e,p=P(x.x+Math.cos(b)*L,x.y+Math.sin(b)*L,0),p0=P(x.x+Math.cos(b+.22)*18,x.y+Math.sin(b+.22)*18,0),p1=P(x.x+Math.cos(b-.22)*18,x.y+Math.sin(b-.22)*18,0);g.beginPath();g.moveTo(p0.x,p0.y);g.lineTo(p.x,p.y);g.lineTo(p1.x,p1.y);g.fill()}}
  else if(x.kind==='snap'){g.strokeStyle=`rgba(10,10,14,${.9*f})`;g.lineWidth=5*f+1;gEll(x.x,x.y,58-34*e);g.stroke();g.strokeStyle=`rgba(120,120,170,${.5*f})`;g.lineWidth=1;gEll(x.x,x.y,50-30*e);g.stroke()}
  else if(x.kind==='ten'){const u=x.ti>=0?units[x.ti]:null,X=u?u.x:x.x,Y=u?u.y:x.y;g.strokeStyle=`rgba(12,12,18,${.85*f})`;g.lineWidth=3;gEll(X,Y,18+32*f);g.stroke();g.strokeStyle=`rgba(140,140,190,${.55*f})`;g.lineWidth=1;gEll(X,Y,14+28*f);g.stroke()}
@@ -199,7 +204,7 @@ AUXD.na_gfx=(x,k,t)=>{const e=1-x.t/x.m,f=Math.max(0,x.t/x.m);
   if(u){naRib(x.x,x.y,x.x+(u.x-x.x)*ex,x.y+(u.y-x.y)*ex,7,t,7,f,.85);return}
   g.fillStyle=`rgba(9,9,13,${.5*f})`;naBlob(x.x,x.y,26,8,t,.12,x.a);g.fill();for(let i=0;i<7;i++){const b=i*.898+x.a,R=(70+(i%3)*30)*ex;naRib(x.x,x.y,x.x+Math.cos(b)*R,x.y+Math.sin(b)*R,5,t+i*.4,5,f,.9)}}};
 // longue ombre du crépuscule : celle d'un Nara s'étire vers sa visée
-AUXD.na_dusk=(x,k,t)=>{const o=units[x.ui];if(!o||o.dead||(o.stealth>0&&player&&o.team!==player.team))return;for(const a of aux)if(a.type==='na_ten'&&a.ui===x.ui&&a.kind!=='nui')return;const a=o.aim||0;naRib(o.x,o.y,o.x+Math.cos(a)*70,o.y+Math.sin(a)*70,10,t,1.5,.34)};
+AUXD.na_dusk=(x,k,t)=>{const o=units[x.ui];if(!o||o.dead||(o.stealth>0&&player&&o.team!==player.team))return;for(const a of aux)if(a.type==='na_ten'&&a.ui===x.ui&&a.kind!=='nui')return;const a=o.aim||0;naRib(o.x,o.y,o.x+Math.cos(a)*70,o.y+Math.sin(a)*70,10,t,1.5,.34*(.6+.4*fxA(o)))};
 // sur les ninjas (dessinés par-dessus) : possession, mains étrangleuses, aiguilles, liens, explosion, parchemin lancé
 JFXD.na_pos=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;let on=false;for(const a of aux)if(a.type==='na_ten'&&a.n===1&&a.ti===f.ti&&a.kind==='mane')on=true;if(!on)return;const q=P(tg.x,tg.y,0),s=q.s;
  g.fillStyle='rgba(9,9,13,.78)';for(let i=0;i<6;i++){const b=i*1.047+t*1.3,px=q.x+Math.cos(b)*15*s,py=q.y+Math.sin(b)*5*s+2*s,h=(10+((t*34+i*11)%22))*s;g.beginPath();g.moveTo(px-3*s,py);g.quadraticCurveTo(px+Math.sin(t*7+i)*5*s,py-h,px+2.5*s,py);g.fill()}
@@ -235,5 +240,10 @@ function naShogi(x,y,z,ch,al){g.save();g.globalAlpha=al;g.translate(x,y);g.fillS
 JFXD.na_shogi=(f,k,e,t,u)=>{if(!u||u.dead||u.stun>0)return;const al=Math.min(1,e*f.m/.15)*Math.min(1,k*f.m/.1);for(let i=0;i<4;i++){const b=t*2.4+i*1.571,q=P(u.x+Math.cos(b)*34,u.y+Math.sin(b)*26,46+Math.sin(t*4+i)*4);naShogi(q.x,q.y,7*q.s,'王飛角金'[i],al*(Math.sin(b)>0?1:.6))}};
 // plan prêt : le roi flotte au-dessus de la tête
 STATD.push((u,p,S,sk)=>{if(!(u.na_pl>0))return;const t=performance.now()/1000,y=p.y-(94*sk+Math.sin(t*3)*2.5)*S,al=Math.min(1,u.na_pl*2);g.save();g.globalCompositeOperation='lighter';g.globalAlpha=al*(.45+.2*Math.sin(t*6));circ(p.x,y,13*S/1.3,'rgba(255,211,138,.5)');g.restore();naShogi(p.x,y,9*S/1.3,'王',al)});
+// anticipation pendant les mudras d'un jutsu Nara : l'ombre du ninja s'élargit et des volutes noires montent de ses pieds
+STATD.push((u,p,S)=>{if(!u.cast||u.dead)return;const ab=u.ch.abil[u.cast.i];if(!ab||!ab.key||!ab.key.startsWith('na_'))return;const kk=Math.min(1,u.cast.t/u.cast.dur),t=performance.now()/1000;
+ naDim(u,()=>{g.save();g.fillStyle=`rgba(9,9,13,${.35+.25*kk})`;g.beginPath();g.ellipse(p.x,p.y,(22+18*kk)*S,(22+18*kk)*S*K,0,0,7);g.fill();g.fillStyle='rgba(9,9,13,.75)';const n=fxN(6,u);
+  for(let i=0;i<n;i++){const b=i*6.283/n+t*1.5,px=p.x+Math.cos(b)*(18+6*kk)*S,py=p.y+Math.sin(b)*(18+6*kk)*S*K,h=(8+22*kk*(.6+.4*Math.sin(t*6+i)))*S;g.beginPath();g.moveTo(px-3*S,py);g.quadraticCurveTo(px+Math.sin(t*7+i)*5*S,py-h,px+2.5*S,py);g.fill()}
+  g.restore();fxGlowG(u.x,u.y,30+20*kk,'#5a5a9a',.2*kk)})});
 // bouclier de l'Ombre protectrice : volutes sombres autour du ninja
 STATD.push((u,p,S)=>{if(!(u.na_sh>0)||!(u.shield>0))return;const t=performance.now()/1000;g.save();g.strokeStyle='rgba(12,12,18,.75)';g.lineWidth=2.5*S/1.3;g.lineCap='round';for(let i=0;i<3;i++){const b=t*3+i*2.094,y=p.y-(18+i*17)*S;g.beginPath();g.ellipse(p.x,y,20*S,7*S,0,b,b+2.2);g.stroke()}g.restore()});

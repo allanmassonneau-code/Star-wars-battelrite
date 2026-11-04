@@ -26,7 +26,9 @@ Object.assign(NAT,{
   for(const e of units){if(e.dead||e===u)continue;const dx=e.x-c.x,dy=e.y-c.y,f=dx*px+dy*py,s=dx*ca+dy*sa;if(Math.abs(f)>SPc*2+19+e.r||Math.abs(s)>26+e.r)continue;const sg=s>=0?1:-1;
    if(e.team!==u.team)hit(e,u,8,{kb:300,fx:e.x-ca*sg*40,fy:e.y-sa*sg*40,unblockable:1});else if(e.unstop<=0){e.kx+=ca*sg*260;e.ky+=sa*sg*260}}
   aux.push({type:'sub_rasho',x:c.x,y:c.y,a:a+Math.PI/2,len:SPc*4+38,r:0,t:SUB_RT,m:SUB_RT,team:u.team,owner:u});
-  jx({jfx:'sub_rashoin',x:c.x,y:c.y,a:a+Math.PI/2,r:115,t:.75,m:.75});subPoof(c.x,c.y,70,u);if(near(c.x,c.y)){subS('boom',u);shake=Math.max(shake,.3)}}),
+  jx({jfx:'sub_rashoin',x:c.x,y:c.y,a:a+Math.PI/2,r:115,t:.75,m:.75});subPoof(c.x,c.y,70,u);
+  for(const i of[-1.6,0,1.6]){const x=c.x+px*i*SPc,y=c.y+py*i*SPc;fxDebris(x,y,{u,n:4,sp:150,col:'#5e5072',c2:'#8a7a58',s:4});fxDecal(x,y,'crack',{u,r:34,t:2.2})}
+  fxSmoke(c.x,c.y,{u,col:'#c8b8e0',n:8,r:90,s:22,t:1,al:.28,rise:40,dx:ca*20,dy:sa*20});fxGlyph(c.x,c.y,'#a890d0',{u,r:60,t:.7});if(near(c.x,c.y))subS('boom',u)}),
  // --- Sôshôryû : deux rouleaux en hélice autour de Tenten, puis une pluie d'armes sur la zone (8 vagues de 5, ralentissent)
  sub_soryu:S_('Sôshôryû','Pluie d\'armes sur la zone',12,{tele:{r:130,max:420},ai:RG(420,.6)},(u,a,td)=>{const p=subFree(atP(u,a,td,420),20),T=1.9;anim(u,'sub_soryu',1.1);subS('wind',u);subS('poof',u);
   u.root=Math.max(u.root,.4);jx({jfx:'sub_twin',ui:units.indexOf(u),x:u.x,y:u.y,x2:p.x,y2:p.y,r:130,t:T,m:T});
@@ -48,8 +50,8 @@ Object.assign(NAT,{
   if(u.jst&&u.jst.key==='sub_clay'){const B=[];for(const o of aux)if(o.type==='sub_clay'&&o.owner===u)for(const p of o.L)if(!p.dead&&p.life>0)B.push(p);
    // bot : ne fait sauter les oiseaux que s'ils frôlent un ennemi (sinon ils continuent leur traque)
    if(!u.ctrl&&!B.some(p=>enemies(u).some(e=>Math.hypot(e.x-p.x,e.y-p.y)<85+e.r))){u.cds[i]=.3;return}
-   u.jst=null;u.cds[i]=cd;for(const p of B){p.life=0;p.kat=1}say(u,'KATSU !','#ffe0a0');anim(u,'sub_katsu',.35);subS('blaster',u);return}
-  anim(u,'sub_clay',.55);subS('poof',u);jx({jfx:'sub_claymouth',ui:units.indexOf(u),x:u.x,y:u.y,t:.5,m:.5});
+   u.jst=null;u.cds[i]=cd;for(const p of B){p.life=0;p.kat=1}say(u,'KATSU !','#ffe0a0');anim(u,'sub_katsu',.35);fxFlare(u.x+Math.cos(u.aim)*10,u.y+Math.sin(u.aim)*10,'#ffe0a0',{u,z:56,r:14,t:.18});subS('blaster',u);return}
+  anim(u,'sub_clay',.55);subS('poof',u);jx({jfx:'sub_claymouth',ui:units.indexOf(u),x:u.x,y:u.y,t:.5,m:.5});fxCast(u,'bakuton',.4);
   const c=atP(u,a,td,460),E=enemies(u).filter(e=>!(e.stealth>0&&dist(u,e)>140)).sort((p,q)=>Math.hypot(p.x-c.x,p.y-c.y)-Math.hypot(q.x-c.x,q.y-c.y)),L=[];
   for(let k=0;k<3;k++){proj(u,a+(k-1)*.6,{spd:310,r:10,dmg:0,o:{silent:1},life:3.2,col:'#f4efe4',vfx:'sub_clay',kind:'sub_cbird',noClash:1});const p=projs[projs.length-1];p.tg=E.length?E[k%Math.min(E.length,3)]:null;p.cb=.22;L.push(p)}
   aux.push({type:'sub_clay',x:u.x,y:u.y,r:0,t:3.4,m:3.4,team:u.team,owner:u,L,i,cd});if(u.jst&&u.jst.key!=='sub_clay')u.cds[u.jst.i]=u.jst.cd;u.jst={key:'sub_clay',i,n:1,t:3.3,cd,v:'tag'};u.cds[i]=.35}),
@@ -67,28 +69,29 @@ AUXF.sub_soryu=x=>{if(x.z&&x.m-x.t>=SUB_ST0+SUB_SFL-.02){x.z.done=1;x.z=null}if(
 // shuriken : au bout de 0,2 s (ou sur le 1er ennemi touché) il éclate en 12 ; chaque ennemi prend 4 clones au plus (7 puis 3 chacun)
 AUXF.sub_kshu=x=>{const p=x.p;if(x.n||!p)return;const alive=!p.dead&&p.life>0;
  if(alive){x.x=p.x;x.y=p.y;if(p.life0-p.life<.2)return;p.life=0;p.dead=1;p.boom=1}else if(!p.hitAny){x.t=0;return}
- x.n=1;x.t=.5;const o=x.owner,b=Math.atan2(p.vy,p.vx),X=p.x-Math.cos(b)*8,Y=p.y-Math.sin(b)*8;subPoof(X,Y,30,o);jx({jfx:'sub_kfan',x:X,y:Y,a:b,t:.3,m:.3});
+ x.n=1;x.t=.5;const o=x.owner,b=Math.atan2(p.vy,p.vx),X=p.x-Math.cos(b)*8,Y=p.y-Math.sin(b)*8;subPoof(X,Y,30,o);jx({jfx:'sub_kfan',x:X,y:Y,a:b,t:.3,m:.3});fxFlare(X,Y,'#eef2f8',{u:o,z:28,r:20,t:.16});fxBurst(X,Y,'#ffffff',{u:o,z:28,n:10,sp:360,gr:0,up:0,w:1.2,len:.25,a:b,arc:1.2});
  for(let i=0;i<12;i++){const c=b+(i-5.5)*(1.1/11);projs.push({x:X+Math.cos(c)*6,y:Y+Math.sin(c)*6,vx:Math.cos(c)*680,vy:Math.sin(c)*680,owner:o,src:o,rot:i,r:6,dmg:0,life:.42,life0:.42,col:'#d8dde6',vfx:'sub_kmini',kind:'sub_kmini',jn:'Multiclonage de shuriken',ex:false,basic:false,hitSet:null,o:{silent:1},
-  onHit:(q,t)=>{const n=x.G.get(t)||0;if(n>=5||t.dead)return;x.G.set(t,n+1);hit(t,o,n?5:9,n>=2?{slow:.7}:{})}})}};
+  onHit:(q,t)=>{const n=x.G.get(t)||0;if(n>=5||t.dead)return;x.G.set(t,n+1);hit(t,o,n?5:9,n>=2?{slow:.7}:{});if(!n||n===2)fxBurst(t.x,t.y,'#eef2f8',{u:o,z:32,n:5,sp:200,gr:0,up:20,w:1.2,c2:'#ffffff'})}})}};
 // Chiens ninja : le terrier suit la cible à 105 px/s ; à 0,6 s, la meute jaillit : le plus proche du centre est mordu et entravé
 AUXF.sub_dig=(x,dt)=>{if(x.n)return;const e=x.tg,o=x.owner;
  if(e&&!e.dead&&x.t>0){const dx=e.x-x.x,dy=e.y-x.y,d=Math.hypot(dx,dy);if(d>1){const s=Math.min(d,105*dt);x.x+=dx/d*s;x.y+=dy/d*s}return}if(x.t>0)return;x.n=1;
  const C=[];for(const v of enemies(o)){const d=Math.hypot(v.x-x.x,v.y-x.y);if(d<x.r+v.r*.6&&!(v.phase>0))C.push([d,v])}C.sort((p,q)=>p[0]-q[0]);let m=null;
  const V=VFX;VFX='claws';if(C.length&&hit(C[0][1],o,16,{root:1,unblockable:1}))m=C[0][1];for(const [,v] of C.slice(1))hit(v,o,8,{slow:.8,unblockable:1});VFX=V;
  if(m)say(m,'CHIENS NINJA !','#e8c890');aux.push({type:'sub_dhole',x:x.x,y:x.y,r:44,t:1.4,m:1.4,team:x.team});
- jx({jfx:'sub_dogs',x:x.x,y:x.y,ti:m?units.indexOf(m):undefined,a:o.aim||0,t:m?1.3:.6,m:m?1.3:.6});sparks(x.x,x.y,'#8a6a48',12,'earth');
- if(near(x.x,x.y)){S('rock',o);S('hit',o);shake=Math.max(shake,.16)}};
+ jx({jfx:'sub_dogs',x:x.x,y:x.y,ti:m?units.indexOf(m):undefined,a:o.aim||0,t:m?1.3:.6,m:m?1.3:.6});
+ fxImpact(x.x,x.y,'doton',1,{u:o,r:x.r,dec:0});fxDecal(x.x,x.y,'crack',{u:o,r:40,t:3});if(m)fxHitStop(o,m,16,1);
+ if(near(x.x,x.y)){S('rock',o);S('hit',o)}};
 AUXF.sub_dhole=()=>{};
 // Raikiri : pendant la ruée, le 1er ennemi rencontré est transpercé, les suivants blessés (chacun une seule fois)
 AUXF.sub_raiki=x=>{const u=x.owner;if(u.dead){x.t=0;return}x.x=u.x;x.y=u.y;
  for(const e of enemies(u)){if(x.hs.has(e)||e.phase>0||Math.hypot(e.x-u.x,e.y-u.y)>u.r+e.r+14)continue;x.hs.add(e);const V=VFX;VFX='lightning';
   if(!x.n){if(hit(e,u,34,{melee:1,unblockable:1,stun:.4,fx:u.x,fy:u.y})){x.n=1;say(e,'TRANSPERCÉ','#bfe6ff');jx({jfx:'sub_raihit',ti:units.indexOf(e),x:e.x,y:e.y,a:x.a,t:.55,m:.55});
-   if(near(e.x,e.y)){S('boom',u);S('chidori',u);shake=Math.max(shake,.35)}if(u===player||e===player)hs=Math.max(hs,.1)}}
+   if(near(e.x,e.y)){S('boom',u);S('chidori',u)}fxImpact(e.x,e.y,'raiton',1.4,{u,r:50,z:34});fxHitStop(u,e,34,1)}}
   else hit(e,u,14,{melee:1,unblockable:1,slow:.8});VFX=V}
  if(!u.dash)x.t=0};
 // Argile explosive : les oiseaux tournent vers leur proie (2,8 rad/s) ; chaque explosion (contact, relance, fin de vol) a son nuage
 function subClayBoom(p){const o=p.owner,V=VFX;VFX='sub_clay';aoe(o,p.x,p.y,62,9,{kb:180,unblockable:1,quiet:1},'#ffe0b0');VFX=V;jx({jfx:'sub_cboom',x:p.x,y:p.y,r:62,t:.65,m:.65});
- if(near(p.x,p.y)){sparks(p.x,p.y,'#f4efe4',14);S('boom',o);shake=Math.max(shake,.18)}}
+ if(near(p.x,p.y)){fxDeto(p.x,p.y,62,'tag',o);fxRing(p.x,p.y,{u:o,r0:12,r1:62,col:'#fff0c8',c2:'#ffb0a0',w:5,t:.32});fxBurst(p.x,p.y,'#f4efe4',{u:o,z:20,n:10,sp:240,up:120,gr:320,w:2.2,sh:'dot',add:0});S('boom',o)}}
 AUXF.sub_clay=(x,dt)=>{const u=x.owner;let alive=0;
  for(const p of x.L){if(p.dead||p.life<=0){if(!p.cbD){p.cbD=1;subClayBoom(p)}continue}alive++;
   if((p.cb-=dt)>0)continue;let e=p.tg;if(!e||e.dead){e=null;let bd=520;for(const v of enemies(u)){const d=Math.hypot(v.x-p.x,v.y-p.y);if(d<bd&&!(v.stealth>0&&d>140)){bd=d;e=v}}p.tg=e}
@@ -154,7 +157,7 @@ function subOni(t,a){const O=SUBK[0],gl=.75+.25*Math.sin(t*5);g.globalAlpha*=a;g
  sh(()=>{g.moveTo(-22,12);g.quadraticCurveTo(0,8,22,12);g.quadraticCurveTo(18,26,0,26);g.quadraticCurveTo(-18,26,-22,12)},'#5a0e14',1.8);
  g.fillStyle='#fff8ea';g.strokeStyle=O;g.lineWidth=1;for(const [x0,y0,dy] of[[-15,11.5,8],[13,11.5,8],[-7,25,-6],[7,25,-6]]){g.beginPath();g.moveTo(x0-2.6,y0);g.lineTo(x0,y0+dy);g.lineTo(x0+2.6,y0);g.closePath();g.fill();g.stroke()}}
 // sol du portail : ombre, fissures et sceau d'invocation (sous les ninjas)
-AUXD.sub_rasho=(x,k)=>{const ca=Math.cos(x.a),sa=Math.sin(x.a),h=x.len/2,nx=-sa,ny=ca,al=Math.min(1,x.t/.4),c=(f,s)=>P(x.x+ca*f+nx*s,x.y+sa*f+ny*s);
+AUXD.sub_rasho=(x,k)=>{const ca=Math.cos(x.a),sa=Math.sin(x.a),h=x.len/2,nx=-sa,ny=ca,al=Math.min(1,x.t/.4)*fxA(x),c=(f,s)=>P(x.x+ca*f+nx*s,x.y+sa*f+ny*s);
  poly([c(-h,-24),c(h,-24),c(h,24),c(-h,24)],rgba('#1a1024',.22*al));g.strokeStyle=rgba('#1a1008',.7*al);g.lineWidth=2;g.lineCap='round';
  for(let i=0;i<9;i++){const f=-h+h*2*i/8,s=(i%2?1:-1)*(16+(i*7)%10),A=c(f,0),B2=c(f+((i*13)%9-4)*3,s*1.8),C2=c(f+((i*5)%11-5)*4,s*2.6);g.beginPath();g.moveTo(A.x,A.y);g.lineTo(B2.x,B2.y);g.lineTo(C2.x,C2.y);g.stroke()}
  const e=Math.min(1,(x.m-x.t)/.25);g.strokeStyle=rgba('#a890d0',.6*al);g.lineWidth=1.5;gEll(x.x,x.y,70*e);g.stroke()};
@@ -201,11 +204,10 @@ function subDog(x,y,z,a,sc,ci,st,t,al){const q=P(x,y,0),p=P(x,y,z),s=p.s*1.2*sc,
  g.fillStyle='#2a4a8a';g.strokeStyle=OUT;g.lineWidth=1;g.beginPath();if(sit){g.moveTo(-3,-17);g.lineTo(3,-19);g.lineTo(6,-8);g.lineTo(0,-6)}else{g.moveTo(-1,-18);g.lineTo(4,-18);g.lineTo(5,-6);g.lineTo(-2,-6)}g.closePath();g.fill();g.stroke();g.fillStyle='#ffe14a';g.fillRect(sit?1:0.5,sit?-15:-14,2.4,2.4)
  g.fillStyle='#2a3a6a';g.fillRect(hx-4.5,hy-5.4,7,2.6);g.fillStyle='#c8ccd4';g.fillRect(hx-3,hy-5.2,4,2.2);g.restore()}
 // terrier qui file sous la cible (alerte au sol qui se remplit) ; trou de sortie
-AUXD.sub_dig=(x,k,t)=>{const e=1-x.t/x.m,q=P(x.x,x.y,0),s=q.s;g.fillStyle=rgba('#c8a070',.12);gEll(x.x,x.y,x.r);g.fill();g.fillStyle=rgba('#b8682a',.28);gEll(x.x,x.y,x.r*e);g.fill();
- g.strokeStyle=rgba('#e8c890',.8);g.lineWidth=2;g.setLineDash([7,5]);g.lineDashOffset=-t*30;gEll(x.x,x.y,x.r);g.stroke();g.setLineDash([]);
+AUXD.sub_dig=(x,k,t)=>{const e=1-x.t/x.m,q=P(x.x,x.y,0),s=q.s;fxTele(x.x,x.y,x.r,e,'#e8a050',x,.12);
  for(let i=0;i<3;i++){const b=t*9+i*2.1,p=P(x.x+Math.cos(b)*9,x.y+Math.sin(b)*6,0);g.fillStyle='#7a5a3a';g.strokeStyle=SUBK[0];g.lineWidth=1.2;g.beginPath();g.ellipse(p.x,p.y,(8+e*3)*s,(3.5+e*1.5)*s,0,Math.PI,0);g.fill();g.stroke()}
  for(let i=0;i<5;i++){const h=(t*3+i*.2)%1,b=i*1.3+t,p=P(x.x+Math.cos(b)*(6+h*16),x.y+Math.sin(b)*(4+h*10),Math.sin(Math.PI*h)*18);g.fillStyle=i%2?'#8a6a48':'#5a4028';g.fillRect(p.x-1.6*s,p.y-1.6*s,3.2*s,3.2*s)}};
-AUXD.sub_dhole=(x,k)=>{const al=Math.min(1,x.t/.5);g.fillStyle=rgba('#2a1c10',.45*al);gEll(x.x,x.y,26);g.fill();g.strokeStyle=rgba('#7a5a3a',.8*al);g.lineWidth=3;gEll(x.x,x.y,30);g.stroke();
+AUXD.sub_dhole=(x,k)=>{const al=Math.min(1,x.t/.5)*fxA(x);g.fillStyle=rgba('#2a1c10',.45*al);gEll(x.x,x.y,26);g.fill();g.strokeStyle=rgba('#7a5a3a',.8*al);g.lineWidth=3;gEll(x.x,x.y,30);g.stroke();
  for(let i=0;i<7;i++){const b=i*.9,p=P(x.x+Math.cos(b)*34,x.y+Math.sin(b)*30,0);g.fillStyle=rgba(i%2?'#8a6a48':'#6a4e34',al);g.beginPath();g.ellipse(p.x,p.y,7*p.s,3.5*p.s,b,0,7);g.fill()}};
 // la meute jaillit : sur une proie, 5 chiens la mordent (côté caméra) et Pakkun s'assoit sur sa tête ; sinon ils bondissent dans le vide
 const SUB_DOGA=[1.571,.62,2.52,-.2,3.34];
@@ -253,10 +255,10 @@ PROJD.sub_cbird=(p,R,ra,t)=>{const O=SUBK[0],w=.4+.6*Math.abs(Math.sin(t/80+(p.l
  if(bl){g.globalCompositeOperation='lighter';circ(0,0,9,'rgba(255,200,90,.5)')}};
 // explosion d'argile : éclair blanc, champignon crème et rose, éclats d'argile
 JFXD.sub_cboom=(f,k,e)=>{const q=P(f.x,f.y,0),R=f.r*q.s,cy=q.y-R*.3;g.strokeStyle=rgba('#3a2a20',.4*k);g.lineWidth=5*q.s*k+1;gEll(f.x,f.y,f.r*(.4+e*.8));g.stroke();
- if(e<.2){const a=1-e/.2,L=R*(.6+e*3);g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba('#fffbe8',.95*a);g.beginPath();for(let i=0;i<14;i++){const b=i*Math.PI/7+f.y,l=i%2?L*.42:L;g.lineTo(q.x+Math.cos(b)*l,cy+Math.sin(b)*l*.75)}g.closePath();g.fill();g.restore()}
+ if(e<.2){const a=1-e/.2,L=R*(.5+e*2.2);g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba('#fffbe8',.55*a);g.beginPath();for(let i=0;i<14;i++){const b=i*Math.PI/7+f.y,l=i%2?L*.42:L;g.lineTo(q.x+Math.cos(b)*l,cy+Math.sin(b)*l*.75)}g.closePath();g.fill();g.restore()}
  const C=e<.3?['#fff6dc','#ffd27a','#ffb0a0']:['#f0e4d8','#d8c8d0','#b8a8b8'];g.lineWidth=1.6;
  for(let i=0;i<7;i++){const b=i*.9+f.x*.01,d=R*(.15+.25*Math.min(1,e*3)),x=q.x+Math.cos(b)*d,y=cy-e*R*.8+Math.sin(b)*d*.5-(i%2)*R*.16,r=R*(.3-.02*i)*(.55+.7*Math.min(1,e*2.5));
-  g.fillStyle=rgba(C[i%3],(e>.5?.7:.95)*k);g.strokeStyle=rgba('#3a2a30',.5*k);g.beginPath();g.arc(x,y,r,0,7);g.fill();g.stroke()}
+  g.fillStyle=rgba(C[i%3],(e>.5?.32:.58)*k);g.strokeStyle=rgba('#3a2a30',.35*k);g.beginPath();g.arc(x,y,r,0,7);g.fill();g.stroke()}
  g.fillStyle=rgba('#f4efe4',.95*k);for(let i=0;i<9;i++){const b=i*.7+f.y,d=R*(.3+e*1.3),x=q.x+Math.cos(b)*d,y=cy+Math.sin(b)*d*.5-Math.sin(e*2.6)*R*.5+e*e*R*.9;g.beginPath();g.arc(x,y,(i%2?3:2)*q.s,0,7);g.fill()}};
 // bouches dans les paumes qui mâchent l'argile : deux boules blanches qui prennent des ailes
 JFXD.sub_claymouth=(f,k,e,t,u)=>{if(!u)return;const a=u.aim||0;for(const s of[-1,1]){const b=a+s*.45,q=P(u.x+Math.cos(b)*18,u.y+Math.sin(b)*18,32),sc=q.s*(.6+.6*Math.min(1,e*2)),O=SUBK[0];

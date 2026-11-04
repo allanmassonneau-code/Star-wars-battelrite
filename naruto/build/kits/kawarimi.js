@@ -15,7 +15,7 @@ Object.assign(NAT,{
   const i=kwSlot(u),cd=i>=0?u.ch.abil[i].cd:KW_CD;for(const x of aux)if(x.type==='kw_mark'&&x.owner===u)x.t=0;
   u.kwE=SIMT+KW_T;u.kwT=KW_T;u.kwX=u.x;u.kwY=u.y;if(i>=0)u.cds[i]=KW_T+cd; // recharge = protection restante + recharge pleine (raccourcie si le coup tombe avant)
   aux.push({type:'kw_mark',x:u.x,y:u.y,r:0,t:KW_T,m:KW_T,team:u.team,owner:u,ui:units.indexOf(u)});
-  anim(u,'seal',.3);S('poof',u);say(u,'KAWARIMI','#e8cfa8');jx({jfx:'sub_poof',x:u.x,y:u.y,r:26,t:.4,m:.4})})});
+  anim(u,'seal',.3);S('poof',u);say(u,'KAWARIMI','#e8cfa8');jx({jfx:'sub_poof',x:u.x,y:u.y,r:26,t:.4,m:.4});fxGlyph(u.x,u.y,'#e8cfa8',{u,r:KW_R,t:.5});fxSmoke(u.x,u.y,{u,col:'#e8e8f0',n:3,r:20,s:12,t:.6,al:.24,rise:20})})});
 // contrôle porté par un coup : un coup silencieux qui en porte un compte toujours (sinon il traverserait la protection)
 const kwCC=o=>o.stun>0||o.root>0||o.air>0||o.kb>0||o.pull>0||o.silence>0||o.fear>0||o.taunt>0||o.disarm>0;
 // le coup annulé : vrai si hit() doit s'arrêter là. Appelé dans hit() APRÈS l'intangibilité et les défenses (esquive, contre, riposte,
@@ -26,7 +26,7 @@ function kwHit(u,src,dmg,o){if(!kwOn(u)||!src||src===u||src.team===u.team||o.tho
  const i=kwSlot(u),cd=i>=0?u.ch.abil[i].cd:KW_CD,ox=u.x,oy=u.y;u.kwE=0;u.kwT=0;if(i>=0)u.cds[i]=Math.min(u.cds[i],cd);
  for(const x of aux)if(x.type==='kw_mark'&&x.owner===u)x.t=0;
  const p=subFree({x:(u.kwX??ox)+.01,y:u.kwY??oy},u.r);/* point libre : bornes de l'arène et obstacles (+0,01 : jamais pile au centre d'un obstacle) */aux.push({type:'kw_log',x:ox,y:oy,a:ang(u,src),r:0,t:1.4,m:1.4,team:u.team});
- subPoof(ox,oy,44,u);u.x=p.x;u.y=p.y;u.z=0;u.kx=u.ky=0;u.dash=null;u.spin=null;u.airT=0;collide(u);u.phase=Math.max(u.phase||0,.25); // bref intangible : la suite de la rafale ne rattrape pas l'ancre
+ subPoof(ox,oy,44,u);fxDebris(ox,oy,{u,n:6,sp:140,col:'#7a4e28',c2:'#c89a60',s:4,t:.9});fxFlare(p.x,p.y,'#ffe0a8',{u,z:34,r:22,t:.18});fxRing(p.x,p.y,{u,r0:KW_R+10,r1:12,col:'#ffe0a8',w:3,t:.3});u.x=p.x;u.y=p.y;u.z=0;u.kx=u.ky=0;u.dash=null;u.spin=null;u.airT=0;collide(u);u.phase=Math.max(u.phase||0,.25); // bref intangible : la suite de la rafale ne rattrape pas l'ancre
  u.flash=0;say(u,'KAWARIMI !','#e8cfa8');subPoof(u.x,u.y,30,u);anim(u,'crouch',.3);return true}
 // ancre : suit la protection (hôte) ; disparaît au coup, à l'expiration ou à la mort
 function kwTick(u){if(u.dead||!(u.kwE>SIMT)){u.kwE=0;u.kwT=0;return}u.kwT=Math.max(0,u.kwE-SIMT)} // hôte (updUnit) : jamais figée, même sans ancre

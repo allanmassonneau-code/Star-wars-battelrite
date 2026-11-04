@@ -21,30 +21,39 @@ KIT('c27',[
 DASHC[27]={src:'x.jg_dash',n:'Bond sauvage',d:JG_D.dash,vfx:'jg_sage',cd:7};
 // fureur : +n (0-100) ; à 100, transformation (JG_B s)
 function jgRage(u,n){if(!u||u.dead||u.jg_b>0||!(n>0))return;u.jg_f=Math.min(100,(u.jg_f||0)+n);u.jg_ft=SIMT;if(u.jg_f>=100){u.jg_f=100;jgBerserk(u,JG_B)}}
-function jgBerserk(u,d){u.jg_b=Math.max(u.jg_b||0,d);u.unstop=Math.max(u.unstop||0,.6);say(u,'MARQUE MAUDITE !','#ffb04a');jx({jfx:'jg_burst',ui:gkI(u),x:u.x,y:u.y,t:.7,m:.7});if(near(u.x,u.y)){gkS('roar',u);shake=Math.max(shake,.2)}}
+function jgBerserk(u,d){u.jg_b=Math.max(u.jg_b||0,d);u.unstop=Math.max(u.unstop||0,.6);say(u,'MARQUE MAUDITE !','#ffb04a');jx({jfx:'jg_burst',ui:gkI(u),x:u.x,y:u.y,t:.7,m:.7});
+ fxLight(u.x,u.y,110,'#ff7a1a',{u,t:.4,a:.25});fxBurst(u.x,u.y,'#ff7a1a',{u,n:16,sp:260,c2:'#ffe0a0',up:120,gr:40,z:30});fxSmoke(u.x,u.y,{u,col:'#3a1a0a',n:5,r:30,s:14,al:.26,rise:50});if(near(u.x,u.y)){gkS('roar',u);shake=Math.max(shake,.2)}}
 Object.assign(NAT,{
  // ---------- Bras-massue (D) : coup en arc devant soi ----------
  jg_club:SP('Jûgo : Bras-massue',JG_D.club,4.5,{ai:{max:125,p:.85}},(u,a)=>{gkS('heavy',u);gkS('rock',u);anim(u,'hammer',.45);
-  for(const e of enemies(u))if(dist(u,e)<120+e.r&&angDiff(ang(u,e),a)<.8)gkHit(e,u,18,{kb:260,melee:1},'jg_sage');jx({jfx:'jg_club',ui:gkI(u),x:u.x,y:u.y,a,t:.35,m:.35});
-  const c=fwd(u,a,80);jx({jfx:'gk_boom',x:c.x,y:c.y,r:55,v:'jg_sage',s:'dust',t:.4,m:.4});if(near(u.x,u.y))shake=Math.max(shake,.12)}),
+  for(const e of enemies(u))if(dist(u,e)<120+e.r&&angDiff(ang(u,e),a)<.8&&gkHit(e,u,18,{kb:260,melee:1},'jg_sage'))jgHitFx(u,e,1);jx({jfx:'jg_club',ui:gkI(u),x:u.x,y:u.y,a,t:.35,m:.35});
+  const c=fwd(u,a,80);jx({jfx:'gk_boom',x:c.x,y:c.y,r:55,v:'jg_sage',s:'dust',t:.4,m:.4});later(u,.12,()=>{fxDebris(c.x,c.y,{u,n:6,sp:150,col:'#8a6040',c2:'#4a2a14',s:3.5});fxDecal(c.x,c.y,'crack',{u,r:46,t:3.5});fxRing(c.x,c.y,{u,r0:8,r1:55,col:JGC.b,w:5,t:.3})});if(near(u.x,u.y))shake=Math.max(shake,.12)}),
  // ---------- Bras-propulseur (C) : charge ----------
  jg_jet:SP('Jûgo : Bras-propulseur',JG_D.jet,8,{ai:{mode:'gap',min:90,max:260,p:.7},line:{len:260,w:44}},(u,a)=>{gkS('dash',u);gkS('flame',u);anim(u,'lunge',.35);
-  aux.push({type:'jg_jet',x:u.x,y:u.y,r:0,t:.3,m:.3,team:u.team,owner:u,ui:gkI(u),a});dash(u,a,260,.26,{dmg:18,kb:340})}),
+  aux.push({type:'jg_jet',x:u.x,y:u.y,r:0,t:.3,m:.3,team:u.team,owner:u,ui:gkI(u),a});dash(u,a,260,.26,{dmg:18,kb:340});
+  fxFlare(u.x-Math.cos(a)*16,u.y-Math.sin(a)*16,'#ffb04a',{u,z:34,r:26,t:.2});fxSmoke(u.x,u.y,{u,col:'#5a4030',n:5,r:20,s:13,al:.26,rise:20,dx:-Math.cos(a)*60,dy:-Math.sin(a)*60});fxDecal(u.x,u.y,'scorch',{u,r:24,t:2.5});
+  fxWind(u.x+Math.cos(a)*130,u.y+Math.sin(a)*130,a,{u,len:260,w:44,n:7,col:'#ffe0a0',t:.32})}),
  // ---------- Absorption naturelle (B) ----------
  jg_absorb:SP('Senjutsu : Absorption naturelle',JG_D.absorb,11,{ai:HEALM},(u)=>{gkS('genjutsu',u);anim(u,'channel',.7);u.jg_hot=2;u.energy=Math.min(100,(u.energy||0)+12);jgRage(u,35);
-  jx({jfx:'jg_nature',ui:gkI(u),x:u.x,y:u.y,t:1.2,m:1.2})}),
+  jx({jfx:'jg_nature',ui:gkI(u),x:u.x,y:u.y,t:1.2,m:1.2});fxCast(u,'jg_sage',1.1,{glyph:1,n:12,c2:JGG,col:JGG});fxCharge(u,JGG,{u,t:1.1,n:10,r:90,c2:'#e8ffb0'});fxEmbers(u.x,u.y,60,JGG,{u,n:10,h:60,t:1.2,c2:'#e8ffb0'});fxLight(u.x,u.y,90,JGG,{u,t:1,a:.3})}),
  // ---------- Bras-canon (A) ----------
  jg_cannon:SP('Jûgo : Bras-canon',JG_D.cannon,12,{ai:RG(500,.65),line:{len:520,w:40}},(u,a)=>{gkS('boom',u);gkS('blaster',u);anim(u,'point',.5);u.kx-=Math.cos(a)*120;u.ky-=Math.sin(a)*120;
-  proj(u,a,{spd:760,r:15,dmg:36,life:.68,col:JGC.b,kind:'jg_shell',vfx:'jg_sage',rocket:1,ar:80,kb:260});jx({jfx:'gk_boom',x:u.x+Math.cos(a)*30,y:u.y+Math.sin(a)*30,r:40,v:'jg_sage',s:'blast',t:.3,m:.3})}),
+  fxCharge(u,JGC.b,{u,t:.25,n:8,r:50,c2:'#ffffff'});{const x=u.x+Math.cos(a)*30,y=u.y+Math.sin(a)*30;fxFlare(x,y,'#ffe0a0',{u,z:36,r:30,t:.2});fxSmoke(x,y,{u,col:'#6a5040',n:5,r:16,s:12,al:.26,dx:-Math.cos(a)*50,dy:-Math.sin(a)*50,rise:20});fxRing(x,y,{u,r0:6,r1:40,col:JGC.b,w:4,t:.25})}
+  proj(u,a,{spd:760,r:15,dmg:36,life:.68,col:JGC.b,kind:'jg_shell',vfx:'jg_sage',rocket:1,ar:80,kb:260,tail:1});jx({jfx:'gk_boom',x:u.x+Math.cos(a)*30,y:u.y+Math.sin(a)*30,r:40,v:'jg_sage',s:'blast',t:.3,m:.3})}),
  // ---------- Transformation sennin (S) ----------
  jg_sennin:ULT('Jûgo : Transformation sennin',JG_D.sennin,{ai:SELF(170,.85),tele:{self:1,r:140}},(u)=>{gkS('roar',u);gkS('boom',u);anim(u,'roar',.8);
-  gkAoe(u,u.x,u.y,140,30,{kb:380},'jg_sage');u.giant=Math.max(u.giant||0,6);u.jg_f=0;jgBerserk(u,6);u.unstop=Math.max(u.unstop,1.2);
+  gkAoe(u,u.x,u.y,140,30,{kb:380},'jg_sage',e=>{jgHitFx(u,e,1.3);fxHitStop(u,e,30,1)});u.giant=Math.max(u.giant||0,6);
+  fxRing(u.x,u.y,{u,r0:20,r1:140,col:'#ff8a2a',c2:'#ffe0a0',w:10,t:.45});fxRing(u.x,u.y,{u,r0:40,r1:170,col:JGC.b,w:4,t:.65,al:.5});
+  fxDebris(u.x,u.y,{u,n:16,sp:280,col:'#8a6040',c2:'#4a2a14',s:5});fxSmoke(u.x,u.y,{u,col:'#7a6050',n:9,r:120,s:16,al:.24,rise:30,t:1.3});fxDecal(u.x,u.y,'crack',{u,r:130,t:5});fxEmbers(u.x,u.y,120,JGG,{u,n:12,h:90,t:1.4,c2:'#ffe0a0'});fxShake(.4,u.x,u.y);u.jg_f=0;jgBerserk(u,6);u.unstop=Math.max(u.unstop,1.2);
   jx({jfx:'gk_boom',x:u.x,y:u.y,r:160,v:'jg_sage',s:'blast',t:.7,m:.7});if(near(u.x,u.y))shake=Math.max(shake,.45)}),
  // ---------- dash : Bond sauvage ----------
  jg_dash:SP('Bond sauvage',JG_D.dash,7,{ai:ESC},(u,a,td)=>{const d=clamp(td||240,120,240);gkS('dash',u);anim(u,'leap',.4);
-  dash(u,a,d,.34,{jump:1,end:()=>{if(u.dead)return;gkAoe(u,u.x,u.y,70,8,{},'jg_sage');jx({jfx:'gk_boom',x:u.x,y:u.y,r:70,v:'jg_sage',s:'dust',t:.45,m:.45});if(near(u.x,u.y)){gkS('rock',u);shake=Math.max(shake,.1)}}})}),
+  fxDebris(u.x,u.y,{u,n:5,sp:120,col:'#8a6040',c2:'#4a2a14',s:3});fxSmoke(u.x,u.y,{u,col:'#9a8268',n:3,r:16,s:11,al:.22});
+  dash(u,a,d,.34,{jump:1,end:()=>{if(u.dead)return;gkAoe(u,u.x,u.y,70,8,{},'jg_sage');jx({jfx:'gk_boom',x:u.x,y:u.y,r:70,v:'jg_sage',s:'dust',t:.45,m:.45});fxRing(u.x,u.y,{u,r0:10,r1:70,col:JGC.b,w:6,t:.35});fxDebris(u.x,u.y,{u,n:7,sp:160,col:'#8a6040',c2:'#4a2a14',s:3.5});fxDecal(u.x,u.y,'crack',{u,r:56,t:3.5});if(near(u.x,u.y)){gkS('rock',u);shake=Math.max(shake,.1)}}})}),
 });
 Object.assign(NATHERO,{jg:'kylo'});
+// ---- VFX (boîte à outils nr_fx.js)
+function jgHitFx(o,e,s){if(!e||!near(e.x,e.y))return;fxFlare(e.x,e.y,'#ffe0a0',{u:o,z:32,r:22*s,t:.18});fxBurst(e.x,e.y,JGC.b,{u:o,n:8*s,sp:220,c2:'#ffffff',z:30,a:ang(o,e),arc:2});fxDebris(e.x,e.y,{u:o,n:3*s,sp:120,col:'#8a6040',c2:'#4a2a14',s:3});fxHitStop(o,e,18*s)}
 // jet du bras-propulseur (flammes derrière le lanceur pendant la charge)
 AUXF.jg_jet=(x,dt)=>{const o=x.owner;if(!o||o.dead){x.t=0;return}x.x=o.x;x.y=o.y;if(near(o.x,o.y))for(let i=0;i<2;i++)fx.push({x:o.x-Math.cos(x.a)*18+(rnd()-.5)*8,y:o.y-Math.sin(x.a)*18+(rnd()-.5)*8,z:30,vx:-Math.cos(x.a)*200+(rnd()-.5)*60,vy:-Math.sin(x.a)*200+(rnd()-.5)*60,t:.3,m:.3,col:i?JGC.a:JGC.b,r:4+rnd()*3,vfx:'fire'})};AUXD.jg_jet=()=>{};
 // ---- trait : Fureur naturelle
@@ -80,8 +89,9 @@ PROJD.jg_shell=(p,R,ra,t)=>{g.rotate(ra);g.save();g.globalCompositeOperation='li
  const gr=g.createRadialGradient(0,0,0,0,0,R*1.6);gr.addColorStop(0,'#ffffff');gr.addColorStop(.35,JGC.a);gr.addColorStop(1,rgba(JGC.b,0));g.fillStyle=gr;g.beginPath();g.arc(0,0,R*1.6,0,7);g.fill();g.restore();
  g.strokeStyle=rgba('#fff0c8',.8);g.lineWidth=1.5;for(let i=0;i<2;i++){const k=((t/120+i*.5)%1);g.beginPath();g.ellipse(-k*R*2,0,R*.4,R*(1+k),0,0,7);g.stroke()}};
 // arc du bras-massue : grosse masse orange qui balaie
-JFXD.jg_club=(f,k,e,t,u)=>{const x0=u&&!u.dead?u.x:f.x,y0=u&&!u.dead?u.y:f.y,b=f.a-.8+1.6*Math.min(1,e*1.6),c=P(x0+Math.cos(b)*95,y0+Math.sin(b)*95,30),A=P(x0,y0,36);g.save();g.globalAlpha=Math.min(1,k*2);
- g.strokeStyle=rgba(JGC.b,.4);g.lineWidth=18*A.s;g.lineCap='round';g.beginPath();g.ellipse(A.x,A.y+4*A.s,95*A.s,95*A.s*K,0,f.a-.8,b);g.stroke();
+JFXD.jg_club=(f,k,e,t,u)=>{const x0=u&&!u.dead?u.x:f.x,y0=u&&!u.dead?u.y:f.y,b=f.a-.8+1.6*Math.min(1,e*1.6),c=P(x0+Math.cos(b)*104,y0+Math.sin(b)*104,30),A=P(x0,y0,36),G=P(x0,y0,0);g.save();g.globalAlpha=Math.min(1,k*2);
+ {const ra=Math.atan2(Math.sin(f.a-.8)*K,Math.cos(f.a-.8)),rb=Math.atan2(Math.sin(b)*K,Math.cos(b));g.globalCompositeOperation='lighter';g.fillStyle=rgba(JGC.b,.16*k);g.beginPath();g.moveTo(G.x,G.y);g.ellipse(G.x,G.y,120*G.s,120*G.s*K,0,ra,rb);g.closePath();g.fill();g.globalCompositeOperation='source-over'} // secteur balayé = portée réelle
+ g.strokeStyle=rgba(JGC.b,.4);g.lineWidth=18*A.s;g.lineCap='round';g.beginPath();g.ellipse(A.x,A.y+4*A.s,104*A.s,104*A.s*K,0,f.a-.8,b);g.stroke();
  g.strokeStyle=JGC.c;g.lineWidth=9*A.s;g.beginPath();g.moveTo(A.x,A.y);g.lineTo(c.x,c.y);g.stroke();g.fillStyle=JGC.b;g.strokeStyle=JGC.d;g.lineWidth=1.5;g.beginPath();g.arc(c.x,c.y,15*c.s,0,7);g.fill();g.stroke();
  g.fillStyle=JGC.c;for(let i=0;i<5;i++){const a=i*1.26;g.beginPath();g.arc(c.x+Math.cos(a)*11*c.s,c.y+Math.sin(a)*11*c.s,3.5*c.s,0,7);g.fill()}g.restore()};
 // énergie naturelle qui converge (points verts et feuilles)

@@ -23,6 +23,10 @@ CLOOK[11]=(look)=>{look.head.eye=look.head.eye||'#7ad04a';if(!look.head.acc)look
 const HKO='#14200c',HKD='#2f5a1e',HKG='#4f9a32',HKL='#9ad860',HKB='#6a4426',HKBL='#9a6a3e',HKT='#f2ead0',HKP='#e0508a',HKP2='#ffa8cc',HKY='#ffd84a',HKS='#e8a030';
 const HK_MAX=6,HK_POL=5; // pousses max par Hoki ; doses de pollen avant l'éternuement
 const hk_i=u=>units.indexOf(u);
+// ---- VFX (boîte à outils nr_fx.js) : feuilles et terre (non additives), pollen doré qui flotte, petite lueur verte ; zones de danger nettes (fxTele)
+function hk_leaves(u,x,y,n,sp,o){fxBurst(x,y,HKG,Object.assign({u,n,sp,z:24,up:80,gr:-10,w:2.4,sh:'petal',c2:HKL,add:0,t:.8},o||{}))}
+function hk_pollen(u,x,y,n,o){fxBurst(x,y,HKY,Object.assign({u,n,sp:90,z:30,up:40,gr:-40,w:2,sh:'dot',c2:'#fff4a0',t:1},o||{}))}
+function hk_dirtFx(u,x,y,r,n){fxDebris(x,y,{u,n:n||5,sp:130,col:'#6a4a28',c2:'#3a2a14',s:3});fxSmoke(x,y,{u,col:'#8a7050',n:3,r:r*.6,s:10,t:.7,al:.22,rise:12});fxDecal(x,y,'crack',{u,r:r*.6,t:3})}
 // ---- jardin : pousses (objets aux synchronisés : x y t m team ui n = 0 germe / 1 mûre, a = orientation)
 function hk_plant(u,x,y){if(!u||u.dead&&mode!=='battle')return null;x=clamp(x,B.x+24,B.x+B.w-24);y=clamp(y,B.y+24,B.y+B.h-24);
  let n=0,old=null;for(const s of aux)if(s.type==='hk_sprout'&&s.owner===u&&s.t>.5){n++;if(!old||s.t<old.t)old=s}
@@ -33,7 +37,7 @@ function hk_plant(u,x,y){if(!u||u.dead&&mode!=='battle')return null;x=clamp(x,B.
 function hk_pol(u,src,n){if(!u||u.dead||!src||u.team===src.team||n<=0)return;if((u.hk_imm||0)>SIMT)return;
  u.hk_pol=Math.min(HK_POL,(u.hk_pol||0)+n);u.hk_polT=4;u.hk_polS=src;u.hk_polN=0;if(u.hk_pol>=HK_POL)hk_sneeze(u,src)}
 function hk_sneeze(u,src){u.hk_pol=0;u.hk_imm=SIMT+6;const V=VFX;VFX='flower';hit(u,src,8,{stun:.5,unblockable:1});VFX=V;
- if(near(u.x,u.y)){say(u,'ATCHOUM !','#ffe070');jx({jfx:'hk_sneeze',ti:hk_i(u),x:u.x,y:u.y,a:u.aim,t:.9,m:.9});S('wind',u)}}
+ if(near(u.x,u.y)){say(u,'ATCHOUM !','#ffe070');jx({jfx:'hk_sneeze',ti:hk_i(u),x:u.x,y:u.y,a:u.aim,t:.9,m:.9});S('wind',u)}hk_pollen(src,u.x,u.y,12,{sp:200,z:56})}
 // bouffée de pollen visible
 const hk_puff=(x,y,n)=>{if(near(x,y))jx({jfx:'hk_puff',x,y,n:n||6,t:.7,m:.7})};
 // un projectile ennemi de l'élément el (0 feu, 2 vent) touche l'objet x (une fois par projectile et par objet)
@@ -73,25 +77,26 @@ Object.assign(NAT,{
  hk_style:SP('Griffes de ronces','',.38,{hero:'rey',melee:1,ai:{max:110,p:1}},(u,a)=>{const c=stC(u),T=[0,[82,1.9,10,.38],[82,1.9,10,.38],[118,.7,11,.46],[86,2.6,11,.44],[100,2,13,.6]][c],V='#9ad860',V2='#2a5a1a';
   stMelee(u,a,T[0],T[1],T[2],{},[0,{d:-1,tl:.7,z:36,th:5,n:3,sp:7,c:V,c2:V2,fl:'vine'},{d:1,tl:-.7,z:36,th:5,n:3,sp:7,c:V,c2:V2,fl:'vine'},null,{d:-1,z:22,th:11,c:V,c2:V2,fl:'vine',x2:1,rr:.75},{d:1,tl:1.2,z:30,th:14,c:V,c2:V2,fl:'vine',rr:.7}][c],e=>{
    u.hk_wc=(u.hk_wc||0)+1;let n=c===5?1:0;if(u.hk_wc>=3){u.hk_wc=0;n++}if(n){hk_pol(e,u,n);hk_puff(e.x,e.y,5)}jx({jfx:'hk_lash',x:e.x,y:e.y,a:ang(u,e),t:.3,m:.3});
-   if(c===5)jx({jfx:'hk_thorns',x:e.x,y:e.y,r:34,n:7,t:.6,m:.6})});
+   if(c===5){jx({jfx:'hk_thorns',x:e.x,y:e.y,r:34,n:7,t:.6,m:.6});hk_leaves(u,e.x,e.y,6,180)}});
   if(c===3){jx({jfx:'st_lash',ui:stI(u),x:u.x,y:u.y,a,R:T[0],kind:'vine',t:.3,m:.3});S('shadow',u)}
   stCd(u,T[3]);anim(u,'st_hok'+c,c===3?.32:.28)}),
  // Graine épineuse : graine rapide ; touche (pollen) ou tombe, et une pousse germe à cet endroit
  hk_seed:SP('Graine épineuse','',5,{hero:'lando',line:{len:510,w:18},ai:RG(500,.7)},(u,a)=>{anim(u,'hk_flick',.4);S('blaster',u);
-  proj(u,a,{spd:820,r:8,dmg:14,life:.6,col:'#8ad05a',kind:'hk_seed',onHit:(p,t)=>{const o=p.owner;hk_pol(t,o,1);if(!o)return;const b=Math.atan2(o.y-t.y,o.x-t.x)+(rnd()-.5)*.8,d=t.r+22;hk_plant(o,t.x+Math.cos(b)*d,t.y+Math.sin(b)*d)}});
+  fxFlare(u.x+Math.cos(a)*18,u.y+Math.sin(a)*18,HKL,{u,z:34,r:9,t:.12,star:0});
+  proj(u,a,{spd:820,r:8,dmg:14,life:.6,col:'#8ad05a',kind:'hk_seed',onHit:(p,t)=>{const o=p.owner;hk_pol(t,o,1);hk_leaves(o,t.x,t.y,6,180,{a:Math.atan2(p.vy,p.vx),arc:1.6});hk_pollen(o,t.x,t.y,4);fxFlare(t.x,t.y,HKL,{u:o,z:30,r:12,t:.14});if(!o)return;const b=Math.atan2(o.y-t.y,o.x-t.x)+(rnd()-.5)*.8,d=t.r+22;hk_plant(o,t.x+Math.cos(b)*d,t.y+Math.sin(b)*d)}});
   aux.push({type:'hk_seedw',x:u.x,y:u.y,r:0,t:1,m:1,team:u.team,owner:u,p:projs[projs.length-1],k:0})}),
  // Liane étrangleuse : la liane file au sol (950/s, 460 max) et s'enroule sur le premier ennemi touché
  hk_vine:SP('Liane étrangleuse','',9,{hero:'lando',line:{len:460,w:30},ai:RG(440,.65)},(u,a)=>{anim(u,'hk_slam',.5);S('shadow',u);const c=fwd(u,a,14);
-  aux.push({type:'hk_vine',x:c.x,y:c.y,a,len:0,L:460,w:30,t:1.3,m:1.3,team:u.team,owner:u,n:0,ti:-1,k:0});if(near(c.x,c.y))sparks(c.x,c.y,'#7a5a3a',8,'smoke')}),
+  aux.push({type:'hk_vine',x:c.x,y:c.y,a,len:0,L:460,w:30,t:1.3,m:1.3,team:u.team,owner:u,n:0,ti:-1,k:0});if(near(c.x,c.y))sparks(c.x,c.y,'#7a5a3a',4,'smoke');hk_dirtFx(u,c.x,c.y,30,4)}),
  // Mur de ronces : haie perpendiculaire à la visée, à 90 devant soi
  hk_hedge:SP('Mur de ronces','',12,{hero:'lando',ai:DEF},(u,a)=>{anim(u,'hk_wall',.6);S('rock',u);const c=fwd(u,a,90);
   aux.push({type:'hk_hedge',x:c.x,y:c.y,a,len:230,w:28,r:115,t:3.5,m:3.5,team:u.team,owner:u,k:0,n:0,hs:{}});if(near(c.x,c.y)){jx({jfx:'hk_dirt',x:c.x,y:c.y,a:a+Math.PI/2,len:230,t:.6,m:.6});shake=Math.max(shake,.1)}}),
  // Fleur carnivore : éclôt au point visé (0,6 s), mord toutes les 1,25 s l'ennemi le plus proche ; une seule à la fois ; le feu la brûle
  hk_trap:SP('Fleur carnivore','',12,{hero:'lando',tele:{r:130,max:420},ai:RG(420,.6)},(u,a,td)=>{const p=atP(u,a,td,420);anim(u,'hk_plant',.6);S('rock',u);
   for(const x of aux)if(x.type==='hk_trap'&&x.owner===u)x.t=Math.min(x.t,.3);
-  aux.push({type:'hk_trap',x:p.x,y:p.y,r:130,t:5.6,m:5.6,team:u.team,owner:u,k:.6,a:ang(p,u),n:0,bt:0,danger:1});if(near(p.x,p.y))jx({jfx:'hk_dirt',x:p.x,y:p.y,a:0,len:0,t:.6,m:.6});
+  aux.push({type:'hk_trap',x:p.x,y:p.y,r:130,t:5.6,m:5.6,team:u.team,owner:u,k:.6,a:ang(p,u),n:0,bt:0,danger:1});if(near(p.x,p.y))jx({jfx:'hk_dirt',x:p.x,y:p.y,a:0,len:0,t:.6,m:.6});hk_dirtFx(u,p.x,p.y,40,6);
   // en éclosant (0,6 s), la fleur crache un petit nuage de spores (ancien Nuage de spores, réduit : rayon 80, 2 s)
-  later(u,.6,()=>{if(state!=='fight')return;aux.push({type:'hk_spore',x:p.x,y:p.y,r:80,t:2,m:2,team:u.team,owner:u,k:0,n:0,hs:{},danger:1});hk_puff(p.x,p.y,10);if(near(p.x,p.y))S('wind',u)})}),
+  later(u,.6,()=>{if(state!=='fight')return;aux.push({type:'hk_spore',x:p.x,y:p.y,r:80,t:2,m:2,team:u.team,owner:u,k:0,n:0,hs:{},danger:1});hk_puff(p.x,p.y,10);if(near(p.x,p.y))S('wind',u);fxRing(p.x,p.y,{u,r0:16,r1:80,col:HKY,c2:'#ffffff',w:5,t:.4});hk_pollen(u,p.x,p.y,10,{sp:140});hk_leaves(u,p.x,p.y,6,150)})}),
  // Nuage de spores : nuage de pollen toxique ; le vent le disperse
  hk_spore:SP('Nuage de spores','',11,{hero:'lando',tele:{r:105,max:440},ai:RG(440,.65)},(u,a,td)=>{const p=atP(u,a,td,440);anim(u,'hk_spore',.6);S('wind',u);
   aux.push({type:'hk_spore',x:p.x,y:p.y,r:105,t:4,m:4,team:u.team,owner:u,k:0,n:0,hs:{},danger:1});jx({jfx:'hk_blow',ui:hk_i(u),x:u.x,y:u.y,x2:p.x,y2:p.y,t:.5,m:.5})}),
@@ -107,7 +112,7 @@ Object.assign(NAT,{
   for(const s of aux)if(s.type==='hk_sprout'&&s.owner===u&&s.t>.6&&Math.hypot(s.x-u.x,s.y-u.y)<500&&Math.hypot(s.x-u.x,s.y-u.y)>60){const d=Math.hypot(s.x-cx,s.y-cy);if(d<bd){bd=d;sp=s}}
   const e=sp?{x:sp.x,y:sp.y}:fwd(u,a,clamp(td||300,120,300)),b=Math.atan2(e.y-u.y,e.x-u.x),L=Math.hypot(e.x-u.x,e.y-u.y);anim(u,'hk_swing',.4);S('dash',u);
   jx({jfx:'hk_rope',ui:hk_i(u),x:u.x,y:u.y,x2:e.x,y2:e.y,t:.42,m:.42});if(sp){jx({jfx:'hk_sink',x:sp.x,y:sp.y,t:.5,m:.5,soft:1});say(u,'FUSION VÉGÉTALE','#9ad860')}
-  dash(u,b,L,sp?.34:.3,{jump:42,end:()=>{if(sp&&sp.t>0){jx({jfx:'hk_rise',x:u.x,y:u.y,t:.5,m:.5});S('rock',u)}for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<75+e.r)hit(e,u,6,{slow:.8});if(near(u.x,u.y))sparks(u.x,u.y,'#5aa83a',10,'leaf')}})}),
+  dash(u,b,L,sp?.34:.3,{jump:42,end:()=>{if(sp&&sp.t>0){jx({jfx:'hk_rise',x:u.x,y:u.y,t:.5,m:.5});S('rock',u)}for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<75+e.r)hit(e,u,6,{slow:.8});if(near(u.x,u.y))sparks(u.x,u.y,'#5aa83a',4,'leaf');fxRing(u.x,u.y,{u,r0:14,r1:75,col:HKL,w:4,t:.3});hk_leaves(u,u.x,u.y,8,200)}})}),
  // Fusion végétale (façon Zetsu) : s'enfonce dans le sol, ressurgit au point visé ou dans une de ses pousses (consommée : +10 PV)
  hk_merge:SP('Fusion végétale','',11,{hero:'lando',ai:ESC},(u,a,td)=>{const cx=u.x+Math.cos(a)*(td||300),cy=u.y+Math.sin(a)*(td||300);let sp=null,bd=150;
   for(const s of aux)if(s.type==='hk_sprout'&&s.owner===u&&s.t>.6&&Math.hypot(s.x-u.x,s.y-u.y)<650){const d=Math.hypot(s.x-cx,s.y-cy);if(d<bd){bd=d;sp=s}}
@@ -119,14 +124,15 @@ Object.assign(NAT,{
    if(S0&&S0.t>0){S0.t=0;gain(u,10/HEALX,u);say(u,'+10','#7fe07f')}})}),
  // Floraison mortelle : épines géantes sur la zone ; toutes les pousses du Hoki éclosent en même temps
  hk_bloom:ULT('Floraison mortelle','',{hero:'kylo',tele:{r:160,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);anim(u,'hk_raise',.85);S('rock',u);
-  zone(u,p.x,p.y,160,38,.8,{root:1},'#9ad860');lastZ().deto='hk_bloom';jx({jfx:'hk_buds',x:p.x,y:p.y,r:160,t:.8,m:.8});
+  zone(u,p.x,p.y,160,38,.8,{root:1},'#9ad860');lastZ().deto='hk_bloom';jx({jfx:'hk_buds',x:p.x,y:p.y,r:160,t:.8,m:.8});fxCharge(u,HKL,{t:.7,n:12,r:60});fxEmbers(p.x,p.y,150,HKY,{u,n:8,t:.8,h:40});
   for(const s of aux)if(s.type==='hk_sprout'&&s.owner===u&&s.t>.5)jx({jfx:'hk_buds',x:s.x,y:s.y,r:60,t:.8,m:.8,small:1});
-  later(u,.8,()=>{const cnt=new Map();VFX='leaf';for(const s of aux){if(s.type!=='hk_sprout'||s.owner!==u||s.t<=.5)continue;s.t=0;if(near(s.x,s.y))jx({jfx:'hk_thorns',x:s.x,y:s.y,r:75,t:.7,m:.7,n:7});
-    for(const e of units){if(e.dead||e.team===u.team||Math.hypot(e.x-s.x,e.y-s.y)>75+e.r)continue;const c=cnt.get(e)||0;if(c>=2)continue;cnt.set(e,c+1);if(hit(e,u,16,{unblockable:1,fx:s.x,fy:s.y}))hk_pol(e,u,2)}}VFX=null;if(near(u.x,u.y))S('bone',u)})}),
+  later(u,.8,()=>{const cnt=new Map();VFX='leaf';for(const s of aux){if(s.type!=='hk_sprout'||s.owner!==u||s.t<=.5)continue;s.t=0;if(near(s.x,s.y))jx({jfx:'hk_thorns',x:s.x,y:s.y,r:75,t:.7,m:.7,n:7});fxRing(s.x,s.y,{u,r0:10,r1:75,col:HKL,w:4,t:.35});fxBurst(s.x,s.y,HKP2,{u,n:6,sp:120,z:30,up:80,gr:-20,w:2.6,sh:'petal',c2:HKP,add:0,t:.8});
+    for(const e of units){if(e.dead||e.team===u.team||Math.hypot(e.x-s.x,e.y-s.y)>75+e.r)continue;const c=cnt.get(e)||0;if(c>=2)continue;cnt.set(e,c+1);if(hit(e,u,16,{unblockable:1,fx:s.x,fy:s.y})){hk_pol(e,u,2);fxHitStop(u,e,16)}}}VFX=null;if(near(u.x,u.y))S('bone',u)})}),
  // Arbre millénaire : arbre géant 6 s ; ses branches fouettent, son ombre soigne, il pleut du pollen ; il laisse 3 pousses
  hk_tree:ULT('Arbre millénaire','',{hero:'kylo',tele:{r:210,max:380},ai:{max:380,p:.8}},(u,a,td)=>{const p=atP(u,a,Math.min(td||200,380),380);anim(u,'hk_tree',.9);S('rock',u);S('heavy',u);
   for(const x of aux)if(x.type==='hk_tree'&&x.owner===u)x.t=Math.min(x.t,.4);
-  aux.push({type:'hk_tree',x:p.x,y:p.y,r:210,t:6.6,m:6.6,team:u.team,owner:u,k:.6,n:0,ti:-1,hk:.5,pk:1.2,danger:1});if(near(p.x,p.y)){jx({jfx:'hk_dirt',x:p.x,y:p.y,a:0,len:0,big:1,t:.8,m:.8});shake=Math.max(shake,.25)}}),
+  aux.push({type:'hk_tree',x:p.x,y:p.y,r:210,t:6.6,m:6.6,team:u.team,owner:u,k:.6,n:0,ti:-1,hk:.5,pk:1.2,danger:1});if(near(p.x,p.y))jx({jfx:'hk_dirt',x:p.x,y:p.y,a:0,len:0,big:1,t:.8,m:.8});
+  hk_dirtFx(u,p.x,p.y,70,9);fxRing(p.x,p.y,{u,r0:30,r1:210,col:HKL,w:5,t:.55});hk_leaves(u,p.x,p.y,12,240,{up:200,z:60});fxDecal(p.x,p.y,'leaf',{u,r:150,t:6.5,al:.4});fxEmbers(p.x,p.y,190,HKY,{u,n:10,t:6.3,h:120,c2:'#fff4a0'})}),
 });
 Object.assign(NATHERO,{hk:'kylo'});
 AFTER.push(()=>{UK.push('hk_pol','hk_sap','hk_mg')});
@@ -148,7 +154,7 @@ AUXF.hk_sprout=(x,dt)=>{const o=x.owner;if(o.dead&&mode!=='battle'&&x.t>.5)x.t=.
 // liane : avance au sol, s'enroule sur le premier ennemi touché
 AUXF.hk_vine=(x,dt)=>{const o=x.owner;if(x.n)return;const ca=Math.cos(x.a),sa=Math.sin(x.a),L0=x.len;x.len=Math.min(x.L,x.len+950*dt);
  let best=null,bf=1e9;for(const e of units){if(e.dead||e.team===x.team||e.phase>0)continue;const dx=e.x-x.x,dy=e.y-x.y,f=dx*ca+dy*sa,s=Math.abs(-dx*sa+dy*ca);if(f>-e.r&&f<x.len+e.r&&s<x.w/2+e.r&&f<bf){bf=f;best=e}}
- if(best){x.n=1;x.len=clamp(bf,0,x.L);x.ti=hk_i(best);x.t=Math.min(x.t,.9);VFX='leaf';if(hit(best,o,18,{root:1}))hk_pol(best,o,1);VFX=null;if(near(best.x,best.y)){jx({jfx:'hk_wrap',ti:x.ti,x:best.x,y:best.y,t:1,m:1});S('shadow',o)}return}
+ if(best){x.n=1;x.len=clamp(bf,0,x.L);x.ti=hk_i(best);x.t=Math.min(x.t,.9);VFX='leaf';if(hit(best,o,18,{root:1})){hk_pol(best,o,1);hk_leaves(o,best.x,best.y,8,200);hk_dirtFx(o,best.x,best.y,30,4);fxHitStop(o,best,18)}VFX=null;if(near(best.x,best.y)){jx({jfx:'hk_wrap',ti:x.ti,x:best.x,y:best.y,t:1,m:1});S('shadow',o)}return}
  if(x.len>=x.L){x.n=2;x.t=Math.min(x.t,.45)}};
 // haie de ronces : points de la ligne, blocage des ennemis et de leurs tirs, épines
 const hk_hpts=x=>{const L=[],px=-Math.sin(x.a),py=Math.cos(x.a);for(let i=0;i<7;i++){const s=(i/6-.5)*x.len;L.push({x:x.x+px*s,y:x.y+py*s})}return L};
@@ -166,7 +172,7 @@ AUXF.hk_trap=(x,dt)=>{const o=x.owner;x.bt=Math.max(0,(x.bt||0)-dt);const p=hk_k
  if(x.t<=.05&&!x.done){x.done=1;hk_plant(o,x.x,x.y);return}
  if(x.k>0||x.t<.3)return;let tg=null,bd=x.r;for(const e of units){if(e.dead||e.team===x.team||e.phase>0)continue;const d=Math.hypot(e.x-x.x,e.y-x.y)-e.r;if(d<bd){bd=d;tg=e}}
  if(!tg){x.k=.15;return}x.k=1.25;x.bt=.4;x.a=Math.atan2(tg.y-x.y,tg.x-x.x);x.n++;VFX='leaf';const ok=hit(tg,o,10,{slow:.7,pull:260,fx:x.x,fy:x.y});VFX=null;
- if(near(x.x,x.y)){jx({jfx:'hk_chomp',ti:hk_i(tg),x:tg.x,y:tg.y,x2:x.x,y2:x.y,t:.45,m:.45});if(ok)S('bone',o)}};
+ if(near(x.x,x.y)){jx({jfx:'hk_chomp',ti:hk_i(tg),x:tg.x,y:tg.y,x2:x.x,y2:x.y,t:.45,m:.45});if(ok)S('bone',o)}if(ok){hk_leaves(o,tg.x,tg.y,5,160);fxBurst(tg.x,tg.y,HKP,{u:o,n:4,sp:120,z:30,up:60,gr:300,w:2,len:.05,add:0,t:.4})}};
 // nuage de spores : ralentit, ronge, ajoute des doses ; le vent le disperse
 AUXF.hk_spore=(x,dt)=>{const o=x.owner;hk_keep(x,'hk_spored',{ar:x.r});const w=hk_elemHit(x,x.r,2);if(w&&x.t>.5){x.t=.5;if(near(x.x,x.y))say(o,'SPORES DISPERSÉES','#c8fff0')}
  const tick=x.k<=0;if(tick)x.k=.25;
@@ -187,7 +193,7 @@ AUXF.hk_tree=(x,dt)=>{const o=x.owner;hk_keep(x,'hk_treed',{ar:x.r});x.hk-=dt;x.
   if(e.root>0){e.root=0;e.rootV=null;if(near(e.x,e.y))sparks(e.x,e.y,HKS,5,'leaf')}if(!(e.drT>.6&&(e.dr||0)>=.15)){e.dr=e.drT>0?Math.max(e.dr||0,.15):.15;e.drT=Math.max(e.drT||0,.6)}if(near(e.x,e.y)&&rnd()<.35)sparks(e.x,e.y-20,HKY,2,'leaf')}}
  if(x.pk<=0){x.pk=1.2;for(const e of units)if(!e.dead&&e.team!==x.team&&Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r)hk_pol(e,o,1)}
  if(x.k>0)return;let tg=null,bd=x.r;for(const e of units){if(e.dead||e.team===x.team||e.phase>0)continue;const d=Math.hypot(e.x-x.x,e.y-x.y)-e.r;if(d<bd){bd=d;tg=e}}
- if(!tg){x.k=.15;return}x.k=1;x.ti=hk_i(tg);x.n++;VFX='leaf';const ok=hit(tg,o,11,{});VFX=null;if(near(x.x,x.y)){jx({jfx:'hk_branch',ti:x.ti,x:x.x,y:x.y,n:x.n,t:.4,m:.4});if(ok)S('saber',o)}};
+ if(!tg){x.k=.15;return}x.k=1;x.ti=hk_i(tg);x.n++;VFX='leaf';const ok=hit(tg,o,11,{});VFX=null;if(near(x.x,x.y)){jx({jfx:'hk_branch',ti:x.ti,x:x.x,y:x.y,n:x.n,t:.4,m:.4});if(ok)S('saber',o)}if(ok)later(o,.12,()=>{if(!tg.dead){hk_leaves(o,tg.x,tg.y,6,200);fxFlare(tg.x,tg.y,HKL,{u:o,z:34,r:12,t:.14,star:0})}})};
 
 // ---- dessins
 // feuille (repère écran) : x,y base, L longueur, a angle
@@ -213,7 +219,7 @@ function hk_vineW(x0,y0,a,len,w,T,al,seed,z0){if(len<3)return;const ca=Math.cos(
  for(let i=1;i<pts.length;i++){const [x,y,ss]=pts[i],pa=Math.atan2(y-pts[i-1][1],x-pts[i-1][0]);if(i%2)hk_thorn(x,y,pa+(i%4<2?1.4:-1.4),6*ss,ss*.8);if(i%3===0)hk_leafS(x,y,9*ss,pa+(i%6<3?-.9:.9),ss,i%2?HKL:HKG)}
  const [ex,ey,es]=pts[pts.length-1];circ(ex,ey,4.5*es,HKO);circ(ex,ey,3.2*es,HKL);g.globalAlpha=1}
 // graine épineuse : graine qui tourne, couronne d'épines, traînée de feuilles
-PROJD.hk_seed=(p,R,ra,t)=>{const T=t/1000;g.rotate(ra);g.globalCompositeOperation='lighter';g.fillStyle='rgba(160,230,100,.35)';for(let i=1;i<6;i++)g.fillRect(-i*7-1.5,Math.sin(T*24+i)*2-1.5,3,3);g.globalCompositeOperation='source-over';
+PROJD.hk_seed=(p,R,ra,t)=>{const T=t/1000;g.rotate(ra);fxTailL(46,14,HKL,.4*fxA(p));g.globalCompositeOperation='lighter';g.fillStyle='rgba(160,230,100,.35)';for(let i=1;i<6;i++)g.fillRect(-i*7-1.5,Math.sin(T*24+i)*2-1.5,3,3);g.globalCompositeOperation='source-over';
  g.rotate(T*14);for(let i=0;i<6;i++){const a=i*1.047;hk_thorn(Math.cos(a)*R*.7,Math.sin(a)*R*.7,a,R*.75,.9)}g.beginPath();g.ellipse(0,0,R*.95,R*.75,0,0,7);g.fillStyle='#7a5a2a';g.fill();g.strokeStyle=HKO;g.lineWidth=1.4;g.stroke();
  g.fillStyle='#b08a4a';g.beginPath();g.ellipse(-R*.2,-R*.2,R*.4,R*.25,.3,0,7);g.fill();hk_leafS(R*.5,0,R*.9,.3,1,HKL)};
 // fouet de ronces : liane de la main du lanceur jusqu'à la pointe épineuse
@@ -246,16 +252,16 @@ PROJD.hk_trapd=(p,R,ra,t)=>{hk_scr();const T=t/1000,q=P(p.x,p.y,0),s=q.s,cs=Stri
   for(let i=1;i<6;i++){const k=i/6,xx=-Rr*.2+k*Rr*1.4,yy=sd*-Rr*(.08+.9*Math.sin(k*Math.PI)*.62);hk_thorn(xx,yy,sd>0?Math.PI/2:-Math.PI/2,5*s,s*.7)}g.restore()}
  circ(0,0,4*s,HKY);g.restore();g.globalAlpha=1};
 // nuage de spores (décor) : volutes de pollen jaune-vert au-dessus de la zone
-PROJD.hk_spored=(p,R,ra,t)=>{hk_scr();const T=t/1000,q=P(p.x,p.y,0),Rr=(p.ar||105)*q.s,k=Math.min(1,p.life/.5,(p.life0-p.life)/.35+.2),cy=q.y-22*q.s;g.globalAlpha=.55*k;
- for(let i=0;i<9;i++){const a=i*.698+T*.35*(i%2?1:-1),d=Rr*(.25+.5*((i*.618)%1)),x=q.x+Math.cos(a)*d,y=cy+Math.sin(a)*d*.42-Math.sin(T*1.3+i)*6*q.s,r=Rr*(.28+.08*Math.sin(T*2+i));
-  const gr=g.createRadialGradient(x,y,0,x,y,r);gr.addColorStop(0,'rgba(236,224,96,.75)');gr.addColorStop(.6,'rgba(190,210,80,.45)');gr.addColorStop(1,'rgba(160,190,60,0)');g.fillStyle=gr;g.beginPath();g.arc(x,y,r,0,7);g.fill()}
- g.globalAlpha=k;hk_motes(q.x,cy-10*q.s,Rr*.9,Rr*.4,26,T*1.2,q.s);g.globalAlpha=1};
-AUXD.hk_spore=(x,k,t)=>{const q=P(x.x,x.y,0),R=x.r*q.s;g.fillStyle=rgba('#c8c040',.16*k);g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.fill();g.strokeStyle=rgba('#e8d860',.6*k);g.lineWidth=1.6;g.setLineDash([4,8]);g.lineDashOffset=-t*18;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();g.setLineDash([])};
-AUXD.hk_trap=(x,k,t)=>{const q=P(x.x,x.y,0),R=x.r*q.s;g.strokeStyle=rgba('#c8304a',.35*k);g.lineWidth=1.4;g.setLineDash([6,8]);g.lineDashOffset=t*14;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();g.setLineDash([]);
+PROJD.hk_spored=(p,R,ra,t)=>{hk_scr();const T=t/1000,q=P(p.x,p.y,0),Rr=(p.ar||105)*q.s,k=Math.min(1,p.life/.5,(p.life0-p.life)/.35+.2),cy=q.y-22*q.s,am=fxA(p),nB=Math.max(4,fxN(9,p));g.globalAlpha=.55*k*am;
+ for(let i=0;i<nB;i++){const a=i*.698+T*.35*(i%2?1:-1),d=Rr*(.25+.5*((i*.618)%1)),x=q.x+Math.cos(a)*d,y=cy+Math.sin(a)*d*.42-Math.sin(T*1.3+i)*6*q.s,r=Rr*(.28+.08*Math.sin(T*2+i));
+  fxSoftS(x,y,r,i%2?'#d8d860':'#bed250',.75)}
+ g.globalAlpha=k*am;hk_motes(q.x,cy-10*q.s,Rr*.9,Rr*.4,fxN(26,p),T*1.2,q.s);g.globalAlpha=1};
+AUXD.hk_spore=(x,k,t)=>{fxTele(x.x,x.y,x.r,0,'#e8d860',x,0);const q=P(x.x,x.y,0),R=x.r*q.s;g.fillStyle=rgba('#c8c040',.16*k);g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.fill();g.strokeStyle=rgba('#e8d860',.6*k);g.lineWidth=1.6;g.setLineDash([4,8]);g.lineDashOffset=-t*18;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();g.setLineDash([])};
+AUXD.hk_trap=(x,k,t)=>{fxTele(x.x,x.y,x.r,0,'#c8304a',x,.03);const q=P(x.x,x.y,0),R=x.r*q.s;g.strokeStyle=rgba('#c8304a',.35*k);g.lineWidth=1.4;g.setLineDash([6,8]);g.lineDashOffset=t*14;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();g.setLineDash([]);
  for(let i=0;i<5;i++){const a=i*1.257+.3,p0=P(x.x+Math.cos(a)*18,x.y+Math.sin(a)*14,0),p1=P(x.x+Math.cos(a)*(44+6*Math.sin(t+i)),x.y+Math.sin(a)*34,0);hk_stem([[p0.x,p0.y],[p1.x,p1.y]],2*q.s,q.s,HKB)}};
 AUXD.hk_sapx=()=>{};
 // arbre millénaire (au sol) : ombre du feuillage, racines, cercle de la zone
-AUXD.hk_tree=(x,k,t)=>{const q=P(x.x,x.y,0),R=x.r*q.s,gr=Math.min(1,(x.m-x.t)/.6);g.fillStyle=rgba('#0e1a08',.28*k*gr);g.beginPath();g.ellipse(q.x,q.y,R*.85,R*.85*K,0,0,7);g.fill();
+AUXD.hk_tree=(x,k,t)=>{const q=P(x.x,x.y,0),R=x.r*q.s,gr=Math.min(1,(x.m-x.t)/.6);if(gr>.5)fxTele(x.x,x.y,x.r,0,'#9ad860',x,0);g.fillStyle=rgba('#0e1a08',.28*k*gr);g.beginPath();g.ellipse(q.x,q.y,R*.85,R*.85*K,0,0,7);g.fill();
  g.strokeStyle=rgba('#9ad860',.45*k);g.lineWidth=1.6;g.setLineDash([10,8]);g.lineDashOffset=t*10;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();g.setLineDash([]);
  for(let i=0;i<7;i++){const a=i*.897+.2,L=(50+20*((i*.618)%1))*gr,p0=P(x.x+Math.cos(a)*16,x.y+Math.sin(a)*12,0),p1=P(x.x+Math.cos(a)*L*.6,x.y+Math.sin(a)*L*.45+6,0),p2=P(x.x+Math.cos(a+.3)*L,x.y+Math.sin(a+.3)*L*.75,0);hk_stem([[p0.x,p0.y],[p1.x,p1.y],[p2.x,p2.y]],(5-i%3)*q.s,q.s,HKB)}};
 // arbre millénaire (décor) : tronc noueux, feuillage en boules, fleurs, feuilles et pollen qui tombent
@@ -323,7 +329,10 @@ JFXD.hk_crush=(f,k,e,t)=>{const q=P(f.x,f.y,0);g.globalAlpha=k;for(let i=0;i<4;i
 JFXD.hk_branch=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;const a=P(f.x+((f.n||0)%2?-30:30),f.y-4,120),b=P(tg.x,tg.y,30),sw=Math.sin(Math.min(1,e*3)*Math.PI*.5),mx=lerp(a.x,b.x,.5)+((f.n||0)%2?-40:40)*a.s*(1-sw),my=Math.min(a.y,b.y)-30*a.s*(1-sw),ex=lerp(a.x,b.x,sw),ey=lerp(a.y,b.y,sw);
  g.globalAlpha=Math.min(1,k*2.5);const pts=[];for(let i=0;i<=8;i++){const kk=i/8,x=(1-kk)*(1-kk)*a.x+2*(1-kk)*kk*mx+kk*kk*ex,y=(1-kk)*(1-kk)*a.y+2*(1-kk)*kk*my+kk*kk*ey;pts.push([x,y])}hk_stem(pts,5*a.s,a.s,HKB);
  for(let i=2;i<8;i+=2)hk_leafS(pts[i][0],pts[i][1],9*a.s,i+t,a.s,i%4?HKG:HKL);if(sw>.95){g.strokeStyle=rgba('#e8ffd0',.8*k);g.lineWidth=2.4;g.beginPath();g.arc(b.x,b.y,(8+16*e)*b.s,0,7);g.stroke()}g.globalAlpha=1};
-DETO.hk_bloom=(x,y,r)=>{jx({jfx:'hk_thorns',x,y,r,t:.9,m:.9});jx({jfx:'hk_puff',x,y,n:12,t:.8,m:.8});jx({jfx:'shock',x,y,r:r*1.1,t:.45,m:.45,col:'#9ad860'})};
+DETO.hk_bloom=(x,y,r)=>{jx({jfx:'hk_thorns',x,y,r,t:.9,m:.9});jx({jfx:'hk_puff',x,y,n:12,t:.8,m:.8});jx({jfx:'shock',x,y,r,t:.45,m:.45,col:'#9ad860'});
+ // floraison : onde au rayon EXACT, pluie de pétales, terre fendue et tapis de feuilles, lumière verte, secousse (rang S)
+ fxRing(x,y,{r0:30,r1:r,col:HKL,c2:'#ffffff',w:8,t:.5});fxBurst(x,y,HKP2,{n:20,sp:240,z:40,up:160,gr:-10,w:3,sh:'petal',c2:HKP,add:0,t:1.2});hk_dirtFx(undefined,x,y,r,10);fxDecal(x,y,'leaf',{r:r*.9,t:4});
+ fxLight(x,y,r*1.3,'#9ad860',{t:.5,a:.4});fxShake(.3,x,y);for(const e of units)if(!e.dead&&FXO&&e.team!==FXO.team&&Math.hypot(e.x-x,e.y-y)<r+e.r)fxHitStop(FXO,e,38,1)};
 // ---- états visibles sur les ninjas : pollen (grains qui tournent autour de la tête + doses près de la barre), cocon de sève, fusion dans le sol
 STATD.push((u,p,S,sk)=>{const pol=u.hk_pol||0,sap=u.hk_sap>0,mg=u.hk_mg>0;if(!pol&&!sap&&!mg)return;const t=performance.now()/1000,H=S*sk,ps=S/1.3/(u.giant>0?1.35:1),top=p.y-100*sk*ps;
  if(pol){hk_motes(p.x,p.y-62*H,16*S,9*S,pol*3,t*2.2,S*.8,.9);const x0=p.x-pol*4*ps,y0=top+9*ps;for(let i=0;i<pol;i++){const cx=x0+i*8*ps;circ(cx,y0,3*ps,HKO);circ(cx,y0,2.2*ps,i===HK_POL-1?'#ffb030':HKY)}}

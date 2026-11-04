@@ -41,7 +41,7 @@ function yu_frost(src,t,n){if(!src||!t||t.dead||t.team===src.team||!(n>0))return
  if(x.im>0||t.phase>0)return 0;x.owner=src;x.gv=Math.min(YU_GMAX,x.gv+n);x.dec=YU_DEC;t.yu_gv=x.gv;
  if(x.gv>=YU_GMAX){x.gv=0;x.fz=YU_FRZ;x.fg=YU_FRG;x.im=YU_IMM+YU_FRZ;t.yu_gv=0;t.yu_frz=YU_FRZ;
   if(t.unstop<=0){t.root=Math.max(t.root,YU_FRZ);t.rootV=null;if(t.dash&&!t.dash.jump)t.dash=null}
-  say(t,'GELÉ !','#bfe6ff');jx({jfx:'yu_freeze',ti:yu_i(t),x:t.x,y:t.y,t:.6,m:.6});if(near(t.x,t.y)){yu_S('rock',t);yu_S('deflect',t);sparks(t.x,t.y,YUC.ice,14,'yu_ice')}}
+  say(t,'GELÉ !','#bfe6ff');jx({jfx:'yu_freeze',ti:yu_i(t),x:t.x,y:t.y,t:.6,m:.6});fxFlare(t.x,t.y,'#e8f8ff',{u:src,z:40,r:30,t:.24});fxBurst(t.x,t.y,'#bfe6ff',{u:src,n:12,sp:200,sh:'dot',w:2.2,up:120,gr:300,c2:'#ffffff',z:30});fxDecal(t.x,t.y,'ice',{u:src,r:36,t:YU_FRZ+1});fxLight(t.x,t.y,80,'#9fe0ff',{u:src,t:.4,a:.35});fxHitStop(src,t,20,1);if(near(t.x,t.y)){yu_S('rock',t);yu_S('deflect',t);sparks(t.x,t.y,YUC.ice,14,'yu_ice')}}
  return 1}
 AUXF.yu_gx=(x,dt)=>{const t=x.tg;if(x.done)return;if(!t||t.dead||units.indexOf(t)<0){x.done=1;x.t=0;if(t){t.yu_gv=0;t.yu_frz=0;t.yu_fg=0}return}
  x.x=t.x;x.y=t.y;if(x.dec>0){x.dec-=dt;if(x.dec<=0)x.gv=0}
@@ -55,7 +55,7 @@ AUXF.yu_pc=(x,dt)=>{const p=x.p;if(!p||x.done){x.t=0;return}x.x=p.x;x.y=p.y;if(p
 AUXD.yu_pc=()=>{};
 // éclatement de glace : dégâts, givre et ralentissement autour (sauf la cible déjà frappée)
 function yu_burst(o,x,y,skip,R,d){if(!o)return;for(const e of enemies(o))if(e!==skip&&Math.hypot(e.x-x,e.y-y)<R+e.r&&yu_hit(e,o,d,{slow:.8,fx:x,fy:y,unblockable:1}))yu_frost(o,e,1);
- jx({jfx:'yu_shatter',x,y,r:R,t:.6,m:.6});if(near(x,y)){yu_S('rock',o);sparks(x,y,YUC.ice,16,'yu_ice');shake=Math.max(shake,.15)}}
+ jx({jfx:'yu_shatter',x,y,r:R,t:.6,m:.6});fxImpact(x,y,'hyoton',R/50,{u:o,r:R});if(near(x,y)){yu_S('rock',o);sparks(x,y,YUC.ice,8,'yu_ice');shake=Math.max(shake,.15)}}
 // les miroirs de glace du lanceur (pour le Pas du miroir)
 const yu_mirs=u=>aux.filter(x=>x.type==='yu_mir'&&x.owner===u&&x.t>.15);
 
@@ -64,17 +64,17 @@ Object.assign(NAT,{
  yu_style:SP('Frappes de glace','',.38,{hero:'rey',melee:1,ai:{max:100,p:1}},(u,a)=>{const c=stC(u),T=[0,[84,1.7,10,.38],[84,1.7,10,.38],[92,2.2,11,.44],[86,1.6,11,.44],[104,1.8,13,.62]][c],M=YUC.md;
   stMelee(u,a,T[0],T[1],T[2],c===3?{slow:.5}:{},[0,{jfx:'st_line',off:-6,z:36,c:M},{jfx:'st_line',off:6,z:36,c:M},{d:-1,z:26,th:11,c:YUC.lt,c2:M,fl:'ice'},{d:1,tl:1.45,z:30,th:11,c:YUC.lt,c2:M,fl:'ice',rr:.6},{d:-1,tl:.4,z:30,th:13,c:YUC.lt,c2:YUC.dk,fl:'ice',rr:.75}][c],e=>{
    if(near(e.x,e.y))sparks(e.x,e.y,YUC.ice,5,'yu_ice');if(c===5)yu_frost(u,e,1)});
-  if(c===5){const p=fwd(u,a,T[0]*.7);jx({jfx:'yu_shatter',x:p.x,y:p.y,r:46,t:.6,m:.6});yu_S('rock',u)}
+  if(c===5){const p=fwd(u,a,T[0]*.7);jx({jfx:'yu_shatter',x:p.x,y:p.y,r:46,t:.6,m:.6});yu_S('rock',u);fxBurst(p.x,p.y,'#bfe6ff',{u,n:8,sp:180,sh:'dot',w:2,up:120,gr:300,c2:'#ffffff',z:30});fxDecal(p.x,p.y,'ice',{u,r:30,t:2.5})}
   stCd(u,T[3]);anim(u,'st_ice'+c,c===5?.34:.28)}),
  // ---------- Tsubame Fubuki (D) : 5 hirondelles de neige qui convergent vers le point visé ----------
  yu_swallow:SP('Hyôton : Tsubame Fubuki',YU_D.swallow,6,{ai:RG(460,.7),line:{len:460,w:90}},(u,a,td)=>{const c=atP(u,a,td,460),D=new Map(),ps=[];yu_S('wind',u);yu_S('blaster',u);anim(u,'yu_sweep',.45);
-  jx({jfx:'yu_gust',ui:yu_i(u),x:u.x,y:u.y,a,t:.45,m:.45});
-  for(let i=0;i<5;i++){proj(u,a+(i-2)*.3,{spd:560,r:7,dmg:4,life:1,col:YUC.ice,kind:'yu_swl',onHit:(p,t)=>{const n=(D.get(t)||0)+1;D.set(t,n);if(n<=2)yu_frost(p.owner,t,1)}});ps.push(projs[projs.length-1])}
+  jx({jfx:'yu_gust',ui:yu_i(u),x:u.x,y:u.y,a,t:.45,m:.45});fxWind(u.x+Math.cos(a)*90,u.y+Math.sin(a)*90,a,{u,len:180,w:90,n:7,col:'#e8f8ff',t:.4});fxSmoke(u.x+Math.cos(a)*30,u.y+Math.sin(a)*30,{u,col:'#e8f8ff',n:4,r:20,s:12,al:.24,dx:Math.cos(a)*80,dy:Math.sin(a)*80,t:.8});
+  for(let i=0;i<5;i++){proj(u,a+(i-2)*.3,{spd:560,r:7,dmg:4,life:1,col:YUC.ice,kind:'yu_swl',onHit:(p,t)=>{const n=(D.get(t)||0)+1;D.set(t,n);if(n<=2)yu_frost(p.owner,t,1);fxFlare(p.x,p.y,'#e8f8ff',{u:p.owner,z:30,r:12,t:.14});fxBurst(p.x,p.y,'#bfe6ff',{u:p.owner,n:4,sp:120,sh:'dot',w:1.6,gr:240,up:60,z:30})}});ps.push(projs[projs.length-1])}
   aux.push({type:'yu_swl',x:c.x,y:c.y,r:0,t:1.2,m:1.2,team:u.team,owner:u,ps,tx:c.x,ty:c.y})}),
  // ---------- Sensatsu Suishô (C) : les aiguilles encerclent la zone puis se referment ----------
  yu_needles:SP('Hyôton : Sensatsu Suishô',YU_D.needles,9,{tele:{r:80,max:420},ai:RG(420,.6)},(u,a,td)=>{const p=atP(u,a,td,420),R=80,D=.65;yu_S('water',u);anim(u,'yu_seal',.55);
-  jx({jfx:'yu_needles',x:p.x,y:p.y,r:R,d:D,t:D+.35,m:D+.35});
-  later(u,D,()=>{let n=0;for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<R+e.r&&yu_hit(e,u,18,{slow:1,unblockable:1,fx:p.x,fy:p.y})){n++;yu_frost(u,e,2)}
+  jx({jfx:'yu_needles',x:p.x,y:p.y,r:R,d:D,t:D+.35,m:D+.35});fxCast(u,'hyoton',D,{n:8});fxSmoke(p.x,p.y,{u,col:'#e8f8ff',n:5,r:R*.8,s:14,al:.2,rise:16,t:D+.3});
+  later(u,D,()=>{let n=0;fxRing(p.x,p.y,{u,r0:16,r1:R,col:'#9fe0ff',c2:'#ffffff',w:6,t:.35});fxBurst(p.x,p.y,'#e8f8ff',{u,n:18,sp:200,c2:'#ffffff',up:200,gr:260,w:1.8,len:.16,z:6});fxDecal(p.x,p.y,'ice',{u,r:R*.85,t:4});fxLight(p.x,p.y,R*1.2,'#9fe0ff',{u,t:.35,a:.35});for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<R+e.r&&yu_hit(e,u,18,{slow:1,unblockable:1,fx:p.x,fy:p.y})){n++;yu_frost(u,e,2)}
    if(near(p.x,p.y)){yu_S('blaster',u);yu_S('deflect',u);sparks(p.x,p.y,YUC.lt,n?16:8,'yu_ice');if(n)shake=Math.max(shake,.1)}},{x:p.x,y:p.y,r:R})}),
  // ---------- Lance de glace (B) : perçante ; cloue une cible déjà givrée (2 givres ou plus) ----------
  yu_lance:SP('Hyôton : Lance de glace',YU_D.lance,10,{ai:RG(540,.6),line:{len:560,w:24}},(u,a)=>{yu_S('rock',u);yu_S('blaster',u);anim(u,'yu_javelin',.5);jx({jfx:'yu_forge',ui:yu_i(u),x:u.x,y:u.y,a,t:.3,m:.3});
@@ -86,10 +86,11 @@ Object.assign(NAT,{
   aux.push({type:'yu_spk',x:u.x+Math.cos(a)*18,y:u.y+Math.sin(a)*18,a,len:400,w:60,r:0,t:1.85,m:1.85,team:u.team,owner:u,vfx:'yu_ice',k:0,hs:new Set()});if(near(u.x,u.y))shake=Math.max(shake,.12)}),
  // ---------- Miroir de glace (B) : renvoie les projectiles ennemis (logique : AUXF.yu_mir) ----------
  yu_mirror:SP('Miroir de glace',YU_D.mirror,14,{ai:DEF},(u,a)=>{const p=fwd(u,a,44);yu_S('deflect',u);yu_S('water',u);anim(u,'yu_mirror',.55);
-  aux.push({type:'yu_mir',x:p.x,y:p.y,a,len:86,w:74,r:0,t:2.5,m:2.5,team:u.team,owner:u,vfx:'yu_ice',k:0,big:1});jx({jfx:'yu_flash',x:p.x,y:p.y,a,t:.4,m:.4})}),
+  aux.push({type:'yu_mir',x:p.x,y:p.y,a,len:86,w:74,r:0,t:2.5,m:2.5,team:u.team,owner:u,vfx:'yu_ice',k:0,big:1});jx({jfx:'yu_flash',x:p.x,y:p.y,a,t:.4,m:.4});
+  fxFlare(p.x,p.y,'#e8f8ff',{u,z:40,r:34,t:.25,rot:a+1.57});fxBurst(p.x,p.y,'#bfe6ff',{u,n:10,sp:160,sh:'dot',w:2,up:140,gr:260,c2:'#ffffff',z:30});fxDecal(p.x,p.y,'ice',{u,r:40,t:3})}),
  // ---------- Dragon de glace (A) : gros projectile, éclate au premier touché ou en bout de course ----------
- yu_dragon:SP('Hyôton : Dragon de glace',YU_D.dragon,13,{ai:RG(500,.6),line:{len:520,w:48}},(u,a)=>{yu_S('roar',u);yu_S('wind',u);anim(u,'yu_thrust',.6);jx({jfx:'yu_gust',ui:yu_i(u),x:u.x,y:u.y,a,big:1,t:.55,m:.55});
-  proj(u,a,{spd:500,r:20,dmg:30,life:1.04,col:YUC.ice,kind:'yu_dragon',vfx:'yu_ice',onHit:(p,t)=>{p.yu_b=1;const pre=t.yu_gv|0;yu_frost(p.owner,t,2);
+ yu_dragon:SP('Hyôton : Dragon de glace',YU_D.dragon,13,{ai:RG(500,.6),line:{len:520,w:48}},(u,a)=>{yu_S('roar',u);yu_S('wind',u);anim(u,'yu_thrust',.6);jx({jfx:'yu_gust',ui:yu_i(u),x:u.x,y:u.y,a,big:1,t:.55,m:.55});fxCast(u,'hyoton',.3,{n:10});fxSmoke(u.x+Math.cos(a)*40,u.y+Math.sin(a)*40,{u,col:'#e8f8ff',n:6,r:30,s:16,al:.24,rise:20,dx:Math.cos(a)*90,dy:Math.sin(a)*90,t:1});fxFlare(u.x+Math.cos(a)*40,u.y+Math.sin(a)*40,'#e8f8ff',{u,z:36,r:30,t:.22});
+  proj(u,a,{spd:500,r:20,dmg:30,life:1.04,col:YUC.ice,kind:'yu_dragon',vfx:'yu_ice',onHit:(p,t)=>{p.yu_b=1;fxHitStop(p.owner,t,30,1);const pre=t.yu_gv|0;yu_frost(p.owner,t,2);
    if(pre>=2&&!t.dead&&t.unstop<=0){t.root=Math.max(t.root,.5);t.rootV=null;say(t,'CLOUÉ','#bfe6ff');jx({jfx:'yu_pin',ti:yu_i(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.55,m:.55})}
    yu_burst(p.owner,p.x,p.y,t,90,12)}});
   yu_pilot(u,(x,p,dt,end)=>{if(end&&!p.yu_b)yu_burst(p.owner,p.x,p.y,null,90,12)})}),
@@ -105,7 +106,8 @@ Object.assign(NAT,{
   const x0=u.x,y0=u.y;yu_S('deflect',u);yu_S('poof',u);anim(u,'yu_seal',.35);
   u.dash=null;u.kx=u.ky=0;u.phase=Math.max(u.phase||0,.2);u.x=clamp(p.x,B.x+u.r,B.x+B.w-u.r);u.y=clamp(p.y,B.y+u.r,B.y+B.h-u.r);collide(u);
   {const L=Math.hypot(u.x-x0,u.y-y0);if(L>20)aux.push({type:'yu_trail',x:x0,y:y0,a:Math.atan2(u.y-y0,u.x-x0),len:L,w:44,r:0,t:1.5,m:1.5,team:u.team,owner:u,vfx:'yu_ice',k:0,hs:new Set(),nf:1})} // piste de glace (souvenir de la Glissade), sans givre
-  jx({jfx:'yu_hop',x:x0,y:y0,x2:u.x,y2:u.y,t:.4,m:.4});jx({jfx:'yu_flash',x:u.x,y:u.y,a,t:.4,m:.4});if(near(u.x,u.y))sparks(u.x,u.y,YUC.lt,10,'yu_ice')}),
+  jx({jfx:'yu_hop',x:x0,y:y0,x2:u.x,y2:u.y,t:.4,m:.4});jx({jfx:'yu_flash',x:u.x,y:u.y,a,t:.4,m:.4});if(near(u.x,u.y))sparks(u.x,u.y,YUC.lt,6,'yu_ice');
+  for(const [x,y] of[[x0,y0],[u.x,u.y]]){fxFlare(x,y,'#e8f8ff',{u,z:36,r:22,t:.2,rot:a+1.57});fxBurst(x,y,'#bfe6ff',{u,n:7,sp:150,sh:'dot',w:1.8,up:110,gr:260,c2:'#ffffff',z:30})}fxDecal(u.x,u.y,'ice',{u,r:28,t:2.5})}),
  // ---------- Blizzard (A, ultime) : la tempête suit le lanceur (logique : AUXF.yu_bliz) ----------
  yu_blizzard:ULT('Hyôton : Blizzard',YU_D.bliz,{tele:{self:1,r:170},ai:SELF(220,.8)},(u)=>{yu_S('wind',u);yu_S('heavy',u);anim(u,'yu_storm',.8);u.slowImm=Math.max(u.slowImm||0,4);u.slow=0;u.haste=Math.max(u.haste||0,4);
   aux.push({type:'yu_bliz',x:u.x,y:u.y,r:170,t:4,m:4,team:u.team,owner:u,ui:yu_i(u),vfx:'yu_ice',k:.8,n:0});jx({jfx:'shock',x:u.x,y:u.y,r:170,t:.5,m:.5,col:YUC.lt});if(near(u.x,u.y))shake=Math.max(shake,.2)}),
@@ -116,7 +118,9 @@ Object.assign(NAT,{
   yu_S('deflect',u);yu_S('heavy',u);yu_S('water',u);anim(u,'yu_makyo',.7);u.yu_mk=D;
   const x={type:'yu_dome',x:c.x,y:c.y,r:R,t:D,m:D,team:u.team,owner:u,ui:yu_i(u),vfx:'yu_ice',k:0,n:N,a:a0,tr,hop:.42,cur:0};aux.push(x);
   jx({jfx:'yu_domeF',ui:yu_i(u),x:c.x,y:c.y,r:R,a:a0,n:N,t:D,m:D});jx({jfx:'yu_hop',x:u.x,y:u.y,x2:c.x+Math.cos(a0)*R,y2:c.y+Math.sin(a0)*R,t:.35,m:.35});
-  u.dash=null;u.x=c.x+Math.cos(a0)*R;u.y=c.y+Math.sin(a0)*R;u.kx=u.ky=0;if(near(c.x,c.y))shake=Math.max(shake,.25);for(const e of tr)say(e,'ENFERMÉ','#bfe6ff')}),
+  u.dash=null;u.x=c.x+Math.cos(a0)*R;u.y=c.y+Math.sin(a0)*R;u.kx=u.ky=0;if(near(c.x,c.y))shake=Math.max(shake,.25);for(const e of tr)say(e,'ENFERMÉ','#bfe6ff');
+  fxRing(c.x,c.y,{u,r0:R*.3,r1:R,col:'#9fe0ff',c2:'#ffffff',w:7,t:.45});fxGlyph(c.x,c.y,'#bfe6ff',{u,r:R,t:D,al:.4});fxDecal(c.x,c.y,'ice',{u,r:R*.9,t:D+1.5,al:.35});fxLight(c.x,c.y,R*1.2,'#9fe0ff',{u,t:.6,a:.4});fxSmoke(c.x,c.y,{u,col:'#e8f8ff',n:8,r:R*.9,s:16,al:.18,rise:20,t:1.4});
+  for(let i=0;i<N;i++){const m=yu_mpos(x,i);fxPillar(m.x,m.y,'#e8f8ff',{u,h:150,w:16,t:.55,al:.4})}fxShake(.3,c.x,c.y)}),
 });
 Object.assign(NATHERO,{yu:'sister'}); // stats de référence : un ninja vif et agile (réglé par duels simulés)
 
@@ -157,7 +161,8 @@ AUXF.yu_dome=(x,dt)=>{const o=x.owner;if(x.done)return;
  if(x.t<=0||!o||o.dead){x.done=1;x.t=0;if(!o)return;
   o.yu_mk=0; // le maintien (entravé, silence, désarmé : 0,1 s renouvelé) s'arrête de lui-même
   for(const e of x.tr)if(!e.dead&&Math.hypot(e.x-x.x,e.y-x.y)<x.r+30&&yu_hit(e,o,10,{unblockable:1,fx:x.x,fy:x.y}))yu_frost(o,e,1);
-  for(let i=0;i<x.n;i++){const m=yu_mpos(x,i);jx({jfx:'yu_shatter',x:m.x,y:m.y,r:40,t:.6,m:.6})}if(near(x.x,x.y)){yu_S('rock',o);yu_S('boom',o);shake=Math.max(shake,.3)}return}
+  for(let i=0;i<x.n;i++){const m=yu_mpos(x,i);jx({jfx:'yu_shatter',x:m.x,y:m.y,r:40,t:.6,m:.6});fxBurst(m.x,m.y,'#e8f8ff',{u:o,n:8,sp:200,sh:'dot',w:2.2,up:150,gr:300,c2:'#ffffff',z:40})}
+  fxRing(x.x,x.y,{u:o,r0:x.r,r1:x.r*.2,col:'#9fe0ff',c2:'#ffffff',w:6,t:.4});fxFlare(x.x,x.y,'#e8f8ff',{u:o,z:40,r:50,t:.3});fxLight(x.x,x.y,x.r*1.2,'#9fe0ff',{u:o,t:.5,a:.4});if(near(x.x,x.y)){yu_S('rock',o);yu_S('boom',o);shake=Math.max(shake,.3)}return}
  // les ennemis enfermés butent contre les miroirs
  for(const e of x.tr){if(e.dead)continue;const dx=e.x-x.x,dy=e.y-x.y,d=Math.hypot(dx,dy),lim=x.r-e.r-8;
   if(d>x.r+60){x.tr.delete(e);continue}if(e.dash||e.phase>0)continue;

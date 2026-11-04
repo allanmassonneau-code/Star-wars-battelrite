@@ -15,6 +15,14 @@ KIT('c7',[
 DASHC[7]={src:'x.ya_swap',n:'Transposition',d:'Échange ta place avec l\'allié visé (bouclier aux deux) ; sans allié, file au curseur en esprit, intangible',vfx:'mind',cd:7};
 // ---------- aides ----------
 const yaI=u=>units.indexOf(u);
+// ---- VFX (boîte à outils nr_fx.js) : esprit lavande additif, pétales roses (non additifs), pollen doré ; les zones de danger restent nettes
+const YA_M='#c080ff',YA_ML='#e8d0ff',YA_P='#ff9ac8';
+const yaDim=(o,fn)=>{const m=fxA(o);return m<1?fxAlpha(m,fn):fn()}; // décor d'un objet aux : atténué s'il est ennemi
+// gerbe de pétales (impact, éclosion)
+function yaPetals(u,x,y,n,sp,o){fxBurst(x,y,YA_P,Object.assign({u,n,sp,z:30,up:70,gr:-10,w:2.6,sh:'petal',c2:'#ffffff',t:.8},o||{}))}
+// impact mental : éclat lavande, onde, pétales qui flottent, gel visuel sur un gros coup
+function yaMindImp(u,e,s,dmg,big){fxFlare(e.x,e.y,YA_M,{u,z:46,r:18*s,t:.22,c2:YA_ML});fxRing(e.x,e.y,{u,r0:8,r1:38*s,col:YA_M,c2:YA_ML,w:4,t:.4});
+ fxBurst(e.x,e.y,YA_ML,{u,n:8*s,sp:110*s,z:52,up:40,gr:-40,w:2.6,sh:'petal',c2:YA_P,t:.8});fxLight(e.x,e.y,70*s,YA_M,{u,t:.35,a:.35});if(dmg)fxHitStop(u,e,dmg,big)}
 const yaS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son propre, sans la teinte « genjutsu » des éléments mind / flower
 const yaMkOn=e=>!!e&&(e.ya_mkU||0)>SIMT; // cible marquée (Marque de l'esprit)
 function yaMark(src,e,d=4){if(!e||e.dead||!src)return;const nw=!yaMkOn(e);e.ya_mkU=SIMT+d;e.ya_mk=d;e.ya_mkB=yaI(src);if(nw&&near(e.x,e.y))jx({jfx:'ya_mkon',ti:yaI(e),x:e.x,y:e.y,t:.45,m:.45})}
@@ -38,34 +46,36 @@ function yaPossess(o,e,mk){if(e.unstop>0){say(e,'RÉSISTE','#d8a8ff');yaBack(o,e
  if(e.cast||e.spin||e.flame)say(e,'INTERROMPU','#fc6');e.cast=null;e.dash=null;e.spin=null;e.flame=null;e.block=false;e.stun=Math.max(e.stun,.1);e.ya_pz=d;e.ya_pa=ang(e,o);
  say(e,'POSSÉDÉ','#d8a8ff');anim(e,'ya_puppet',d);anim(o,'ya_limp',d+.15);yaS('genjutsu',e);yaS('shadow',e);
  aux.push({type:'ya_poss',x:e.x,y:e.y,a:0,r:0,t:d,m:d,team:o.team,owner:o,tg:e,ui:yaI(o),ti:yaI(e),vfx:'mind',k:.5});
- if(near(e.x,e.y)){jx({jfx:'ya_possfx',ui:yaI(o),ti:yaI(e),x:e.x,y:e.y,t:d,m:d});jx({jfx:'ya_ripple',x:e.x,y:e.y,t:.5,m:.5})}}
+ if(near(e.x,e.y)){jx({jfx:'ya_possfx',ui:yaI(o),ti:yaI(e),x:e.x,y:e.y,t:d,m:d});jx({jfx:'ya_ripple',x:e.x,y:e.y,t:.5,m:.5})}
+ // prise de possession : colonne d'esprit sur la cible, sceau au sol qui la suit, gel visuel
+ yaMindImp(o,e,1.3,14,1);fxGlyph(e.x,e.y,YA_M,{u:o,ui:yaI(e),r:34,t:d,al:.55})}
 // ultime ciblé sans cible : rien n'est dépensé
 function yaRefund(u,key){const i=u.ch.abil.findIndex(b=>b&&b.key===key);if(i>=0){u.cds[i]=1;u.energy=Math.min(100,u.energy+jcost(u.ch.abil[i]))}say(u,'AUCUNE CIBLE','#d8a8ff')}
 // sommeil (Pollen) : un coup réveille
 function yaSleep(o,e,d){e.cast=null;e.spin=null;e.flame=null;e.dash=null;e.block=false;e.stun=Math.max(e.stun,d);e.sleepT=-d;e.ya_sl=d;
- say(e,'ENDORMI','#ffd8e8');yaS('genjutsu',e);aux.push({type:'ya_sleep',x:e.x,y:e.y,r:0,t:d,m:d,team:o.team,owner:o,tg:e,ti:yaI(e),vfx:'flower',k:0,hp:e.hp})}
+ say(e,'ENDORMI','#ffd8e8');yaS('genjutsu',e);fxBurst(e.x,e.y,'#ffe08a',{u:o,n:8,sp:60,z:60,up:20,gr:-50,w:2,sh:'dot',c2:'#ffd8e8',t:.9});fxFlare(e.x,e.y,'#ffd8e8',{u:o,z:62,r:14,t:.2,star:0});aux.push({type:'ya_sleep',x:e.x,y:e.y,r:0,t:d,m:d,team:o.team,owner:o,tg:e,ti:yaI(e),vfx:'flower',k:0,hp:e.hp})}
 Object.assign(NAT,{
  // Kunai fleuri : kunai rapide et perçant, une hélice de pétales autour de la lame
  ya_flower:S_('Kunai fleuri','Kunai rapide enveloppé de pétales : transperce, blesse et ralentit chaque ennemi touché',5,{line:{len:520,w:16},ai:RG(520,.7)},(u,a)=>{yaS('blaster',u);anim(u,'ya_throw',.42);
-  jx({jfx:'ya_petfan',ui:yaI(u),x:u.x,y:u.y,a,t:.4,m:.4});
-  proj(u,a,{spd:950,r:7,dmg:13,life:.55,col:'#ff9ac8',pierce:1,slow:1,kind:'ya_kunai',onHit:(p,t)=>{if(near(t.x,t.y))jx({jfx:'ya_burst',x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.45,m:.45})}});
+  jx({jfx:'ya_petfan',ui:yaI(u),x:u.x,y:u.y,a,t:.4,m:.4});fxFlare(u.x+Math.cos(a)*18,u.y+Math.sin(a)*18,YA_P,{u,z:36,r:10,t:.14,star:0});
+  proj(u,a,{spd:950,r:7,dmg:13,life:.55,col:'#ff9ac8',pierce:1,slow:1,kind:'ya_kunai',onHit:(p,t)=>{if(near(t.x,t.y))jx({jfx:'ya_burst',x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.45,m:.45});const o=p.owner,b=Math.atan2(p.vy,p.vx);yaPetals(o,t.x,t.y,8,200,{a:b,arc:1.4});fxFlare(t.x,t.y,YA_P,{u:o,z:30,r:12,t:.14});fxBurst(t.x,t.y,'#ffffff',{u:o,n:4,sp:260,z:30,a:b,arc:.8,w:1.4,len:.14,t:.25})}});
   aux.push({type:'ya_kt',x:u.x,y:u.y,a,r:0,t:1,m:1,team:u.team,owner:u,k:0,p:projs[projs.length-1]})}),
  // Transposition : échange avec un allié, sinon l'esprit file et le corps suit (intangible)
  ya_swap:S_('Transposition','Échange ta place avec l\'allié visé (bouclier aux deux) ; sans allié, file au curseur en esprit, intangible',9,{ai:ESC},(u,a,td)=>{const p=atP(u,a,td,320),o={x:u.x,y:u.y};
   const al=units.filter(x=>x!==u&&x.team===u.team&&!x.dead&&Math.hypot(x.x-p.x,x.y-p.y)<160&&dist(x,u)<520).sort((m,n)=>Math.hypot(m.x-p.x,m.y-p.y)-Math.hypot(n.x-p.x,n.y-p.y))[0];
-  yaS('poof',u);yaS('genjutsu',u);anim(u,'ya_blink',.36);
+  yaS('poof',u);yaS('genjutsu',u);anim(u,'ya_blink',.36);yaPetals(u,u.x,u.y,8,120,{z:40,gr:-30});fxFlare(u.x,u.y,YA_M,{u,z:44,r:16,t:.18,star:0});
   if(al){u.x=al.x;u.y=al.y;al.x=o.x;al.y=o.y;collide(u);collide(al);shieldU(u,15,1.5);shieldU(al,15,1.5);u.aim=a;
    jx({jfx:'ya_swapfx',x:o.x,y:o.y,x2:u.x,y2:u.y,t:.55,m:.55});say(al,'TRANSPOSITION','#d8a8ff');return}
-  u.phase=Math.max(u.phase||0,.25);dash(u,a,clamp(Math.hypot(p.x-u.x,p.y-u.y),90,300),.16,{end:()=>{if(near(u.x,u.y))jx({jfx:'ya_arrive',x:u.x,y:u.y,t:.45,m:.45})}});
+  u.phase=Math.max(u.phase||0,.25);dash(u,a,clamp(Math.hypot(p.x-u.x,p.y-u.y),90,300),.16,{end:()=>{if(near(u.x,u.y))jx({jfx:'ya_arrive',x:u.x,y:u.y,t:.45,m:.45});fxRing(u.x,u.y,{u,r0:8,r1:44,col:YA_M,w:4,t:.35});fxLight(u.x,u.y,70,YA_M,{u,t:.3,a:.3})}});
   const D=u.dash;jx({jfx:'ya_ghost',x:o.x,y:o.y,a,t:.6,m:.6});if(D)jx({jfx:'ya_streak',x:o.x,y:o.y,x2:D.tx,y2:D.ty,t:.38,m:.38})}),
  // Shinranshin : onde de confusion, imparable mais esquivable
  ya_shinran:S_('Shinranshin','Onde mentale imparable : la cible confuse titube au hasard et subit +25 % de dégâts 1,2 s (1,6 s si marquée)',12,{hero:'inquisitor',line:{len:470,w:34},ai:RG(450,.6)},(u,a)=>{a=yaAim(u,a,760);u.aim=a;
-  yaS('genjutsu',u);anim(u,'ya_wave',.5);jx({jfx:'ya_sigil',ui:yaI(u),x:u.x,y:u.y,a,t:.42,m:.42});
-  yaMind(u,a,{kind:'ran',sp:760,len:470,r:17,onHit:(x,e)=>{const mk=yaMkOn(e);const d=mk?1.6:1.2;if(yaHit(e,u,13,{})){e.vuln=Math.max(e.vuln,d);yaConfuse(u,e,d)};if(near(e.x,e.y))jx({jfx:'ya_ripple',x:e.x,y:e.y,t:.5,m:.5})},
+  yaS('genjutsu',u);anim(u,'ya_wave',.5);jx({jfx:'ya_sigil',ui:yaI(u),x:u.x,y:u.y,a,t:.42,m:.42});fxCharge(u,YA_M,{t:.3,n:8,z:50,hd:20});
+  yaMind(u,a,{kind:'ran',sp:760,len:470,r:17,onHit:(x,e)=>{const mk=yaMkOn(e);const d=mk?1.6:1.2;if(yaHit(e,u,13,{})){e.vuln=Math.max(e.vuln,d);yaConfuse(u,e,d);yaMindImp(u,e,1.2,13,1)};if(near(e.x,e.y))jx({jfx:'ya_ripple',x:e.x,y:e.y,t:.5,m:.5})},
    onMiss:x=>{if(near(x.x,x.y))jx({jfx:'ya_ripple',x:x.x,y:x.y,t:.4,m:.4,s:.6})}})}),
  // Shintenshin : l'esprit quitte le corps ; s'il touche, la cible est possédée
  ya_shinten:S_('Shintenshin','Esprit imparable : possède la cible 1,2 s, qui marche vers ton curseur et se frappe. Corps inerte, sonné si raté',14,{hero:'kylo',line:{len:540,w:30},ai:RG(500,.5)},(u,a)=>{a=yaAim(u,a,700);u.aim=a;
-  yaS('genjutsu',u);yaS('shadow',u);anim(u,'ya_sign',.95);jx({jfx:'ya_sigil',ui:yaI(u),x:u.x,y:u.y,a,t:.55,m:.55,big:1});
+  yaS('genjutsu',u);yaS('shadow',u);anim(u,'ya_sign',.95);jx({jfx:'ya_sigil',ui:yaI(u),x:u.x,y:u.y,a,t:.55,m:.55,big:1});fxCharge(u,YA_M,{t:.45,n:12,z:56,hd:22,r:60});fxGlyph(u.x,u.y,YA_M,{u,ui:yaI(u),r:46,t:.9});
   yaMind(u,a,{kind:'ten',sp:700,len:540,r:16,lock:1,onHit:(x,e)=>{const mk=yaMkOn(e);if(yaHit(e,u,6,{}))yaPossess(u,e,mk);else yaBack(u,x.x,x.y,0)},onMiss:(x,cut)=>yaBack(u,x.x,x.y,!cut)})}),
  // Pollen hypnotique : bouquet lancé, nuage qui endort
  ya_pollen:S_('Pollen hypnotique','Nuage de pollen 4 s qui ralentit ; l\'ennemi qui y reste 0,8 s s\'endort 1,8 s, mais un coup le réveille',10,{tele:{r:120,max:420},ai:RG(420,.55)},(u,a,td)=>{const p=atP(u,a,td,420),fl=.4;
@@ -77,20 +87,20 @@ Object.assign(NAT,{
   const wave=i=>{if(u.dead||u.stun>0)return;const V=VFX;VFX='flower';
    for(const e of enemies(u))if(dist(u,e)<265+e.r&&angDiff(ang(u,e),a)<.58)hit(e,u,9,i===0?{slow:1.5}:i===2?{kb:190}:{});
    for(const p of projs)if(p.owner.team!==u.team&&!p.dead&&p.life>0&&!p.rocket&&!p.grenade&&!p.big&&p.r<=16&&Math.hypot(p.x-u.x,p.y-u.y)<275&&angDiff(Math.atan2(p.y-u.y,p.x-u.x),a)<.62){p.life=0;if(near(p.x,p.y))jx({jfx:'ya_burst',x:p.x,y:p.y,a:a,t:.35,m:.35,s:.6})}
-   VFX=V;if(i===2)yaS('saber',u)};
+   VFX=V;if(i===2)yaS('saber',u);fxWind(u.x+Math.cos(a)*130,u.y+Math.sin(a)*130,a,{u,len:250,w:170,n:5,t:.4,col:'#ffd8e8'});yaPetals(u,u.x+Math.cos(a)*40,u.y+Math.sin(a)*40,6,420,{a,arc:1.1,up:30,gr:0,t:.5})};
   wave(0);later(u,.13,()=>wave(1));later(u,.26,()=>wave(2))}),
  // Tempête de pétales (v5, fusion avec le Champ de fleurs) : les vagues laissent un petit champ de fleurs 2 s devant toi
  ya_stormB:S_('Tempête de pétales','',10,{line:{len:250,w:180},ai:RG(230,.6)},(u,a,td,P)=>{NAT.ya_storm.f(u,a,td,P);const c=fwd(u,a,130);
-  later(u,.3,()=>{if(u.dead)return;aux.push({type:'ya_garden',x:c.x,y:c.y,r:115,t:2,m:2,team:u.team,owner:u,vfx:'flower',k:.1});jx({jfx:'ya_bloom',x:c.x,y:c.y,r:115,t:.6,m:.6,g:1})})}),
+  later(u,.3,()=>{if(u.dead)return;aux.push({type:'ya_garden',x:c.x,y:c.y,r:115,t:2,m:2,team:u.team,owner:u,vfx:'flower',k:.1});jx({jfx:'ya_bloom',x:c.x,y:c.y,r:115,t:.6,m:.6,g:1});fxRing(c.x,c.y,{u,r0:20,r1:115,col:'#9fe07f',c2:'#ffffff',w:4,t:.4});fxEmbers(c.x,c.y,100,'#9fe07f',{u,n:8,t:2,h:60,c2:YA_P});fxDecal(c.x,c.y,'leaf',{u,r:100,t:2.4})})}),
  // Champ de fleurs : jardin posé au sol, soigne les alliés, ralentit et marque les ennemis
  ya_garden:S_('Champ de fleurs','Champ de fleurs 4 s autour de toi : tes alliés et toi y régénérez, les ennemis y sont ralentis et marqués',15,{hero:'quigon',tele:{self:1,r:160},ai:HEALM},(u)=>{yaS('orb',u);yaS('genjutsu',u);anim(u,'ya_bloom',.9);
-  aux.push({type:'ya_garden',x:u.x,y:u.y,r:160,t:4,m:4,team:u.team,owner:u,vfx:'flower',k:.1});jx({jfx:'ya_bloom',x:u.x,y:u.y,r:160,t:.7,m:.7,g:1})}),
+  aux.push({type:'ya_garden',x:u.x,y:u.y,r:160,t:4,m:4,team:u.team,owner:u,vfx:'flower',k:.1});jx({jfx:'ya_bloom',x:u.x,y:u.y,r:160,t:.7,m:.7,g:1});fxEmbers(u.x,u.y,140,'#9fe07f',{u,n:10,t:4,h:60,c2:YA_P})}),
  // Esprit destructeur : lien mental puis l'esprit de la cible vole en éclats
  ya_destroy:ULT('Esprit destructeur','Verrouille l\'esprit visé 1 s puis le brise : dégâts + 30 % des PV manquants (45 % si marqué), étourdit',{hero:'sister',line:{len:420,w:26},ai:{mode:'exec',max:420,p:.9}},(u,a,td)=>{const e=pick(u,a,td||300,420);
   if(!e){yaRefund(u,'ya_destroy');return}
   yaS('genjutsu',u);anim(u,'ya_focus',1.15);u.aim=ang(u,e);u.root=Math.max(u.root,1);
   aux.push({type:'ya_dest',x:e.x,y:e.y,r:0,t:1,m:1,team:u.team,owner:u,tg:e,ui:yaI(u),ti:yaI(e),vfx:'mind',k:0});
-  jx({jfx:'ya_lock',ui:yaI(u),ti:yaI(e),x:e.x,y:e.y,t:1,m:1});say(e,'ESPRIT VERROUILLÉ','#d8a8ff')}),
+  jx({jfx:'ya_lock',ui:yaI(u),ti:yaI(e),x:e.x,y:e.y,t:1,m:1});fxGlyph(e.x,e.y,YA_M,{u,ui:yaI(e),r:36,t:1.1});say(e,'ESPRIT VERROUILLÉ','#d8a8ff')}),
  // Shinden : lien des esprits, la moitié des dégâts subis repart vers l'ennemi lié (voir TRAITS[7].take)
  ya_shinden:ULT('Shinden : Lien des esprits','Lie ton esprit à l\'ennemi visé 5 s : la moitié des dégâts que tu subis lui revient. Brisé au loin ou si tu es étourdi',{line:{len:450,w:26},ai:RG(420,.7)},(u,a,td)=>{const e=pick(u,a,td||300,450);
   if(!e){yaRefund(u,'ya_shinden');return}
@@ -124,12 +134,16 @@ AUXF.ya_poss=(x,dt)=>{const o=x.owner,e=x.tg;
  if(dd>stop){const sp=e.ch.spd*.8*dt,k=Math.min(1,(dd-stop)/sp);e.x+=dx/dd*sp*k;e.y+=dy/dd*sp*k;e.aim=Math.atan2(dy,dx);collide(e)}
  x.x=e.x;x.y=e.y;x.a=Math.atan2(dy,dx);e.ya_pa=x.a;
  if(x.k<=0&&x.t>.2){x.k=.5;yaHit(e,o,5,{});e.flash=.12;if(near(e.x,e.y))jx({jfx:'ya_slap',ti:yaI(e),x:e.x,y:e.y,t:.3,m:.3})}
- if(x.t<=0){e.ya_pz=0;yaHit(e,o,22,{silence:1,stun:.4,exec:.25});yaBack(o,e.x,e.y,0);say(e,'ESPRIT BRISÉ','#ffffff');if(near(e.x,e.y)){jx({jfx:'ya_ripple',x:e.x,y:e.y,t:.55,m:.55,s:1.3});jx({jfx:'ya_shatter',ti:yaI(e),x:e.x,y:e.y,t:.9,m:.9});shake=Math.max(shake,.25);yaS('genjutsu',e);yaS('deflect',e)}}};
+ if(x.t<=0){e.ya_pz=0;yaHit(e,o,22,{silence:1,stun:.4,exec:.25});yaBack(o,e.x,e.y,0);say(e,'ESPRIT BRISÉ','#ffffff');if(near(e.x,e.y)){jx({jfx:'ya_ripple',x:e.x,y:e.y,t:.55,m:.55,s:1.3});jx({jfx:'ya_shatter',ti:yaI(e),x:e.x,y:e.y,t:.9,m:.9});yaS('genjutsu',e);yaS('deflect',e)}
+  yaShatterFx(o,e)}};
+// l'esprit vole en éclats (fin du Shintenshin, Esprit destructeur) : éclats de cristal, onde, lumière, secousse (rang S)
+function yaShatterFx(o,e){fxBurst(e.x,e.y,YA_ML,{u:o,n:16,sp:320,z:70,up:60,gr:260,w:2.2,len:.16,c2:'#ffffff',t:.6});fxRing(e.x,e.y,{u:o,r0:20,r1:110,col:YA_M,c2:YA_ML,w:7,t:.5});
+ fxFlare(e.x,e.y,YA_ML,{u:o,z:70,r:30,t:.25});fxLight(e.x,e.y,140,YA_M,{u:o,t:.5,a:.4});fxHitStop(o,e,22,1);fxShake(.25,e.x,e.y)}
 AUXF.ya_sleep=x=>{const e=x.tg;if(!e||e.dead){x.t=0;if(e){e.ya_sl=0;e.sleepT=0}return}x.x=e.x;x.y=e.y;const rem=Math.max(0,x.t);
  if(e.hp<x.hp-.5&&x.m-rem>.1){if(e.stun<=rem+.1)e.stun=Math.min(e.stun,.12);e.sleepT=0;e.ya_sl=0;e.ya_slI=SIMT+2.5;x.t=0;say(e,'RÉVEILLÉ','#ffd8e8');if(near(e.x,e.y))jx({jfx:'ya_wake',ti:yaI(e),x:e.x,y:e.y,t:.4,m:.4});return}
  x.hp=Math.max(x.hp,e.hp);e.ya_sl=rem;if(rem<=0){e.ya_sl=0;e.ya_slI=SIMT+2.5}};
 AUXF.ya_pollen=(x,dt)=>{const o=x.owner;
- if(!x.on){if(x.m-x.t<x.fl)return;x.on=1;if(near(x.x,x.y)){yaS('poof',o);jx({jfx:'ya_bloom',x:x.x,y:x.y,r:x.r,t:.6,m:.6})}if(o)field(o,x.x,x.y,{r:x.r,t:x.t,slow:1,col:'#ffe08a',vfx:'ya_pollen'})}
+ if(!x.on){if(x.m-x.t<x.fl)return;x.on=1;if(near(x.x,x.y)){yaS('poof',o);jx({jfx:'ya_bloom',x:x.x,y:x.y,r:x.r,t:.6,m:.6})}fxRing(x.x,x.y,{u:o,r0:20,r1:x.r,col:'#ffe08a',c2:'#ffffff',w:5,t:.45});fxSmoke(x.x,x.y,{u:o,col:'#fff0b8',n:6,r:x.r*.6,s:20,t:1.2,al:.2,rise:20});fxLight(x.x,x.y,x.r,'#ffe08a',{u:o,t:.5,a:.3});if(o)field(o,x.x,x.y,{r:x.r,t:x.t,slow:1,col:'#ffe08a',vfx:'ya_pollen'})}
  for(const e of units){if(e.dead||e.team===x.team)continue;const i=yaI(e),inn=Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r*.5;let v=x.dz[i]||0;
   if(inn&&e.unstop<=0&&!((e.ya_slI||0)>SIMT)&&!(e.ya_sl>0)){v+=dt;if(v>=.8){v=0;yaSleep(o,e,1.8)}else e.sleepT=Math.max(e.sleepT,v*1.6)}else v=Math.max(0,v-dt*.6);x.dz[i]=v}};
 AUXF.ya_garden=x=>{if(x.k>0)return;x.k=.25;const o=x.owner;
@@ -140,13 +154,13 @@ AUXF.ya_dest=x=>{if(x.done)return;const o=x.owner,e=x.tg;if(!o||o.dead||!e||e.de
  o.root=Math.max(o.root,.1);o.aim=ang(o,e);
  if(x.t<=0){x.done=1;const mk=yaMkOn(e);if(mk){e.ya_mkU=0;e.ya_mk=0}
   yaHit(e,o,20,{exec:mk?.45:.3,stun:.4,ya_nomk:1});say(e,'ESPRIT BRISÉ','#ffffff');
-  if(near(e.x,e.y)){jx({jfx:'ya_shatter',ti:yaI(e),x:e.x,y:e.y,t:.9,m:.9});shake=Math.max(shake,.35);yaS('boom',e);yaS('deflect',e)}}};
+  if(near(e.x,e.y)){jx({jfx:'ya_shatter',ti:yaI(e),x:e.x,y:e.y,t:.9,m:.9});yaS('boom',e);yaS('deflect',e)}yaShatterFx(o,e)}};
 AUXF.ya_lnk=x=>{const o=x.owner,e=x.tg;if(!o||!e){x.t=0;return}x.x=e.x;x.y=e.y;
  if(o.dead||e.dead||o.stun>0||Math.hypot(e.x-o.x,e.y-o.y)>560||!((o.ya_lnkU||0)>SIMT)){if(x.t>.05&&!o.dead&&!e.dead){say(e,'LIEN BRISÉ','#cccccc');if(near(e.x,e.y))jx({jfx:'ya_snap',ui:yaI(o),ti:yaI(e),x:e.x,y:e.y,t:.4,m:.4})}o.ya_lnkU=0;x.t=0}};
 // ---------- trait de clan : Marque de l'esprit (et renvoi des dégâts du Shinden) ----------
 TRAITS[7]={nom:'Marque de l\'esprit',desc:'Tes jutsu marquent l\'esprit des ennemis touchés (4 s). Ta prochaine attaque de base sur une cible marquée fait éclater la marque : +5 dégâts et +5 chakra.',
  deal(src,t,dmg,o){if(!t||t===src||t.team===src.team)return dmg;
-  if(o.basic){if(!o.silent&&yaMkOn(t)){t.ya_mkU=0;t.ya_mk=0;src.energy=Math.min(100,src.energy+5);if(near(t.x,t.y))jx({jfx:'ya_pop',ti:yaI(t),x:t.x,y:t.y,t:.5,m:.5});return dmg+5}return dmg}
+  if(o.basic){if(!o.silent&&yaMkOn(t)){t.ya_mkU=0;t.ya_mk=0;src.energy=Math.min(100,src.energy+5);if(near(t.x,t.y))jx({jfx:'ya_pop',ti:yaI(t),x:t.x,y:t.y,t:.5,m:.5});fxFlare(t.x,t.y,YA_M,{u:src,z:60,r:14,t:.16});return dmg+5}return dmg}
   if(!o.silent&&!o.ya_nomk)yaMark(src,t);return dmg},
  take(t,src,dmg,o){if(dmg>0&&src&&src!==t&&src.team!==t.team&&!o.ya_lk&&(t.ya_lnkU||0)>SIMT){const p=units[t.ya_lnkT];if(p&&p!==t&&!p.dead&&p.team!==t.team){const tr=dmg*.5,kp=src.ch&&src.ch.pw&&t.ch.pw?src.ch.pw/t.ch.pw:1,V=VFX;VFX='mind';const ok=hit(p,t,tr*kp,{unblockable:1,ya_lk:1,ya_nomk:1,silent:!!o.silent});VFX=V;
    if(ok){if(!o.silent&&near(p.x,p.y))jx({jfx:'ya_pulse',ui:yaI(t),ti:yaI(p),x:p.x,y:p.y,t:.32,m:.32});return dmg-tr}}}return dmg},
@@ -170,14 +184,15 @@ function yaEye(x,y,R,rot,a){g.save();g.translate(x,y);g.rotate(rot);g.globalAlph
  g.fillStyle='#ffffff';g.beginPath();g.moveTo(-R*.56,0);g.quadraticCurveTo(0,-R*.5,R*.56,0);g.quadraticCurveTo(0,R*.5,-R*.56,0);g.fill();circ(0,0,R*.2,'#8a4ae0');g.restore()}
 // ---------- projectiles et objets ----------
 // kunai fleuri : ruban et hélice de pétales autour de la lame
-PROJD.ya_kunai=(p,R,ra,t)=>{g.rotate(ra);const ph=t/55;
+PROJD.ya_kunai=(p,R,ra,t)=>{g.rotate(ra);const ph=t/55;fxTailL(60,14,YA_P,.4*fxA(p));
  g.strokeStyle='rgba(255,154,200,.5)';g.lineWidth=3;g.lineCap='round';g.beginPath();g.moveTo(-36,Math.sin(t/70)*7);g.quadraticCurveTo(-20,-Math.sin(t/70)*8,-5,0);g.stroke();
  for(let i=0;i<6;i++){const b=ph+i*1.05;if(Math.cos(b)<0)yaPet(-4-i*4.6,Math.sin(b)*8,.7,b*1.7,'rgba(255,106,168,.8)')}
  g.strokeStyle='#3a3a44';g.lineWidth=1.3;g.beginPath();g.arc(-17,0,2.6,0,7);g.stroke();g.fillStyle='#3a3a44';g.fillRect(-14.5,-1.6,8.5,3.2);
  g.fillStyle='#d8dde6';g.beginPath();g.moveTo(-6,-4.2);g.lineTo(11,0);g.lineTo(-6,4.2);g.fill();g.fillStyle='#ffffff';g.beginPath();g.moveTo(-6,-1);g.lineTo(11,0);g.lineTo(-6,1);g.fill();
  for(let i=0;i<6;i++){const b=ph+i*1.05;if(Math.cos(b)>=0)yaPet(-4-i*4.6,Math.sin(b)*8,.8+.25*Math.cos(b),b*1.7,YAP[i%2])}};
 // onde de Shinranshin (anneaux et spirale) ; esprit du Shintenshin (feu follet lavande aux yeux clos)
-AUXD.ya_mind=(x,k,t)=>{const q=P(x.x,x.y,34),s=q.s,ra=Math.atan2(Math.sin(x.a)*K,Math.cos(x.a));g.fillStyle='rgba(0,0,0,.22)';gEll(x.x,x.y,x.r*.7);g.fill();g.globalCompositeOperation='lighter';
+AUXD.ya_mind=(x,k,t)=>{const q=P(x.x,x.y,34),s=q.s,ra=Math.atan2(Math.sin(x.a)*K,Math.cos(x.a));g.fillStyle='rgba(0,0,0,.22)';gEll(x.x,x.y,x.r*.7);g.fill();
+ {g.save();g.translate(q.x,q.y);g.rotate(ra);fxTailL((x.kind==='ran'?70:110)*s,x.r*2.6*s,x.kind==='ran'?YA_P:YA_M,.45);g.restore()}fxGlowS(q.x,q.y,x.r*2.2*s,YA_M,.45);g.globalCompositeOperation='lighter';
  if(x.kind==='ran'){g.translate(q.x,q.y);g.rotate(ra);
   for(let i=0;i<3;i++){const f=(t*2.6+i/3)%1;g.strokeStyle=rgba(i%2?'#ff9ac8':'#d8a8ff',.85*(1-f));g.lineWidth=2.6*s;g.beginPath();g.ellipse(-f*30*s,0,(5+f*8)*s,(10+f*18)*s,0,-1.35,1.35);g.stroke()}
   circ(0,0,12*s,'rgba(192,128,255,.3)');g.rotate(t*10);g.strokeStyle='#ffffff';g.lineWidth=1.7*s;g.beginPath();for(let i=0;i<13;i++){const b=i*.62,r=i*.75*s;i?g.lineTo(Math.cos(b)*r,Math.sin(b)*r):g.moveTo(0,0)}g.stroke();return}
@@ -185,21 +200,22 @@ AUXD.ya_mind=(x,k,t)=>{const q=P(x.x,x.y,34),s=q.s,ra=Math.atan2(Math.sin(x.a)*K
  circ(q.x,q.y,x.r*1.3*s,'rgba(192,128,255,.28)');circ(q.x,q.y,x.r*.78*s,'rgba(232,208,255,.55)');circ(q.x,q.y,x.r*.42*s,'#ffffff');
  g.globalCompositeOperation='source-over';g.strokeStyle='#5a2a8a';g.lineWidth=1.4*s;for(const sx of[-1,1]){g.beginPath();g.arc(q.x+sx*4*s,q.y-1*s,2.2*s,.25,Math.PI-.25);g.stroke()}};
 // nuage de pollen : bouffées pastel, grains qui montent
-AUXD.ya_pollen=(x,k,t)=>{const age=x.m-x.t;if(age<.4)return;const a=Math.min(1,(age-.4)*3,x.t*1.5),R=x.r;
+AUXD.ya_pollen=(x,k,t)=>{const age=x.m-x.t;if(age<x.fl){fxTele(x.x,x.y,x.r,age/x.fl,'#ffe08a',x,.05);return}const a=Math.min(1,(age-.4)*3,x.t*1.5),R=x.r;
+ if(a>.05)fxTele(x.x,x.y,R,0,'#ffe08a',x,.06*a);
  g.strokeStyle=rgba('#fff4c0',.55*a);g.lineWidth=1.5;g.setLineDash([6,8]);g.lineDashOffset=-t*12;gEll(x.x,x.y,R);g.stroke();g.setLineDash([]);
- g.globalCompositeOperation='lighter';
- for(let i=0;i<8;i++){const b=i*.785+t*.35,d=R*(.2+.45*((i*37)%10)/10),c=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d*.8,16+Math.sin(t*1.3+i)*6);circ(c.x,c.y,(R*.34+Math.sin(t*2+i)*4)*c.s,rgba(i%2?'#ffe08a':'#ffd8e8',.12*a))}
- for(let i=0;i<16;i++){const b=i*2.4+t*.6,d=R*((i*53)%100)/100*.9,hz=(t*22+i*17)%60,c=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d*.8,6+hz);circ(c.x,c.y,1.7*c.s,rgba('#fff4c0',.9*a*(1-hz/60)))}};
+ g.globalCompositeOperation='lighter';g.globalAlpha*=fxA(x);const nP=fxN(8,x),nG=fxNB(16,x);
+ for(let i=0;i<nP;i++){const b=i*.785+t*.35,d=R*(.2+.45*((i*37)%10)/10),c=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d*.8,16+Math.sin(t*1.3+i)*6);circ(c.x,c.y,(R*.34+Math.sin(t*2+i)*4)*c.s,rgba(i%2?'#ffe08a':'#ffd8e8',.12*a))}
+ for(let i=0;i<nG;i++){const b=i*2.4+t*.6,d=R*((i*53)%100)/100*.9,hz=(t*22+i*17)%60,c=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d*.8,6+hz);circ(c.x,c.y,1.7*c.s,rgba('#fff4c0',.9*a*(1-hz/60)))}};
 // champ de fleurs : fleurs qui poussent en spirale, soins qui montent
-AUXD.ya_garden=(x,k,t)=>{const age=x.m-x.t,R=x.r,a=Math.min(1,x.t*1.2),sp=ezo(Math.min(1,age/.45));
+AUXD.ya_garden=(x,k,t)=>yaDim(x,()=>{const age=x.m-x.t,R=x.r,a=Math.min(1,x.t*1.2),sp=ezo(Math.min(1,age/.45)),nF=Math.max(8,fxN(20,x));
  g.fillStyle=rgba('#6ab84a',.2*a);gEll(x.x,x.y,R*sp);g.fill();g.fillStyle=rgba('#ff9ac8',.1*a);gEll(x.x,x.y,R*.62*sp);g.fill();
  g.strokeStyle=rgba('#ff9ac8',.7*a);g.lineWidth=2.5;g.setLineDash([4,7]);g.lineDashOffset=t*8;gEll(x.x,x.y,R*sp);g.stroke();g.setLineDash([]);
  const C=['#ff9ac8','#ffffff','#c080ff','#ffd36a','#ff6aa8'];
- for(let i=0;i<20;i++){const gr=clamp((age-i*.03)/.45,0,1);if(gr<=0)continue;const b=i*2.399,d=R*Math.sqrt((i+.5)/20)*.93,q=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,0),s=q.s,h=(13+(i%3)*5)*s*gr*a,sw=Math.sin(t*2+i)*2.5*s;
+ for(let i=0;i<nF;i++){const gr=clamp((age-i*.03)/.45,0,1);if(gr<=0)continue;const b=i*2.399,d=R*Math.sqrt((i+.5)/nF)*.93,q=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,0),s=q.s,h=(13+(i%3)*5)*s*gr*a,sw=Math.sin(t*2+i)*2.5*s;
   g.strokeStyle='#3e7a24';g.lineWidth=2*s;g.beginPath();g.moveTo(q.x,q.y);g.quadraticCurveTo(q.x+sw*.5,q.y-h*.5,q.x+sw,q.y-h);g.stroke();
   if(i%2){g.fillStyle='#5aa83a';g.beginPath();g.ellipse(q.x+sw*.3+4*s,q.y-h*.35,4.5*s*gr,1.8*s*gr,-.5,0,7);g.fill()}
   yaFlw(q.x+sw,q.y-h,(1.35+.3*(i%3))*s*gr,i+t*.4,C[i%5],i%5===3?'#ff6aa8':'#ffe08a')}
- for(let i=0;i<7;i++){const ph=(t*.7+i/7)%1,b=i*1.9,q=P(x.x+Math.cos(b)*R*.55,x.y+Math.sin(b)*R*.45,10+ph*55);g.fillStyle=rgba(i%2?'#ff9ac8':'#9fe07f',.85*a*(1-ph));g.fillRect(q.x-1.2,q.y-5*q.s,2.4,10*q.s);g.fillRect(q.x-5*q.s,q.y-1.2,10*q.s,2.4)}};
+ for(let i=0;i<7;i++){const ph=(t*.7+i/7)%1,b=i*1.9,q=P(x.x+Math.cos(b)*R*.55,x.y+Math.sin(b)*R*.45,10+ph*55);g.fillStyle=rgba(i%2?'#ff9ac8':'#9fe07f',.85*a*(1-ph));g.fillRect(q.x-1.2,q.y-5*q.s,2.4,10*q.s);g.fillRect(q.x-5*q.s,q.y-1.2,10*q.s,2.4)}});
 // ---------- états visibles : marque de l'esprit, sommeil ----------
 STATD.push((u,p,S,sk)=>{const t=performance.now()/1000;
  if(u.ya_mk>0){const B=u.ya_mkB!=null?units[u.ya_mkB]:null;if(B&&!B.dead){const b=t*2.2,cx=p.x+Math.cos(b)*19*S*sk,cy=p.y-54*S*sk+Math.sin(b)*5*S;g.save();g.globalAlpha=Math.min(1,u.ya_mk*2.5);g.globalCompositeOperation='lighter';circ(cx,cy,6.5*S,'rgba(192,128,255,.3)');g.globalCompositeOperation='source-over';yaFlw(cx,cy,S*1.05,t*3,'#d8a8ff','#ffffff');g.restore()}}
@@ -269,7 +285,7 @@ JFXD.ya_bloom=(f,k,e,t)=>{const q=P(f.x,f.y,0),s=q.s,R=f.r;g.strokeStyle=rgba(f.
 JFXD.ya_storm=(f,k,e,t,u)=>{const X=u?u.x:f.x,Y=u?u.y:f.y,R=f.r,A=f.a,fa=Math.min(1,k*2.5);
  // voile rose du cône
  {const pts=[P(X,Y,0)];for(let j=0;j<=8;j++){const b=A-.58+j*.145,dd=R*Math.min(1,e*3);pts.push(P(X+Math.cos(b)*dd,Y+Math.sin(b)*dd,0))}poly(pts,rgba('#ff9ac8',.13*fa))}
- for(let i=0;i<60;i++){const sp=((i*37)%60)/60*2-1,d=(e*1.6+i*.0213)%1;if(e<d*.45)continue;const dd=16+d*R,b=A+sp*.56+Math.sin(d*7+i)*.09,q=P(X+Math.cos(b)*dd,Y+Math.sin(b)*dd,14+Math.abs(Math.sin(i*1.7))*36+d*6);yaPet(q.x,q.y,q.s*(1.1+(i%3)*.25),t*9+i,rgba(YAP[i%4],fa*(1-d*.55)))}
+{const nS=fxNB(48,f);for(let i=0;i<nS;i++){const sp=((i*37)%60)/60*2-1,d=(e*1.6+i*.0213)%1;if(e<d*.45)continue;const dd=16+d*R,b=A+sp*.56+Math.sin(d*7+i)*.09,q=P(X+Math.cos(b)*dd,Y+Math.sin(b)*dd,14+Math.abs(Math.sin(i*1.7))*36+d*6);yaPet(q.x,q.y,q.s*(1.1+(i%3)*.25),t*9+i,rgba(YAP[i%4],fa*(1-d*.55)))}}
  g.globalCompositeOperation='lighter';g.lineCap='round';for(let w=0;w<3;w++){const ew=(e-w*.2)/.35;if(ew<0||ew>1)continue;const dd=30+ezo(ew)*(R-30);
   for(const [c,lw] of[['#ff9ac8',9],['#ffffff',3]]){g.strokeStyle=rgba(c,.85*(1-ew));g.lineWidth=lw*(1-ew*.5);g.beginPath();for(let j=0;j<=10;j++){const b=A-.56+j*.112,q=P(X+Math.cos(b)*dd,Y+Math.sin(b)*dd,30);j?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y)}g.stroke()}}};
 // Esprit destructeur : lien mental et sceau qui se referme sur la cible
@@ -294,7 +310,7 @@ JFXD.ya_snap=(f,k,e,t,u)=>{const b=P(f.x,f.y,60),a=u?P(u.x,u.y,58):b,s=b.s;g.glo
 JFXD.ya_shatter=(f,k,e,t,u,tg)=>{const X=tg?tg.x:f.x,Y=tg?tg.y:f.y,q=P(X,Y,70),s=q.s,g0=P(X,Y,0);g.globalCompositeOperation='lighter';
  g.strokeStyle=rgba('#d8a8ff',.85*k);g.lineWidth=5*k+1;g.beginPath();g.ellipse(g0.x,g0.y,(20+ezo(e)*110)*s,(20+ezo(e)*110)*s*K,0,0,7);g.stroke();
  g.fillStyle=rgba('#e8d0ff',.22*k);g.fillRect(q.x-16*s*k,q.y-170*s,32*s*k,g0.y-q.y+170*s);
- if(e<.2){const c=1-e/.2,R=(32+c*10)*s;g.fillStyle='rgba(232,208,255,.85)';g.beginPath();g.moveTo(q.x,q.y-R*1.3);g.lineTo(q.x+R,q.y);g.lineTo(q.x,q.y+R*1.3);g.lineTo(q.x-R,q.y);g.closePath();g.fill();g.strokeStyle='#ffffff';g.lineWidth=2;g.stroke();
+ if(e<.2){const c=1-e/.2,R=(32+c*10)*s;fxGlowS(q.x,q.y,R*2.2,YA_M,.5*c);g.fillStyle='rgba(232,208,255,.6)';g.beginPath();g.moveTo(q.x,q.y-R*1.3);g.lineTo(q.x+R,q.y);g.lineTo(q.x,q.y+R*1.3);g.lineTo(q.x-R,q.y);g.closePath();g.fill();g.strokeStyle='#ffffff';g.lineWidth=2;g.stroke();
   g.globalCompositeOperation='source-over';g.strokeStyle='#5a2a8a';g.lineWidth=1.5;g.beginPath();g.moveTo(q.x,q.y-R*1.3);g.lineTo(q.x-R*.2,q.y-R*.2);g.lineTo(q.x+R*.3,q.y+R*.3);g.lineTo(q.x,q.y+R*1.3);g.moveTo(q.x-R*.2,q.y-R*.2);g.lineTo(q.x-R,q.y);g.stroke();return}
  const w=(e-.2)/.8;g.globalCompositeOperation='source-over';for(let i=0;i<16;i++){const b=i*.393+.2,r=ezo(w)*(64+(i*17)%48)*s,x=q.x+Math.cos(b)*r,y=q.y+Math.sin(b)*r*.8+w*w*60*s,L=(13-(i%3)*3)*s,rot=b+w*(6+i);
   g.fillStyle=rgba(i%3?'#e8d0ff':'#ffffff',.9*k);g.beginPath();g.moveTo(x+Math.cos(rot)*L,y+Math.sin(rot)*L);g.lineTo(x+Math.cos(rot+2.4)*L*.6,y+Math.sin(rot+2.4)*L*.6);g.lineTo(x+Math.cos(rot-2.4)*L*.6,y+Math.sin(rot-2.4)*L*.6);g.closePath();g.fill()}};

@@ -36,6 +36,12 @@ STYLES.push(['Éventail fermé',RRD.st,'x.rr_st','wind','fan',[12],1.12,1.07]);
 const RRC={paper:'#f4ecd8',fold:'#ddd0b0',rib:'#3a2a1e',moon:'#7a4aa8',moonL:'#d8b8ff',wind:'#e8fff8',wind2:'#a8e8d0',gold:'#e0b84a'};
 const rrS=(k,u)=>{const V=VFX;VFX=null;S(k,u);VFX=V}; // son « brut » (sans la teinte vent)
 const rrI=u=>units.indexOf(u);
+// ---- VFX (boîte à outils nr_fx.js) : vent vert d'eau additif, entailles blanches, poussière beige, lueur violette des lunes ; zones et lignes de danger nettes
+// entaille de vent sur une cible : traits qui filent dans la direction a, éclat, poussière ; gel visuel sur un gros coup
+function rrImp(u,e,s,dmg,big,a){fxBurst(e.x,e.y,'#ffffff',{u,n:7*s,sp:380*s,z:32,a:a??0,arc:a==null?6.3:1.4,w:1.6,len:.22,gr:0,up:10,c2:RRC.wind2,t:.3});fxFlare(e.x,e.y,RRC.wind,{u,z:32,r:14*s,t:.15,c2:'#ffffff'});
+ fxWind(e.x,e.y,a??0,{u,len:90*s,w:40*s,n:3,t:.3,col:RRC.wind2});if(dmg)fxHitStop(u,e,dmg,big)}
+// éventail grand ouvert (3 lunes) : petit sceau lunaire au sol
+const rrFull=(u,c)=>{if(c.full){fxGlyph(u.x,u.y,RRC.moonL,{u,ui:rrI(u),r:34,t:.6});fxFlare(u.x,u.y,RRC.moonL,{u,z:80,r:18,t:.25,star:0})}};
 let RR_ID=0;
 // début d'un jutsu Roran : à 3 lunes, l'éventail part grand ouvert (+20 % de dégâts, +20 % de taille) et se referme
 function rrOpen(u){RR_ID=RR_ID%1e6+1;const full=(u.rr_mn|0)>=3;if(full){u.rr_mn=0;u.rr_mT=0;say(u,'ÉVENTAIL GRAND OUVERT','#e8d8ff');jx({jfx:'rr_moons',ui:rrI(u),x:u.x,y:u.y,t:.8,m:.8})}
@@ -52,16 +58,15 @@ Object.assign(NAT,{
  // ---- style (corps à corps) : éventail fermé ; 3e coup : estoc qui souffle (repousse) ; 5e : l'éventail s'abat, la bourrasque repousse et balaie les tirs ennemis
  rr_st:SP('Éventail fermé','',.42,{hero:'rey',melee:1,ai:{max:106,p:1}},(u,a)=>{const c=stC(u),T=[0,[92,1.8,10,.42],[92,1.8,10,.42],[110,1.2,11,.48],[96,2.8,11,.46],[104,2.2,14,.66]][c];
   stMelee(u,a,T[0],T[1],T[2],c===3?{kb:120}:c===5?{kb:200}:{},[0,{d:-1,tl:.6,z:36,th:9,c:RRC.paper,c2:RRC.rib,blade:1},{d:1,tl:-.6,z:32,th:9,c:RRC.paper,c2:RRC.rib,blade:1},{jfx:'st_thrust',z:34,c:RRC.paper,w2:6},{d:-1,z:26,th:12,c:RRC.wind,c2:RRC.wind2,rr:.8},{d:1,tl:1.45,z:30,th:16,c:RRC.wind,c2:RRC.wind2,rr:.65}][c]);
-  if(c===3||c===5){const R=T[0]+(c===5?16:4),W=c===5?1.6:.9;jx({jfx:'rr_gust',x:u.x,y:u.y,a,r:R,w:W,t:.42,m:.42});S('wind',u);if(c===5){rrSweep(u,u.x,u.y,a,R,W);rrFan(u,a,.34,2);rrS('heavy',u)}}
+  if(c===3||c===5){const R=T[0]+(c===5?16:4),W=c===5?1.6:.9;jx({jfx:'rr_gust',x:u.x,y:u.y,a,r:R,w:W,t:.42,m:.42});S('wind',u);if(c===5){rrSweep(u,u.x,u.y,a,R,W);rrFan(u,a,.34,2);rrS('heavy',u)}fxWind(u.x+Math.cos(a)*R*.5,u.y+Math.sin(a)*R*.5,a,{u,len:R,w:R*.8,n:c===5?6:3,t:.35,col:RRC.wind})}
   stCd(u,T[3]);anim(u,'st_ror'+c,c===5?.42:.3)}),
  // ---- Kamaitachi : faux de vent perçante ; +30 % sur une cible en l'air (trait)
- rr_kama:SP('Kamaitachi',RRD.kama,7,{line:{len:480,w:30},ai:RG(460,.7)},(u,a)=>{const c=rrOpen(u);anim(u,'rr_swing',.42);rrS('saber',u);S('wind',u);rrFan(u,a,.38,1,c.full);
-  proj(u,a,{vfx:'wind',spd:900,r:14*c.G,dmg:14*c.F,life:.55,col:RRC.wind,pierce:1,slow:.8,kind:'rr_sickle',o:{rr:c.id,rrAir:1},onHit:(p,t)=>{if(near(t.x,t.y))jx({jfx:'rr_cut',ti:rrI(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.35,m:.35})}})}),
+ rr_kama:SP('Kamaitachi',RRD.kama,7,{line:{len:480,w:30},ai:RG(460,.7)},(u,a)=>{const c=rrOpen(u);anim(u,'rr_swing',.42);rrS('saber',u);S('wind',u);rrFan(u,a,.38,1,c.full);rrFull(u,c);fxWind(u.x+Math.cos(a)*40,u.y+Math.sin(a)*40,a,{u,len:100,w:40,n:4,t:.3,col:RRC.wind});
+  proj(u,a,{vfx:'wind',spd:900,r:14*c.G,dmg:14*c.F,life:.55,col:RRC.wind,pierce:1,slow:.8,kind:'rr_sickle',o:{rr:c.id,rrAir:1},onHit:(p,t)=>{if(near(t.x,t.y))jx({jfx:'rr_cut',ti:rrI(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.35,m:.35});rrImp(p.owner,t,1,p.dmg,0,Math.atan2(p.vy,p.vx))}})}),
  // ---- Rafale : grand coup d'éventail en cône, repousse loin, interrompt, balaie les tirs
  rr_gale:SP('Rafale de l\'éventail',RRD.gale,8,{line:{len:230,w:220},ai:RG(200,.75)},(u,a)=>{const c=rrOpen(u),R=230*c.G,A=1.6;anim(u,'rr_sweep',.45);rrS('heavy',u);S('wind',u);rrFan(u,a,.42,2,c.full);
-  jx({jfx:'rr_gust',x:u.x,y:u.y,a,r:R,w:A,t:.45,m:.45});rrSweep(u,u.x,u.y,a,R,A);
-  for(const e of enemies(u))if(dist(u,e)<R+e.r&&angDiff(ang(u,e),a)<A/2){if(hit(e,u,18*c.F,{kb:650,rr:c.id,unblockable:1})&&near(e.x,e.y))jx({jfx:'rr_cut',ti:rrI(e),x:e.x,y:e.y,a,t:.35,m:.35})}
-  if(near(u.x,u.y))shake=Math.max(shake,.12)}),
+  jx({jfx:'rr_gust',x:u.x,y:u.y,a,r:R,w:A,t:.45,m:.45});rrSweep(u,u.x,u.y,a,R,A);rrFull(u,c);fxWind(u.x+Math.cos(a)*R*.5,u.y+Math.sin(a)*R*.5,a,{u,len:R,w:R*1.2,n:9,t:.45,col:RRC.wind});fxSmoke(u.x+Math.cos(a)*40,u.y+Math.sin(a)*40,{u,col:'#d8c8a0',n:4,r:40,s:12,t:.7,al:.22,dx:Math.cos(a)*90,dy:Math.sin(a)*90});
+  for(const e of enemies(u))if(dist(u,e)<R+e.r&&angDiff(ang(u,e),a)<A/2){if(hit(e,u,18*c.F,{kb:650,rr:c.id,unblockable:1})){if(near(e.x,e.y))jx({jfx:'rr_cut',ti:rrI(e),x:e.x,y:e.y,a,t:.35,m:.35});rrImp(u,e,1.3,18*c.F,1,ang(u,e))}}}),
  // ---- Vent ascendant : colonne de vent retardée qui projette en l'air
  rr_up:SP('Vent ascendant',RRD.up,11,{tele:{r:80,max:440},ai:RG(420,.55)},(u,a,td)=>{const c=rrOpen(u),p=atP(u,a,td,440),R=80*c.G;anim(u,'rr_lift',.5);rrS('dash',u);rrFan(u,a,.45,3,c.full);
   jx({jfx:'rr_swirl',x:p.x,y:p.y,r:R,t:.6,m:.6});
@@ -73,18 +78,19 @@ Object.assign(NAT,{
   jx({jfx:'rr_dust',x:x0,y:y0,r:L/2,t:.45,m:.45})}),
  // ---- Tempête tranchante : tourbillon de lames au point visé (logique : AUXF.rr_storm)
  rr_storm:SP('Tempête tranchante',RRD.storm,12,{tele:{r:110,max:420},ai:RG(400,.55)},(u,a,td)=>{const c=rrOpen(u),p=atP(u,a,td,420),R=110*c.G,T=2.5;anim(u,'rr_whirl',.55);S('wind',u);rrS('saber',u);rrFan(u,a,.5,2,c.full);
-  aux.push({type:'rr_storm',x:p.x,y:p.y,r:R,t:T,m:T,team:u.team,owner:u,vfx:'wind',k:.36,id:c.id,F:c.F,n:0,danger:1})}),
+  aux.push({type:'rr_storm',x:p.x,y:p.y,r:R,t:T,m:T,team:u.team,owner:u,vfx:'wind',k:.36,id:c.id,F:c.F,n:0,danger:1});rrFull(u,c);fxRing(p.x,p.y,{u,r0:R,r1:R*.3,col:RRC.wind,w:4,t:.4});fxWind(p.x,p.y,0,{u,spin:1,w:R,n:8,t:2.4,col:RRC.wind})}),
  // ---- Grande Kamaitachi : 0,3 s pour ouvrir l'éventail, puis une vague de faux qui traverse tout
  rr_dai:SP('Grande Kamaitachi',RRD.dai,13,{line:{len:560,w:110},ai:RG(520,.6)},(u,a)=>{const c=rrOpen(u),R=44*c.G;u.root=Math.max(u.root,.4);anim(u,'rr_big',.75);rrS('heavy',u);rrFan(u,a,.7,4,c.full);
   jx({jfx:'rr_tline',x:u.x,y:u.y,a,len:560,w:2*R+36,t:.3,m:.3});
-  later(u,.3,()=>{if(u.dead||u.stun>0)return;rrS('boom',u);S('wind',u);if(near(u.x,u.y))shake=Math.max(shake,.2);
+  rrFull(u,c);fxCharge(u,RRC.wind,{t:.3,n:10,z:60,hd:6,r:50});
+  later(u,.3,()=>{if(u.dead||u.stun>0)return;rrS('boom',u);S('wind',u);fxFlare(u.x+Math.cos(a)*30,u.y+Math.sin(a)*30,RRC.wind,{u,z:40,r:26,t:.2});fxWind(u.x,u.y,a,{u,len:200,w:110,n:8,t:.45,col:RRC.wind});fxSmoke(u.x,u.y,{u,col:'#d8c8a0',n:4,r:30,s:12,t:.7,al:.22});
    proj(u,a,{vfx:'wind',spd:760,r:R,dmg:28*c.F,life:.74,col:RRC.wind,pierce:1,noClash:1,kind:'rr_wave',o:{rr:c.id,dot:{dps:8/3,dur:3}},
-    onHit:(p,t)=>{if(t.dead)return;if(t.unstop<=0){const b=Math.atan2(p.vy,p.vx);t.kx+=Math.cos(b)*650;t.ky+=Math.sin(b)*650}if(near(t.x,t.y))jx({jfx:'rr_cut',ti:rrI(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),big:1,t:.5,m:.5})}});
+    onHit:(p,t)=>{if(t.dead)return;if(t.unstop<=0){const b=Math.atan2(p.vy,p.vx);t.kx+=Math.cos(b)*650;t.ky+=Math.sin(b)*650}if(near(t.x,t.y))jx({jfx:'rr_cut',ti:rrI(t),x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),big:1,t:.5,m:.5});rrImp(p.owner,t,1.6,p.dmg,1,Math.atan2(p.vy,p.vx))}});
    aux.push({type:'rr_wavec',x:u.x,y:u.y,r:0,t:1,m:1,team:u.team,owner:u,p:projs[projs.length-1]})})}),
  // ---- Vol sur l'éventail : planer, dirigé à la souris (logique : AUXF.rr_glide ; esquive au corps à corps : trait)
  rr_glide:SP('Vol sur l\'éventail',RRD.glide,7,{ai:{mode:'gap',min:140,max:280,p:.5}},(u,a)=>{const D=.6;u.dash=null;u.rr_gl=D;u.rr_gh=a;u.slowImm=Math.max(u.slowImm,D);anim(u,'rr_ride',D);rrS('dash',u);S('wind',u);
   for(const x of aux)if(x.type==='rr_glide'&&x.owner===u)x.t=0;
-  aux.push({type:'rr_glide',x:u.x,y:u.y,r:0,t:D,m:D,team:u.team,owner:u,a,k:0});jx({jfx:'rr_ride',ui:rrI(u),x:u.x,y:u.y,a,t:D+.05,m:D+.05});sparks(u.x,u.y,RRC.wind,8,'wind')}),
+  aux.push({type:'rr_glide',x:u.x,y:u.y,r:0,t:D,m:D,team:u.team,owner:u,a,k:0});jx({jfx:'rr_ride',ui:rrI(u),x:u.x,y:u.y,a,t:D+.05,m:D+.05});sparks(u.x,u.y,RRC.wind,4,'wind');fxWind(u.x,u.y,a+Math.PI,{u,len:120,w:60,n:5,t:.4,col:RRC.wind});fxSmoke(u.x,u.y,{u,col:'#d8c8a0',n:3,r:24,s:10,t:.6,al:.22})}),
  // ---- Contre-vent : l'éventail frappe le sol, rafale autour, puis le contrecoup projette le lanceur
  rr_back:SP('Contre-vent',RRD.back,12,{ai:ESC},(u,a,td)=>{anim(u,'rr_slam',.42);rrS('heavy',u);S('wind',u);jx({jfx:'rr_burst',x:u.x,y:u.y,r:120,t:.5,m:.5});
   for(const e of enemies(u))if(dist(u,e)<120+e.r)hit(e,u,14,{kb:700,slow:1,fx:u.x,fy:u.y,unblockable:1});
@@ -93,7 +99,7 @@ Object.assign(NAT,{
  rr_kamatari:ULT('Invocation : Kamatari',RRD.kamatari,{line:{len:640,w:80},ai:{max:560,p:.85}},(u,a)=>{const c=rrOpen(u);anim(u,'rr_summon',.8);rrS('poof',u);S('wind',u);
   const sx=u.x+Math.cos(a)*30,sy=u.y+Math.sin(a)*30,e=fwd(u,a,640);
   aux.push({type:'rr_weasel',x:sx,y:sy,sx,sy,ex:e.x,ey:e.y,a,len:Math.hypot(e.x-sx,e.y-sy),w:80,t:2.6,m:2.6,team:u.team,owner:u,vfx:'wind',k:.45,n:0,hs:new Set(),id:c.id,F:c.F});
-  jx({jfx:'rr_poof',x:sx,y:sy,r:46,t:.6,m:.6})}),
+  jx({jfx:'rr_poof',x:sx,y:sy,r:46,t:.6,m:.6});rrFull(u,c);fxSmoke(sx,sy,{u,col:'#f4f2ee',n:6,r:36,s:16,t:.9,al:.3,rise:40});fxGlyph(sx,sy,RRC.wind2,{u,r:44,t:.6});fxWind(sx,sy,0,{u,spin:1,w:60,n:6,t:.5,col:RRC.wind})}),
  // ---- Tempête de l'éventail : 3 battements en cône (suivent la visée)
  rr_typh:ULT('Tempête de l\'éventail',RRD.typh,{line:{len:380,w:240},ai:{max:340,p:.8}},(u,a)=>{const c=rrOpen(u),D=1.05,R=380*c.G;u.root=Math.max(u.root,D);anim(u,'rr_beat',D);rrS('heavy',u);
   for(let i=0;i<3;i++)later(u,.12+i*.4,()=>{if(u.dead||u.stun>0)return;const A=u.aim,last=i===2;rrFan(u,A,.36,2,c.full);jx({jfx:'rr_gust',x:u.x,y:u.y,a:A,r:R,w:1.3,t:.5,m:.5});S('wind',u);rrS(last?'boom':'heavy',u);rrSweep(u,u.x,u.y,A,R,1.3);
@@ -117,9 +123,10 @@ AUXF.rr_wall=(x,dt)=>{const o=x.owner,ca=Math.cos(x.a),sa=Math.sin(x.a),H=x.len/
 AUXF.rr_storm=(x,dt)=>{const o=x.owner;
  for(const e of units){if(e.dead||e.team===x.team)continue;const d=Math.hypot(e.x-x.x,e.y-x.y);if(d>x.r+e.r)continue;
   if(!(e.unstop>0)&&!e.dash&&!(e.slowImm>0)){if(d>8){const v=Math.min(d,28*dt);e.x+=(x.x-e.x)/d*v;e.y+=(x.y-e.y)/d*v}e.slow=Math.max(e.slow,.3)}}
- if(x.k<=0&&x.n<6){x.k=.4;x.n++;VFX='wind';for(const e of units){if(e.dead||e.team===x.team||Math.hypot(e.x-x.x,e.y-x.y)>x.r+e.r)continue;if(hit(e,o,3*x.F,{rr:x.id,unblockable:1})&&near(e.x,e.y))jx({jfx:'rr_cut',ti:rrI(e),x:e.x,y:e.y,a:rnd()*7,t:.3,m:.3})}VFX=null;if(near(x.x,x.y))rrS('saber',o)}
+ if(x.k<=0&&x.n<6){x.k=.4;x.n++;VFX='wind';for(const e of units){if(e.dead||e.team===x.team||Math.hypot(e.x-x.x,e.y-x.y)>x.r+e.r)continue;if(hit(e,o,3*x.F,{rr:x.id,unblockable:1})){if(near(e.x,e.y))jx({jfx:'rr_cut',ti:rrI(e),x:e.x,y:e.y,a:rnd()*7,t:.3,m:.3});fxBurst(e.x,e.y,'#ffffff',{u:o,n:4,sp:300,z:34,w:1.4,len:.2,gr:0,t:.25})}}VFX=null;if(near(x.x,x.y))rrS('saber',o)}
  if(x.t<=0&&!x.done){x.done=1;VFX='wind';for(const e of units)if(!e.dead&&e.team!==x.team&&Math.hypot(e.x-x.x,e.y-x.y)<x.r+e.r+20)hit(e,o,6*x.F,{air:.5,fx:x.x,fy:x.y,rr:x.id,unblockable:1});VFX=null;
-  jx({jfx:'rr_column',x:x.x,y:x.y,r:x.r+20,t:.75,m:.75});jx({jfx:'rr_burst',x:x.x,y:x.y,r:x.r+20,t:.4,m:.4});if(near(x.x,x.y)){rrS('boom',o);S('wind',o);shake=Math.max(shake,.18)}}};
+  jx({jfx:'rr_column',x:x.x,y:x.y,r:x.r+20,t:.75,m:.75});jx({jfx:'rr_burst',x:x.x,y:x.y,r:x.r+20,t:.4,m:.4});if(near(x.x,x.y)){rrS('boom',o);S('wind',o)}
+  fxRing(x.x,x.y,{u:o,r0:20,r1:x.r+20,col:RRC.wind,c2:'#ffffff',w:7,t:.4});fxSmoke(x.x,x.y,{u:o,col:'#d8c8a0',n:6,r:x.r,s:14,t:.9,al:.22,rise:40});fxDecal(x.x,x.y,'crack',{u:o,r:x.r*.5,t:3});fxLight(x.x,x.y,x.r*1.4,RRC.wind2,{u:o,t:.4,a:.35})}};
 // vague de la Grande Kamaitachi : elle avale les tirs ennemis qu'elle croise
 AUXF.rr_wavec=x=>{const p=x.p;if(!p||p.dead||p.life<=0||projs.indexOf(p)<0){x.t=0;return}x.x=p.x;x.y=p.y;const sp=Math.hypot(p.vx,p.vy)||1,cx=p.vx/sp,cy=p.vy/sp;
  for(const q of projs){if(q===p||q.dead||q.life<=0||q.grenade||!q.owner||q.owner.team===x.team)continue;const dx=q.x-p.x,dy=q.y-p.y;if(Math.abs(dx*cx+dy*cy)<30+q.r&&Math.abs(-dx*cy+dy*cx)<p.r+12+q.r){q.life=0;if(q.rocket)q.boom=1;if(near(q.x,q.y))sparks(q.x,q.y,RRC.wind,6,'wind')}}};
@@ -129,7 +136,7 @@ AUXF.rr_glide=(x,dt)=>{const u=x.owner;if(!u||u.dead){x.t=0;if(u)u.rr_gl=0;retur
  if(u.ctrl==='local'||u.ctrl==='remote'){let d=u.aim-x.a;while(d>Math.PI)d-=2*Math.PI;while(d<-Math.PI)d+=2*Math.PI;x.a+=clamp(d,-3.6*dt,3.6*dt)}
  u.x-=u.vx*dt;u.y-=u.vy*dt;const v=430;u.x=clamp(u.x+Math.cos(x.a)*v*dt,B.x+u.r,B.x+B.w-u.r);u.y=clamp(u.y+Math.sin(x.a)*v*dt,B.y+u.r,B.y+B.h-u.r);collide(u);x.x=u.x;x.y=u.y;
  const el=x.m-x.t;u.z=30*Math.min(1,el/.15,Math.max(0,x.t)/.15);u.moving=0;u.rr_gl=Math.max(0,x.t);u.rr_gh=x.a;
- if(x.t<=0){u.rr_gl=0;u.z=0;jx({jfx:'rr_dust',x:u.x,y:u.y,r:90,t:.4,m:.4});rrS('dash',u);VFX='wind';for(const e of units)if(!e.dead&&e.team!==u.team&&dist(u,e)<90+e.r)hit(e,u,0,{kb:420,fx:u.x,fy:u.y,unblockable:1,silent:1});VFX=null}};
+ if(x.t<=0){u.rr_gl=0;u.z=0;jx({jfx:'rr_dust',x:u.x,y:u.y,r:90,t:.4,m:.4});rrS('dash',u);fxRing(u.x,u.y,{u,r0:14,r1:90,col:RRC.wind,w:4,t:.3});VFX='wind';for(const e of units)if(!e.dead&&e.team!==u.team&&dist(u,e)<90+e.r)hit(e,u,0,{kb:420,fx:u.x,fy:u.y,unblockable:1,silent:1});VFX=null}};
 // Kamatari : n = 0 apparition, 1 aller, 2 demi-tour, 3 retour, 4 disparition
 AUXF.rr_weasel=(x,dt)=>{const o=x.owner;
  if(x.n===0){if(x.k<=0){x.n=1;rrS('dash',o);rrS('saber',o)}return}
@@ -138,9 +145,9 @@ AUXF.rr_weasel=(x,dt)=>{const o=x.owner;
  const back=x.n===3,tx=back?x.sx:x.ex,ty=back?x.sy:x.ey,dx=tx-x.x,dy=ty-x.y,d=Math.hypot(dx,dy),st=Math.min(d,1500*dt),px=x.x,py=x.y;
  if(d>.01){x.x+=dx/d*st;x.y+=dy/d*st}
  for(const e of units){if(e.dead||e.team===x.team||x.hs.has(e))continue;if(rrSeg(e.x,e.y,px,py,x.x,x.y)>x.w/2+e.r)continue;x.hs.add(e);VFX='wind';
-  const ok=hit(e,o,(back?14:28)*x.F,back?{kb:300,fx:px,fy:py,rr:x.id,unblockable:1}:{air:.5,rr:x.id,unblockable:1});VFX=null;if(ok&&near(e.x,e.y))jx({jfx:'rr_cut',ti:rrI(e),x:e.x,y:e.y,a:x.a,big:1,t:.5,m:.5})}
+  const ok=hit(e,o,(back?14:28)*x.F,back?{kb:300,fx:px,fy:py,rr:x.id,unblockable:1}:{air:.5,rr:x.id,unblockable:1});VFX=null;if(ok){if(near(e.x,e.y))jx({jfx:'rr_cut',ti:rrI(e),x:e.x,y:e.y,a:x.a,big:1,t:.5,m:.5});rrImp(o,e,back?1.4:1.8,(back?14:28)*x.F,1,x.a);if(!back){fxPillar(e.x,e.y,RRC.wind,{u:o,h:160,w:18,t:.4,al:.4});fxShake(.25,e.x,e.y)}}}
  for(const p of projs)if(!p.dead&&p.life>0&&!p.grenade&&p.owner&&p.owner.team!==x.team&&Math.hypot(p.x-x.x,p.y-x.y)<x.w/2+p.r+8){p.life=0;if(p.rocket)p.boom=1;if(near(p.x,p.y))sparks(p.x,p.y,RRC.wind,6,'wind')}
- if(st>=d-.5){if(!back){x.n=2;x.k=.3;x.hs.clear();x.a+=Math.PI;if(near(x.x,x.y))jx({jfx:'rr_dust',x:x.x,y:x.y,r:60,t:.4,m:.4})}else{x.n=4;x.t=Math.min(x.t,.4);jx({jfx:'rr_poof',x:x.x,y:x.y,r:40,t:.5,m:.5});rrS('poof',o)}}};
+ if(st>=d-.5){if(!back){x.n=2;x.k=.3;x.hs.clear();x.a+=Math.PI;if(near(x.x,x.y))jx({jfx:'rr_dust',x:x.x,y:x.y,r:60,t:.4,m:.4});fxWind(x.x,x.y,0,{u:o,spin:1,w:50,n:6,t:.35,col:RRC.wind});fxDecal(x.x,x.y,'crack',{u:o,r:40,t:2.5})}else{x.n=4;x.t=Math.min(x.t,.4);jx({jfx:'rr_poof',x:x.x,y:x.y,r:40,t:.5,m:.5});rrS('poof',o)}}};
 
 // ---- trait de clan : Trois lunes
 const RR_GA={max:250,p:.9},RR_GD={mode:'def',p:.45};
@@ -241,12 +248,12 @@ JFXD.rr_fan=(f,k,e,t,u)=>{if(!u||u.dead)return;const a=f.a,q=P(u.x+Math.cos(a)*1
  if(sw>.05&&sw<1&&f.n!==3){g.save();g.globalCompositeOperation='lighter';g.strokeStyle=rgba(RRC.wind,.55*al);g.lineWidth=R*.5;g.lineCap='round';g.beginPath();g.arc(q.x,q.y,R*.8,Math.min(phi,phi-(f.n===4?-1:1)*1.4*sw),Math.max(phi,phi-(f.n===4?-1:1)*1.4*sw));g.stroke();g.restore()}
  rrFanDraw(q.x,q.y,R,phi,span,al,f.full?3:u.rr_mn|0,f.full)};
 // faux de vent (Kamaitachi) : croissant blanc à liseré doré et ses images rémanentes
-PROJD.rr_sickle=(p,R,ra,t)=>{g.rotate(ra);const L=R*2.1;g.globalCompositeOperation='lighter';for(let i=3;i>=1;i--){g.strokeStyle=rgba(RRC.wind2,.3/i);g.lineWidth=4;g.beginPath();g.arc(-R*.5-i*R*.75,0,L,-1,1);g.stroke()}
+PROJD.rr_sickle=(p,R,ra,t)=>{g.rotate(ra);const L=R*2.1;fxTailL(R*5,L*1.6,RRC.wind2,.35*fxA(p));g.globalCompositeOperation='lighter';for(let i=3;i>=1;i--){g.strokeStyle=rgba(RRC.wind2,.3/i);g.lineWidth=4;g.beginPath();g.arc(-R*.5-i*R*.75,0,L,-1,1);g.stroke()}
  g.globalCompositeOperation='source-over';g.fillStyle=rgba('#f6fffc',.93);g.beginPath();g.arc(-R*.5,0,L,-1.05,1.05);g.arc(-R*1.3,0,L*.97,1,-1,true);g.closePath();g.fill();
  g.strokeStyle=rgba(RRC.gold,.95);g.lineWidth=1.8;g.beginPath();g.arc(-R*.5,0,L,-1.05,1.05);g.stroke();g.strokeStyle=rgba('#2a7a68',.45);g.lineWidth=1;g.beginPath();g.arc(-R*1.3,0,L*.97,-1,1);g.stroke();
  g.strokeStyle=rgba('#ffffff',.7);g.lineWidth=1.2;g.beginPath();for(let i=-2;i<=2;i++){const y=i*L*.3,x0=-R*1.5+Math.sin(t/50+i)*2;g.moveTo(x0,y);g.lineTo(x0-R*(1.4+(i&1)*.8),y*1.05)}g.stroke()};
 // vague de la Grande Kamaitachi : trois croissants géants empilés, poussière soulevée
-PROJD.rr_wave=(p,R,ra,t)=>{g.rotate(ra);const L=R*1.75,gr=Math.min(1,(p.life0-p.life)/.12+.4);g.scale(gr,gr);
+PROJD.rr_wave=(p,R,ra,t)=>{g.rotate(ra);const L=R*1.75,gr=Math.min(1,(p.life0-p.life)/.12+.4);g.scale(gr,gr);fxTailL(R*5,L*2,RRC.wind2,.3*fxA(p));fxGlowS(-R*.8,0,L*.9,RRC.wind,.12*fxA(p),L*1.2);
  g.fillStyle=rgba('#c8fff0',.16);g.beginPath();g.arc(-R*1.2,0,L*1.08,-1.1,1.1);g.arc(-R*3,0,L,1.05,-1.05,true);g.closePath();g.fill();
  for(let i=2;i>=0;i--){const o=-i*R*.55,sp=1.05-i*.08;g.fillStyle=i?rgba(RRC.wind2,.45-i*.1):rgba('#f6fffc',.92);g.beginPath();g.arc(o-R*.5,0,L,-sp,sp);g.arc(o-R*1.15,0,L*.97,sp-.05,-sp+.05,true);g.closePath();g.fill()}
  g.strokeStyle=RRC.gold;g.lineWidth=2.2;g.beginPath();g.arc(-R*.5,0,L,-1.05,1.05);g.stroke();
@@ -308,13 +315,14 @@ AUXD.rr_wall=(x,k,t)=>{const ca=Math.cos(x.a),sa=Math.sin(x.a),H=x.len/2,R=H*1.0
  const pv=pt(0,0);circ(pv.x,pv.y,5*pv.s,RRC.rib);g.globalAlpha=1;
  if(x.t<.5){g.globalCompositeOperation='lighter';g.strokeStyle=rgba(RRC.wind,.5*(1-x.t/.5));g.lineWidth=3;const a=W(-H,6),b=W(H,6);g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.globalCompositeOperation='source-over'}};
 // tempête tranchante : disque qui tourbillonne, lames en croissant qui tournent à plusieurs hauteurs
-AUXD.rr_storm=(x,k,t)=>{const q=P(x.x,x.y,0),R=x.r*q.s;g.fillStyle=rgba('#c8fff0',.13*k);gEll(x.x,x.y,x.r);g.fill();g.strokeStyle=rgba(RRC.wind,.6*k);g.lineWidth=2;g.setLineDash([8,6]);g.lineDashOffset=-t*40;gEll(x.x,x.y,x.r);g.stroke();g.setLineDash([]);
+AUXD.rr_storm=(x,k,t)=>{fxTele(x.x,x.y,x.r,0,RRC.wind2,x,0);const q=P(x.x,x.y,0),R=x.r*q.s;g.globalAlpha*=Math.max(.7,fxA(x));g.fillStyle=rgba('#c8fff0',.13*k);gEll(x.x,x.y,x.r);g.fill();g.strokeStyle=rgba(RRC.wind,.6*k);g.lineWidth=2;g.setLineDash([8,6]);g.lineDashOffset=-t*40;gEll(x.x,x.y,x.r);g.stroke();g.setLineDash([]);
  g.strokeStyle=rgba(RRC.wind2,.6*k);g.lineWidth=2.5;for(let j=0;j<4;j++){g.beginPath();for(let i=0;i<=10;i++){const d=1-i/11,b=-t*4+j*1.571+i*.5,xx=q.x+Math.cos(b)*R*d,yy=q.y+Math.sin(b)*R*d*K;i?g.lineTo(xx,yy):g.moveTo(xx,yy)}g.stroke()}
  g.globalCompositeOperation='lighter';for(let i=0;i<9;i++){const b=-t*(5+(i%3))+i*.7,d=x.r*(.35+(i%3)*.25),z=12+(i%4)*16+Math.sin(t*3+i)*4,p=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d,z),ra=Math.atan2(Math.cos(b)*K,-Math.sin(b));
   g.save();g.translate(p.x,p.y);g.rotate(ra);g.scale(p.s,p.s);g.fillStyle=rgba('#f6fffc',.85*k);g.beginPath();g.arc(-4,0,14,-1,1);g.arc(-8,0,13.5,.95,-.95,true);g.closePath();g.fill();g.strokeStyle=rgba(RRC.gold,.7*k);g.lineWidth=1;g.beginPath();g.arc(-4,0,14,-1,1);g.stroke();g.restore()}
  g.globalCompositeOperation='source-over';g.fillStyle=rgba('#d8c8a0',.7*k);for(let i=0;i<12;i++){const d=(t*.4+i*.083)%1,b=i*2.4-t*4-d*3,p=P(x.x+Math.cos(b)*x.r*(1-d),x.y+Math.sin(b)*x.r*(1-d),d*40);g.fillRect(p.x,p.y,2.2*p.s,2.2*p.s)}};
 // Kamatari : belette blanche borgne, grande faux, portée par un tourbillon ; ligne d'alerte pendant l'apparition
 AUXD.rr_weasel=(x,k,t)=>{const c=Math.cos(x.a),s0=Math.sin(x.a);
+ if(x.n===0)fxTeleLine(x.sx,x.sy,x.a,x.len||640,x.w,1-Math.max(0,x.k)/.45,RRC.wind,x,.06);
  if(x.n===0){const h=x.w/2,L=x.len||640,pts=[[0,-h],[L,-h],[L,h],[0,h]].map(([a,b])=>P(x.x+c*a-s0*b,x.y+s0*a+c*b,1));poly(pts,rgba('#c8fff0',.16));g.strokeStyle=rgba('#ffffff',.65);g.lineWidth=2;g.setLineDash([12,6]);g.lineDashOffset=-t*60;g.beginPath();pts.forEach((p,i)=>i?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y));g.closePath();g.stroke();g.setLineDash([])}
  if(x.n>=4&&x.t<.25)return;const grow=x.n===0?Math.min(1,(.45-Math.max(0,x.k))/.3+.2):1,run=x.n===1||x.n===3,q=P(x.x,x.y,run?22:14),S=q.s*1.3*grow,f=c>=0?1:-1;
  // tourbillon sous la belette
@@ -337,3 +345,4 @@ AUXD.rr_weasel=(x,k,t)=>{const c=Math.cos(x.a),s0=Math.sin(x.a);
  g.strokeStyle=rgba('#ffffff',.9);g.lineWidth=1;g.beginPath();g.moveTo(10,-25);g.quadraticCurveTo(25,-28,32,-14);g.stroke();g.restore();g.restore();
  if(x.n===2){g.globalCompositeOperation='lighter';g.strokeStyle=rgba(RRC.wind,.8);g.lineWidth=3;g.beginPath();g.arc(q.x,q.y-24*S,38*S,t*20,t*20+4.5);g.stroke();g.globalCompositeOperation='source-over'}};
 AUXD.rr_glide=()=>{};AUXD.rr_wavec=()=>{};
+AFTER.push(()=>FXTELE.add('rr_tline')); // la ligne d'alerte de la Grande Kamaitachi n'est jamais atténuée

@@ -12,7 +12,7 @@ DASHF[4]={src:'x.sub_grap',n:'Kunai à fil',d:'Kunai à fil : te tire jusqu\'au 
 const SUB_ST='#d8dde6';
 Object.assign(NAT,{
  // --- Sôfûsha : 3 shuriken en éventail, deux fils tendus entre eux (gauche-milieu, milieu-droite) ; franchir un fil = ligoté
- sub_sofu:S_('Sôfûsha : Shuriken à fil','Trois shuriken reliés par un fil qui ligote',13,{hero:'padme',line:{len:430,w:120},ai:RG(400,.6,60)},(u,a)=>{u.thrT=.2;anim(u,'throw2',.4);S('saber',u);S('deflect',u);const L=[];
+ sub_sofu:S_('Sôfûsha : Shuriken à fil','Trois shuriken reliés par un fil qui ligote',13,{hero:'padme',line:{len:430,w:120},ai:RG(400,.6,60)},(u,a)=>{u.thrT=.2;anim(u,'throw2',.4);S('saber',u);S('deflect',u);const L=[];fxBurst(u.x+Math.cos(a)*20,u.y+Math.sin(a)*20,'#ffffff',{u,z:34,n:6,sp:300,gr:0,up:0,w:1.2,len:.25,a,arc:.5});
   const X={type:'sub_sofu',x:u.x,y:u.y,a:a+Math.PI/2,len:0,r:0,k:0,t:.7,m:.7,team:u.team,owner:u,L,B:new Set(),H:new Map()};
   for(const d of[-.17,0,.17]){proj(u,a+d,{spd:760,r:9,dmg:8,life:.58,col:SUB_ST,vfx:'shuriken',kind:'sub_kbig',pierce:1,onHit:(q,t)=>{const n=(X.H.get(t)||0)+1;X.H.set(t,n);if(n>=2)subSofBind(X,t)}});L.push(projs[projs.length-1])}
   aux.push(X)}),
@@ -20,13 +20,13 @@ Object.assign(NAT,{
  sub_ronde:S_('Shuriken Kaiten : Ronde des shuriken','Shuriken en orbite qui arrêtent les tirs ; relance : volée',22,{hero:'padme',ai:{mode:'gap',min:60,max:420,p:.6}},(u,a)=>{const i=subIdx(u,'sub_ronde'),X=aux.find(x=>x.type==='sub_ronde'&&x.owner===u&&x.t>0&&!x.done);
   if(X&&u.jst&&u.jst.key==='sub_ronde'){u.cds[i]=u.jst.cd;u.jst=null;subRondeFire(X,a);return}
   S('saber',u);S('dash',u);anim(u,'spin',.5);for(const x of aux)if(x.type==='sub_ronde'&&x.owner===u)x.t=0;
-  aux.push({type:'sub_ronde',x:u.x,y:u.y,r:58,t:3,m:3,team:u.team,owner:u,ui:units.indexOf(u),n:6,k:.4,hs:new Map()});jx({jfx:'sub_rburst',x:u.x,y:u.y,r:70,t:.35,m:.35});
+  aux.push({type:'sub_ronde',x:u.x,y:u.y,r:58,t:3,m:3,team:u.team,owner:u,ui:units.indexOf(u),n:6,k:.4,hs:new Map()});jx({jfx:'sub_rburst',x:u.x,y:u.y,r:58,t:.35,m:.35});fxWind(u.x,u.y,0,{u,spin:1,w:66,n:9,t:.5,col:'#eef2f8'});fxBurst(u.x,u.y,'#ffffff',{u,z:28,n:10,sp:260,gr:0,up:10,w:1.3});
   if(i>0){if(u.jst&&u.jst.key!=='sub_ronde')u.cds[u.jst.i]=u.jst.cd;u.jst={key:'sub_ronde',i,n:1,t:3,cd:u.ch.abil[i].cd,v:'shuriken'};u.cds[i]=.35}}),
 });
 // la volée : les shuriken restants partent l'un après l'autre (visée du lanceur, ou ennemi le plus proche pour une fin de durée)
 function subRondeFire(x,a){const u=x.owner;if(x.done||!u||u.dead)return;x.done=1;const n=x.n|0;x.n=0;x.t=0;if(n<=0)return;S('saber',u);anim(u,'throw2',.35);
  let k=0;seqs.push({owner:u,n,t:.01,iv:.06,vfx:'shuriken',f:o=>{k++;const b=a!=null?o.aim:(()=>{const e=nearE(o,o.x,o.y,520);return e?ang(o,e):o.aim})(),j=(k%3-1)*.06,last=k===n;
-  proj(o,b+j,{x:o.x+Math.cos(b)*30,y:o.y+Math.sin(b)*30,spd:920,r:last?12:10,dmg:9,life:.6,col:SUB_ST,vfx:'shuriken',kind:'sub_kbig',o:last?{stun:.8}:{}})}})}
+  proj(o,b+j,{x:o.x+Math.cos(b)*30,y:o.y+Math.sin(b)*30,spd:920,r:last?12:10,dmg:9,life:.6,col:SUB_ST,vfx:'shuriken',kind:'sub_kbig',tail:1,o:last?{stun:.8}:{},onHit:(q,t)=>{fxBurst(t.x,t.y,'#eef2f8',{u:o,z:32,n:last?10:5,sp:240,gr:0,up:20,w:1.3,c2:'#ffffff'});if(last){fxImpact(t.x,t.y,'kunai',1.1,{u:o,r:40,dec:0});fxHitStop(o,t,20,1)}}})}})}
 // ---------- logique (hôte) ----------
 AUXF.sub_sofu=x=>{const u=x.owner,L=x.L.filter(p=>p&&!p.dead&&p.life>0);if(!u||u.dead||L.length<2){x.t=0;return}const [p0,p1,p2]=x.L,A=[];
  if(p1&&!p1.dead&&p1.life>0){x.x=p1.x;x.y=p1.y}else{x.x=(L[0].x+L[1].x)/2;x.y=(L[0].y+L[1].y)/2}
@@ -35,7 +35,7 @@ AUXF.sub_sofu=x=>{const u=x.owner,L=x.L.filter(p=>p&&!p.dead&&p.life>0);if(!u||u
  for(const e of enemies(u)){if(x.B.has(e)||e.dead)continue;for(const [p,q] of A){const dx=q.x-p.x,dy=q.y-p.y,D2=dx*dx+dy*dy||1,f=clamp(((e.x-p.x)*dx+(e.y-p.y)*dy)/D2,0,1);
    if(f>.05&&f<.95&&Math.hypot(e.x-(p.x+dx*f),e.y-(p.y+dy*f))<e.r+4){subSofBind(x,e);break}}}};
 // ligoté (une fois par volée) : pris par le fil, ou touché par deux shuriken de la volée
-function subSofBind(x,e){if(x.B.has(e)||e.dead)return;x.B.add(e);const u=x.owner,V=VFX;VFX='steel';if(hit(e,u,0,{root:1,silent:1,unblockable:1})&&e.unstop<=0){say(e,'LIGOTÉ','#e8ecf2');jx({jfx:'sub_sofbind',ti:units.indexOf(e),x:e.x,y:e.y,t:1,m:1})}VFX=V}
+function subSofBind(x,e){if(x.B.has(e)||e.dead)return;x.B.add(e);const u=x.owner,V=VFX;VFX='steel';if(hit(e,u,0,{root:1,silent:1,unblockable:1})&&e.unstop<=0){say(e,'LIGOTÉ','#e8ecf2');jx({jfx:'sub_sofbind',ti:units.indexOf(e),x:e.x,y:e.y,t:1,m:1});fxFlare(e.x,e.y,'#ffffff',{u,z:36,r:18,t:.16});fxBurst(e.x,e.y,'#eef2f8',{u,z:34,n:8,sp:220,gr:0,up:20,w:1.3})}VFX=V}
 AUXF.sub_ronde=x=>{const o=x.owner;if(!o||o.dead){x.t=0;return}x.x=o.x;x.y=o.y;if(x.done)return;
  if(x.n>0)for(const p of projs){if(p.dead||p.life<=0||p.grenade||!p.owner||p.owner.team===x.team)continue;if(Math.abs(p.x-x.x)>x.r+p.r+8||Math.hypot(p.x-x.x,p.y-x.y)>x.r+p.r+8)continue;
   if(!(p.big||p.rocket))p.life=0,p.dead=1,p.boom=1;x.n--;if(near(p.x,p.y)){sparks(p.x,p.y,SUB_ST,7,'kunai');S('deflect',o)}jx({jfx:'sub_rburst',x:p.x,y:p.y,r:24,t:.25,m:.25});if(x.n<=0){x.t=0;break}}

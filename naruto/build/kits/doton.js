@@ -25,13 +25,19 @@ function do_h(n){const s=Math.sin(n*127.1+311.7)*43758.5453;return s-Math.floor(
 function do_hit(e,u,dmg,o={}){const V=VFX;VFX='earth';const ok=hit(e,u,dmg,o);VFX=V;if(ok&&e.do_kj>0&&!o.nokj)do_kjSlam(e);return ok}
 // nuage de poussière + éclats de roche
 function do_puff(x,y,r,n){if(!near(x,y))return;jx({jfx:'do_dust',x,y,r,t:.55,m:.55});if(n)sparks(x,y,'#8a6a48',n,'earth')}
+// ---- VFX (boîte à outils nr_fx.js) : décor selon intensité / foule / camp ; zones dangereuses (marécage, ondes, montagne) nettes
+const do_dim=(o,fn)=>{const m=fxA(o);return m<1?fxAlpha(m,fn):fn()};
+// impact de terre : petit = éclats + poussière ; gros = impact complet (éclat local, onde au rayon RÉEL, éclats qui rebondissent, fissures au sol)
+function do_imp(u,x,y,r,big,t,dmg){if(big)fxImpact(x,y,'doton',clamp(r/48,.6,2.6),{u,r});else{fxDebris(x,y,{u,n:5,sp:130,col:'#8a6a48',c2:'#5a4028',s:3.2});fxSmoke(x,y,{u,col:'#9a8268',n:3,r:r*.6,s:10,t:.7,al:.22,rise:14})}if(t&&dmg)fxHitStop(u,t,dmg)}
+// boue : éclaboussure opaque (non additive) + flaque brune qui s'efface
+const do_mud=(u,x,y,r)=>{fxBurst(x,y,'#4a3220',{u,n:10,sp:200,up:150,gr:420,w:2.6,len:.05,add:0,c2:'#6a4a30',t:.5});fxDecal(x,y,'puddle',{u,r:r*.8,t:2.6,col:'#3a2616'})};
 // obstacle au contact dans la direction (vx,vy) : bord de l'arène, poteau ou mur ennemi
 function do_wallAt(e,vx,vy){const m=5;if((vx<0&&e.x<=B.x+e.r+m)||(vx>0&&e.x>=B.x+B.w-e.r-m)||(vy<0&&e.y<=B.y+e.r+m)||(vy>0&&e.y>=B.y+B.h-e.r-m))return true;
  for(const p of OBST)if(Math.hypot(e.x-p.x,e.y-p.y)<p.r+e.r+m&&(p.x-e.x)*vx+(p.y-e.y)*vy>0)return true;
  for(const w of walls)if(w.team!==e.team&&Math.hypot(e.x-w.x,e.y-w.y)<w.r+e.r+m&&(w.x-e.x)*vx+(w.y-e.y)*vy>0)return true;return false}
 // écrasé contre l'obstacle : étourdi + dégâts
 function do_stun(e,st){if(e.dead||e.unstop>0)return;e.stun=Math.max(e.stun,st);e.cast=null;e.flame=null;e.spin=null}
-function do_crush(e,u,dmg,st){e.kx*=.15;e.ky*=.15;if(do_hit(e,u,dmg,{unblockable:1}))do_stun(e,st);say(e,'ÉCRASÉ','#ff9a4a');do_puff(e.x,e.y,40,12);if(near(e.x,e.y)){do_S('heavy',e);shake=Math.max(shake,.2)}}
+function do_crush(e,u,dmg,st){e.kx*=.15;e.ky*=.15;if(do_hit(e,u,dmg,{unblockable:1}))do_stun(e,st);say(e,'ÉCRASÉ','#ff9a4a');do_puff(e.x,e.y,40,12);if(near(e.x,e.y)){do_S('heavy',e);do_imp(u,e.x,e.y,40,1,e,dmg+14)}}
 // après une poussée, l'écrasement reste possible pendant t secondes
 function do_crushArm(e,u,t,dmg,st){if(!e.dead&&e.unstop<=0)aux.push({type:'do_cr',x:e.x,y:e.y,r:0,t,m:t,team:u.team,owner:u,tg:e,dmg,st})}
 // décor dessiné à sa profondeur parmi les ninjas : projectile immobile « en cloche », sans collision, explosion ni lueur
@@ -50,10 +56,10 @@ function do_kjMark(e,u){if(e.dead||e.unstop>0)return;let x=null;for(const q of a
  e.do_kj=2.5;e.do_kjS=u;anim(e,'do_heavy',2.5);say(e,'ALOURDI','#f0d890');if(near(e.x,e.y))do_S('heavy',e)}
 function do_kjSlam(e){if(!(e.do_kj>0))return;const u=e.do_kjS||e;e.do_kj=0;anim(e,'do_slammed',.75);if(do_hit(e,u,15,{unblockable:1,nokj:1}))do_stun(e,.75);say(e,'PLAQUÉ AU SOL','#f0d890');
  aux.push({type:'do_crater',x:e.x,y:e.y,r:42,t:1.8,m:1.8,team:u.team,owner:u});
- if(near(e.x,e.y)){jx({jfx:'do_slam',x:e.x,y:e.y,t:.4,m:.4});do_puff(e.x,e.y,46,8);do_S('boom',e);shake=Math.max(shake,.2)}}
+ if(near(e.x,e.y)){jx({jfx:'do_slam',x:e.x,y:e.y,t:.4,m:.4});do_puff(e.x,e.y,46,8);do_S('boom',e);do_imp(u,e.x,e.y,42,1,e,15);fxFlare(e.x,e.y,'#f0d890',{u,z:30,r:26,t:.2})}}
 // Kyôka : la roche éclate autour du lanceur, d'autant plus fort qu'elle a encaissé
 function do_burst(u,abs){u.do_ar=0;const d=Math.min(36,12+abs*.35);for(const e of enemies(u))if(dist(u,e)<105+e.r){do_hit(e,u,d,{kb:260,fx:u.x,fy:u.y,unblockable:1});do_crushArm(e,u,.4,6,.5)}
- if(near(u.x,u.y)){jx({jfx:'do_shatter',x:u.x,y:u.y,r:105,t:.55,m:.55});do_puff(u.x,u.y,70,16);do_S('boom',u);shake=Math.max(shake,.22)}say(u,'ÉCLATS DE ROCHE','#e8c890')}
+ if(near(u.x,u.y)){jx({jfx:'do_shatter',x:u.x,y:u.y,r:105,t:.55,m:.55});do_puff(u.x,u.y,70,16);do_S('boom',u);do_imp(u,u.x,u.y,105,1);fxDebris(u.x,u.y,{u,n:10,sp:240,col:'#7a6a58',c2:'#a8845a',s:4.5});for(const e of enemies(u))if(dist(u,e)<105+e.r)fxHitStop(u,e,d)}say(u,'ÉCLATS DE ROCHE','#e8c890')}
 // Dragon de terre : boulet de boue en cloche, de la gueule du dragon vers la visée (à la distance choisie au lancement) ;
 // il se cale sur l'ennemi le plus proche du point visé (90 px), en anticipant sa course
 function do_mudShot(u,H,d){const b=u.aim,hx=H.x+Math.cos(b)*20,hy=H.y+Math.sin(b)*20;let tx=u.x+Math.cos(b)*d,ty=u.y+Math.sin(b)*d,fl=clamp(Math.hypot(tx-hx,ty-hy)/640,.26,.7);
@@ -62,53 +68,54 @@ function do_mudShot(u,H,d){const b=u.aim,hx=H.x+Math.cos(b)*20,hy=H.y+Math.sin(b
  projs.push({x:hx,y:hy-44,vx:(tx-hx)/fl,vy:(ty-hy+44)/fl,owner:u,src:u,rot:0,r:9,dmg:0,life:fl,life0:fl,col:'#4a3220',grenade:1,boom:1,tx,ty,ar:58,kind:'do_mudball',vfx:'do_prop',noClash:1,hitSet:null});
  later(u,fl,()=>{const fire=do_fireAt(u.team,hx,hy,tx,ty);for(const e of enemies(u))if(Math.hypot(e.x-tx,e.y-ty)<58+e.r)do_hit(e,u,13,fire?{slow:1.2,unblockable:1,el:0,dot:BURN(5,3)}:{slow:1.2,unblockable:1});
   field(u,tx,ty,{r:46,t:1.8,slow:1,col:'#4a3424',vfx:'earth'});aux.push({type:'do_puddle',x:tx,y:ty,r:46,t:1.8,m:1.8,team:u.team,owner:u,kind:fire?'fire':''});
-  if(near(tx,ty)){jx({jfx:'do_splash',x:tx,y:ty,r:58,t:.45,m:.45,fire:fire?1:0});sparks(tx,ty,'#3a2616',6,'earth')}},{})}
+  if(near(tx,ty)){jx({jfx:'do_splash',x:tx,y:ty,r:58,t:.45,m:.45,fire:fire?1:0});sparks(tx,ty,'#3a2616',6,'earth');do_mud(u,tx,ty,58);fxRing(tx,ty,{u,r0:12,r1:58,col:fire?'#ff9a3a':'#a07850',t:.3,w:4});if(fire)fxImpact(tx,ty,'katon',.9,{u,r:58,ring:0})}},{})}
 Object.assign(NAT,{
  // Rocher : roule et repousse ; contre un obstacle, l'ennemi est écrasé
  do_rock:SP('Doton : Rocher','Rocher roulant qui repousse ; projeté contre un mur ou un obstacle, l\'ennemi est écrasé (étourdi)',5,{line:{len:460,w:30},ai:RG(470,.7)},(u,a)=>{S('rock',u);anim(u,'throw2',.45);do_puff(u.x+Math.cos(a)*22,u.y+Math.sin(a)*22,24,5);
-  proj(u,a,{spd:600,r:14,dmg:12,life:.78,col:'#7a5a3a',kind:'do_boulder',o:{kb:230},onHit:(p,e)=>{if(e.do_kj>0)do_kjSlam(e);do_crushArm(e,p.owner,.5,5,.5);do_puff(p.x,p.y,28,8)}})}),
+  proj(u,a,{spd:600,r:14,dmg:12,life:.78,col:'#7a5a3a',kind:'do_boulder',o:{kb:230},onHit:(p,e)=>{if(e.do_kj>0)do_kjSlam(e);do_crushArm(e,p.owner,.5,5,.5);do_puff(p.x,p.y,28,8);do_imp(p.owner,p.x,p.y,28,0,e,p.dmg)}})}),
  // Doryûheki : rempart de 7 blocs au point visé (les bots le posent devant eux)
  do_wall:SP('Doton : Doryûheki','Mur de terre au point visé : bloque tirs et passage 4 s, repousse les ennemis pris dessus',8,{tele:{r:60,max:330},ai:DEF},(u,a,td)=>{const d=u.ctrl?clamp(td||200,70,330):clamp((td||200)*.45,70,150),c=fwd(u,a,d),ca=Math.cos(a),sa=Math.sin(a),px=-sa,py=ca;
   S('rock',u);do_S('heavy',u);anim(u,'do_palms',.55);
   for(let i=-3;i<=3;i++)walls.push({x:c.x+px*i*25,y:c.y+py*i*25,r:14,t:4,team:u.team,owner:u,earth:1,vfx:'do_wall'});
   for(const e of enemies(u)){const dx=e.x-c.x,dy=e.y-c.y,s=dx*px+dy*py,f=dx*ca+dy*sa;if(Math.abs(s)<90+e.r&&Math.abs(f)<e.r+16){const k=f>=0?1:-1;do_hit(e,u,6,{kb:280,fx:e.x-ca*k*20,fy:e.y-sa*k*20,unblockable:1})}}
   aux.push({type:'do_crack',kind:'line',x:c.x-px*96,y:c.y-py*96,a:a+Math.PI/2,len:192,r:0,t:4,m:4,team:u.team,owner:u});
-  do_puff(c.x,c.y,80,0);if(near(c.x,c.y))for(let i=-3;i<=3;i+=2)sparks(c.x+px*i*25,c.y+py*i*25,'#8a6a48',3,'earth')}),
+  do_puff(c.x,c.y,80,0);if(near(c.x,c.y))for(let i=-3;i<=3;i+=2)sparks(c.x+px*i*25,c.y+py*i*25,'#8a6a48',3,'earth');
+  for(const i of[-2,0,2]){fxDebris(c.x+px*i*30,c.y+py*i*30,{u,n:4,sp:120,s:3.5});fxSmoke(c.x+px*i*30,c.y+py*i*30,{u,col:'#9a8268',n:2,r:20,s:14,t:1,al:.24,rise:40})}fxRing(c.x,c.y,{u,r0:20,r1:100,col:'#c8a070',t:.35,w:4})}),
  // Doryûsô : 6 bouquets de pics jaillissent l'un après l'autre le long de la ligne
  do_spikes:SP('Doton : Doryûsô','Une ligne de pics de terre jaillit devant soi : blesse et projette en l\'air',7,{line:{len:350,w:76},ai:RG(330,.6)},(u,a)=>{S('rock',u);anim(u,'do_strike',.55);const o={x:u.x,y:u.y},hs=new Set();
   aux.push({type:'do_crack',kind:'line',x:o.x+Math.cos(a)*24,y:o.y+Math.sin(a)*24,a,len:330,r:0,t:1.3,m:1.3,team:u.team,owner:u,w:.3});
   for(let i=0;i<6;i++){const p=fwd(o,a,60+i*56);later(u,.03+i*.05,()=>{do_prop(u,p.x,p.y,.9,'do_spear',{r:10});
-   for(const e of enemies(u))if(!hs.has(e)&&Math.hypot(e.x-p.x,e.y-p.y)<38+e.r){hs.add(e);do_hit(e,u,15,{air:.5,unblockable:1})}
-   if(near(p.x,p.y)){sparks(p.x,p.y,'#8a6a48',4,'earth');if(i%2<1)S('rock',u)}},{})}}),
+   for(const e of enemies(u))if(!hs.has(e)&&Math.hypot(e.x-p.x,e.y-p.y)<38+e.r){hs.add(e);if(do_hit(e,u,15,{air:.5,unblockable:1}))fxHitStop(u,e,15)}
+   if(near(p.x,p.y)){sparks(p.x,p.y,'#8a6a48',4,'earth');if(i%2<1)S('rock',u);fxDebris(p.x,p.y,{u,n:4,sp:140,s:3});if(i%2)fxSmoke(p.x,p.y,{u,col:'#9a8268',n:2,r:20,s:12,t:.8,al:.2,rise:30})}},{})}}),
  // Yomi Numa : marécage (ralentit, coupe les déplacements) ; au bout de 1,2 s dedans, on s'enlise
  do_swamp:SP('Doton : Yomi Numa','Marécage 4 s : enlise (immobilise) ceux qui y sont pris, puis ralentit et bloque Espace ; y rester enlise à nouveau',9,{tele:{r:140,max:420},ai:RG(420,.6)},(u,a,td)=>{const p=atP(u,a,td,420);S('rock',u);do_S('water',u);anim(u,'summon',.6);
   field(u,p.x,p.y,{r:140,t:4,slow:1,dps:3,col:'#5a4028',vfx:'earth'});aux.push({type:'do_swamp',x:p.x,y:p.y,r:140,t:4,m:4,team:u.team,owner:u,in:{},sunk:{}});
   for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<140+e.r*.4&&(e.z||0)<10){do_hit(e,u,6,{root:.5,unblockable:1});do_puff(e.x,e.y,28,0)}
-  if(near(p.x,p.y))jx({jfx:'do_splash',x:p.x,y:p.y,r:140,t:.5,m:.5})}),
+  if(near(p.x,p.y)){jx({jfx:'do_splash',x:p.x,y:p.y,r:140,t:.5,m:.5});fxBurst(p.x,p.y,'#3a2616',{u,n:18,sp:260,up:180,gr:420,w:2.8,len:.05,add:0,c2:'#6a4a30',t:.6});fxRing(p.x,p.y,{u,r0:20,r1:140,col:'#a07850',t:.4,w:5})}}),
  // Kyôka : carapace de roche ; à la fin, elle éclate autour de soi
  do_armor:SP('Doton : Kyôka','Corps de roche 3,5 s : 45 % de dégâts en moins, inarrêtable, plus lent ; puis éclate et repousse (selon les coups encaissés)',11,{ai:DEF},(u)=>{S('rock',u);do_S('heavy',u);anim(u,'do_flex',.7);
   u.drT=Math.max(u.drT,3.5);u.dr=.45;u.unstop=Math.max(u.unstop,3.5);u.slow=Math.max(u.slow,3.5);u.do_ar=3.5;u.do_ac=0;
   aux.push({type:'do_armor',x:u.x,y:u.y,r:0,t:3.5,m:3.5,team:u.team,owner:u,hp:u.hp,sh:u.shield||0,abs:0});
-  jx({jfx:'do_harden',ui:units.indexOf(u),x:u.x,y:u.y,t:.45,m:.45});later(u,.01,()=>{if(u.auraV==='earth')u.auraV=null},{})}),
+  jx({jfx:'do_harden',ui:units.indexOf(u),x:u.x,y:u.y,t:.45,m:.45});later(u,.01,()=>{if(u.auraV==='earth')u.auraV=null},{});fxDecal(u.x,u.y,'crack',{u,r:50,t:3.5});fxSmoke(u.x,u.y,{u,col:'#9a8268',n:4,r:30,s:12,t:.8,al:.22});fxGlyph(u.x,u.y,'#c8a070',{u,ui:units.indexOf(u),r:40,t:.6})}),
  // Main de terre : saisit au point visé (après 0,5 s) et jette les ennemis aux pieds du lanceur
  do_hand:SP('Doton : Main de terre','Une main de terre surgit au point visé (court délai), saisit les ennemis et les jette à tes pieds',10,{tele:{r:80,max:420},ai:RG(410,.6,150)},(u,a,td)=>{const p=atP(u,a,td,420);S('rock',u);anim(u,'do_grab',.9);
   aux.push({type:'do_crack',kind:'ray',x:p.x,y:p.y,a:0,n:7,len:80,r:12,t:1.4,m:1.4,team:u.team,owner:u,w:.3});
   do_prop(u,p.x,p.y-9,1.15,'do_hand',{r:16,tx:p.x+Math.cos(a),ty:p.y-9+Math.sin(a)});
   later(u,.5,()=>{let n=0;for(const e of enemies(u)){if(Math.hypot(e.x-p.x,e.y-p.y)>=80+e.r||!do_hit(e,u,14,{unblockable:1}))continue;n++;if(e.unstop>0||e.dead||u.dead)continue;
     const b=ang(u,e),tx=clamp(u.x+Math.cos(b)*56,B.x+e.r,B.x+B.w-e.r),ty=clamp(u.y+Math.sin(b)*56,B.y+e.r,B.y+B.h-e.r);
-    e.dash={sx:e.x,sy:e.y,tx,ty,t:0,dur:.45,jump:80,end:()=>do_puff(e.x,e.y,30,6)};e.cast=null;e.flame=null;e.spin=null;e.stun=Math.max(e.stun,.55);say(e,'SAISI !','#e8c890')}
-   do_puff(p.x,p.y,60,10);if(n&&near(p.x,p.y))do_S('heavy',u)},{x:p.x,y:p.y,r:80})}),
+    e.dash={sx:e.x,sy:e.y,tx,ty,t:0,dur:.45,jump:80,end:()=>{do_puff(e.x,e.y,30,6);do_imp(u,e.x,e.y,30,0,e,20)}};e.cast=null;e.flame=null;e.spin=null;e.stun=Math.max(e.stun,.55);say(e,'SAISI !','#e8c890')}
+   do_puff(p.x,p.y,60,10);if(n&&near(p.x,p.y))do_S('heavy',u);do_imp(u,p.x,p.y,80,1)},{x:p.x,y:p.y,r:80})}),
  // Doryû Taiga : fleuve de boue qui emporte vers l'aval (et écrase contre les murs)
  do_river:SP('Doton : Doryû Taiga','Fleuve de boue devant soi 3 s : emporte et ralentit les ennemis ; plaqués contre un mur, ils sont écrasés',11,{line:{len:430,w:110},ai:RG(250,.55)},(u,a)=>{S('rock',u);do_S('water',u);anim(u,'twohand',.6);
   aux.push({type:'do_river',x:u.x+Math.cos(a)*16,y:u.y+Math.sin(a)*16,a,len:430,w:110,r:0,t:3,m:3,team:u.team,owner:u,k:0,hs:{}});do_puff(u.x+Math.cos(a)*30,u.y+Math.sin(a)*30,40,6)}),
  // Dragon de terre : une tête de dragon sort du sol et crache 3 boulets de boue qui suivent la visée
  do_dragon:SP('Doton : Dragon de terre','Un dragon de terre crache 3 boulets de boue qui suivent ta visée : explosent, ralentissent, laissent de la boue',12,{tele:{r:58,max:440},ai:RG(440,.6,120)},(u,a,td)=>{const d=clamp(td||300,120,440),hx=u.x+Math.cos(a)*26+Math.sin(a)*38,hy=u.y+Math.sin(a)*26-Math.cos(a)*38;
   S('rock',u);do_S('roar',u);anim(u,'pray',1);
-  const H=do_prop(u,hx,hy,1.3,'do_dhead',{r:18,tx:hx+Math.cos(a),ty:hy+Math.sin(a)});do_puff(hx,hy,40,8);
+  const H=do_prop(u,hx,hy,1.3,'do_dhead',{r:18,tx:hx+Math.cos(a),ty:hy+Math.sin(a)});do_puff(hx,hy,40,8);fxDecal(hx,hy,'crack',{u,r:46,t:3});fxDebris(hx,hy,{u,n:8,sp:160,s:4});
   seqs.push({owner:u,n:3,t:.22,iv:.3,vfx:'earth',f:o=>do_mudShot(o,H,d)})}),
  // Kajûgan : projectile de chakra qui alourdit ; plaquage au sol à la fin (ou au prochain coup Doton)
  do_weight:SP('Doton : Kajûgan','Projectile qui alourdit 2,5 s (ralenti, sans déplacement) puis plaque au sol (étourdi) ; un jutsu Doton le plaque aussitôt',12,{line:{len:540,w:24},ai:RG(520,.6)},(u,a)=>{S('rock',u);anim(u,'point',.45);jx({jfx:'do_kcast',ui:units.indexOf(u),x:u.x,y:u.y,t:.3,m:.3});
-  proj(u,a,{spd:760,r:10,dmg:13,life:.72,col:'#e8d090',kind:'do_kaju',onHit:(p,e)=>do_kjMark(e,p.owner)})}),
+  proj(u,a,{spd:760,r:10,dmg:13,life:.72,col:'#e8d090',kind:'do_kaju',onHit:(p,e)=>{do_kjMark(e,p.owner);fxFlare(e.x,e.y,'#f0d890',{u:p.owner,z:40,r:22,t:.2});fxRing(e.x,e.y,{u:p.owner,r0:8,r1:36,col:'#f0d890',t:.3})}})}),
  // Taupe : sous terre (intouchable), jaillit avec des pics qui projettent en l'air
  do_mole:SP('Doton : Taupe','Plonge sous terre (intouchable), file vers le curseur et jaillit en projetant en l\'air les ennemis proches',11,{ai:{mode:'gap',min:150,max:320,p:.4}},(u,a,td)=>{const d=clamp(td||300,100,300);S('rock',u);u.phase=Math.max(u.phase||0,.5);u.do_mo=1;anim(u,'do_dive',.5);do_puff(u.x,u.y,34,10);
   aux.push({type:'do_crack',kind:'trail',x:u.x,y:u.y,a,len:d,r:0,t:1.6,m:1.6,team:u.team,owner:u,w:.42});aux.push({type:'do_moT',x:u.x,y:u.y,r:0,t:.5,m:.5,team:u.team,owner:u});
@@ -118,14 +125,16 @@ Object.assign(NAT,{
  do_flip:SP('Doton : Doroku Gaeshi','Bondit vers le curseur et soulève derrière soi une dalle de terre qui arrête tirs et poursuivants 1,5 s',7,{ai:ESC},(u,a)=>{const b=a+Math.PI,c={x:u.x+Math.cos(b)*28,y:u.y+Math.sin(b)*28},px=-Math.sin(a),py=Math.cos(a);S('rock',u);anim(u,'leap',.38);
   for(let i=-1;i<=1;i++)walls.push({x:c.x+px*i*27,y:c.y+py*i*27,r:16,t:1.5,team:u.team,owner:u,earth:1,vfx:'do_slab'});
   for(const e of enemies(u)){const dx=e.x-c.x,dy=e.y-c.y,s=Math.abs(dx*px+dy*py),f=dx*Math.cos(b)+dy*Math.sin(b);if(s<46+e.r&&f>-e.r&&f<70+e.r)do_hit(e,u,5,{kb:220,fx:c.x-Math.cos(b)*40,fy:c.y-Math.sin(b)*40,unblockable:1})}
-  dash(u,a,210,.3,{jump:34});do_puff(c.x,c.y,44,8)}),
+  dash(u,a,210,.3,{jump:34});do_puff(c.x,c.y,44,8);fxDebris(c.x,c.y,{u,n:6,sp:140,s:3.5});fxDecal(c.x,c.y,'crack',{u,r:40,t:2.4})}),
  // Chute de montagne : la montagne tombe (1 s), puis 18 piliers enferment la zone
  do_mountain:SP('Doton : Chute de montagne','Une montagne s\'écrase sur la zone après 1 s (gros dégâts, étourdit), puis un cercle de rochers l\'enferme 4 s',20,{tele:{r:160,max:450},ai:{max:450,p:.8}},(u,a,td)=>{const p=atP(u,a,td,450);do_S('heavy',u);anim(u,'raise',1);
   jx({jfx:'do_mount',x:p.x,y:p.y,r:160,t:1,m:1});zone(u,p.x,p.y,160,55,1,{stun:1},'#a07850');lastZ().deto='do_mount';
   later(u,1,()=>{for(const e of enemies(u)){const d=Math.hypot(e.x-p.x,e.y-p.y);if(e.do_kj>0&&d<160+e.r)do_kjSlam(e);if(d>160&&d<218)do_hit(e,u,8,{kb:300,fx:p.x+(e.x-p.x)*2,fy:p.y+(e.y-p.y)*2,unblockable:1})}
    for(let i=0;i<18;i++){const b=i*Math.PI/9;walls.push({x:p.x+Math.cos(b)*188,y:p.y+Math.sin(b)*188,r:19,t:4,team:u.team,owner:u,earth:1,vfx:'do_pillar'})}
    aux.push({type:'do_crater',x:p.x,y:p.y,r:150,t:5,m:5,team:u.team,owner:u});aux.push({type:'do_crack',kind:'ray',x:p.x,y:p.y,a:0,n:12,len:130,r:70,t:5,m:5,team:u.team,owner:u,w:.15});
-   if(near(p.x,p.y)){shake=Math.max(shake,.55);do_S('boom',u)}},{})}),
+   if(near(p.x,p.y)){fxShake(.45,p.x,p.y);do_S('boom',u);fxImpact(p.x,p.y,'doton',3,{u,r:160});fxDebris(p.x,p.y,{u,n:9,sp:300,col:'#7a5a3a',c2:'#a8845a',s:5});
+    fxSmoke(p.x,p.y,{u,col:'#9a8268',n:10,r:170,s:24,t:1.6,al:.18,rise:50});fxDecal(p.x,p.y,'crack',{u,r:150,t:6});fxLight(p.x,p.y,260,'#c8a070',{u,t:.4,a:.4});
+    for(const e of enemies(u))if(Math.hypot(e.x-p.x,e.y-p.y)<160+e.r)fxHitStop(u,e,55,1)}},{})}),
  // Grand séisme : coup de poing au sol, 3 ondes de plus en plus larges, puis sol fendu qui ralentit
  do_quake:SP('Doton : Grand séisme','Frappe le sol : 3 ondes de choc projettent en l\'air et repoussent, puis le sol fendu ralentit 3 s',20,{tele:{self:1,r:290},ai:SELF(240,.8)},(u)=>{do_S('heavy',u);anim(u,'do_quake',.9);const o={x:u.x,y:u.y};
   [[.18,0,130,20],[.48,100,215,16],[.78,185,295,14]].forEach(([dl,r0,r1,dm],i)=>later(u,dl,()=>{
@@ -133,7 +142,10 @@ Object.assign(NAT,{
    aux.push({type:'do_qring',x:o.x,y:o.y,r:r1,w:r0,t:.45,m:.45,team:u.team,owner:u});
    if(!i){aux.push({type:'do_rubble',x:o.x,y:o.y,r:290,t:3.9,m:3.9,team:u.team,owner:u});aux.push({type:'do_crater',x:o.x,y:o.y,r:46,t:3.9,m:3.9,team:u.team,owner:u})}
    if(i===2)field(u,o.x,o.y,{r:290,t:3,slow:1,col:'#6a4a30',vfx:'earth'});
-   if(near(o.x,o.y)){do_S(i?'rock':'boom',u);shake=Math.max(shake,.35-i*.05);jx({jfx:'shock',x:o.x,y:o.y,r:r1,t:.45,m:.45,col:'#e8c890'});if(!i)jx({jfx:'do_dust',x:o.x,y:o.y,r:60,t:.6,m:.6})}},{}))}),
+   if(near(o.x,o.y)){do_S(i?'rock':'boom',u);fxShake(.32-i*.06,o.x,o.y);jx({jfx:'shock',x:o.x,y:o.y,r:r1,t:.45,m:.45,col:'#e8c890'});if(!i)jx({jfx:'do_dust',x:o.x,y:o.y,r:60,t:.6,m:.6});
+    fxRing(o.x,o.y,{u,r0:r0,r1,col:'#e8c890',c2:'#ffffff',w:8-i,t:.4});for(let j=0;j<6+i*2;j++){const b=j*6.283/(6+i*2)+i;fxDebris(o.x+Math.cos(b)*r1*.85,o.y+Math.sin(b)*r1*.85,{u,n:2,sp:90,s:3.5})}
+    fxSmoke(o.x,o.y,{u,col:'#9a8268',n:5+i*2,r:r1*.85,s:18,t:1.1,al:.2,rise:30});if(!i){fxDecal(o.x,o.y,'crack',{u,r:130,t:5});fxLight(o.x,o.y,200,'#c8a070',{u,t:.4,a:.35})}
+    for(const e of enemies(u)){const d=Math.hypot(e.x-o.x,e.y-o.y);if(d>r0-e.r&&d<r1+e.r)fxHitStop(u,e,dm,!i)}}},{}))}),
 });
 Object.assign(NATHERO,{do:'vader'}); // référence lourde et lente (PV 185, puissance 0,74, vitesse 200) : la terre encaisse et contrôle plus qu'elle ne frappe
 // ---- logique des objets (hôte)
@@ -169,7 +181,7 @@ AUXD.do_cr=AUXD.do_moT=AUXD.do_armor=AUXD.do_kj=()=>{};
 function do_crackLine(x0,y0,a,len,sd,w,al){if(len<4)return;const n=Math.max(3,len/20|0),ca=Math.cos(a),sa=Math.sin(a);g.beginPath();
  for(let i=0;i<=n;i++){const f=i/n*len,o=i&&i<n?(do_h(sd+i)-.5)*Math.min(26,len*.18):0,q=P(x0+ca*f-sa*o,y0+sa*f+ca*o);i?g.lineTo(q.x,q.y):g.moveTo(q.x,q.y)}
  g.strokeStyle=rgba('#1a120a',al);g.lineWidth=w;g.stroke();g.translate(1.2,1.4);g.strokeStyle=rgba('#c8a070',al*.45);g.lineWidth=w*.4;g.stroke();g.translate(-1.2,-1.4)}
-AUXD.do_crack=(x,k)=>{const sd=(x.x*3+x.y*7)|0,gr=x.w?Math.min(1,(x.m-x.t)/x.w):1,al=.8*k;g.lineCap='round';g.lineJoin='round';
+AUXD.do_crack=(x,k)=>{const sd=(x.x*3+x.y*7)|0,gr=x.w?Math.min(1,(x.m-x.t)/x.w):1,al=.8*k*(.5+.5*fxA(x));g.lineCap='round';g.lineJoin='round';
  if(x.kind==='ray')for(let i=0;i<x.n;i++){const b=i*Math.PI*2/x.n+do_h(sd+i*5)*.5;do_crackLine(x.x+Math.cos(b)*x.r,x.y+Math.sin(b)*x.r,b,x.len*gr*(.55+do_h(sd+i)*.45),sd+i*9,2.6,al)}
  else if(x.kind==='trail'){const L=x.len*gr,ca=Math.cos(x.a),sa=Math.sin(x.a);do_crackLine(x.x,x.y,x.a,L,sd,5,al*.85);
   for(let i=0;i<L/22;i++){const f=i*22+8,s=(i%2?1:-1)*(7+do_h(sd+i)*5),q=P(x.x+ca*f-sa*s,x.y+sa*f+ca*s);g.fillStyle=rgba(i%3?'#6a4a30':'#8a6a48',.9*k);g.beginPath();g.ellipse(q.x,q.y,(3+do_h(i)*3)*q.s,(2+do_h(i)*1.5)*q.s,0,0,7);g.fill()}}
@@ -207,7 +219,7 @@ AUXD.do_qring=(x,k)=>{const e=1-x.t/x.m,rr=lerp(x.w,x.r,ezo(e)),h=Math.sin(Math.
   g.fillStyle='#6a4a30';g.strokeStyle='#22160c';g.lineWidth=1.2;g.beginPath();g.moveTo(q.x-W,q.y);g.lineTo(q.x-W*.3,q.y-H);g.lineTo(q.x+W*.5,q.y-H*.8);g.lineTo(q.x+W,q.y);g.closePath();g.fill();g.stroke();
   g.fillStyle='#a8845a';g.beginPath();g.moveTo(q.x-W*.3,q.y-H);g.lineTo(q.x+W*.5,q.y-H*.8);g.lineTo(q.x+W*.1,q.y-H*.35);g.closePath();g.fill()}};
 // sol fendu après le séisme : fissures rayonnantes et cailloux
-AUXD.do_rubble=(x,k)=>{const sd=(x.x+x.y)|0,gr=Math.min(1,(x.m-x.t)/.5);g.lineCap='round';g.lineJoin='round';
+AUXD.do_rubble=(x,k)=>{const sd=(x.x+x.y)|0,gr=Math.min(1,(x.m-x.t)/.5);g.lineCap='round';g.lineJoin='round';k*=.5+.5*fxA(x);
  for(let i=0;i<12;i++){const b=i*.5236+do_h(sd+i)*.3;do_crackLine(x.x+Math.cos(b)*34,x.y+Math.sin(b)*34,b,x.r*gr*(.55+do_h(sd+i*3)*.4),sd+i*11,2.6,.7*k)}
  for(let i=0;i<14;i++){const b=do_h(sd+i*5)*7,d=x.r*(.2+do_h(sd+i*9)*.75)*gr,q=P(x.x+Math.cos(b)*d,x.y+Math.sin(b)*d);g.fillStyle=rgba(i%2?'#6a4a30':'#9a7650',.9*k);g.beginPath();g.ellipse(q.x,q.y,(2.5+do_h(i)*3)*q.s,(1.6+do_h(i)*1.5)*q.s,0,0,7);g.fill()}};
 // ---- projectiles et décors à leur profondeur
@@ -231,7 +243,7 @@ function do_stone(u,p,S,f){const tl=typeof N3!=='undefined'&&N3.ok&&N3.tile.get(
  x.fillStyle='rgba(176,150,120,.45)';x.fillRect(0,0,TPW*.42,TPH);x.fillStyle='rgba(54,40,28,.55)';for(let i=0;i<30;i++)x.fillRect(do_h(i*3)*TPW,do_h(i*7+1)*TPH,3,2);
  x.strokeStyle='rgba(36,26,16,.8)';x.lineWidth=2;x.beginPath();for(let i=0;i<6;i++){const a=(.3+do_h(i*11)*.4)*TPW,b=(.25+do_h(i*13)*.55)*TPH;x.moveTo(a,b);x.lineTo(a+7,b+9);x.lineTo(a+2,b+19)}x.stroke();x.globalCompositeOperation='source-over';
  const sk=u.ch.look.scale||1,w=TWU*S*sk,h=THU*S*sk;g.save();g.globalAlpha=f;g.drawImage(c,p.x-w/2,p.y-h+FOOT*S*sk,w,h);g.restore()}
-PROJD.do_kaju=(p,R,ra,t)=>{g.globalCompositeOperation='lighter';circ(0,0,R*1.7,rgba('#f0d890',.28));g.strokeStyle=rgba('#f0d890',.55);g.lineWidth=2;const c=Math.cos(ra),s=Math.sin(ra);
+PROJD.do_kaju=(p,R,ra,t)=>{g.globalCompositeOperation='lighter';fxGlowS(0,0,R*3,'#f0d890',.4*fxA(p));g.strokeStyle=rgba('#f0d890',.55);g.lineWidth=2;const c=Math.cos(ra),s=Math.sin(ra);
  g.beginPath();for(const o of[-4,4]){g.moveTo(-c*R*1.2-s*o,-s*R*1.2+c*o);g.lineTo(-c*R*3.4-s*o*.6,-s*R*3.4+c*o*.6)}g.stroke();g.globalCompositeOperation='source-over';do_cube(0,0,R*1.15,t/160,'#f6e6b0')};
 // boulet de boue (en cloche) avec ses gouttes
 PROJD.do_mudball=(p,R,ra)=>{for(let i=3;i>0;i--)circ(-Math.cos(ra)*R*(1+i*.55),-Math.sin(ra)*R*(1+i*.55)+i*2,R*(.5-i*.1),rgba('#3a2616',.8));
@@ -269,7 +281,7 @@ PROJD.mud=PROJD.do_mudball; // ancien nom
 // ---- effets (par-dessus la scène)
 // montagne qui tombe du ciel, son ombre grandit au sol
 JFXD.do_mount=(f,k,e)=>{const q=P(f.x,f.y,0),fl=Math.pow(Math.min(1,e*1.04),1.7),R=f.r*q.s*(.62+.38*fl),cy=q.y-(1-fl)*330*q.s,cx=q.x+(1-fl)*40*q.s;
- g.fillStyle=rgba('#000000',.14+.4*fl);g.beginPath();g.ellipse(q.x,q.y,f.r*q.s*(.3+.7*fl),f.r*q.s*K*(.3+.7*fl),0,0,7);g.fill();if(fl>=1)return;
+ g.fillStyle=rgba('#000000',.14+.4*fl);g.beginPath();g.ellipse(q.x,q.y,f.r*q.s*(.3+.7*fl),f.r*q.s*K*(.3+.7*fl),0,0,7);g.fill();if(fl>=1)return;g.globalAlpha*=Math.max(.45,1-Math.max(0,fl-.45)*1.1); // près du sol : translucide, on voit qui est dessous
  g.strokeStyle='rgba(240,225,200,.35)';g.lineWidth=3*q.s;g.beginPath();for(let i=0;i<4;i++){const x=cx+(i-1.5)*R*.45;g.moveTo(x,cy-R*1.55);g.lineTo(x+R*.1,cy-R*1.55-140*q.s*(1-fl))}g.stroke();
  const pt=(x,y)=>[cx+x*R,cy+y*R];g.lineJoin='round';
  do_sh([[-1.05,0],[-.8,-.55],[-.55,-.8],[-.3,-1.25],[-.05,-1.05],[.2,-1.5],[.45,-1.15],[.7,-.95],[.95,-.45],[1.05,0],[.6,.22],[0,.3],[-.6,.2]].map(([x,y])=>pt(x,y)),'#5a4028',3);
@@ -278,7 +290,7 @@ JFXD.do_mount=(f,k,e)=>{const q=P(f.x,f.y,0),fl=Math.pow(Math.min(1,e*1.04),1.7)
  g.strokeStyle='rgba(34,22,12,.55)';g.lineWidth=2;g.beginPath();g.moveTo(...pt(-.8,-.3));g.lineTo(...pt(-.2,-.45));g.lineTo(...pt(.5,-.35));g.moveTo(...pt(-.6,.05));g.lineTo(...pt(.3,-.05));g.stroke()};
 JFXD.mountain=JFXD.do_mount; // ancien nom
 // nuage de poussière qui s'étale et retombe
-JFXD.do_dust=(f,k,e)=>{const q=P(f.x,f.y,0);for(let i=0;i<8;i++){const b=i*.785+f.x*.01,d=f.r*(.35+e*.75)*q.s,rr=(f.r*.22+e*f.r*.25)*q.s;g.fillStyle=rgba(i%2?'#b8a080':'#9a8264',.5*k);g.beginPath();g.ellipse(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*K-e*18*q.s,rr,rr*.7,0,0,7);g.fill()}};
+JFXD.do_dust=(f,k,e)=>{const q=P(f.x,f.y,0),n=Math.max(4,fxNB(8,f));for(let i=0;i<n;i++){const b=i*.785+f.x*.01,d=f.r*(.35+e*.75)*q.s,rr=(f.r*.22+e*f.r*.25)*q.s;g.fillStyle=rgba(i%2?'#b8a080':'#9a8264',.5*k);g.beginPath();g.ellipse(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*K-e*18*q.s,rr,rr*.7,0,0,7);g.fill()}};
 // éclaboussure de boue (marécage, boulets)
 JFXD.do_splash=(f,k,e)=>{const q=P(f.x,f.y,0);for(let i=0;i<10;i++){const b=i*.628+f.x*.013,d=f.r*(.25+e*.7)*q.s,hh=Math.sin(Math.PI*Math.min(1,e*1.2))*26*q.s*(.6+(i%3)*.25);circ(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*K-hh,(3.2+(i%3))*q.s*(1-e*.4),f.fire&&i%2?'#ff8a2a':i%2?'#3a2616':'#6a4a30')}
  g.strokeStyle=rgba('#7a5a3a',.7*k);g.lineWidth=2;g.beginPath();g.ellipse(q.x,q.y,f.r*e*q.s,f.r*e*q.s*K,0,0,7);g.stroke()};
@@ -296,6 +308,11 @@ JFXD.do_slam=(f,k,e)=>{const q=P(f.x,f.y,0),s=24*q.s*(1+e*.4),cy=q.y-(1-Math.min
 DETO.do_mount=(x,y,r)=>{jx({jfx:'do_dust',x,y,r:r*1.15,t:1,m:1});jx({jfx:'shock',x,y,r:r*1.7,t:.7,m:.7,col:'#c8a070'});jx({jfx:'shock',x,y,r:r*1.2,t:.5,m:.5,col:'#e8d8b8'});jx({jfx:'spikes',x,y,r,t:1.1,m:1.1,bone:0});sparks(x,y,'#8a6a48',22,'earth')};
 DETO.mountain=(x,y,r)=>{jx({jfx:'spikes',x,y,r,t:1.2,m:1.2,bone:0});jx({jfx:'shock',x,y,r:r*1.5,t:.6,m:.6});jx({jfx:'do_dust',x,y,r,t:.7,m:.7})};
 // ---- états visibles sur les ninjas
+// anticipation pendant les mudras d'un jutsu Doton : cailloux qui se soulèvent autour des pieds, poussière, lueur ocre au sol
+STATD.push((u,p,S)=>{if(!u.cast||u.dead)return;const ab=u.ch.abil[u.cast.i];if(!ab||!ab.key||!ab.key.startsWith('do_'))return;const kk=Math.min(1,u.cast.t/u.cast.dur),t=performance.now()/1000;
+ do_dim(u,()=>{fxGlowG(u.x,u.y,30+30*kk,'#c8a070',.25+.25*kk);const n=fxN(7,u);for(let i=0;i<n;i++){const b=i*6.283/n+t*.6,r=(26+6*Math.sin(t*3+i))*S,h=(4+kk*26*(.6+.4*do_h(i)))*S+Math.sin(t*5+i)*2*S,x=p.x+Math.cos(b)*r,y=p.y+Math.sin(b)*r*.4-h,s=(2.4+do_h(i+3)*2)*S;
+  g.fillStyle=i%2?'#8a6a48':'#5e4229';g.beginPath();g.moveTo(x-s,y);g.lineTo(x-s*.2,y-s);g.lineTo(x+s,y-s*.3);g.lineTo(x+s*.5,y+s*.7);g.closePath();g.fill()}
+  if(kk>.4){g.strokeStyle=rgba('#c8a070',.4*kk);g.lineWidth=1.5;g.beginPath();g.ellipse(p.x,p.y,(30+10*kk)*S,(30+10*kk)*S*K,0,0,7);g.stroke()}})});
 function do_plate(x,y,s){do_sh([[x-s,y],[x-s*.5,y-s*.75],[x+s*.6,y-s*.6],[x+s,y+s*.15],[x+s*.1,y+s*.7]],'#6e5034',1.2);do_sh([[x-s*.5,y-s*.75],[x+s*.6,y-s*.6],[x+s*.1,y-s*.1]],'#a8845a')}
 STATD.push((u,p,S,sk)=>{const t=performance.now()/1000;
  // Kajûgan : cube de chakra qui pèse au-dessus de la tête, lignes de pression

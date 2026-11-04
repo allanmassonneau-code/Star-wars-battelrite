@@ -30,13 +30,17 @@ STYLES.push(['Lames d\'or','Kunai d\'or dans les mains et pattes d\'araignée ; 
 // ---------- couleurs et outils ----------
 const HMC={silk:'#eef0f6',silk2:'#c8c0dc',vio:'#b48ae0',pur:'#6a4a8a',dark:'#2a1a3a',gold:'#f0c040',gold2:'#c8901a',red:'#e0304a'};
 const hm_I=u=>units.indexOf(u);
+// ---- VFX (boîte à outils nr_fx.js) : soie blanche (fils non additifs), lueur violette, or de l'armure et de l'arc ; toiles (danger) nettes
+// impact de soie : fils qui giclent, petit éclat violet ; gel visuel sur un gros coup
+function hmImp(u,e,s,dmg,big,a,col){fxBurst(e.x,e.y,col||HMC.silk,{u,n:7*s,sp:240*s,z:32,a:a??0,arc:a==null?6.3:1.8,w:1.4,len:.18,up:40,gr:120,add:0,c2:'#ffffff',t:.4});
+ fxFlare(e.x,e.y,col===HMC.gold?HMC.gold:HMC.vio,{u,z:32,r:13*s,t:.15,star:0});if(dmg)fxHitStop(u,e,dmg,big)}
 const HM_MAX=4,HM_FILT=5,HM_GLU=3,HM_IMM=4,HM_VULN=1.2; // fils pour engluer, durée des fils, durée de la faiblesse, immunité après, bonus de dégâts
 // pose n fils sur t (n peut valoir ½) ; au 4e fil : englué
 function hm_fil(src,t,n){if(!t||t.dead||!src||t.team===src.team||state!=='fight')return;if((t.hm_imm||0)>SIMT)return;
  if(!((t.hm_filE||0)>SIMT))t.hm_fil=0;t.hm_fil=Math.min(HM_MAX,(t.hm_fil||0)+n);t.hm_filE=SIMT+HM_FILT;
  if(t.hm_fil>=HM_MAX){t.hm_fil=0;t.hm_imm=SIMT+HM_IMM;t.hm_gluE=SIMT+HM_GLU;t.hm_glu=HM_GLU;
   if(t.unstop<=0){t.root=Math.max(t.root,.7);t.rootV='silk'}t.stealth=0;say(t,'ENGLUÉ','#e8d8ff');
-  jx({jfx:'hm_cocoon',ti:hm_I(t),x:t.x,y:t.y,t:.8,m:.8});if(near(t.x,t.y)){sparks(t.x,t.y,HMC.silk,10);S('bone',t)}}}
+  jx({jfx:'hm_cocoon',ti:hm_I(t),x:t.x,y:t.y,t:.8,m:.8});if(near(t.x,t.y)){sparks(t.x,t.y,HMC.silk,5);S('bone',t)}fxRing(t.x,t.y,{u:src,r0:40,r1:12,col:HMC.vio,c2:HMC.silk,w:4,t:.35});hmImp(src,t,1.3,0);fxDecal(t.x,t.y,'default',{u:src,r:30,t:2.5,col:'#e8e4f0',al:.35})}}
 // tient compte des fils et de la faiblesse sur tous les ninjas (l'hôte calcule, les invités reçoivent hm_fil et hm_glu)
 function hm_tick(){for(const e of units){if(e.hm_fil>0&&!((e.hm_filE||0)>SIMT))e.hm_fil=0;if(e.hm_glu>0)e.hm_glu=Math.max(0,(e.hm_gluE||0)-SIMT)}}
 AFTER.push(()=>{const A=auxUpdate;auxUpdate=function(dt){A(dt);hm_tick()};
@@ -46,12 +50,12 @@ const hm_free=e=>e.unstop<=0&&!(e.slowImm>0)&&!e.dead; // un ninja qu'on peut fr
 // toile au sol (Toile collante, Filin, Araignée géante) : n = graine de la forme
 function hm_brood(u,tx,ty){jx({jfx:'hm_hatch',x:tx,y:ty,r:60,t:.6,m:.6});S('bugs',u);for(let i=0;i<5;i++){const b=i*1.2566+rnd()*.4;
   aux.push({type:'hm_spid',x:tx+Math.cos(b)*14,y:ty+Math.sin(b)*14,a:b,r:6,t:4.5,m:4.5,team:u.team,owner:u,ui:hm_I(u),ti:-1,n:0,w:i,k:.15+i*.06,tg:null})}}
-function hm_web(u,x,y,r,t){aux.push({type:'hm_web',x,y,r,t,m:t,team:u.team,owner:u,ui:hm_I(u),n:(rnd()*6.28*100|0)/100,k:0,in:new Map(),done:new Set(),danger:1})}
+function hm_web(u,x,y,r,t){fxRing(x,y,{u,r0:r*.3,r1:r,col:HMC.silk,c2:HMC.vio,w:4,t:.4});aux.push({type:'hm_web',x,y,r,t,m:t,team:u.team,owner:u,ui:hm_I(u),n:(rnd()*6.28*100|0)/100,k:0,in:new Map(),done:new Set(),danger:1})}
 
 Object.assign(NAT,{
  // Fil d'araignée : fil collant, lien de 2 s (ralentit), puis rétraction qui tire la cible
  hm_fil:SP('Fil d\'araignée',HMD.fil,7,{hero:'boba',line:{len:500,w:18},ai:RG(480,.6)},(u,a)=>{S('blaster',u);anim(u,'hm_spit',.35);jx({jfx:'hm_mouth',ui:hm_I(u),x:u.x,y:u.y,a,t:.3,m:.3});
-  proj(u,a,{spd:900,r:7,dmg:12,life:.56,col:HMC.silk,kind:'hm_thread',noClash:1,onHit:(p,t)=>{const o=p.owner;hm_fil(o,t,1);if(t.dead||o.dead)return;
+  proj(u,a,{spd:900,r:7,dmg:12,life:.56,col:HMC.silk,kind:'hm_thread',noClash:1,onHit:(p,t)=>{const o=p.owner;hm_fil(o,t,1);hmImp(o,t,1,0,0,Math.atan2(p.vy,p.vx));if(t.dead||o.dead)return;
    for(const x of aux)if(x.type==='hm_line'&&x.owner===o)x.t=0;aux.push({type:'hm_line',x:t.x,y:t.y,t:2,m:2,team:o.team,owner:o,tg:t,ui:hm_I(o),ti:hm_I(t),k:0});say(t,'LIÉ','#e8d8ff')}})}),
  // Toile collante : boule de soie lancée en cloche, la toile se tisse à l'impact
  hm_toile:SP('Toile collante',HMD.toile,11,{hero:'cal',tele:{r:95,max:420},ai:RG(420,.5)},(u,a,td)=>{const d=clamp(td||300,80,420),T=d/560;S('bugs',u);anim(u,'hm_spit',.4);jx({jfx:'hm_mouth',ui:hm_I(u),x:u.x,y:u.y,a,t:.3,m:.3});
@@ -59,7 +63,8 @@ Object.assign(NAT,{
   const tx=clamp(u.x+Math.cos(a)*(d+24),B.x+20,B.x+B.w-20),ty=clamp(u.y+Math.sin(a)*(d+24),B.y+20,B.y+B.h-20);later(u,T,()=>{if(state==='fight')hm_web(u,tx,ty,95,5)})}),
  // Kumo Sôkei : grand filet qui avale les tirs ; emmaillote la 1re cible
  hm_filet:SP('Filet d\'araignée',HMD.filet,11,{hero:'cal',line:{len:460,w:52},ai:RG(440,.6)},(u,a)=>{S('bugs',u);S('dash',u);anim(u,'hm_net',.45);
-  proj(u,a,{spd:560,r:24,dmg:16,life:.82,col:HMC.silk,kind:'hm_net',noClash:1,root:1,onHit:(p,t)=>{hm_fil(p.owner,t,2);if(t.root>0)jx({jfx:'hm_wrap',ti:hm_I(t),x:t.x,y:t.y,t:1,m:1});S('bone',t)}});
+  proj(u,a,{spd:560,r:24,dmg:16,life:.82,col:HMC.silk,kind:'hm_net',noClash:1,root:1,onHit:(p,t)=>{hm_fil(p.owner,t,2);if(t.root>0)jx({jfx:'hm_wrap',ti:hm_I(t),x:t.x,y:t.y,t:1,m:1});S('bone',t);hmImp(p.owner,t,1.4,16,1,Math.atan2(p.vy,p.vx));fxRing(t.x,t.y,{u:p.owner,r0:10,r1:40,col:HMC.silk,w:4,t:.3})}});
+  fxBurst(u.x+Math.cos(a)*24,u.y+Math.sin(a)*24,HMC.silk,{u,n:6,sp:200,z:36,a,arc:1.2,w:1.4,len:.2,add:0,t:.3});
   aux.push({type:'hm_netc',x:u.x,y:u.y,r:0,t:1,m:1,team:u.team,owner:u,p:projs[projs.length-1],k:0})}),
  // Kuchiyose : cocon de bébés araignées
  hm_nuee:SP('Nuée d\'araignées',HMD.nuee,12,{hero:'iden',tele:{r:70,max:380},ai:RG(400,.6)},(u,a,td)=>{const d=clamp(td||280,60,380),T=d/600;S('poof',u);anim(u,'hm_summon',.5);
@@ -69,20 +74,20 @@ Object.assign(NAT,{
    aux.push({type:'hm_spid',x:tx+Math.cos(b)*14,y:ty+Math.sin(b)*14,a:b,r:6,t:4.5,m:4.5,team:u.team,owner:u,ui:hm_I(u),ti:-1,n:0,w:i,k:.15+i*.06,tg:null})}})}),
  // Kumo Nenkin no Yoroi : armure d'or (le trait colle les fils aux attaquants)
  hm_armure:SP('Armure d\'or',HMD.armure,13,{hero:'thrawn',ai:DEF},(u)=>{S('deflect',u);S('rock',u);anim(u,'hm_armor',.55);shieldU(u,26,3.5);u.hm_armE=SIMT+3.5;u.hm_arm=3.5;
-  jx({jfx:'hm_gild',ui:hm_I(u),x:u.x,y:u.y,t:.6,m:.6});sparks(u.x,u.y,HMC.gold,10)}),
+  jx({jfx:'hm_gild',ui:hm_I(u),x:u.x,y:u.y,t:.6,m:.6});sparks(u.x,u.y,HMC.gold,5);fxPillar(u.x,u.y,HMC.gold,{u,h:130,w:22,t:.45,al:.4});fxRing(u.x,u.y,{u,r0:40,r1:16,col:HMC.gold,c2:'#fff2b8',w:4,t:.35});fxBurst(u.x,u.y,'#ffe8a0',{u,n:10,sp:150,z:40,up:80,gr:200,w:1.6,len:.12,t:.5});fxLight(u.x,u.y,90,HMC.gold,{u,t:.45,a:.35})}),
  // Étreinte de soie : cercle d'ancrage autour de la cible ; les fils se referment 0,6 s plus tard
  hm_etreinte:SP('Étreinte de soie',HMD.etreinte,12,{hero:'kylo',tele:{r:80,max:420},ai:RG(400,.55)},(u,a,td)=>{const e=pick(u,a,td||300,420),p=e&&dist(u,e)<460?{x:e.x,y:e.y}:atP(u,a,td,420);
   S('shadow',u);anim(u,'hm_pull',.85);aux.push({type:'hm_strg',x:p.x,y:p.y,r:80,t:.6,m:.6,team:u.team,owner:u,ui:hm_I(u),k:0,danger:1});jx({jfx:'hm_cast',ui:hm_I(u),x:u.x,y:u.y,a:Math.atan2(p.y-u.y,p.x-u.x),len:Math.hypot(p.x-u.x,p.y-u.y),t:.6,m:.6})}),
  // Filin : le fil s'accroche au point visé et arrache le ninja ; une petite toile reste au départ
  hm_filin:SP('Filin d\'araignée',HMD.filin,6,{hero:'boba',ai:{mode:'gap',min:130,max:260,p:.5}},(u,a,td)=>{const d=clamp(td||260,100,260),p=fwd(u,a,d),sx=u.x,sy=u.y;S('dash',u);S('blaster',u);anim(u,'hm_swing',.42);
-  jx({jfx:'hm_zip',ui:hm_I(u),x:p.x,y:p.y,sx,sy,t:.45,m:.45});hm_web(u,sx,sy,70,1.5);dash(u,Math.atan2(p.y-u.y,p.x-u.x),Math.hypot(p.x-u.x,p.y-u.y),.3,{jump:46,end:()=>{for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<70+e.r)hit(e,u,6,{slow:.8});sparks(u.x,u.y,HMC.silk,6)}})}),
+  jx({jfx:'hm_zip',ui:hm_I(u),x:p.x,y:p.y,sx,sy,t:.45,m:.45});hm_web(u,sx,sy,70,1.5);dash(u,Math.atan2(p.y-u.y,p.x-u.x),Math.hypot(p.x-u.x,p.y-u.y),.3,{jump:46,end:()=>{for(const e of enemies(u))if(Math.hypot(e.x-u.x,e.y-u.y)<70+e.r)hit(e,u,6,{slow:.8});sparks(u.x,u.y,HMC.silk,3);fxRing(u.x,u.y,{u,r0:12,r1:70,col:HMC.silk,c2:HMC.vio,w:4,t:.3});fxSmoke(u.x,u.y,{u,col:'#d8d0e0',n:3,r:24,s:10,t:.6,al:.22})}})}),
  // Mue : la mue reste (piège), le ninja fuit invisible
  hm_mue:SP('Mue de l\'araignée',HMD.mue,15,{hero:'ahsoka',ai:ESC},(u,a,td)=>{const d=clamp(td||220,120,240);S('poof',u);S('dash',u);
   aux.push({type:'hm_husk',x:u.x,y:u.y,a:u.aim,r:55,t:3,m:3,team:u.team,owner:u,ui:hm_I(u),k:.35,danger:1});jx({jfx:'hm_shed',x:u.x,y:u.y,t:.5,m:.5});
   anim(u,'hm_crouch',.3);dash(u,a,d,.28,{jump:22,end:()=>{u.stealth=Math.max(u.stealth||0,.7)}});u.stealth=Math.max(u.stealth||0,1)}),
  // Kuchiyose : araignée géante (chute, toile, crachats)
  hm_geante:ULT('Invocation : Araignée géante',HMD.geante,{hero:'iden',tele:{r:120,max:460},ai:{max:460,p:.8}},(u,a,td)=>{const p=atP(u,a,td,460);S('poof',u);S('roar',u);anim(u,'hm_summon',.7);
-  zone(u,p.x,p.y,120,30,.75,{stun:.7},HMC.pur);lastZ().deto='hm_quake';
+  zone(u,p.x,p.y,120,30,.75,{stun:.7},HMC.pur);lastZ().deto='hm_quake';fxSmoke(u.x,u.y,{u,col:'#e8e4f0',n:5,r:30,s:14,t:.8,al:.28,rise:40});fxGlyph(p.x,p.y,HMC.vio,{u,r:110,t:.8});
   aux.push({type:'hm_giant',x:p.x,y:p.y,a:Math.atan2(p.y-u.y,p.x-u.x),r:60,t:6.75,m:6.75,team:u.team,owner:u,ui:hm_I(u),n:3,k:1.65,ti:-1});
   later(u,.75,()=>{if(state==='fight')hm_web(u,p.x,p.y,130,6)})}),
  // Kumo Senkyû : bander l'arc d'or (relancer pour tirer), sinon la flèche part seule à pleine charge
@@ -90,18 +95,18 @@ Object.assign(NAT,{
   if(u.hm_bw){if(!u.human&&u.hm_bw.t<1.1){u.cds[i]=.3;return} // les bots tirent à pleine charge (relance normalement interceptée par fire, voir AFTER)
    hm_loose(u);return}
   u.hm_bw={t:0,i,cd:u.ch.abil[i].cd};if(u.jst&&u.jst.key!=='hm_arc')u.cds[u.jst.i]=u.jst.cd;u.jst={key:'hm_arc',i,n:0,t:2.5,cd:u.ch.abil[i].cd,v:'silk'};u.cds[i]=u.human?.3:1.3;u.hm_bow=.01;anim(u,'hm_draw',1.6);S('deflect',u);
-  jx({jfx:'hm_forge',ui:hm_I(u),x:u.x,y:u.y,t:.45,m:.45})}),
+  jx({jfx:'hm_forge',ui:hm_I(u),x:u.x,y:u.y,t:.45,m:.45});fxCharge(u,HMC.gold,{t:1.2,n:12,z:38,hd:16,r:56});fxLight(u.x,u.y,90,HMC.gold,{u,t:1.2,a:.3})}),
  // ---------- styles ----------
  // Lames d'or (corps à corps) : kunai d'or et pattes d'araignée ; 3e et 5e coups posent ½ fil, le 5e ralentit
  hm_st_or:SP('Lames d\'or','',.4,{hero:'rey',melee:1,ai:{max:100,p:1}},(u,a)=>{const c=stC(u),T=[0,[88,2,10,.4],[88,2,10,.4],[94,2.4,11,.44],[90,6.3,10,.48],[106,1.2,13,.6]][c],G=HMC.gold,GL='#ffe8a0';
   stMelee(u,a,T[0],T[1],T[2],c===5?{slow:.8}:{},[0,{d:-1,tl:.6,z:36,th:6,c:GL,c2:G,blade:1,fl:'gold'},{d:1,tl:-.6,z:36,th:6,c:GL,c2:G,blade:1,fl:'gold'},{d:-1,tl:.8,z:34,th:7,c:GL,c2:G,blade:1,x2:1,fl:'gold'},{d:1,z:26,th:6,n:3,sp:6,c:GL,c2:HMC.gold2,blade:1,rr:.85,fl:'silk'},{jfx:'st_thrust',z:32,c:GL,w2:5}][c],e=>{
-   if(c===3||c===5){hm_fil(u,e,.5);sparks(e.x,e.y,HMC.silk,4)}if(c>=4)jx({jfx:'st_glint',ti:hm_I(e),x:e.x,y:e.y,a,t:.32,m:.32})});
+   if(c===3||c===5){hm_fil(u,e,.5);sparks(e.x,e.y,HMC.silk,2);hmImp(u,e,.8,0,0,a,HMC.gold)}if(c>=4)jx({jfx:'st_glint',ti:hm_I(e),x:e.x,y:e.y,a,t:.32,m:.32})});
   if(c>=3)S('saber',u);stCd(u,T[3]);anim(u,'st_gld'+c,c===4?.36:.28)}),
  // Crocs d'araignée : griffures rapides ; 5e coup : morsure venimeuse
  hm_st_croc:SP('Crocs d\'araignée','',.3,{hero:'ventress',melee:1,ai:{max:86,p:1}},(u,a)=>{const c=stC(u),T=[0,[80,1.9,6,.28],[80,1.9,6,.28],[84,2.1,7,.3],[88,1.9,7,.32],[96,1.6,8,.5]][c];
   if(c===5)stLunge(u,a,40);
   const n=stMelee(u,a,T[0],T[1],T[2],c===5?{dot:{dps:3,dur:3},slow:.8}:{},[0,{d:-1,tl:.6,z:34,th:5,n:3,claw:1,c:HMC.silk,c2:HMC.vio},{d:1,tl:-.6,z:34,th:5,n:3,claw:1,c:HMC.silk,c2:HMC.vio},{d:1,tl:1.4,z:30,th:5,n:3,claw:1,rr:.65,c:HMC.silk,c2:HMC.vio},{d:-1,z:26,th:5,n:3,claw:1,c:HMC.silk,c2:HMC.vio},0][c],
-   c===5?e=>{hm_fil(u,e,1);jx({jfx:'hm_fang',ui:hm_I(u),ti:hm_I(e),x:e.x,y:e.y,a,t:.42,m:.42});S('bone',u)}:null);
+   c===5?e=>{hm_fil(u,e,1);jx({jfx:'hm_fang',ui:hm_I(u),ti:hm_I(e),x:e.x,y:e.y,a,t:.42,m:.42});S('bone',u);fxBurst(e.x,e.y,'#9ad040',{u,n:5,sp:90,z:40,up:40,gr:-30,w:2,sh:'dot',c2:HMC.vio,t:.7})}:null);
   if(c===5&&!n)jx({jfx:'hm_fang',ui:hm_I(u),x:u.x+Math.cos(a)*50,y:u.y+Math.sin(a)*50,a,t:.3,m:.3,miss:1});
   stCd(u,T[3]);anim(u,'st_inu'+c,c===5?.36:.24)}),
 });
@@ -111,8 +116,9 @@ Object.assign(NATHERO,{hm:'kylo'});
 function hm_loose(u){const bw=u.hm_bw;if(!bw)return;const c=clamp((bw.t-.1)/1.1,0,1),a=u.aim,full=c>=.6;u.hm_bw=null;u.hm_bow=0;if(u.jst&&u.jst.key==='hm_arc')u.jst=null;u.cds[bw.i]=bw.cd;
  const V=VFX;VFX='silk';S('blaster',u);S('wind',u);anim(u,'hm_loose',.4);
  proj(u,a,{spd:1150,r:8+c*5,dmg:30+24*c,life:(600+420*c)/1150,col:HMC.gold,kind:'hm_arrow',vfx:'silk',jn:'Arc d\'or : Kumo Senkyû',steer:1,pierce:full?1:0,noClash:full?1:0,o:{kb:60+100*c},
-  onHit:(p,t)=>{hm_fil(p.owner,t,c>=.99?2:1);jx({jfx:'hm_pierce',x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.45,m:.45,big:full?1:0});if(near(t.x,t.y)){sparks(t.x,t.y,HMC.gold,full?12:6);S('bone',t)}}});
- jx({jfx:'hm_snap',ui:hm_I(u),x:u.x,y:u.y,a,t:.35,m:.35,big:full?1:0});if(full&&near(u.x,u.y))shake=Math.max(shake,.15);VFX=V;if(c>=.99)say(u,'PLEINE CHARGE','#ffe08a')}
+  onHit:(p,t)=>{hm_fil(p.owner,t,c>=.99?2:1);jx({jfx:'hm_pierce',x:t.x,y:t.y,a:Math.atan2(p.vy,p.vx),t:.45,m:.45,big:full?1:0});if(near(t.x,t.y)){sparks(t.x,t.y,HMC.gold,full?6:3);S('bone',t)}
+   const b=Math.atan2(p.vy,p.vx);hmImp(p.owner,t,full?1.8:1.2,p.dmg,full,b,HMC.gold);fxRing(t.x,t.y,{u:p.owner,r0:8,r1:full?60:36,col:HMC.gold,c2:'#fff2b8',w:5,t:.35});if(full)fxWind(t.x,t.y,b,{u:p.owner,len:140,w:50,n:4,t:.35,col:'#fff2b8'})}});
+ jx({jfx:'hm_snap',ui:hm_I(u),x:u.x,y:u.y,a,t:.35,m:.35,big:full?1:0});fxFlare(u.x+Math.cos(a)*30,u.y+Math.sin(a)*30,HMC.gold,{u,z:38,r:full?30:18,t:.2,c2:'#fff2b8'});fxWind(u.x,u.y,a,{u,len:120,w:40,n:full?6:3,t:.3,col:'#fff2b8'});VFX=V;if(c>=.99)say(u,'PLEINE CHARGE','#ffe08a')}
 
 // ---------- logique des objets (hôte) ----------
 // fil tendu : ralentit la cible ; à la fin, il se rétracte et la tire vers le lanceur
@@ -134,7 +140,7 @@ AUXF.hm_netc=x=>{const p=x.p;if(!p||p.dead||p.life<=0||projs.indexOf(p)<0){x.t=0
 AUXF.hm_spid=(x,dt)=>{const o=x.owner;if(!o||o.dead||state!=='fight'){x.t=0;return}if(x.n===1)return;
  if(x.k<=0){x.k=.3;let e=null,bd=380;for(const v of enemies(o)){const d=Math.hypot(v.x-x.x,v.y-x.y);if(d<bd&&!(v.stealth>0&&d>140)){bd=d;e=v}}x.tg=e;x.ti=e?hm_I(e):-1}
  const e=x.tg;if(e&&!e.dead){const d=Math.hypot(e.x-x.x,e.y-x.y);x.a=Math.atan2(e.y-x.y,e.x-x.x);
-  if(d<e.r+8){x.n=1;x.t=Math.min(x.t,.32);VFX='silk';hit(e,o,4,{slow:.4});VFX=null;hm_fil(o,e,.5);jx({jfx:'hm_nip',ti:hm_I(e),x:e.x,y:e.y,a:x.a,t:.3,m:.3});if(near(e.x,e.y))S('bone',o);return}
+  if(d<e.r+8){x.n=1;x.t=Math.min(x.t,.32);VFX='silk';hit(e,o,4,{slow:.4});VFX=null;hm_fil(o,e,.5);jx({jfx:'hm_nip',ti:hm_I(e),x:e.x,y:e.y,a:x.a,t:.3,m:.3});fxBurst(e.x,e.y,HMC.red,{u:o,n:3,sp:120,z:22,up:60,gr:300,w:1.8,len:.05,add:0,t:.35});if(near(e.x,e.y))S('bone',o);return}
   const v=Math.min(d,300*dt);x.x+=Math.cos(x.a)*v;x.y+=Math.sin(x.a)*v}
  else{x.a+=Math.sin(x.t*7+x.w*2)*3*dt;x.x=clamp(x.x+Math.cos(x.a)*60*dt,B.x+10,B.x+B.w-10);x.y=clamp(x.y+Math.sin(x.a)*60*dt,B.y+10,B.y+B.h-10)}};
 // Étreinte : à la fin, étrangle les ennemis restés dans le cercle (consomme leurs fils)
@@ -154,7 +160,7 @@ AUXF.hm_giant=(x,dt)=>{const o=x.owner;if(!o||o.dead||state!=='fight'){x.t=Math.
  if(x.k>0||x.n<=0||x.t<.3)return;if(!e){x.k=.3;return}x.k=1.25;x.n--;const a=Math.atan2(e.y-x.y,e.x-x.x),V=VFX;VFX='silk';
  // la bouche est à 40 px du centre ; une cible sous l'araignée est crachée à bout portant (sinon le crachat partirait derrière elle)
  const m0=Math.max(0,Math.min(40,Math.hypot(e.x-x.x,e.y-x.y)-e.r-14));
- proj(o,a,{x:x.x+Math.cos(a)*m0,y:x.y+Math.sin(a)*m0,jn:'Invocation : Araignée géante',spd:640,r:10,dmg:7,life:.7,col:HMC.silk,kind:'hm_spit',slow:.8,noClash:1,onHit:(p,t)=>{hm_fil(p.owner,t,1);jx({jfx:'hm_wrap',ti:hm_I(t),x:t.x,y:t.y,t:.45,m:.45,low:1})}});
+ proj(o,a,{x:x.x+Math.cos(a)*m0,y:x.y+Math.sin(a)*m0,jn:'Invocation : Araignée géante',spd:640,r:10,dmg:7,life:.7,col:HMC.silk,kind:'hm_spit',slow:.8,noClash:1,onHit:(p,t)=>{hm_fil(p.owner,t,1);jx({jfx:'hm_wrap',ti:hm_I(t),x:t.x,y:t.y,t:.45,m:.45,low:1});hmImp(p.owner,t,1.1,0,0,Math.atan2(p.vy,p.vx))}});
  VFX=V;jx({jfx:'hm_gspit',x:x.x,y:x.y,a,t:.3,m:.3});S('bugs',o)};
 
 // ---------- trait de clan : Soie d'araignée ----------
@@ -245,7 +251,7 @@ PROJD.hm_net=(p,R,ra,t)=>{const e=Math.min(1,((p.life0||1)-p.life)/.18),W=R*(.6+
 // flèche d'or : longue hampe, pointe en tête d'araignée, sillage doré et fil de guidage
 PROJD.hm_arrow=(p,R,ra,t)=>{const c=clamp((R-8)/5,0,1),sp=Math.hypot(p.vx,p.vy)||1,L=Math.min(220,((p.life0||1)-p.life)*sp);g.rotate(ra);g.lineCap='round';
  g.strokeStyle=rgba(HMC.silk,.55);g.lineWidth=1;g.beginPath();g.moveTo(-30,0);for(let i=1;i<=8;i++)g.lineTo(-30-L*i/8,Math.sin(t/30+i*1.3)*3*(i/8));g.stroke();
- g.save();g.globalCompositeOperation='lighter';const gr=g.createLinearGradient(-90-60*c,0,10,0);gr.addColorStop(0,'rgba(240,192,64,0)');gr.addColorStop(1,rgba('#ffd860',.55+.3*c));g.fillStyle=gr;g.beginPath();g.moveTo(10,-(4+5*c));g.lineTo(-90-60*c,0);g.lineTo(10,4+5*c);g.closePath();g.fill();g.restore();
+ g.save();g.translate(10,0);fxTailL(100+80*c,10+12*c,'#ffd860',(.55+.3*c)*fxA(p));g.restore();if(c>.6)fxGlowS(24,0,22+10*c,HMC.gold,.35*fxA(p));
  g.strokeStyle='#5a3a08';g.lineWidth=4.2;g.beginPath();g.moveTo(-30,0);g.lineTo(14,0);g.stroke();g.strokeStyle=HMC.gold;g.lineWidth=2.6;g.stroke();
  g.fillStyle=HMC.gold;g.strokeStyle='#5a3a08';g.lineWidth=1;g.beginPath();g.moveTo(30,0);g.lineTo(14,-6);g.lineTo(18,0);g.lineTo(14,6);g.closePath();g.fill();g.stroke();
  g.strokeStyle=HMC.gold;g.lineWidth=1.4;for(const s of[-1,1])for(let i=0;i<3;i++){g.beginPath();g.moveTo(10-i*4,0);g.lineTo(6-i*4,s*(7+i));g.lineTo(2-i*4,s*(9+i*1.5));g.stroke()}
@@ -261,7 +267,7 @@ AUXD.hm_line=(x,k,t)=>{const o=units[x.ui],e=units[x.ti];if(!o||!e||o.dead||e.de
  g.fillStyle=HMC.silk;for(let i=1;i<4;i++){const s=((t*.6+i/4)%1),mx=(a.x+b.x)/2,my=(a.y+b.y)/2+sag,xx=(1-s)*(1-s)*a.x+2*(1-s)*s*mx+s*s*b.x,yy=(1-s)*(1-s)*a.y+2*(1-s)*s*my+s*s*b.y;g.fillRect(xx-1,yy-1,2,2)}
  g.strokeStyle=rgba(HMC.silk,.8);g.lineWidth=1.2;for(let i=0;i<3;i++){g.beginPath();g.ellipse(b.x,b.y-4*b.s+i*5*b.s,10*b.s,3*b.s,0,0,7);g.stroke()}g.restore()};
 // toile au sol : rayons, spirale, rosée qui brille
-AUXD.hm_web=(x,k,t)=>{const q=P(x.x,x.y,0),R=x.r,gr=Math.min(1,(x.m-x.t)/.35),r=R*gr,al=k,N=10,rot=x.n||0;g.save();g.lineCap='round';
+AUXD.hm_web=(x,k,t)=>{const q=P(x.x,x.y,0),R=x.r,gr=Math.min(1,(x.m-x.t)/.35),r=R*gr,al=k,N=10,rot=x.n||0;if(gr>=1)fxTele(x.x,x.y,R,0,HMC.vio,x,0);g.save();g.lineCap='round';g.globalAlpha*=Math.max(.75,fxA(x));
  g.fillStyle=rgba(HMC.pur,.1*al);gEll(x.x,x.y,r);g.fill();
  const pt=(a,d)=>P(x.x+Math.cos(a)*d,x.y+Math.sin(a)*d,1);
  g.strokeStyle=rgba(HMC.silk,.7*al);g.lineWidth=1.4;for(let i=0;i<N;i++){const a=rot+i*Math.PI*2/N+Math.sin(i*3.1)*.12,e=pt(a,r);g.beginPath();g.moveTo(q.x,q.y);g.lineTo(e.x,e.y);g.stroke()}
@@ -362,7 +368,10 @@ JFXD.hm_shed=(f,k,e)=>{const q=P(f.x,f.y,30),s=q.s;g.save();g.fillStyle=rgba('#e
 JFXD.hm_burst=(f,k,e)=>{const q=P(f.x,f.y,0),s=q.s,ext=Math.min(1,e/.25);g.save();g.lineCap='round';for(let i=0;i<12;i++){const a=i*.5236,b=P(f.x+Math.cos(a)*f.r*ext,f.y+Math.sin(a)*f.r*ext,4);hm_strand(q.x,q.y-20*s,b.x,b.y,8*s,HMC.silk,1.5,.95*k)}
  g.strokeStyle=rgba(HMC.vio,.7*k);g.lineWidth=3;gEll(f.x,f.y,f.r*ext);g.stroke();g.restore()};
 // chute de l'araignée géante : onde et fissures de soie
-DETO.hm_quake=(x,y,r)=>{jx({jfx:'hm_land',x,y,r,t:.6,m:.6});sparks(x,y,HMC.vio,16);sparks(x,y,HMC.silk,10);if(near(x,y))shake=Math.max(shake,.4)};
+DETO.hm_quake=(x,y,r)=>{jx({jfx:'hm_land',x,y,r,t:.6,m:.6});sparks(x,y,HMC.vio,6);sparks(x,y,HMC.silk,4);
+ // chute de l'araignée géante : onde au rayon EXACT, sol fendu, éclats, poussière violette, secousse (rang S), gel des ennemis sonnés
+ fxRing(x,y,{r0:30,r1:r,col:HMC.vio,c2:HMC.silk,w:9,t:.5});fxDecal(x,y,'crack',{r:r*.85,t:4.5});fxDebris(x,y,{n:10,sp:210,col:'#8a6a48',c2:'#5a4028',s:5});fxSmoke(x,y,{col:'#c8b8d8',n:8,r:r*.8,s:18,t:1.1,al:.26,rise:24});
+ fxLight(x,y,r*1.5,HMC.vio,{t:.5,a:.4});fxShake(.38,x,y);for(const e of units)if(!e.dead&&FXO&&e.team!==FXO.team&&Math.hypot(e.x-x,e.y-y)<r+e.r)fxHitStop(FXO,e,30,1)};
 JFXD.hm_land=(f,k,e)=>{g.save();g.strokeStyle=rgba(HMC.vio,.85*k);g.lineWidth=7*k+1;gEll(f.x,f.y,f.r*(.4+e*.8));g.stroke();g.strokeStyle=rgba(HMC.silk,.7*k);g.lineWidth=2;gEll(f.x,f.y,f.r*(.3+e*.9));g.stroke();
  const q=P(f.x,f.y,0);g.fillStyle=rgba(HMC.dark,.6*k);for(let i=0;i<10;i++){const a=i*.628,p=P(f.x+Math.cos(a)*f.r*e,f.y+Math.sin(a)*f.r*e,Math.sin(Math.PI*e)*30);g.beginPath();g.ellipse(p.x,p.y,6*q.s,4*q.s,0,0,7);g.fill()}g.restore()};
 // crachat de l'araignée géante (bouffée à la bouche)

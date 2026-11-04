@@ -14,17 +14,17 @@ const SUB_SG='#9ad05a',SUB_SGO='#ffb04a';
 const subSageFree=(u,k)=>{if(!(u.sub_sage>0))return;const i=subIdx(u,k);if(i>0){u.energy=Math.min(100,u.energy+jcost(u.ch.abil[i]));say(u,'SENPÔ','#c8f08a')}};
 Object.assign(NAT,{
  // --- Kawazu Kumite : 4 coups de base allongés (+40) et renforcés (+6), 5 s
- sub_skum:S_('Senpô : Kawazu Kumite','4 coups de base allongés et renforcés',9,{hero:'yoda',ai:{mode:'gap',min:40,max:200,p:.55}},(u)=>{subSageFree(u,'sub_skum');anim(u,'pray',.4);S('ignite',u);u.sub_kum=4;u.sub_kumT=5;
+ sub_skum:S_('Senpô : Kawazu Kumite','4 coups de base allongés et renforcés',9,{hero:'yoda',ai:{mode:'gap',min:40,max:200,p:.55}},(u)=>{subSageFree(u,'sub_skum');anim(u,'pray',.4);S('ignite',u);u.sub_kum=4;u.sub_kumT=5;fxCast(u,'sennin',.4);fxRing(u.x,u.y,{u,r0:16,r1:60,col:SUB_SG,c2:SUB_SGO,w:4,t:.4});
   say(u,'KAWAZU KUMITE','#c8f08a');jx({jfx:'sub_kumin',ui:units.indexOf(u),x:u.x,y:u.y,t:.7,m:.7})}),
  // --- Kebari Senbon : 0,6 s en boule de cheveux (réduction de dégâts), puis anneau de 12 aiguilles
  sub_skeb:S_('Senpô : Kebari Senbon','Boule de cheveux puis anneau d\'aiguilles',11,{hero:'yoda',tele:{self:1,r:150},ai:SELF(150,.6)},(u)=>{subSageFree(u,'sub_skeb');anim(u,'crouch',.6);S('wind',u);
   u.drT=Math.max(u.drT||0,.6);u.dr=Math.max(u.dr||0,.5);u.root=Math.max(u.root,.6);u.sub_kebT=.6;
-  later(u,.6,()=>{u.sub_kebT=0;if(u.dead)return;S('saber',u);S('deflect',u);const b0=rnd()*Math.PI;for(let i=0;i<12;i++){const b=b0+i*Math.PI/6;proj(u,b,{x:u.x+Math.cos(b)*18,y:u.y+Math.sin(b)*18,spd:720,r:5,dmg:7,life:.42,col:'#f0e0a0',vfx:'sage',kind:'sub_needle',noClash:1})}
+  later(u,.6,()=>{u.sub_kebT=0;if(u.dead)return;S('saber',u);S('deflect',u);fxRing(u.x,u.y,{u,r0:20,r1:150,col:'#fff3c0',c2:'#ffffff',w:4,t:.35});fxBurst(u.x,u.y,'#f6f0d8',{u,z:30,n:12,sp:520,gr:0,up:0,w:1.2,len:.3,c2:'#ffffff'});const b0=rnd()*Math.PI;for(let i=0;i<12;i++){const b=b0+i*Math.PI/6;proj(u,b,{x:u.x+Math.cos(b)*18,y:u.y+Math.sin(b)*18,spd:720,r:5,dmg:7,life:.42,col:'#f0e0a0',vfx:'sage',kind:'sub_needle',noClash:1})}
    jx({jfx:'sub_kebburst',x:u.x,y:u.y,t:.4,m:.4});if(near(u.x,u.y))shake=Math.max(shake,.14)})}),
 });
 // coups de base allongés : l'allonge est ajoutée dans melee() (toutes les attaques de base au corps à corps y passent)
 AFTER.push(()=>{const M=melee;melee=function(u,a,range,arc,dmg,o){if(u&&u.sub_kumT>0&&u.sub_kum>0&&BASIC){u.sub_kum--;u.sub_kumH=1;if(u.sub_kum<=0)u.sub_kumT=Math.min(u.sub_kumT,.3);
-  jx({jfx:'sub_kumarc',ui:units.indexOf(u),x:u.x,y:u.y,a,R:range+40,w:arc,t:.26,m:.26});try{return M.call(this,u,a,range+40,arc,dmg,o)}finally{u.sub_kumH=0}}return M.apply(this,arguments)};
+  jx({jfx:'sub_kumarc',ui:units.indexOf(u),x:u.x,y:u.y,a,R:range+40,w:arc,t:.26,m:.26});fxBurst(u.x+Math.cos(a)*(range+40),u.y+Math.sin(a)*(range+40),SUB_SG,{u,z:30,n:4,sp:120,gr:-40,up:20,w:2,sh:'dot',c2:SUB_SGO});try{return M.call(this,u,a,range+40,arc,dmg,o)}finally{u.sub_kumH=0}}return M.apply(this,arguments)};
  UK.push('sub_kumT','sub_kebT','sub_rskW')});
 // règles de famille (trait des sans-clan) : Mode Ermite +25 %, Kumite +6, bras blessé du Rasenshuriken −10 %, décomptes
 subTH({
@@ -37,7 +37,7 @@ STATD.push((u,p,S,sk)=>{if(!(u.sub_kumT>0)||u.dead)return;const t=performance.no
  g.strokeStyle=rgba(SUB_SG,.35);g.lineWidth=1.5*S;g.beginPath();g.ellipse(p.x,p.y,34*S,12*S,0,0,7);g.stroke();g.restore()});
 // crinière enroulée : boule de cheveux hérissée autour du ninja
 STATD.push((u,p,S,sk)=>{if(!(u.sub_kebT>0)||u.dead)return;const t=performance.now()/1000,c=p.y-34*S*(sk||1),k=Math.min(1,(.6-u.sub_kebT)/.15+.2);g.save();
- g.fillStyle=rgba('#e8e0c8',.55*k);g.beginPath();g.ellipse(p.x,c,28*S,30*S,0,0,7);g.fill();g.strokeStyle=rgba('#fff8e0',.9*k);g.lineWidth=1.6*S;
+ g.fillStyle=rgba('#e8e0c8',.3*k);g.beginPath();g.ellipse(p.x,c,28*S,30*S,0,0,7);g.fill();g.strokeStyle=rgba('#fff8e0',.9*k);g.lineWidth=1.6*S;
  for(let i=0;i<22;i++){const b=i*.2856+Math.sin(t*6+i)*.05,r0=22*S,r1=(32+((i*7)%4)*3)*S;g.beginPath();g.moveTo(p.x+Math.cos(b)*r0,c+Math.sin(b)*r0);g.lineTo(p.x+Math.cos(b)*r1,c+Math.sin(b)*r1);g.stroke()}g.restore()});
 // bras blessé par le Rasenshuriken : marbrures violettes sur le bras
 STATD.push((u,p,S,sk)=>{if(!(u.sub_rskW>0)||u.dead||u!==player&&!near(u.x,u.y))return;const t=performance.now()/1000,a=Math.min(1,u.sub_rskW);g.save();g.strokeStyle=rgba('#5a2a6a',.7*a);g.lineWidth=1.4*S;

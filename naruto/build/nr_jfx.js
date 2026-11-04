@@ -6,7 +6,7 @@ Object.assign(VP,{rasengan:['#7fc8ff','#ffffff','#3a8aff'],chidori:['#bfe6ff','#
 Object.assign(VSND,{rasengan:{'*':'rasengan'},chidori:{'*':'chidori'},kirin:{'*':'chidori',boom:'boom'},hiraishin:{'*':'chidori'},rasenshuriken:{'*':'rasengan',boom:'boom'},tsukuyomi:{'*':'genjutsu'},susano:{'*':'roar'},
  byakugan:{'*':'jyuken'},kaiten:{'*':'jyuken'},hakke64:{'*':'jyuken'},sandcoffin:{'*':'sand'},mind:{'*':'genjutsu'},flower:{'*':'genjutsu'},seal:{'*':'genjutsu'},gatsuga:{'*':'wind'},peacock:{'*':'fire'},sage:{'*':'roar'},claws:{saber:'saber'}});
 const JFXT={'*':1};
-const jx=(o)=>{if(near(o.x,o.y))fx.push(o);return o};
+const jx=(o)=>{if(near(o.x,o.y)){if(o.oi==null){const i=fxOI();if(i!=null)o.oi=i}fx.push(o)}return o}; // oi : lanceur (atténuation des effets ennemis au dessin)
 const targetOf=(u,a,td,R=520)=>{const p=fwd(u,a,Math.min(td||300,R));return nearE(u,p.x,p.y,170)||nearE(u,u.x,u.y,R)};
 const JFX={
  rasengan:(u,a)=>{jx({jfx:'rasengan',ui:units.indexOf(u),x:u.x,y:u.y,a,t:.7,m:.7})},
@@ -44,7 +44,11 @@ function detoFx(x,y,r,v){if(!near(x,y))return;if(DETO[v])return DETO[v](x,y,r);
  else if(v==='sand'||v==='sandcoffin')jx({jfx:'splash',x,y,r,t:.6,m:.6,sand:1})}
 const UI=f=>f.ui!=null?units[f.ui]:null,TI=f=>f.ti!=null?units[f.ti]:null;
 function drawChainLine(x0,y0,x1,y1){const n=Math.max(3,Math.hypot(x1-x0,y1-y0)/7|0);g.strokeStyle='#e8c860';g.lineWidth=1.6;for(let i=0;i<n;i++){const k=i/n,x=lerp(x0,x1,k),y=lerp(y0,y1,k);g.beginPath();g.ellipse(x,y,3.2,1.8,Math.atan2(y1-y0,x1-x0)+(i%2?1.2:0),0,7);g.stroke()}}
-function drawJfx(f){const k=f.t/f.m,e=1-k,t=performance.now()/1000,u=UI(f),tg=TI(f);if(u&&u.dead&&f.ui!=null&&!f.ti)return;
+// jfx d'un ennemi (ou d'un allié) : opacité réduite selon l'intensité (fxA) ; jamais pour un télégraphe (f.tele, f.danger, FXTELE)
+const FXTELER=/warn|tele|alert|danger/;
+function drawJfx(f){const am=f.tele||f.danger||FXTELE.has(f.jfx)||FXTELER.test(f.jfx)?1:fxA(f);if(am>=1)return drawJfx0(f);
+ const o=FXAM,a0=g.globalAlpha;FXAM=o*Math.max(0,am);g.globalAlpha=1;try{drawJfx0(f)}finally{FXAM=o;g.globalAlpha=a0}} // drawJfx0 a déjà son save/restore : pas de second save (coûteux en 20c20)
+function drawJfx0(f){const k=f.t/f.m,e=1-k,t=performance.now()/1000,u=UI(f),tg=TI(f);if(u&&u.dead&&f.ui!=null&&!f.ti)return;
  const hand=(uu,z=30)=>{const a=uu.aim;return P(uu.x+Math.cos(a)*16,uu.y+Math.sin(a)*16,z)};
  g.save();
  switch(f.jfx){
@@ -56,8 +60,10 @@ function drawJfx(f){const k=f.t/f.m,e=1-k,t=performance.now()/1000,u=UI(f),tg=TI
    const b=P(u.x-Math.cos(u.aim)*40,u.y-Math.sin(u.aim)*40,6);g.globalAlpha=k*.7;drawBolt(b.x,b.y,q.x,q.y,'#bfe6ff');break}
   case'hiraishin':{const a=P(f.x,f.y,30),b=P(f.x2,f.y2,30);g.globalCompositeOperation='lighter';g.globalAlpha=k;g.strokeStyle='#ffe14a';g.lineWidth=10*k;g.lineCap='round';g.beginPath();g.moveTo(a.x,a.y);g.lineTo(b.x,b.y);g.stroke();g.strokeStyle='#fff';g.lineWidth=3*k;g.stroke();
    for(const p of[a,b]){circ(p.x,p.y,(24*e+6)*p.s,rgba('#ffe14a',.5*k))}const m=P(f.x2,f.y2,4);g.globalCompositeOperation='source-over';g.fillStyle='#ccc';g.save();g.translate(m.x,m.y);g.rotate(.6);g.beginPath();g.moveTo(-3,-6);g.lineTo(9,0);g.lineTo(-3,6);g.fill();g.restore();break}
-  case'redmoon':{if(!nearMe(f.x,f.y))break;g.setTransform(RS,0,0,RS,0,0);const a=Math.min(1,k*3)*Math.min(1,e*6);g.globalAlpha=a*.55;g.fillStyle='#3a0006';g.fillRect(0,0,W,H);g.globalAlpha=a;circ(W*.78,H*.2,70,'#d01a2a');circ(W*.78,H*.2,70,'rgba(0,0,0,0)');g.strokeStyle='#1a0003';g.lineWidth=5;g.beginPath();g.arc(W*.78,H*.2,40,0,7);g.stroke();
-   for(let i=0;i<3;i++){const b=t*2+i*2.09;circ(W*.78+Math.cos(b)*40,H*.2+Math.sin(b)*40,8,'#1a0003')}break}
+  case'redmoon':{const a=Math.min(1,k*3)*Math.min(1,e*6),q=P(f.x,f.y,0),R=190*q.s; // Tsukuyomi : voile rouge LOCAL au sol + lune rouge au-dessus du lanceur (plus de voile plein écran)
+   fxSoftS(q.x,q.y,R,'#4a0008',a*.42,R*K);g.strokeStyle=rgba('#d01a2a',.5*a);g.lineWidth=2;g.beginPath();g.ellipse(q.x,q.y,R*.8,R*.8*K,0,0,7);g.stroke();
+   const m=P(f.x,f.y,200),mr=30*m.s*(.8+.2*Math.min(1,e*4));fxGlowS(m.x,m.y,mr*2.6,'#ff2a3a',a*.55);g.globalAlpha=a;circ(m.x,m.y,mr,'#c8142a');g.strokeStyle='#1a0003';g.lineWidth=2.5*m.s;g.beginPath();g.arc(m.x,m.y,mr*.58,0,7);g.stroke();
+   for(let i=0;i<3;i++){const b=t*2+i*2.09;circ(m.x+Math.cos(b)*mr*.58,m.y+Math.sin(b)*mr*.58,mr*.16,'#1a0003')}break}
   case'veins':{if(!u)break;const q=P(u.x,u.y,58);g.strokeStyle=rgba('#9ab8ff',.8*k);g.lineWidth=1.2;for(const sx of[-1,1])for(let i=0;i<3;i++){g.beginPath();g.moveTo(q.x+sx*6*q.s,q.y);g.lineTo(q.x+sx*(11+i*2)*q.s,q.y-(4-i*4)*q.s);g.stroke()}break}
   case'dome':{if(!u)break;const q=P(u.x,u.y,0),R=50*q.s;g.globalCompositeOperation='lighter';for(let i=0;i<5;i++){g.strokeStyle=rgba('#dfe8ff',.6*k);g.lineWidth=3;g.beginPath();g.ellipse(q.x,q.y-R*.45,R*(1-i*.08),R*(.9-i*.07),0,t*10+i,t*10+i+3.6);g.stroke()}g.fillStyle=rgba('#cfe0ff',.15*k);g.beginPath();g.ellipse(q.x,q.y-R*.45,R,R*.9,0,0,7);g.fill();break}
   case'trigram':{if(!u)break;const q=P(u.x,u.y,0),R=120*q.s;g.globalAlpha=Math.min(1,k*3);g.strokeStyle='#dfe8ff';g.lineWidth=2;g.beginPath();g.ellipse(q.x,q.y,R,R*K,0,0,7);g.stroke();g.beginPath();g.ellipse(q.x,q.y,R*.25,R*.25*K,0,0,7);g.stroke();
@@ -82,7 +88,8 @@ function drawJfx(f){const k=f.t/f.m,e=1-k,t=performance.now()/1000,u=UI(f),tg=TI
    for(let i=0;i<10;i++){const a=i*.63+t,r=(20+e*70)*q.s;circ(q.x+Math.cos(a)*r,q.y-e*40*q.s+Math.sin(a)*r*.4,(5+e*8)*q.s,rgba(col,.25*k))}
    if(f.tiger){g.globalCompositeOperation='source-over';g.globalAlpha=k;const R=(40+e*90)*q.s;g.fillStyle='rgba(180,255,190,.35)';g.beginPath();g.ellipse(q.x+Math.cos(u.aim)*R,q.y,R,R*.8,0,0,7);g.fill();g.fillStyle='rgba(20,60,30,.6)';g.fillRect(q.x+Math.cos(u.aim)*R-R*.45,q.y-R*.25,R*.25,R*.12);g.fillRect(q.x+Math.cos(u.aim)*R+R*.2,q.y-R*.25,R*.25,R*.12)}break}
   case'slugs':{if(!u)break;for(let i=0;i<4;i++){const a=i*1.57+t*.6,q=P(u.x+Math.cos(a)*50,u.y+Math.sin(a)*40,6);g.fillStyle='#e8eef8';g.beginPath();g.ellipse(q.x,q.y,11*q.s,6*q.s,a,0,7);g.fill();g.fillStyle='#4a6aa8';g.fillRect(q.x-6*q.s,q.y-2*q.s,12*q.s,2*q.s)}break}
-  case'flashsky':{if(!nearMe(f.x,f.y))break;g.setTransform(RS,0,0,RS,0,0);g.globalAlpha=k*.35;g.fillStyle='#e8f4ff';g.fillRect(0,0,W,H);break}
+  case'flashsky':{const q=P(f.x,f.y,0),top=P(f.x,f.y,520); // Kirin : lueur d'orage LOCALE (colonne de ciel + lumière au sol), plus de flash plein écran
+   fxGlowS(q.x,q.y,200*q.s,'#cfe8ff',.3*k,200*q.s*K,0);const hh=q.y-top.y;g.globalCompositeOperation='lighter';g.globalAlpha=.26*k;g.drawImage(fxSpr('#cfe8ff',0),q.x-55*q.s,top.y,110*q.s,hh*2);break}
   case'spikes':{const q0=P(f.x,f.y,0),n=f.bone?10:7;for(let i=0;i<n;i++){const a=i*2.4,d=(i%3)*f.r*.28,q=P(f.x+Math.cos(a)*d,f.y+Math.sin(a)*d*.8,0),h=(f.bone?46:38)*q.s*Math.min(1,e*4)*k*1.4;
     g.fillStyle=f.bone?'#f2efe6':'#8a6a48';g.strokeStyle=f.bone?'#b8b0a0':'#4a3424';g.lineWidth=1.2;g.beginPath();g.moveTo(q.x-6*q.s,q.y);g.lineTo(q.x+(i%2?2:-2)*q.s,q.y-h);g.lineTo(q.x+6*q.s,q.y);g.closePath();g.fill();g.stroke()}break}
   case'pillar':{const q=P(f.x,f.y,0),h=140*q.s*Math.min(1,e*4),w=f.r*.6*q.s*k;g.globalCompositeOperation=f.v==='black'?'source-over':'lighter';const gr=g.createLinearGradient(0,q.y-h,0,q.y);

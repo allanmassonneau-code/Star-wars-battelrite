@@ -256,7 +256,7 @@ function cells(x0,y0,x1,y1,S,f){const own=!BT;if(own)BT=new Map();for(let x=Math
   sides(){sideFaces(80,50,'#2e343c',(a,b)=>{g.strokeStyle='#4a545e';g.lineWidth=6*a.s;g.beginPath();const c=up(a,30),d=up(b,24);g.moveTo(c.x,c.y);g.lineTo(d.x,d.y);g.stroke()})},
   amb(){const t=T();g.strokeStyle='rgba(175,195,225,.38)';g.lineWidth=1.2;g.beginPath();for(let i=0;i<150;i++){const sp=900+(i%5)*120,y=((i*137.31)%H+t*sp)%(H+40)-20,x=((i*211.7)%(W+120))-((y/H)*60)-30+Math.sin(i)*20;g.moveTo(x,y);g.lineTo(x-5,y+20)}g.stroke();
    g.strokeStyle='rgba(200,215,240,.2)';g.beginPath();for(let i=0;i<60;i++){const sp=700,y=((i*91.7)%H+t*sp)%(H+40)-20,x=((i*331.3)%(W+120))-((y/H)*40)-30;g.moveTo(x,y);g.lineTo(x-3,y+12)}g.stroke();
-   const k=t%11.5;if(k<.35){g.fillStyle=`rgba(220,230,255,${(k<.12||k>.22)?.1:.03})`;g.fillRect(0,0,W,H)} // éclair lointain, discret
+   const k=t%11.5;if(k<.35&&OPT.fxi!==0){const lg=g.createLinearGradient(0,0,0,H*.3);lg.addColorStop(0,`rgba(220,230,255,${(k<.12||k>.22)?.12:.04})`);lg.addColorStop(1,'rgba(220,230,255,0)');g.fillStyle=lg;g.fillRect(0,0,W,H*.3)} // éclair lointain : lueur en haut du ciel seulement (pas de flash plein écran), coupée en Faible
    const vg=g.createRadialGradient(W/2,H/2,H*.4,W/2,H/2,H*.95);vg.addColorStop(0,'rgba(0,0,0,0)');vg.addColorStop(1,'rgba(10,16,26,.42)');g.fillStyle=vg;g.fillRect(0,0,W,H)}
  });
 

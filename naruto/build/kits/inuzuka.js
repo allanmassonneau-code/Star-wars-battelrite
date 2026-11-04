@@ -29,6 +29,16 @@ DASHC[5]={src:'x.in_instinct',n:'Instinct bestial',d:IN_D.instinct,vfx:'claws',c
 const IN_BAL=.83;
 // ---------- outils : le ninken partenaire ----------
 const in_I=u=>units.indexOf(u);
+// ---- VFX (boîte à outils nr_fx.js) : chakra bestial gris-blanc, griffes et sang rouges, poussière brune ; les hitbox restent nettes
+const IN_C={w:'#eeece6',g:'#b8b4ac',r:'#ff5a3a',d:'#c8b898',a:'#f0b860'};
+const in_dim=(o,fn)=>{const m=fxA(o);return m<1?fxAlpha(m,fn):fn()}; // décor d'un objet aux / d'un état : atténué s'il est ennemi
+// impact de vrille / de plaquage : éclats blancs, poussière, gel visuel sur un gros coup
+function in_imp(u,e,s,dmg,big){fxBurst(e.x,e.y,IN_C.w,{u,n:8*s,sp:300*s,z:30,c2:'#ffffff',w:2,len:.14,t:.35});fxSmoke(e.x,e.y,{u,col:IN_C.d,n:2+2*s,r:18*s,s:10*s,t:.6,al:.22,rise:14});
+ fxFlare(e.x,e.y,IN_C.w,{u,z:32,r:16*s,t:.16,c2:IN_C.g});if(dmg)fxHitStop(u,e,dmg,big)}
+// morsure / griffure : gouttes de sang (non additives) + petit éclat rouge
+function in_blood(u,e,n){fxBurst(e.x,e.y,'#a8161a',{u,n:n||6,sp:170,z:34,up:90,gr:380,w:2.2,len:.05,add:0,c2:'#ff5a3a',t:.45});fxFlare(e.x,e.y,IN_C.r,{u,z:34,r:12,t:.12,star:0})}
+// poussière soulevée (bond, atterrissage, départ de vrille)
+function in_dust(u,x,y,r,n){fxSmoke(x,y,{u,col:IN_C.d,n:n||4,r:r*.6,s:Math.max(8,r*.28),t:.7,al:.24,rise:16})}
 // place du ninken au repos, à côté de son maître (comme le chien dessiné du clan)
 const in_side=u=>({x:u.x+Math.cos(u.aim+1.9)*22,y:u.y+Math.sin(u.aim+1.9)*22+6});
 // objets pendant lesquels le ninken est parti (morsure, vrille, fusion…) : le chien dessiné à côté du maître est alors caché
@@ -53,55 +63,62 @@ Object.assign(NAT,{
   S('rasengan',u);S('dash',u);anim(u,'in_drill',dur+.12);dash(u,a,L,dur,{});for(const x of aux)if(x.type==='in_dog'&&x.owner===u)x.t=0;
   const sx=u.x+px*26,sy=u.y+py*26;aux.push({type:'in_gat',x:sx,y:sy,a,len:L,t:dur,m:dur,team:u.team,owner:u,ui:i,sx,sy,hc:new Set(),hd:new Set(),r:1});
   aux.push({type:'in_scr',x:u.x,y:u.y,a,len:L,w:26,t:1.1,m:1.1,team:u.team,owner:u,n:dur,r:1});
-  jx({jfx:'in_drill',ui:i,x:u.x,y:u.y,a,t:dur+.05,m:dur+.05,dog:1});jx({jfx:'in_burst',x:u.x,y:u.y,a,t:.35,m:.35})}),
+  jx({jfx:'in_drill',ui:i,x:u.x,y:u.y,a,t:dur+.05,m:dur+.05,dog:1});jx({jfx:'in_burst',x:u.x,y:u.y,a,t:.35,m:.35});
+  fxWind(u.x,u.y,a+Math.PI,{u,len:130,w:60,n:6,t:.4,col:IN_C.w});in_dust(u,u.x,u.y,44,5);fxDebris(u.x,u.y,{u,n:4,sp:120,col:'#8a6a48',c2:'#5a4028',s:3})}),
  // Tsûga : vrille seule ; au premier ennemi touché, repousse et rebond en arrière
  in_tsuga:S_('Tsûga',IN_D.tsuga,7,{line:{len:280,w:50},ai:{mode:'gap',min:50,max:260,p:.6}},(u,a)=>{a=in_track(u,a,320);u.aim=a;const i=in_I(u);
   S('rasengan',u);S('dash',u);anim(u,'in_drill',.3);dash(u,a,280,.25,{});
   aux.push({type:'in_tsu',x:u.x,y:u.y,a,t:.3,m:.3,team:u.team,owner:u,ui:i,n:0});aux.push({type:'in_scr',x:u.x,y:u.y,a,len:280,w:0,t:.8,m:.8,team:u.team,owner:u,n:.25,r:0});
-  jx({jfx:'in_drill',ui:i,x:u.x,y:u.y,a,t:.3,m:.3,small:1})}),
+  jx({jfx:'in_drill',ui:i,x:u.x,y:u.y,a,t:.3,m:.3,small:1});fxWind(u.x,u.y,a+Math.PI,{u,len:100,w:40,n:4,t:.35,col:IN_C.w});in_dust(u,u.x,u.y,30,3)}),
  // Instinct bestial : bond ; une proie (blessée ou marquée) près de l'arrivée attire le bond, morsure qui saigne
  in_instinct:S_('Instinct bestial',IN_D.instinct,7,{hero:'bossk',ai:{mode:'gap',min:110,max:330,p:.45}},(u,a,td)=>{const p=fwd(u,a,clamp(td||230,70,230));let prey=null,bd=130;
   for(const e of enemies(u)){const d=Math.hypot(e.x-p.x,e.y-p.y);if(d<bd&&dist(u,e)<330&&(e.hp<e.max*.5||in_marked(e,u))){bd=d;prey=e}}
   let tx=p.x,ty=p.y;if(prey){const b=ang(prey,u),r=prey.r+u.r+4;tx=prey.x+Math.cos(b)*r;ty=prey.y+Math.sin(b)*r;say(u,'PROIE !','#ff8a5a');jx({jfx:'in_prey',ti:in_I(prey),x:prey.x,y:prey.y,t:.55,m:.55})}
-  const aa=Math.atan2(ty-u.y,tx-u.x);u.aim=aa;S('dash',u);anim(u,'in_pounce',.42);
-  dash(u,aa,Math.hypot(tx-u.x,ty-u.y),.3,{jump:58,end:()=>{jx({jfx:'in_land',x:u.x,y:u.y,t:.4,m:.4,r:40});
-   if(prey&&!prey.dead&&dist(u,prey)<prey.r+u.r+32){u.aim=ang(u,prey);VFX='claws';hit(prey,u,5,{melee:1,dot:{dps:2,dur:2}});VFX=null;jx({jfx:'in_claw',x:prey.x,y:prey.y,a:u.aim,t:.4,m:.4});S('bone',u)}}})}),
+  const aa=Math.atan2(ty-u.y,tx-u.x);u.aim=aa;S('dash',u);anim(u,'in_pounce',.42);in_dust(u,u.x,u.y,30,3);if(prey)fxCharge(u,IN_C.r,{t:.3,n:6,r:30});
+  dash(u,aa,Math.hypot(tx-u.x,ty-u.y),.3,{jump:58,end:()=>{jx({jfx:'in_land',x:u.x,y:u.y,t:.4,m:.4,r:40});in_dust(u,u.x,u.y,40,4);fxRing(u.x,u.y,{u,r0:10,r1:40,col:IN_C.d,w:4,t:.3});
+   if(prey&&!prey.dead&&dist(u,prey)<prey.r+u.r+32){u.aim=ang(u,prey);VFX='claws';hit(prey,u,5,{melee:1,dot:{dps:2,dur:2}});VFX=null;jx({jfx:'in_claw',x:prey.x,y:prey.y,a:u.aim,t:.4,m:.4});in_blood(u,prey,8);S('bone',u)}}})}),
  // Shikyaku (v5, fusion avec le Flair) : posture à quatre pattes + le 1er coup reçu (4 s) est esquivé et le chien mord
- in_beastC:S_('Shikyaku','',9,{ai:SELF(320,.5)},(u,a,td,P)=>{NAT.in_beast.f(u,a,td,P);u.in_flair=4;jx({jfx:'in_nose',x:u.x,y:u.y,ui:in_I(u),t:.7,m:.7})}),
+ in_beastC:S_('Shikyaku','',9,{ai:SELF(320,.5)},(u,a,td,P)=>{NAT.in_beast.f(u,a,td,P);u.in_flair=4;jx({jfx:'in_nose',x:u.x,y:u.y,ui:in_I(u),t:.7,m:.7});fxGlyph(u.x,u.y,IN_C.a,{u,ui:in_I(u),r:30,t:.6,al:.4})}),
  // Gatsûga (v5, fusion avec Tsûga) : si la vrille du lanceur a touché, rebond en arrière à la fin
  in_gatB:S_('Gatsûga','',9,{hero:'rey',line:{len:300,w:84},ai:{mode:'gap',min:60,max:290,p:.6}},(u,a,td,P)=>{const n0=aux.length;NAT.in_gatsuga.f(u,a,td,P);let gx=null;for(let k=n0;k<aux.length;k++)if(aux[k].type==='in_gat')gx=aux[k];if(!gx)return;
-  later(u,gx.m+.02,()=>{if(u.dead||u.stun>0||!gx.hc.size)return;u.dash=null;dash(u,gx.a+Math.PI+(rnd()-.5)*.25,140,.28,{jump:46});anim(u,'backflip',.4);jx({jfx:'in_ric',x:u.x,y:u.y,a:gx.a,t:.35,m:.35});if(near(u.x,u.y))S('hit',u)})}),
+  later(u,gx.m+.02,()=>{if(u.dead||u.stun>0||!gx.hc.size)return;u.dash=null;dash(u,gx.a+Math.PI+(rnd()-.5)*.25,140,.28,{jump:46});anim(u,'backflip',.4);jx({jfx:'in_ric',x:u.x,y:u.y,a:gx.a,t:.35,m:.35});in_dust(u,u.x,u.y,26,3);if(near(u.x,u.y))S('hit',u)})}),
  // Ninken : le chien grandit, plaque la cible visée puis la traque et la mord
  in_ninken:S_('Ninken',IN_D.ninken,14,{hero:'iden',line:{len:460,w:30},ai:RG(460,.6)},(u,a,td)=>{const e=pick(u,a,td||300,480),s=in_side(u);S('poof',u);S('roar',u);anim(u,'point',.55);
   for(const x of aux)if(x.type==='in_dog'&&x.owner===u)x.t=0;const tp=e?{x:e.x,y:e.y}:fwd(u,a,Math.min(td||300,420));
   aux.push({type:'in_big',x:s.x,y:s.y,a:Math.atan2(tp.y-s.y,tp.x-s.x),r:1.75,t:8,m:8,team:u.team,owner:u,ui:in_I(u),tg:e,ti:e?in_I(e):null,n:0,k:.42,tx:tp.x,ty:tp.y});
-  jx({jfx:'in_poof',x:s.x,y:s.y,r:44,t:.55,m:.55});say(u,'NINKEN !','#f0d0a0')}),
+  jx({jfx:'in_poof',x:s.x,y:s.y,r:44,t:.55,m:.55});fxSmoke(s.x,s.y,{u,col:'#f4f2ee',n:6,r:30,s:14,t:.8,al:.3,rise:30});fxGlyph(s.x,s.y,IN_C.a,{u,r:40,t:.6});say(u,'NINKEN !','#f0d0a0')}),
  // Flair du chien : esquive le prochain coup (voir le trait : take)
- in_flair:S_('Flair du chien',IN_D.flair,8,{hero:'ahsoka',ai:DEF},(u)=>{u.in_flair=1.5;S('deflect',u);anim(u,'in_sniff',.5);jx({jfx:'in_nose',x:u.x,y:u.y,ui:in_I(u),t:.7,m:.7})}),
+ in_flair:S_('Flair du chien',IN_D.flair,8,{hero:'ahsoka',ai:DEF},(u)=>{u.in_flair=1.5;S('deflect',u);anim(u,'in_sniff',.5);fxGlyph(u.x,u.y,IN_C.a,{u,ui:in_I(u),r:30,t:.6,al:.4});jx({jfx:'in_nose',x:u.x,y:u.y,ui:in_I(u),t:.7,m:.7})}),
  // Shikyaku : posture à quatre pattes (vitesse, saignement, morsures plus fréquentes)
- in_beast:S_('Shikyaku',IN_D.beast,8,{ai:SELF(320,.5)},(u)=>{S('roar',u);u.haste=Math.max(u.haste,4);u.slowImm=Math.max(u.slowImm,3);u.slow=0;u.root=0;u.in_four=4;anim(u,'in_four',4);jx({jfx:'in_feral',ui:in_I(u),x:u.x,y:u.y,t:.6,m:.6})}),
+ in_beast:S_('Shikyaku',IN_D.beast,8,{ai:SELF(320,.5)},(u)=>{S('roar',u);u.haste=Math.max(u.haste,4);u.slowImm=Math.max(u.slowImm,3);u.slow=0;u.root=0;u.in_four=4;anim(u,'in_four',4);jx({jfx:'in_feral',ui:in_I(u),x:u.x,y:u.y,t:.6,m:.6});
+  fxBurst(u.x,u.y,IN_C.r,{u,n:12,sp:150,z:12,up:120,gr:-60,w:2,len:.12,c2:'#ffb08a',t:.6});fxRing(u.x,u.y,{u,r0:12,r1:58,col:'#ff7a4a',c2:'#ffd0b0',w:5,t:.35});in_dust(u,u.x,u.y,46,5);fxLight(u.x,u.y,90,'#ff5a3a',{u,t:.4,a:.35});fxFlare(u.x,u.y,IN_C.r,{u,z:50,r:14,t:.2,star:0})}),
  // Marquage : le ninken bondit (projectile) et marque l'ennemi touché
  in_mark:S_('Marquage',IN_D.mark,7,{line:{len:440,w:24},ai:RG(440,.6)},(u,a)=>{S('dash',u);anim(u,'point',.35);for(const x of aux)if(x.type==='in_dog'&&x.owner===u)x.t=0;
-  const s=in_side(u),tx=u.x+Math.cos(a)*440,ty=u.y+Math.sin(a)*440,b=Math.atan2(ty-s.y,tx-s.x);
-  proj(u,a,{x:s.x,y:s.y,vx:Math.cos(b)*620,vy:Math.sin(b)*620,spd:620,r:11,dmg:6,life:.7,col:'#f4f0e8',kind:'in_dogp',noClash:1,onHit:(p,t)=>{in_markOn(p.owner,t,5)}});
+  const s=in_side(u),tx=u.x+Math.cos(a)*440,ty=u.y+Math.sin(a)*440,b=Math.atan2(ty-s.y,tx-s.x);in_dust(u,s.x,s.y,24,3);
+  proj(u,a,{x:s.x,y:s.y,vx:Math.cos(b)*620,vy:Math.sin(b)*620,spd:620,r:11,dmg:6,life:.7,col:'#f4f0e8',kind:'in_dogp',noClash:1,onHit:(p,t)=>{in_markOn(p.owner,t,5);const o=p.owner;fxBurst(t.x,t.y,IN_C.a,{u:o,n:10,sp:150,z:40,up:60,gr:-30,w:2.4,sh:'dot',c2:'#fff0c8',t:.6});fxRing(t.x,t.y,{u:o,r0:6,r1:30,col:IN_C.a,w:4,t:.35});fxFlare(t.x,t.y,IN_C.a,{u:o,z:36,r:16,t:.18});in_blood(o,t,4)}});
   aux.push({type:'in_hide',x:u.x,y:u.y,t:.9,m:.9,team:u.team,owner:u,ui:in_I(u),p:projs[projs.length-1]})}),
  // Loup bicéphale : fusion (le dessin du ninja devient un loup géant à deux têtes)
  in_wolf:ULT('Loup bicéphale',IN_D.wolf,{tele:{self:1,r:220},ai:SELF(250,.8)},(u)=>{S('poof',u);S('roar',u);u.giant=Math.max(u.giant,7);u.haste=Math.max(u.haste,7);u.lsB=Math.max(u.lsB,7);u.in_wolf=7;anim(u,'roar',.7);
   for(const x of aux)if((x.type==='in_dog'||x.type==='in_big')&&x.owner===u)x.t=0;aux.push({type:'in_wolfx',x:u.x,y:u.y,t:7,m:7,team:u.team,owner:u,ui:in_I(u),r:1});
   for(const e of enemies(u))if(dist(u,e)<220+e.r)hit(e,u,6,{slow:1.5,unblockable:1});
-  jx({jfx:'in_howl',ui:in_I(u),x:u.x,y:u.y,r:220,t:.9,m:.9});jx({jfx:'in_poof',x:u.x,y:u.y,r:70,t:.6,m:.6});if(near(u.x,u.y))shake=Math.max(shake,.3)}),
+  jx({jfx:'in_howl',ui:in_I(u),x:u.x,y:u.y,r:220,t:.9,m:.9});jx({jfx:'in_poof',x:u.x,y:u.y,r:70,t:.6,m:.6});
+  // fusion : colonne de chakra bestial, double onde au rayon EXACT du hurlement (220), poussière, gel des cibles prises
+  fxRing(u.x,u.y,{u,r0:30,r1:220,col:'#e8dcc8',c2:'#ffffff',w:8,t:.55});fxRing(u.x,u.y,{u,r0:20,r1:220,col:'#ff7a4a',w:5,t:.85});
+  fxSmoke(u.x,u.y,{u,col:'#f4f2ee',n:10,r:70,s:20,t:1,al:.3,rise:40});fxBurst(u.x,u.y,IN_C.r,{u,n:18,sp:260,z:40,up:120,gr:-20,w:2.4,c2:'#ffd0b0',t:.7});fxLight(u.x,u.y,240,'#ff5a3a',{u,t:.7,a:.4});fxDecal(u.x,u.y,'crack',{u,r:90,t:4});fxShake(.3,u.x,u.y);
+  for(const e of enemies(u))if(dist(u,e)<220+e.r)fxWind(e.x,e.y,ang(u,e),{u,len:70,w:30,n:3,t:.35,col:IN_C.w})}),
  // Garôga : double vrille géante qui emporte les ennemis et les écrase à l'arrivée
  in_garoga:ULT('Garôga',IN_D.garoga,{hero:'anakin',line:{len:430,w:110},ai:{max:360,p:.8}},(u,a,td)=>{a=in_track(u,a,460);u.aim=a;const L=clamp((td||380)+30,220,430),dur=.6,i=in_I(u);
   S('rasengan',u);S('heavy',u);anim(u,'in_drill',dur+.15);u.unstop=Math.max(u.unstop,dur+.1);dash(u,a,L,dur,{});for(const x of aux)if((x.type==='in_dog'||x.type==='in_big')&&x.owner===u)x.t=0;
   aux.push({type:'in_garo',x:u.x,y:u.y,a,len:L,t:dur+.12,m:dur+.12,team:u.team,owner:u,ui:i,c:[],n:0,r:1});aux.push({type:'in_scr',x:u.x,y:u.y,a,len:L,w:0,t:1.6,m:1.6,team:u.team,owner:u,n:dur,r:2});
-  jx({jfx:'in_drill',ui:i,x:u.x,y:u.y,a,t:dur+.05,m:dur+.05,big:1});jx({jfx:'in_burst',x:u.x,y:u.y,a,t:.45,m:.45,big:1})}),
+  jx({jfx:'in_drill',ui:i,x:u.x,y:u.y,a,t:dur+.05,m:dur+.05,big:1});jx({jfx:'in_burst',x:u.x,y:u.y,a,t:.45,m:.45,big:1});
+  fxCharge(u,IN_C.w,{t:.25,n:10,r:60});fxWind(u.x,u.y,a+Math.PI,{u,len:180,w:110,n:9,t:.5,col:IN_C.w});in_dust(u,u.x,u.y,70,7);fxDebris(u.x,u.y,{u,n:7,sp:160,col:'#8a6a48',c2:'#5a4028',s:4})}),
 });
 Object.assign(NATHERO,{in:'bossk'});
 // ---------- logique des objets (hôte) ----------
 // petit ninken qui court mordre une cible puis revient
 AUXF.in_dog=(x,dt)=>{const o=x.owner,e=x.tg;if(!o||o.dead){x.t=0;return}
  if(x.n===0){if(!e||e.dead||x.t<.8){x.n=2;return}const d=Math.hypot(e.x-x.x,e.y-x.y);x.a=Math.atan2(e.y-x.y,e.x-x.x);
-  if(d<e.r+12){x.n=1;x.k=.28;VFX='claws';hit(e,o,x.dmg,{in_d:1,slow:.3});VFX=null;jx({jfx:'in_fang',x:e.x,y:e.y,a:x.a,t:.3,m:.3});if(near(e.x,e.y))S('bone',o)}
+  if(d<e.r+12){x.n=1;x.k=.28;VFX='claws';hit(e,o,x.dmg,{in_d:1,slow:.3});VFX=null;jx({jfx:'in_fang',x:e.x,y:e.y,a:x.a,t:.3,m:.3});in_blood(o,e,4);if(near(e.x,e.y))S('bone',o)}
   else{const v=Math.min(d,780*dt);x.x+=Math.cos(x.a)*v;x.y+=Math.sin(x.a)*v}}
  else if(x.n===1){if(e&&!e.dead){x.x=e.x-Math.cos(x.a)*(e.r+6);x.y=e.y-Math.sin(x.a)*(e.r+6)}if(x.k<=0)x.n=2}
  else{const s=in_side(o),d=Math.hypot(s.x-x.x,s.y-x.y);x.a=Math.atan2(s.y-x.y,s.x-x.x);if(d<16){x.t=0;return}const v=Math.min(d,680*dt);x.x+=Math.cos(x.a)*v;x.y+=Math.sin(x.a)*v}};
@@ -110,33 +127,37 @@ AUXF.in_big=(x,dt)=>{const o=x.owner;if(!o||o.dead){x.t=0;return}
  if(x.t<=0){jx({jfx:'in_poof',x:x.x,y:x.y,r:40,t:.5,m:.5});return}
  if(x.n===0){const d=Math.hypot(x.tx-x.x,x.ty-x.y),v=920*dt;x.a=Math.atan2(x.ty-x.y,x.tx-x.x);if(d>v){x.x+=Math.cos(x.a)*v;x.y+=Math.sin(x.a)*v}else{x.x=x.tx;x.y=x.ty}
   if(d<=v||x.k<=0){const e=nearE(o,x.x,x.y,60);x.n=1;x.k=.3;jx({jfx:'in_land',x:x.x,y:x.y,r:52,t:.45,m:.45});
-   if(e){x.tg=e;x.ti=in_I(e);x.n=3;x.k=.8;VFX='claws';hit(e,o,8,{root:.8,in_d:1,unblockable:1});VFX=null;say(e,'PLAQUÉ !','#f0d0a0');jx({jfx:'in_fang',x:e.x,y:e.y,a:x.a,t:.35,m:.35,big:1});if(near(e.x,e.y)){S('bone',o);S('heavy',o);shake=Math.max(shake,.15)}}}return}
+   if(e){x.tg=e;x.ti=in_I(e);x.n=3;x.k=.8;VFX='claws';hit(e,o,8,{root:.8,in_d:1,unblockable:1});VFX=null;say(e,'PLAQUÉ !','#f0d0a0');jx({jfx:'in_fang',x:e.x,y:e.y,a:x.a,t:.35,m:.35,big:1});in_imp(o,e,1.3,8,1);in_blood(o,e,6);fxRing(x.x,x.y,{u:o,r0:10,r1:60,col:IN_C.d,w:5,t:.35});if(near(e.x,e.y)){S('bone',o);S('heavy',o);shake=Math.max(shake,.15)}}}return}
  if(x.n===3){const e=x.tg;if(!e||e.dead||x.k<=0){x.n=1;x.k=.45}else{x.x=e.x-Math.cos(x.a)*6;x.y=e.y-Math.sin(x.a)*6}return}
  let e=x.tg;if(!e||e.dead||dist(e,o)>650){e=x.tg=nearE(o,x.x,x.y,520);x.ti=e?in_I(e):null}
  if(!e){const s=in_side(o),d=Math.hypot(s.x-x.x,s.y-x.y);x.a=Math.atan2(s.y-x.y,s.x-x.x);x.n=1;if(d>44){const v=Math.min(d-44,300*dt);x.x+=Math.cos(x.a)*v;x.y+=Math.sin(x.a)*v}return}
  const d=Math.hypot(e.x-x.x,e.y-x.y);x.a=Math.atan2(e.y-x.y,e.x-x.x);
  if(d>e.r+24){const v=Math.min(d-e.r-20,285*dt);x.x+=Math.cos(x.a)*v;x.y+=Math.sin(x.a)*v;if(x.k<.45)x.n=1}
- else if(x.k<=0){x.k=.85;x.n=2;VFX='claws';hit(e,o,4,{in_d:1,slow:.45});VFX=null;jx({jfx:'in_fang',x:e.x,y:e.y,a:x.a,t:.3,m:.3});if(near(e.x,e.y))S('bone',o)}
+ else if(x.k<=0){x.k=.85;x.n=2;VFX='claws';hit(e,o,4,{in_d:1,slow:.45});VFX=null;jx({jfx:'in_fang',x:e.x,y:e.y,a:x.a,t:.3,m:.3});in_blood(o,e,4);if(near(e.x,e.y))S('bone',o)}
  else if(x.k<.45)x.n=1};
 // Gatsûga : la vrille du chien file en parallèle ; chaque vrille touche une fois, les deux = projeté
 AUXF.in_gat=x=>{const u=x.owner;if(!u||u.dead){x.t=0;return}const e1=Math.min(1,1-x.t/x.m);x.x=x.sx+Math.cos(x.a)*x.len*e1;x.y=x.sy+Math.sin(x.a)*x.len*e1;
  for(const e of enemies(u)){
   if(!x.hc.has(e)&&dist(u,e)<e.r+22){x.hc.add(e);in_gatHit(u,e,8,x.hd.has(e),u.x,u.y,0)}
   if(!x.hd.has(e)&&Math.hypot(e.x-x.x,e.y-x.y)<e.r+18){x.hd.add(e);in_gatHit(u,e,6,x.hc.has(e),x.x,x.y,1)}}};
-function in_gatHit(u,e,dmg,two,fx0,fy0,dog){VFX='gatsuga';hit(e,u,dmg,two?{melee:1,in_d:dog,air:.45}:{melee:1,in_d:dog,kb:70,fx:fx0,fy:fy0});VFX=null;
+function in_gatHit(u,e,dmg,two,fx0,fy0,dog){VFX='gatsuga';hit(e,u,dmg,two?{melee:1,in_d:dog,air:.45}:{melee:1,in_d:dog,kb:70,fx:fx0,fy:fy0});VFX=null;in_imp(u,e,two?1.6:1,dmg,two);
+ if(two){fxRing(e.x,e.y,{u,r0:8,r1:44,col:IN_C.w,c2:'#ffffff',w:6,t:.35});fxPillar(e.x,e.y,IN_C.w,{u,h:120,w:16,t:.35,al:.4})}
  if(two){say(e,'TENAILLE !','#ffffff');jx({jfx:'in_pincer',x:e.x,y:e.y,t:.45,m:.45});if(near(e.x,e.y)){S('heavy',u);shake=Math.max(shake,.15)}}else if(near(e.x,e.y))sparks(e.x,e.y,'#ffffff',6,'tai')}
 // Tsûga : au premier contact, coup + rebond en arrière
 AUXF.in_tsu=x=>{const u=x.owner;if(!u||u.dead||x.n)return;if(!u.dash){x.t=0;return}x.x=u.x;x.y=u.y;
- for(const e of enemies(u))if(dist(u,e)<u.r+e.r+10){x.n=1;VFX='gatsuga';hit(e,u,11,{melee:1,kb:170});VFX=null;
+ for(const e of enemies(u))if(dist(u,e)<u.r+e.r+10){x.n=1;VFX='gatsuga';hit(e,u,11,{melee:1,kb:170});VFX=null;in_imp(u,e,1.2,11,1);
   u.dash=null;dash(u,x.a+Math.PI+(rnd()-.5)*.25,150,.28,{jump:46});anim(u,'backflip',.4);jx({jfx:'in_ric',x:(u.x+e.x)/2,y:(u.y+e.y)/2,a:x.a,t:.35,m:.35});if(near(u.x,u.y)){S('hit',u);shake=Math.max(shake,.1)}break}};
 // Garôga : happe les ennemis devant la vrille, les emporte, puis les écrase à l'arrivée
 AUXF.in_garo=x=>{const u=x.owner;if(!u||u.dead){x.t=0;return}if(x.n)return;
  if(u.dash){x.x=u.x;x.y=u.y;const ca=Math.cos(x.a),sa=Math.sin(x.a);
-  for(const e of enemies(u))if(!x.c.includes(e)&&dist(u,e)<e.r+52){x.c.push(e);VFX='gatsuga';hit(e,u,4,{unblockable:1});VFX=null;if(near(e.x,e.y))sparks(e.x,e.y,'#ffffff',8,'tai')}
+  for(const e of enemies(u))if(!x.c.includes(e)&&dist(u,e)<e.r+52){x.c.push(e);VFX='gatsuga';hit(e,u,4,{unblockable:1});VFX=null;in_imp(u,e,1,0)}
   x.c.forEach((e,i)=>{if(e.dead||e.unstop>0)return;const s=(i%2?1:-1)*Math.ceil(i/2)*20;e.x=u.x+ca*(u.r+e.r+6)-sa*s;e.y=u.y+sa*(u.r+e.r+6)+ca*s;e.kx=e.ky=0;e.stun=Math.max(e.stun,.15);e.airT=Math.max(e.airT||0,.2);e.cast=null;e.dash=null;collide(e)});return}
  x.n=1;x.t=Math.min(x.t,.05);const p={x:u.x+Math.cos(x.a)*26,y:u.y+Math.sin(x.a)*26};
  for(const e of enemies(u)){const cg=x.c.includes(e);if(cg||Math.hypot(e.x-p.x,e.y-p.y)<100+e.r){VFX='gatsuga';hit(e,u,cg?12:7,{stun:cg?.4:0,kb:cg?190:150,fx:p.x,fy:p.y,unblockable:1});VFX=null}}
- jx({jfx:'in_crater',x:p.x,y:p.y,r:110,t:1,m:1});if(near(p.x,p.y)){S('boom',u);S('rock',u);shake=Math.max(shake,.4)}};
+ jx({jfx:'in_crater',x:p.x,y:p.y,r:110,t:1,m:1});if(near(p.x,p.y)){S('boom',u);S('rock',u)}
+ // écrasement : onde au rayon EXACT du coup (100), cratère qui reste, éclats, gel visuel des ennemis emportés
+ fxImpact(p.x,p.y,'earth',2,{u,r:100,dec:0});fxRing(p.x,p.y,{u,r0:20,r1:100,col:IN_C.w,c2:'#ffffff',w:8,t:.4});fxDecal(p.x,p.y,'crack',{u,r:95,t:4.5});fxDecal(p.x,p.y,'scorch',{u,r:60,t:3,al:.35});
+ fxDebris(p.x,p.y,{u,n:10,sp:220,col:'#8a6a48',c2:'#5a4028',s:5});fxSmoke(p.x,p.y,{u,col:IN_C.d,n:8,r:80,s:22,t:1.2,al:.26,rise:30});for(const e of x.c)if(!e.dead)fxHitStop(u,e,12,1)};
 // marque olfactive : suit la cible, qui ne peut plus se rendre invisible
 AUXF.in_mark=x=>{const e=x.tg;if(!e||e.dead){x.t=0;return}x.x=e.x;x.y=e.y;if(e.stealth>0)e.stealth=0};
 // Marquage : le chien vole (projectile) ; à la fin, il revient en courant
@@ -177,30 +198,31 @@ const in_ra=a=>Math.atan2(Math.sin(a)*K,Math.cos(a));
 JFXD.in_drill=(f,k,e,t,u)=>{if(!u||u.dead)return;const al=Math.min(1,k*6,e*10);
  if(f.small){const x=aux.find(a=>a.type==='in_tsu'&&a.ui===f.ui);if(!x||x.n)return}
  const z=(u.z||0)+(f.big?44:40),q=P(u.x,u.y,z),ra=in_ra(f.a);
+ {g.save();g.translate(q.x,q.y);g.rotate(ra);fxTailL((f.big?170:110)*q.s,(f.big?70:40)*q.s,f.big?'#d8d4cc':'#c8c4bc',.4*al);g.restore()}fxGlowS(q.x,q.y,(f.big?62:36)*q.s,'#e8e8f0',.16*al,(f.big?40:24)*q.s);
  if(f.big){const ox=-Math.sin(ra),oy=Math.cos(ra);g.save();g.globalCompositeOperation='lighter';g.fillStyle=rgba('#ffffff',.16*al);g.beginPath();g.ellipse(q.x,q.y,74*q.s,44*q.s,ra,0,7);g.fill();g.restore();
   const sw=Math.sin(t*14),ord=sw>0?[-1,1]:[1,-1];for(const sg of ord){const w=sg*sw*15*q.s,c=Math.cos(t*14)*sg;in_drillDraw({x:q.x+ox*w,y:q.y+oy*w},ra,(33+c*3)*q.s,92*q.s,t+(sg>0?.5:0),sg>0?'#b8b4ac':'#9a9aa2',sg>0?'#eeece6':'#dcdad4',al,'#a88868')}return}
  in_drillDraw(q,ra,(f.small?26:30)*q.s,(f.small?58:66)*q.s,t,'#9a9aa2','#e2e2e8',al);
- if(f.dog){const x=aux.find(a=>a.type==='in_gat'&&a.ui===f.ui);if(x){const p=P(x.x,x.y,26);in_drillDraw(p,in_ra(x.a),21*p.s,48*p.s,t+.3,'#c8a080','#f4f0e8',al,'#c8a080')}}};
+ if(f.dog){const x=aux.find(a=>a.type==='in_gat'&&a.ui===f.ui);if(x){const p=P(x.x,x.y,26);g.save();g.translate(p.x,p.y);g.rotate(in_ra(x.a));fxTailL(90*p.s,30*p.s,'#f0c870',.35*al);g.restore();in_drillDraw(p,in_ra(x.a),21*p.s,48*p.s,t+.3,'#c8a080','#f4f0e8',al,'#c8a080')}}};
 // traces au sol (griffures des vrilles, sillon de Garôga) : se dessinent au rythme de la vrille puis s'effacent
-AUXD.in_scr=(x,k,t)=>{const e=Math.min(1,(x.m-x.t)/Math.max(.05,x.n||.3)),L=x.len*e;if(L<16)return;const ca=Math.cos(x.a),sa=Math.sin(x.a),px=-sa,py=ca,al=Math.min(1,x.t/.5),big=x.r>1;
+AUXD.in_scr=(x,k,t)=>in_dim(x,()=>{const e=Math.min(1,(x.m-x.t)/Math.max(.05,x.n||.3)),L=x.len*e;if(L<16)return;const ca=Math.cos(x.a),sa=Math.sin(x.a),px=-sa,py=ca,al=Math.min(1,x.t/.5),big=x.r>1;
  const pt=(d,o)=>P(x.x+ca*d+px*o,x.y+sa*d+py*o),tr=big?[[0,15,0],[0,15,Math.PI]]:x.w?[[0,5,0],[x.w,4,1]]:[[0,5,0]];g.save();g.lineCap='round';g.lineJoin='round';
  for(const o of big?[0]:tr.map(r=>r[0])){const A=pt(8,o),B=pt(L,o);g.strokeStyle=rgba('#3a2a1a',(big?.3:.2)*al);g.lineWidth=(big?44:15)*A.s;g.beginPath();g.moveTo(A.x,A.y);g.lineTo(B.x,B.y);g.stroke();
   if(big){g.strokeStyle=rgba('#c8b898',.25*al);g.lineWidth=3;for(const sd of[-1,1]){const C=pt(8,sd*24),D=pt(L,sd*24);g.beginPath();g.moveTo(C.x,C.y);g.lineTo(D.x,D.y);g.stroke()}}}
  for(const [o,amp,ph] of tr)for(const [c,lw] of[[rgba('#1e140c',.6*al),2.8],[rgba('#f0e4c8',.42*al),1.1]]){g.strokeStyle=c;g.lineWidth=lw;g.beginPath();for(let d=8;d<=L;d+=4){const p=pt(d,o+Math.sin(d*.2+ph)*amp);d>8?g.lineTo(p.x,p.y):g.moveTo(p.x,p.y)}g.stroke()}
  if(big)for(let i=0;i<8;i++){const d=L*(i+.5)/8,sd=((i*53)%44)-22,q=pt(d,sd);g.fillStyle=rgba(i%2?'#6a4a30':'#8a6a48',.85*al);g.beginPath();g.moveTo(q.x-4*q.s,q.y);g.lineTo(q.x-1*q.s,q.y-5*q.s);g.lineTo(q.x+4*q.s,q.y-1*q.s);g.closePath();g.fill()}
- g.restore()};
+ g.restore()});
 // marque : anneau d'odeur au sol
-AUXD.in_mark=(x,k,t)=>{const tg=x.ti!=null?units[x.ti]:null;if(!tg||tg.dead)return;const al=Math.min(1,x.t/.6);g.save();g.strokeStyle=rgba('#f0b860',.7*al);g.lineWidth=2;g.setLineDash([6,5]);g.lineDashOffset=-t*20;gEll(tg.x,tg.y,26);g.stroke();g.setLineDash([]);
+AUXD.in_mark=(x,k,t)=>{const tg=x.ti!=null?units[x.ti]:null;if(!tg||tg.dead)return;const al=Math.min(1,x.t/.6);fxGlowG(tg.x,tg.y,34,IN_C.a,.22*al*fxA(x)*(.75+.25*Math.sin(t*5)));g.save();g.strokeStyle=rgba('#f0b860',.7*al);g.lineWidth=2;g.setLineDash([6,5]);g.lineDashOffset=-t*20;gEll(tg.x,tg.y,26);g.stroke();g.setLineDash([]);
  for(let i=0;i<3;i++){const b=t*.8+i*2.09,q=P(tg.x+Math.cos(b)*30,tg.y+Math.sin(b)*30*.8);g.fillStyle=rgba('#c89048',.55*al);g.beginPath();g.ellipse(q.x,q.y,2.6*q.s,2*q.s,0,0,7);g.fill();for(let j=-1;j<=1;j++){g.beginPath();g.arc(q.x+j*2.4*q.s,q.y-3*q.s,1*q.s,0,7);g.fill()}}g.restore()};
 // projectile : le ninken en plein bond
-PROJD.in_dogp=(p,R,ra,t)=>{const f=Math.cos(ra)>=0?1:-1,tl=f>0?ra:ra-Math.PI;g.save();g.rotate(ra);g.strokeStyle=rgba('#f0c870',.65);g.lineWidth=1.6;g.lineCap='round';g.beginPath();for(let i=0;i<3;i++){const y=(i-1)*5-6;g.moveTo(-14,y);g.quadraticCurveTo(-21,y-4+Math.sin(t/60+i)*3,-29,y)}g.stroke();g.restore();
- g.rotate(clamp(tl*.6,-.5,.5));g.scale(1.3*f,1.3);g.translate(0,10);in_dogBody(2,t/1000,'#f4f0e8','#c8a080')};
+PROJD.in_dogp=(p,R,ra,t)=>{const f=Math.cos(ra)>=0?1:-1,tl=f>0?ra:ra-Math.PI;g.save();g.rotate(ra);g.translate(0,-10);fxTailL(54,18,IN_C.a,.4*fxA(p));g.translate(0,10);g.strokeStyle=rgba('#f0c870',.65);g.lineWidth=1.6;g.lineCap='round';g.beginPath();for(let i=0;i<3;i++){const y=(i-1)*5-6;g.moveTo(-14,y);g.quadraticCurveTo(-21,y-4+Math.sin(t/60+i)*3,-29,y)}g.stroke();g.restore();
+ g.rotate(clamp(tl*.6,-.5,.5));g.scale(1.3*f,1.3);g.translate(0,10);in_dogBody(2,t/1000,'#f4f0e8','#c8a080');fxGlowS(15,-19,5,'#ff7a3a',.6*fxA(p))};
 // morsure : deux mâchoires crantées qui claquent
 JFXD.in_fang=(f,k,e)=>{const q=P(f.x,f.y,32),s=q.s*(f.big?1.45:1),c=Math.min(1,e*3.2),gap=(1-c)*13*s;g.save();g.translate(q.x,q.y);g.rotate(in_ra(f.a||0)*.25);g.globalAlpha=Math.min(1,k*2.5);
  g.fillStyle='#ffffff';g.strokeStyle=OUT;g.lineWidth=1.4;for(const sg of[-1,1]){const y0=sg*gap;g.beginPath();g.moveTo(-15*s,y0);g.quadraticCurveTo(0,y0+sg*13*s,15*s,y0);for(let i=0;i<4;i++){const x0=15*s-i*7.5*s;g.lineTo(x0-3.75*s,y0-sg*6.5*s);g.lineTo(x0-7.5*s,y0)}g.closePath();g.fill();g.stroke()}
- if(c>=1){g.globalCompositeOperation='lighter';g.fillStyle=rgba('#ff6a4a',.6*k);g.beginPath();for(let i=0;i<10;i++){const b=i*.628,L=i%2?6*s:20*s*(1.3-k);g.lineTo(Math.cos(b)*L,Math.sin(b)*L*.7)}g.closePath();g.fill()}g.restore()};
+ if(c>=1){fxGlowS(0,0,26*s,IN_C.r,.5*k,18*s);g.globalCompositeOperation='lighter';g.fillStyle=rgba('#ff6a4a',.6*k);g.beginPath();for(let i=0;i<10;i++){const b=i*.628,L=i%2?6*s:20*s*(1.3-k);g.lineTo(Math.cos(b)*L,Math.sin(b)*L*.7)}g.closePath();g.fill()}g.restore()};
 // griffures (Instinct bestial)
-JFXD.in_claw=(f,k,e)=>{const q=P(f.x,f.y,34),s=q.s,L=26*s*Math.min(1,e*4);g.save();g.translate(q.x,q.y);g.rotate(in_ra(f.a)+.9);g.lineCap='round';
+JFXD.in_claw=(f,k,e)=>{const q=P(f.x,f.y,34),s=q.s,L=26*s*Math.min(1,e*4);fxGlowS(q.x,q.y,30*s,IN_C.r,.4*k,20*s);g.save();g.translate(q.x,q.y);g.rotate(in_ra(f.a)+.9);g.lineCap='round';
  for(const [w,c] of[[5.5,rgba('#a0281e',.75*k)],[2.2,rgba('#ffffff',.95*k)]]){g.strokeStyle=c;g.lineWidth=w*s;g.beginPath();for(const o of[-8,0,8]){g.moveTo(-L,o*s-L*.12);g.lineTo(L,o*s+L*.12)}g.stroke()}g.restore()};
 // prise en tenaille (Gatsûga) : croix blanche
 JFXD.in_pincer=(f,k,e)=>{const q=P(f.x,f.y,36),s=q.s*(1+e*.5);g.save();g.translate(q.x,q.y);g.globalCompositeOperation='lighter';g.strokeStyle=rgba('#ffffff',k);g.lineCap='round';
@@ -216,7 +238,7 @@ JFXD.in_burst=(f,k,e)=>{const q=P(f.x,f.y,6),s=q.s*(f.big?1.7:1),ra=in_ra(f.a);g
 JFXD.in_prey=(f,k,e,t,u,tg)=>{if(!tg||tg.dead)return;const q=P(tg.x,tg.y,0),s=q.s,r=(34-e*12)*s;g.save();g.strokeStyle=rgba('#ff5a3a',.9*k);g.lineWidth=2.5;g.beginPath();g.ellipse(q.x,q.y,r,r*K,0,0,7);g.stroke();
  g.fillStyle=rgba('#ff5a3a',.9*k);for(let i=0;i<3;i++){const b=t*2+i*2.094,x=q.x+Math.cos(b)*r*1.3,y=q.y+Math.sin(b)*r*1.3*K;g.beginPath();g.moveTo(x,y);g.lineTo(x+Math.cos(b+Math.PI+.35)*9*s,y+Math.sin(b+Math.PI+.35)*9*s*K);g.lineTo(x+Math.cos(b+Math.PI-.35)*9*s,y+Math.sin(b+Math.PI-.35)*9*s*K);g.fill()}g.restore()};
 // nuage de fumée (le ninken grandit / redevient petit, fusion)
-JFXD.in_poof=(f,k,e)=>{const q=P(f.x,f.y,18),R=f.r*q.s;g.save();for(let i=0;i<8;i++){const b=i*.785+f.r,d=R*(.3+e*.7),r=R*(.35+e*.25)*(i%2?.8:1);g.fillStyle=rgba(i%3?'#f4f2ee':'#d8d8dc',.75*k);g.beginPath();g.arc(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*.6-e*14*q.s,r,0,7);g.fill()}g.restore()};
+JFXD.in_poof=(f,k,e)=>{const q=P(f.x,f.y,18),R=f.r*q.s,n=Math.max(5,fxN(8,f));g.save();for(let i=0;i<n;i++){const b=i*.785+f.r,d=R*(.3+e*.7),r=R*(.35+e*.25)*(i%2?.8:1);g.fillStyle=rgba(i%3?'#f4f2ee':'#d8d8dc',.4*k);g.beginPath();g.arc(q.x+Math.cos(b)*d,q.y+Math.sin(b)*d*.6-e*14*q.s,r,0,7);g.fill()}g.restore()};
 // poussière à l'atterrissage
 JFXD.in_land=(f,k,e)=>{g.save();g.strokeStyle=rgba('#c8b898',.6*k);g.lineWidth=3;gEll(f.x,f.y,(f.r||40)*(.4+e*.8));g.stroke();for(let i=0;i<6;i++){const b=i*1.047,q=P(f.x+Math.cos(b)*(f.r||40)*(.5+e*.6),f.y+Math.sin(b)*(f.r||40)*(.5+e*.6),4+e*10);g.fillStyle=rgba('#d8c8a8',.5*k);g.beginPath();g.arc(q.x,q.y,(4+e*5)*q.s,0,7);g.fill()}g.restore()};
 // cratère de Garôga
@@ -227,13 +249,13 @@ JFXD.in_crater=(f,k,e,t)=>{const q=P(f.x,f.y,0),R=f.r*q.s,al=Math.min(1,k*2);g.s
  for(let i=0;i<10;i++){const b=i*.63,d=R*(.3+e*.85),h=Math.sin(Math.PI*Math.min(1,e*1.3))*(46+(i%3)*22)*q.s,x=q.x+Math.cos(b)*d,y=q.y+Math.sin(b)*d*K-h,r=(4.5+(i%3)*2.2)*q.s;
   g.fillStyle=i%2?'#6a4a30':'#8a6a48';g.strokeStyle=OUT;g.lineWidth=1;g.beginPath();g.moveTo(x-r,y);g.lineTo(x-r*.2,y-r);g.lineTo(x+r,y-r*.3);g.lineTo(x+r*.4,y+r*.7);g.closePath();g.fill();g.stroke()}g.restore()};
 // hurlement (Loup bicéphale) : ondes sonores
-JFXD.in_howl=(f,k,e,t,u)=>{const c=u&&!u.dead?u:f;g.save();g.lineCap='round';for(let i=0;i<3;i++){const ee=Math.min(1,e*1.4-i*.18);if(ee<=0)continue;const r=f.r*ee;g.strokeStyle=rgba(i%2?'#c8c4bc':'#ffffff',.75*(1-ee));g.lineWidth=5*(1-ee)+1.5;g.setLineDash([22,10]);g.lineDashOffset=i*9;gEll(c.x,c.y,r);g.stroke()}g.setLineDash([]);g.restore()};
+JFXD.in_howl=(f,k,e,t,u)=>{const c=u&&!u.dead?u:f;{const q=P(c.x,c.y,60);fxGlowS(q.x,q.y,60*q.s*(1+e),'#ff7a4a',.3*k,40*q.s)}g.save();g.lineCap='round';for(let i=0;i<3;i++){const ee=Math.min(1,e*1.4-i*.18);if(ee<=0)continue;const r=f.r*ee;g.strokeStyle=rgba(i%2?'#c8c4bc':'#ffffff',.75*(1-ee));g.lineWidth=5*(1-ee)+1.5;g.setLineDash([22,10]);g.lineDashOffset=i*9;gEll(c.x,c.y,r);g.stroke()}g.setLineDash([]);g.restore()};
 // flair : volutes d'odeur (au lancement) ou éclat « ! » (esquive, ennemi flairé)
 JFXD.in_nose=(f,k,e,t,u,tg)=>{const c=tg||u||f;if(c.dead)return;const q=P(c.x,c.y,70),s=q.s;g.save();g.lineCap='round';
  if(f.hit){g.globalAlpha=Math.min(1,k*2);g.fillStyle='#f0d0a0';g.strokeStyle=OUT;g.lineWidth=2;g.font=`bold ${Math.round(22*s*(1+e*.4))}px "Trebuchet MS",sans-serif`;g.textAlign='center';g.strokeText('!',q.x,q.y-e*12*s);g.fillText('!',q.x,q.y-e*12*s)}
  g.strokeStyle=rgba('#f0c870',.75*k);g.lineWidth=2;g.beginPath();for(let i=0;i<4;i++){const b=i*1.57+t*1.5,r=(16+e*26)*s,x0=q.x+Math.cos(b)*r,y0=q.y+Math.sin(b)*r*.5+10*s;g.moveTo(x0,y0);g.bezierCurveTo(x0+6*s,y0-6*s,x0-6*s,y0-12*s,x0+2*s,y0-18*s)}g.stroke();g.restore()};
 // Shikyaku : flambée de chakra bestial
-JFXD.in_feral=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x,u.y,0),s=q.s;g.save();g.globalCompositeOperation='lighter';for(let i=0;i<9;i++){const b=i*.7+t*4,x=q.x+Math.cos(b)*(14+e*10)*s,h=(30+(i%3)*14)*s*(1-e*.4),y=q.y-6*s;g.fillStyle=rgba(i%2?'#c0402a':'#ff7a4a',.55*k);g.beginPath();g.moveTo(x-5*s,y);g.quadraticCurveTo(x+Math.sin(t*20+i)*4*s,y-h,x+5*s,y);g.fill()}
+JFXD.in_feral=(f,k,e,t,u)=>{if(!u||u.dead)return;const q=P(u.x,u.y,0),s=q.s,n=fxNB(9,f);fxGlowS(q.x,q.y-20*s,44*s,'#ff5a3a',.2*k,36*s);g.save();g.globalCompositeOperation='lighter';for(let i=0;i<n;i++){const b=i*.7+t*4,x=q.x+Math.cos(b)*(14+e*10)*s,h=(30+(i%3)*14)*s*(1-e*.4),y=q.y-6*s;g.fillStyle=rgba(i%2?'#c0402a':'#ff7a4a',.55*k);g.beginPath();g.moveTo(x-5*s,y);g.quadraticCurveTo(x+Math.sin(t*20+i)*4*s,y-h,x+5*s,y);g.fill()}
  g.strokeStyle=rgba('#ff7a4a',.8*k);g.lineWidth=3;g.beginPath();g.ellipse(q.x,q.y,(20+e*40)*s,(20+e*40)*s*K,0,0,7);g.stroke();g.restore()};
 // ---------- poses 3D ----------
 Object.assign(ANIM,{
@@ -262,7 +284,8 @@ function in_wolfBody(t,run,bite){const r=run?Math.sin(t*14):0,col='#eeece6',sh='
   outlined(()=>{g.moveTo(hx+4,hy+4+op*.6);g.lineTo(hx+16,hy+3.2+op);g.lineTo(hx+6,hy+7+op*.6)},c);
   g.fillStyle='#d0201a';g.beginPath();g.moveTo(hx+1.5,hy-3.6);g.lineTo(hx+6.2,hy-2.4);g.lineTo(hx+2,hy-1);g.closePath();g.fill();g.fillStyle='#120c08';g.beginPath();g.arc(hx+19,hy+.6-op*.4,1.9,0,7);g.fill()}}
 function in_wolfAt(u,bx,by,s){const f=Math.cos(u.aim)>=0?1:-1,t=performance.now()/1000;g.save();if(u.stun>0)g.translate(Math.sin(t*12)*1.2,0);
- g.translate(bx,by);g.scale(s*1.05*f,s*1.05);in_wolfBody(t,u.moving||!!u.dash,u.swing>0);
+ g.translate(bx,by);g.scale(s*1.05*f,s*1.05);const am=fxA(u);fxGlowS(0,-26,46,'#ff6a4a',.16*am*(.8+.2*Math.sin(t*6)),30);in_wolfBody(t,u.moving||!!u.dash,u.swing>0);
+ for(const [ex,ey] of[[20,-48],[30,-35]])fxGlowS(ex,ey,6,'#ff2a1a',.8*am*(.75+.25*Math.sin(t*9+ex)));
  if(u.flash>0){g.globalAlpha=Math.min(1,u.flash/.12)*.6;g.globalCompositeOperation='lighter';g.fillStyle='#ffffff';g.beginPath();g.ellipse(0,-21,22,11.5,0,0,7);g.fill()}g.restore()}
 // ---------- états visibles ----------
 // ninken devant son ancre (le maître ou la cible, la plus proche) : dessiné juste après elle (bon ordre d'affichage)
@@ -290,7 +313,7 @@ TRAITS[5]={nom:'Ninken',desc:'Ton ninken combat avec toi : toutes les 8 s (4 s s
  draw(u,p,S,sk){const t=performance.now()/1000;
   if(u.in_flair>0){g.save();g.strokeStyle=rgba('#f0c870',.8);g.lineWidth=1.8;g.lineCap='round';g.beginPath();for(let i=0;i<3;i++){const b=t*3+i*2.09,x0=p.x+Math.cos(b)*20*S,y0=p.y-58*S+Math.sin(b)*7*S;g.moveTo(x0,y0);g.bezierCurveTo(x0+5*S,y0-5*S,x0-5*S,y0-9*S,x0+1*S,y0-14*S)}g.stroke();
    g.setLineDash([3,4]);g.strokeStyle=rgba('#f0d0a0',.7);g.beginPath();g.ellipse(p.x,p.y,30*S,30*S*K,0,0,7);g.stroke();g.restore()}
-  if(u.in_four>0&&u.haste>0&&!(u.in_wolf>0)){g.save();g.globalCompositeOperation='lighter';for(let i=0;i<7;i++){const b=i*.9+t*5,x=p.x+Math.cos(b)*16*S,h=(14+((t*30+i*7)%14))*S,y=p.y-(8+(i%3)*10)*S;g.fillStyle=rgba(i%2?'#c0402a':'#ff6a3a',.32);g.beginPath();g.moveTo(x-4*S,y);g.quadraticCurveTo(x,y-h,x+4*S,y);g.fill()}g.restore()}},
+  if(u.in_four>0&&u.haste>0&&!(u.in_wolf>0)){g.save();g.globalCompositeOperation='lighter';g.globalAlpha*=fxA(u);fxGlowS(p.x,p.y-22*S,30*S,'#ff5a3a',.18,34*S);const n=fxNB(7,u);for(let i=0;i<n;i++){const b=i*.9+t*5,x=p.x+Math.cos(b)*16*S,h=(14+((t*30+i*7)%14))*S,y=p.y-(8+(i%3)*10)*S;g.fillStyle=rgba(i%2?'#c0402a':'#ff6a3a',.32);g.beginPath();g.moveTo(x-4*S,y);g.quadraticCurveTo(x,y-h,x+4*S,y);g.fill()}g.restore()}},
  hud(u,x,y){const yy=y-16,w=118,cd=Math.max(0,u.in_bcd||0),aw=in_away(u),rd=cd<=0;g.fillStyle='rgba(0,0,0,.55)';g.fillRect(x,yy,w+2,7);g.fillStyle=aw?'#f0b860':rd?'#f4f0e8':'#8a7058';g.fillRect(x+1,yy+1,w*(aw||rd?1:Math.max(0,1-cd/8)),5);
   g.save();g.translate(x+w+14,yy+7);g.scale(.7,.7);in_dogBody(aw?2:rd?4:0,performance.now()/1000,'#f4f0e8','#c8a080',0,1);g.restore();text(aw?'Ninken : à l\'attaque !':rd?'Ninken prêt':'Ninken',x+w+30,yy+7,11,'#f0d8b0','left','normal')}};
 // ---------- crochets d'affichage (auto-suffisants) ----------
